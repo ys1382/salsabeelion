@@ -1,0 +1,11 @@
+.DS_Store
+*.pem
+.env
+.env.*
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.wasm
+*.pck
+*.import

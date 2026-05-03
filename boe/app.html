@@ -1,0 +1,2315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Book of Ecology</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+@import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=Source+Sans+3:wght@300;400;600&display=swap');
+
+:root {
+  --bg: #0a0e0c;
+  --panel: #111916;
+  --panel-border: #1e2e25;
+  --text: #c8d4ca;
+  --text-dim: #6b7e6f;
+  --accent: #4a9e6e;
+  --accent-glow: #3aff8a22;
+  --gold: #c4a24e;
+  --gold-dim: #7a6530;
+  --danger: #9b3943;
+  --journal-bg: #1a1408;
+  --journal-text: #c4b07a;
+  --journal-line: #3a2e18;
+}
+
+html, body {
+  height: 100%; width: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Source Sans 3', 'Segoe UI', sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  overflow: hidden;
+}
+
+/* ── Layout ── */
+#app {
+  display: grid;
+  grid-template-rows: 1fr auto;
+  height: 100vh;
+  width: 100vw;
+}
+
+#scene {
+  position: relative;
+  overflow: hidden;
+}
+
+/* ── Parallax Background ── */
+.parallax-layer {
+  position: absolute; inset: 0;
+  background-size: cover;
+  background-position: center;
+  transition: opacity 1.2s ease, transform 0.3s ease;
+  will-change: transform, opacity;
+}
+
+.parallax-layer.fading-out { opacity: 0; }
+.parallax-layer.fading-in {
+  opacity: 1;
+  /* Slow background drift (independent of mouse parallax on transform) */
+  animation: parallaxBgDrift 32s ease-in-out infinite alternate;
+}
+
+@keyframes parallaxBgDrift {
+  0% { background-position: 48% 52%; }
+  100% { background-position: 52% 48%; }
+}
+
+/* ── Ambient Canvas ── */
+#ambient-canvas {
+  position: absolute; inset: 0;
+  z-index: 5;
+  pointer-events: none;
+}
+
+/* ── Vignette + atmospheric overlay ── */
+#atmosphere {
+  position: absolute; inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  transition: opacity 1.5s ease;
+}
+
+.atmo-vignette {
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.5) 100%);
+}
+
+/* ── Water shimmer (estuary) ── */
+.water-shimmer {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 30%;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(60,140,180,0.03) 40%,
+    rgba(60,140,180,0.06) 100%
+  );
+  animation: shimmer 4s ease-in-out infinite;
+  z-index: 3;
+  pointer-events: none;
+}
+
+@keyframes shimmer {
+  0%, 100% { opacity: 0.4; transform: translateY(0); }
+  50% { opacity: 0.8; transform: translateY(-3px); }
+}
+
+/* ── Fog drift ── */
+.fog-layer {
+  position: absolute; inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  opacity: 0.15;
+}
+
+.fog-band {
+  position: absolute;
+  width: 200%;
+  height: 40%;
+  background: linear-gradient(90deg, transparent, rgba(180,200,180,0.15), transparent, rgba(180,200,180,0.1), transparent);
+  filter: blur(30px);
+}
+
+.fog-band:nth-child(1) {
+  top: 20%;
+  animation: fogDrift1 25s linear infinite;
+}
+
+.fog-band:nth-child(2) {
+  top: 50%;
+  animation: fogDrift2 35s linear infinite;
+  opacity: 0.7;
+}
+
+@keyframes fogDrift1 {
+  0% { transform: translateX(-50%); }
+  100% { transform: translateX(0%); }
+}
+
+@keyframes fogDrift2 {
+  0% { transform: translateX(0%); }
+  100% { transform: translateX(-50%); }
+}
+
+/* ── Light rays ── */
+.light-rays {
+  position: absolute; inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.ray {
+  position: absolute;
+  top: -20%;
+  width: 2px;
+  height: 120%;
+  background: linear-gradient(180deg, rgba(255,255,200,0.08), transparent 70%);
+  transform-origin: top center;
+  animation: rayPulse 8s ease-in-out infinite;
+}
+
+.ray:nth-child(1) { left: 25%; transform: rotate(5deg); animation-delay: 0s; }
+.ray:nth-child(2) { left: 35%; transform: rotate(-3deg); animation-delay: 2s; width: 3px; }
+.ray:nth-child(3) { left: 60%; transform: rotate(8deg); animation-delay: 4s; }
+.ray:nth-child(4) { left: 75%; transform: rotate(-2deg); animation-delay: 6s; width: 1.5px; }
+
+@keyframes rayPulse {
+  0%, 100% { opacity: 0; }
+  30%, 70% { opacity: 1; }
+}
+
+/* ── Spore float animation ── */
+@keyframes sporeFloat {
+  0% { transform: translateY(0) translateX(0) scale(1); opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { transform: translateY(-120px) translateX(30px) scale(0.5); opacity: 0; }
+}
+
+/* ── Scene Overlay ── */
+#scene-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(to top, rgba(10,14,12,0.95) 0%, rgba(10,14,12,0.6) 40%, transparent 70%);
+  display: flex; flex-direction: column;
+  justify-content: flex-end;
+  padding: 2rem;
+  z-index: 10;
+}
+
+#location-header {
+  display: flex; align-items: center; gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+#location-name {
+  font-family: 'Lora', serif;
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: #e8ede9;
+}
+
+#lens-badge {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  background: var(--accent-glow);
+  border: 1px solid var(--accent);
+  border-radius: 1rem;
+  padding: 0.15rem 0.6rem;
+  font-size: 0.75rem;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+#lens-badge .icon { font-size: 0.85rem; }
+
+#location-desc {
+  font-size: 0.95rem;
+  color: var(--text-dim);
+  max-width: 600px;
+  margin-bottom: 1rem;
+  font-style: italic;
+}
+
+/* ── Protagonist Banner ── */
+#protagonist-intro {
+  position: absolute; top: 0; left: 0; right: 0;
+  background: linear-gradient(to bottom, rgba(10,14,12,0.95) 0%, transparent 100%);
+  padding: 1.5rem 2rem 3rem;
+  z-index: 15;
+  opacity: 0;
+  transform: translateY(-20px);
+  transition: opacity 0.8s ease, transform 0.8s ease;
+  pointer-events: none;
+}
+
+#protagonist-intro.visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+#protagonist-intro h2 {
+  font-family: 'Lora', serif;
+  font-size: 1.1rem;
+  color: var(--gold);
+  margin-bottom: 0.3rem;
+}
+
+#protagonist-intro p {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  max-width: 500px;
+  line-height: 1.5;
+}
+
+/* ── Action Panel ── */
+#actions {
+  display: flex; flex-wrap: wrap; gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.action-btn {
+  background: rgba(30,46,37,0.8);
+  border: 1px solid var(--panel-border);
+  border-radius: 0.5rem;
+  color: var(--text);
+  padding: 0.4rem 0.9rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+  position: relative;
+}
+
+.action-btn:hover {
+  background: rgba(74,158,110,0.2);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.action-btn.npc-btn { border-color: var(--gold-dim); color: var(--gold); }
+.action-btn.npc-btn:hover { background: rgba(196,162,78,0.15); border-color: var(--gold); }
+
+.action-btn .new-badge {
+  position: absolute; top: -4px; right: -4px;
+  width: 8px; height: 8px;
+  background: var(--accent);
+  border-radius: 50%;
+  box-shadow: 0 0 6px var(--accent);
+}
+
+.action-btn.visited .new-badge { display: none; }
+
+.action-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  border-style: dashed;
+}
+
+.action-btn:disabled:hover {
+  background: rgba(30,46,37,0.8);
+  border-color: var(--panel-border);
+  color: var(--text);
+}
+
+.lock-reason {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  display: block;
+  margin-top: 0.15rem;
+}
+
+/* ── Text Display ── */
+#text-display {
+  background: rgba(17,25,22,0.9);
+  border: 1px solid var(--panel-border);
+  border-radius: 0.75rem;
+  padding: 1rem 1.25rem;
+  max-width: 650px;
+  min-height: 3rem;
+  max-height: 12rem;
+  overflow-y: auto;
+  font-size: 0.9rem;
+  line-height: 1.7;
+  display: none;
+}
+
+#text-display.visible { display: block; }
+
+#text-display .speaker {
+  color: var(--gold);
+  font-weight: 600;
+  font-family: 'Lora', serif;
+}
+
+#text-display .narration {
+  color: var(--text);
+}
+
+#text-display .system-msg {
+  color: var(--accent);
+  font-size: 0.8rem;
+  font-style: italic;
+  margin-top: 0.5rem;
+}
+
+#text-display .evidence-msg {
+  color: var(--gold);
+  font-size: 0.8rem;
+  margin-top: 0.5rem;
+  padding: 0.3rem 0.5rem;
+  background: rgba(196,162,78,0.1);
+  border-radius: 0.3rem;
+}
+
+/* ── Bottom Bar ── */
+#bottom-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  background: var(--panel);
+  border-top: 1px solid var(--panel-border);
+  padding: 0.5rem 1.5rem;
+  z-index: 20;
+}
+
+#nav-section {
+  display: flex; align-items: center; gap: 0.5rem;
+}
+
+#nav-section label {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.nav-btn {
+  background: rgba(30,46,37,0.6);
+  border: 1px solid var(--panel-border);
+  border-radius: 0.4rem;
+  color: var(--text);
+  padding: 0.3rem 0.7rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+  position: relative;
+}
+
+.nav-btn:hover:not(:disabled) {
+  background: rgba(74,158,110,0.2);
+  border-color: var(--accent);
+}
+
+.nav-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.nav-btn .unread-dot {
+  position: absolute; top: -3px; right: -3px;
+  width: 6px; height: 6px;
+  background: var(--accent);
+  border-radius: 50%;
+  display: none;
+}
+
+.nav-btn.has-new .unread-dot { display: block; }
+
+#toolbar {
+  display: flex; gap: 0.5rem;
+}
+
+.tool-btn {
+  background: none;
+  border: 1px solid var(--panel-border);
+  border-radius: 0.4rem;
+  color: var(--text-dim);
+  padding: 0.35rem 0.7rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+  position: relative;
+}
+
+.tool-btn:hover { color: var(--text); border-color: var(--accent); }
+.tool-btn.active { color: var(--accent); border-color: var(--accent); background: var(--accent-glow); }
+
+.tool-btn .notif {
+  position: absolute; top: -4px; right: -4px;
+  min-width: 14px; height: 14px;
+  background: var(--accent);
+  border-radius: 7px;
+  font-size: 0.6rem;
+  color: #000;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700;
+  padding: 0 3px;
+}
+
+/* ── Journal Overlay ── */
+#journal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 100;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+}
+
+#journal-overlay.open { display: flex; }
+
+#journal-book {
+  width: min(700px, 90vw);
+  height: min(500px, 80vh);
+  background: var(--journal-bg);
+  border-radius: 0.5rem;
+  border: 2px solid var(--journal-line);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5), inset 0 0 80px rgba(26,20,8,0.5);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+#journal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0.75rem 1.25rem;
+  border-bottom: 1px solid var(--journal-line);
+  background: rgba(58,46,24,0.3);
+}
+
+#journal-header h2 {
+  font-family: 'Lora', serif;
+  font-size: 1.1rem;
+  color: var(--journal-text);
+}
+
+#journal-close {
+  background: none; border: none;
+  color: var(--journal-text);
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 0.2rem 0.4rem;
+}
+
+#journal-pages {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+.journal-page {
+  position: absolute; inset: 0;
+  padding: 1.5rem;
+  overflow-y: auto;
+  transition: transform 0.4s ease, opacity 0.4s ease;
+  background: repeating-linear-gradient(
+    transparent, transparent 1.55rem, var(--journal-line) 1.55rem, var(--journal-line) 1.6rem
+  );
+}
+
+.journal-page.hidden-left {
+  transform: translateX(-100%);
+  opacity: 0;
+}
+
+.journal-page.hidden-right {
+  transform: translateX(100%);
+  opacity: 0;
+}
+
+.journal-entry {
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px dashed var(--journal-line);
+}
+
+.journal-entry:last-child { border-bottom: none; }
+
+.journal-entry .entry-source {
+  font-size: 0.7rem;
+  color: var(--gold-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.2rem;
+}
+
+.journal-entry .entry-text {
+  font-family: 'Lora', serif;
+  font-size: 0.85rem;
+  color: var(--journal-text);
+  line-height: 1.6;
+}
+
+.journal-entry .entry-tags {
+  display: flex; flex-wrap: wrap; gap: 0.3rem;
+  margin-top: 0.4rem;
+}
+
+.journal-entry .tag {
+  font-size: 0.65rem;
+  background: rgba(196,162,78,0.15);
+  color: var(--gold-dim);
+  padding: 0.1rem 0.4rem;
+  border-radius: 0.2rem;
+}
+
+.journal-annotation {
+  background: rgba(74,158,110,0.08);
+  border-left: 2px solid var(--accent);
+  padding: 0.5rem 0.75rem;
+  margin: 0.5rem 0;
+  font-size: 0.8rem;
+  color: var(--accent);
+  font-style: italic;
+}
+
+#journal-nav {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0.5rem 1.25rem;
+  border-top: 1px solid var(--journal-line);
+}
+
+.page-turn-btn {
+  background: none;
+  border: 1px solid var(--journal-line);
+  color: var(--journal-text);
+  padding: 0.3rem 0.8rem;
+  border-radius: 0.3rem;
+  cursor: pointer;
+  font-family: 'Lora', serif;
+  font-size: 0.8rem;
+  transition: all 0.2s;
+}
+
+.page-turn-btn:hover:not(:disabled) {
+  background: rgba(196,162,78,0.1);
+  border-color: var(--gold-dim);
+}
+
+.page-turn-btn:disabled { opacity: 0.3; cursor: default; }
+
+#page-indicator {
+  font-size: 0.75rem;
+  color: var(--gold-dim);
+  font-family: 'Lora', serif;
+}
+
+/* ── Map Overlay ── */
+#map-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 100;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+}
+
+#map-overlay.open { display: flex; }
+
+#map-panel {
+  width: min(600px, 90vw);
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+
+#map-panel h2 {
+  font-family: 'Lora', serif;
+  font-size: 1.1rem;
+  color: var(--text);
+  margin-bottom: 1rem;
+  display: flex; justify-content: space-between; align-items: center;
+}
+
+#map-close {
+  background: none; border: none;
+  color: var(--text-dim); font-size: 1.2rem;
+  cursor: pointer;
+}
+
+#map-canvas {
+  width: 100%;
+  height: 350px;
+}
+
+.map-node {
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.map-node:hover .node-circle { filter: brightness(1.3); }
+
+.map-legend {
+  display: flex; gap: 1rem; margin-top: 0.75rem;
+  font-size: 0.7rem; color: var(--text-dim);
+}
+
+.map-legend span {
+  display: flex; align-items: center; gap: 0.3rem;
+}
+
+.legend-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+/* ── Inventory Overlay ── */
+#inventory-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 100;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+}
+
+#inventory-overlay.open { display: flex; }
+
+#inventory-panel {
+  width: min(450px, 90vw);
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+
+#inventory-panel h2 {
+  font-family: 'Lora', serif;
+  font-size: 1.1rem;
+  color: var(--text);
+  margin-bottom: 1rem;
+  display: flex; justify-content: space-between; align-items: center;
+}
+
+#inv-close {
+  background: none; border: none;
+  color: var(--text-dim); font-size: 1.2rem;
+  cursor: pointer;
+}
+
+.inv-item {
+  display: flex; align-items: flex-start; gap: 0.75rem;
+  padding: 0.75rem;
+  background: rgba(30,46,37,0.4);
+  border: 1px solid var(--panel-border);
+  border-radius: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.inv-icon {
+  font-size: 1.3rem;
+  min-width: 2rem;
+  text-align: center;
+}
+
+.inv-details h3 {
+  font-size: 0.85rem;
+  color: var(--text);
+  margin-bottom: 0.15rem;
+}
+
+.inv-details p {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  line-height: 1.4;
+}
+
+.inv-empty {
+  text-align: center;
+  color: var(--text-dim);
+  font-style: italic;
+  padding: 2rem;
+}
+
+/* ── EcoLens Level Display ── */
+#ecolens-display {
+  position: absolute;
+  top: 1rem; right: 1rem;
+  z-index: 12;
+  display: flex; flex-direction: column; align-items: flex-end; gap: 0.3rem;
+}
+
+#ecolens-level {
+  display: flex; align-items: center; gap: 0.4rem;
+  background: rgba(17,25,22,0.85);
+  border: 1px solid var(--accent);
+  border-radius: 0.5rem;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.8rem;
+  color: var(--accent);
+}
+
+#ecolens-pips {
+  display: flex; gap: 3px;
+}
+
+.eco-pip {
+  width: 6px; height: 12px;
+  background: var(--panel-border);
+  border-radius: 2px;
+  transition: background 0.5s, box-shadow 0.5s;
+}
+
+.eco-pip.filled {
+  background: var(--accent);
+  box-shadow: 0 0 4px var(--accent);
+}
+
+#ecolens-tier {
+  font-size: 0.65rem;
+  color: var(--text-dim);
+  background: rgba(17,25,22,0.85);
+  padding: 0.15rem 0.5rem;
+  border-radius: 0.3rem;
+}
+
+/* ── Transition effects ── */
+.scene-transition {
+  animation: sceneFade 0.8s ease;
+}
+
+@keyframes sceneFade {
+  0% { opacity: 0; transform: translateY(10px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.text-reveal {
+  animation: textReveal 0.5s ease;
+}
+
+@keyframes textReveal {
+  0% { opacity: 0; transform: translateY(5px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--panel-border); border-radius: 2px; }
+
+/* ── Responsive ── */
+@media (max-width: 600px) {
+  #scene-overlay { padding: 1rem; }
+  #location-name { font-size: 1.2rem; }
+  #bottom-bar { padding: 0.4rem 0.75rem; flex-wrap: wrap; gap: 0.3rem; }
+}
+</style>
+</head>
+<body>
+
+<div id="app">
+  <div id="scene">
+    <div id="parallax-container"></div>
+    <div id="atmosphere"></div>
+    <canvas id="ambient-canvas"></canvas>
+
+    <div id="ecolens-display">
+      <div id="ecolens-level">
+        <span class="icon">&#x1f33f;</span>
+        <span id="ecolens-tier-name">Newcomer</span>
+        <div id="ecolens-pips"></div>
+      </div>
+      <div id="ecolens-tier"></div>
+    </div>
+
+    <div id="protagonist-intro">
+      <h2>Field Notes &mdash; Day 1</h2>
+      <p>You are <strong>Maren Voss</strong>, an independent environmental researcher following a tip about ecological anomalies in a post-industrial watershed. Your grant runs out in three months. Your editor wants a story. You want the truth &mdash; whatever shape it takes.</p>
+    </div>
+
+    <div id="scene-overlay">
+      <div id="location-header">
+        <h1 id="location-name"></h1>
+        <div id="lens-badge"><span class="icon">&#x1f33f;</span> <span id="lens-badge-text"></span></div>
+      </div>
+      <p id="location-desc"></p>
+      <div id="actions"></div>
+      <div id="text-display"></div>
+    </div>
+  </div>
+
+  <div id="bottom-bar">
+    <div id="nav-section">
+      <label>Travel:</label>
+      <div id="nav-buttons"></div>
+    </div>
+    <div id="toolbar">
+      <button class="tool-btn" id="btn-map" title="Map">Map</button>
+      <button class="tool-btn" id="btn-journal" title="Journal">Journal<span class="notif" id="journal-notif" style="display:none">0</span></button>
+      <button class="tool-btn" id="btn-inventory" title="Evidence">Evidence<span class="notif" id="inv-notif" style="display:none">0</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- Journal -->
+<div id="journal-overlay">
+  <div id="journal-book">
+    <div id="journal-header">
+      <h2>Field Journal</h2>
+      <button id="journal-close">&times;</button>
+    </div>
+    <div id="journal-pages"></div>
+    <div id="journal-nav">
+      <button class="page-turn-btn" id="page-prev">&larr; Previous</button>
+      <span id="page-indicator">Page 1</span>
+      <button class="page-turn-btn" id="page-next">Next &rarr;</button>
+    </div>
+  </div>
+</div>
+
+<!-- Map -->
+<div id="map-overlay">
+  <div id="map-panel">
+    <h2>Watershed Map <button id="map-close">&times;</button></h2>
+    <svg id="map-canvas" viewBox="0 0 500 350"></svg>
+    <div class="map-legend">
+      <span><span class="legend-dot" style="background:var(--accent)"></span> Current</span>
+      <span><span class="legend-dot" style="background:var(--text-dim)"></span> Visited</span>
+      <span><span class="legend-dot" style="background:var(--panel-border)"></span> Undiscovered</span>
+      <span><span class="legend-dot" style="background:var(--danger);border:1px dashed var(--danger)"></span> Locked</span>
+    </div>
+  </div>
+</div>
+
+<!-- Inventory -->
+<div id="inventory-overlay">
+  <div id="inventory-panel">
+    <h2>Evidence Collected <button id="inv-close">&times;</button></h2>
+    <div id="inv-list"></div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// GAME DATA
+// ═══════════════════════════════════════════════════════════
+
+const BIOMES = {
+  estuary_edge: {
+    name: "Estuary Edge",
+    description: {
+      0: "A muddy shoreline where the Carrow River meets the tidal basin. Smells like salt and rust.",
+      2: "The sediment here carries a chemical signature — runoff from upriver. The common reed (Phragmites australis) is filtering what it can.",
+      4: "This estuary was once a tidal nursery for Atlantic silverside and mummichog. The Vennox Chemical outflow changed the salinity gradient decades ago. Life adapted, but not without cost."
+    },
+    tags: ["water", "edge", "transition"],
+    mood: [0.04, 0.05, 0.09],
+    npcs: ["lina"],
+    images: ["estuary_edge_depth0", "estuary_edge_depth2", "estuary_edge_depth4"],
+    observations: [
+      {
+        name: "the shoreline",
+        text: {
+          0: "Mud and reeds. Footprints where someone fished this morning.",
+          1: "The mud has an oily sheen — likely petroleum hydrocarbons. Near the waterline, the Phragmites reeds are yellowing at their roots, a sign of heavy metal uptake.",
+          3: "The sediment carries a chemical memory. Lead, cadmium, and zinc from the Vennox plant upstream have been settling here for decades, layer by layer."
+        },
+        tags: ["water", "contamination"],
+        evidence: null,
+        first_effect: {
+          deepen_lens: true,
+          trust_shift: { watershed_keepers: 0.08 },
+          journal_entry: {
+            text: "Looked closely at the shoreline. The mud has an oily sheen that doesn't belong to water. The Phragmites reeds are yellowing — heavy metal stress.",
+            tags: ["water", "contamination", "observation"],
+            source: "observation"
+          }
+        }
+      },
+      {
+        name: "the outflow pipe",
+        text: {
+          0: "A concrete pipe, half-buried in the bank. Water trickles from it.",
+          1: "The trickle from the pipe has a faint milky color — suspended solids, possibly titanium dioxide waste. The limestone downstream is stained ochre.",
+          4: "This pipe has been discharging since before the Clean Water Act permits were revised. What flows here was once called 'within acceptable limits' — 50 parts per million of suspended solids. The limit is now 15."
+        },
+        tags: ["water", "contamination", "infrastructure"],
+        evidence: { name: "Water Sample (Outflow)", icon: "\u{1F4A7}", desc: "Milky water collected from the discharge pipe. Lab analysis could reveal titanium dioxide and heavy metal concentrations." },
+        first_effect: {
+          trust_shift: { watershed_keepers: 0.07 },
+          journal_entry: {
+            text: "Found a discharge pipe at the estuary. Milky water trickles steadily. The limestone downstream is stained — this has been going on for years.",
+            tags: ["water", "contamination", "infrastructure"],
+            source: "observation"
+          }
+        }
+      },
+      {
+        name: "the tree line",
+        text: {
+          0: "Dense trees in the distance. If you look carefully, there are animal tracks near the water's edge.",
+          1: "The tracks are mixed — white-tailed deer, raccoon, and human boot prints. Someone walks this route regularly, following the water.",
+          3: "The path is hidden by intention, not neglect. Whoever uses it prefers not to be followed."
+        },
+        tags: ["forest", "access"],
+        evidence: null,
+        first_effect: {
+          trust_shift: { watershed_keepers: 0.05 },
+          unlock_knowledge: ["forest_paths"],
+          journal_entry: {
+            text: "Noticed tracks leading into the forest from the estuary. A hidden path — deer, raccoon, and one set of human boots. Someone knows this route well.",
+            tags: ["forest", "access", "paths"],
+            source: "observation"
+          }
+        }
+      }
+    ]
+  },
+
+  quiet_mill: {
+    name: "The Quiet Mill",
+    description: {
+      0: "An old grain mill building, repurposed by Vennox Chemical in the 1970s. Walls streaked with green. Someone left the door open.",
+      1: "Residue on the walls — not moss. Copper chromated arsenate (CCA), an industrial wood preservative, painted over with latex.",
+      3: "The mill processed more than grain. The settling ponds behind it fed directly into the Carrow watershed. The records were shredded in 1998, but the red oak (Quercus rubra) rings remember."
+    },
+    tags: ["industrial", "history", "contamination"],
+    mood: [0.06, 0.05, 0.04],
+    npcs: ["orlen"],
+    images: ["quiet_mill_depth0", "quiet_mill_depth1", "quiet_mill_depth3"],
+    observations: [
+      {
+        name: "the walls",
+        text: {
+          0: "Old stone walls, streaked with green. The building has been empty for years.",
+          1: "The streaks aren't moss. Under the green latex paint, there's a chemical residue — copper chromated arsenate (CCA). Someone covered it to pass inspection.",
+          3: "Lead-based paint over CCA coating over original sandstone. Three layers of concealment. Each layer is a decision someone made."
+        },
+        tags: ["contamination", "history"],
+        evidence: { name: "Paint Chip Sample", icon: "\u{1F9EA}", desc: "A flake of layered paint from the mill wall. Three distinct layers — lead paint, CCA industrial coating, original stone. Evidence of repeated cover-ups." },
+        first_effect: {
+          trust_shift: { factory_workers: 0.05 },
+          journal_entry: {
+            text: "The walls of the mill are layered — latex paint over CCA residue over stone. Each layer is a decision someone made about what to show and what to hide.",
+            tags: ["contamination", "history", "concealment"],
+            source: "observation"
+          }
+        }
+      },
+      {
+        name: "the settling ponds",
+        text: {
+          0: "Stagnant water behind the building. Algae on the surface.",
+          2: "The algae bloom is Cladophora — dense nutrient overload from nitrogen and phosphorus that leached from the mill. The water is eerily still.",
+          4: "These ponds were never designed for containment. They were just low ground where the runoff collected. Nobody planned for what accumulated. The EPA Superfund assessment is still 'pending' — since 2003."
+        },
+        tags: ["water", "contamination"],
+        evidence: { name: "Sediment Core", icon: "\u{1FAA8}", desc: "A tube of layered sediment from the settling pond. Dark bands mark decades of industrial discharge. Could be sent for spectrometric analysis." },
+        first_effect: {
+          deepen_lens: true,
+          trust_shift: { factory_workers: 0.05 },
+          journal_entry: {
+            text: "Found settling ponds behind the mill. Cladophora algae thick on the surface. Whatever Vennox processed, the runoff ended up here. EPA assessment still pending since 2003.",
+            tags: ["water", "contamination", "neglect"],
+            source: "observation"
+          }
+        }
+      }
+    ]
+  },
+
+  root_hollow: {
+    name: "Root Hollow",
+    description: {
+      0: "A dense thicket of old-growth red oaks and eastern hemlocks. Light barely reaches the ground. It feels older than the road nearby.",
+      2: "Mycorrhizal networks — arbuscular mycorrhiza (AM fungi) — are visible where the soil is exposed. This grove is connected underground.",
+      5: "This hollow survived because it was deemed unprofitable. The red oaks (Quercus rubra) here are 200+ years old. They are witnesses."
+    },
+    tags: ["forest", "old_growth", "refuge"],
+    mood: [0.03, 0.06, 0.04],
+    npcs: [],
+    images: ["root_hollow_depth0", "root_hollow_depth2", "root_hollow_depth5"],
+    observations: [
+      {
+        name: "the root network",
+        text: {
+          0: "Exposed roots winding between rocks. The ground is soft and giving.",
+          2: "Mycorrhizal threads — the hyphae of Amanita and Russula species — are visible where the soil is disturbed. The trees here are sharing nutrients underground.",
+          5: "This network has been exchanging nitrogen, phosphorus, and chemical alarm signals for centuries. A parliament of trees, making decisions by chemistry."
+        },
+        tags: ["mycology", "forest"],
+        evidence: null,
+        first_effect: {
+          deepen_lens: true,
+          trust_shift: { forest_dwellers: 0.1 },
+          journal_entry: {
+            text: "The root systems here are interlocked through mycorrhizal fungi — Amanita and Russula species. The trees are not individuals; they are a community sharing resources underground.",
+            tags: ["mycology", "forest", "interdependence"],
+            source: "observation"
+          }
+        }
+      },
+      {
+        name: "the oldest oak",
+        text: {
+          0: "A massive red oak (Quercus rubra). Its bark is deeply grooved. It must be very old.",
+          2: "Growth rings are visible in a broken limb. The rings narrow sharply around 1972 — something changed the growing conditions.",
+          4: "The narrow rings correspond to the decade Vennox Chemical expanded its east processing line. The tree recorded what the company's annual reports omitted."
+        },
+        tags: ["history", "forest"],
+        evidence: { name: "Tree Ring Photo", icon: "\u{1F4F8}", desc: "Close-up photograph of growth rings from a fallen limb of a 200-year-old red oak. The rings narrow dramatically starting in 1972 — the year Vennox expanded." },
+        first_effect: {
+          trust_shift: { forest_dwellers: 0.1 },
+          unlock_knowledge: ["tree_ring_data"],
+          journal_entry: {
+            text: "Found a red oak old enough to remember. Its growth rings narrow during the years Vennox Chemical expanded. The tree kept the records nobody else did.",
+            tags: ["history", "forest", "data"],
+            source: "observation"
+          }
+        }
+      }
+    ]
+  },
+
+  council_square: {
+    name: "Council Square",
+    description: {
+      0: "A paved square with a fountain that doesn't run. Official notices on a cork board. A bench dedicated to someone named Elara Marsh.",
+      3: "The notices reference 'remediation timelines' that have been extended four times. The Elara Marsh bench — she was a watershed keeper who died in 2001.",
+      5: "This square was built on a filled wetland. The fountain stopped when the water table shifted after Vennox's extraction wells went in."
+    },
+    tags: ["civic", "power", "constructed"],
+    mood: [0.05, 0.05, 0.06],
+    npcs: [],
+    images: ["council_square_depth0", "council_square_depth3", "council_square_depth5"],
+    observations: [
+      {
+        name: "the notice board",
+        text: {
+          0: "Official notices. Meeting times, zoning updates, a faded flyer for a harvest festival.",
+          3: "Among the notices, a remediation timeline has been posted and re-posted four times. Each revision extends the deadline by 18 months.",
+          5: "The language shifts across revisions. 'Cleanup' became 'remediation' became 'monitored natural attenuation' — each term more distant from action. Classic regulatory capture."
+        },
+        tags: ["civic", "institutional_failure"],
+        evidence: { name: "Timeline Photos", icon: "\u{1F4CB}", desc: "Photographs of four successive remediation timeline notices from the council board. Each revision extends the deadline and softens the language. A paper trail of institutional failure." },
+        first_effect: {
+          trust_shift: { town_council: 0.05 },
+          unlock_knowledge: ["remediation_timeline"],
+          journal_entry: {
+            text: "Read the notices in Council Square. The remediation timeline has been revised four times. Each revision extends the deadline and softens the language — from 'cleanup' to 'monitored natural attenuation.'",
+            tags: ["civic", "institutional_failure", "language"],
+            source: "observation"
+          }
+        }
+      },
+      {
+        name: "the dry fountain",
+        text: {
+          0: "A stone fountain. No water. Oak leaves have collected in the basin.",
+          2: "The pump mechanism is intact. The fountain didn't break — the water stopped coming.",
+          4: "The water table dropped when Vennox's extraction wells went in during 1985. The fountain was connected to a natural spring that no longer reaches the surface. The bench nearby reads: 'For Elara, who listened to the water.'"
+        },
+        tags: ["water", "loss"],
+        evidence: null,
+        first_effect: {
+          trust_shift: { town_council: 0.05 },
+          journal_entry: {
+            text: "The fountain in Council Square is dry, but the mechanism still works. The water stopped because Vennox's extraction wells lowered the water table. The bench nearby memorializes Elara Marsh — 'who listened to the water.'",
+            tags: ["water", "loss", "infrastructure"],
+            source: "observation"
+          }
+        }
+      }
+    ]
+  },
+
+  spore_field: {
+    name: "Spore Field",
+    description: {
+      0: "An open field. Black-eyed Susans and strange mushrooms. Monarch butterflies, despite the season.",
+      1: "The mushrooms are decomposers — oyster mushrooms (Pleurotus ostreatus) and turkey tail (Trametes versicolor), breaking down petroleum hydrocarbons buried here.",
+      4: "This field is an accidental mycoremediation site. The fungi are doing the work the Vennox Corporation refused to fund. No one planted them. They arrived on spores and started cleaning."
+    },
+    tags: ["mycology", "remediation", "emergence"],
+    mood: [0.06, 0.04, 0.06],
+    npcs: [],
+    images: ["spore_field_depth0", "spore_field_depth1", "spore_field_depth4"],
+    observations: [
+      {
+        name: "the mushrooms",
+        text: {
+          0: "Strange mushrooms, growing in clusters. Oyster-shaped caps, fan-like formations. A fairy ring.",
+          1: "Oyster mushrooms (Pleurotus ostreatus) — known to break down polycyclic aromatic hydrocarbons (PAHs). They've formed a visible ring around where something was buried.",
+          4: "These fungi are performing mycoremediation. They're secreting enzymes that break down petroleum compounds dumped here by Vennox in the 1980s. Nobody planted them. They arrived because the contamination called them."
+        },
+        tags: ["mycology", "remediation"],
+        evidence: { name: "Mushroom Specimen", icon: "\u{1F344}", desc: "A preserved oyster mushroom (Pleurotus ostreatus) from Spore Field. Its mycelium was growing through petroleum-contaminated soil, actively breaking down PAH compounds." },
+        first_effect: {
+          deepen_lens: true,
+          journal_entry: {
+            text: "The mushrooms in Spore Field are not random. Oyster mushrooms (Pleurotus ostreatus) concentrated around buried petroleum waste — performing mycoremediation that Vennox never funded.",
+            tags: ["mycology", "remediation", "emergence"],
+            source: "observation"
+          }
+        }
+      },
+      {
+        name: "the burial mound",
+        text: {
+          0: "The ground is slightly raised in one area. Grass grows differently there.",
+          2: "The soil composition changes at the boundary. Inside the raised area, the earth is darker, denser — anaerobic conditions from buried organic waste.",
+          5: "This is a buried waste deposit. Vennox's 1987 cleanup contract specified 'removal and disposal.' They paid for burial on-site instead. The contract is public record. The mycorrhizal network is doing what the cleanup contract promised."
+        },
+        tags: ["contamination", "history", "mycology"],
+        evidence: { name: "Soil Comparison", icon: "\u{1FAB1}", desc: "Two soil samples side by side — one from inside the burial mound (dark, anaerobic, petroleum-scented) and one from outside (healthy loam). The contrast is damning." },
+        first_effect: {
+          unlock_knowledge: ["buried_waste"],
+          journal_entry: {
+            text: "Something is buried beneath Spore Field. The 1987 Vennox cleanup contract said 'removal.' They buried it instead. The mushrooms know what's down there.",
+            tags: ["contamination", "history", "concealment"],
+            source: "observation"
+          }
+        }
+      }
+    ]
+  }
+};
+
+const EDGES = [
+  { from: "estuary_edge", to: "quiet_mill", requires: {} },
+  { from: "estuary_edge", to: "root_hollow", requires: { knowledge: ["forest_paths"] } },
+  { from: "quiet_mill", to: "estuary_edge", requires: {} },
+  { from: "quiet_mill", to: "council_square", requires: {} },
+  { from: "quiet_mill", to: "spore_field", requires: { eco_lens: 1 } },
+  { from: "council_square", to: "quiet_mill", requires: {} },
+  { from: "council_square", to: "root_hollow", requires: { trust: { town_council: 0.4 } } },
+  { from: "root_hollow", to: "estuary_edge", requires: {} },
+  { from: "root_hollow", to: "spore_field", requires: { eco_lens: 2 } },
+  { from: "spore_field", to: "quiet_mill", requires: {} },
+  { from: "spore_field", to: "root_hollow", requires: {} }
+];
+
+const NPCS = {
+  lina: {
+    name: "Lina",
+    role: "watershed keeper",
+    backstory: "Lina's grandmother, Elara Marsh, was the last official caretaker of the Carrow watershed before the position was defunded in 1999. Elara died in 2001 — the bench in Council Square is hers. Lina carries her grandmother's water testing kit and continues the work unpaid.",
+    preconditions: { trust: { watershed_keepers: 0.1 } },
+    refusal: "She watches you, then turns back to the water. Not yet.",
+    lines: [
+      {
+        topic: "the water",
+        conditions: {},
+        text: {
+          0: "The river's fine. People fish here every day.",
+          2: "There's a color shift downstream. After rain, especially. You have to know where to look.",
+          4: "The sediment load tripled after they regraded the mill site. The permit said 'remediated.' The water says otherwise."
+        },
+        tags: ["water", "contamination", "observation"],
+        effects: {}
+      },
+      {
+        topic: "trust",
+        conditions: { trust: { watershed_keepers: 0.3 } },
+        text: "We've been monitoring this stretch for years. Nobody reads our reports. But the data is there, if you want to see it.",
+        tags: ["trust", "data", "institutional_failure"],
+        effects: {
+          unlock_knowledge: ["water_quality_data"],
+          journal_entry: {
+            text: "Lina offered access to water monitoring data — years of measurements collected with her grandmother Elara's old testing kit. Unread by anyone with authority.",
+            tags: ["water", "data", "trust"],
+            source: "conversation"
+          }
+        }
+      },
+      {
+        topic: "the mill",
+        conditions: { knowledge: ["water_quality_data"], eco_lens: 3 },
+        text: "You've seen the numbers. You know what the mill outflow looks like in the data. What I can't show you is what it looked like before. My grandmother Elara could, but she's gone. The river she knew is gone. She used to say the mummichog would school so thick you could walk across them.",
+        tags: ["history", "loss", "contamination"],
+        effects: {
+          trust_shift: { watershed_keepers: 0.1 },
+          deepen_lens: true,
+          journal_entry: {
+            text: "Lina spoke about the river her grandmother Elara knew — when mummichog schooled thick enough to walk across. A river that no longer exists. The data shows what was lost, but not what it felt like.",
+            tags: ["history", "loss", "intergenerational"],
+            source: "conversation"
+          }
+        }
+      },
+      {
+        topic: "grandmother's journal",
+        conditions: { knowledge: ["water_quality_data", "tree_ring_data"], eco_lens: 4 },
+        text: "Elara kept a journal. Decades of observations — water levels, fish counts, the day the herons stopped coming. I've been afraid to share it. People take data and twist it. But you... you're actually looking. Here.",
+        tags: ["history", "trust", "data"],
+        effects: {
+          unlock_knowledge: ["elara_journal"],
+          evidence: { name: "Elara's Field Journal", icon: "\u{1F4D3}", desc: "Elara Marsh's handwritten watershed journal, spanning 1965-2001. Decades of water quality observations, species counts, and personal notes. Invaluable primary source data." },
+          journal_entry: {
+            text: "Lina entrusted me with Elara Marsh's field journal — decades of watershed observations. This is the record the official files are missing.",
+            tags: ["history", "trust", "data", "breakthrough"],
+            source: "conversation"
+          }
+        }
+      }
+    ]
+  },
+
+  orlen: {
+    name: "Orlen",
+    role: "Vennox Chemical, night shift",
+    backstory: "Orlen Thade has worked at Vennox Chemical for eight years. He took the job after the lumber mill closed — it was Vennox or leaving town. His daughter Ada, age 7, has developed asthma since the east processing line expanded. He knows more than he says. He is afraid of more than he admits.",
+    preconditions: { trust: { factory_workers: 0.15 } },
+    refusal: "He glances at you and keeps walking. His shift starts soon.",
+    lines: [
+      {
+        topic: "the job",
+        conditions: {},
+        text: {
+          0: "It's work. Pays the bills.",
+          3: "They rotate us through different lines so nobody sees the full process. I've been here eight years and I still don't know what we make, exactly.",
+          5: "I know what goes in. I know what comes out. The gap between those two things is where the waste goes. Nobody talks about the gap."
+        },
+        tags: ["labor", "opacity", "complicity"],
+        effects: {}
+      },
+      {
+        topic: "the smell",
+        conditions: { eco_lens: 1 },
+        text: "You notice it too? They say it's within limits. Maybe it is. My daughter Ada's asthma started the year they expanded the east line. She's seven. She's never known air that doesn't taste like metal.",
+        tags: ["health", "air", "precarity"],
+        effects: {
+          trust_shift: { factory_workers: 0.05 },
+          journal_entry: {
+            text: "Orlen mentioned his daughter Ada's asthma — started the year Vennox expanded. She's seven. He connects these things quietly, like someone who has learned not to say them too loudly.",
+            tags: ["health", "air", "precarity", "family"],
+            source: "conversation"
+          }
+        }
+      },
+      {
+        topic: "the waste",
+        conditions: { knowledge: ["buried_waste"], eco_lens: 3 },
+        text: "You found it, didn't you. The field. I was on the crew that dug those trenches in '87. We were told it was topsoil amendment. It wasn't topsoil. It wasn't amendment. I've got the old work orders at home. They list what went into those trucks.",
+        tags: ["contamination", "complicity", "evidence"],
+        effects: {
+          trust_shift: { factory_workers: 0.15 },
+          unlock_knowledge: ["work_orders"],
+          evidence: { name: "Vennox Work Orders (1987)", icon: "\u{1F4C4}", desc: "Photocopied work orders from the 1987 'cleanup' operation. They list the actual chemical waste that was buried at Spore Field — not 'topsoil amendment' as officially reported." },
+          journal_entry: {
+            text: "Orlen was on the burial crew in 1987. He has the work orders. What Vennox called 'topsoil amendment' was chemical waste. He kept the evidence for eight years, waiting.",
+            tags: ["contamination", "evidence", "breakthrough", "labor"],
+            source: "conversation"
+          }
+        }
+      }
+    ]
+  }
+};
+
+const JOURNAL_TAGS = {
+  water: {
+    display_name: "Water",
+    annotations_by_depth: {
+      2: "Water carries memory. Every reading downstream tells a story about what happened upstream.",
+      4: "The watershed doesn't recognize property lines. Contamination flows through legal boundaries like they aren't there."
+    }
+  },
+  contamination: {
+    display_name: "Contamination",
+    annotations_by_depth: {
+      1: "Not all contamination is visible. Some of it is in the parts-per-billion range — too small to see, too persistent to ignore.",
+      3: "Remediation is a word that means 'we'll deal with the consequences.' The cause is rarely addressed.",
+      5: "The distinction between 'contaminated' and 'clean' is a regulatory fiction. Everything exists on a spectrum of exposure."
+    }
+  },
+  trust: {
+    display_name: "Trust",
+    annotations_by_depth: {
+      2: "Trust is not given. It is built through presence, through showing up when nothing is required.",
+      4: "Some communities have been studied so often they distrust anyone who asks questions. Listening without extracting is its own practice."
+    }
+  },
+  labor: {
+    display_name: "Labor",
+    annotations_by_depth: {
+      3: "The people who make the harm possible are often the people most harmed by it. This is not irony. It is structure.",
+      5: "Precarity is a management strategy. When workers cannot afford to question, the process becomes invisible."
+    }
+  },
+  history: {
+    display_name: "History",
+    annotations_by_depth: {
+      2: "History is not what happened. It is what was recorded, and by whom.",
+      4: "The land holds a record that no archive contains. Soil cores, tree rings, sediment layers — these are the documents of the unheard."
+    }
+  },
+  health: {
+    display_name: "Health",
+    annotations_by_depth: {
+      1: "Health is not just the absence of disease. It is the presence of conditions that allow life to flourish.",
+      3: "Environmental health and human health are the same system described in different languages."
+    }
+  },
+  loss: {
+    display_name: "Loss",
+    annotations_by_depth: {
+      3: "Some losses are irreversible. The species that vanished, the aquifer that was drawn down — these are not coming back.",
+      5: "Grief for what was lost is not sentimentality. It is ecological literacy."
+    }
+  },
+  mycology: {
+    display_name: "Mycology",
+    annotations_by_depth: {
+      2: "Fungi are the original network. They share nutrients, communicate stress, and decompose what others cannot process.",
+      4: "Mycoremediation — fungi breaking down toxins — is not technology. It is patience made biological."
+    }
+  }
+};
+
+const ECO_TIERS = [
+  { min: 0, name: "Newcomer", desc: "You see the surface" },
+  { min: 1, name: "Observer", desc: "You notice patterns" },
+  { min: 2, name: "Investigator", desc: "You read the signs" },
+  { min: 3, name: "Analyst", desc: "You connect the data" },
+  { min: 4, name: "Witness", desc: "You see the whole system" },
+  { min: 5, name: "Voice", desc: "You can speak for the land" }
+];
+
+// Map node positions for SVG
+const MAP_POSITIONS = {
+  estuary_edge:   { x: 80,  y: 180 },
+  quiet_mill:     { x: 220, y: 100 },
+  council_square: { x: 380, y: 70  },
+  root_hollow:    { x: 180, y: 280 },
+  spore_field:    { x: 370, y: 260 }
+};
+
+
+// ═══════════════════════════════════════════════════════════
+// GAME STATE
+// ═══════════════════════════════════════════════════════════
+
+const state = {
+  currentBiome: "estuary_edge",
+  ecoLens: 0,
+  trust: {
+    watershed_keepers: 0,
+    factory_workers: 0,
+    forest_dwellers: 0,
+    town_council: 0
+  },
+  knowledge: [],
+  journal: [],         // { text, tags, source, id }
+  journalIds: new Set(), // for dedup
+  inventory: [],       // { name, icon, desc }
+  visited: new Set(),
+  observedThisVisit: new Set(), // tracks observations seen at current biome
+  observedEver: new Set(),      // tracks all observations ever seen (biome:name)
+  npcTalkedTopics: new Set(),   // tracks npc:topic combos
+  introShown: false,
+  journalPage: 0,
+  newJournalCount: 0,
+  lastJournalSeen: 0
+};
+
+
+// ═══════════════════════════════════════════════════════════
+// ENGINE
+// ═══════════════════════════════════════════════════════════
+
+function getDepthText(obj, depth) {
+  if (typeof obj === "string") return obj;
+  const keys = Object.keys(obj).map(Number).sort((a, b) => b - a);
+  for (const k of keys) {
+    if (depth >= k) return obj[k];
+  }
+  return obj[keys[keys.length - 1]] || "";
+}
+
+function meetsRequirements(req) {
+  if (!req || Object.keys(req).length === 0) return true;
+  if (req.knowledge) {
+    for (const k of req.knowledge) {
+      if (!state.knowledge.includes(k)) return false;
+    }
+  }
+  if (req.eco_lens !== undefined && state.ecoLens < req.eco_lens) return false;
+  if (req.trust) {
+    for (const [faction, min] of Object.entries(req.trust)) {
+      if ((state.trust[faction] || 0) < min) return false;
+    }
+  }
+  return true;
+}
+
+function getRequirementReason(req) {
+  if (req.knowledge) {
+    const missing = req.knowledge.filter(k => !state.knowledge.includes(k));
+    if (missing.length) return "Requires more knowledge";
+  }
+  if (req.eco_lens !== undefined && state.ecoLens < req.eco_lens) {
+    const tier = ECO_TIERS.find(t => t.min === req.eco_lens) || {};
+    return `Requires ${tier.name || 'deeper'} insight`;
+  }
+  if (req.trust) {
+    for (const [faction, min] of Object.entries(req.trust)) {
+      if ((state.trust[faction] || 0) < min) return "Requires more trust";
+    }
+  }
+  return "Locked";
+}
+
+function addJournalEntry(entry) {
+  const id = entry.text.substring(0, 60);
+  if (state.journalIds.has(id)) return; // DEDUP
+  state.journalIds.add(id);
+  state.journal.push({ ...entry, id, timestamp: Date.now() });
+  state.newJournalCount++;
+  updateJournalNotif();
+}
+
+function applyEffects(effects) {
+  if (!effects) return;
+  if (effects.deepen_lens) {
+    state.ecoLens = Math.min(state.ecoLens + 1, 5);
+    updateEcoLens();
+  }
+  if (effects.trust_shift) {
+    for (const [faction, amt] of Object.entries(effects.trust_shift)) {
+      state.trust[faction] = Math.min((state.trust[faction] || 0) + amt, 1);
+    }
+  }
+  if (effects.unlock_knowledge) {
+    for (const k of effects.unlock_knowledge) {
+      if (!state.knowledge.includes(k)) state.knowledge.push(k);
+    }
+  }
+  if (effects.journal_entry) {
+    addJournalEntry(effects.journal_entry);
+  }
+  if (effects.evidence) {
+    const existing = state.inventory.find(i => i.name === effects.evidence.name);
+    if (!existing) {
+      state.inventory.push(effects.evidence);
+      updateInventoryNotif();
+    }
+  }
+}
+
+function biomeHasNewContent(biomeKey) {
+  const biome = BIOMES[biomeKey];
+  // Check observations
+  for (const obs of biome.observations) {
+    const obsKey = biomeKey + ":" + obs.name;
+    if (!state.observedEver.has(obsKey)) return true;
+  }
+  // Check NPCs
+  for (const npcId of biome.npcs) {
+    const npc = NPCS[npcId];
+    if (!npc) continue;
+    for (const line of npc.lines) {
+      const topicKey = npcId + ":" + line.topic;
+      if (!state.npcTalkedTopics.has(topicKey) && meetsRequirements(line.conditions)) return true;
+    }
+  }
+  return false;
+}
+
+
+// ═══════════════════════════════════════════════════════════
+// RENDERING
+// ═══════════════════════════════════════════════════════════
+
+function enterBiome(biomeKey) {
+  state.currentBiome = biomeKey;
+  state.visited.add(biomeKey);
+  state.observedThisVisit = new Set();
+
+  const biome = BIOMES[biomeKey];
+
+  // Parallax background + atmosphere
+  renderParallax(biome);
+  setAtmosphere(biomeKey);
+
+  // Location info
+  document.getElementById("location-name").textContent = biome.name;
+  document.getElementById("location-desc").textContent = getDepthText(biome.description, state.ecoLens);
+
+  // Lens badge
+  const hasNew = biomeHasNewContent(biomeKey);
+  const badge = document.getElementById("lens-badge");
+  badge.style.display = hasNew ? "inline-flex" : "none";
+  document.getElementById("lens-badge-text").textContent = hasNew ? "New insights available" : "";
+
+  // Clear text
+  const td = document.getElementById("text-display");
+  td.classList.remove("visible");
+  td.innerHTML = "";
+
+  // Render actions
+  renderActions(biome);
+
+  // Render navigation
+  renderNavigation();
+
+  // Protagonist intro on first visit
+  if (!state.introShown) {
+    state.introShown = true;
+    const intro = document.getElementById("protagonist-intro");
+    intro.classList.add("visible");
+    addJournalEntry({
+      text: "Arrived at the Carrow watershed. Following a tip about ecological anomalies near the old Vennox Chemical plant. The grant gives me three months to find something publishable. The landscape will tell me if there's a story here.",
+      tags: ["arrival", "observation"],
+      source: "field notes"
+    });
+    setTimeout(() => intro.classList.remove("visible"), 8000);
+  }
+
+  // Scene transition
+  document.getElementById("scene-overlay").classList.add("scene-transition");
+  setTimeout(() => document.getElementById("scene-overlay").classList.remove("scene-transition"), 800);
+}
+
+function renderParallax(biome) {
+  const container = document.getElementById("parallax-container");
+  // Fade out old layers
+  const oldLayers = container.querySelectorAll(".parallax-layer");
+  oldLayers.forEach(l => {
+    l.classList.add("fading-out");
+    setTimeout(() => l.remove(), 1200);
+  });
+
+  // Add new layers
+  biome.images.forEach((img, i) => {
+    const layer = document.createElement("div");
+    layer.className = "parallax-layer fading-out";
+    layer.style.backgroundImage = `url(assets/biomes/${img}.png)`;
+    layer.style.zIndex = i;
+    // Parallax depth offset
+    layer.dataset.depth = (i * 0.15).toFixed(2);
+    container.appendChild(layer);
+    requestAnimationFrame(() => {
+      layer.classList.remove("fading-out");
+      layer.classList.add("fading-in");
+    });
+  });
+}
+
+function renderActions(biome) {
+  const container = document.getElementById("actions");
+  container.innerHTML = "";
+
+  // Observations
+  for (const obs of biome.observations) {
+    const obsKey = state.currentBiome + ":" + obs.name;
+    const visited = state.observedEver.has(obsKey);
+    const btn = document.createElement("button");
+    btn.className = "action-btn" + (visited ? " visited" : "");
+    btn.innerHTML = `Examine ${obs.name}${visited ? "" : '<span class="new-badge"></span>'}`;
+    btn.onclick = () => examineObservation(obs);
+    container.appendChild(btn);
+  }
+
+  // NPCs
+  for (const npcId of biome.npcs) {
+    const npc = NPCS[npcId];
+    if (!npc) continue;
+
+    const canTalk = meetsRequirements(npc.preconditions);
+    const availableTopics = npc.lines.filter(l => {
+      const topicKey = npcId + ":" + l.topic;
+      return !state.npcTalkedTopics.has(topicKey) && meetsRequirements(l.conditions);
+    });
+
+    const btn = document.createElement("button");
+    btn.className = "action-btn npc-btn";
+    if (!canTalk) {
+      btn.disabled = true;
+      btn.innerHTML = `Talk to ${npc.name} (${npc.role})<span class="lock-reason">Requires more trust</span>`;
+    } else {
+      btn.innerHTML = `Talk to ${npc.name} (${npc.role})${availableTopics.length > 0 ? '<span class="new-badge"></span>' : ''}`;
+      btn.onclick = () => talkToNPC(npcId);
+    }
+    container.appendChild(btn);
+  }
+}
+
+function examineObservation(obs) {
+  const obsKey = state.currentBiome + ":" + obs.name;
+  const isFirst = !state.observedEver.has(obsKey);
+
+  state.observedThisVisit.add(obs.name);
+  state.observedEver.add(obsKey);
+
+  const td = document.getElementById("text-display");
+  const text = getDepthText(obs.text, state.ecoLens);
+
+  let html = `<div class="text-reveal"><span class="narration">${text}</span>`;
+
+  if (isFirst && obs.first_effect) {
+    applyEffects(obs.first_effect);
+    if (obs.first_effect.deepen_lens) {
+      html += `<div class="system-msg">Your ecological understanding deepens.</div>`;
+    }
+    if (obs.first_effect.unlock_knowledge) {
+      html += `<div class="system-msg">New knowledge unlocked: ${obs.first_effect.unlock_knowledge.join(", ").replace(/_/g, " ")}</div>`;
+    }
+  }
+
+  if (isFirst && obs.evidence) {
+    const existing = state.inventory.find(i => i.name === obs.evidence.name);
+    if (!existing) {
+      state.inventory.push(obs.evidence);
+      updateInventoryNotif();
+      html += `<div class="evidence-msg">${obs.evidence.icon} Evidence collected: ${obs.evidence.name}</div>`;
+    }
+  }
+
+  html += `</div>`;
+  td.innerHTML = html;
+  td.classList.add("visible");
+
+  // Refresh actions to update visited state
+  renderActions(BIOMES[state.currentBiome]);
+  updateEcoLens();
+
+  // Update lens badge
+  const hasNew = biomeHasNewContent(state.currentBiome);
+  document.getElementById("lens-badge").style.display = hasNew ? "inline-flex" : "none";
+}
+
+function talkToNPC(npcId) {
+  const npc = NPCS[npcId];
+  if (!meetsRequirements(npc.preconditions)) {
+    showText(`<span class="narration">${npc.refusal}</span>`);
+    return;
+  }
+
+  // Find next available topic
+  const available = npc.lines.filter(l => {
+    const topicKey = npcId + ":" + l.topic;
+    return !state.npcTalkedTopics.has(topicKey) && meetsRequirements(l.conditions);
+  });
+
+  if (available.length === 0) {
+    showText(`<span class="speaker">${npc.name}:</span> <span class="narration">${npc.name} nods at you. You've covered everything for now.</span>`);
+    return;
+  }
+
+  const line = available[0];
+  const topicKey = npcId + ":" + line.topic;
+  state.npcTalkedTopics.add(topicKey);
+
+  const text = getDepthText(line.text, state.ecoLens);
+  let html = `<div class="text-reveal"><span class="speaker">${npc.name}:</span> <span class="narration">${text}</span>`;
+
+  if (line.effects) {
+    applyEffects(line.effects);
+    if (line.effects.deepen_lens) {
+      html += `<div class="system-msg">Your ecological understanding deepens.</div>`;
+    }
+    if (line.effects.unlock_knowledge) {
+      html += `<div class="system-msg">New knowledge unlocked: ${line.effects.unlock_knowledge.join(", ").replace(/_/g, " ")}</div>`;
+    }
+    if (line.effects.evidence) {
+      html += `<div class="evidence-msg">${line.effects.evidence.icon} Evidence collected: ${line.effects.evidence.name}</div>`;
+    }
+  }
+
+  html += `</div>`;
+  showText(html);
+
+  // Refresh
+  renderActions(BIOMES[state.currentBiome]);
+  updateEcoLens();
+}
+
+function showText(html) {
+  const td = document.getElementById("text-display");
+  td.innerHTML = html;
+  td.classList.add("visible");
+}
+
+function renderNavigation() {
+  const container = document.getElementById("nav-buttons");
+  container.innerHTML = "";
+
+  const available = EDGES.filter(e => e.from === state.currentBiome);
+
+  for (const edge of available) {
+    const target = BIOMES[edge.to];
+    const canGo = meetsRequirements(edge.requires);
+    const hasNew = state.visited.has(edge.to) ? biomeHasNewContent(edge.to) : true;
+
+    const btn = document.createElement("button");
+    btn.className = "nav-btn" + (hasNew && canGo ? " has-new" : "");
+
+    if (!canGo) {
+      btn.disabled = true;
+      const reason = getRequirementReason(edge.requires);
+      btn.title = reason;
+      btn.textContent = target.name + " \u{1F512}";
+    } else {
+      btn.innerHTML = `${target.name}<span class="unread-dot"></span>`;
+      btn.onclick = () => enterBiome(edge.to);
+    }
+
+    container.appendChild(btn);
+  }
+}
+
+function updateEcoLens() {
+  const tier = [...ECO_TIERS].reverse().find(t => state.ecoLens >= t.min) || ECO_TIERS[0];
+  document.getElementById("ecolens-tier-name").textContent = tier.name;
+  document.getElementById("ecolens-tier").textContent = tier.desc;
+
+  const pips = document.getElementById("ecolens-pips");
+  pips.innerHTML = "";
+  for (let i = 0; i < 6; i++) {
+    const pip = document.createElement("div");
+    pip.className = "eco-pip" + (i <= state.ecoLens ? " filled" : "");
+    pips.appendChild(pip);
+  }
+}
+
+function updateJournalNotif() {
+  const el = document.getElementById("journal-notif");
+  if (state.newJournalCount > 0) {
+    el.style.display = "flex";
+    el.textContent = state.newJournalCount;
+  } else {
+    el.style.display = "none";
+  }
+}
+
+function updateInventoryNotif() {
+  const el = document.getElementById("inv-notif");
+  if (state.inventory.length > 0) {
+    el.style.display = "flex";
+    el.textContent = state.inventory.length;
+  } else {
+    el.style.display = "none";
+  }
+}
+
+
+// ═══════════════════════════════════════════════════════════
+// JOURNAL
+// ═══════════════════════════════════════════════════════════
+
+const ENTRIES_PER_PAGE = 4;
+
+function openJournal() {
+  state.newJournalCount = 0;
+  updateJournalNotif();
+  document.getElementById("journal-overlay").classList.add("open");
+  renderJournalPage();
+}
+
+function closeJournal() {
+  document.getElementById("journal-overlay").classList.remove("open");
+}
+
+function renderJournalPage() {
+  const pages = document.getElementById("journal-pages");
+  pages.innerHTML = "";
+
+  const totalPages = Math.max(1, Math.ceil(state.journal.length / ENTRIES_PER_PAGE));
+  state.journalPage = Math.min(state.journalPage, totalPages - 1);
+
+  const start = state.journalPage * ENTRIES_PER_PAGE;
+  const entries = state.journal.slice(start, start + ENTRIES_PER_PAGE);
+
+  const page = document.createElement("div");
+  page.className = "journal-page";
+
+  if (entries.length === 0) {
+    page.innerHTML = `<p style="color:var(--gold-dim);font-style:italic;text-align:center;margin-top:3rem;">Your field journal is empty. Begin exploring to collect observations.</p>`;
+  } else {
+    for (const entry of entries) {
+      const div = document.createElement("div");
+      div.className = "journal-entry";
+
+      let html = `<div class="entry-source">${entry.source || "observation"}</div>`;
+      html += `<div class="entry-text">${entry.text}</div>`;
+
+      // Tag annotations based on depth
+      if (entry.tags) {
+        const annotationsShown = new Set();
+        for (const tag of entry.tags) {
+          const tagData = JOURNAL_TAGS[tag];
+          if (!tagData) continue;
+          for (const [depth, annotation] of Object.entries(tagData.annotations_by_depth || {})) {
+            if (state.ecoLens >= Number(depth) && !annotationsShown.has(annotation)) {
+              annotationsShown.add(annotation);
+              html += `<div class="journal-annotation">${annotation}</div>`;
+              break; // one annotation per tag
+            }
+          }
+        }
+
+        html += `<div class="entry-tags">`;
+        for (const tag of entry.tags) {
+          const tagData = JOURNAL_TAGS[tag];
+          html += `<span class="tag">${tagData ? tagData.display_name : tag}</span>`;
+        }
+        html += `</div>`;
+      }
+
+      div.innerHTML = html;
+      page.appendChild(div);
+    }
+  }
+
+  pages.appendChild(page);
+
+  // Page indicator
+  document.getElementById("page-indicator").textContent = `Page ${state.journalPage + 1} of ${totalPages}`;
+  document.getElementById("page-prev").disabled = state.journalPage === 0;
+  document.getElementById("page-next").disabled = state.journalPage >= totalPages - 1;
+}
+
+
+// ═══════════════════════════════════════════════════════════
+// MAP
+// ═══════════════════════════════════════════════════════════
+
+function openMap() {
+  document.getElementById("map-overlay").classList.add("open");
+  renderMap();
+}
+
+function closeMap() {
+  document.getElementById("map-overlay").classList.remove("open");
+}
+
+function renderMap() {
+  const svg = document.getElementById("map-canvas");
+  svg.innerHTML = "";
+
+  // Draw edges
+  for (const edge of EDGES) {
+    const from = MAP_POSITIONS[edge.from];
+    const to = MAP_POSITIONS[edge.to];
+    const canGo = meetsRequirements(edge.requires);
+    const isFromCurrent = edge.from === state.currentBiome;
+
+    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    line.setAttribute("x1", from.x);
+    line.setAttribute("y1", from.y);
+    line.setAttribute("x2", to.x);
+    line.setAttribute("y2", to.y);
+
+    if (!canGo) {
+      line.setAttribute("stroke", "#9b3943");
+      line.setAttribute("stroke-dasharray", "4,4");
+      line.setAttribute("stroke-width", "1");
+    } else if (isFromCurrent) {
+      line.setAttribute("stroke", "#4a9e6e");
+      line.setAttribute("stroke-width", "2");
+    } else {
+      line.setAttribute("stroke", "#1e2e25");
+      line.setAttribute("stroke-width", "1.5");
+    }
+
+    svg.appendChild(line);
+
+    // Lock icon for locked edges
+    if (!canGo) {
+      const mx = (from.x + to.x) / 2;
+      const my = (from.y + to.y) / 2;
+      const lock = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      lock.setAttribute("x", mx);
+      lock.setAttribute("y", my + 4);
+      lock.setAttribute("text-anchor", "middle");
+      lock.setAttribute("font-size", "10");
+      lock.setAttribute("fill", "#9b3943");
+      lock.textContent = "\u{1F512}";
+      svg.appendChild(lock);
+
+      // Tooltip for why it's locked
+      const title = document.createElementNS("http://www.w3.org/2000/svg", "title");
+      title.textContent = getRequirementReason(edge.requires);
+      lock.appendChild(title);
+    }
+  }
+
+  // Draw nodes
+  for (const [key, pos] of Object.entries(MAP_POSITIONS)) {
+    const biome = BIOMES[key];
+    const isCurrent = key === state.currentBiome;
+    const isVisited = state.visited.has(key);
+    const hasNew = biomeHasNewContent(key);
+
+    const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    g.classList.add("map-node");
+
+    const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    circle.classList.add("node-circle");
+    circle.setAttribute("cx", pos.x);
+    circle.setAttribute("cy", pos.y);
+    circle.setAttribute("r", isCurrent ? 18 : 14);
+
+    if (isCurrent) {
+      circle.setAttribute("fill", "#4a9e6e");
+      circle.setAttribute("stroke", "#3aff8a");
+      circle.setAttribute("stroke-width", "2");
+    } else if (isVisited) {
+      circle.setAttribute("fill", "#1e2e25");
+      circle.setAttribute("stroke", "#6b7e6f");
+      circle.setAttribute("stroke-width", "1.5");
+    } else {
+      circle.setAttribute("fill", "#111916");
+      circle.setAttribute("stroke", "#1e2e25");
+      circle.setAttribute("stroke-width", "1");
+    }
+
+    g.appendChild(circle);
+
+    // Label
+    const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    label.setAttribute("x", pos.x);
+    label.setAttribute("y", pos.y + (isCurrent ? 32 : 28));
+    label.setAttribute("text-anchor", "middle");
+    label.setAttribute("font-size", "11");
+    label.setAttribute("font-family", "'Lora', serif");
+    label.setAttribute("fill", isCurrent ? "#e8ede9" : isVisited ? "#6b7e6f" : "#2a3a30");
+    label.textContent = biome.name;
+    g.appendChild(label);
+
+    // New content indicator
+    if (hasNew && isVisited && !isCurrent) {
+      const dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      dot.setAttribute("cx", pos.x + 12);
+      dot.setAttribute("cy", pos.y - 12);
+      dot.setAttribute("r", 4);
+      dot.setAttribute("fill", "#4a9e6e");
+      g.appendChild(dot);
+    }
+
+    // Click to travel if adjacent and accessible
+    const edge = EDGES.find(e => e.from === state.currentBiome && e.to === key);
+    if (edge && meetsRequirements(edge.requires)) {
+      g.style.cursor = "pointer";
+      g.onclick = () => { closeMap(); enterBiome(key); };
+    }
+
+    svg.appendChild(g);
+  }
+}
+
+
+// ═══════════════════════════════════════════════════════════
+// INVENTORY
+// ═══════════════════════════════════════════════════════════
+
+function openInventory() {
+  document.getElementById("inventory-overlay").classList.add("open");
+  renderInventory();
+}
+
+function closeInventory() {
+  document.getElementById("inventory-overlay").classList.remove("open");
+}
+
+function renderInventory() {
+  const list = document.getElementById("inv-list");
+  list.innerHTML = "";
+
+  if (state.inventory.length === 0) {
+    list.innerHTML = `<div class="inv-empty">No evidence collected yet. Examine your surroundings carefully.</div>`;
+    return;
+  }
+
+  for (const item of state.inventory) {
+    const div = document.createElement("div");
+    div.className = "inv-item";
+    div.innerHTML = `
+      <div class="inv-icon">${item.icon}</div>
+      <div class="inv-details">
+        <h3>${item.name}</h3>
+        <p>${item.desc}</p>
+      </div>
+    `;
+    list.appendChild(div);
+  }
+}
+
+
+// ═══════════════════════════════════════════════════════════
+// AMBIENT ANIMATION SYSTEM
+// ═══════════════════════════════════════════════════════════
+
+const ambientCanvas = document.getElementById("ambient-canvas");
+const ambientCtx = ambientCanvas.getContext("2d");
+let particles = [];
+let ambientAnimId = null;
+
+// Per-biome atmosphere config
+const BIOME_ATMOSPHERE = {
+  estuary_edge: {
+    particles: { type: "water", count: 40, color: "rgba(100,180,220,0.4)", sizeRange: [1, 3] },
+    fog: true, fogColor: "rgba(150,180,170,0.12)",
+    rays: false,
+    waterShimmer: true,
+    tint: "rgba(40,80,100,0.04)"
+  },
+  quiet_mill: {
+    particles: { type: "dust", count: 25, color: "rgba(200,180,140,0.35)", sizeRange: [1, 2.5] },
+    fog: true, fogColor: "rgba(160,150,120,0.1)",
+    rays: true,
+    waterShimmer: false,
+    tint: "rgba(80,70,40,0.04)"
+  },
+  root_hollow: {
+    particles: { type: "spore", count: 35, color: "rgba(120,200,140,0.4)", sizeRange: [1.5, 4] },
+    fog: true, fogColor: "rgba(80,120,80,0.12)",
+    rays: true,
+    waterShimmer: false,
+    tint: "rgba(20,60,20,0.06)"
+  },
+  council_square: {
+    particles: { type: "dust", count: 15, color: "rgba(180,180,180,0.25)", sizeRange: [0.5, 2] },
+    fog: false,
+    rays: false,
+    waterShimmer: false,
+    tint: "rgba(60,60,70,0.03)"
+  },
+  spore_field: {
+    particles: { type: "spore", count: 50, color: "rgba(180,220,100,0.45)", sizeRange: [2, 5] },
+    fog: true, fogColor: "rgba(140,180,80,0.08)",
+    rays: true,
+    waterShimmer: false,
+    tint: "rgba(40,60,20,0.05)"
+  }
+};
+
+function resizeAmbientCanvas() {
+  const scene = document.getElementById("scene");
+  const w = Math.max(1, scene.clientWidth | 0);
+  const h = Math.max(1, scene.clientHeight | 0);
+  ambientCanvas.width = w;
+  ambientCanvas.height = h;
+}
+
+function spawnParticles(config) {
+  particles = [];
+  const w = ambientCanvas.width;
+  const h = ambientCanvas.height;
+  for (let i = 0; i < config.count; i++) {
+    particles.push(createParticle(config, w, h, true));
+  }
+}
+
+function createParticle(config, w, h, randomY) {
+  const size = config.sizeRange[0] + Math.random() * (config.sizeRange[1] - config.sizeRange[0]);
+  const p = {
+    x: Math.random() * w,
+    y: randomY ? Math.random() * h : h + 10,
+    size,
+    baseSize: size,
+    color: config.color,
+    type: config.type,
+    life: Math.random(),
+    speed: 0.2 + Math.random() * 0.6,
+    drift: (Math.random() - 0.5) * 0.3,
+    wobblePhase: Math.random() * Math.PI * 2,
+    wobbleSpeed: 0.5 + Math.random() * 1.5,
+    opacity: 0
+  };
+  if (config.type === "water") {
+    p.y = h * 0.6 + Math.random() * h * 0.4;
+    p.speed = 0.1 + Math.random() * 0.3;
+    p.drift = 0.2 + Math.random() * 0.5;
+  }
+  return p;
+}
+
+function animateParticles(time) {
+  ambientCtx.clearRect(0, 0, ambientCanvas.width, ambientCanvas.height);
+  const w = ambientCanvas.width;
+  const h = ambientCanvas.height;
+  const config = BIOME_ATMOSPHERE[state.currentBiome]?.particles;
+  if (!config) { ambientAnimId = requestAnimationFrame(animateParticles); return; }
+
+  for (let i = 0; i < particles.length; i++) {
+    const p = particles[i];
+    p.life += 0.002 * p.speed;
+
+    // Fade in/out
+    if (p.life < 0.1) p.opacity = p.life / 0.1;
+    else if (p.life > 0.85) p.opacity = (1 - p.life) / 0.15;
+    else p.opacity = 1;
+
+    const wobble = Math.sin(time * 0.001 * p.wobbleSpeed + p.wobblePhase);
+
+    if (p.type === "spore") {
+      p.y -= p.speed * 0.5;
+      p.x += p.drift + wobble * 0.3;
+      p.size = p.baseSize * (0.8 + wobble * 0.2);
+    } else if (p.type === "water") {
+      p.x += p.drift;
+      p.y += wobble * 0.15;
+      p.size = p.baseSize * (0.9 + Math.sin(time * 0.002 + p.wobblePhase) * 0.3);
+    } else { // dust
+      p.y -= p.speed * 0.2;
+      p.x += p.drift + wobble * 0.2;
+    }
+
+    // Reset if out of bounds
+    if (p.y < -10 || p.x < -10 || p.x > w + 10 || p.life > 1) {
+      particles[i] = createParticle(config, w, h, false);
+      if (config.type === "dust") particles[i].y = h + 10;
+      if (config.type === "water") {
+        particles[i].y = h * 0.6 + Math.random() * h * 0.4;
+        particles[i].x = -10;
+      }
+    }
+
+    // Draw
+    ambientCtx.save();
+    ambientCtx.globalAlpha = p.opacity * 0.7;
+
+    if (p.type === "spore") {
+      // Glowing spore
+      const grad = ambientCtx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size * 2);
+      grad.addColorStop(0, p.color);
+      grad.addColorStop(1, "transparent");
+      ambientCtx.fillStyle = grad;
+      ambientCtx.beginPath();
+      ambientCtx.arc(p.x, p.y, p.size * 2, 0, Math.PI * 2);
+      ambientCtx.fill();
+      // Core
+      ambientCtx.fillStyle = p.color.replace(/[\d.]+\)$/, "0.8)");
+      ambientCtx.beginPath();
+      ambientCtx.arc(p.x, p.y, p.size * 0.5, 0, Math.PI * 2);
+      ambientCtx.fill();
+    } else if (p.type === "water") {
+      // Shimmering water particle
+      ambientCtx.fillStyle = p.color;
+      ambientCtx.beginPath();
+      ambientCtx.ellipse(p.x, p.y, p.size * 1.5, p.size * 0.5, 0, 0, Math.PI * 2);
+      ambientCtx.fill();
+    } else {
+      // Dust mote
+      ambientCtx.fillStyle = p.color;
+      ambientCtx.beginPath();
+      ambientCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      ambientCtx.fill();
+    }
+
+    ambientCtx.restore();
+  }
+
+  ambientAnimId = requestAnimationFrame(animateParticles);
+}
+
+function setAtmosphere(biomeKey) {
+  const atmo = BIOME_ATMOSPHERE[biomeKey];
+  if (!atmo) return;
+
+  const container = document.getElementById("atmosphere");
+  container.innerHTML = '<div class="atmo-vignette"></div>';
+
+  // Fog
+  if (atmo.fog) {
+    const fog = document.createElement("div");
+    fog.className = "fog-layer";
+    fog.innerHTML = `
+      <div class="fog-band" style="background:linear-gradient(90deg, transparent, ${atmo.fogColor}, transparent, ${atmo.fogColor}, transparent)"></div>
+      <div class="fog-band" style="background:linear-gradient(90deg, transparent, ${atmo.fogColor}, transparent)"></div>
+    `;
+    container.appendChild(fog);
+  }
+
+  // Light rays (forest/mill scenes)
+  if (atmo.rays) {
+    const rays = document.createElement("div");
+    rays.className = "light-rays";
+    rays.innerHTML = '<div class="ray"></div><div class="ray"></div><div class="ray"></div><div class="ray"></div>';
+    container.appendChild(rays);
+  }
+
+  // Water shimmer
+  if (atmo.waterShimmer) {
+    const shimmer = document.createElement("div");
+    shimmer.className = "water-shimmer";
+    container.appendChild(shimmer);
+  }
+
+  // Color tint
+  if (atmo.tint) {
+    const tint = document.createElement("div");
+    tint.style.cssText = `position:absolute;inset:0;background:${atmo.tint};pointer-events:none;`;
+    container.appendChild(tint);
+  }
+
+  // Particles — defer until layout so canvas dimensions are non-zero
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      resizeAmbientCanvas();
+      spawnParticles(atmo.particles);
+      if (!ambientAnimId) animateParticles(0);
+    });
+  });
+}
+
+window.addEventListener("resize", resizeAmbientCanvas);
+
+
+// ═══════════════════════════════════════════════════════════
+// PARALLAX MOUSE EFFECT
+// ═══════════════════════════════════════════════════════════
+
+document.getElementById("scene").addEventListener("mousemove", (e) => {
+  const rect = e.currentTarget.getBoundingClientRect();
+  const x = (e.clientX - rect.left) / rect.width - 0.5;
+  const y = (e.clientY - rect.top) / rect.height - 0.5;
+
+  document.querySelectorAll(".parallax-layer").forEach(layer => {
+    const depth = parseFloat(layer.dataset.depth) || 0;
+    const moveX = x * depth * 40;
+    const moveY = y * depth * 20;
+    layer.style.transform = `translate(${moveX}px, ${moveY}px) scale(1.05)`;
+  });
+});
+
+
+// ═══════════════════════════════════════════════════════════
+// EVENT BINDINGS
+// ═══════════════════════════════════════════════════════════
+
+document.getElementById("btn-journal").onclick = openJournal;
+document.getElementById("journal-close").onclick = closeJournal;
+document.getElementById("journal-overlay").onclick = (e) => { if (e.target === e.currentTarget) closeJournal(); };
+document.getElementById("page-prev").onclick = () => { state.journalPage--; renderJournalPage(); };
+document.getElementById("page-next").onclick = () => { state.journalPage++; renderJournalPage(); };
+
+document.getElementById("btn-map").onclick = openMap;
+document.getElementById("map-close").onclick = closeMap;
+document.getElementById("map-overlay").onclick = (e) => { if (e.target === e.currentTarget) closeMap(); };
+
+document.getElementById("btn-inventory").onclick = openInventory;
+document.getElementById("inv-close").onclick = closeInventory;
+document.getElementById("inventory-overlay").onclick = (e) => { if (e.target === e.currentTarget) closeInventory(); };
+
+// Keyboard shortcuts
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") { closeJournal(); closeMap(); closeInventory(); }
+  if (e.key === "j" || e.key === "J") openJournal();
+  if (e.key === "m" || e.key === "M") openMap();
+  if (e.key === "e" || e.key === "E") openInventory();
+});
+
+
+// ═══════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════
+
+updateEcoLens();
+enterBiome("estuary_edge");
+
+window.addEventListener("load", () => {
+  resizeAmbientCanvas();
+  const cfg = BIOME_ATMOSPHERE[state.currentBiome]?.particles;
+  if (cfg) spawnParticles(cfg);
+});
+
+</script>
+</body>
+</html>

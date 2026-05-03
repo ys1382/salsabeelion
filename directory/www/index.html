@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sites</title>
+  <style>
+    :root {
+      --bg: #0f1419;
+      --card: #1a2332;
+      --text: #e8eef5;
+      --muted: #8b9cb3;
+      --accent: #6eb5ff;
+      --ok: #7dcea0;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Segoe UI", system-ui, sans-serif;
+      background: radial-gradient(1200px 600px at 20% 0%, #1a2744 0%, var(--bg) 55%);
+      color: var(--text);
+      padding: clamp(1.5rem, 4vw, 3rem);
+      line-height: 1.5;
+    }
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: 1rem;
+      max-width: 640px;
+    }
+    a.site {
+      display: block;
+      padding: 1.25rem 1.5rem;
+      background: var(--card);
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.06);
+      text-decoration: none;
+      color: inherit;
+      transition: border-color 0.15s, transform 0.15s;
+    }
+    a.site:hover {
+      border-color: rgba(110, 181, 255, 0.45);
+      transform: translateY(-2px);
+    }
+    a.site strong {
+      display: block;
+      font-size: 1.1rem;
+      color: var(--accent);
+      margin-bottom: 0.35rem;
+    }
+    a.site span.desc {
+      display: block;
+      color: var(--muted);
+      font-size: 0.95rem;
+      margin-top: 0.15rem;
+    }
+    a.site code {
+      display: block;
+      margin-top: 0.65rem;
+      font-size: 0.8rem;
+      color: var(--ok);
+      word-break: break-all;
+    }
+  </style>
+</head>
+<body>
+  <ul>
+    <li>
+      <a class="site" href="https://157.230.130.12:8060/">
+        <strong>Bane of Extinction</strong>
+        <span class="desc">Deeply narrative environmental game where you grow past greenwashing into real careers of care.</span>
+        <code>https://157.230.130.12:8060/</code>
+      </a>
+    </li>
+    <li>
+      <a class="site" href="https://157.230.130.12:8071/">
+        <strong>Maestro’s Odyssey</strong>
+        <span class="desc">Language-learning narrative demo: comprehension continuum, narrative frames, pronunciation progression.</span>
+        <code>https://157.230.130.12:8071/</code>
+      </a>
+    </li>
+    <li>
+      <a class="site" href="https://157.230.130.12:8072/">
+        <strong>Environmental Dystopia</strong>
+        <span class="desc">Atmospheric scroll experience: prologue vs muted world, quiet restoration.</span>
+        <code>https://157.230.130.12:8072/</code>
+      </a>
+    </li>
+    <li>
+      <a class="site" href="https://157.230.130.12:8073/">
+        <strong>Cozy Crocheter’s Sanctum</strong>
+        <span class="desc">Pattern library demo: steps, focus mode, stitch help, local progress.</span>
+        <code>https://157.230.130.12:8073/</code>
+      </a>
+    </li>
+  </ul>
+</body>
+</html>

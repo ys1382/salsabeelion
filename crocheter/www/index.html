@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Cozy Crocheter’s Sanctum — demo</title>
+  <style>
+    :root {
+      --cream: #faf6f0;
+      --paper: #fffefb;
+      --ink: #3d3832;
+      --soft: #8a8278;
+      --accent: #6b8f71;
+      --line: #e5dfd4;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--cream);
+      color: var(--ink);
+      font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+      line-height: 1.55;
+    }
+    header {
+      padding: 1.75rem clamp(1rem, 4vw, 2rem);
+      border-bottom: 1px solid var(--line);
+      background: var(--paper);
+    }
+    header h1 {
+      font-size: clamp(1.35rem, 3vw, 1.75rem);
+      font-weight: 500;
+      margin: 0 0 0.35rem;
+    }
+    header p {
+      margin: 0;
+      color: var(--soft);
+      font-size: 0.95rem;
+      max-width: 52ch;
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0;
+      max-width: 720px;
+      margin: 0 auto;
+    }
+    @media (min-width: 800px) {
+      .layout {
+        grid-template-columns: 220px 1fr;
+        max-width: 960px;
+        gap: 0 1.5rem;
+        padding: 0 1rem;
+      }
+    }
+    aside {
+      padding: 1.25rem clamp(1rem, 3vw, 1.25rem);
+      font-size: 0.9rem;
+      color: var(--soft);
+      border-bottom: 1px solid var(--line);
+      background: var(--paper);
+    }
+    @media (min-width: 800px) {
+      aside {
+        border-bottom: none;
+        border-right: 1px solid var(--line);
+        align-self: start;
+        position: sticky;
+        top: 0;
+      }
+    }
+    aside h2 {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--accent);
+      margin: 0 0 0.75rem;
+      font-family: system-ui, sans-serif;
+    }
+    .skill-list { list-style: none; padding: 0; margin: 0; }
+    .skill-list li {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.45rem;
+      font-family: system-ui, sans-serif;
+      font-size: 0.85rem;
+    }
+    main { padding: 1.5rem clamp(1rem, 3vw, 2rem) 3rem; }
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 1.25rem;
+      font-family: system-ui, sans-serif;
+    }
+    .toolbar label {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.85rem;
+      color: var(--soft);
+    }
+    .toolbar button {
+      font: inherit;
+      padding: 0.45rem 0.85rem;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: #fff;
+      cursor: pointer;
+      color: var(--ink);
+    }
+    .toolbar button.on {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+    .pattern-title {
+      font-size: 1.35rem;
+      margin: 0 0 0.25rem;
+    }
+    .meta { color: var(--soft); font-size: 0.9rem; margin-bottom: 1.25rem; }
+    .steps { list-style: none; padding: 0; margin: 0; }
+    .steps li {
+      padding: 1rem 0;
+      border-bottom: 1px solid var(--line);
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 0.75rem 1rem;
+      align-items: start;
+    }
+    body.focus-mode .steps li:not(.current) { display: none; }
+    body.focus-mode .steps li.current { display: grid; border: none; padding: 1.5rem 0; }
+    .steps input[type="checkbox"] {
+      width: 1.15rem;
+      height: 1.15rem;
+      accent-color: var(--accent);
+      margin-top: 0.2rem;
+    }
+    .step-body strong {
+      font-family: system-ui, sans-serif;
+      font-size: 0.75rem;
+      letter-spacing: 0.06em;
+      color: var(--accent);
+    }
+    .gloss {
+      border-bottom: 1px dotted var(--accent);
+      cursor: help;
+      position: relative;
+    }
+    .gloss:active::after,
+    .gloss:hover::after {
+      content: attr(data-tip);
+      position: absolute;
+      left: 0;
+      bottom: 100%;
+      margin-bottom: 6px;
+      padding: 0.5rem 0.65rem;
+      background: var(--ink);
+      color: var(--cream);
+      font-size: 0.8rem;
+      font-family: system-ui, sans-serif;
+      line-height: 1.35;
+      border-radius: 8px;
+      width: min(280px, 70vw);
+      z-index: 2;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+    }
+    .toast {
+      position: fixed;
+      bottom: 1.25rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(120%);
+      background: var(--ink);
+      color: var(--cream);
+      padding: 0.65rem 1rem;
+      border-radius: 999px;
+      font-family: system-ui, sans-serif;
+      font-size: 0.85rem;
+      opacity: 0;
+      transition: transform 0.35s ease, opacity 0.35s ease;
+      z-index: 10;
+    }
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Cozy Crocheter’s Sanctum</h1>
+    <p>Calm pattern library demo: standardized steps, check-off progress, focus mode, and stitch help on hover or press-and-hold.</p>
+  </header>
+  <div class="layout">
+    <aside>
+      <h2>Your techniques</h2>
+      <p style="margin:0 0 0.75rem;font-size:0.82rem;">Optional learning layer—saved on this device only.</p>
+      <ul class="skill-list" id="skills"></ul>
+    </aside>
+    <main>
+      <div class="toolbar">
+        <label><input type="checkbox" id="focus" /> Focus mode (only current step)</label>
+        <button type="button" id="resetProg">Reset pattern progress</button>
+      </div>
+      <h2 class="pattern-title">Simple cotton washcloth</h2>
+      <p class="meta">Worsted cotton · 5 mm hook · ~25 minutes · saved in your browser</p>
+      <ol class="steps" id="steps"></ol>
+    </main>
+  </div>
+  <div class="toast" id="toast" role="status"></div>
+  <script>
+    const STORAGE_KEY = "crocheter_demo_v1";
+    const defaultSkills = [
+      { id: "ch", label: "Chain (ch)", ok: false },
+      { id: "sc", label: "Single crochet (sc)", ok: false },
+      { id: "mr", label: "Magic ring", ok: false }
+    ];
+    const stepDefs = [
+      { title: "Foundation", html: "Make a slip knot. Work 31 <span class=\"gloss\" data-tip=\"Yarn over, pull through loop on hook—repeat.\">chains (ch)</span>." },
+      { title: "Row 1", html: "Skip 1 ch. Work 1 <span class=\"gloss\" data-tip=\"Insert hook, yarn over, pull up a loop, yarn over, pull through both loops.\">single crochet (sc)</span> in each ch across (30 sc)." },
+      { title: "Rows 2–12", html: "Ch 1, turn. Sc in each st across. Repeat until fabric feels square." },
+      { title: "Finish", html: "Fasten off, weave ends gently. Block flat with a damp cloth if you like." }
+    ];
+
+    function load() {
+      try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+      } catch {
+        return {};
+      }
+    }
+    function save(data) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }
+    let data = load();
+    if (!data.checks) data.checks = stepDefs.map(() => false);
+    if (!data.skills) data.skills = defaultSkills.map((s) => ({ ...s }));
+
+    const stepsEl = document.getElementById("steps");
+    const skillsEl = document.getElementById("skills");
+    const focusEl = document.getElementById("focus");
+    const toast = document.getElementById("toast");
+
+    function currentIndex() {
+      const i = data.checks.findIndex((c) => !c);
+      return i === -1 ? data.checks.length - 1 : i;
+    }
+
+    function renderSkills() {
+      skillsEl.innerHTML = "";
+      data.skills.forEach((s) => {
+        const li = document.createElement("li");
+        const cb = document.createElement("input");
+        cb.type = "checkbox";
+        cb.checked = s.ok;
+        cb.addEventListener("change", () => {
+          s.ok = cb.checked;
+          save(data);
+        });
+        li.appendChild(cb);
+        const span = document.createElement("span");
+        span.textContent = s.label;
+        li.appendChild(span);
+        skillsEl.appendChild(li);
+      });
+    }
+
+    function showToast(msg) {
+      toast.textContent = msg;
+      toast.classList.add("show");
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(() => toast.classList.remove("show"), 3200);
+    }
+
+    function renderSteps() {
+      const cur = currentIndex();
+      const focus = focusEl.checked;
+      document.body.classList.toggle("focus-mode", focus);
+      stepsEl.innerHTML = "";
+      stepDefs.forEach((def, i) => {
+        const li = document.createElement("li");
+        if (focus && i === cur) li.classList.add("current");
+        const cb = document.createElement("input");
+        cb.type = "checkbox";
+        cb.checked = data.checks[i];
+        cb.addEventListener("change", () => {
+          data.checks[i] = cb.checked;
+          save(data);
+          renderSteps();
+          if (data.checks.every(Boolean)) {
+            showToast("Soft applause from the room—you finished without rush.");
+          }
+        });
+        const body = document.createElement("div");
+        body.className = "step-body";
+        body.innerHTML = "<strong>Step " + (i + 1) + " · " + def.title + "</strong><br/>" + def.html;
+        li.appendChild(cb);
+        li.appendChild(body);
+        stepsEl.appendChild(li);
+      });
+    }
+
+    focusEl.addEventListener("change", renderSteps);
+    document.getElementById("resetProg").addEventListener("click", () => {
+      data.checks = stepDefs.map(() => false);
+      save(data);
+      renderSteps();
+      showToast("Progress cleared. Take it one stitch at a time.");
+    });
+
+    let tipShown = sessionStorage.getItem("crocheter_tip") === "1";
+    renderSkills();
+    renderSteps();
+    if (!tipShown) {
+      sessionStorage.setItem("crocheter_tip", "1");
+      setTimeout(() => showToast("Tip: hover or long-press underlined terms for quick help."), 800);
+    }
+  </script>
+</body>
+</html>

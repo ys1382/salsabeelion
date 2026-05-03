@@ -1,0 +1,5 @@
+*.pck
+*.wasm
+*.import
+key.pem
+cert.pem
