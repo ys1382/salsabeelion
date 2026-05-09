@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Cozy Crocheter’s Sanctum — simple list (no scripts)</title>
+  <style>
+    :root {
+      --cream: #faf6f0;
+      --paper: #fffefb;
+      --ink: #3d3832;
+      --soft: #8a8278;
+      --accent: #6b8f71;
+      --line: #e5dfd4;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--cream);
+      color: var(--ink);
+      font-family: Georgia, "Times New Roman", serif;
+      line-height: 1.55;
+      padding: 1.5rem clamp(1rem, 4vw, 2rem) 3rem;
+      max-width: 40rem;
+    }
+    h1 { font-size: 1.4rem; font-weight: 500; margin: 0 0 0.5rem; }
+    p.note {
+      font-family: system-ui, sans-serif;
+      font-size: 0.9rem;
+      color: var(--soft);
+      margin: 0 0 1.25rem;
+    }
+    ul { margin: 0; padding: 0; list-style: none; font-family: system-ui, sans-serif; }
+    li { border-bottom: 1px solid var(--line); padding: 0.65rem 0; }
+    a {
+      color: var(--accent);
+      font-weight: 600;
+      text-decoration: none;
+    }
+    a:hover { text-decoration: underline; }
+    .tools { margin-top: 1.5rem; font-family: system-ui, sans-serif; font-size: 0.92rem; }
+    .tools a { margin-right: 0.75rem; }
+  </style>
+</head>
+<body>
+  <h1>Cozy Crocheter’s Sanctum</h1>
+  <p class="note">
+    This page is plain HTML — no JavaScript. If the main hub doesn’t load, use the links below.
+    For checkboxes, difficulty filters, and focus mode, use <a href="./index.html">index.html</a>
+    served over <kbd>http://127.0.0.1</kbd> (double‑click <code>open-site.command</code> in <code>crocheter/</code>).
+  </p>
+  <p class="note" style="margin-top:-0.5rem;"><strong>Patterns</strong></p>
+  <ul>
+    <li><a href="./patterns/basic-coaster.html">Basic coaster</a></li>
+    <li><a href="./patterns/basic-market-bag.html">Basic market bag</a></li>
+    <li><a href="./patterns/basic-throw-blanket.html">Basic throw blanket</a></li>
+    <li><a href="./patterns/beginner-cotton-dishcloth.html">Beginner cotton dishcloth</a></li>
+    <li><a href="./patterns/easy-dishcloth.html">Easy dishcloth</a></li>
+    <li><a href="./patterns/easy-pot-holder.html">Easy pot holder</a></li>
+    <li><a href="./patterns/lace-edging.html">Simple Lace Edging</a></li>
+    <li><a href="./patterns/doily.html">Simple Round Crochet Doily</a></li>
+    <li><a href="./patterns/mini-storage-basket.html">Mini storage basket</a></li>
+    <li><a href="./patterns/mug-cozy.html">Mug cozy</a></li>
+    <li><a href="./patterns/pillow-cover-panel.html">Simple pillow cover (two panels)</a></li>
+    <li><a href="./patterns/pineapple-lace-motif.html">Pineapple Lace Motif</a></li>
+    <li><a href="./patterns/simple-beanie.html">Simple beanie</a></li>
+    <li><a href="./patterns/simple-scarf.html">Simple scarf</a></li>
+    <li><a href="./patterns/simple-washcloth-hdc.html">Simple washcloth (half double crochet)</a></li>
+    <li><a href="./patterns/washcloth.html">Simple cotton washcloth</a></li>
+    <li><a href="./patterns/basic-granny-square.html">Basic granny square</a></li>
+  </ul>
+  <nav class="tools" aria-label="Other pages">
+    <a href="./index.html">Full pattern hub</a>
+    <a href="./dictionary.html">Dictionary</a>
+    <a href="./gallery.html">Demo Gallery</a>
+    <a href="./stitch-calculator.html">Stitch calculator</a>
+  </nav>
+</body>
+</html>

@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Crochet Stitch Calculator</title>
+  <style>
+    :root {
+      --cream: #faf6f0;
+      --paper: #fffefb;
+      --ink: #3d3832;
+      --soft: #8a8278;
+      --accent: #6b8f71;
+      --line: #e5dfd4;
+      --warn: #9a6a2b;
+      --error: #9d3d3d;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--cream);
+      color: var(--ink);
+      font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+      line-height: 1.5;
+    }
+    header {
+      border-bottom: 1px solid var(--line);
+      background: var(--paper);
+      padding: 1.25rem clamp(1rem, 3vw, 2rem);
+    }
+    .nav {
+      font-family: system-ui, sans-serif;
+      font-size: 0.95rem;
+      margin-bottom: 0.4rem;
+    }
+    .nav a { color: var(--accent); font-weight: 600; }
+    h1 { margin: 0.15rem 0 0.25rem; font-size: clamp(1.35rem, 3vw, 1.85rem); }
+    p { margin: 0; color: var(--soft); max-width: 70ch; }
+    main {
+      max-width: 850px;
+      margin: 0 auto;
+      padding: 1.2rem clamp(1rem, 3vw, 2rem) 2.2rem;
+    }
+    form {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 1rem;
+      display: grid;
+      gap: 0.85rem;
+    }
+    label {
+      display: block;
+      font-family: system-ui, sans-serif;
+      font-size: 0.9rem;
+      color: var(--soft);
+      margin-bottom: 0.35rem;
+    }
+    input[type="url"], textarea, input[type="text"] {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 0.6rem 0.7rem;
+      font: inherit;
+      color: var(--ink);
+      background: #fff;
+    }
+    textarea { min-height: 160px; resize: vertical; }
+    button {
+      width: fit-content;
+      border: 1px solid var(--accent);
+      background: var(--accent);
+      color: #fff;
+      border-radius: 10px;
+      padding: 0.55rem 0.9rem;
+      cursor: pointer;
+      font: 600 0.9rem system-ui, sans-serif;
+    }
+    .status {
+      margin-top: 0.95rem;
+      font-family: system-ui, sans-serif;
+      font-size: 0.9rem;
+      color: var(--soft);
+    }
+    .status.ok { color: var(--accent); }
+    .status.warn { color: var(--warn); }
+    .status.error { color: var(--error); }
+    .results {
+      margin-top: 0.85rem;
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 0.9rem 1rem;
+    }
+    .result-row {
+      font-family: system-ui, sans-serif;
+      font-size: 0.92rem;
+      margin-bottom: 0.45rem;
+    }
+    .result-row:last-child { margin-bottom: 0; }
+    details.help-panel {
+      margin-top: 0.9rem;
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 0.7rem 0.9rem;
+    }
+    details.help-panel summary {
+      cursor: pointer;
+      font: 600 0.92rem system-ui, sans-serif;
+      color: var(--ink);
+    }
+    .help-body { margin-top: 0.7rem; }
+    .help-prompt {
+      margin: 0 0 0.5rem;
+      font: 0.88rem system-ui, sans-serif;
+      color: var(--soft);
+    }
+    .help-results {
+      margin-top: 0.55rem;
+      display: grid;
+      gap: 0.45rem;
+    }
+    .help-item {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 0.55rem 0.65rem;
+      background: #fff;
+      font-family: system-ui, sans-serif;
+      font-size: 0.88rem;
+    }
+    .help-item a { color: var(--accent); font-weight: 600; text-decoration: none; }
+    .help-type {
+      color: var(--soft);
+      font-size: 0.76rem;
+      margin-left: 0.35rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <nav class="nav"><a href="./index.html#patterns">← Patterns</a></nav>
+    <h1>Crochet Stitch Calculator</h1>
+    <p>Private helper for row position, repeat position, and stitch count metadata. It does not output full pattern instructions.</p>
+  </header>
+  <main>
+    <form id="calc-form">
+      <div>
+        <label for="pattern-url">Pattern URL (public)</label>
+        <input id="pattern-url" type="url" placeholder="https://example.com/pattern" />
+      </div>
+      <div>
+        <label for="pattern-rows">Or paste only relevant rows / repeat section</label>
+        <textarea id="pattern-rows" placeholder="Row 21: ...&#10;Row 22: ...&#10;Rows 23-26: repeat Rows 19-22"></textarea>
+      </div>
+      <div>
+        <label for="pattern-question">Question</label>
+        <input id="pattern-question" type="text" placeholder="I'm on the third row above the 5th mesh row" required />
+      </div>
+      <button type="submit">Calculate</button>
+    </form>
+    <div id="status" class="status" aria-live="polite"></div>
+    <section id="output" class="results" aria-live="polite"></section>
+    <details class="help-panel">
+      <summary>Need Help?</summary>
+      <div class="help-body">
+        <p class="help-prompt">Enter the part you’re confused about:</p>
+        <input id="help-query" type="text" placeholder="joining brim with slip stitch" />
+        <section id="help-results" class="help-results" aria-live="polite"></section>
+      </div>
+    </details>
+  </main>
+  <script src="./stitch-calculator-core.js"></script>
+  <script src="./stitch-calculator.js"></script>
+</body>
+</html>

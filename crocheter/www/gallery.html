@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Demo Gallery — Crocheter</title>
+  <style>
+    :root {
+      --cream: #faf6f0;
+      --paper: #fffefb;
+      --ink: #3d3832;
+      --soft: #8a8278;
+      --accent: #6b8f71;
+      --line: #e5dfd4;
+      --header-surface: #ece6dd;
+      --header-border: #dbd3c7;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--cream);
+      transition: background-color 0.35s ease;
+      color: var(--ink);
+      font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+      line-height: 1.55;
+    }
+    header {
+      padding: 1.75rem clamp(1rem, 4vw, 2rem);
+      border-bottom: 1px solid var(--header-border);
+      background: var(--header-surface);
+      transition: background-color 0.35s ease, border-color 0.35s ease;
+    }
+    header h1 {
+      font-size: clamp(1.35rem, 3vw, 1.75rem);
+      font-weight: 500;
+      margin: 0 0 0.35rem;
+    }
+    .header-nav {
+      margin: 0 0 0.5rem;
+      font-size: 0.88rem;
+      font-family: system-ui, sans-serif;
+    }
+    .header-nav a {
+      color: var(--accent);
+      font-weight: 600;
+      text-decoration: underline;
+      text-decoration-thickness: 1px;
+      text-underline-offset: 0.15em;
+    }
+    .header-sub {
+      margin: 0;
+      color: var(--soft);
+      font-size: 0.95rem;
+      max-width: 52ch;
+    }
+    body[data-page-bg="default"],
+    body:not([data-page-bg]) {
+      background: var(--cream);
+      --header-surface: #ece6dd;
+      --header-border: #dbd3c7;
+    }
+    body[data-page-bg="pink"] {
+      background: #fcf0f5;
+      --header-surface: #e5d0dd;
+      --header-border: #d4c2ce;
+    }
+    body[data-page-bg="blue"] {
+      background: #eef5fc;
+      --header-surface: #dce8f5;
+      --header-border: #c9d6ea;
+    }
+    body[data-page-bg="green"] {
+      background: #eef8f1;
+      --header-surface: #dfeee3;
+      --header-border: #cddfd4;
+    }
+    body[data-page-bg="yellow"] {
+      background: #fdf9ec;
+      --header-surface: #f3ebd9;
+      --header-border: #e5dcc8;
+    }
+    body[data-page-bg="purple"] {
+      background: #f4eefb;
+      --header-surface: #e6daf2;
+      --header-border: #d4c8e4;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      body,
+      header {
+        transition: none;
+      }
+    }
+    main {
+      max-width: 36rem;
+      margin: 0 auto;
+      padding: 1.75rem clamp(1rem, 4vw, 2rem) 3rem;
+    }
+    .gallery-toc {
+      font-family: system-ui, sans-serif;
+      font-size: 0.9rem;
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 1rem 1.15rem 1.1rem;
+      margin-bottom: 2rem;
+    }
+    .gallery-toc h2 {
+      margin: 0 0 0.65rem;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--accent);
+      font-weight: 600;
+    }
+    .gallery-toc ul {
+      margin: 0;
+      padding-left: 1.1rem;
+      columns: 1;
+    }
+    .gallery-toc li {
+      margin-bottom: 0.35rem;
+    }
+    .gallery-toc a {
+      color: var(--accent);
+      text-decoration: underline;
+      text-underline-offset: 0.12em;
+    }
+    .gallery-section {
+      scroll-margin-top: 1.25rem;
+      padding-bottom: 2rem;
+      margin-bottom: 2rem;
+      border-bottom: 1px solid var(--line);
+    }
+    .gallery-section:last-of-type {
+      border-bottom: none;
+      margin-bottom: 0;
+    }
+    .gallery-section h2 {
+      font-size: 1.25rem;
+      font-weight: 500;
+      margin: 0 0 0.35rem;
+    }
+    .gallery-section .slug {
+      font-family: system-ui, sans-serif;
+      font-size: 0.8rem;
+      color: var(--soft);
+      margin: 0 0 0.75rem;
+    }
+    .gallery-section p.lead {
+      margin: 0 0 1rem;
+      color: var(--ink);
+      font-size: 0.95rem;
+    }
+    .gallery-section figure {
+      margin: 0;
+      text-align: center;
+    }
+    .gallery-section img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: #fff;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.06);
+    }
+    .gallery-section figcaption {
+      margin-top: 0.65rem;
+      font-size: 0.85rem;
+      color: var(--soft);
+      font-family: system-ui, sans-serif;
+      line-height: 1.4;
+    }
+    .back-to-dict {
+      margin-top: 0.75rem;
+      font-size: 0.88rem;
+      font-family: system-ui, sans-serif;
+    }
+    .back-to-dict a {
+      color: var(--accent);
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <p class="header-nav">
+      <a href="index.html#patterns">← Patterns</a> · <a href="dictionary.html">Dictionary</a>
+    </p>
+    <h1>Demo Gallery</h1>
+    <p class="header-sub">
+      One key frame per stitch—what videos often blur: hook placement and how loops sit on the hook. Not a full tutorial.
+    </p>
+  </header>
+  <main>
+    <nav class="gallery-toc" aria-label="Gallery sections">
+      <h2>Jump to stitch</h2>
+      <ul>
+        <li><a href="#chain">Chain (ch)</a></li>
+        <li><a href="#yarn-over">Yarn over (yo)</a></li>
+        <li><a href="#slip-stitch">Slip stitch (sl st)</a></li>
+        <li><a href="#single-crochet">Single crochet (sc)</a></li>
+        <li><a href="#double-crochet">Double crochet (dc)</a></li>
+        <li><a href="#treble-crochet">Treble crochet (tr)</a></li>
+        <li><a href="#picot">Picot</a></li>
+      </ul>
+    </nav>
+
+    <section id="chain" class="gallery-section">
+      <h2>Chain</h2>
+      <p class="slug">Dictionary: <a href="dictionary.html#chain">Chain (ch)</a></p>
+      <p class="lead">The moment the new loop slides through—your working yarn path and the hook tip should read as one clean motion.</p>
+      <figure>
+        <img src="gallery-chain.png" width="640" height="640" alt="Close-up instructional illustration: forming a chain stitch on the hook with cream yarn" loading="lazy" />
+        <figcaption>Pulling the yarn through the loop on the hook to complete one chain.</figcaption>
+      </figure>
+      <p class="back-to-dict"><a href="dictionary.html#chain">← Back to Dictionary entry</a></p>
+    </section>
+
+    <section id="yarn-over" class="gallery-section">
+      <h2>Yarn over</h2>
+      <p class="slug">Dictionary: <a href="dictionary.html#yarn-over">Yarn over (yo)</a></p>
+      <p class="lead">Before many tall stitches, this wrap is easy to rush past on camera—here the strand lies clearly over the shaft.</p>
+      <figure>
+        <img src="gallery-yarn-over.png" width="640" height="640" alt="Close-up instructional illustration: yarn wrapped once on the crochet hook" loading="lazy" />
+        <figcaption>Yarn over the hook, ready for the next insert.</figcaption>
+      </figure>
+      <p class="back-to-dict"><a href="dictionary.html#yarn-over">← Back to Dictionary entry</a></p>
+    </section>
+
+    <section id="slip-stitch" class="gallery-section">
+      <h2>Slip stitch</h2>
+      <p class="slug">Dictionary: <a href="dictionary.html#slip-stitch">Slip stitch (sl st)</a></p>
+      <p class="lead">Joining and traveling stitches hide in a blink—this frame shows both loops about to leave together.</p>
+      <figure>
+        <img src="gallery-slip-stitch.png" width="640" height="640" alt="Close-up instructional illustration: slip stitch with hook through stitch and loops visible" loading="lazy" />
+        <figcaption>Yarn over, then pull through the stitch and the loop on the hook together.</figcaption>
+      </figure>
+      <p class="back-to-dict"><a href="dictionary.html#slip-stitch">← Back to Dictionary entry</a></p>
+    </section>
+
+    <section id="single-crochet" class="gallery-section">
+      <h2>Single crochet</h2>
+      <p class="slug">Dictionary: <a href="dictionary.html#single-crochet">Single crochet (sc)</a></p>
+      <p class="lead">The “two loops on the hook” beat before the last pull-through is the anchor of most beginner fabric.</p>
+      <figure>
+        <img src="gallery-single-crochet.png" width="640" height="640" alt="Close-up instructional illustration: single crochet with two loops on the hook" loading="lazy" />
+        <figcaption>Two loops on the hook—finish by yarning over and pulling through both.</figcaption>
+      </figure>
+      <p class="back-to-dict"><a href="dictionary.html#single-crochet">← Back to Dictionary entry</a></p>
+    </section>
+
+    <section id="double-crochet" class="gallery-section">
+      <h2>Double crochet</h2>
+      <p class="slug">Dictionary: <a href="dictionary.html#double-crochet">Double crochet (dc)</a></p>
+      <p class="lead">The classic three-loop stage: where double crochet either clicks or tangles—height comes from the first yarn over.</p>
+      <figure>
+        <img src="gallery-double-crochet.png" width="640" height="640" alt="Close-up instructional illustration: double crochet mid-stitch with three loops on the hook" loading="lazy" />
+        <figcaption>Three loops on the hook after yarn over, insert, and pull up a loop.</figcaption>
+      </figure>
+      <p class="back-to-dict"><a href="dictionary.html#double-crochet">← Back to Dictionary entry</a></p>
+    </section>
+
+    <section id="treble-crochet" class="gallery-section">
+      <h2>Treble crochet</h2>
+      <p class="slug">Dictionary: <a href="dictionary.html#treble-crochet">Treble crochet (tr)</a></p>
+      <p class="lead">Extra yarn overs mean more loops in a stack—lace motifs depend on seeing this ladder clearly.</p>
+      <figure>
+        <img src="gallery-treble-crochet.png" width="640" height="640" alt="Close-up instructional illustration: treble crochet with multiple loops on the hook" loading="lazy" />
+        <figcaption>Mid-treble: working the loops off in pairs after the tall setup.</figcaption>
+      </figure>
+      <p class="back-to-dict"><a href="dictionary.html#treble-crochet">← Back to Dictionary entry</a></p>
+    </section>
+
+    <section id="picot" class="gallery-section">
+      <h2>Picot</h2>
+      <p class="slug">Dictionary: <a href="dictionary.html#picot">Picot</a></p>
+      <p class="lead">A picot is tiny; video rarely holds focus long enough to see how the slip stitch anchors the bump.</p>
+      <figure>
+        <img src="gallery-picot.png" width="640" height="640" alt="Close-up instructional illustration: forming a crochet picot bump" loading="lazy" />
+        <figcaption>Chain a few stitches, then slip back into the chain base to make the point.</figcaption>
+      </figure>
+      <p class="back-to-dict"><a href="dictionary.html#picot">← Back to Dictionary entry</a></p>
+    </section>
+  </main>
+  <script>
+    (function () {
+      try {
+        var d = JSON.parse(localStorage.getItem("crocheter_demo_v1")) || {};
+        if (d.pageBg) document.body.setAttribute("data-page-bg", d.pageBg);
+      } catch (e) {}
+    })();
+  </script>
+</body>
+</html>

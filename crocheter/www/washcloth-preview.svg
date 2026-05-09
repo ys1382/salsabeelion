@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220" width="220" height="220" aria-hidden="true">
+  <defs>
+    <pattern id="sc-grid" width="9" height="9" patternUnits="userSpaceOnUse">
+      <path d="M2 2v5M5 4.5H2" stroke="#9a9086" stroke-width="0.55" stroke-linecap="round" opacity="0.4"/>
+    </pattern>
+  </defs>
+  <rect x="40" y="40" width="140" height="140" rx="10" fill="#fffefb" stroke="#e5dfd4" stroke-width="1.25"/>
+  <rect x="46" y="46" width="128" height="128" rx="6" fill="url(#sc-grid)"/>
+</svg>

@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Crochet Context Help</title>
+  <style>
+    :root {
+      --cream: #faf6f0;
+      --paper: #fffefb;
+      --ink: #3d3832;
+      --soft: #8a8278;
+      --accent: #6b8f71;
+      --line: #e5dfd4;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--cream);
+      color: var(--ink);
+      font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+      line-height: 1.55;
+    }
+    header {
+      border-bottom: 1px solid var(--line);
+      background: var(--paper);
+      padding: 1.1rem clamp(1rem, 3vw, 2rem);
+    }
+    .nav {
+      font-family: system-ui, sans-serif;
+      font-size: 0.92rem;
+      margin-bottom: 0.45rem;
+    }
+    .nav a { color: var(--accent); font-weight: 600; }
+    h1 { margin: 0; font-size: clamp(1.3rem, 3vw, 1.75rem); }
+    main { max-width: 900px; margin: 0 auto; padding: 1rem clamp(1rem, 3vw, 2rem) 2rem; }
+    article {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 1rem;
+      margin-bottom: 0.85rem;
+    }
+    h2 { margin: 0 0 0.55rem; font-size: 1.1rem; color: var(--accent); }
+    h3 { margin: 0.65rem 0 0.3rem; font: 600 0.9rem system-ui, sans-serif; color: var(--soft); }
+    p, li { margin: 0.2rem 0; }
+    ol, ul { margin: 0.2rem 0 0.2rem 1.15rem; }
+    .related a { color: var(--accent); font-family: system-ui, sans-serif; font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+  <header>
+    <nav class="nav"><a href="./stitch-calculator.html">← Calculator</a></nav>
+    <h1>Context Help</h1>
+  </header>
+  <main>
+    <article id="slst-same-piece">
+      <h2>Slip stitch on the same piece</h2>
+      <h3>When you use this</h3>
+      <p>To move position quietly, finish a decorative edge, or close a small gap without adding height.</p>
+      <h3>What you are joining/working into</h3>
+      <p>You work into stitches that belong to the same fabric panel.</p>
+      <h3>Step-by-step explanation</h3>
+      <ol><li>Insert hook into target stitch.</li><li>Yarn over and pull through stitch and loop on hook in one motion.</li><li>Keep tension relaxed to avoid puckering.</li></ol>
+      <h3>How it differs from the basic stitch</h3>
+      <p>Basic slip stitch definition is the mechanics only; this context focuses on repositioning within one fabric.</p>
+      <h3>Common mistakes</h3>
+      <ul><li>Pulling too tight and shrinking the edge.</li><li>Using slip stitch where structural height is needed.</li></ul>
+      <h3>Related dictionary entry</h3>
+      <p class="related"><a href="./dictionary.html">Slip stitch (sl st)</a></p>
+    </article>
+
+    <article id="slst-join-rounds">
+      <h2>Slip stitch to join rounds</h2>
+      <h3>When you use this</h3>
+      <p>At the end of a worked round to close the round before the next instruction.</p>
+      <h3>What you are joining/working into</h3>
+      <p>You join the final stitch of the round to the first stitch or chain of the same round.</p>
+      <h3>Step-by-step explanation</h3>
+      <ol><li>Locate first stitch/ch of the round.</li><li>Insert hook into that point.</li><li>Yarn over and pull through both loops.</li></ol>
+      <h3>How it differs from the basic stitch</h3>
+      <p>Same stitch motion, but placement is precise so the seam line stays clean.</p>
+      <h3>Common mistakes</h3>
+      <ul><li>Joining to wrong stitch and shifting stitch counts.</li><li>Forgetting marker before join.</li></ul>
+      <h3>Related dictionary entry</h3>
+      <p class="related"><a href="./dictionary.html">Slip stitch (sl st)</a></p>
+    </article>
+
+    <article id="slst-two-edges">
+      <h2>Slip stitch joining two edges</h2>
+      <h3>When you use this</h3>
+      <p>To connect two separate edges (seam, closure, ribbing attach) with a flexible join.</p>
+      <h3>What you are joining/working into</h3>
+      <p>One stitch from edge A and one matching stitch from edge B.</p>
+      <h3>Step-by-step explanation</h3>
+      <ol><li>Align edges and insert hook through both target stitches/loops.</li><li>Yarn over and pull through both layers and loop on hook.</li><li>Repeat evenly so edges do not twist.</li></ol>
+      <h3>How it differs from the basic stitch</h3>
+      <p>The difference is two-layer placement and alignment, not stitch mechanics.</p>
+      <h3>Common mistakes</h3>
+      <ul><li>Mismatched stitch pairing causing ripple.</li><li>Joining with too much tension and reducing stretch.</li></ul>
+      <h3>Related dictionary entry</h3>
+      <p class="related"><a href="./dictionary.html">Slip stitch (sl st)</a></p>
+    </article>
+
+    <article id="slst-both-layers">
+      <h2>Slip stitch through both layers</h2>
+      <h3>When you use this</h3>
+      <p>When pattern says join through both layers for stronger seam stability.</p>
+      <h3>What you are joining/working into</h3>
+      <p>Top loops/front loops from two stacked layers or folded fabric.</p>
+      <h3>Step-by-step explanation</h3>
+      <ol><li>Hold layers aligned.</li><li>Insert hook through both specified loops.</li><li>Yarn over and pull through all loops in one pass.</li></ol>
+      <h3>How it differs from the basic stitch</h3>
+      <p>Basic slip stitch can be one-layer; this context requires two-layer penetration each time.</p>
+      <h3>Common mistakes</h3>
+      <ul><li>Catching only one layer and leaving gaps.</li><li>Skipping paired stitches.</li></ul>
+      <h3>Related dictionary entry</h3>
+      <p class="related"><a href="./dictionary.html">Slip stitch (sl st)</a></p>
+    </article>
+
+    <article id="beanie-brim-join">
+      <h2>Joining a beanie brim with slip stitches</h2>
+      <h3>When you use this</h3>
+      <p>After brim/ribbing section is complete and you need to connect it to beanie body.</p>
+      <h3>What you are joining/working into</h3>
+      <p>Brim edge stitches and matching beanie body edge stitches.</p>
+      <h3>Step-by-step explanation</h3>
+      <ol><li>Match stitch landmarks around circumference.</li><li>Insert through one brim point and one body point.</li><li>Slip stitch around while checking alignment every few stitches.</li></ol>
+      <h3>How it differs from the basic stitch</h3>
+      <p>This is structural attachment, not decorative traveling.</p>
+      <h3>Common mistakes</h3>
+      <ul><li>Uneven stitch matching leading to puckers.</li><li>Not checking circumference fit before full join.</li></ul>
+      <h3>Related dictionary entry</h3>
+      <p class="related"><a href="./dictionary.html">Slip stitch (sl st)</a></p>
+    </article>
+
+    <article id="attach-ribbing-hat-body">
+      <h2>Attaching ribbing to a hat body</h2>
+      <h3>When you use this</h3>
+      <p>For hat constructions where ribbing is made separately then attached.</p>
+      <h3>What you are joining/working into</h3>
+      <p>Ribbing row edges into hat body foundation/edge stitches.</p>
+      <h3>Step-by-step explanation</h3>
+      <ol><li>Mark quarter points on both pieces.</li><li>Align quarter points first.</li><li>Use slip stitches between markers, adjusting spacing evenly.</li></ol>
+      <h3>How it differs from the basic stitch</h3>
+      <p>Focus is distribution and fit around circumference, not single-stitch execution.</p>
+      <h3>Common mistakes</h3>
+      <ul><li>Attaching without distributing ease.</li><li>Skipping marker-based alignment.</li></ul>
+      <h3>Related dictionary entry</h3>
+      <p class="related"><a href="./dictionary.html">Slip stitch (sl st)</a></p>
+    </article>
+  </main>
+</body>
+</html>

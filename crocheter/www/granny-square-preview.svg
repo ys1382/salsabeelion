@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 320" role="img" aria-label="Granny square motif sketch">
+  <rect width="320" height="320" fill="#faf6f0"/>
+  <g fill="none" stroke="#6b8f71" stroke-width="6" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M48 48 H272 V272 H48 Z"/>
+    <path d="M88 88 H232 V232 H88 Z"/>
+    <path d="M128 128 H192 V192 H128 Z"/>
+  </g>
+  <circle cx="160" cy="160" r="20" fill="#dce8dd" stroke="#5a7d5f" stroke-width="4"/>
+</svg>
