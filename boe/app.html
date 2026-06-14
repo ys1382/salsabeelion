@@ -913,6 +913,7 @@ const BIOMES = {
         first_effect: {
           deepen_lens: true,
           trust_shift: { watershed_keepers: 0.08 },
+          unlock_knowledge: ["insight_estuary_edge_first"],
           journal_entry: {
             text: "Looked closely at the shoreline. The mud has an oily sheen that doesn't belong to water. The Phragmites reeds are yellowing — heavy metal stress.",
             tags: ["water", "contamination", "observation"],
@@ -983,6 +984,7 @@ const BIOMES = {
         evidence: { name: "Paint Chip Sample", icon: "\u{1F9EA}", desc: "A flake of layered paint from the mill wall. Three distinct layers — lead paint, CCA industrial coating, original stone. Evidence of repeated cover-ups." },
         first_effect: {
           trust_shift: { factory_workers: 0.05 },
+          unlock_knowledge: ["insight_quiet_mill_first"],
           journal_entry: {
             text: "The walls of the mill are layered — latex paint over CCA residue over stone. Each layer is a decision someone made about what to show and what to hide.",
             tags: ["contamination", "history", "concealment"],
@@ -1088,7 +1090,7 @@ const BIOMES = {
         evidence: { name: "Timeline Photos", icon: "\u{1F4CB}", desc: "Photographs of four successive remediation timeline notices from the council board. Each revision extends the deadline and softens the language. A paper trail of institutional failure." },
         first_effect: {
           trust_shift: { town_council: 0.05 },
-          unlock_knowledge: ["remediation_timeline"],
+          unlock_knowledge: ["remediation_timeline", "insight_council_square_first"],
           journal_entry: {
             text: "Read the notices in Council Square. The remediation timeline has been revised four times. Each revision extends the deadline and softens the language — from 'cleanup' to 'monitored natural attenuation.'",
             tags: ["civic", "institutional_failure", "language"],
@@ -1232,6 +1234,20 @@ const NPCS = {
         }
       },
       {
+        topic: "council revisions",
+        conditions: { knowledge: ["remediation_timeline"], trust: { watershed_keepers: 0.3 }, eco_lens: 2 },
+        text: "So you saw the board in Council Square. They keep extending the timeline and renaming the same delay. Elara used to circle every revision date in red. She said if language gets softer while the river gets worse, you're looking at policy theater.",
+        tags: ["civic", "water", "institutional_failure"],
+        effects: {
+          trust_shift: { watershed_keepers: 0.08 },
+          journal_entry: {
+            text: "Lina connected Council Square's revised remediation notices to Elara's records. The terms changed — cleanup to monitored attenuation — while watershed conditions did not.",
+            tags: ["civic", "water", "institutional_failure", "language"],
+            source: "conversation"
+          }
+        }
+      },
+      {
         topic: "grandmother's journal",
         conditions: { knowledge: ["water_quality_data", "tree_ring_data"], eco_lens: 4 },
         text: "Elara kept a journal. Decades of observations — water levels, fish counts, the day the herons stopped coming. I've been afraid to share it. People take data and twist it. But you... you're actually looking. Here.",
@@ -1253,7 +1269,8 @@ const NPCS = {
     name: "Orlen",
     role: "Vennox Chemical, night shift",
     backstory: "Orlen Thade has worked at Vennox Chemical for eight years. He took the job after the lumber mill closed — it was Vennox or leaving town. His daughter Ada, age 7, has developed asthma since the east processing line expanded. He knows more than he says. He is afraid of more than he admits.",
-    preconditions: { trust: { factory_workers: 0.15 } },
+    // Reachable after meaningful exploration in Quiet Mill.
+    preconditions: { knowledge: ["insight_estuary_edge_first", "insight_quiet_mill_first", "insight_council_square_first"] },
     refusal: "He glances at you and keeps walking. His shift starts soon.",
     lines: [
       {
@@ -1400,6 +1417,7 @@ const state = {
   visited: new Set(),
   observedThisVisit: new Set(), // tracks observations seen at current biome
   observedEver: new Set(),      // tracks all observations ever seen (biome:name)
+  observationInsightDepth: {},  // tracks deepest insight level recorded per observation key
   npcTalkedTopics: new Set(),   // tracks npc:topic combos
   introShown: false,
   journalPage: 0,
@@ -1493,19 +1511,10 @@ function applyEffects(effects) {
 
 function biomeHasNewContent(biomeKey) {
   const biome = BIOMES[biomeKey];
-  // Check observations
+  // "New insights" indicators should reflect unseen observations only.
   for (const obs of biome.observations) {
     const obsKey = biomeKey + ":" + obs.name;
     if (!state.observedEver.has(obsKey)) return true;
-  }
-  // Check NPCs
-  for (const npcId of biome.npcs) {
-    const npc = NPCS[npcId];
-    if (!npc) continue;
-    for (const line of npc.lines) {
-      const topicKey = npcId + ":" + line.topic;
-      if (!state.npcTalkedTopics.has(topicKey) && meetsRequirements(line.conditions)) return true;
-    }
   }
   return false;
 }
@@ -1638,8 +1647,21 @@ function examineObservation(obs) {
 
   const td = document.getElementById("text-display");
   const text = getDepthText(obs.text, state.ecoLens);
+  const textDepths = typeof obs.text === "string"
+    ? [0]
+    : Object.keys(obs.text).map(Number).sort((a, b) => a - b);
+  const currentInsightDepth = textDepths
+    .filter((d) => d <= state.ecoLens)
+    .reduce((max, d) => Math.max(max, d), 0);
+  const recordedInsightDepth = state.observationInsightDepth[obsKey] ?? -1;
 
-  let html = `<div class="text-reveal"><span class="narration">${text}</span>`;
+  const hasNewInsight = isFirst || currentInsightDepth > recordedInsightDepth;
+  let html = `<div class="text-reveal">`;
+  if (hasNewInsight) {
+    html += `<span class="narration">${text}</span>`;
+  } else {
+    html += `<span class="narration">You've already reviewed this observation at your current insight level.</span>`;
+  }
 
   if (isFirst && obs.first_effect) {
     applyEffects(obs.first_effect);
@@ -1650,6 +1672,21 @@ function examineObservation(obs) {
       html += `<div class="system-msg">New knowledge unlocked: ${obs.first_effect.unlock_knowledge.join(", ").replace(/_/g, " ")}</div>`;
     }
   }
+
+  if (!isFirst) {
+    if (currentInsightDepth > recordedInsightDepth) {
+      addJournalEntry({
+        text: `Revisited ${obs.name} at ${BIOMES[state.currentBiome].name}. With deeper context, new patterns are visible here now.`,
+        tags: [...(obs.tags || []), "observation"],
+        source: "revisit insight"
+      });
+      html += `<div class="system-msg">New insight recorded from revisiting this location.</div>`;
+    } else {
+      html += `<div class="system-msg">You've unlocked everything here for the moment. Try exploring elsewhere to understand how the fates of these different locations are intertwined.</div>`;
+    }
+  }
+
+  state.observationInsightDepth[obsKey] = Math.max(recordedInsightDepth, currentInsightDepth);
 
   if (isFirst && obs.evidence) {
     const existing = state.inventory.find(i => i.name === obs.evidence.name);
@@ -1821,6 +1858,7 @@ function renderJournalPage() {
   if (entries.length === 0) {
     page.innerHTML = `<p style="color:var(--gold-dim);font-style:italic;text-align:center;margin-top:3rem;">Your field journal is empty. Begin exploring to collect observations.</p>`;
   } else {
+    const pageAnnotationsShown = new Set();
     for (const entry of entries) {
       const div = document.createElement("div");
       div.className = "journal-entry";
@@ -1830,13 +1868,12 @@ function renderJournalPage() {
 
       // Tag annotations based on depth
       if (entry.tags) {
-        const annotationsShown = new Set();
         for (const tag of entry.tags) {
           const tagData = JOURNAL_TAGS[tag];
           if (!tagData) continue;
           for (const [depth, annotation] of Object.entries(tagData.annotations_by_depth || {})) {
-            if (state.ecoLens >= Number(depth) && !annotationsShown.has(annotation)) {
-              annotationsShown.add(annotation);
+            if (state.ecoLens >= Number(depth) && !pageAnnotationsShown.has(annotation)) {
+              pageAnnotationsShown.add(annotation);
               html += `<div class="journal-annotation">${annotation}</div>`;
               break; // one annotation per tag
             }

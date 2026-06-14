@@ -1,12 +1,21 @@
 <!DOCTYPE html>
-<html lang="en" data-crocheter-build="patterns-hub-2026-05c">
+<html lang="en" data-crocheter-build="patterns-hub-2026-06-no-easy-url">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Cozy Crocheter’s Sanctum — demo</title>
-  <link rel="stylesheet" href="./crocheter-shared.css?v=patterns-hub-8" />
+  <link rel="stylesheet" href="./crocheter-shared.css?v=patterns-hub-17" />
 </head>
 <body>
+  <script>
+    (function (w, d) {
+      try {
+        var bg = (JSON.parse(w.localStorage.getItem("crocheter_demo_v1") || "{}") || {}).pageBg;
+        if (bg && /^(pink|blue|green|yellow|purple)$/.test(bg)) d.body.setAttribute("data-page-bg", bg);
+      } catch (e) {}
+    })(window, document);
+  </script>
+  <script src="./crocheter-page-bg.js?v=patterns-hub-17"></script>
   <header>
     <nav class="top-nav">
       <a href="./dictionary.html">Dictionary</a>
@@ -19,6 +28,18 @@
       <a href="./dictionary.html">Dictionary</a>
       <a href="./gallery.html">Demo Gallery</a>
       <a href="./stitch-calculator.html">Crochet Stitch Calculator</a>
+    </div>
+    <div class="header-room-tone-wrap">
+      <label class="header-room-tone-label" for="pageBgSel">Room tone (background tint)</label>
+      <select id="pageBgSel" class="header-room-tone-select" aria-label="Page background tint">
+        <option value="default">Cream</option>
+        <option value="pink">Rose</option>
+        <option value="blue">Powder blue</option>
+        <option value="green">Sage mint</option>
+        <option value="yellow">Butter</option>
+        <option value="purple">Lilac</option>
+      </select>
+      <span class="header-room-tone-hint">Saved on this device; matches Dictionary &amp; Gallery.</span>
     </div>
   </header>
   <div class="layout">
@@ -34,7 +55,6 @@
           <select id="experienceSel" aria-describedby="patternsHelp">
             <option value="all">All patterns</option>
             <option value="beginner">Beginner</option>
-            <option value="easy">Easy</option>
             <option value="intermediate">Intermediate</option>
             <option value="intermediate-advanced">Intermediate–Advanced</option>
             <option value="advanced">Advanced</option>
@@ -42,17 +62,24 @@
         </label>
       </div>
       <p id="patternsHelp" class="pattern-hub-intro">
-        Choose a level to narrow the list, or <strong>All patterns</strong> for the full library. <strong>Click a title</strong> to open it; use the round button if you’d like a short on-page preview first.
+        Four tiers: <strong>Beginner</strong> through <strong>Advanced</strong>. Or use <strong>All patterns</strong>. The list shows a few at a time—<strong>scroll inside the box</strong> for the rest. <strong>Click a title</strong> to open it; use the round button for a short preview.
       </p>
       <section class="pattern-accordion-section" aria-labelledby="patterns-heading">
         <h3 id="patterns-heading">Patterns for this level</h3>
-        <div id="patternAccordionHost" class="pattern-accordion" role="region" aria-live="polite"></div>
+        <div
+          class="pattern-accordion-scroll"
+          id="patternAccordionScroll"
+          tabindex="0"
+          aria-label="Pattern list — scroll to see more"
+        >
+          <div id="patternAccordionHost" class="pattern-accordion" role="region" aria-live="polite"></div>
+        </div>
       </section>
     </main>
   </div>
   <div class="toast" id="toast" role="status"></div>
-  <script src="./pattern-difficulty-core.js?v=patterns-hub-8"></script>
-  <script src="./patterns-data.js?v=patterns-hub-8"></script>
+  <script src="./pattern-difficulty-core.js?v=patterns-hub-17"></script>
+  <script src="./patterns-data.js?v=patterns-hub-17"></script>
   <script>
   (function () {
     const STORAGE_KEY = "crocheter_demo_v2";
@@ -74,8 +101,8 @@
         ["basic-market-bag.html", "Basic market bag"],
         ["basic-throw-blanket.html", "Basic throw blanket"],
         ["beginner-cotton-dishcloth.html", "Beginner cotton dishcloth"],
-        ["easy-dishcloth.html", "Easy dishcloth"],
-        ["easy-pot-holder.html", "Easy pot holder"],
+        ["square-cotton-dishcloth.html", "Square cotton dishcloth"],
+        ["folded-cotton-pot-holder.html", "Cotton pot holder (folded)"],
         ["lace-edging.html", "Simple Lace Edging"],
         ["doily.html", "Simple Round Crochet Doily"],
         ["mini-storage-basket.html", "Mini storage basket"],
@@ -100,10 +127,11 @@
         "</ul>";
     }
 
-    const VALID_EXPERIENCE = ["all", "beginner", "easy", "intermediate", "intermediate-advanced", "advanced"];
+    const VALID_EXPERIENCE = ["all", "beginner", "intermediate", "intermediate-advanced", "advanced"];
 
     function migrateExperience(val) {
-      if (val === "beginner-intermediate") return "easy";
+      if (val === "beginner-intermediate") return "beginner";
+      if (val === "beginner-easy" || val === "easy") return "beginner";
       if (VALID_EXPERIENCE.includes(val)) return val;
       return "all";
     }
@@ -138,11 +166,48 @@
       data.experience = "all";
       save(data);
     }
-    if (data.patternsHubListVersion !== 2) {
-      data.patternsHubListVersion = 2;
-      data.experience = "all";
+    if (data.patternsHubListVersion !== 5) {
+      data.patternsHubListVersion = 5;
+      if (data.experience === "beginner-easy" || data.experience === "easy") {
+        data.experience = "beginner";
+      }
       save(data);
     }
+
+    function migrateLegacyPatternIds(d) {
+      const pairs = [
+        ["easy-dishcloth", "square-cotton-dishcloth"],
+        ["easy-pot-holder", "folded-cotton-pot-holder"],
+      ];
+      if (!d.checksByPattern) d.checksByPattern = {};
+      pairs.forEach(function (pr) {
+        var oldId = pr[0],
+          newId = pr[1];
+        if (Object.prototype.hasOwnProperty.call(d.checksByPattern, oldId)) {
+          if (!d.checksByPattern[newId]) d.checksByPattern[newId] = d.checksByPattern[oldId];
+          delete d.checksByPattern[oldId];
+        }
+      });
+      try {
+        var okey = CrocheterPatterns.OVERRIDE_STORAGE_KEY;
+        var raw = localStorage.getItem(okey);
+        if (!raw) return;
+        var omap = JSON.parse(raw);
+        if (!omap || typeof omap !== "object") return;
+        var ch = false;
+        pairs.forEach(function (pr) {
+          var o = pr[0],
+            n = pr[1];
+          if (Object.prototype.hasOwnProperty.call(omap, o)) {
+            if (omap[n] == null) omap[n] = omap[o];
+            delete omap[o];
+            ch = true;
+          }
+        });
+        if (ch) localStorage.setItem(okey, JSON.stringify(omap));
+      } catch (_) {}
+    }
+    migrateLegacyPatternIds(data);
 
     if (!data.checksByPattern) data.checksByPattern = {};
     Object.keys(CrocheterPatterns.byId).forEach((id) => {
@@ -201,6 +266,8 @@
     function renderAccordion() {
       const level = experienceSel.value;
       const list = CrocheterPatterns.patternsForLevel(level);
+      const scrollEl = document.getElementById("patternAccordionScroll");
+      if (scrollEl) scrollEl.scrollTop = 0;
       accordionHost.innerHTML = "";
       if (list.length === 0) {
         const p = document.createElement("p");

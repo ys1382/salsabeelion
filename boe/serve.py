@@ -30,7 +30,8 @@ class GodotHandler(http.server.SimpleHTTPRequestHandler):
 
 
 if __name__ == "__main__":
-    server = http.server.HTTPServer((BIND or "", PORT), GodotHandler)
+    # Threaded server prevents one slow client from blocking all requests.
+    server = http.server.ThreadingHTTPServer((BIND or "", PORT), GodotHandler)
     if KEY_PEM and CERT_PEM and os.path.isfile(KEY_PEM) and os.path.isfile(CERT_PEM):
         ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
         ctx.load_cert_chain(CERT_PEM, KEY_PEM)
