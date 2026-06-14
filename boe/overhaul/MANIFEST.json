@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "label": "shadow-grove-overhaul",
+  "archive_before": true,
+  "deploy": true,
+  "promote": [
+    {
+      "from": "overhaul/app.html",
+      "to": "app.html"
+    }
+  ]
+}

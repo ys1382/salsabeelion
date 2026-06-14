@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "label": "example-overhaul",
+  "notes": "Copy to MANIFEST.json (or your-name/MANIFEST.json), edit promote list, then: complete the overhaul with this file.",
+  "archive_before": true,
+  "deploy": true,
+  "promote": [
+    { "from": "overhaul/app.html", "to": "app.html" },
+    { "from": "overhaul/serve.py", "to": "serve.py" },
+    { "from": "overhaul/assets", "to": "assets" }
+  ]
+}
