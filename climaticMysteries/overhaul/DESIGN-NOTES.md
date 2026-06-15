@@ -1,6 +1,20 @@
-# Bane of Extinction — overhaul direction (notes only, not live)
+# Climatic Mysteries — overhaul direction (notes only, not live)
 
-**Status:** Planning. No promote / deploy until owner says complete the overhaul with a manifest.
+**Status:** Planning. Live game shipped Shadow Grove v1; further edits in `overhaul/` until promoted.
+
+## Series reframe (owner)
+
+- **Franchise name (direction):** **Climatic Mysteries** — replaces **Bane of Extinction / BOE** as the umbrella title.
+- **First installment title (locked):** **Moor's Tale** — Shadow Grove County, Eco-Feed, Moortail, Maren, Lina, Orlen.
+- **Moor / Moortail clarity (owner):** **Moor = meadow/wet grassland** (the **tail** of water from **moor → forest**). **Not** the old racist colonial “Moor” for people. **Moor's Tale** can sound like *someone's* story when spoken — design must make the **river** reading obvious:
+  - Keep **Moortail** on signs, maps, company paperwork where neutral.
+  - **Moor's Tale** as spoken/local name — always tied to **the river** in context (bench plaque, Lina line, journal: “what the Moortail carries”).
+  - Early beat (prologue, rental, or first river examine): plain line that the name is **the water trail from the meadow**, before the company made people argue about spelling — **title-screen art carries most of this** (moor meadow + water tail into forest).
+  - Optional map tooltip / field note: *Moortail — moor as in meadow, not the other word.*
+  - Avoid framing as a lecture; **one clear geographic anchor** beats repeated disclaimers.
+- **This storyline** = **one chapter / one adventure** in a larger holistic picture — not the whole product name.
+- **Implications (when built):** browser title, intro branding, maybe hub for picking adventures later; repo folder **`climaticMysteries/`** and URL **`/climatic-mysteries/`**.
+- **Book of Ecology** — still in-world for Maren; relationship to series title TBD (beat name? old column?).
 
 ## Core pivot
 
@@ -82,7 +96,7 @@ Live/staging prototype already skews toward: industrial contamination, council r
 - **Still unprepared for depth:** Knows the *shape* of bounded duty; hasn’t yet seen how far **institutional** greenwashing goes when it’s aimed at a real community — this case, on the ground, is the first time that scale hits her own eyes. Strong student, credentials, done well in school — but this is **her first real job** as a **lone** journalist / investigator (first time without a professor, lab, or team). Explains why Lina’s “another clipboard outsider” read lands, and why the player earns trust through **how** they investigate.
 - **Arc:** Personal adequacy → institutional lie scale; mirrors player journey without mockery at the start.
 
-**Name locked:** Maren Voss (owner confirmed).
+**Name locked:** Maren Voss (owner confirmed). **From Minnesota** — parents back home; can surface in Airbnb unpack monologue (e.g. water bottle gift).
 
 **Onboarding (planned):** Short **premise / prologue** before game proper — so the reader starts with the **same baseline awareness** as Maren (not smarter, not dumber). Replaces or expands today’s one-shot `#protagonist-intro` banner.
 
@@ -95,7 +109,50 @@ Live/staging prototype already skews toward: industrial contamination, council r
 5. **Cover / read (light):** May **read as freelance** to locals and company — less stir than a full official probe; Maren doesn’t spell her exact setup at every door (practical, not action-movie undercover).
 6. **Tone:** Plain, no lecture; mystery ahead, not the answer. End on **arrival** or first step into the map (handoff to gameplay).
 
-**Format TBD:** scrollable intro screen, short “chapter 0” text, or a few cards.
+**Arrival sequence (owner):**
+1. **Bus** (static interior or window at stop) → click leave.
+2. **Title card** (moor-as-tail art + Moor's Tale) → **fade out**.
+3. **Bus stop exterior** → **fade in** (county sign, pavement; bus gone or pulling away; you're on the ground).
+4. **Airbnb-style stay** — **unpacking scene** (see below); first **quest-log** objective after bus stop.
+5. **First playable area:** Moortail river (map pin when investigation loop begins).
+
+**Opening beat (detail):** **Sound on bus:** idling diesel, occasional tick, distant stop ambience. Title card: bus idle fades; soft river/meadow can rise. After stop fade-in: idling drops or shifts to stop ambience. Bus stop + stay = **prologue / chapter 0**; **river** = first **map pin** when play begins. Travel UI stays place-to-place after that. Bus stop is **opening only**, not a map pin.
+
+**Title screen art (between bus and stop):**
+- **River** runs through the frame (Moortail).
+- **One bank:** open **moor** — wet meadow / grassland, low plants, shallow water — the **head** of the name.
+- **Water “tail”** visibly threads from moor into **forest** on the other side — **moor-as-tail** made literal in the illustration (meadow → creek path → trees).
+- **Forest edge:** partly **diseased / dying** — not spooky noir, just sick canopy, thin understory, wrong color at the margin (Eco-Feed harm without a lecture).
+- **Text:** series + installment — e.g. **Climatic Mysteries** / **Moor's Tale** — optional small **Moortail** under the title.
+- **Transition:** card fades out → stop exterior fades in (no hard cut). Main **moor-clarity** beat — image teaches meadow + tail before any disclaimer line.
+
+**Format TBD:** scrollable intro screen, short “chapter 0” text, or a few cards — **Airbnb beat is mostly the unpacking room**, not a text wall.
+
+### Quest log (owner — Stardew-style)
+
+- **Separate from journal:** Journal = **case notes**, evidence, eco lens, footnotes, dedup. **Quest log** = **what to do next** — one clear line (or short stack), Stardew Valley feel.
+- **Always visible or easy to open** — player checks it when unsure; not a lecture, just direction.
+- **Updates as prologue advances:** e.g. after bus stop fade-in → *Go to your rental and unpack* → after enough unpack clicks → *Head to the Moortail* (or similar).
+- **Later chapters:** same UI — current objective, optional sub-steps; stays **everyday wording** (matches system nudge tone).
+- **Not a spoiler dump** — tells you **where / what kind of beat**, not the answer.
+
+### Airbnb unpacking beat (owner)
+
+- **Scene:** Short-term rental interior — bag on floor, Maren **laying out** kit and personal things on table / bed / counter as you click through.
+- **Learn Maren through objects** — not a bio paragraph at the start. Each placed item is **clickable** (escape-room browser games use **hover** for tooltips; **here = click**).
+- **Click → silent monologue:** Internal thought in **first person**, plain student voice — no voice acting required; text panel or soft overlay. Example: reusable water bottle → *I got this bottle as a gift a long time ago from my parents. They’re waiting for me back in Minnesota.*
+- **Objects teach in layers:** home (Minnesota, parents), first solo job, grant/editor pressure, field kit, bounded eco duty (bottle guilt without merch sermon), assignment folder / tip — **optional clicks**, not forced sequence except quest may ask “unpack” or “settle in.”
+- **Notebook in the bag:** Maren’s **field notebook** is an **unpack object** — click for monologue (student reporter kit, first solo job). **Journal UI not available yet** until she **starts writing** (first real note at river or first observation — TBD exact trigger). After that, notebook icon appears in the tool bar; quest can nudge *start your notes* when appropriate.
+- **Quest log ties in:** Open log → *Go to the rental and unpack* → player clicks items → when **enough** objects seen (or one “done” click on bed/keys), objective advances to **river**.
+- **Prologue only** — rental is **not** a map pin in the main loop (same as bus stop); handoff to **Moortail** as first travel pin.
+
+### Maren’s notebook / journal UI (owner)
+
+- **Same object** as unpack notebook — becomes the in-game **journal** once writing begins.
+- **Phase 1 (now / no character animation):** Click journal icon → **book opens** to the existing journal overlay (lined pages, entries, tags, footnotes, dedup). No hands yet — instant or simple fade.
+- **Phase 2 (when movement/animation ships):** Click icon → **Maren’s hands open the notebook** in-scene (short animation), then same inner UI — feels like **holding** the book, not a detached menu.
+- **Visual tone (reference only — not copy):** **BrainPOP Jr** clarity + **Untitled Goose Game** notebook vibe — friendly, chunky, slightly illustrated, warm paper, readable labels, light humor in margins ok; **student field notes**, not leather detective ledger. Cozy and clear for all ages.
+- **Still separate from quest log** — notebook = what you’ve recorded; quest log = what to do next.
 
 **Dismiss UX (owner):** Quick on-screen intro gets a **subtle but unmissable-if-you’re-looking ✕** to close — not loud, not hidden; rewards attention. Player chooses when they’re ready (vs. today’s auto-fade ~8s only). Still ok to remember “already dismissed” for return visits — TBD.
 
@@ -184,7 +241,7 @@ Live/staging prototype already skews toward: industrial contamination, council r
 - **Lina’s reports:** She **filed** the kind of thing the OG tied to council revisions — dates, revisions, soft language — but as **fighting the system without expecting care**: paper trail for **whoever comes after**, keeping harm **fresh in memory**, not performing for an audience that was never listening. Evidence = **her copies**, not a dignified public board.
 - Greenwash language still discoverable — just **neglectful**, not theater.
 
-**Book of Ecology:** **In-world definite thing** (Maren’s framing? field method? publication Elara read?) — **not** the browser tab title (site stays **Bane of Extinction**).
+**Book of Ecology:** **In-world definite thing** (Maren’s framing? field method? publication Elara read?) — **not** the browser tab title (site stays **Climatic Mysteries**).
 
 **Atmosphere:** **Everyday life** — sun, buses, kids, cookout smoke, river noise. Not beach-boardwalk games energy, not graveyard spook. Retune OG fog/spore/fairy-ring presentation.
 
@@ -195,7 +252,8 @@ Live/staging prototype already skews toward: industrial contamination, council r
 - **Burial/soil contrast** can stay for evidence; **layered cover-up** may be fence/signage/mural, not peeling mill paint — TBD.
 
 **Engine / presentation — locked keep:**
-- **Journal + eco lens + book UI + dedup** — definite
+- **Journal + eco lens + book UI + dedup** — definite; **notebook from unpack → journal after first write**; **hand-open animation** when animation pipeline exists
+- **Quest log** (Stardew-style next-step) — definite; **separate from journal**
 - **System nudge** — definite (everyday wording)
 - NPC topics unlock in order; **refusal lines** when too early
 - Parallax, ambient motion, map, evidence tray — **everyday-life** palette and motion
@@ -213,7 +271,7 @@ Live/staging prototype already skews toward: industrial contamination, council r
 
 ### Book of Ecology (in-world)
 
-- **Definite** in the story world — **not** the browser tab title (player-facing site: **Bane of Extinction**).
+- **Definite** in the story world — **not** the browser tab title (player-facing site: **Climatic Mysteries**).
 - **TBD:** Maren’s beat / field manual / publication title / something Elara marked up — pin when writing prologue.
 
 **TBD:** Other map fill-ins (plant/fence-line, community block, etc.) — **Elara bench → riverbank** (locked).
@@ -265,4 +323,9 @@ How these pieces **wired together** in the original — so you can keep, rename,
 - Orlen = wants to save his community from company + broader greenwash mindset; gatherings/charity; Ada; trapped job; player helps real exit that serves that goal.
 - Lina = cold polite but **answers**; topics gated not base refusal; family riverkeeper line.
 - **Shadow Grove County** map locked; Eco-Feed; Moortail / Moor’s Tale; river evidence water/foam/shore dirt.
+- Opening: bus → title card → stop fade in → **quest log: rental** → **unpack / click monologue** → river.
+- **Quest log** (Stardew next-step) separate from journal; Airbnb = click objects for silent internal monologue (not hover).
+- Notebook **in unpack bag** → journal icon after first write; UI tone BrainPOP-clear / Goose-notebook cozy; hands-open animation later.
+- Moor's Tale = river/meadow geography (**moor** = meadow); not colonial “Moor”; make river reading obvious in UI/copy.
+- **Series:** **Climatic Mysteries**; first installment **Moor's Tale** (locked).
 - Orlen = ignores you while working; after investigation noticed, company rumor-control + his mixed bind (stop pollution vs paycheck); path/tracks his.

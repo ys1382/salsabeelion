@@ -3,26 +3,26 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Bane of Extinction</title>
+<title>Climatic Mysteries — Moor's Tale</title>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 @import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=Source+Sans+3:wght@300;400;600&display=swap');
 
 :root {
-  --bg: #0a0e0c;
-  --panel: #111916;
-  --panel-border: #1e2e25;
-  --text: #c8d4ca;
-  --text-dim: #6b7e6f;
-  --accent: #4a9e6e;
-  --accent-glow: #3aff8a22;
-  --gold: #c4a24e;
-  --gold-dim: #7a6530;
-  --danger: #9b3943;
-  --journal-bg: #1a1408;
-  --journal-text: #c4b07a;
-  --journal-line: #3a2e18;
+  --bg: #1a1814;
+  --panel: #242018;
+  --panel-border: #3a3428;
+  --text: #e8e2d4;
+  --text-dim: #8a8070;
+  --accent: #5a9e5e;
+  --accent-glow: #7acc6a22;
+  --gold: #c9a85a;
+  --gold-dim: #8a7340;
+  --danger: #b04a4a;
+  --journal-bg: #2a2218;
+  --journal-text: #d4c090;
+  --journal-line: #4a3e28;
 }
 
 html, body {
@@ -46,6 +46,25 @@ html, body {
 #scene {
   position: relative;
   overflow: hidden;
+  background: #2a2618;
+}
+
+/* ── Full-scene generated art (primary backdrop) ── */
+#scene-backdrop {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center center;
+  z-index: 0;
+  opacity: 0;
+  transition: opacity 1s ease;
+  pointer-events: none;
+}
+
+#scene-backdrop.visible {
+  opacity: 1;
 }
 
 /* ── Parallax Background ── */
@@ -86,7 +105,7 @@ html, body {
 
 .atmo-vignette {
   position: absolute; inset: 0;
-  background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.5) 100%);
+  background: radial-gradient(ellipse at center, transparent 58%, rgba(20,16,10,0.22) 100%);
 }
 
 /* ── Water shimmer (estuary) ── */
@@ -115,7 +134,7 @@ html, body {
   position: absolute; inset: 0;
   z-index: 3;
   pointer-events: none;
-  opacity: 0.15;
+  opacity: 0.06;
 }
 
 .fog-band {
@@ -185,12 +204,21 @@ html, body {
 
 /* ── Scene Overlay ── */
 #scene-overlay {
-  position: absolute; inset: 0;
-  background: linear-gradient(to top, rgba(10,14,12,0.95) 0%, rgba(10,14,12,0.6) 40%, transparent 70%);
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  top: auto;
+  min-height: 36%;
+  max-height: 52%;
+  background: linear-gradient(to top, rgba(26,24,20,0.94) 0%, rgba(26,24,20,0.72) 55%, transparent 100%);
   display: flex; flex-direction: column;
   justify-content: flex-end;
   padding: 2rem;
   z-index: 10;
+  pointer-events: none;
+}
+
+#scene-overlay > * {
+  pointer-events: auto;
 }
 
 #location-header {
@@ -276,6 +304,408 @@ html, body {
 #intro-dismiss:hover {
   color: var(--text);
   border-color: var(--text-dim);
+}
+
+/* ── Title screen (Moor's Tale) ── */
+#title-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: #141210;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 1.8s ease;
+  overflow: hidden;
+}
+
+#title-screen.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+#title-screen.fading-out {
+  opacity: 0;
+  pointer-events: none;
+}
+
+#title-stage {
+  position: absolute;
+  inset: 0;
+}
+
+#title-map {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+#title-map .map-parchment-inner {
+  animation: none;
+}
+
+#title-map .map-candlelight {
+  animation: titleMapCandle 14s ease-in-out infinite alternate;
+}
+
+#title-map .map-river-shimmer {
+  animation: titleMapRiver 6s ease-in-out infinite;
+}
+
+#title-map .map-mist {
+  animation: titleMapMist 22s ease-in-out infinite alternate;
+}
+
+#title-vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at center, transparent 42%, rgba(10, 9, 8, 0.55) 100%),
+    linear-gradient(to bottom, rgba(20, 18, 16, 0.35) 0%, transparent 28%, transparent 58%, rgba(20, 18, 16, 0.88) 100%);
+}
+
+#title-overlay {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  padding: 2.5rem 1.5rem 2.25rem;
+  text-align: center;
+  pointer-events: none;
+}
+
+#title-caption {
+  text-align: center;
+  pointer-events: none;
+}
+
+#title-caption .series {
+  font-size: 0.78rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 0.35rem;
+}
+
+#title-caption h1 {
+  font-family: 'Lora', serif;
+  font-size: clamp(2rem, 5.5vw, 3.4rem);
+  color: var(--gold);
+  font-weight: 600;
+  line-height: 1.1;
+  text-shadow: 0 2px 24px rgba(0, 0, 0, 0.65);
+}
+
+#title-start {
+  margin-top: 1.35rem;
+  padding: 0.6rem 1.85rem;
+  font-family: 'Source Sans 3', sans-serif;
+  font-size: 0.95rem;
+  background: rgba(26, 24, 20, 0.55);
+  border: 1px solid var(--gold-dim);
+  color: var(--gold);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  pointer-events: auto;
+}
+
+#title-start:hover {
+  background: var(--gold-dim);
+  color: #fff8e8;
+}
+
+@keyframes titleMapCandle {
+  0% { opacity: 0; }
+  100% { opacity: 0.04; }
+}
+
+@keyframes titleMapRiver {
+  0%, 100% { opacity: 0.72; }
+  50% { opacity: 0.92; }
+}
+
+@keyframes titleMapMist {
+  0% { transform: translateX(0); opacity: 0.18; }
+  100% { transform: translateX(6px); opacity: 0.28; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #title-map .map-candlelight,
+  #title-map .map-river-shimmer,
+  #title-map .map-mist {
+    animation: none;
+  }
+
+  #prologue-bus-frame.rental-unpack #prologue-backdrop,
+  #prologue-bus-frame.rental-unpack.rental-enter #prologue-backdrop,
+  .prologue-choice-btn {
+    animation: none;
+    transition: none;
+  }
+}
+
+/* ── Prologue (bus → title → stop → rental) ── */
+#app.prologue-hidden {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+#prologue {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  background: #141210;
+  opacity: 0;
+  pointer-events: none;
+}
+
+#prologue.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+#prologue-bus-frame {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+#prologue-backdrop {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  opacity: 0;
+  will-change: transform;
+}
+
+#prologue.active #prologue-backdrop.visible {
+  opacity: 1;
+}
+
+#prologue-bus-frame.bus-idle #prologue-backdrop {
+  transform-origin: 50% 92%;
+  animation: busDieselIdle 3.4s linear infinite;
+}
+
+@keyframes busDieselIdle {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1.016); }
+  7%  { transform: translate3d(0, -0.3px, 0) scale(1.016); }
+  14% { transform: translate3d(0, -0.65px, 0) scale(1.016); }
+  21% { transform: translate3d(0, -0.45px, 0) scale(1.016); }
+  28% { transform: translate3d(0, -0.8px, 0) scale(1.016); }
+  35% { transform: translate3d(0, -0.55px, 0) scale(1.016); }
+  42% { transform: translate3d(0, -0.9px, 0) scale(1.016); }
+  50% { transform: translate3d(0, -0.7px, 0) scale(1.016); }
+  57% { transform: translate3d(0, -0.95px, 0) scale(1.016); }
+  64% { transform: translate3d(0, -0.75px, 0) scale(1.016); }
+  71% { transform: translate3d(0, -0.85px, 0) scale(1.016); }
+  78% { transform: translate3d(0, -0.5px, 0) scale(1.016); }
+  85% { transform: translate3d(0, -0.8px, 0) scale(1.016); }
+  92% { transform: translate3d(0, -0.35px, 0) scale(1.016); }
+}
+
+#prologue-vignette {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(20,18,16,0.82) 0%, transparent 45%);
+  pointer-events: none;
+}
+
+#prologue-caption {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  padding: 2rem 2rem 5.5rem;
+  z-index: 2;
+}
+
+#prologue-caption h2 {
+  font-family: 'Lora', serif;
+  font-size: 1.35rem;
+  color: var(--gold);
+  margin-bottom: 0.35rem;
+}
+
+#prologue-caption p {
+  font-size: 0.92rem;
+  color: var(--text-dim);
+  max-width: 520px;
+  line-height: 1.5;
+}
+
+#prologue-bus-frame.rental-unpack #prologue-backdrop {
+  transition: transform 1.15s cubic-bezier(0.22, 0.08, 0.2, 1), transform-origin 1.15s ease;
+}
+
+#prologue-bus-frame.rental-unpack.rental-enter #prologue-backdrop {
+  animation: rentalRoomReveal 1.35s ease-out forwards;
+}
+
+@keyframes rentalRoomReveal {
+  from { transform: scale(1.14); }
+  to { transform: scale(1); }
+}
+
+#prologue.rental-spotlight #prologue-vignette {
+  transition: background 1s ease;
+  background:
+    radial-gradient(
+      ellipse 42vmin 36vmin at var(--spot-x, 50%) var(--spot-y, 52%),
+      transparent 0%,
+      rgba(20, 18, 16, 0.25) 45%,
+      rgba(20, 18, 16, 0.72) 100%
+    ),
+    linear-gradient(to top, rgba(20, 18, 16, 0.88) 0%, transparent 48%);
+}
+
+#prologue-monologue {
+  position: absolute;
+  left: 50%;
+  bottom: 6.5rem;
+  transform: translateX(-50%) translateY(10px);
+  width: min(90vw, 520px);
+  background: rgba(26,24,20,0.94);
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  padding: 1rem 1.2rem;
+  font-size: 0.95rem;
+  color: var(--text);
+  font-style: italic;
+  line-height: 1.55;
+  z-index: 3;
+  opacity: 0;
+  transition: opacity 0.5s ease, transform 0.5s ease, border-color 0.5s ease, box-shadow 0.5s ease;
+  pointer-events: none;
+  box-shadow: 0 10px 36px rgba(0, 0, 0, 0.35);
+}
+
+#prologue-monologue.visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+  border-color: rgba(201, 168, 90, 0.38);
+  box-shadow: 0 12px 42px rgba(0, 0, 0, 0.5);
+}
+
+#prologue-actions {
+  position: absolute;
+  left: 0; right: 0; bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.65rem;
+  z-index: 4;
+  padding: 0 1rem;
+}
+
+#prologue-btn {
+  padding: 0.55rem 1.4rem;
+  font-family: 'Source Sans 3', sans-serif;
+  font-size: 0.9rem;
+  background: transparent;
+  border: 1px solid var(--gold-dim);
+  color: var(--gold);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+#prologue-btn:hover {
+  background: var(--gold-dim);
+  color: #fff8e8;
+}
+
+#prologue-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+#unpack-choices {
+  display: none;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.45rem;
+  max-width: min(96vw, 680px);
+}
+
+#prologue[data-step="rental"] #unpack-choices {
+  display: flex;
+}
+
+.prologue-choice-btn {
+  padding: 0.42rem 0.85rem;
+  font-family: 'Source Sans 3', sans-serif;
+  font-size: 0.82rem;
+  background: rgba(26, 24, 20, 0.82);
+  border: 1px solid var(--panel-border);
+  color: var(--text);
+  border-radius: 4px;
+  cursor: pointer;
+  animation: choiceRise 0.55s ease backwards;
+}
+
+@keyframes choiceRise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.prologue-choice-btn:hover {
+  border-color: var(--gold-dim);
+  color: var(--gold);
+}
+
+.prologue-choice-btn.active {
+  border-color: var(--gold);
+  color: var(--gold);
+  background: rgba(201, 168, 90, 0.12);
+}
+
+/* ── Quest log (Stardew-style) ── */
+#quest-log {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 95;
+  max-width: 220px;
+  background: rgba(26,24,20,0.88);
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  padding: 0.55rem 0.75rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.5s ease;
+}
+
+#quest-log.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+#quest-log .quest-label {
+  display: block;
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 0.2rem;
+}
+
+#quest-text {
+  font-size: 0.82rem;
+  color: var(--text);
+  line-height: 1.4;
+}
+
+#btn-journal.locked {
+  display: none;
 }
 
 /* ── Action Panel ── */
@@ -821,8 +1251,177 @@ html, body {
 </head>
 <body>
 
-<div id="app">
+<div id="prologue" class="active" data-step="bus">
+  <div id="prologue-bus-frame">
+    <img id="prologue-backdrop" alt="">
+  </div>
+  <div id="prologue-vignette"></div>
+  <div id="prologue-caption">
+    <h2 id="prologue-title"></h2>
+    <p id="prologue-desc"></p>
+  </div>
+  <div id="prologue-monologue"></div>
+  <div id="prologue-actions">
+    <div id="unpack-choices"></div>
+    <button id="prologue-btn" type="button"></button>
+  </div>
+</div>
+
+<div id="quest-log">
+  <span class="quest-label">Quest</span>
+  <p id="quest-text"></p>
+</div>
+
+<div id="title-screen">
+  <div id="title-stage">
+    <svg id="title-map" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 380" preserveAspectRatio="xMidYMid meet" width="100%" height="100%" role="img" aria-label="Shadow Grove County — illustrated game map">
+  <defs>
+    <linearGradient id="map-panel-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2a2824"/>
+      <stop offset="100%" stop-color="#1e1c18"/>
+    </linearGradient>
+    <linearGradient id="map-river-glow" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#5a9eb8"/>
+      <stop offset="100%" stop-color="#4a8aa8"/>
+    </linearGradient>
+    <path id="map-moortail-name" d="M 168 196 Q 198 172 228 158 Q 258 148 288 158 Q 318 168 348 182 Q 378 198 408 214"/>
+    <symbol id="t-pine" viewBox="-5 -1 10 15">
+      <path d="M0 11 L0 13 M-2.5 11 L2.5 11" stroke="#4a6848" stroke-width="0.7" fill="none"/>
+      <path d="M0 0 L3.8 8.5 L2.2 8.5 L3.2 11 L-3.2 11 L-2.2 8.5 L-3.8 8.5 Z" fill="#3d5a42" stroke="#2a4030" stroke-width="0.35"/>
+    </symbol>
+    <symbol id="t-oak" viewBox="-6 -1 12 14">
+      <line x1="0" y1="7" x2="0" y2="11" stroke="#4a6848" stroke-width="0.8"/>
+      <circle cx="0" cy="3.5" r="4.2" fill="#456844" stroke="#2e4828" stroke-width="0.35"/>
+    </symbol>
+    <symbol id="t-reed" viewBox="-2 0 4 12">
+      <path d="M0 12 Q0.8 8 0 4 Q-0.6 8 0 12" fill="none" stroke="#5a7a58" stroke-width="0.7"/>
+      <ellipse cx="0" cy="3" rx="1.2" ry="2" fill="#6a9060" opacity="0.7"/>
+    </symbol>
+    <filter id="map-soft-blur" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="4"/>
+    </filter>
+  </defs>
+
+  <rect width="560" height="380" fill="#141210"/>
+  <rect x="20" y="14" width="520" height="352" rx="8" fill="url(#map-panel-bg)" stroke="#3a3428" stroke-width="1.2"/>
+
+  <g class="map-parchment-inner">
+    <g stroke="#2e2a24" stroke-width="0.4" opacity="0.65">
+      <line x1="20" y1="102" x2="540" y2="102"/>
+      <line x1="20" y1="190" x2="540" y2="190"/>
+      <line x1="20" y1="278" x2="540" y2="278"/>
+      <line x1="150" y1="14" x2="150" y2="366"/>
+      <line x1="280" y1="14" x2="280" y2="366"/>
+      <line x1="410" y1="14" x2="410" y2="366"/>
+    </g>
+
+    <path d="M 36 48 L 524 48 L 524 130 L 480 122 L 400 112 L 320 108 L 240 112 L 160 122 L 80 138 L 36 148 Z" fill="#2a3d2c" opacity="0.75"/>
+    <path d="M 36 148 L 80 138 L 160 122 L 240 112 L 320 108 L 400 112 L 480 122 L 524 130 L 524 346 L 360 346 L 320 318 L 260 302 L 200 308 L 140 322 L 80 338 L 36 346 Z" fill="#322e28" opacity="0.55"/>
+    <path d="M 36 148 Q 64 118 104 124 Q 140 128 156 158 Q 166 188 146 218 Q 120 242 86 236 Q 56 230 44 200 Q 36 172 36 148 Z" fill="#3a5238" opacity="0.8"/>
+    <path d="M 280 250 Q 340 238 400 248 Q 460 258 524 268 L 524 346 L 360 346 L 300 318 L 280 290 Z" fill="#2a3d2c" opacity="0.65"/>
+
+    <g fill="none" stroke="#6a5e48" stroke-width="0.5" opacity="0.4">
+      <path d="M 60 290 Q 140 268 220 282 Q 300 296 380 280 Q 460 264 520 288"/>
+      <path d="M 50 310 Q 130 295 210 305 Q 290 315 370 302 Q 450 290 510 305"/>
+    </g>
+
+    <path d="M 72 210 Q 88 196 108 206 Q 128 218 148 204 Q 172 186 198 170 Q 224 154 252 162 Q 280 170 306 184 Q 332 198 358 212 Q 384 226 412 234 Q 434 238 458 232 L 462 240 Q 432 248 406 240 Q 378 228 350 214 Q 322 200 292 188 Q 262 176 232 168 Q 204 182 178 198 Q 152 214 128 224 Q 104 232 86 220 Q 68 208 74 218 Z" fill="url(#map-river-glow)" class="map-river-shimmer" opacity="0.88"/>
+    <path d="M 72 210 Q 88 196 108 206 Q 128 218 148 204 Q 172 186 198 170 Q 224 154 252 162 Q 280 170 306 184 Q 332 198 358 212 Q 384 226 412 234 Q 434 238 458 232" fill="none" stroke="#7ec8dc" stroke-width="1.2" opacity="0.65"/>
+
+    <!-- North grove — kept east of Eco-Feed label zone -->
+    <g opacity="0.95">
+      <use href="#t-pine" x="318" y="68" width="10" height="15"/>
+      <use href="#t-oak" x="348" y="62" width="12" height="14"/>
+      <use href="#t-pine" x="378" y="70" width="11" height="16"/>
+      <use href="#t-oak" x="408" y="58" width="12" height="14"/>
+      <use href="#t-pine" x="438" y="66" width="10" height="15"/>
+      <use href="#t-pine" x="468" y="54" width="11" height="16"/>
+      <use href="#t-oak" x="334" y="92" width="12" height="14"/>
+      <use href="#t-pine" x="364" y="88" width="10" height="15"/>
+      <use href="#t-oak" x="396" y="94" width="12" height="14"/>
+      <use href="#t-pine" x="428" y="86" width="10" height="15"/>
+      <use href="#t-pine" x="458" y="96" width="11" height="16"/>
+    </g>
+
+    <!-- South grove — below Moorland Row label -->
+    <g opacity="0.92">
+      <use href="#t-oak" x="308" y="252" width="12" height="14"/>
+      <use href="#t-pine" x="338" y="262" width="10" height="15"/>
+      <use href="#t-pine" x="368" y="248" width="11" height="16"/>
+      <use href="#t-oak" x="398" y="258" width="12" height="14"/>
+      <use href="#t-pine" x="428" y="252" width="10" height="15"/>
+      <use href="#t-pine" x="458" y="266" width="11" height="16"/>
+      <use href="#t-oak" x="478" y="248" width="12" height="14"/>
+    </g>
+
+    <g opacity="0.85">
+      <use href="#t-reed" x="54" y="182" width="4" height="12"/>
+      <use href="#t-reed" x="66" y="198" width="4" height="12"/>
+      <use href="#t-reed" x="58" y="214" width="4" height="12"/>
+    </g>
+
+    <path d="M 148 218 Q 178 198 208 178 Q 228 162 248 148" fill="none" stroke="#8a7860" stroke-width="1" stroke-dasharray="3 4" opacity="0.5"/>
+    <path d="M 248 148 Q 268 132 278 118 Q 288 108 298 102" fill="none" stroke="#8a7860" stroke-width="1" stroke-dasharray="3 4" opacity="0.45"/>
+
+    <g transform="translate(236, 112)" stroke="#8a8070" stroke-width="0.65" fill="#4a4438">
+      <rect x="0" y="4" width="22" height="12" rx="0.5"/>
+      <path d="M -2 4 L 11 0 L 24 4" fill="#3a3630"/>
+    </g>
+
+    <g transform="translate(400, 186)" stroke="#8a8070" stroke-width="0.55" fill="#4a4438">
+      <rect x="0" y="6" width="10" height="8"/><path d="M -1 6 L 5 2 L 11 6" fill="#3a3630"/>
+      <rect x="14" y="4" width="12" height="10"/><path d="M 13 4 L 20 0 L 27 4" fill="#3a3630"/>
+    </g>
+
+    <!-- Labels on top, each in a clear pocket -->
+    <g paint-order="stroke fill markers">
+      <text x="52" y="158" font-family="Lora, Georgia, serif" font-size="10" fill="#9ab898">Moor Meadow</text>
+
+      <text font-family="Lora, Georgia, serif" font-size="10" fill="#9ec8dc">
+        <textPath href="#map-moortail-name" startOffset="18%">Moortail</textPath>
+      </text>
+
+      <text x="248" y="106" text-anchor="middle" font-family="Source Sans 3, sans-serif" font-size="7.5" fill="#8a8070" letter-spacing="0.06em">ECO-FEED</text>
+
+      <text x="452" y="52" text-anchor="end" font-family="Lora, Georgia, serif" font-size="10" fill="#8a9888">Shadow Grove</text>
+
+      <text x="414" y="182" text-anchor="middle" font-family="Source Sans 3, sans-serif" font-size="7.5" fill="#8a8070" letter-spacing="0.06em">MOORLAND ROW</text>
+    </g>
+
+    <text x="40" y="38" font-family="Lora, serif" font-size="11" fill="#c9a85a" letter-spacing="0.1em">SHADOW GROVE COUNTY</text>
+    <line x1="40" y1="44" x2="220" y2="44" stroke="#4a4034" stroke-width="0.8"/>
+
+    <g transform="translate(500, 322)" opacity="0.85">
+      <circle r="16" fill="#2a2824" stroke="#5a9e5e" stroke-width="1"/>
+      <path d="M 0 -11 L 2.5 0 L 0 11 L -2.5 0 Z" fill="#5a9e5e" opacity="0.5"/>
+      <path d="M 0 -11 L 1.5 -1 L 0 0 L -1.5 -1 Z" fill="#7acc6a"/>
+      <text y="-20" text-anchor="middle" font-family="Source Sans 3, sans-serif" font-size="8" fill="#8a8070">N</text>
+    </g>
+
+    <g transform="translate(40, 328)" opacity="0.75">
+      <line x1="0" y1="0" x2="44" y2="0" stroke="#6b6358" stroke-width="0.9"/>
+      <line x1="0" y1="-3" x2="0" y2="3" stroke="#6b6358" stroke-width="0.9"/>
+      <line x1="44" y1="-3" x2="44" y2="3" stroke="#6b6358" stroke-width="0.9"/>
+    </g>
+
+    <ellipse class="map-mist" cx="92" cy="192" rx="36" ry="16" fill="#6a9eb8" opacity="0.08" filter="url(#map-soft-blur)"/>
+    <rect class="map-candlelight" x="20" y="14" width="520" height="352" rx="8" fill="#5a9e5e" opacity="0"/>
+  </g>
+</svg>
+  </div>
+  <div id="title-vignette"></div>
+  <div id="title-overlay">
+    <div id="title-caption">
+      <p class="series">Climatic Mysteries</p>
+      <h1>Moor's Tale</h1>
+    </div>
+    <button id="title-start" type="button">Begin</button>
+  </div>
+</div>
+
+<div id="app" class="prologue-hidden">
   <div id="scene">
+    <img id="scene-backdrop" alt="" aria-hidden="true">
     <div id="parallax-container"></div>
     <div id="atmosphere"></div>
     <canvas id="ambient-canvas"></canvas>
@@ -860,7 +1459,7 @@ html, body {
     </div>
     <div id="toolbar">
       <button class="tool-btn" id="btn-map" title="Map">Map</button>
-      <button class="tool-btn" id="btn-journal" title="Journal">Journal<span class="notif" id="journal-notif" style="display:none">0</span></button>
+      <button class="tool-btn locked" id="btn-journal" title="Journal">Journal<span class="notif" id="journal-notif" style="display:none">0</span></button>
       <button class="tool-btn" id="btn-inventory" title="Evidence">Evidence<span class="notif" id="inv-notif" style="display:none">0</span></button>
     </div>
   </div>
@@ -905,6 +1504,17 @@ html, body {
 </div>
 
 <script>
+// Resolve assets under /climatic-mysteries/ or any subpath
+const ASSET_BASE = (() => {
+  const path = location.pathname;
+  const slash = path.lastIndexOf("/");
+  return slash >= 0 ? path.slice(0, slash + 1) : "/";
+})();
+
+function resolveAssetUrl(relativePath) {
+  return ASSET_BASE + relativePath;
+}
+
 // ═══════════════════════════════════════════════════════════
 // GAME DATA
 // ═══════════════════════════════════════════════════════════
@@ -920,7 +1530,7 @@ const BIOMES = {
     tags: ["water", "community", "fenceline"],
     mood: [0.04, 0.05, 0.08],
     npcs: ["lina"],
-    images: ["estuary_edge_depth0", "estuary_edge_depth2", "estuary_edge_depth4"],
+    images: ["scenes/moortail_river_scene"],
     observations: [
       {
         name: "the waterline",
@@ -985,14 +1595,14 @@ const BIOMES = {
   ecofeed_yard: {
     name: "Eco-Feed Yard",
     description: {
-      0: "Forklifts, stacked pallets, and the smell of warm compost. Most of what they sell is legitimate fertilizer.",
+      0: "You are on the marked county perimeter lane—forklifts, stacked pallets, and rinse channels visible beyond the fence. Most of what they sell is legitimate fertilizer.",
       1: "The issue is not the bagged product. It is hose-down rinse water routed outdoors instead of captured.",
       3: "Everyday operations, everyday shortcuts, and a river that absorbs the paperwork gap."
     },
     tags: ["industrial", "labor", "runoff"],
     mood: [0.06, 0.05, 0.04],
     npcs: ["orlen"],
-    images: ["quiet_mill_depth0", "quiet_mill_depth1", "quiet_mill_depth3"],
+    images: ["scenes/ecofeed_yard_scene"],
     observations: [
       {
         name: "the loading bay",
@@ -1063,7 +1673,7 @@ const BIOMES = {
     tags: ["forest", "neighborhood", "paths"],
     mood: [0.03, 0.06, 0.04],
     npcs: [],
-    images: ["root_hollow_depth0", "root_hollow_depth2", "root_hollow_depth5"],
+    images: ["scenes/grove_border_scene"],
     observations: [
       {
         name: "the footpath",
@@ -1115,7 +1725,7 @@ const BIOMES = {
     tags: ["civic", "records", "community"],
     mood: [0.05, 0.05, 0.06],
     npcs: [],
-    images: ["council_square_depth0", "council_square_depth3", "council_square_depth5"],
+    images: ["scenes/moorland_row_scene"],
     observations: [
       {
         name: "the filings shelf",
@@ -1159,13 +1769,13 @@ const BIOMES = {
 };
 
 const EDGES = [
-  { from: "moortail_river", to: "ecofeed_yard", requires: {} },
+  { from: "moortail_river", to: "ecofeed_yard", requires: { knowledge: ["ecofeed_perimeter_ok"] } },
   { from: "moortail_river", to: "grove_border", requires: { knowledge: ["hidden_river_tracks"] } },
   { from: "ecofeed_yard", to: "moortail_river", requires: {} },
   { from: "ecofeed_yard", to: "moorland_row", requires: { eco_lens: 1 } },
   { from: "grove_border", to: "moortail_river", requires: {} },
   { from: "grove_border", to: "moorland_row", requires: { eco_lens: 2 } },
-  { from: "moorland_row", to: "ecofeed_yard", requires: {} },
+  { from: "moorland_row", to: "ecofeed_yard", requires: { knowledge: ["ecofeed_perimeter_ok"] } },
   { from: "moorland_row", to: "grove_border", requires: { knowledge: ["filings_data"] } }
 ];
 
@@ -1175,23 +1785,37 @@ const NPCS = {
     role: "riverbank sampler",
     backstory: "Lina is Elara's granddaughter. She stays polite but cool, carries old test strips, and files what she can through public channels instead of any council board spotlight.",
     preconditions: {},
-    refusal: "Lina gives a short nod. She has nothing new yet.",
+    refusal: "She gives a brief nod and returns to her sampling kit without comment.",
     lines: [
       {
         topic: "water",
         conditions: {},
         text: {
-          0: "Moortail looks calm today. Doesn't mean it's clean.",
-          2: "When folks say Moor's Tale, they mean the river keeps receipts.",
-          4: "You can track rinse windows by foam return and dissolved nitrogen spikes."
+          0: "Good morning. The public sampling point is marked on the bank if you need it.",
+          2: "The name is Moortail. Moor's Tale is what some older neighbors say. I use the map spelling.",
+          4: "Foam lines and nitrogen spikes track with upstream rinse windows. I log what repeats."
         },
         tags: ["water", "observation"],
-        effects: { trust_shift: { watershed_keepers: 0.06 } }
+        effects: { trust_shift: { watershed_keepers: 0.04 } }
+      },
+      {
+        topic: "eco-feed access",
+        conditions: { knowledge: ["insight_moortail_first"] },
+        text: "If you are trying to enter Eco-Feed's working yard, the front desk will send you away. County easement follows the north fence line. That is public ground if you are measuring water.",
+        tags: ["access", "civic"],
+        effects: {
+          unlock_knowledge: ["ecofeed_easement_known"],
+          journal_entry: {
+            text: "Lina said the county easement along Eco-Feed's north fence is public ground for water measurements—the front desk won't tell you that.",
+            tags: ["access", "civic"],
+            source: "conversation"
+          }
+        }
       },
       {
         topic: "trust and data",
         conditions: { trust: { watershed_keepers: 0.2 } },
-        text: "You keep showing up, so here's the sheet. Strip tests, conductivity, timestamps. Nothing fancy, but it's honest data.",
+        text: "You have been back several times. Here is the monitoring sheet. Strip tests, conductivity, timestamps. Use it or do not.",
         tags: ["trust", "data"],
         effects: {
           unlock_knowledge: ["water_quality_data"],
@@ -1205,7 +1829,7 @@ const NPCS = {
       {
         topic: "ecofeed plant",
         conditions: { knowledge: ["water_quality_data"], eco_lens: 1 },
-        text: "Eco-Feed's bags are mostly fine. That's why people defend them. The weak point is rinse handling, not the fertilizer label.",
+        text: "Most of their product line tests fine on paper. That is why the company keeps goodwill. The rinse channel is a separate story—and not one their brochures lead with.",
         tags: ["industry", "runoff"],
         effects: {
           trust_shift: { watershed_keepers: 0.06 },
@@ -1220,7 +1844,7 @@ const NPCS = {
       {
         topic: "filings",
         conditions: { knowledge: ["water_quality_data", "shore_dirt_evidence"], eco_lens: 2 },
-        text: "Check the filings shelf on Moorland Row. Soft wording, same problem. They call it temporary outdoor routing and move on.",
+        text: "Filings shelf on Moorland Row. Soft wording, same problem. They call it temporary outdoor routing and move on.",
         tags: ["filings", "civic"],
         effects: {
           unlock_knowledge: ["filings_hint"],
@@ -1234,7 +1858,7 @@ const NPCS = {
       {
         topic: "grandmother's journal",
         conditions: { knowledge: ["water_quality_data", "filings_data", "rinse_evidence"], trust: { watershed_keepers: 0.45 }, eco_lens: 3 },
-        text: "You saw her bench? Lina lets out a short bark laugh. 'She'd hate drama and ask for numbers.' She slides over a stapled packet. 'Freebie handout. Her journal pages and notes. Don't make it pretty; make it true.'",
+        text: "That bench is my grandmother's. She would have asked for numbers, not a scene. She sets down a stapled packet. Copy of her notes—handle it carefully.",
         tags: ["history", "trust", "data"],
         effects: {
           unlock_knowledge: ["elara_journal"],
@@ -1403,6 +2027,8 @@ const state = {
   observationInsightDepth: {},  // tracks deepest insight level recorded per observation key
   npcTalkedTopics: new Set(),   // tracks npc:topic combos
   introShown: false,
+  prologueDone: false,
+  journalUnlocked: false,
   journalPage: 0,
   newJournalCount: 0,
   lastJournalSeen: 0
@@ -1441,6 +2067,9 @@ function meetsRequirements(req) {
 function getRequirementReason(req) {
   if (req.knowledge) {
     const missing = req.knowledge.filter(k => !state.knowledge.includes(k));
+    if (missing.includes("ecofeed_perimeter_ok")) {
+      return "Eco-Feed front gate — visitors turned away";
+    }
     if (missing.length) return "Requires more knowledge";
   }
   if (req.eco_lens !== undefined && state.ecoLens < req.eco_lens) {
@@ -1462,6 +2091,10 @@ function addJournalEntry(entry) {
   state.journal.push({ ...entry, id, timestamp: Date.now() });
   state.newJournalCount++;
   updateJournalNotif();
+  if (!state.journalUnlocked) {
+    state.journalUnlocked = true;
+    document.getElementById("btn-journal").classList.remove("locked");
+  }
 }
 
 function applyEffects(effects) {
@@ -1539,8 +2172,8 @@ function enterBiome(biomeKey) {
   // Render navigation
   renderNavigation();
 
-  // Protagonist intro on first visit
-  if (!state.introShown) {
+  // Handoff after prologue — no repeat intro banner
+  if (!state.introShown && !state.prologueDone) {
     state.introShown = true;
     const intro = document.getElementById("protagonist-intro");
     intro.classList.add("visible");
@@ -1556,7 +2189,31 @@ function enterBiome(biomeKey) {
   setTimeout(() => document.getElementById("scene-overlay").classList.remove("scene-transition"), 800);
 }
 
+function biomeImageUrl(img) {
+  if (img.includes("/")) return resolveAssetUrl(`assets/${img}.png`);
+  return resolveAssetUrl(`assets/biomes/${img}.png`);
+}
+
+function setSceneBackdrop(biome) {
+  const backdrop = document.getElementById("scene-backdrop");
+  const mainImg = biome.images[0];
+  if (!mainImg) return;
+  const url = biomeImageUrl(mainImg);
+  backdrop.classList.remove("visible");
+  const preload = new Image();
+  preload.onload = () => {
+    backdrop.src = url;
+    backdrop.alt = biome.name + " scene";
+    backdrop.classList.add("visible");
+  };
+  preload.onerror = () => {
+    backdrop.removeAttribute("src");
+  };
+  preload.src = url;
+}
+
 function renderParallax(biome) {
+  setSceneBackdrop(biome);
   const container = document.getElementById("parallax-container");
   // Fade out old layers
   const oldLayers = container.querySelectorAll(".parallax-layer");
@@ -1569,7 +2226,7 @@ function renderParallax(biome) {
   biome.images.forEach((img, i) => {
     const layer = document.createElement("div");
     layer.className = "parallax-layer fading-out";
-    layer.style.backgroundImage = `url(assets/biomes/${img}.png)`;
+    layer.style.backgroundImage = `url(${biomeImageUrl(img)})`;
     layer.style.zIndex = i;
     // Parallax depth offset
     layer.dataset.depth = (i * 0.15).toFixed(2);
@@ -1744,6 +2401,62 @@ function showText(html) {
   td.classList.add("visible");
 }
 
+function grantEcoFeedPerimeter() {
+  if (!state.knowledge.includes("ecofeed_easement_known")) return;
+  if (!state.knowledge.includes("ecofeed_perimeter_ok")) {
+    state.knowledge.push("ecofeed_perimeter_ok");
+  }
+  showText(`<div class="text-reveal"><span class="speaker">Eco-Feed reception:</span> <span class="narration">"The county easement along the north fence—yes, that's marked for public access. You may walk that lane for water sampling. Stay outside operating areas and don't interrupt shifts."</span><div class="system-msg">Eco-Feed Yard is reachable via Travel.</div></div>`);
+  renderNavigation();
+}
+
+function ecoFeedGateReporterAttempt() {
+  if (!state.knowledge.includes("reporter_known_at_ecofeed")) {
+    state.knowledge.push("reporter_known_at_ecofeed");
+    addJournalEntry({
+      text: "Told Eco-Feed I was on assignment. They logged my name, handed me a communications card, and kept the yard closed.",
+      tags: ["industry", "access"],
+      source: "field notes"
+    });
+  }
+  showText(`<div class="text-reveal"><span class="speaker">Eco-Feed reception:</span> <span class="narration">"A student writer—how nice. Media requests go through our communications team. They'll reach out if there's a fit. In the meantime, our product catalog is online."</span><div class="system-msg">The working yard stays closed. You may need another way onto the perimeter.</div></div>`);
+}
+
+function showEcoFeedGate() {
+  const hasEasement = state.knowledge.includes("ecofeed_easement_known");
+  let html = `<div class="text-reveal"><span class="narration">The front office window shows a poster about sustainable agriculture. A staff member greets you with a practiced smile.</span><br><br><span class="speaker">Eco-Feed reception:</span> <span class="narration">"Hi there—thanks for stopping by! Our working yard isn't open for walk-in visits right now. We're focused on building a better experience for our customers and community partners. Can I help you find product information?"</span><div class="actions" style="margin-top:0.75rem">`;
+
+  if (hasEasement) {
+    html += `<button class="action-btn" type="button" id="gate-easement">Ask about the county easement along the north fence</button>`;
+  }
+  if (!state.knowledge.includes("reporter_known_at_ecofeed")) {
+    html += `<button class="action-btn" type="button" id="gate-reporter">Explain you're a student reporter covering the Moortail</button>`;
+  }
+  html += `<button class="action-btn" type="button" id="gate-leave">Leave for now</button></div></div>`;
+
+  showText(html);
+  if (hasEasement) {
+    document.getElementById("gate-easement").onclick = () => grantEcoFeedPerimeter();
+  }
+  const reporterBtn = document.getElementById("gate-reporter");
+  if (reporterBtn) reporterBtn.onclick = () => ecoFeedGateReporterAttempt();
+  document.getElementById("gate-leave").onclick = () => {
+    showText(`<span class="narration">You thank them and step back. The gate stays closed for now.</span>`);
+  };
+}
+
+function tryNavigateTo(edge) {
+  if (edge.to === "ecofeed_yard" && !state.knowledge.includes("ecofeed_perimeter_ok")) {
+    showEcoFeedGate();
+    return;
+  }
+  if (!meetsRequirements(edge.requires)) {
+    showText(`<span class="narration">${getRequirementReason(edge.requires)}</span>`);
+    return;
+  }
+  enterBiome(edge.to);
+}
+
 function renderNavigation() {
   const container = document.getElementById("nav-buttons");
   container.innerHTML = "";
@@ -1759,13 +2472,18 @@ function renderNavigation() {
     btn.className = "nav-btn" + (hasNew && canGo ? " has-new" : "");
 
     if (!canGo) {
-      btn.disabled = true;
-      const reason = getRequirementReason(edge.requires);
-      btn.title = reason;
-      btn.textContent = target.name + " \u{1F512}";
+      if (edge.to === "ecofeed_yard" && !state.knowledge.includes("ecofeed_perimeter_ok")) {
+        btn.textContent = target.name;
+        btn.onclick = () => tryNavigateTo(edge);
+      } else {
+        btn.disabled = true;
+        const reason = getRequirementReason(edge.requires);
+        btn.title = reason;
+        btn.textContent = target.name + " \u{1F512}";
+      }
     } else {
       btn.innerHTML = `${target.name}<span class="unread-dot"></span>`;
-      btn.onclick = () => enterBiome(edge.to);
+      btn.onclick = () => tryNavigateTo(edge);
     }
 
     container.appendChild(btn);
@@ -1814,6 +2532,7 @@ function updateInventoryNotif() {
 const ENTRIES_PER_PAGE = 4;
 
 function openJournal() {
+  if (!state.journalUnlocked) return;
   state.newJournalCount = 0;
   updateJournalNotif();
   document.getElementById("journal-overlay").classList.add("open");
@@ -2003,9 +2722,16 @@ function renderMap() {
 
     // Click to travel if adjacent and accessible
     const edge = EDGES.find(e => e.from === state.currentBiome && e.to === key);
-    if (edge && meetsRequirements(edge.requires)) {
+    if (edge && (meetsRequirements(edge.requires) || (key === "ecofeed_yard" && !state.knowledge.includes("ecofeed_perimeter_ok")))) {
       g.style.cursor = "pointer";
-      g.onclick = () => { closeMap(); enterBiome(key); };
+      g.onclick = () => {
+        closeMap();
+        if (key === "ecofeed_yard" && !state.knowledge.includes("ecofeed_perimeter_ok")) {
+          tryNavigateTo(edge);
+        } else {
+          enterBiome(key);
+        }
+      };
     }
 
     svg.appendChild(g);
@@ -2062,32 +2788,32 @@ let ambientAnimId = null;
 // Per-biome atmosphere config
 const BIOME_ATMOSPHERE = {
   moortail_river: {
-    particles: { type: "water", count: 40, color: "rgba(100,180,220,0.4)", sizeRange: [1, 3] },
-    fog: true, fogColor: "rgba(150,180,170,0.12)",
+    particles: { type: "water", count: 22, color: "rgba(120,190,220,0.28)", sizeRange: [1, 2.5] },
+    fog: false,
     rays: false,
     waterShimmer: true,
-    tint: "rgba(40,80,100,0.04)"
+    tint: "rgba(180,150,90,0.03)"
   },
   ecofeed_yard: {
-    particles: { type: "dust", count: 25, color: "rgba(200,180,140,0.35)", sizeRange: [1, 2.5] },
-    fog: true, fogColor: "rgba(160,150,120,0.1)",
+    particles: { type: "dust", count: 14, color: "rgba(210,190,150,0.22)", sizeRange: [0.8, 2] },
+    fog: false,
     rays: true,
     waterShimmer: false,
-    tint: "rgba(80,70,40,0.04)"
+    tint: "rgba(200,170,100,0.03)"
   },
   grove_border: {
-    particles: { type: "spore", count: 35, color: "rgba(120,200,140,0.4)", sizeRange: [1.5, 4] },
-    fog: true, fogColor: "rgba(80,120,80,0.04)",
+    particles: { type: "dust", count: 10, color: "rgba(160,190,140,0.18)", sizeRange: [0.8, 2] },
+    fog: false,
     rays: true,
     waterShimmer: false,
-    tint: "rgba(20,60,20,0.04)"
+    tint: "rgba(100,140,80,0.02)"
   },
   moorland_row: {
-    particles: { type: "dust", count: 15, color: "rgba(180,180,180,0.25)", sizeRange: [0.5, 2] },
+    particles: { type: "dust", count: 10, color: "rgba(200,195,180,0.18)", sizeRange: [0.5, 1.8] },
     fog: false,
     rays: false,
     waterShimmer: false,
-    tint: "rgba(60,60,70,0.03)"
+    tint: "rgba(180,170,150,0.02)"
   }
 };
 
@@ -2265,6 +2991,327 @@ window.addEventListener("resize", resizeAmbientCanvas);
 
 
 // ═══════════════════════════════════════════════════════════
+// PROLOGUE — bus → title → stop → rental → river
+// ═══════════════════════════════════════════════════════════
+
+const UNPACK_OBJECTS = [
+  {
+    id: "duffel",
+    label: "Duffel bag",
+    focus: { x: 46, y: 60, scale: 1.52 },
+    monologue: "Same duffel since freshman year. Still smells faintly of bus depot and rain."
+  },
+  {
+    id: "folder",
+    label: "Tip folder",
+    focus: { x: 58, y: 56, scale: 1.58 },
+    monologue: "Editor sent a tip folder: Eco-Feed rinse water may be reaching the Moortail. Grant clock is ticking."
+  },
+  {
+    id: "notebook",
+    label: "Field notebook",
+    focus: { x: 48, y: 68, scale: 1.62 },
+    monologue: "Field notebook for my first solo assignment. Student reporter kit — not a detective movie prop."
+  },
+  {
+    id: "bottle",
+    label: "Water bottle",
+    focus: { x: 34, y: 54, scale: 1.72 },
+    monologue: "I got this bottle as a gift a long time ago from my parents. They're waiting for me back in Minnesota."
+  },
+  {
+    id: "keys",
+    label: "Rental keys",
+    focus: { x: 24, y: 40, scale: 1.68 },
+    monologue: "Rental keys on the table. Short stay, long story if this piece lands."
+  }
+];
+
+const prologueState = {
+  step: "bus",
+  unpackSeen: new Set(),
+  monologueTimer: null,
+  actionsLocked: false,
+  actionsLockTimer: null,
+  titleLockTimer: null,
+  titleShownAt: 0,
+  backdropRequest: 0
+};
+
+function lockTitleStart(ms = 850) {
+  const startBtn = document.getElementById("title-start");
+  startBtn.disabled = true;
+  clearTimeout(prologueState.titleLockTimer);
+  prologueState.titleLockTimer = setTimeout(() => {
+    startBtn.disabled = false;
+  }, ms);
+}
+
+function lockPrologueActions(ms = 500) {
+  prologueState.actionsLocked = true;
+  clearTimeout(prologueState.actionsLockTimer);
+  prologueState.actionsLockTimer = setTimeout(() => {
+    prologueState.actionsLocked = false;
+  }, ms);
+}
+
+function preloadPrologueScene(imageKey) {
+  const img = new Image();
+  img.src = resolveAssetUrl(`assets/${imageKey}.png`);
+}
+
+function setQuest(text) {
+  const log = document.getElementById("quest-log");
+  document.getElementById("quest-text").textContent = text;
+  if (text) log.classList.add("visible");
+  else log.classList.remove("visible");
+}
+
+function showPrologueMonologue(text) {
+  const panel = document.getElementById("prologue-monologue");
+  clearTimeout(prologueState.monologueTimer);
+  panel.textContent = text;
+  panel.classList.add("visible");
+  prologueState.monologueTimer = setTimeout(() => {
+    panel.classList.remove("visible");
+  }, 5200);
+}
+
+function setPrologueBackdrop(imageKey, idleBus) {
+  const requestId = ++prologueState.backdropRequest;
+  const img = document.getElementById("prologue-backdrop");
+  const frame = document.getElementById("prologue-bus-frame");
+  frame.classList.remove("bus-idle");
+  const url = resolveAssetUrl(`assets/${imageKey}.png`);
+
+  if (img.dataset.sceneKey === imageKey && img.complete && img.naturalWidth > 0) {
+    img.classList.add("visible");
+    if (idleBus) frame.classList.add("bus-idle");
+    return;
+  }
+
+  img.classList.remove("visible");
+  const preload = new Image();
+  preload.onload = () => {
+    if (requestId !== prologueState.backdropRequest) return;
+    img.src = url;
+    img.dataset.sceneKey = imageKey;
+    img.classList.add("visible");
+    if (idleBus) frame.classList.add("bus-idle");
+  };
+  preload.onerror = () => {
+    if (requestId !== prologueState.backdropRequest) return;
+    img.src = url;
+    img.dataset.sceneKey = imageKey;
+    img.classList.add("visible");
+    if (idleBus) frame.classList.add("bus-idle");
+  };
+  preload.src = url;
+}
+
+function clearRentalScene() {
+  const frame = document.getElementById("prologue-bus-frame");
+  const prologue = document.getElementById("prologue");
+  const img = document.getElementById("prologue-backdrop");
+  frame.classList.remove("rental-unpack", "rental-enter", "item-focused");
+  prologue.classList.remove("rental-spotlight");
+  img.style.transform = "";
+  img.style.transformOrigin = "";
+  prologue.style.removeProperty("--spot-x");
+  prologue.style.removeProperty("--spot-y");
+}
+
+function beginRentalScene() {
+  const frame = document.getElementById("prologue-bus-frame");
+  const prologue = document.getElementById("prologue");
+  clearRentalScene();
+  frame.classList.add("rental-unpack", "rental-enter");
+  prologue.classList.add("rental-spotlight");
+  prologue.style.setProperty("--spot-x", "46%");
+  prologue.style.setProperty("--spot-y", "58%");
+  setTimeout(() => frame.classList.remove("rental-enter"), 1400);
+}
+
+function focusUnpackItem(obj) {
+  const frame = document.getElementById("prologue-bus-frame");
+  const prologue = document.getElementById("prologue");
+  const img = document.getElementById("prologue-backdrop");
+  const f = obj.focus;
+  if (!f) return;
+  frame.classList.add("item-focused");
+  prologue.style.setProperty("--spot-x", f.x + "%");
+  prologue.style.setProperty("--spot-y", f.y + "%");
+  img.style.transformOrigin = f.x + "% " + f.y + "%";
+  img.style.transform = "scale(" + f.scale + ")";
+  document.querySelectorAll(".prologue-choice-btn").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.unpackId === obj.id);
+  });
+}
+
+function resetUnpackFocus() {
+  const frame = document.getElementById("prologue-bus-frame");
+  const prologue = document.getElementById("prologue");
+  const img = document.getElementById("prologue-backdrop");
+  frame.classList.remove("item-focused");
+  img.style.transform = "";
+  img.style.transformOrigin = "";
+  prologue.style.setProperty("--spot-x", "46%");
+  prologue.style.setProperty("--spot-y", "58%");
+  document.querySelectorAll(".prologue-choice-btn.active").forEach(btn => btn.classList.remove("active"));
+}
+
+function unpackItem(obj) {
+  if (prologueState.actionsLocked) return;
+  focusUnpackItem(obj);
+  if (prologueState.unpackSeen.has(obj.id)) {
+    showPrologueMonologue(obj.monologue);
+    return;
+  }
+  prologueState.unpackSeen.add(obj.id);
+  showPrologueMonologue(obj.monologue);
+  renderUnpackChoices();
+  checkRentalProgress();
+}
+
+function renderUnpackChoices() {
+  const container = document.getElementById("unpack-choices");
+  container.innerHTML = "";
+  if (prologueState.step !== "rental") return;
+
+  UNPACK_OBJECTS.forEach((obj, index) => {
+    if (prologueState.unpackSeen.has(obj.id)) return;
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "prologue-choice-btn";
+    btn.dataset.unpackId = obj.id;
+    btn.textContent = obj.label;
+    btn.style.animationDelay = (index * 0.08) + "s";
+    btn.addEventListener("click", () => unpackItem(obj));
+    container.appendChild(btn);
+  });
+}
+
+function checkRentalProgress() {
+  if (prologueState.step !== "rental") return;
+  const btn = document.getElementById("prologue-btn");
+  if (prologueState.unpackSeen.size >= 3) {
+    setQuest("Head to the Moortail riverbank");
+    btn.textContent = "Head to the Moortail";
+    btn.disabled = false;
+    btn.style.display = "";
+    resetUnpackFocus();
+  } else {
+    btn.textContent = `Unpack your things (${prologueState.unpackSeen.size}/3)`;
+    btn.disabled = true;
+    btn.style.display = "";
+  }
+}
+
+function showPrologueStep(step) {
+  clearRentalScene();
+  prologueState.step = step;
+  document.getElementById("prologue").dataset.step = step;
+  document.getElementById("title-screen").classList.remove("visible", "fading-out");
+  document.getElementById("prologue").classList.add("active");
+  document.getElementById("prologue-monologue").classList.remove("visible");
+  document.getElementById("unpack-choices").innerHTML = "";
+  lockPrologueActions();
+
+  const title = document.getElementById("prologue-title");
+  const desc = document.getElementById("prologue-desc");
+  const btn = document.getElementById("prologue-btn");
+
+  if (step === "bus") {
+    setQuest("");
+    setPrologueBackdrop("scenes/bus_interior_scene", true);
+    title.textContent = "On the county bus";
+    desc.textContent = "Diesel idle, window glare, last leg into Shadow Grove County. Your rental is one stop away.";
+    btn.textContent = "Get off here";
+    btn.disabled = false;
+    btn.style.display = "";
+    btn.onclick = () => {
+      if (prologueState.actionsLocked) return;
+      lockPrologueActions(900);
+      showTitleCard();
+    };
+    return;
+  }
+
+  if (step === "bus_stop") {
+    setQuest("Go to your rental and unpack");
+    setPrologueBackdrop("scenes/bus_stop_scene", false);
+    title.textContent = "Shadow Grove County";
+    desc.textContent = "The bus pulls away. County sign, warm pavement, your bag on your shoulder.";
+    btn.textContent = "Walk to the rental";
+    btn.disabled = false;
+    btn.style.display = "";
+    btn.onclick = () => {
+      if (prologueState.actionsLocked) return;
+      showPrologueStep("rental");
+    };
+    return;
+  }
+
+  if (step === "rental") {
+    setQuest("Go to your rental and unpack");
+    setPrologueBackdrop("scenes/rental_unpack_scene", false);
+    title.textContent = "Short-term rental";
+    desc.textContent = "Choose what to set out. The room holds on each thing while Maren thinks.";
+    beginRentalScene();
+    renderUnpackChoices();
+    checkRentalProgress();
+    btn.onclick = () => {
+      if (prologueState.actionsLocked) return;
+      finishPrologue();
+    };
+    return;
+  }
+}
+
+function showTitleCard() {
+  prologueState.step = "title";
+  prologueState.titleShownAt = Date.now();
+  document.getElementById("prologue").classList.remove("active");
+  preloadPrologueScene("scenes/bus_stop_scene");
+  const title = document.getElementById("title-screen");
+  title.classList.add("visible");
+  lockTitleStart(900);
+}
+
+function advanceFromTitleCard() {
+  if (Date.now() - prologueState.titleShownAt < 900) return;
+  const title = document.getElementById("title-screen");
+  const startBtn = document.getElementById("title-start");
+  if (startBtn.disabled) return;
+  startBtn.disabled = true;
+  title.classList.add("fading-out");
+  setTimeout(() => {
+    title.classList.remove("visible", "fading-out");
+    startBtn.disabled = false;
+    showPrologueStep("bus_stop");
+  }, 1850);
+}
+
+function finishPrologue() {
+  if (prologueState.step === "rental" && prologueState.unpackSeen.size < 3) return;
+  state.prologueDone = true;
+  state.introShown = true;
+  setQuest("Explore the Moortail riverbank");
+
+  document.getElementById("prologue").classList.remove("active");
+  document.getElementById("app").classList.remove("prologue-hidden");
+  updateEcoLens();
+  enterBiome("moortail_river");
+  resizeAmbientCanvas();
+}
+
+function initPrologue() {
+  document.getElementById("title-start").onclick = advanceFromTitleCard;
+  showPrologueStep("bus");
+}
+
+
+// ═══════════════════════════════════════════════════════════
 // PARALLAX MOUSE EFFECT
 // ═══════════════════════════════════════════════════════════
 
@@ -2290,6 +3337,7 @@ document.getElementById("btn-journal").onclick = openJournal;
 document.getElementById("intro-dismiss").onclick = () => {
   document.getElementById("protagonist-intro").classList.remove("visible");
 };
+
 document.getElementById("journal-close").onclick = closeJournal;
 document.getElementById("journal-overlay").onclick = (e) => { if (e.target === e.currentTarget) closeJournal(); };
 document.getElementById("page-prev").onclick = () => { state.journalPage--; renderJournalPage(); };
@@ -2316,13 +3364,9 @@ document.addEventListener("keydown", (e) => {
 // INIT
 // ═══════════════════════════════════════════════════════════
 
-updateEcoLens();
-enterBiome("moortail_river");
-
 window.addEventListener("load", () => {
   resizeAmbientCanvas();
-  const cfg = BIOME_ATMOSPHERE[state.currentBiome]?.particles;
-  if (cfg) spawnParticles(cfg);
+  initPrologue();
 });
 
 </script>

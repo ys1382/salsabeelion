@@ -39,7 +39,7 @@ if __name__ == "__main__":
     else:
         scheme = "http"
     addr = BIND or "0.0.0.0"
-    print(f"Serving Boe at {scheme}://{addr}:{PORT}")
+    print(f"Serving Climatic Mysteries at {scheme}://{addr}:{PORT}")
     try:
         server.serve_forever()
     except KeyboardInterrupt:

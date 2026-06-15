@@ -1,18 +1,18 @@
 #!/usr/bin/env bash
-# Promote staged Boe overhaul files into live boe/ per a MANIFEST.json.
-# Usage: bash boe/scripts/complete-overhaul.sh boe/overhaul/MANIFEST.json
+# Promote staged Climatic Mysteries overhaul files into live climaticMysteries/ per a MANIFEST.json.
+# Usage: bash climaticMysteries/scripts/complete-overhaul.sh climaticMysteries/overhaul/MANIFEST.json
 set -euo pipefail
 
 if [[ $# -lt 1 ]]; then
   echo "Usage: $0 <manifest.json>" >&2
-  echo "Example: $0 boe/overhaul/MANIFEST.json" >&2
+  echo "Example: $0 climaticMysteries/overhaul/MANIFEST.json" >&2
   exit 1
 fi
 
 MANIFEST_INPUT="$1"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-BOE_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-REPO_ROOT="$(cd "$BOE_ROOT/.." && pwd)"
+CM_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+REPO_ROOT="$(cd "$CM_ROOT/.." && pwd)"
 
 if [[ "$MANIFEST_INPUT" = /* ]]; then
   MANIFEST="$MANIFEST_INPUT"
@@ -60,20 +60,20 @@ fi
 
 STAMP="$(date +%Y-%m-%d)"
 SAFE_LABEL="$(echo "$LABEL" | tr ' /' '__' | tr -cd '[:alnum:]_.-')"
-ARCHIVE_DIR="$BOE_ROOT/_archive/pre-promote-${STAMP}-${SAFE_LABEL}"
+ARCHIVE_DIR="$CM_ROOT/_archive/pre-promote-${STAMP}-${SAFE_LABEL}"
 
 if [[ "$ARCHIVE_BEFORE" == "1" ]]; then
   mkdir -p "$ARCHIVE_DIR"
-  echo "Archiving current live boe/ -> $ARCHIVE_DIR ..."
-  rsync -a --exclude='_archive/' --exclude='overhaul/' "$BOE_ROOT/" "$ARCHIVE_DIR/"
+  echo "Archiving current live climaticMysteries/ -> $ARCHIVE_DIR ..."
+  rsync -a --exclude='_archive/' --exclude='overhaul/' "$CM_ROOT/" "$ARCHIVE_DIR/"
   cp -f "$MANIFEST" "$ARCHIVE_DIR/MANIFEST-used.json"
 fi
 
 echo "Promoting from manifest: $MANIFEST"
 while IFS=$'\t' read -r FROM_REL TO_REL; do
   [[ -z "$FROM_REL" ]] && continue
-  FROM="$BOE_ROOT/$FROM_REL"
-  TO="$BOE_ROOT/$TO_REL"
+  FROM="$CM_ROOT/$FROM_REL"
+  TO="$CM_ROOT/$TO_REL"
   if [[ ! -e "$FROM" ]]; then
     echo "Missing source (from): $FROM_REL" >&2
     exit 1
@@ -89,7 +89,7 @@ while IFS=$'\t' read -r FROM_REL TO_REL; do
 done <<< "$PROMOTE_LINES"
 
 if [[ "$DEPLOY" == "1" ]]; then
-  echo "Deploying to server (boe/scripts/deploy.sh) ..."
+  echo "Deploying to server (climaticMysteries/scripts/deploy.sh) ..."
   bash "$SCRIPT_DIR/deploy.sh"
 else
   echo "Skipping deploy (manifest deploy: false)."
