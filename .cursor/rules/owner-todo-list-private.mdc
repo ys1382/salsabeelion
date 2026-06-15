@@ -1,0 +1,26 @@
+---
+description: "Add to my todo list" goes in roadmap/todo markdown — never on the live site (halalit/www/ or other deployed www).
+alwaysApply: true
+---
+
+# Owner todo list — on the list, not on the site
+
+When the owner asks to **add to my todo list**, **pin for later**, **add to Halalit todo**, **to-do ideas to pin**, or any close variation:
+
+## Do
+
+- Append to the project **todo / roadmap markdown** (for Halalit: `halalit/HALALIT-ROADMAP-AND-TODO.md`, under **Your additions**).
+- Use checkboxes `[ ]` / `[x]` and short headings.
+- Confirm in chat that it was added to their todo list.
+
+## Do not
+
+- Put those items on the **live reader-facing site**: `halalit/www/`, other kids sites’ `www/`, hub `www/`, or anything **rsynced/deployed** by `top/scripts/deploy-kids-sites.sh` — unless the owner explicitly asks to **build or ship** that feature on the site in the same message.
+
+## Optional (git-private only)
+
+- If the owner says the pin must **not** be committed to git either, use `halalit/HALALIT-OWNER-TODO.local.md` (`*.local.md` is gitignored) instead of the roadmap file.
+
+## Halalit
+
+Read `HALALIT-ROADMAP-AND-TODO.md` for planning; verbal “add to my todo list” → that file, **not** `www/`.

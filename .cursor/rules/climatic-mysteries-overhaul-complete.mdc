@@ -1,0 +1,44 @@
+---
+description: Climatic Mysteries — when owner says complete/ship the overhaul with a manifest file, promote staging to live climaticMysteries/ and optionally deploy
+alwaysApply: true
+---
+
+# Climatic Mysteries — complete the overhaul (manifest-driven)
+
+## When this applies
+
+Owner says to **complete**, **ship**, or **promote** the **Climatic Mysteries overhaul**, and names a **manifest file** (path or filename), e.g.:
+
+- *Complete the overhaul now with `climaticMysteries/overhaul/MANIFEST.json`*
+- *Ship the Climatic Mysteries overhaul using summer/MANIFEST.json*
+
+**Do not ask what they mean.** Run the workflow below.
+
+## What the manifest is
+
+JSON under `climaticMysteries/overhaul/` (see `climaticMysteries/overhaul/MANIFEST.example.json` and `climaticMysteries/overhaul/README.md`).
+
+- `promote`: list of `{ "from", "to" }` paths **relative to `climaticMysteries/`**
+- `archive_before` (default true): snapshot live `climaticMysteries/` to `climaticMysteries/_archive/pre-promote-<date>-<label>/`
+- `deploy` (default false in example, often true when shipping): run `climaticMysteries/scripts/deploy.sh` after promote
+- `label`: short name for the archive folder
+
+Staging work lives in `climaticMysteries/overhaul/` and is **not** live until promote.
+
+## Agent steps (same turn)
+
+1. Resolve the manifest path (repo-relative; default area `climaticMysteries/overhaul/`).
+2. Read it; if `promote` is empty or sources missing, report clearly and stop.
+3. From **repo root**, run:
+   `bash climaticMysteries/scripts/complete-overhaul.sh <manifest-path>`
+4. Summarize: label, what was promoted, archive path if any, whether deploy ran.
+5. **Do not** delete `climaticMysteries/overhaul/` unless the owner explicitly asks.
+
+## Overrides (only if owner says so in the same message)
+
+- *don't deploy* / *local only* → edit manifest `deploy` to false for that run, or pass intent so deploy is skipped.
+- *skip archive* → set `archive_before` false for that run.
+
+## Not an overhaul complete
+
+Edits directly in live `climaticMysteries/app.html` (outside `overhaul/`) are normal site work — use `climaticMysteries/scripts/deploy.sh` only, not this flow.

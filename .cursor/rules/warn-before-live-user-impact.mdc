@@ -1,0 +1,57 @@
+---
+description: Before any deploy — tell owner if it will mess with readers; then deploy only when they asked
+alwaysApply: true
+---
+
+# Warn before live user impact
+
+Match warnings to **who can see the site** and **what could touch reader progress or books**.
+
+## Site tiers
+
+**Owner-only** (basically only you): Maestro's (`/maestros/`), envDyst (`/envdyst/`), Climatic Mysteries (`/climatic-mysteries/`). Low reader risk.
+
+**Public** (real readers): Halalit (`/halalit/`), Crocheter (`/crocheter/`), oddtrove.art hub when served.
+
+## Deploy check — always before running deploy
+
+**Every time** deploy is about to run — including when the owner just said **deploy** / **deploy now** / **ship it** — give a short **Deploy check** **first**, then run the script **in the same turn** if they asked to deploy.
+
+Do **not** run deploy silently. Do **not** skip the check because they said deploy.
+
+**Deploy check** (plain English, 3–5 lines max):
+
+1. **Verdict** — **Won't mess with readers** / **Minor blip only** / **May affect what readers see** (pick one; say why)
+2. **What ships** — which site(s) and the kind of change (vet rules, copy, owner-only, accounts, etc.)
+3. **Reader data** — shelves & Halalit progress on device **stay** unless you changed storage keys; Crocheter server sync called out if relevant
+4. **If "May affect"** — one line on effect (e.g. Book Quest won't recommend X after refresh; Bookcheck shows new note; ~1–2s outage during restart)
+
+Then deploy (if they asked) or ask **deploy now or local only?** (if they didn't).
+
+### High-impact changes (usually "May affect what readers see")
+
+- Halalit vetting & shelf rules — `halalit-curated-shelf-warnings.js`, `halalit-family-shelf-policy.js`, `halalit-bookquest-age-ratings.js`, Book Quest rec lists
+- Reader progress & saves — localStorage keys, Book Quest state, import/series logic, Crocheter sync keys
+- Accounts — Crocheter auth, sign-up toggles, `/api/auth/`
+- Routes, deleted pages, nginx, auth gates
+
+**Halalit vet deploy:** personal shelves **not wiped**; recommendations & Bookcheck **do** update after refresh; cover clicks on existing shelf **fine**; brief restart blip possible.
+
+### Usually "Minor blip only" or "Won't mess"
+
+- Owner-only `www/` changes (no public paths in the rsync set)
+- Public copy/CSS/layout with no shelf/vet/progress/account changes
+- Roster markdown only with no `halalit/www/` change → **no deploy needed**; say so
+
+## When owner did NOT ask to deploy
+
+Do **not** deploy. Give Deploy check if relevant, then ask **deploy now or local only?**
+
+## When owner said "local only" / "don't deploy"
+
+No deploy for the rest of the conversation unless they later say deploy.
+
+## Safe without Deploy check
+
+- Edits that stay local (no deploy)
+- Private files only (`halalit/.cursor/private/`, roadmap, My TBR)

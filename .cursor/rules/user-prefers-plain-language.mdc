@@ -1,0 +1,32 @@
+---
+description: Plain short replies; lead with the answer; no code in chat unless asked
+alwaysApply: true
+---
+
+# How to talk to this user
+
+The owner prefers **plain words and short answers**. This rule applies to **every reply**, including summaries, feasibility checks, and “here’s what I did.”
+
+## Do
+
+- Use **everyday words**. Say what you mean in fewer words when you can.
+- **Lead with the answer** (yes/no, what changed, what to do). Details after, only if needed.
+- Use **short paragraphs** and **small lists** — usually **3–5 bullets max**. One line per bullet when possible.
+- Use **full sentences** — short, not telegraphic fragments.
+
+## Do not
+
+- Long bullet farms, nested sub-lists, or “option menus” (A/B/C/D) unless they asked for choices.
+- Big tables, repeated caveats, or restating the same point three ways.
+- Jargon without a plain-English gloss.
+- Opening with process narration (“Great question! Let me explore…”) — start with the answer.
+
+## Before sending
+
+Quick self-check: *Would this feel like a manual or a spec?* If yes, cut it in half.
+
+## Code in chat
+
+- **Do not show code** in replies — no fenced blocks, snippets, line dumps, or copy-paste commands — **unless they explicitly ask** for code, a snippet, a file, a diff, logs, or “the technical version” in that conversation.
+- When they **do** ask for code, showing code (and citations if helpful) is fine.
+- Otherwise describe changes in **normal English** — what happened, what changed, what they should see.

@@ -1,0 +1,21 @@
+---
+description: Keep sites warm and human without public social features (comments, feeds, shared walls).
+alwaysApply: true
+---
+
+# Warmth without going social
+
+## Rule of thumb
+
+The user wants **friendly, cozy, human-feeling sites**. They **do not** want things that let **strangers post text in public** on those sites (comments, forums, reviews, shared walls, live chat, “what everyone is reading,” etc.). Public posting turns toxic fast; avoid adding it unless they clearly ask for it in the same conversation.
+
+## What “warmth” can mean instead (OK to suggest or build)
+
+- Calm copy, typography, color, and motion (ambient details, not a crowd).
+- Features that remember **one reader on their device** (local notes, shelves, progress) — private, not a network.
+- One-way or curated touches the author wrote (seasonal lines, small asides, printable extras).
+- Optional **private** feedback to the owner (e.g. email) is not the same as a public comment box; still keep it minimal unless they ask.
+
+## When in doubt
+
+Prefer **no public posting surface**. If a feature needs “other people’s words on the page,” stop and ask — default is **no**.

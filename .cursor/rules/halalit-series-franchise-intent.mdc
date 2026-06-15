@@ -1,0 +1,10 @@
+---
+description: Halalit series/catalog — one family-friendly popular franchise by default
+alwaysApply: true
+---
+
+# Halalit — series and catalog intent
+
+When Halalit (or agents working on it) resolves **series-style imports** or other **ambiguous catalog searches** for the reader, assume they mean **one** coherent, **family-friendly** “main” franchise or listing — the strongest mainstream match that fits Halalit’s **all-ages** tone — **not** a mix of unrelated IPs, self-help, novelty merch, or alternate spin-offs unless the reader clearly asks for breadth.
+
+Prefer **popularity / catalog signal** (editions, relevance, clustering) over pulling every substring match. If the product should merge multiple franchises or stay exhaustive, the reader must say so in that conversation.

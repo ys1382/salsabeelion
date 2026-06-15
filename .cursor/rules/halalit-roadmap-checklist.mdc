@@ -1,0 +1,19 @@
+---
+description: Halalit roadmap and todo — read and maintain halalit/HALALIT-ROADMAP-AND-TODO.md when Book Quest, Bookcheck, or Halalit product work is in scope.
+alwaysApply: true
+---
+
+# Halalit roadmap & todo
+
+**When to use:** Only when the conversation is about **Halalit** — the site, Book Quest, Bookcheck, files under `halalit/`, or Halalit product/planning. If unrelated, ignore this rule.
+
+**Single source of truth:** `halalit/HALALIT-ROADMAP-AND-TODO.md`
+
+1. **Read** that file at the start of Halalit planning or implementation.
+2. **Roadmap** (product direction): bring those ideas into discussion and design; do not drop them.
+3. **Active tasks:** update checkboxes (`[ ]` → `[x]`) when work is completed; add tasks when the user asks or agrees to a follow-up.
+4. **Owner says “add to my todo list” (or similar):** append under **Your additions** here — see `owner-todo-list-private.mdc` (**not** on `halalit/www/`).
+5. Do not delete the **Your additions** section.
+6. No public comment walls for feedback; private / curated patterns only (see warmth-without-social if present).
+
+If the user only asks for todo status, read this file (and `HALALIT-OWNER-TODO.local.md` only if they use git-private pins) and summarize — no code required.

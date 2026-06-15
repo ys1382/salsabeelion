@@ -1,0 +1,26 @@
+---
+description: Kids-site deploy — only after owner confirms; warn about live reader impact first
+alwaysApply: true
+---
+
+# Kids sites — deploy after owner OK
+
+When **kids static sites** change (paths rsynced by `top/scripts/deploy-kids-sites.sh`), **do not deploy automatically**.
+
+Follow **`warn-before-live-user-impact`**: give a **Deploy check** (will it mess with readers?) before running the script.
+
+**Deploy only when** the owner clearly says **deploy**, **deploy now**, **ship it**, or **yes** — but **always** the Deploy check **first in the same turn**, then run deploy.
+
+From **repo root** when approved:
+
+```bash
+bash top/scripts/deploy-kids-sites.sh
+```
+
+**Usually touched paths:** `maestrosOdyssey/www/`, `crocheter/www/`, `envDyst/www/`, `halalit/www/`, `top/directory/www/` (hub), `top/_shared/serve_static_https.py`.
+
+**Halalit:** Same rule for `halalit/www/`. `halalit/.cursor/private/` design-notes are local-only and never deployed.
+
+If SSH or the script fails, say so clearly and leave the command for a retry.
+
+For edits that **do not** affect those deploy paths, skip deploy.

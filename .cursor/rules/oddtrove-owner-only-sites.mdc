@@ -1,0 +1,29 @@
+---
+description: oddtrove.art — Halalit and Crocheter public; other kids paths owner-only
+alwaysApply: true
+---
+
+# Odd Trove — public vs owner-only
+
+## Public (no login)
+
+- https://oddtrove.art/ → site hub (HalaLit + Crocheter links)
+- https://oddtrove.art/halalit/
+- https://oddtrove.art/crocheter/ → **account signup/sign-in required** (app gate; hub links to signup)
+
+## Owner-only (HTTP basic auth on nginx)
+
+- `/maestros/`, `/envdyst/`, `/climatic-mysteries/`
+- Directory hub at `/` is **not** served (404 except root redirect to Halalit)
+
+## When the owner asks to open a private site (envDyst, Maestro's, Climatic Mysteries)
+
+1. Read **`ODDTROVE-OWNER-ACCESS.local.md`** at the **repo root** (gitignored) for username, password, and URLs.
+2. Tell them the URL and that the browser will prompt for login — do **not** paste the password in chat unless they explicitly ask for it in that conversation.
+3. Do **not** remove nginx auth or expose backends on `157.230.130.12:807x` to “make it public” **unless the owner explicitly asks** in that conversation (e.g. Crocheter went public after accounts shipped).
+4. To **rotate** credentials: `ODDTROVE_ROTATE_AUTH=1 bash top/scripts/setup-oddtrove-owner-auth.sh` then deploy nginx if config changed.
+
+## Deploy
+
+- Nginx: `top/nginx/oddtrove.art.conf` → server `/etc/nginx/sites-available/oddtrove.art`, `nginx -t && systemctl reload nginx`
+- Static sites: `bash top/scripts/deploy-kids-sites.sh` (backends bind **127.0.0.1** only)

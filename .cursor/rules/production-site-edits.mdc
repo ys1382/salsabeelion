@@ -1,0 +1,23 @@
+---
+description: Production site edits — minimal, preserve behavior, deploy on request
+alwaysApply: true
+---
+
+# Modifying existing production websites
+
+This repo ships real static sites. Unless the user **explicitly approves** removal or replacement in the same conversation, agents must **not** delete, rename, or overwrite existing code, sections, UI, copy, styling, routes, APIs, environment variables, or deployment configuration.
+
+- Preserve existing behavior unless the task requires changing it.
+- Make the **smallest, most targeted** edits; no unrelated refactors, redesigns, or cleanup.
+- No placeholder or fake functionality; if uncertain, **ask** before changing architecture or removing anything.
+- **Before** editing: state which files or areas will change and why.
+- **After** editing: summarize what changed factually.
+- If the request cannot be met as stated, say so clearly instead of implying completion.
+
+## Deployment
+
+Follow **`warn-before-live-user-impact`**: **Deploy check** first (will it mess with readers?), then deploy when the owner asked.
+
+When the user says **deploy** or **deploy now**, give the Deploy check, then run deploy immediately in the same turn. Do not add extra improvements before deploy unless required to fix a failure. If deploy fails, report the exact error and propose the smallest fix.
+
+For kids static sites, deploy from repo root with `bash top/scripts/deploy-kids-sites.sh` only after that OK (see `kids-sites-immediate-deploy`).

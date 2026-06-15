@@ -1,0 +1,29 @@
+---
+description: >-
+  Check with the user before deleting any significant content or feature
+  (applies to all work in this repository).
+alwaysApply: true
+---
+
+# Ask before deleting significant content or features
+
+**Rule:** Check with the user before deleting any significant content or feature.
+
+Do not remove or strip meaningful behavior, copy, or structure without **explicit confirmation in the same conversation** (unless the user already asked you to remove that exact thing).
+
+## What counts as significant (ask first)
+
+- User-visible text, instructions, or instructional content
+- Whole pages, major sections, routes, or navigation entries
+- Code that implements a **feature** (UI behavior, APIs, scripts, styling that defines layout or branding)
+- Shared or referenced assets, data, config, or helpers other parts of the project rely on
+- Tests, tooling, or scripts that affect how the project runs or is verified
+
+## What you can remove without asking
+
+- Obvious mistakes you just introduced (duplicate lines, broken markup, wrong paste)
+- Truly unused dead code **only if** you can show it is unreferenced in the same change (e.g. orphaned import)
+
+## How to ask
+
+State briefly what you plan to delete and why, then wait for approval. If unsure whether something is significant, **treat it as significant** and ask.
