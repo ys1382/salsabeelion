@@ -604,12 +604,17 @@ html, body {
   to { transform: scale(1.05); }
 }
 
+#prologue-bus-frame.rental-unpack.item-focused {
+  background: #141210;
+}
+
 #prologue-bus-frame.rental-unpack.item-focused #prologue-backdrop {
   animation: none;
   filter: none;
-  object-position: center;
+  object-fit: contain;
+  object-position: center center;
   transform: none;
-  transition: opacity 0.5s ease;
+  transition: opacity 0.45s ease;
 }
 
 #prologue[data-step="rental"] #prologue-vignette {
@@ -3371,7 +3376,8 @@ function focusUnpackItem(obj) {
   hideScenePin();
   img.style.transform = "";
   img.style.transformOrigin = "";
-  img.style.objectPosition = "center";
+  img.style.objectFit = "contain";
+  img.style.objectPosition = "center center";
   setPrologueBackdrop(obj.closeup, false);
 
   document.querySelectorAll(".prologue-choice-btn").forEach(btn => {
@@ -3386,6 +3392,7 @@ function resetUnpackFocus() {
   hideScenePin();
   img.style.transform = "";
   img.style.transformOrigin = "";
+  img.style.objectFit = "";
   img.style.objectPosition = "";
   setPrologueBackdrop(RENTAL_UNPACK_SCENE, false);
   document.querySelectorAll(".prologue-choice-btn.active").forEach(btn => btn.classList.remove("active"));

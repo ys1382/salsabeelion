@@ -1,0 +1,42 @@
+{
+  "duffel": {
+    "w": 702,
+    "h": 468,
+    "focusX": 50.0,
+    "focusY": 50.0,
+    "centerX": 750,
+    "centerY": 790
+  },
+  "folder": {
+    "w": 672,
+    "h": 448,
+    "focusX": 50.0,
+    "focusY": 50.0,
+    "centerX": 960,
+    "centerY": 800
+  },
+  "notebook": {
+    "w": 492,
+    "h": 328,
+    "focusX": 50.0,
+    "focusY": 50.0,
+    "centerX": 770,
+    "centerY": 860
+  },
+  "bottle": {
+    "w": 732,
+    "h": 488,
+    "focusX": 50.0,
+    "focusY": 50.0,
+    "centerX": 570,
+    "centerY": 780
+  },
+  "keys": {
+    "w": 1272,
+    "h": 848,
+    "focusX": 50.0,
+    "focusY": 50.0,
+    "centerX": 900,
+    "centerY": 470
+  }
+}
