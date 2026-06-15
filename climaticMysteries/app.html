@@ -607,7 +607,9 @@ html, body {
 #prologue-bus-frame.rental-unpack.item-focused #prologue-backdrop {
   animation: none;
   filter: none;
-  transition: transform 1.35s cubic-bezier(0.4, 0, 0.2, 1), object-position 1.35s cubic-bezier(0.4, 0, 0.2, 1);
+  object-position: center;
+  transform: none;
+  transition: opacity 0.5s ease;
 }
 
 #prologue[data-step="rental"] #prologue-vignette {
@@ -3177,36 +3179,37 @@ window.addEventListener("resize", resizeAmbientCanvas);
 // PROLOGUE — bus → title → stop → rental → river
 // ═══════════════════════════════════════════════════════════
 
-// Unpack focus: mask centroids on rental_unpack_scene (1536×1024). See .cursor/rules/climatic-mysteries-unpack-camera.mdc
+// Unpack close-ups: crops from rental_unpack_scene (same art). Regen: scripts/build-unpack-closeups.py
+const RENTAL_UNPACK_SCENE = "scenes/rental_unpack_scene";
 const UNPACK_OBJECTS = [
   {
     id: "duffel",
     label: "Duffel bag",
-    focus: { x: 48.8, y: 77.1, scale: 2.05 },
+    closeup: "scenes/unpack_closeups/duffel",
     monologue: "Same duffel since freshman year. Still smells faintly of bus depot and rain."
   },
   {
     id: "folder",
     label: "Tip folder",
-    focus: { x: 62.5, y: 78.1, scale: 2.10 },
+    closeup: "scenes/unpack_closeups/folder",
     monologue: "Editor sent a tip folder: Eco-Feed rinse water may be reaching the Moortail. Grant clock is ticking."
   },
   {
     id: "notebook",
     label: "Field notebook",
-    focus: { x: 50.1, y: 84.0, scale: 2.15 },
+    closeup: "scenes/unpack_closeups/notebook",
     monologue: "Field notebook for my first solo assignment. Student reporter kit — not a detective movie prop."
   },
   {
     id: "bottle",
     label: "Water bottle",
-    focus: { x: 37.1, y: 76.2, scale: 2.15 },
+    closeup: "scenes/unpack_closeups/bottle",
     monologue: "I got this bottle as a gift a long time ago from my parents. They're waiting for me back in Minnesota."
   },
   {
     id: "keys",
     label: "Rental keys",
-    focus: { x: 58.6, y: 45.9, scale: 3.15 },
+    closeup: "scenes/unpack_closeups/keys",
     monologue: "Rental keys on the table. Short stay, long story if this piece lands."
   }
 ];
@@ -3331,82 +3334,10 @@ function setPrologueBackdrop(imageKey, idleBus) {
   preload.src = url;
 }
 
-function clampUnpack(v, lo, hi) {
-  return Math.min(Math.max(v, lo), hi);
-}
-
-function coverLayout(img, container) {
-  const cw = container.clientWidth;
-  const ch = container.clientHeight;
-  const iw = img.naturalWidth;
-  const ih = img.naturalHeight;
-  if (!cw || !ch || !iw || !ih) return null;
-  const coverScale = Math.max(cw / iw, ch / ih);
-  const renderedW = iw * coverScale;
-  const renderedH = ih * coverScale;
-  return {
-    cw,
-    ch,
-    coverScale,
-    renderedW,
-    renderedH,
-    visW: cw / renderedW,
-    visH: ch / renderedH
-  };
-}
-
-function screenPointFromObjectPosition(layout, u, v, oxPct, oyPct) {
-  const ox = oxPct / 100;
-  const oy = oyPct / 100;
-  let left = 0;
-  let top = 0;
-  let visW = 1;
-  let visH = 1;
-  if (layout.visW < 0.999) {
-    visW = layout.visW;
-    left = ox * (1 - visW);
-  }
-  if (layout.visH < 0.999) {
-    visH = layout.visH;
-    top = oy * (1 - visH);
-  }
-  return {
-    x: clampUnpack((u - left) / visW, 0, 1) * layout.cw,
-    y: clampUnpack((v - top) / visH, 0, 1) * layout.ch
-  };
-}
-
-/** Pan crop to item (sharp), then center item on screen and zoom. */
-function buildItemCameraFocus(img, container, focus) {
-  const layout = coverLayout(img, container);
-  if (!layout) return null;
-
-  const u = focus.x / 100;
-  const v = focus.y / 100;
-  const zoom = focus.scale || 2;
-  const viewX = layout.cw / 2;
-  const viewY = layout.ch / 2;
-
-  let ox = 50;
-  let oy = 50;
-  if (layout.visW < 0.999) {
-    ox = clampUnpack(((u - layout.visW / 2) / (1 - layout.visW)) * 100, 4, 96);
-  }
-  if (layout.visH < 0.999) {
-    oy = clampUnpack(((v - layout.visH / 2) / (1 - layout.visH)) * 100, 4, 96);
-  }
-
-  const pt = screenPointFromObjectPosition(layout, u, v, ox, oy);
-  const panX = (viewX - pt.x) / zoom;
-  const panY = (viewY - pt.y) / zoom;
-
-  return {
-    objectPosition: ox.toFixed(2) + "% " + oy.toFixed(2) + "%",
-    transformOrigin: pt.x.toFixed(2) + "px " + pt.y.toFixed(2) + "px",
-    transform: "scale(" + zoom + ") translate(" + panX.toFixed(2) + "px, " + panY.toFixed(2) + "px)",
-    pinX: 50,
-    pinY: 50
-  };
+function preloadUnpackCloseups() {
+  UNPACK_OBJECTS.forEach((obj) => {
+    if (obj.closeup) preloadPrologueScene(obj.closeup);
+  });
 }
 
 function clearRentalScene() {
@@ -3427,50 +3358,25 @@ function beginRentalScene() {
   const frame = document.getElementById("prologue-bus-frame");
   clearRentalScene();
   frame.classList.add("rental-unpack", "rental-enter");
+  preloadUnpackCloseups();
   setTimeout(() => frame.classList.remove("rental-enter"), 1400);
 }
 
 function focusUnpackItem(obj) {
   const frame = document.getElementById("prologue-bus-frame");
   const img = document.getElementById("prologue-backdrop");
-  const f = obj.focus;
-  if (!f) return;
+  if (!obj.closeup) return;
 
-  const apply = () => {
-    const cam = buildItemCameraFocus(img, frame, f);
-    if (!cam) return;
+  frame.classList.add("item-focused");
+  hideScenePin();
+  img.style.transform = "";
+  img.style.transformOrigin = "";
+  img.style.objectPosition = "center";
+  setPrologueBackdrop(obj.closeup, false);
 
-    const wasFocused = frame.classList.contains("item-focused");
-    frame.classList.add("item-focused");
-
-    if (!wasFocused) {
-      const frozen = getComputedStyle(img).transform;
-      if (frozen && frozen !== "none") {
-        img.style.transform = frozen;
-      }
-      void img.offsetWidth;
-    } else if (!img.style.transform) {
-      const cs = getComputedStyle(img);
-      img.style.transform = cs.transform;
-      img.style.transformOrigin = cs.transformOrigin;
-      img.style.objectPosition = cs.objectPosition;
-      void img.offsetWidth;
-    }
-
-    img.style.transformOrigin = cam.transformOrigin;
-    void img.offsetWidth;
-    img.style.objectPosition = cam.objectPosition;
-    img.style.transform = cam.transform;
-
-    pulseRentalFlash(cam.pinX, cam.pinY);
-    showScenePin(obj.label, cam.pinX, cam.pinY);
-    document.querySelectorAll(".prologue-choice-btn").forEach(btn => {
-      btn.classList.toggle("active", btn.dataset.unpackId === obj.id);
-    });
-  };
-
-  if (img.naturalWidth > 0) apply();
-  else img.addEventListener("load", apply, { once: true });
+  document.querySelectorAll(".prologue-choice-btn").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.unpackId === obj.id);
+  });
 }
 
 function resetUnpackFocus() {
@@ -3481,6 +3387,7 @@ function resetUnpackFocus() {
   img.style.transform = "";
   img.style.transformOrigin = "";
   img.style.objectPosition = "";
+  setPrologueBackdrop(RENTAL_UNPACK_SCENE, false);
   document.querySelectorAll(".prologue-choice-btn.active").forEach(btn => btn.classList.remove("active"));
 }
 
@@ -3588,7 +3495,7 @@ function showPrologueStep(step) {
 
   if (step === "rental") {
     setQuest("Go to your rental and unpack");
-    setPrologueBackdrop("scenes/rental_unpack_scene", false);
+    setPrologueBackdrop(RENTAL_UNPACK_SCENE, false);
     title.textContent = "Short-term rental";
     desc.textContent = "Choose what to set out. The room holds on each thing while Maren thinks.";
     beginRentalScene();

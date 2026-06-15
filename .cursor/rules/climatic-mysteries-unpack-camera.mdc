@@ -1,48 +1,43 @@
 ---
-description: Climatic Mysteries — rental unpack camera; prevent regressions when tuning item focus
-globs: climaticMysteries/app.html,climaticMysteries/overhaul/app.html
+description: Climatic Mysteries — rental unpack close-ups; same-art crops, not CSS camera
+globs: climaticMysteries/app.html,climaticMysteries/overhaul/app.html,climaticMysteries/assets/scenes/unpack_closeups/**
 alwaysApply: false
 ---
 
-# Climatic Mysteries — unpack camera (do not rewrite)
+# Climatic Mysteries — unpack close-ups (locked)
 
-## Why this rule exists
+## Approach
 
-Agents kept replacing the whole camera system each pass. **Tune in place** via `buildItemCameraFocus` unless the owner explicitly asks for a new approach.
+Click item name → **swap backdrop** to a **close-up PNG** in `assets/scenes/unpack_closeups/{id}.png`.
 
-## Locked approach (live `app.html`)
+Close-ups must **match** `rental_unpack_scene.png` (same rug, wood, lamp light, illustrated style). Prefer **authored close-ups** that frame one item clearly; mask-crops from the wide scene are a fallback when props are too clustered.
 
-**Actual camera focus** — not magnifier-on-a-point:
+**Do not** bring back CSS pan/zoom camera math on the wide room image.
 
-1. **`object-position`** — pan the cover crop so the item moves toward frame center (stays sharp).
-2. **`scale` + `translate`** — center the item on screen, then zoom (`buildItemCameraFocus`).
-3. **Pin / flash** — screen center (item should land there).
+## Regenerate mask-crops (fallback only)
 
-Do **not** revert to scale-only from `transform-origin` on item percent without the pan step.
+After scene or mask changes, optional crop regen:
 
-**Freeze on first focus:** snapshot drift `transform` only — **never** force `transform-origin: 50% 50%` before applying item camera (breaks floor-item zoom).
+```bash
+python3 climaticMysteries/scripts/build-unpack-closeups.py
+```
 
-**Baselines locked (owner):** keys + field notebook — tune other items against these.
+Masks: `assets/scenes/unpack_masks/{id}.png`. Overwrites `unpack_closeups/` — only run if intentionally replacing authored art.
 
-**Coordinates:** mask centroids on `rental_unpack_scene.png` (1536×1024). **Scale:** ~2.0–2.15 per item.
+## Code touch points
 
-| id | x | y | scale |
-|----|---|---|-------|
-| duffel | 48.8 | 77.1 | 2.05 |
-| folder | 62.5 | 78.1 | 2.10 |
-| notebook | 50.1 | 84.0 | 2.15 |
-| bottle | 37.1 | 76.2 | 2.15 |
-| keys | 58.6 | 45.9 | 2.05 |
+- `UNPACK_OBJECTS[].closeup` — image key per item
+- `focusUnpackItem` — `setPrologueBackdrop(obj.closeup)`
+- `resetUnpackFocus` — restore `RENTAL_UNPACK_SCENE`
+- `preloadUnpackCloseups` on rental enter
 
 ## Allowed edits
 
-- Change **one** item’s `x`, `y`, or `scale` in `UNPACK_OBJECTS`.
-- Or small tweaks inside `buildItemCameraFocus` only when owner reports all edge items wrong on one axis.
+- Tune pad factors in `build-unpack-closeups.py` per item
+- Adjust fade CSS on `#prologue-bus-frame.rental-unpack.item-focused`
 
-**Not allowed** without owner asking: delete `buildItemCameraFocus`, bbox auto-zoom, separate camera systems.
+**Not allowed** without owner asking: new AI close-up art, `buildItemCameraFocus`, bbox auto-zoom on wide scene.
 
-## Workflow
+## Deploy
 
-1. Owner says a version works → **git commit** (`cm: unpack camera ok`).
-2. Owner names **one item** and direction — not “fix camera again”.
-3. Deploy: `bash climaticMysteries/scripts/deploy.sh`.
+`bash climaticMysteries/scripts/deploy.sh`
