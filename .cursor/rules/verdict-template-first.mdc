@@ -1,0 +1,23 @@
+---
+description: On site change requests, reply with filled Phase 1 template before any edits
+alwaysApply: true
+---
+
+# Verdict template first
+
+When the owner asks for a **change** to Odd Trove sites, deploy, or repo work that would edit files:
+
+1. **Do not edit files** on the first reply (unless they explicitly said **approved**, **skip verdict**, or **verdict only — now implement**).
+2. **Read** `ODDTROVE-CAPABILITIES.md` and any site-specific rule that applies.
+3. **Reply with a filled-in Phase 1** from `CURSOR-TASK-TEMPLATE.md`:
+   - Restate their task in one sentence
+   - Verdict label: Feasible now / Feasible with tradeoffs / Not yet / Not feasible / Needs you
+   - Blockers in plain English
+   - **Do NOT touch** — list files, systems, and past failed approaches to leave alone
+4. **Stop and wait** for owner approval before Phase 2.
+
+**Phase 2** only after they approve (or give a narrowed scope): do exactly what was approved; summarize in plain English; deploy only if they said deploy; commit only if they said commit.
+
+If they only ask a **question** (no change requested), answer normally — no template required.
+
+If they say **give me the template** or **verdict only**, never skip straight to building.

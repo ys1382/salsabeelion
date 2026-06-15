@@ -1,6 +1,8 @@
 # Cursor task template (paste at start of a chat)
 
-Copy one block below. Fill in the `[brackets]`. Use **Phase 1** first; send **Phase 2** only after you agree with the verdict.
+**Auto mode:** If you ask for a site change in normal words, agents should reply with a **filled-in Phase 1** first (see `.cursor/rules/verdict-template-first.mdc`) — you do not need to paste this every time.
+
+**Manual mode:** Copy one block below. Fill in the `[brackets]`. Use **Phase 1** first; send **Phase 2** only after you agree with the verdict.
 
 ---
 
