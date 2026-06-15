@@ -1,0 +1,18 @@
+---
+description: Check ODDTROVE-CAPABILITIES before building; stop after two failures
+alwaysApply: true
+---
+
+# Feasibility check first
+
+Before editing files for any Odd Trove site (Halalit, Crocheter, Maestro's, envDyst, Climatic Mysteries, hub, deploy):
+
+1. **Read** `ODDTROVE-CAPABILITIES.md` at the repo root (and site roadmap/lorebook if the task is Halalit or Maestro's).
+2. **Give a short verdict** using the labels in that doc: Feasible now / Feasible with tradeoffs / Not yet / Not feasible / Needs you.
+3. **Name blockers in plain English** — architecture, missing wiring, owner-only auth, hand-vet, missing checkout files, SSH/deploy.
+4. **Do not start a long build** on **Not feasible** or **Not yet** unless the owner explicitly chooses a stub, doc-only work, or roadmap pin in that conversation.
+5. **Two-strike rule:** if the same fix or approach fails twice, stop. Report the verdict and why — do not loop.
+
+Follow **user-prefers-plain-language** for the verdict (lead with yes/no, few bullets, no code in chat unless asked).
+
+If deploy is requested, confirm SSH and target paths exist before claiming success.
