@@ -20,6 +20,10 @@ Agents kept replacing the whole camera system each pass. **Tune in place** via `
 
 Do **not** revert to scale-only from `transform-origin` on item percent without the pan step.
 
+**Freeze on first focus:** snapshot drift `transform` only — **never** force `transform-origin: 50% 50%` before applying item camera (breaks floor-item zoom).
+
+**Baselines locked (owner):** keys + field notebook — tune other items against these.
+
 **Coordinates:** mask centroids on `rental_unpack_scene.png` (1536×1024). **Scale:** ~2.0–2.15 per item.
 
 | id | x | y | scale |

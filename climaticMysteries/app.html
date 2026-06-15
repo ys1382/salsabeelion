@@ -583,16 +583,16 @@ html, body {
 }
 
 #prologue-bus-frame.rental-unpack #prologue-backdrop {
-  transition: transform 1.05s cubic-bezier(0.18, 0.06, 0.15, 1), object-position 1.05s cubic-bezier(0.18, 0.06, 0.15, 1), transform-origin 1.05s ease;
+  transition: transform 1.35s cubic-bezier(0.4, 0, 0.2, 1), object-position 1.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 #prologue-bus-frame.rental-unpack:not(.item-focused) #prologue-backdrop {
-  animation: rentalDrift 22s ease-in-out infinite alternate;
+  animation: rentalDrift 28s ease-in-out infinite alternate;
 }
 
 @keyframes rentalDrift {
-  0% { transform: scale(1.05) translate(0, 0); }
-  100% { transform: scale(1.08) translate(-0.9%, -0.5%); }
+  0% { transform: scale(1.05); }
+  100% { transform: scale(1.058); }
 }
 
 #prologue-bus-frame.rental-unpack.rental-enter #prologue-backdrop {
@@ -607,7 +607,7 @@ html, body {
 #prologue-bus-frame.rental-unpack.item-focused #prologue-backdrop {
   animation: none;
   filter: none;
-  transition: transform 0.95s cubic-bezier(0.2, 0.85, 0.25, 1.05), object-position 0.95s cubic-bezier(0.2, 0.85, 0.25, 1.05), transform-origin 0.95s ease;
+  transition: transform 1.35s cubic-bezier(0.4, 0, 0.2, 1), object-position 1.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 #prologue[data-step="rental"] #prologue-vignette {
@@ -3418,16 +3418,29 @@ function focusUnpackItem(obj) {
   const apply = () => {
     const cam = buildItemCameraFocus(img, frame, f);
     if (!cam) return;
+
+    const wasFocused = frame.classList.contains("item-focused");
     frame.classList.add("item-focused");
-    const frozen = getComputedStyle(img).transform;
-    if (frozen && frozen !== "none") {
-      img.style.transform = frozen;
-      img.style.transformOrigin = "50% 50%";
+
+    if (!wasFocused) {
+      const frozen = getComputedStyle(img).transform;
+      if (frozen && frozen !== "none") {
+        img.style.transform = frozen;
+      }
+      void img.offsetWidth;
+    } else if (!img.style.transform) {
+      const cs = getComputedStyle(img);
+      img.style.transform = cs.transform;
+      img.style.transformOrigin = cs.transformOrigin;
+      img.style.objectPosition = cs.objectPosition;
       void img.offsetWidth;
     }
-    img.style.objectPosition = cam.objectPosition;
+
     img.style.transformOrigin = cam.transformOrigin;
+    void img.offsetWidth;
+    img.style.objectPosition = cam.objectPosition;
     img.style.transform = cam.transform;
+
     pulseRentalFlash(cam.pinX, cam.pinY);
     showScenePin(obj.label, cam.pinX, cam.pinY);
     document.querySelectorAll(".prologue-choice-btn").forEach(btn => {
