@@ -1,0 +1,156 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="20 14 520 352" role="img" aria-label="Shadow Grove County — illustrated game map">
+  <defs>
+    <linearGradient id="map-panel-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2a2824"/>
+      <stop offset="100%" stop-color="#1e1c18"/>
+    </linearGradient>
+    <linearGradient id="map-river-glow" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#5a9eb8"/>
+      <stop offset="100%" stop-color="#4a8aa8"/>
+    </linearGradient>
+    <path id="map-moortail-name" d="M 168 196 Q 198 172 228 158 Q 258 148 288 158 Q 318 168 348 182 Q 378 198 408 214"/>
+    <symbol id="t-pine" viewBox="-5 -1 10 15">
+      <path d="M0 11 L0 13 M-2.5 11 L2.5 11" stroke="#4a6848" stroke-width="0.7" fill="none"/>
+      <path d="M0 0 L3.8 8.5 L2.2 8.5 L3.2 11 L-3.2 11 L-2.2 8.5 L-3.8 8.5 Z" fill="#3d5a42" stroke="#2a4030" stroke-width="0.35"/>
+    </symbol>
+    <symbol id="t-oak" viewBox="-6 -1 12 14">
+      <line x1="0" y1="7" x2="0" y2="11" stroke="#4a6848" stroke-width="0.8"/>
+      <circle cx="0" cy="3.5" r="4.2" fill="#456844" stroke="#2e4828" stroke-width="0.35"/>
+    </symbol>
+    <symbol id="t-reed" viewBox="-2 0 4 12">
+      <path d="M0 12 Q0.8 8 0 4 Q-0.6 8 0 12" fill="none" stroke="#5a7a58" stroke-width="0.7"/>
+      <ellipse cx="0" cy="3" rx="1.2" ry="2" fill="#6a9060" opacity="0.7"/>
+    </symbol>
+    <filter id="map-soft-blur" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="4"/>
+    </filter>
+  </defs>
+
+  <rect x="20" y="14" width="520" height="352" rx="8" fill="url(#map-panel-bg)" stroke="#3a3428" stroke-width="1.2"/>
+
+  <g class="map-parchment-inner">
+    <g stroke="#5a5040" stroke-width="0.7" fill="none" opacity="0.55">
+      <path d="M 34 28 Q 28 28 28 34"/><path d="M 526 28 Q 532 28 532 34"/>
+      <path d="M 34 352 Q 28 352 28 346"/><path d="M 526 352 Q 532 352 532 346"/>
+    </g>
+
+    <g stroke="#2e2a24" stroke-width="0.4" opacity="0.65">
+      <line x1="20" y1="102" x2="540" y2="102"/>
+      <line x1="20" y1="190" x2="540" y2="190"/>
+      <line x1="20" y1="278" x2="540" y2="278"/>
+      <line x1="150" y1="14" x2="150" y2="366"/>
+      <line x1="280" y1="14" x2="280" y2="366"/>
+      <line x1="410" y1="14" x2="410" y2="366"/>
+    </g>
+
+    <path d="M 36 48 L 524 48 L 524 130 L 480 122 L 400 112 L 320 108 L 240 112 L 160 122 L 80 138 L 36 148 Z" fill="#2a3d2c" opacity="0.75"/>
+    <path d="M 36 148 L 80 138 L 160 122 L 240 112 L 320 108 L 400 112 L 480 122 L 524 130 L 524 346 L 360 346 L 320 318 L 260 302 L 200 308 L 140 322 L 80 338 L 36 346 Z" fill="#322e28" opacity="0.55"/>
+    <path d="M 36 148 Q 64 118 104 124 Q 140 128 156 158 Q 166 188 146 218 Q 120 242 86 236 Q 56 230 44 200 Q 36 172 36 148 Z" fill="#3a5238" opacity="0.8"/>
+    <path d="M 280 250 Q 340 238 400 248 Q 460 258 524 268 L 524 346 L 360 346 L 300 318 L 280 290 Z" fill="#2a3d2c" opacity="0.65"/>
+
+    <g fill="none" stroke="#6a5e48" stroke-width="0.5" opacity="0.4">
+      <path d="M 60 290 Q 140 268 220 282 Q 300 296 380 280 Q 460 264 520 288"/>
+      <path d="M 50 310 Q 130 295 210 305 Q 290 315 370 302 Q 450 290 510 305"/>
+    </g>
+
+    <path d="M 72 210 Q 88 196 108 206 Q 128 218 148 204 Q 172 186 198 170 Q 224 154 252 162 Q 280 170 306 184 Q 332 198 358 212 Q 384 226 412 234 Q 434 238 458 232 L 462 240 Q 432 248 406 240 Q 378 228 350 214 Q 322 200 292 188 Q 262 176 232 168 Q 204 182 178 198 Q 152 214 128 224 Q 104 232 86 220 Q 68 208 74 218 Z" fill="url(#map-river-glow)" class="map-river-shimmer" opacity="0.88"/>
+    <path d="M 72 210 Q 88 196 108 206 Q 128 218 148 204 Q 172 186 198 170 Q 224 154 252 162 Q 280 170 306 184 Q 332 198 358 212 Q 384 226 412 234 Q 434 238 458 232" fill="none" stroke="#7ec8dc" stroke-width="1.2" opacity="0.65"/>
+
+    <g opacity="0.55" stroke="#7ec8dc" fill="none" stroke-width="0.45">
+      <ellipse cx="118" cy="206" rx="5" ry="2"/><ellipse cx="186" cy="182" rx="4" ry="1.6"/>
+      <ellipse cx="262" cy="168" rx="5" ry="2"/><ellipse cx="334" cy="196" rx="4" ry="1.6"/>
+    </g>
+    <g transform="translate(198, 176)" stroke="#8a7860" stroke-width="0.55" fill="#5a5448" opacity="0.85">
+      <rect x="-7" y="-1" width="14" height="2" rx="0.4"/>
+      <path d="M -6 1 L -6 4 M 6 1 L 6 4" stroke-width="0.45"/>
+    </g>
+
+    <g stroke="#4a6048" stroke-width="0.35" opacity="0.35" fill="none">
+      <path d="M 48 168 Q 72 154 96 162"/><path d="M 56 184 Q 78 172 102 180"/>
+      <path d="M 64 200 Q 86 188 110 196"/>
+    </g>
+
+    <g opacity="0.95">
+      <use href="#t-pine" x="318" y="68" width="10" height="15"/>
+      <use href="#t-oak" x="348" y="62" width="12" height="14"/>
+      <use href="#t-pine" x="378" y="70" width="11" height="16"/>
+      <use href="#t-oak" x="408" y="58" width="12" height="14"/>
+      <use href="#t-pine" x="438" y="66" width="10" height="15"/>
+      <use href="#t-pine" x="468" y="54" width="11" height="16"/>
+      <use href="#t-oak" x="334" y="92" width="12" height="14"/>
+      <use href="#t-pine" x="364" y="88" width="10" height="15"/>
+      <use href="#t-oak" x="396" y="94" width="12" height="14"/>
+      <use href="#t-pine" x="428" y="86" width="10" height="15"/>
+      <use href="#t-pine" x="458" y="96" width="11" height="16"/>
+    </g>
+
+    <g opacity="0.92">
+      <use href="#t-oak" x="308" y="252" width="12" height="14"/>
+      <use href="#t-pine" x="338" y="262" width="10" height="15"/>
+      <use href="#t-pine" x="368" y="248" width="11" height="16"/>
+      <use href="#t-oak" x="398" y="258" width="12" height="14"/>
+      <use href="#t-pine" x="428" y="252" width="10" height="15"/>
+      <use href="#t-pine" x="458" y="266" width="11" height="16"/>
+      <use href="#t-oak" x="478" y="248" width="12" height="14"/>
+    </g>
+
+    <g opacity="0.85">
+      <use href="#t-reed" x="54" y="182" width="4" height="12"/>
+      <use href="#t-reed" x="66" y="198" width="4" height="12"/>
+      <use href="#t-reed" x="58" y="214" width="4" height="12"/>
+    </g>
+
+    <path d="M 148 218 Q 178 198 208 178 Q 228 162 248 148" fill="none" stroke="#8a7860" stroke-width="1" stroke-dasharray="3 4" opacity="0.5"/>
+    <path d="M 248 148 Q 268 132 278 118 Q 288 108 298 102" fill="none" stroke="#8a7860" stroke-width="1" stroke-dasharray="3 4" opacity="0.45"/>
+    <text x="156" y="212" font-family="Source Sans 3, sans-serif" font-size="6.5" fill="#8a7860" opacity="0.7" letter-spacing="0.04em">COUNTY RD.</text>
+
+    <g transform="translate(72, 318)" opacity="0.8">
+      <rect x="0" y="0" width="10" height="7" rx="0.5" fill="#4a4438" stroke="#8a8070" stroke-width="0.45"/>
+      <line x1="5" y1="7" x2="5" y2="11" stroke="#6b6358" stroke-width="0.7"/>
+      <text x="14" y="8" font-family="Source Sans 3, sans-serif" font-size="6.5" fill="#8a8070">Bus stop</text>
+    </g>
+
+    <g transform="translate(236, 112)" stroke="#8a8070" stroke-width="0.65" fill="#4a4438">
+      <rect x="0" y="4" width="22" height="12" rx="0.5"/>
+      <path d="M -2 4 L 11 0 L 24 4" fill="#3a3630"/>
+    </g>
+
+    <g transform="translate(400, 186)" stroke="#8a8070" stroke-width="0.55" fill="#4a4438">
+      <rect x="0" y="6" width="10" height="8"/><path d="M -1 6 L 5 2 L 11 6" fill="#3a3630"/>
+      <rect x="14" y="4" width="12" height="10"/><path d="M 13 4 L 20 0 L 27 4" fill="#3a3630"/>
+    </g>
+
+    <g paint-order="stroke fill markers">
+      <text x="52" y="158" font-family="Lora, Georgia, serif" font-size="10" fill="#9ab898">Moor Meadow</text>
+
+      <text font-family="Lora, Georgia, serif" font-size="10" fill="#9ec8dc">
+        <textPath href="#map-moortail-name" startOffset="18%">Moortail</textPath>
+      </text>
+
+      <text x="248" y="106" text-anchor="middle" font-family="Source Sans 3, sans-serif" font-size="7.5" fill="#8a8070" letter-spacing="0.06em">ECO-FEED</text>
+
+      <text x="452" y="52" text-anchor="end" font-family="Lora, Georgia, serif" font-size="10" fill="#8a9888">Shadow Grove</text>
+
+      <text x="414" y="182" text-anchor="middle" font-family="Source Sans 3, sans-serif" font-size="7.5" fill="#8a8070" letter-spacing="0.06em">MOORLAND ROW</text>
+    </g>
+
+    <text x="40" y="38" font-family="Lora, serif" font-size="11" fill="#c9a85a" letter-spacing="0.1em">SHADOW GROVE COUNTY</text>
+    <line x1="40" y1="44" x2="220" y2="44" stroke="#4a4034" stroke-width="0.8"/>
+
+    <g transform="translate(500, 322)" opacity="0.85">
+      <circle r="16" fill="#2a2824" stroke="#5a9e5e" stroke-width="1"/>
+      <path d="M 0 -11 L 2.5 0 L 0 11 L -2.5 0 Z" fill="#5a9e5e" opacity="0.5"/>
+      <path d="M 0 -11 L 1.5 -1 L 0 0 L -1.5 -1 Z" fill="#7acc6a"/>
+      <text y="-20" text-anchor="middle" font-family="Source Sans 3, sans-serif" font-size="8" fill="#8a8070">N</text>
+    </g>
+
+    <g transform="translate(40, 328)" opacity="0.75">
+      <line x1="0" y1="0" x2="44" y2="0" stroke="#6b6358" stroke-width="0.9"/>
+      <line x1="0" y1="-3" x2="0" y2="3" stroke="#6b6358" stroke-width="0.9"/>
+      <line x1="44" y1="-3" x2="44" y2="3" stroke="#6b6358" stroke-width="0.9"/>
+    </g>
+
+    <ellipse class="map-mist" cx="92" cy="192" rx="36" ry="16" fill="#6a9eb8" opacity="0.08" filter="url(#map-soft-blur)"/>
+    <rect class="map-candlelight" x="20" y="14" width="520" height="352" rx="8" fill="#5a9e5e" opacity="0"/>
+  </g>
+</svg>

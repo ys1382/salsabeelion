@@ -331,11 +331,6 @@ html, body {
 #title-stage {
   position: absolute;
   inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: clamp(0.5rem, 2vw, 1.25rem);
-  padding-bottom: clamp(7rem, 22vh, 10rem);
 }
 
 #title-stage,
@@ -345,10 +340,8 @@ html, body {
 
 #title-map {
   display: block;
-  width: min(100%, calc((100vh - 8rem) * 520 / 352));
-  height: auto;
-  max-height: calc(100vh - 8rem);
-  aspect-ratio: 520 / 352;
+  width: 100%;
+  height: 100%;
 }
 
 #title-map .map-parchment-inner {
@@ -1406,7 +1399,7 @@ html, body {
 
 <div id="title-screen">
   <div id="title-stage">
-    <svg id="title-map" xmlns="http://www.w3.org/2000/svg" viewBox="20 14 520 352" preserveAspectRatio="xMidYMid meet" width="100%" height="100%" role="img" aria-label="Shadow Grove County — illustrated game map">
+    <svg id="title-map" xmlns="http://www.w3.org/2000/svg" viewBox="20 14 520 352" preserveAspectRatio="xMidYMid slice" width="100%" height="100%" role="img" aria-label="Shadow Grove County — illustrated game map">
   <defs>
     <linearGradient id="map-panel-bg" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#2a2824"/>
