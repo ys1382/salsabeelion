@@ -1,0 +1,19 @@
+---
+description: Halalit Book Quest — narrative continuity and reactive NPCs
+globs: halalit/**
+alwaysApply: false
+---
+
+# Halalit (Book Quest) — agent rule of thumb
+
+When editing **Halalit** (`halalit/www/`, especially `play.html`):
+
+1. **Do not skip story beats** — If the player makes a concrete physical or social action (knock, open a door, speak first), the next screen should show the **immediate consequence** of that action before the scene jumps to a new character or bargain. Avoid chaining `choice → unrelated node` without an intermediate beat when the fiction implies one.
+
+2. **Guardians and people should react** — Copy and branching should reflect **how** the player arrived (polite vs rash, truth vs bluff, etc.). Prefer small state flags (`doorManner`, `tollKind`, …) or distinct nodes over one generic paragraph that ignores the last choice.
+
+3. **Keep tone** — All-ages, family-friendly; no adult themes. Match existing warm, literary voice.
+
+4. **Family shelf (recommendations)** — Do not recommend books whose plot centers on **illegitimate children** (children born out of wedlock). **Juvenile fiction / children’s catalog tags are not enough** on their own (e.g. *The Secret Starling* is excluded). **Never recommend group demonization** — no blanket condemnation of an entire race, religion, ethnicity, or people group (e.g. “all X are racist”); naming specific oppression or injustice is fine. **No pro-colonial narrative** (e.g. Burnett’s *A Little Princess*, *The Secret Garden*) — use the exact exclusion copy in `halalit-family-shelf-policy.js` when blocked. **Comics, manga, and graphic novels** — Halalit must **not** recommend them through Book Quest, Bookcheck “family shelf” picks, or community merge unless they are on **`VERIFIED_CLEAN`** in `halalit-curated-shelf-warnings.js` (owner hand-check today; a future team vet counts the same way). Catalog “children’s comic” tags are not enough. **Known fanservice** — if you plot-vet a title but note that the **series includes fanservice**, put it on **`NO_RECOMMEND_KNOWN_FANSERVICE`** (not `VERIFIED_CLEAN`). Halalit will not recommend those series (e.g. Pokemon manga, Sorceline); closing line: “Halalit will not recommend series known to include fanservice.” **Lighter comic caution** — robot-led or otherwise lower-risk comics with some human fanservice (e.g. Transformers) go on **`FANSERVICE_CAUTION_GRAPHIC`** (`fanservice_caution` tier): preview human characters/outfits, no auto-recommend, but not the heavy no-recommend list. Enforce via `halalit-family-shelf-policy.js` (blocklists + Open Library subject heuristics + `halalit-curated-shelf-warnings.js`) and the reader-note guidelines in `play.html`. **Book Quest** must filter `REC_VARIANTS` through `variantPassesFamilyShelf` / `filterFamilyShelfVariants` in `pickFromBucket`—never hand-pick a title that Bookcheck would flag.
+
+When adding new beats, wire **scores** and **end recommendation** if the new choices should nudge the same four axes.

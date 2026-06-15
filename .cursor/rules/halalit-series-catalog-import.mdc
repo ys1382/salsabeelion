@@ -1,0 +1,23 @@
+---
+description: Halalit — Open Library series expansion must yield real volumes, not junk or banner rows
+globs: halalit/**
+alwaysApply: false
+---
+
+# Halalit — series line expansion (catalog import)
+
+When changing **series import** (textarea lines ending in “… series”, “first N books of …”, “books 1 and 3 of …”), readers expect **the actual books in that series** on Personal Library / Wishlist — not packaging SKUs, umbrella works, or near-duplicate titles that are only the series name.
+
+## Rule of thumb
+
+- **Implementation** lives primarily in `halalit/www/halalit-series-expand.js` (and the import callers in `halalit/www/index.html`). Keep behavior consistent if the pipeline moves or splits.
+- **Filter catalog junk before adding rows**: study guides, boxed / gift / slipcase sets, “N volume set”, multi-volume bind-ups, omnibus / “complete works” style lines, and similar **product** records — not individual novels. Extend the existing junk / omnibus patterns rather than only tightening the search query.
+- **Banner / umbrella rows**: Open Library often returns works whose visible title is basically **only the series phrase** (sometimes with a short prefix like *The*, *First*, or *Complete*). When at least one **distinct** volume title remains, **drop** those short banner rows so imports don’t duplicate “Chronicles of Prydain” + “First Chronicles of Prydain” + a real novel.
+- **Substring matching alone is insufficient** — it will always pull boxed sets and umbrella titles; every change should preserve **junk filtering** + **banner dedupe** (or an equivalent that achieves the same outcome).
+- **Catalog gaps:** many volumes omit the series phrase in the title (Prydain) or use rotating authors (Spirit Animals). Prefer **publisher-aware imports** (ignore “by Scholastic” as an author filter), **rank‑proximity halo** on the same search result page, **anchor‑author sibling merge** when one writer owns the phrase hits, and **franchise clustering that cannot wipe a multi‑author line**. Do not regress those behaviors when tuning filters.
+- **Halo safety:** never add “nearby” hits **without** an **early** phrase-matched anchor row in the same API result; do not use a fixed 0…N window from the top of the list alone (that pulls unrelated high‑edition classics). Prefer a **tight rank band** around the first phrase hit and a **publish‑year plausibility** check vs. phrase hits for halo and sibling rows.
+- **Franchise intent** stays aligned with `halalit-series-franchise-intent.mdc`: one coherent family-friendly franchise unless the reader explicitly wants breadth.
+
+## Before finishing an edit
+
+- If you loosen title matching or deduping, sanity-check with a **known messy series** (e.g. Prydain-style: umbrella + boxed set + real volumes in one result set) so the shelf still lists individual books only.

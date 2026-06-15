@@ -1,0 +1,19 @@
+---
+description: Maestro's Odyssey — social tone (family-friendly, no swearing, community-first)
+globs: maestrosOdyssey/**
+alwaysApply: false
+---
+
+# Maestro’s Odyssey — social tone rules
+
+When editing **Maestro’s Odyssey** (`maestrosOdyssey/`), keep copy, dialogue, and player-facing text aligned with these rules:
+
+- **Family-friendly** — all-ages appropriate; emotionally grounded and respectful.
+- **No swearing** — no profanity or crude language in player-visible content.
+- **No romance-focused writing** — do not center plots, scenes, or character beats on romance; avoid flirt-forward or shipping-style framing (see contributor guidelines for minimal acceptable family-friendly romance notes).
+- **No gossip / backbiting** — avoid cruel or degrading social talk framed as entertainment.
+- **No glamorized alcohol** — alcohol may appear only in educational or plain contextual ways, never as sophisticated, rebellious, aspirational, or comedic glamor.
+- **Avoid cynical humor** — prefer sincerity, practical reactions, and warmth; skip mockery and “too cool to care” detachment as the default voice.
+- **Emphasize honesty, community, and hospitality** — trust, kindness, patience, cultural respect, and healthy ties to place and people.
+
+For full nuance (morality lists, action scenes, perception, sacred boundaries), use **`maestrosOdyssey/CONTRIBUTOR-GUIDELINES.txt`**.

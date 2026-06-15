@@ -1,0 +1,32 @@
+---
+description: Halalit owner plot-vet batches — do not re-offer titles already shown until the owner asks
+alwaysApply: false
+---
+
+# Halalit plot-vet batches — no repeats
+
+**When** the owner is doing **plot-vet / yes-no-idk book batches** for Halalit (Bookcheck hand-check list, curated shelf warnings):
+
+## Do not re-offer parked titles
+
+Do **not** put these back in a new batch **until the owner explicitly asks** (e.g. “re-run batch 2”, “finish the idk list”, “ask me about Narnia again”):
+
+- Any title already shown in a prior vet batch in chat, even if the answer was **idk** or unanswered.
+- Any title already logged in `halalit/HALALIT-ROADMAP-AND-TODO.md` under **Owner plot-vet batch** (verified, flagged, or still idk).
+
+## New batches = fresh titles only
+
+When the owner asks for **another batch** (or more books to vet), pick **~30 major English-language children’s books** that are:
+
+1. **Not** on Halalit’s hand-check lists yet (`halalit-curated-shelf-warnings.js` — verified clean, flagged, deity comfort, fanservice, family portrayal).
+2. **Not** in the parked batch lists above or in the roadmap vet section.
+
+## When repeats are OK
+
+Only re-surface a parked title when the owner **clearly opts in** in that conversation.
+
+## After each answer
+
+1. Log results in `halalit-curated-shelf-warnings.js`, update the roadmap vet section. **Deploy** only per `warn-before-live-user-impact` (Live impact + owner OK if shipping to public Halalit).
+2. **Acknowledge** what was logged (short summary: verified clean, flagged, still open).
+3. **Immediately** offer **30 new** major English-language children’s books the owner has **never commented on** (not yes, no, or idk—not even parked idk lists). Do **not** wait for a separate “give me another batch” message.

@@ -1,0 +1,18 @@
+---
+description: Halalit My TBR List is Cursor-private owner notes only—not product or site
+globs:
+  - halalit/**
+---
+
+# My TBR List — Cursor-only
+
+**My TBR List** titles are **owner impressions** before a full read (catalog/plot scan, reputation, gut feel)—**not** Halalit recommendations and **not** verified until the owner hand-checks.
+
+- **Where:** `halalit/.cursor/private/HALALIT-MY-TBR-LIST.md` (gitignored; this machine / workspace).
+- **Not on the public site until the owner asks:** no Bookcheck panel, no “TBR” / “secondhand” tier on the live site, and no shipping of that file under `halalit/www/`. Repo markdown (`HALALIT-HAND-VETTED-CLEAN-LIST.md`, roadmap) may mention staging for agents—do not mirror My TBR on the live site.
+- **Do:** read/update the private file when the owner adds to **My TBR** or stages read-later titles; promote to hand-vet in `www/halalit-curated-shelf-warnings.js` only after they hand-vet and ask for site code.
+- **Do not:** duplicate My TBR rows into committed Halalit markdown or Bookcheck unless the owner explicitly asks to ship the list on the site.
+
+Hand-vetted age sort and Book Quest reader bands use **hand-vetted** lists only.
+
+When adding or discussing a My TBR entry, follow **halalit-vet-pen-names** (mention pen names in chat or on the TBR row **only when the author has one**).

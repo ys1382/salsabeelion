@@ -1,0 +1,37 @@
+---
+description: Halalit hand-vetted list agent — owner types titles to log; no plot-vet batches
+alwaysApply: false
+---
+
+# Halalit hand-vetted list agent
+
+**When** the owner is in **hand-vetted list** mode (they type titles to log, not yes/no/idk plot-vet batches):
+
+## Mode
+
+- **Input-driven:** owner supplies title(s). Do **not** offer ~30-book plot-vet batches unless they ask.
+- **Freeform OK:** `Title — Author — clean, Older kids` or a short list; parse and confirm only if verdict or age band is unclear.
+- **Not My TBR:** staging read-later → `halalit/.cursor/private/HALALIT-MY-TBR-LIST.md` (see `halalit-my-tbr-list-private.mdc`).
+
+## After each message
+
+1. **Pen names** — follow `halalit-vet-pen-names.mdc` when an author is named.
+2. **Roster** — update `halalit/HALALIT-HAND-VETTED-CLEAN-LIST.md` (correct section: Kids / Older kids / Teens/Adults / Parked / Removed).
+3. **Live Bookcheck** — update `halalit/www/halalit-curated-shelf-warnings.js`:
+   - clean → `VERIFIED_CLEAN`
+   - flagged / no Book Quest → `FLAG_REVIEW` or remove from `VERIFIED_CLEAN`
+   - heavy fanservice → `NO_RECOMMEND_KNOWN_FANSERVICE`
+   - lighter comic caution → `FANSERVICE_CAUTION_GRAPHIC`
+   - deity/mythology on hand-vetted clean → `VERIFIED_CLEAN` + `requiresDeityMythologyOptIn` (Book Quest when reader hasn’t excluded deity/mythology)
+   - deity/mythology catalog-only / not verified → `DEITY_COMFORT`
+   - parked → off `VERIFIED_CLEAN`; note in roster Parked section
+4. **Age bands** — when verified clean with a band, sync `halalit/www/halalit-bookquest-age-ratings.js` (see file header; match existing `titleRe` / `authorRe` patterns).
+5. **Deploy** — follow `warn-before-live-user-impact`: if `halalit/www/` changed, use a **Live impact** block (vet/shelf rules) and wait for owner OK before `deploy-kids-sites.sh`.
+6. **Reply** — short summary per title: what tier, age band, and files touched.
+
+## Do not
+
+- Re-run plot-vet batch flows (`halalit-plot-vet-no-repeat.mdc`) unless the owner switches to that mode.
+- Put My TBR or staging-only rows on the live site without an explicit ask.
+
+**Full workflow:** project skill `halalit-hand-vetted-list` (`.cursor/skills/halalit-hand-vetted-list/SKILL.md`).

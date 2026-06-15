@@ -8,21 +8,11 @@ alwaysApply: false
 
 ## Approach
 
-Click item name → **swap backdrop** to a **close-up PNG** in `assets/scenes/unpack_closeups/{id}.png`.
+Click item name → **swap backdrop** to a **close-up PNG** cropped from `rental_unpack_scene.png`.
 
-Close-ups must **match** `rental_unpack_scene.png` (same rug, wood, lamp light, illustrated style). Prefer **authored close-ups** that frame one item clearly; mask-crops from the wide scene are a fallback when props are too clustered.
+**Same pixels only** — one rug, one table, one room. Regenerate with the build script; do not use separate AI close-up art.
 
 **Do not** bring back CSS pan/zoom camera math on the wide room image.
-
-## Regenerate mask-crops (fallback only)
-
-After scene or mask changes, optional crop regen:
-
-```bash
-python3 climaticMysteries/scripts/build-unpack-closeups.py
-```
-
-Masks: `assets/scenes/unpack_masks/{id}.png`. Overwrites `unpack_closeups/` — only run if intentionally replacing authored art.
 
 ## Code touch points
 

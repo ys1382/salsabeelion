@@ -1,0 +1,7 @@
+# Halalit design notes PDF — local / Cursor only
+
+The Halalit **design notes PDF** is **not** part of the public site. Do **not** link it from `halalit/www/`, deploy it, rsync it, or place copies under any path served by `deploy-kids-sites.sh`.
+
+**Owner copy (this machine / Cursor workspace):** `halalit/.cursor/private/halalit-design-notes.pdf` (folder is gitignored).
+
+When the owner asks about design notes, read that file in the workspace if it exists. Never suggest putting the PDF on the server or in `halalit/www/`.

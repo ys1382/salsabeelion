@@ -1,0 +1,16 @@
+---
+description: When vetting Halalit titles, report known pen names and wire them in code
+globs:
+  - halalit/**
+---
+
+# Halalit vetting — pen names
+
+When the owner **rejects, flags, hand-vets, TBR-stages, or says they plan to check a book themselves** (My TBR, “read later,” “I’ll vet this”) and names an **author or pen name**, agents must:
+
+1. **Check for pen names** (publisher/author site, agency bio, ISFDB, Wikipedia—quick pass is enough).
+2. **Tell the owner in chat only if a pen name exists**—one short line: pen name + which books use it. **Do not** mention pen names at all when the author publishes under one name only (no “no other pen name found,” no filler).
+3. **Wire every known pen into site vetting** when adding `authorRe` in `halalit-curated-shelf-warnings.js` or Book Quest blocks in `halalit-family-shelf-policy.js`, so Bookcheck lookups under any listed name hit the same note.
+4. **My TBR:** use the **Pen names** field only when there is a real pen name; leave it out otherwise.
+
+Do not assume one pen name covers a different author’s line (e.g. “Khan” alone is not enough—match the vetting author).
