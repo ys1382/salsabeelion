@@ -2584,9 +2584,29 @@ function ecoFeedGateReporterAttempt() {
   showText(`<div class="text-reveal"><span class="speaker">Eco-Feed reception:</span> <span class="narration">"A student writer—how nice. Media requests go through our communications team. They'll reach out if there's a fit. In the meantime, our product catalog is online."</span><div class="system-msg">The working yard stays closed. You may need another way onto the perimeter.</div></div>`);
 }
 
+const ECOFEED_GATE_SCENE = "scenes/ecofeed_yard_gate_scene";
+
+function renderSceneImage(imageKey, altText) {
+  const fauxBiome = { images: [imageKey], name: altText || "Scene" };
+  renderParallax(fauxBiome);
+}
+
+function restoreCurrentBiomeView() {
+  const biome = BIOMES[state.currentBiome];
+  renderParallax(biome);
+  setAtmosphere(state.currentBiome);
+  document.getElementById("location-name").textContent = biome.name;
+  document.getElementById("location-desc").textContent = getDepthText(biome.description, state.ecoLens);
+}
+
 function showEcoFeedGate() {
+  document.getElementById("location-name").textContent = "Eco-Feed Yard";
+  document.getElementById("location-desc").textContent = "The gate is closed. A shift worker on the easement path turns walk-in visitors away.";
+  renderSceneImage(ECOFEED_GATE_SCENE, "Eco-Feed Yard gate");
+  setAtmosphere("ecofeed_yard");
+
   const hasEasement = state.knowledge.includes("ecofeed_easement_known");
-  let html = `<div class="text-reveal"><span class="narration">The front office window shows a poster about sustainable agriculture. A staff member greets you with a practiced smile.</span><br><br><span class="speaker">Eco-Feed reception:</span> <span class="narration">"Hi there—thanks for stopping by! Our working yard isn't open for walk-in visits right now. We're focused on building a better experience for our customers and community partners. Can I help you find product information?"</span><div class="actions" style="margin-top:0.75rem">`;
+  let html = `<div class="text-reveal"><span class="narration">A shift worker stands in front of the closed gate, palm out—not rude, just doing his job.</span><br><br><span class="speaker">Eco-Feed worker:</span> <span class="narration">"Sorry—you can't come in through here. The working yard isn't open to walk-ins. If you need product info, the front office might help."</span><div class="actions" style="margin-top:0.75rem">`;
 
   if (hasEasement) {
     html += `<button class="action-btn" type="button" id="gate-easement">Ask about the county easement along the north fence</button>`;
@@ -2603,6 +2623,7 @@ function showEcoFeedGate() {
   const reporterBtn = document.getElementById("gate-reporter");
   if (reporterBtn) reporterBtn.onclick = () => ecoFeedGateReporterAttempt();
   document.getElementById("gate-leave").onclick = () => {
+    restoreCurrentBiomeView();
     showText(`<span class="narration">You thank them and step back. The gate stays closed for now.</span>`);
   };
 }
@@ -3185,7 +3206,7 @@ const UNPACK_OBJECTS = [
   {
     id: "keys",
     label: "Rental keys",
-    focus: { x: 58.6, y: 45.9, scale: 2.05 },
+    focus: { x: 58.6, y: 45.9, scale: 3.15 },
     monologue: "Rental keys on the table. Short stay, long story if this piece lands."
   }
 ];
@@ -3635,6 +3656,7 @@ function finishPrologue() {
 
   document.getElementById("prologue").classList.remove("active");
   document.getElementById("app").classList.remove("prologue-hidden");
+  preloadPrologueScene(ECOFEED_GATE_SCENE);
   updateEcoLens();
   enterBiome("moortail_river");
   resizeAmbientCanvas();
