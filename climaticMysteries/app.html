@@ -744,6 +744,29 @@ html, body {
   padding: 0 1rem;
 }
 
+#progress-restart-btn {
+  position: fixed;
+  top: 0.65rem;
+  right: 0.65rem;
+  z-index: 200;
+  padding: 0.35rem 0.72rem;
+  font-family: 'Source Sans 3', sans-serif;
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  background: rgba(26, 24, 20, 0.78);
+  border: 1px solid var(--panel-border);
+  border-radius: 4px;
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+#progress-restart-btn:hover {
+  opacity: 1;
+  color: var(--gold);
+  border-color: var(--gold-dim);
+}
+
 #prologue-btn {
   padding: 0.55rem 1.4rem;
   font-family: 'Source Sans 3', sans-serif;
@@ -1394,6 +1417,8 @@ html, body {
 </style>
 </head>
 <body>
+
+<button id="progress-restart-btn" type="button" title="Clear saved progress and start from the bus">Start at the beginning</button>
 
 <div id="prologue" class="active" data-step="bus">
   <div id="prologue-bus-frame">
@@ -2209,6 +2234,153 @@ const state = {
   lastJournalSeen: 0
 };
 
+const PROGRESS_KEY = "climaticMysteries_owner_progress_v1";
+const VALID_PROLOGUE_STEPS = new Set(["bus", "bus_stop", "rental", "title"]);
+
+function serializeProgress() {
+  return {
+    v: 1,
+    prologueStep: prologueState.step,
+    unpackSeen: [...prologueState.unpackSeen],
+    prologueDone: state.prologueDone,
+    questText: document.getElementById("quest-text").textContent || "",
+    currentBiome: state.currentBiome,
+    ecoLens: state.ecoLens,
+    trust: { ...state.trust },
+    knowledge: [...state.knowledge],
+    journal: state.journal.map((entry) => ({ ...entry })),
+    inventory: state.inventory.map((item) => ({ ...item })),
+    visited: [...state.visited],
+    observedEver: [...state.observedEver],
+    observationInsightDepth: { ...state.observationInsightDepth },
+    npcTalkedTopics: [...state.npcTalkedTopics],
+    introShown: state.introShown,
+    journalUnlocked: state.journalUnlocked,
+    journalPage: state.journalPage,
+    newJournalCount: state.newJournalCount,
+    lastJournalSeen: state.lastJournalSeen
+  };
+}
+
+function saveProgress() {
+  try {
+    localStorage.setItem(PROGRESS_KEY, JSON.stringify(serializeProgress()));
+  } catch (err) {
+    /* ignore quota / private mode */
+  }
+}
+
+function loadProgress() {
+  try {
+    const raw = localStorage.getItem(PROGRESS_KEY);
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    if (!data || data.v !== 1) return null;
+    return data;
+  } catch (err) {
+    return null;
+  }
+}
+
+function applyProgressToState(data) {
+  state.currentBiome = data.currentBiome || "moortail_river";
+  state.ecoLens = data.ecoLens || 0;
+  state.trust = {
+    watershed_keepers: data.trust?.watershed_keepers || 0,
+    factory_workers: data.trust?.factory_workers || 0,
+    forest_dwellers: data.trust?.forest_dwellers || 0,
+    town_council: data.trust?.town_council || 0
+  };
+  state.knowledge = [...(data.knowledge || [])];
+  state.journal = [...(data.journal || [])];
+  state.journalIds = new Set(state.journal.map((entry) => entry.id).filter(Boolean));
+  state.inventory = [...(data.inventory || [])];
+  state.visited = new Set(data.visited || []);
+  state.observedThisVisit = new Set();
+  state.observedEver = new Set(data.observedEver || []);
+  state.observationInsightDepth = { ...(data.observationInsightDepth || {}) };
+  state.npcTalkedTopics = new Set(data.npcTalkedTopics || []);
+  state.introShown = !!data.introShown;
+  state.prologueDone = !!data.prologueDone;
+  state.journalUnlocked = !!data.journalUnlocked;
+  state.journalPage = data.journalPage || 0;
+  state.newJournalCount = data.newJournalCount || 0;
+  state.lastJournalSeen = data.lastJournalSeen || 0;
+}
+
+function resumeMainGame(data) {
+  applyProgressToState(data);
+  document.getElementById("prologue").classList.remove("active");
+  document.getElementById("title-screen").classList.remove("visible", "fading-out", "show-ui", "show-skip");
+  document.getElementById("app").classList.remove("prologue-hidden");
+  setQuest(data.questText || "Explore the Moortail riverbank");
+  updateEcoLens();
+  updateJournalNotif();
+  updateInventoryNotif();
+  document.getElementById("btn-journal").classList.toggle("locked", !state.journalUnlocked);
+  enterBiome(state.currentBiome);
+  resizeAmbientCanvas();
+}
+
+function resumePrologue(data) {
+  applyProgressToState(data);
+  prologueState.unpackSeen = new Set(data.unpackSeen || []);
+  const step = VALID_PROLOGUE_STEPS.has(data.prologueStep) ? data.prologueStep : "bus";
+
+  if (step === "title") {
+    document.getElementById("prologue").classList.remove("active");
+    showTitleCard();
+    return;
+  }
+
+  showPrologueStep(step);
+}
+
+function resetGameState() {
+  state.currentBiome = "moortail_river";
+  state.ecoLens = 0;
+  state.trust = {
+    watershed_keepers: 0,
+    factory_workers: 0,
+    forest_dwellers: 0,
+    town_council: 0
+  };
+  state.knowledge = [];
+  state.journal = [];
+  state.journalIds = new Set();
+  state.inventory = [];
+  state.visited = new Set();
+  state.observedThisVisit = new Set();
+  state.observedEver = new Set();
+  state.observationInsightDepth = {};
+  state.npcTalkedTopics = new Set();
+  state.introShown = false;
+  state.prologueDone = false;
+  state.journalUnlocked = false;
+  state.journalPage = 0;
+  state.newJournalCount = 0;
+  state.lastJournalSeen = 0;
+}
+
+function startFromBeginning() {
+  try {
+    localStorage.removeItem(PROGRESS_KEY);
+  } catch (err) {
+    /* ignore */
+  }
+  resetGameState();
+  prologueState.unpackSeen = new Set();
+  prologueState.step = "bus";
+  clearTitleCard();
+  clearRentalScene();
+  document.getElementById("app").classList.add("prologue-hidden");
+  document.getElementById("prologue").classList.add("active");
+  document.getElementById("btn-journal").classList.add("locked");
+  setQuest("");
+  showPrologueStep("bus");
+  saveProgress();
+}
+
 
 // ═══════════════════════════════════════════════════════════
 // ENGINE
@@ -2298,6 +2470,7 @@ function applyEffects(effects) {
       updateInventoryNotif();
     }
   }
+  saveProgress();
 }
 
 function biomeHasNewContent(biomeKey) {
@@ -2362,6 +2535,7 @@ function enterBiome(biomeKey) {
   // Scene transition
   document.getElementById("scene-overlay").classList.add("scene-transition");
   setTimeout(() => document.getElementById("scene-overlay").classList.remove("scene-transition"), 800);
+  saveProgress();
 }
 
 function biomeImageUrl(img) {
@@ -2522,6 +2696,7 @@ function examineObservation(obs) {
   // Update lens badge
   const hasNew = biomeHasNewContent(state.currentBiome);
   document.getElementById("lens-badge").style.display = hasNew ? "inline-flex" : "none";
+  saveProgress();
 }
 
 function talkToNPC(npcId) {
@@ -2568,6 +2743,7 @@ function talkToNPC(npcId) {
   // Refresh
   renderActions(BIOMES[state.currentBiome]);
   updateEcoLens();
+  saveProgress();
 }
 
 function showText(html) {
@@ -3190,6 +3366,9 @@ window.addEventListener("resize", resizeAmbientCanvas);
 // PROLOGUE — bus → title → stop → rental → river
 // ═══════════════════════════════════════════════════════════
 
+// Owner-locked close-ups — do not retune crop/display unless owner asks in that conversation.
+const UNPACK_CLOSEUP_LOCKED = new Set(["bottle", "keys"]);
+
 // Unpack close-ups: crops from rental_unpack_scene (same art). Regen: scripts/build-unpack-closeups.py
 const RENTAL_UNPACK_SCENE = "scenes/rental_unpack_scene";
 const UNPACK_OBJECTS = [
@@ -3215,14 +3394,14 @@ const UNPACK_OBJECTS = [
     id: "bottle",
     label: "Water bottle",
     closeup: "scenes/unpack_closeups/bottle",
+    locked: true,
     monologue: "I got this bottle as a gift a long time ago from my parents. They're waiting for me back in Minnesota."
   },
   {
     id: "keys",
     label: "Rental keys",
     closeup: "scenes/unpack_closeups/keys",
-    displayFit: "contain",
-    focus: "50% 50%",
+    locked: true,
     monologue: "Rental keys on the table. Short stay, long story if this piece lands."
   }
 ];
@@ -3416,12 +3595,14 @@ function unpackItem(obj) {
   focusUnpackItem(obj);
   if (prologueState.unpackSeen.has(obj.id)) {
     showPrologueMonologue(obj.monologue, obj.label);
+    saveProgress();
     return;
   }
   prologueState.unpackSeen.add(obj.id);
   showPrologueMonologue(obj.monologue, obj.label);
   renderUnpackChoices();
   checkRentalProgress();
+  saveProgress();
 }
 
 function renderUnpackChoices() {
@@ -3495,6 +3676,7 @@ function showPrologueStep(step) {
       lockPrologueActions(900);
       showTitleCard();
     };
+    saveProgress();
     return;
   }
 
@@ -3510,6 +3692,7 @@ function showPrologueStep(step) {
       if (prologueState.actionsLocked) return;
       showPrologueStep("rental");
     };
+    saveProgress();
     return;
   }
 
@@ -3525,6 +3708,7 @@ function showPrologueStep(step) {
       if (prologueState.actionsLocked) return;
       finishPrologue();
     };
+    saveProgress();
     return;
   }
 }
@@ -3551,6 +3735,7 @@ function showTitleCard() {
   prologueState.titleUiTimer = setTimeout(() => {
     title.classList.add("show-ui");
   }, 2800);
+  saveProgress();
 }
 
 function advanceFromTitleCard() {
@@ -3587,11 +3772,27 @@ function finishPrologue() {
   updateEcoLens();
   enterBiome("moortail_river");
   resizeAmbientCanvas();
+  saveProgress();
 }
 
 function initPrologue() {
   document.getElementById("title-start").onclick = () => advanceFromTitleCard();
   document.getElementById("title-skip").onclick = () => advanceFromTitleCard();
+  document.getElementById("progress-restart-btn").onclick = () => {
+    if (window.confirm("Start at the beginning? Saved progress will be cleared.")) {
+      startFromBeginning();
+    }
+  };
+
+  const saved = loadProgress();
+  if (saved) {
+    if (saved.prologueDone) {
+      resumeMainGame(saved);
+      return;
+    }
+    resumePrologue(saved);
+    return;
+  }
   showPrologueStep("bus");
 }
 
@@ -3652,6 +3853,11 @@ document.addEventListener("keydown", (e) => {
 window.addEventListener("load", () => {
   resizeAmbientCanvas();
   initPrologue();
+});
+
+window.addEventListener("beforeunload", saveProgress);
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "hidden") saveProgress();
 });
 
 </script>

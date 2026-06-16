@@ -23,10 +23,18 @@ Click item name → **swap backdrop** to a **close-up PNG** cropped from `rental
 
 ## Allowed edits
 
-- Tune pad factors in `build-unpack-closeups.py` per item
+- Tune pad factors in `build-unpack-closeups.py` per item **except owner-locked close-ups**
 - Adjust fade CSS on `#prologue-bus-frame.rental-unpack.item-focused`
 
-**Not allowed** without owner asking: new AI close-up art, `buildItemCameraFocus`, bbox auto-zoom on wide scene.
+## Owner-locked close-ups (do not retune unless owner asks)
+
+**Locked:** `bottle` (water bottle), `keys` (rental keys).
+
+- Do **not** change crop PNGs, mask pads, `KEYS_HALF_W`, display fit/scale, or glow/framing for these items.
+- Build script skips them unless run with `--force`.
+- Active work: duffel, folder, notebook.
+
+**Not allowed** without owner asking: new AI close-up art, `buildItemCameraFocus`, bbox auto-zoom on wide scene, edits to locked items above.
 
 ## Deploy
 

@@ -1,14 +1,17 @@
- #!/usr/bin/env python3
+#!/usr/bin/env python3
 """Crop unpack close-ups from rental_unpack_scene.png using unpack_masks/.
 
 Same pixels as the wide room. Each crop wraps the item mask with breathing room (sharp — no upscale)
 with the item mask centroid at the center of the frame when possible.
 
   python3 climaticMysteries/scripts/build-unpack-closeups.py
+  python3 climaticMysteries/scripts/build-unpack-closeups.py --force   # include owner-locked items
 """
 from __future__ import annotations
 
+import argparse
 import json
+import sys
 from pathlib import Path
 
 from PIL import Image
@@ -22,6 +25,9 @@ MASK_DIR = SCENES / "unpack_masks"
 
 ASPECT = 3 / 2  # match rental_unpack_scene.png (1536×1024)
 ITEMS = ("duffel", "folder", "notebook", "bottle", "keys")
+
+# Owner-locked — skip regen unless --force (see climatic-mysteries-unpack-camera.mdc).
+LOCKED_ITEMS = frozenset({"bottle", "keys"})
 
 # Padding around each mask bbox (× width/height). Tight close-ups, not wide-room crops.
 ITEM_PAD = {
@@ -105,12 +111,33 @@ def clamp_crop_to_scene(
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description="Build rental unpack close-up crops.")
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Regenerate owner-locked items (bottle, keys). Default: skip them.",
+    )
+    args = parser.parse_args()
+
     scene = Image.open(SCENE_PATH).convert("RGB")
     sw, sh = scene.size
     OUT.mkdir(parents=True, exist_ok=True)
+
+    existing_meta: dict[str, dict[str, float | int]] = {}
+    if META_PATH.is_file():
+        existing_meta = json.loads(META_PATH.read_text(encoding="utf-8"))
+
     meta: dict[str, dict[str, float | int]] = {}
 
     for name in ITEMS:
+        if name in LOCKED_ITEMS and not args.force:
+            if name in existing_meta:
+                meta[name] = existing_meta[name]
+                print(f"{name}: skipped (owner-locked; use --force to regenerate)")
+            else:
+                print(f"{name}: skipped (owner-locked; no existing focus.json entry)", file=sys.stderr)
+            continue
+
         mask_path = MASK_DIR / f"{name}.png"
         mask = Image.open(mask_path).convert("L")
         if mask.size != (sw, sh):
