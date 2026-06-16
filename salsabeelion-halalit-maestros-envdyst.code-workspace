@@ -1,0 +1,17 @@
+{
+  "folders": [
+    {
+      "name": "Halalit",
+      "path": "halalit"
+    },
+    {
+      "name": "Maestro's Odyssey",
+      "path": "maestrosOdyssey"
+    },
+    {
+      "name": "Environmental Dystopia",
+      "path": "envDyst"
+    }
+  ],
+  "settings": {}
+}

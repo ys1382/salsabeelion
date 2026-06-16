@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Cozy Crocheter’s Sanctum</title>
+  <link rel="stylesheet" href="./crocheter-shared.css?v=studio-1" />
+  <style>
+    .office-wrap { max-width: 52rem; margin: 0 auto; padding: clamp(1rem, 4vw, 2rem); }
+    .office-wrap h1 { font-size: 1.85rem; font-weight: 500; margin: 0 0 0.25rem; }
+    .office-lead { color: var(--soft); margin: 0 0 1.25rem; font-size: 0.95rem; }
+    .office-section {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 1.15rem 1.25rem;
+      margin-bottom: 0.65rem;
+    }
+    .office-section summary {
+      list-style: none;
+      cursor: pointer;
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 0.75rem;
+    }
+    .office-section summary::-webkit-details-marker { display: none; }
+    .office-section__title strong { font-size: 1.05rem; color: var(--accent); }
+    .office-section__toggle {
+      font-family: system-ui, sans-serif;
+      font-size: 0.78rem;
+      color: var(--accent);
+      text-decoration: underline;
+    }
+    .office-section__toggle::after { content: "More"; }
+    .office-section[open] .office-section__toggle::after { content: "Less"; }
+    .office-section__body {
+      margin-top: 0.65rem;
+      padding-top: 0.65rem;
+      border-top: 1px solid var(--line);
+    }
+    .hint {
+      font-family: system-ui, sans-serif;
+      font-size: 0.84rem;
+      color: var(--soft);
+      margin: 0 0 0.75rem;
+    }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+      gap: 0.65rem;
+      margin-bottom: 1rem;
+    }
+    .stat {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 0.75rem 0.9rem;
+      text-align: center;
+    }
+    .stat strong { display: block; font-size: 1.5rem; color: var(--accent); }
+    .stat span { font-family: system-ui, sans-serif; font-size: 0.78rem; color: var(--soft); }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: system-ui, sans-serif;
+      font-size: 0.84rem;
+    }
+    th, td {
+      text-align: left;
+      padding: 0.45rem 0.5rem;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+    }
+    th { color: var(--soft); font-weight: 600; }
+    .feedback-item {
+      font-family: system-ui, sans-serif;
+      font-size: 0.84rem;
+      padding: 0.55rem 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .switch {
+      display: flex;
+      gap: 0.55rem;
+      align-items: flex-start;
+      font-family: system-ui, sans-serif;
+      font-size: 0.88rem;
+      margin: 0.45rem 0;
+    }
+    .save-settings {
+      margin-top: 0.75rem;
+      padding: 0.55rem 1rem;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: rgba(107, 143, 113, 0.2);
+      color: var(--accent);
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .status { font-family: system-ui, sans-serif; font-size: 0.9rem; color: var(--soft); }
+    .status.ok { color: var(--accent); }
+    [hidden] { display: none !important; }
+  </style>
+  <script src="./crocheter-auth-gate.js"></script>
+</head>
+<body>
+  <div id="root"></div>
+  <script src="./crocheter-api-config.js"></script>
+  <script src="./crocheter-account-storage.js?v=studio-1"></script>
+  <script src="./crocheter-auth.js"></script>
+  <script>
+    (function () {
+      var STUDIO_PATH = "./studio.html";
+
+      function fmtDate(ts) {
+        if (!ts) return "—";
+        try {
+          return new Date(ts * 1000).toLocaleDateString(undefined, {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+          });
+        } catch (e) {
+          return "—";
+        }
+      }
+
+      function buildPage() {
+        document.title = "Owner’s Office — Cozy Crocheter’s Sanctum";
+        document.getElementById("root").innerHTML =
+          '<div class="office-wrap">' +
+          '<p class="header-nav"><a href="./index.html">← Patterns</a> · <a href="./account.html">Your account</a></p>' +
+          "<h1>Owner’s Office</h1>" +
+          '<p class="office-lead">Private to you. Nothing here is shown on the public pattern pages.</p>' +
+          '<div id="office">' +
+          '<div class="stats" id="statsRow" aria-label="Summary counts"></div>' +
+          '<details class="office-section" open>' +
+          "<summary><span class=\"office-section__title\"><strong>Reader notes &amp; suggestions</strong></span>" +
+          '<span class="office-section__toggle" aria-hidden="true"></span></summary>' +
+          '<div class="office-section__body"><p class="hint">Private messages from signed-in readers—not a public wall.</p>' +
+          '<div id="readerMessagesList"></div></div></details>' +
+          '<details class="office-section"><summary><span class="office-section__title"><strong>Reader accounts</strong></span>' +
+          '<span class="office-section__toggle" aria-hidden="true"></span></summary>' +
+          '<div class="office-section__body"><p class="hint">Emails only (passwords are never stored in plain text).</p>' +
+          "<table><thead><tr><th>Email</th><th>Joined</th></tr></thead><tbody id=\"accountsList\"></tbody></table>" +
+          "</div></details>" +
+          '<details class="office-section"><summary><span class="office-section__title"><strong>Site switches</strong></span>' +
+          '<span class="office-section__toggle" aria-hidden="true"></span></summary>' +
+          '<div class="office-section__body"><p class="hint">Turn sections off without redeploying. Readers see a short “paused” note when something is off.</p>' +
+          '<label class="switch"><input type="checkbox" id="flagPatterns" checked />' +
+          "<span><strong>Pattern library</strong> — hub and pattern pages</span></label>" +
+          '<label class="switch"><input type="checkbox" id="flagStitchCalculator" checked />' +
+          "<span><strong>Stitch calculator</strong></span></label>" +
+          '<label class="switch"><input type="checkbox" id="flagDictionary" checked />' +
+          "<span><strong>Dictionary</strong></span></label>" +
+          '<label class="switch"><input type="checkbox" id="flagStitchLearning" checked />' +
+          "<span><strong>Stitch Learning</strong> (gallery)</span></label>" +
+          '<label class="switch"><input type="checkbox" id="flagSignups" checked />' +
+          "<span><strong>New sign-ups</strong> — allow creating accounts (sign-in still works)</span></label>" +
+          '<button type="button" class="save-settings" id="saveSettingsBtn">Save switches</button>' +
+          '<p class="status" id="settingsStatus" hidden></p></div></details></div></div>';
+      }
+
+      function renderStats(stats) {
+        var row = document.getElementById("statsRow");
+        row.innerHTML = "";
+        [
+          ["Reader accounts", stats.readerAccounts || 0],
+          ["Reader messages", stats.readerMessages || 0],
+        ].forEach(function (pair) {
+          var div = document.createElement("div");
+          div.className = "stat";
+          div.innerHTML = "<strong>" + pair[1] + "</strong><span>" + pair[0] + "</span>";
+          row.appendChild(div);
+        });
+      }
+
+      function renderReaderMessages(list) {
+        var root = document.getElementById("readerMessagesList");
+        root.innerHTML = "";
+        if (!list || !list.length) {
+          root.textContent = "No reader notes yet.";
+          return;
+        }
+        list.forEach(function (row) {
+          var div = document.createElement("div");
+          div.className = "feedback-item";
+          var label =
+            row.source === "tips_box"
+              ? "Suggestion"
+              : row.source === "pattern_note"
+                ? "Pattern note"
+                : "Site note";
+          var meta = row.meta || {};
+          var extra = meta.patternId ? " · " + meta.patternId : "";
+          div.textContent =
+            label + extra + " — “" + (row.message || "").slice(0, 200) + "” · " + fmtDate(row.createdAt);
+          root.appendChild(div);
+        });
+      }
+
+      function applySettings(flags) {
+        document.getElementById("flagPatterns").checked = !!flags.patternsEnabled;
+        document.getElementById("flagStitchCalculator").checked = !!flags.stitchCalculatorEnabled;
+        document.getElementById("flagDictionary").checked = !!flags.dictionaryEnabled;
+        document.getElementById("flagStitchLearning").checked = !!flags.stitchLearningEnabled;
+        document.getElementById("flagSignups").checked = !!flags.signupsEnabled;
+      }
+
+      function wireSave() {
+        document.getElementById("saveSettingsBtn").addEventListener("click", function () {
+          var flags = {
+            patternsEnabled: document.getElementById("flagPatterns").checked,
+            stitchCalculatorEnabled: document.getElementById("flagStitchCalculator").checked,
+            dictionaryEnabled: document.getElementById("flagDictionary").checked,
+            stitchLearningEnabled: document.getElementById("flagStitchLearning").checked,
+            signupsEnabled: document.getElementById("flagSignups").checked,
+          };
+          CrocheterAuth.saveOwnerSettings(flags).then(function (res) {
+            var st = document.getElementById("settingsStatus");
+            if (res && res.ok) {
+              st.textContent = "Saved.";
+              st.className = "status ok";
+            } else {
+              st.textContent = "Could not save.";
+              st.className = "status";
+            }
+            st.hidden = false;
+          });
+        });
+      }
+
+      function loadOffice() {
+        CrocheterAuth.loadOwnerOffice().then(function (res) {
+          if (!res || !res.ok) {
+            location.replace("./index.html");
+            return;
+          }
+          renderStats(res.stats || {});
+          renderReaderMessages(res.readerMessages || []);
+          var acc = document.getElementById("accountsList");
+          acc.innerHTML = "";
+          (res.accounts || []).forEach(function (row) {
+            var tr = document.createElement("tr");
+            var tdE = document.createElement("td");
+            tdE.textContent = row.email + (row.isOwner ? " (you)" : "");
+            var tdD = document.createElement("td");
+            tdD.textContent = fmtDate(row.createdAt);
+            tr.appendChild(tdE);
+            tr.appendChild(tdD);
+            acc.appendChild(tr);
+          });
+          applySettings(res.settings || {});
+        });
+      }
+
+      CrocheterAccountStorage.ready.then(function () {
+        if (!CrocheterAccountStorage.isSignedIn() || !CrocheterAccountStorage.isOwner()) {
+          location.replace("./index.html");
+          return;
+        }
+        buildPage();
+        wireSave();
+        loadOffice();
+      });
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,33 @@
+Maestro’s Odyssey — contributor gates (not on the public page)
+================================================================
+
+Read **`docs/LOREBOOK.md`** for owner hard rules and **`docs/WORLD-AND-CAST.md`** for full peoples, jobs, languages, and story shape.
+
+## Social tone (always)
+
+- Family-friendly; no profanity.
+- No romance-focused writing; no gossip-as-entertainment; no glamorized alcohol.
+- Honesty, hospitality, community, cultural respect.
+
+## No man-eating — any people (hard rule)
+
+- **No cannibalism** and **no man-eating** as **real** behavior or history for **any** sentient people — not default, not minority, not “evil branch,” not folklore gag.
+- Do **not** attach anthropophagy to peoples tied to **real-world languages** (Turkish, Arabic, Japanese, Irish, Spanish, etc.) — even as “only the bad ones.”
+- Villains: corruption, exploitation, violence, prejudice, legal abuse — **without** eating people.
+- Carnivore ecology (ordinary prey only) is fine where already established; **never** humans as food.
+
+### False accusation vs. distorted history
+
+- **Man-eating:** quoted only as **false** racist rumor — shut down flat.
+- **Hercules-type legend:** may reflect **real past violence** by a **mortal human** champion (**no deity**). **Anti-dragon racism** is why it happened; human retellings cast dragons/hydra-born as villains. In-game: **context and rejection of the glorified version** — not a celebratory replay. See **`docs/LOREBOOK.md`**.
+
+## Languages
+
+- Spanish = early player lane; Irish, Japanese, Arabic, Turkish = later regional lanes. AI-drafted vocab: see **`docs/LANGUAGE-VOCAB-WORKFLOW.md`** — owner review required.
+
+## Story spine (when wired)
+
+- Dragon's Brew first → plaza floor → train → wider world.
+- Attunement surfaces interests first; player can **pivot anytime**.
+
+When copy conflicts with **`docs/LOREBOOK.md`**, the lorebook wins.

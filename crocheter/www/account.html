@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sign in — Cozy Crocheter’s Sanctum</title>
+  <link rel="stylesheet" href="./crocheter-shared.css?v=account-1" />
+  <style>
+    .account-wrap { max-width: 28rem; margin: 0 auto; padding: clamp(1.25rem, 4vw, 2.5rem); }
+    .account-wrap h1 { font-size: 1.75rem; font-weight: 500; margin: 0 0 0.35rem; }
+    .account-lead { color: var(--soft); margin: 0 0 1.25rem; font-size: 0.98rem; }
+    .account-panel {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 1.25rem 1.35rem;
+      margin-bottom: 1rem;
+    }
+    .privacy-note {
+      font-family: system-ui, "Segoe UI", sans-serif;
+      font-size: 0.88rem;
+      color: var(--soft);
+      border-left: 3px solid var(--line);
+      padding-left: 0.75rem;
+      margin: 0 0 1rem;
+    }
+    .account-panel label {
+      display: block;
+      font-family: system-ui, sans-serif;
+      font-size: 0.85rem;
+      margin: 0.75rem 0 0.3rem;
+      color: var(--soft);
+    }
+    .account-panel input {
+      width: 100%;
+      padding: 0.55rem 0.65rem;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: var(--cream);
+      color: var(--ink);
+      font-size: 1rem;
+    }
+    .password-field { position: relative; }
+    .password-field input { padding-right: 2.75rem; }
+    .password-toggle {
+      position: absolute;
+      right: 0.35rem;
+      bottom: 0.35rem;
+      width: 2rem;
+      height: 2rem;
+      border: none;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--soft);
+      cursor: pointer;
+    }
+    .account-panel button {
+      margin-top: 1rem;
+      width: 100%;
+      padding: 0.65rem 1rem;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: rgba(107, 143, 113, 0.15);
+      color: var(--accent);
+      font-size: 1rem;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .account-panel button.secondary {
+      background: transparent;
+      color: var(--soft);
+      margin-top: 0.5rem;
+      font-weight: 500;
+    }
+    .auth-error {
+      color: #a05252;
+      font-family: system-ui, sans-serif;
+      font-size: 0.88rem;
+      margin: 0.75rem 0 0;
+    }
+    .auth-tabs { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
+    .auth-tabs button { width: auto; flex: 1; margin: 0; }
+    .auth-tabs button[aria-selected="true"] {
+      background: rgba(107, 143, 113, 0.28);
+      color: var(--ink);
+    }
+    .owner-panel h2 { font-size: 1rem; color: var(--accent); margin: 0 0 0.5rem; }
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+  <div class="account-wrap">
+    <p class="header-nav"><a href="/">← Odd Trove</a></p>
+    <h1>Your account</h1>
+    <p class="account-lead">Pattern progress, room tone, and technique checks can sync when you sign in—not only on one device.</p>
+
+    <div id="signedInView" hidden>
+      <div class="account-panel">
+        <p>You’re signed in as <strong id="signedInEmail"></strong>.</p>
+        <button type="button" id="signOutBtn">Sign out</button>
+        <button type="button" class="secondary" id="backToSiteBtn">Back to patterns</button>
+      </div>
+    </div>
+
+    <div id="authView">
+      <p class="privacy-note">
+        A spare email is a nice fit if you’d rather keep this separate from your main inbox.
+      </p>
+      <div class="auth-tabs" role="tablist">
+        <button type="button" role="tab" id="tabSignIn" aria-selected="true" aria-controls="formSignIn">Sign in</button>
+        <button type="button" role="tab" id="tabSignUp" aria-selected="false" aria-controls="formSignUp">Create account</button>
+      </div>
+      <div class="account-panel" id="formSignIn" role="tabpanel">
+        <form id="signInForm">
+          <label for="signInEmail">Email</label>
+          <input type="email" id="signInEmail" autocomplete="username" required />
+          <label for="signInPassword">Password</label>
+          <div class="password-field">
+            <input type="password" id="signInPassword" autocomplete="current-password" required minlength="8" />
+            <button type="button" class="password-toggle" id="toggleSignInPassword" aria-label="Show password">👁</button>
+          </div>
+          <button type="submit">Sign in</button>
+        </form>
+      </div>
+      <div class="account-panel" id="formSignUp" role="tabpanel" hidden>
+        <form id="signUpForm">
+          <label for="signUpEmail">Email</label>
+          <input type="email" id="signUpEmail" autocomplete="username" required />
+          <label for="signUpPassword">Password (8+ characters)</label>
+          <div class="password-field">
+            <input type="password" id="signUpPassword" autocomplete="new-password" required minlength="8" />
+            <button type="button" class="password-toggle" id="toggleSignUpPassword" aria-label="Show password">👁</button>
+          </div>
+          <button type="submit">Create account</button>
+        </form>
+      </div>
+      <p class="auth-error" id="authError" hidden></p>
+    </div>
+  </div>
+  <script src="./crocheter-api-config.js"></script>
+  <script src="./crocheter-account-storage.js?v=account-1"></script>
+  <script src="./crocheter-auth.js"></script>
+  <script>
+    (function () {
+      var params = new URLSearchParams(location.search);
+      var returnUrl = params.get("return") || "./index.html";
+      var errEl = document.getElementById("authError");
+
+      if (params.get("signup") === "1") {
+        document.getElementById("tabSignUp").click();
+      }
+
+      function showError(msg) {
+        errEl.textContent = msg;
+        errEl.hidden = !msg;
+      }
+
+      function wirePasswordToggle(toggleId, inputId) {
+        var btn = document.getElementById(toggleId);
+        var input = document.getElementById(inputId);
+        if (!btn || !input) return;
+        btn.addEventListener("click", function () {
+          var show = input.type === "password";
+          input.type = show ? "text" : "password";
+          btn.setAttribute("aria-label", show ? "Hide password" : "Show password");
+        });
+      }
+      wirePasswordToggle("toggleSignInPassword", "signInPassword");
+      wirePasswordToggle("toggleSignUpPassword", "signUpPassword");
+
+      document.getElementById("tabSignIn").addEventListener("click", function () {
+        document.getElementById("tabSignIn").setAttribute("aria-selected", "true");
+        document.getElementById("tabSignUp").setAttribute("aria-selected", "false");
+        document.getElementById("formSignIn").hidden = false;
+        document.getElementById("formSignUp").hidden = true;
+        showError("");
+      });
+      document.getElementById("tabSignUp").addEventListener("click", function () {
+        document.getElementById("tabSignUp").setAttribute("aria-selected", "true");
+        document.getElementById("tabSignIn").setAttribute("aria-selected", "false");
+        document.getElementById("formSignUp").hidden = false;
+        document.getElementById("formSignIn").hidden = true;
+        showError("");
+      });
+
+      document.getElementById("signInForm").addEventListener("submit", function (e) {
+        e.preventDefault();
+        showError("");
+        CrocheterAuth.signIn(
+          document.getElementById("signInEmail").value.trim(),
+          document.getElementById("signInPassword").value
+        ).then(function (res) {
+          if (res && res.ok) return CrocheterAuth.afterAuthSuccess(returnUrl);
+          showError(CrocheterAuth.friendlyError(res && res.error));
+        });
+      });
+
+      document.getElementById("signUpForm").addEventListener("submit", function (e) {
+        e.preventDefault();
+        showError("");
+        CrocheterAuth.signUp(
+          document.getElementById("signUpEmail").value.trim(),
+          document.getElementById("signUpPassword").value
+        ).then(function (res) {
+          if (res && res.ok) return CrocheterAuth.afterAuthSuccess(returnUrl);
+          showError(CrocheterAuth.friendlyError(res && res.error));
+        });
+      });
+
+      document.getElementById("signOutBtn").addEventListener("click", function () {
+        CrocheterAccountStorage.signOut().then(function () {
+          location.reload();
+        });
+      });
+      document.getElementById("backToSiteBtn").addEventListener("click", function () {
+        location.href = returnUrl;
+      });
+
+      function injectOwnerPanel() {
+        if (!CrocheterAccountStorage.isOwner()) return;
+        var host = document.getElementById("signedInView");
+        if (!host || document.getElementById("ownerPanel")) return;
+        var panel = document.createElement("div");
+        panel.className = "account-panel owner-panel";
+        panel.id = "ownerPanel";
+        panel.innerHTML =
+          "<h2>Owner’s Office</h2>" +
+          '<p class="privacy-note">Reader notes, accounts, and site switches—private to you.</p>' +
+          '<p><a href="./studio.html">Open Owner’s Office →</a></p>';
+        host.appendChild(panel);
+      }
+
+      CrocheterAccountStorage.ready.then(function () {
+        if (CrocheterAccountStorage.isSignedIn()) {
+          document.getElementById("authView").hidden = true;
+          document.getElementById("signedInView").hidden = false;
+          document.getElementById("signedInEmail").textContent = CrocheterAccountStorage.getEmail();
+          injectOwnerPanel();
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

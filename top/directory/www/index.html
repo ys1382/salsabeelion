@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Sites</title>
+  <title>Odd Trove</title>
   <style>
     :root {
       --bg: #0f1419;
@@ -12,6 +12,7 @@
       --muted: #8b9cb3;
       --accent: #6eb5ff;
       --ok: #7dcea0;
+      --err: #e8a0a0;
     }
     * { box-sizing: border-box; }
     body {
@@ -22,6 +23,23 @@
       color: var(--text);
       padding: clamp(1.5rem, 4vw, 3rem);
       line-height: 1.5;
+    }
+    h1 {
+      font-size: clamp(1.5rem, 4vw, 2rem);
+      font-weight: 600;
+      margin: 0 0 0.35rem;
+    }
+    h2 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--muted);
+      margin: 2rem 0 0.75rem;
+      letter-spacing: 0.02em;
+    }
+    .lead {
+      color: var(--muted);
+      margin: 0 0 1.75rem;
+      max-width: 36rem;
     }
     ul {
       list-style: none;
@@ -36,7 +54,7 @@
       padding: 1.25rem 1.5rem;
       background: var(--card);
       border-radius: 12px;
-      border: 1px solid rgba(255,255,255,0.06);
+      border: 1px solid rgba(255, 255, 255, 0.06);
       text-decoration: none;
       color: inherit;
       transition: border-color 0.15s, transform 0.15s;
@@ -51,51 +69,288 @@
       color: var(--accent);
       margin-bottom: 0.35rem;
     }
+    a.site.owner strong { color: var(--ok); }
     a.site span.desc {
       display: block;
       color: var(--muted);
       font-size: 0.95rem;
       margin-top: 0.15rem;
     }
-    a.site code {
-      display: block;
-      margin-top: 0.65rem;
-      font-size: 0.8rem;
-      color: var(--ok);
-      word-break: break-all;
+    .owner-bar {
+      margin-top: 2.5rem;
+      max-width: 640px;
+      padding-top: 1.25rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
     }
+    .owner-toggle {
+      background: none;
+      border: none;
+      color: var(--muted);
+      font: inherit;
+      font-size: 0.9rem;
+      cursor: pointer;
+      padding: 0;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+    .owner-toggle:hover { color: var(--accent); }
+    .owner-panel {
+      margin-top: 1rem;
+      padding: 1.25rem 1.35rem;
+      background: var(--card);
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      max-width: 28rem;
+    }
+    .owner-panel[hidden] { display: none !important; }
+    .owner-panel label {
+      display: block;
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin: 0.65rem 0 0.3rem;
+    }
+    .owner-panel input {
+      width: 100%;
+      padding: 0.55rem 0.65rem;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(0, 0, 0, 0.2);
+      color: var(--text);
+      font-size: 1rem;
+    }
+    .owner-pass-field { position: relative; }
+    .owner-pass-field input { padding-right: 4.5rem; }
+    .owner-show-pass {
+      position: absolute;
+      right: 0.35rem;
+      bottom: 0.35rem;
+      padding: 0.35rem 0.5rem;
+      border: none;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--muted);
+      font: inherit;
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+    .owner-show-pass:hover { color: var(--accent); }
+    .owner-panel button {
+      margin-top: 1rem;
+      padding: 0.6rem 1rem;
+      border-radius: 8px;
+      border: 1px solid rgba(110, 181, 255, 0.35);
+      background: rgba(110, 181, 255, 0.12);
+      color: var(--accent);
+      font: inherit;
+      font-size: 0.95rem;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .owner-panel button.secondary {
+      margin-top: 0.5rem;
+      background: transparent;
+      border-color: rgba(255, 255, 255, 0.1);
+      color: var(--muted);
+      font-weight: 500;
+    }
+    .owner-msg {
+      font-size: 0.88rem;
+      margin: 0.75rem 0 0;
+      color: var(--err);
+    }
+    .owner-msg.ok { color: var(--ok); }
+    #ownerSites[hidden] { display: none !important; }
   </style>
 </head>
 <body>
-  <ul>
+  <h1>Odd Trove</h1>
+  <p class="lead">Family-friendly reading and cozy crochet—pick a site to visit.</p>
+  <ul id="publicSites">
     <li>
-      <a class="site" href="https://157.230.130.12:8060/">
-        <strong>Bane of Extinction</strong>
-        <span class="desc">Deeply narrative environmental game where you grow past greenwashing into real careers of care.</span>
-        <code>https://157.230.130.12:8060/</code>
+      <a class="site" href="/halalit/">
+        <strong>HalaLit</strong>
+        <span class="desc">Family-friendly reads, Book Quest, and Bookcheck—browse and vet books at your pace.</span>
       </a>
     </li>
     <li>
-      <a class="site" href="https://157.230.130.12:8071/">
-        <strong>Maestro’s Odyssey</strong>
-        <span class="desc">Language-learning narrative demo: comprehension continuum, narrative frames, pronunciation progression.</span>
-        <code>https://157.230.130.12:8071/</code>
-      </a>
-    </li>
-    <li>
-      <a class="site" href="https://157.230.130.12:8072/">
-        <strong>Environmental Dystopia</strong>
-        <span class="desc">Atmospheric scroll experience: prologue vs muted world, quiet restoration.</span>
-        <code>https://157.230.130.12:8072/</code>
-      </a>
-    </li>
-    <li>
-      <a class="site" href="https://157.230.130.12:8073/">
+      <a class="site" href="/crocheter/account.html?signup=1">
         <strong>Cozy Crocheter’s Sanctum</strong>
-        <span class="desc">Pattern library demo: steps, focus mode, stitch help, local progress.</span>
-        <code>https://157.230.130.12:8073/</code>
+        <span class="desc">Pattern library with steps, focus mode, and stitch help. Create a free account to enter.</span>
       </a>
     </li>
   </ul>
+
+  <div id="ownerSites" hidden>
+    <h2>Owner sites</h2>
+    <ul>
+      <li>
+        <a class="site owner" href="/climatic-mysteries/">
+          <strong>Climatic Mysteries</strong>
+          <span class="desc">Environmental mystery game (in progress)—Shadow Grove, Moortail, Eco-Feed.</span>
+        </a>
+      </li>
+      <li>
+        <a class="site owner" href="/maestros/">
+          <strong>Maestro’s Odyssey</strong>
+          <span class="desc">Language-learning narrative demo—comprehension continuum and pronunciation.</span>
+        </a>
+      </li>
+      <li>
+        <a class="site owner" href="/envdyst/">
+          <strong>Environmental Dystopia</strong>
+          <span class="desc">Atmospheric scroll experience—prologue vs muted world.</span>
+        </a>
+      </li>
+    </ul>
+  </div>
+
+  <div class="owner-bar">
+    <button type="button" class="owner-toggle" id="ownerToggle" hidden>Owner sign-in</button>
+    <div class="owner-panel" id="ownerPanel" hidden>
+      <p style="margin:0 0 0.5rem;font-size:0.92rem;color:var(--muted);">
+        For the site owner only—not Crocheter accounts. Use your private owner username and password.
+      </p>
+      <label for="ownerUser">Username</label>
+      <input type="text" id="ownerUser" autocomplete="off" autocapitalize="off" spellcheck="false" />
+      <label for="ownerPass">Password</label>
+      <div class="owner-pass-field">
+        <input type="password" id="ownerPass" autocomplete="new-password" />
+        <button type="button" class="owner-show-pass" id="ownerShowPass" aria-pressed="false">Show</button>
+      </div>
+      <button type="button" id="ownerSignIn">Sign in</button>
+      <button type="button" class="secondary" id="ownerCancel">Cancel</button>
+      <p class="owner-msg" id="ownerMsg" hidden></p>
+    </div>
+    <p id="ownerSignedIn" hidden style="margin:0.75rem 0 0;font-size:0.9rem;color:var(--muted);">
+      Signed in as owner. <button type="button" class="owner-toggle" id="ownerSignOut">Sign out</button>
+    </p>
+  </div>
+
+  <script>
+  (function () {
+    var STORAGE_KEY = "oddtrove_hub_owner";
+    var ownerSites = document.getElementById("ownerSites");
+    var ownerPanel = document.getElementById("ownerPanel");
+    var ownerToggle = document.getElementById("ownerToggle");
+    var ownerSignedIn = document.getElementById("ownerSignedIn");
+    var ownerMsg = document.getElementById("ownerMsg");
+
+    function showOwnerLinks() {
+      ownerSites.hidden = false;
+      ownerPanel.hidden = true;
+      ownerToggle.hidden = true;
+      ownerSignedIn.hidden = false;
+      try { sessionStorage.setItem(STORAGE_KEY, "1"); } catch (_) {}
+    }
+
+    function hideOwnerLinks() {
+      ownerSites.hidden = true;
+      ownerToggle.hidden = false;
+      ownerSignedIn.hidden = true;
+      try { sessionStorage.removeItem(STORAGE_KEY); } catch (_) {}
+    }
+
+    function setMsg(text, ok) {
+      ownerMsg.textContent = text;
+      ownerMsg.hidden = !text;
+      ownerMsg.classList.toggle("ok", !!ok);
+    }
+
+    function verifyOwner(user, pass) {
+      return fetch("/hub/api/owner-login", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: user, password: pass }),
+      }).then(function (res) {
+        return res.json().then(function (data) {
+          if (res.ok && data && data.ok) return { ok: true };
+          return { ok: false, error: (data && data.error) || "invalid_credentials" };
+        });
+      });
+    }
+
+    function checkOwnerSession() {
+      return fetch("/hub/api/owner-me", { credentials: "include", cache: "no-store" })
+        .then(function (res) { return res.json(); })
+        .then(function (data) { return data && data.ok && data.signedIn; })
+        .catch(function () { return false; });
+    }
+
+    function ownerLogout() {
+      return fetch("/hub/api/owner-logout", {
+        method: "POST",
+        credentials: "include",
+      }).catch(function () {});
+    }
+
+    ownerToggle.addEventListener("click", function () {
+      ownerPanel.hidden = false;
+      ownerToggle.hidden = true;
+      setMsg("");
+      document.getElementById("ownerPass").focus();
+    });
+
+    document.getElementById("ownerCancel").addEventListener("click", function () {
+      ownerPanel.hidden = true;
+      ownerToggle.hidden = false;
+      setMsg("");
+    });
+
+    document.getElementById("ownerSignIn").addEventListener("click", function () {
+      var user = document.getElementById("ownerUser").value.trim();
+      var pass = document.getElementById("ownerPass").value;
+      if (!user || !pass) {
+        setMsg("Enter username and password.");
+        return;
+      }
+      setMsg("Checking…", true);
+      verifyOwner(user, pass).then(function (result) {
+        document.getElementById("ownerPass").value = "";
+        if (result && result.ok) {
+          setMsg("");
+          showOwnerLinks();
+        } else if (result && result.error === "missing_credentials") {
+          setMsg("Enter both username and password.");
+        } else {
+          setMsg("Username or password didn’t match. Paste from your private notes file—don’t use Halalit or Crocheter passwords. Tap Show to check what you typed.");
+        }
+      }).catch(function () {
+        setMsg("Couldn’t reach the site. Try again in a moment.");
+      });
+    });
+
+    document.getElementById("ownerSignOut").addEventListener("click", function () {
+      ownerLogout().then(function () {
+        hideOwnerLinks();
+        setMsg("");
+      });
+    });
+
+    document.getElementById("ownerPass").addEventListener("keydown", function (e) {
+      if (e.key === "Enter") document.getElementById("ownerSignIn").click();
+    });
+
+    document.getElementById("ownerShowPass").addEventListener("click", function () {
+      var input = document.getElementById("ownerPass");
+      var btn = document.getElementById("ownerShowPass");
+      var show = input.type === "password";
+      input.type = show ? "text" : "password";
+      btn.textContent = show ? "Hide" : "Show";
+      btn.setAttribute("aria-pressed", show ? "true" : "false");
+    });
+
+    checkOwnerSession().then(function (signedIn) {
+      if (signedIn) showOwnerLinks();
+      else ownerToggle.hidden = false;
+    });
+
+    if (new URLSearchParams(location.search).get("owner") === "1") {
+      ownerPanel.hidden = false;
+      ownerToggle.hidden = true;
+      setMsg("Sign in on the homepage first, then open owner sites from here.");
+    }
+  })();
+  </script>
 </body>
 </html>

@@ -502,3 +502,7 @@ body.focus-mode .steps li.current { display: grid; border: none; padding: 1.5rem
   transform: translateX(-50%) translateY(0);
   opacity: 1;
 }
+
+html.auth-checking body {
+  visibility: hidden;
+}
