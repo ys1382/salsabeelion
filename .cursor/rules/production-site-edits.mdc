@@ -16,8 +16,12 @@ This repo ships real static sites. Unless the user **explicitly approves** remov
 
 ## Deployment
 
-Follow **`warn-before-live-user-impact`**: **Deploy check** first (will it mess with readers?), then deploy when the owner asked.
+Follow **`warn-before-live-user-impact`**: **Deploy check** first, then deploy.
+
+**Public** sites — deploy when the owner asked (**deploy** / **ship it** / **yes**).
+
+**Owner-only** sites — verify per **`owner-only-auto-deploy`**, deploy in the same turn without waiting for those words.
 
 When the user says **deploy** or **deploy now**, give the Deploy check, then run deploy immediately in the same turn. Do not add extra improvements before deploy unless required to fix a failure. If deploy fails, report the exact error and propose the smallest fix.
 
-For kids static sites, deploy from repo root with `bash top/scripts/deploy-kids-sites.sh` only after that OK (see `kids-sites-immediate-deploy`).
+For kids static sites, deploy from repo root with `bash top/scripts/deploy-kids-sites.sh` (see `kids-sites-immediate-deploy` and `owner-only-auto-deploy`).

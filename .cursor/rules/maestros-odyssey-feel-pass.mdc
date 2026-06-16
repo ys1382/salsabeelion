@@ -1,0 +1,61 @@
+---
+description: Maestro's Odyssey — feel pass + self-check before done or deploy
+globs: maestrosOdyssey/**
+alwaysApply: false
+---
+
+# Maestro's Odyssey — feel pass (required)
+
+After **any** change to MO gameplay feel — maps, building art, door tiles, spawn points, collisions, camera, transitions, **Mara dialogue, menu read, or order typing** — **do not call the work done or deploy** until this pass passes in the browser.
+
+## Self-check rule
+
+1. Make the change.
+2. **Open the game locally** and walk through the checks below.
+3. If anything regressed, fix it and re-check.
+4. Only then report success — and **deploy** per **`owner-only-auto-deploy`** (owner-only; no need to wait for "deploy" in chat).
+
+Skipping the browser check is how door/collision fixes ship broken. **Do not deploy MO gameplay changes until the checks below pass locally** (then auto-deploy per owner-only rule).
+
+## Local open (before checks)
+
+From `maestrosOdyssey/www/`:
+
+```bash
+python3 -m http.server 8765
+```
+
+If port 8765 is busy, pick another (e.g. `8766`). Open `http://127.0.0.1:<port>/index.html`.
+
+## What to check (in order)
+
+### Map / doors
+
+1. **Street → café** — walk onto the door tile, then through. Must **not** trigger from a tile away.
+2. **Café → street** — stand on the inside exit door tile, then leave. Land on sidewalk facing out.
+3. **Spawn facing** — entering faces into the room; leaving faces the street.
+4. **Porch / sidewalk** — path (`P`) tiles in front of the café stay walkable; upper building walls stay solid (no walking through the sides).
+5. **Ground under facade** — building footprint cells still draw street/grass under the sprite (never leave empty tiles that flash black).
+6. **Single source of truth** — `OUTSIDE_BUILDING.doorCol` / `doorRow`, `doorPos`, and exit spawns stay in sync.
+
+### Dragon's Brew — Mara + order (required when dialogue, menu, or order input changed)
+
+Run on a **fresh page load** (hard refresh). Intro is per visit (`sessionStorage`), not permanent save.
+
+7. **Mara first talk** — **E** near Mara: *Laughs gently*, left-hand wave, Çampire line. Must **not** skip to menu nudge or order on first visit.
+8. **Menu nudge** — talk again **before** reading menu: she points you to the board.
+9. **Read menu** — **R** facing drink menu: board text opens.
+10. **Order prompt** — **E** again: “What’s your order?” + Spanish hint in parentheses.
+11. **Order box** — **E** to dismiss prompt: empty box, blinking cursor, can type **more than one letter** (try **Té** or **croissant**).
+12. **Typing not stuck** — game movement keys must **not** steal keys while the order box is open.
+
+## Fix patterns
+
+- Draw ground under `OUTSIDE_BUILDING` cells; paint the facade sprite on top.
+- Porch collision: skip solid only on door cell + sidewalk row where grid is `P`.
+- `exitSpawn` one tile inside on enter, one tile outside on leave; optional `facing`.
+- Door transition: only when the player’s **current tile** is the door — not the tile in front.
+
+## Report to owner
+
+Plain English: what felt wrong, what changed, which checks above you walked (map and/or Mara). Deploy after pass unless **local only** / **don't deploy** in that conversation.

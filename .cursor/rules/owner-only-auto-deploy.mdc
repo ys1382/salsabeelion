@@ -1,0 +1,36 @@
+---
+description: Owner-only Odd Trove sites — verify first, then deploy without asking
+alwaysApply: true
+---
+
+# Owner-only — verify, then deploy (no ask)
+
+When the change is **only** for owner-only sites — not public reader paths — **deploy without waiting** for the owner to say "deploy." Still **verify first** so nothing ships broken.
+
+## Owner-only (auto-deploy after verify)
+
+- **Maestro's Odyssey** — `maestrosOdyssey/` → `/maestros/`
+- **envDyst** — `envDyst/` → `/envdyst/`
+- **Climatic Mysteries** — `climaticMysteries/` → `/climatic-mysteries/`
+
+## Before deploy (required)
+
+1. **Sanity check** — quick local test or browser pass for gameplay/UI; read the diff if it's logic-only. Do **not** deploy if broken or untested.
+2. **MO map/door/spawn** — follow **`maestros-odyssey-feel-pass`** in the browser before deploy.
+3. **Brief deploy check in chat** — one line: owner-only, won't touch reader shelves/progress; ~1–2s restart blip possible if the kids deploy script runs.
+
+## Deploy commands (repo root)
+
+- Maestro's + envDyst (shared script): `bash top/scripts/deploy-kids-sites.sh`
+- Climatic Mysteries only: `bash climaticMysteries/scripts/deploy.sh`
+
+Run deploy **in the same turn** after the check passes.
+
+## Still ask before deploy
+
+- **Halalit** — vetting, shelves, Book Quest, progress, `halalit/www/`
+- **Crocheter** — accounts, sync, `crocheter/www/`
+- **Mixed change** — owner-only **and** public paths in one task → follow **`warn-before-live-user-impact`**; get OK for the public part
+- **High-impact public** — nginx routes, auth gates, localStorage keys readers rely on
+
+Public site rules (`kids-sites-immediate-deploy`, `warn-before-live-user-impact`) win when readers could be affected.

@@ -3,13 +3,19 @@ description: Kids-site deploy — only after owner confirms; warn about live rea
 alwaysApply: true
 ---
 
-# Kids sites — deploy after owner OK
+# Kids sites — deploy after owner OK (public paths)
 
-When **kids static sites** change (paths rsynced by `top/scripts/deploy-kids-sites.sh`), **do not deploy automatically**.
+When **public** kids static sites change — Halalit, Crocheter, hub — **do not deploy automatically**.
 
-Follow **`warn-before-live-user-impact`**: give a **Deploy check** (will it mess with readers?) before running the script.
+**Owner-only** (Maestro's, envDyst, Climatic Mysteries): follow **`owner-only-auto-deploy`** — verify, then deploy without asking.
 
-**Deploy only when** the owner clearly says **deploy**, **deploy now**, **ship it**, or **yes** — but **always** the Deploy check **first in the same turn**, then run deploy.
+When **all** paths in `deploy-kids-sites.sh` change but edits are **only** under `maestrosOdyssey/www/` or `envDyst/www/`, use the owner-only rule (script restarts all backends; public files on server are not replaced unless you changed them locally).
+
+Follow **`warn-before-live-user-impact`**: give a **Deploy check** before running the script.
+
+**Public paths** — deploy only when the owner clearly says **deploy**, **deploy now**, **ship it**, or **yes**. Deploy check **first in the same turn**, then run deploy.
+
+**Owner-only paths** — after verify (see **`owner-only-auto-deploy`**), deploy in the **same turn** without waiting for those words. Still give the brief deploy check.
 
 From **repo root** when approved:
 

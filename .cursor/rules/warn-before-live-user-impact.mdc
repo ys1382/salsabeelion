@@ -45,7 +45,8 @@ Then deploy (if they asked) or ask **deploy now or local only?** (if they didn't
 
 ## When owner did NOT ask to deploy
 
-Do **not** deploy. Give Deploy check if relevant, then ask **deploy now or local only?**
+- **Public** changes — do not deploy. Give Deploy check if relevant, then ask **deploy now or local only?**
+- **Owner-only** changes (Maestro's, envDyst, Climatic Mysteries only) — follow **`owner-only-auto-deploy`**: verify, brief deploy check, deploy in the same turn.
 
 ## When owner said "local only" / "don't deploy"
 
