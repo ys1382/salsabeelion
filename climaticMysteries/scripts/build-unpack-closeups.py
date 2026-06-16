@@ -1,8 +1,8 @@
-#!/usr/bin/env python3
+ #!/usr/bin/env python3
 """Crop unpack close-ups from rental_unpack_scene.png using unpack_masks/.
 
-Same pixels as the wide room. Each crop is as large as possible (sharp — no upscale)
-with the item mask centroid at the exact center of the frame.
+Same pixels as the wide room. Each crop wraps the item mask with breathing room (sharp — no upscale)
+with the item mask centroid at the center of the frame when possible.
 
   python3 climaticMysteries/scripts/build-unpack-closeups.py
 """
@@ -23,6 +23,16 @@ MASK_DIR = SCENES / "unpack_masks"
 ASPECT = 3 / 2  # match rental_unpack_scene.png (1536×1024)
 ITEMS = ("duffel", "folder", "notebook", "bottle", "keys")
 
+# Padding around each mask bbox (× width/height). Tight close-ups, not wide-room crops.
+ITEM_PAD = {
+    "duffel": 2.15,
+    "folder": 2.05,
+    "notebook": 2.05,
+    "bottle": 2.05,
+    "keys": 2.2,
+}
+MIN_HALF_W = 100
+
 
 def mask_bbox(mask: Image.Image) -> tuple[int, int, int, int]:
     px = mask.load()
@@ -39,31 +49,58 @@ def mask_bbox(mask: Image.Image) -> tuple[int, int, int, int]:
     return min(xs), min(ys), max(xs), max(ys)
 
 
-def max_centered_half_w(sw: int, sh: int, cx: int, cy: int) -> int:
-    """Largest 3:2 window centered on (cx, cy) that fits inside the scene."""
-    hw = min(cx, sw - cx)
-    hh = hw / ASPECT
-    if cy - hh < 0:
-        hw = min(hw, int(cy * ASPECT))
-        hh = hw / ASPECT
-    if cy + hh > sh:
-        hw = min(hw, int((sh - cy) * ASPECT))
-    return max(int(hw), 40)
+def half_w_from_bbox(name: str, x0: int, y0: int, x1: int, y1: int) -> int:
+    """3:2 crop half-width that wraps the mask bbox with item-specific breathing room."""
+    pad = ITEM_PAD.get(name, 2.05)
+    bw = x1 - x0 + 1
+    bh = y1 - y0 + 1
+    req_w = bw * pad
+    req_h = bh * pad
+    if req_w / max(req_h, 1) >= ASPECT:
+        crop_w = req_w
+        crop_h = crop_w / ASPECT
+    else:
+        crop_h = req_h
+        crop_w = crop_h * ASPECT
+    return max(int(crop_w / 2), MIN_HALF_W)
 
 
-def centered_crop_box(
+KEYS_HALF_W = 88  # preview F — best center so far
+
+
+def keys_crop_box(
+    sw: int,
+    sh: int,
+    cx: int,
+    cy: int,
+    y0: int,
+    y1: int,
+) -> tuple[int, int, int, int]:
+    """Key ring centered like preview F, zoomed in tighter."""
+    half_w = KEYS_HALF_W
+    half_h = max(int(half_w / ASPECT), 24)
+    left = max(0, min(cx - half_w, sw - half_w * 2))
+    right = min(sw, left + half_w * 2)
+    left = max(0, right - half_w * 2)
+    top = max(0, min(cy - half_h, sh - half_h * 2))
+    bottom = min(sh, top + half_h * 2)
+    top = max(0, bottom - half_h * 2)
+    return left, top, right, bottom
+
+
+def clamp_crop_to_scene(
     sw: int,
     sh: int,
     cx: int,
     cy: int,
     half_w: int,
 ) -> tuple[int, int, int, int]:
-    half_w = max(half_w, 40)
+    """Shift a centered crop box inward if it crosses scene edges."""
     half_h = max(int(half_w / ASPECT), 27)
-    left = cx - half_w
-    top = cy - half_h
-    right = cx + half_w
-    bottom = cy + half_h
+    left = max(0, min(cx - half_w, sw - half_w * 2))
+    top = max(0, min(cy - half_h, sh - half_h * 2))
+    right = min(sw, left + half_w * 2)
+    bottom = min(sh, top + half_h * 2)
     return left, top, right, bottom
 
 
@@ -80,8 +117,11 @@ def main() -> None:
             mask = mask.resize((sw, sh), Image.NEAREST)
         x0, y0, x1, y1 = mask_bbox(mask)
         cx, cy = (x0 + x1) // 2, (y0 + y1) // 2
-        half_w = max_centered_half_w(sw, sh, cx, cy)
-        box = centered_crop_box(sw, sh, cx, cy, half_w)
+        half_w = half_w_from_bbox(name, x0, y0, x1, y1)
+        if name == "keys":
+            box = keys_crop_box(sw, sh, cx, cy, y0, y1)
+        else:
+            box = clamp_crop_to_scene(sw, sh, cx, cy, half_w)
         crop = scene.crop(box)
         l, t, r, b = box
         cw, ch = crop.size

@@ -611,9 +611,12 @@ html, body {
 #prologue-bus-frame.rental-unpack.item-focused #prologue-backdrop {
   animation: none;
   filter: none;
-  object-fit: contain;
+  object-fit: cover;
   object-position: center center;
-  transform: none;
+  transition: opacity 0.45s ease;
+}
+
+#prologue-bus-frame.rental-unpack.item-focused.keys-focus #prologue-backdrop {
   transition: opacity 0.45s ease;
 }
 
@@ -3215,6 +3218,9 @@ const UNPACK_OBJECTS = [
     id: "keys",
     label: "Rental keys",
     closeup: "scenes/unpack_closeups/keys",
+    displayFit: "cover",
+    focus: "50% 50%",
+    displayScale: 1.28,
     monologue: "Rental keys on the table. Short stay, long story if this piece lands."
   }
 ];
@@ -3373,11 +3379,12 @@ function focusUnpackItem(obj) {
   if (!obj.closeup) return;
 
   frame.classList.add("item-focused");
+  frame.classList.toggle("keys-focus", obj.id === "keys");
   hideScenePin();
-  img.style.transform = "";
-  img.style.transformOrigin = "";
-  img.style.objectFit = "contain";
-  img.style.objectPosition = "center center";
+  img.style.transform = obj.displayScale ? `scale(${obj.displayScale})` : "";
+  img.style.transformOrigin = obj.displayScale ? "center center" : "";
+  img.style.objectFit = obj.displayFit || "";
+  img.style.objectPosition = obj.focus || "";
   setPrologueBackdrop(obj.closeup, false);
 
   document.querySelectorAll(".prologue-choice-btn").forEach(btn => {
@@ -3388,7 +3395,7 @@ function focusUnpackItem(obj) {
 function resetUnpackFocus() {
   const frame = document.getElementById("prologue-bus-frame");
   const img = document.getElementById("prologue-backdrop");
-  frame.classList.remove("item-focused");
+  frame.classList.remove("item-focused", "keys-focus");
   hideScenePin();
   img.style.transform = "";
   img.style.transformOrigin = "";
