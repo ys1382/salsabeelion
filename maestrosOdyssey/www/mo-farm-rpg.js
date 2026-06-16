@@ -1,0 +1,622 @@
+// ─────────────────────────────────────────────────────────────────────────────
+//  Web Audio engine  (chiptune music + SFX, no external files)
+// ─────────────────────────────────────────────────────────────────────────────
+const Audio = (() => {
+  let ctx = null;
+  let masterGain = null;
+  let musicTimeout = null;
+  let musicPlaying = false;
+  let stepTime = 0;
+
+  function init() {
+    if (ctx) return;
+    ctx = new (window.AudioContext || window.webkitAudioContext)();
+    masterGain = ctx.createGain();
+    masterGain.gain.value = 0.18;
+    masterGain.connect(ctx.destination);
+  }
+
+  function tone(freq, type, startTime, duration, vol = 1, env = true) {
+    const osc = ctx.createOscillator();
+    const g   = ctx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, startTime);
+    if (env) {
+      g.gain.setValueAtTime(0, startTime);
+      g.gain.linearRampToValueAtTime(vol, startTime + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+    } else {
+      g.gain.setValueAtTime(vol, startTime);
+      g.gain.linearRampToValueAtTime(0, startTime + duration);
+    }
+    osc.connect(g);
+    g.connect(masterGain);
+    osc.start(startTime);
+    osc.stop(startTime + duration + 0.05);
+  }
+
+  // Simple chiptune — pentatonic melody in C: C D E G A
+  const SCALE = [261.63, 293.66, 329.63, 392.00, 440.00,
+                 523.25, 587.33, 659.25, 783.99, 880.00];
+  const MELODY = [4,2,0,2,4,4,4, 2,2,2, 4,7,7, 4,2,0,2,4,4,4,4,2,2,4,2,0];
+  const BASS   = [0,0,4,0,0,4,4, 0,0,4, 0,4,4, 0,0,4,0,0,4,4,0,0,4,0,0];
+  const DUR    = 0.18; // seconds per note
+
+  function playMusicBeat(step) {
+    if (!musicPlaying) return;
+    const t = ctx.currentTime + 0.05;
+    const mi = step % MELODY.length;
+    tone(SCALE[MELODY[mi]],          'square',   t, DUR * 0.8, 0.6);
+    tone(SCALE[MELODY[mi]] * 1.005,  'square',   t, DUR * 0.8, 0.3); // slight detune
+    tone(SCALE[BASS[mi]] / 2,        'triangle', t, DUR * 0.9, 0.5);
+    // hi-hat on even beats
+    if (step % 2 === 0) {
+      const buf = ctx.createBuffer(1, ctx.sampleRate * 0.04, ctx.sampleRate);
+      const d   = buf.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * 0.15;
+      const src = ctx.createBufferSource();
+      const g2  = ctx.createGain();
+      src.buffer = buf;
+      g2.gain.setValueAtTime(0.4, t);
+      g2.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
+      src.connect(g2);
+      g2.connect(masterGain);
+      src.start(t);
+    }
+    musicTimeout = setTimeout(() => playMusicBeat(step + 1), DUR * 1000);
+  }
+
+  function startMusic() {
+    if (musicPlaying) return;
+    musicPlaying = true;
+    playMusicBeat(0);
+  }
+
+  function stopMusic() {
+    musicPlaying = false;
+    if (musicTimeout) clearTimeout(musicTimeout);
+  }
+
+  function sfxStep() {
+    const now = ctx.currentTime;
+    if (now - stepTime < 0.22) return; // throttle
+    stepTime = now;
+    const buf = ctx.createBuffer(1, ctx.sampleRate * 0.06, ctx.sampleRate);
+    const d   = buf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / d.length) * 0.3;
+    const src = ctx.createBufferSource();
+    const g   = ctx.createGain();
+    src.buffer = buf;
+    g.gain.setValueAtTime(0.6, now);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+    src.connect(g);
+    g.connect(masterGain);
+    src.start(now);
+  }
+
+  function sfxInteract() {
+    const t = ctx.currentTime;
+    tone(523.25, 'square', t,        0.08, 0.7);
+    tone(659.25, 'square', t + 0.08, 0.08, 0.7);
+    tone(783.99, 'square', t + 0.16, 0.15, 0.7);
+  }
+
+  function sfxClose() {
+    const t = ctx.currentTime;
+    tone(392.00, 'triangle', t,       0.07, 0.5);
+    tone(329.63, 'triangle', t + 0.07, 0.07, 0.5);
+  }
+
+  return { init, startMusic, stopMusic, sfxStep, sfxInteract, sfxClose };
+})();
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Pixel art constants
+// ─────────────────────────────────────────────────────────────────────────────
+const TILE   = 32;   // pixels per tile
+const COLS   = 20;
+const ROWS   = 15;
+const W      = TILE * COLS;
+const H      = TILE * ROWS;
+const SCALE  = 2;   // pixel-art upscale
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Pixel drawing helpers  (draws onto an offscreen canvas → Phaser texture)
+// ─────────────────────────────────────────────────────────────────────────────
+function makeCanvas(w, h) {
+  const c = document.createElement('canvas');
+  c.width = w; c.height = h;
+  return c;
+}
+
+function px(ctx, x, y, color) {
+  ctx.fillStyle = color;
+  ctx.fillRect(x, y, 1, 1);
+}
+
+function rect(ctx, x, y, w, h, color) {
+  ctx.fillStyle = color;
+  ctx.fillRect(x, y, w, h);
+}
+
+// Draw a single grass tile  (32×32)
+function drawGrass(ctx, ox, oy, variant) {
+  const base = variant === 1 ? '#4a7c3f' : '#3d6b35';
+  rect(ctx, ox, oy, 32, 32, base);
+  // small detail tufts
+  const details = variant === 1
+    ? [[4,5],[12,20],[24,8],[28,18],[8,26]]
+    : [[6,10],[18,4],[10,22],[26,14],[20,28]];
+  details.forEach(([dx, dy]) => {
+    px(ctx, ox+dx, oy+dy, '#5a9c4f');
+    px(ctx, ox+dx+1, oy+dy, '#5a9c4f');
+  });
+}
+
+// Draw a path tile  (32×32, horizontal)
+function drawPath(ctx, ox, oy) {
+  rect(ctx, ox, oy, 32, 32, '#c4a35a');
+  // pebble texture
+  [[3,5],[10,12],[18,7],[25,15],[7,22],[20,24]].forEach(([dx, dy]) => {
+    rect(ctx, ox+dx, oy+dy, 2, 2, '#b8935a');
+  });
+  // edge shadow
+  rect(ctx, ox, oy, 32, 1, '#a07840');
+  rect(ctx, ox, oy+31, 32, 1, '#a07840');
+}
+
+// Draw a water tile  (32×32)
+function drawWater(ctx, ox, oy, frame) {
+  rect(ctx, ox, oy, 32, 32, '#2a6e9e');
+  const shift = frame % 2 === 0 ? 0 : 2;
+  for (let i = 0; i < 4; i++) {
+    rect(ctx, ox + 2 + i*8 + shift, oy+10, 5, 2, '#4a9ec0');
+    rect(ctx, ox + 5 + i*8 - shift, oy+20, 5, 2, '#4a9ec0');
+  }
+}
+
+// Draw a tree  (32×48 in a 32×64 frame — trunk at bottom)
+function drawTree(ctx, ox, oy) {
+  // shadow
+  rect(ctx, ox+8, oy+60, 16, 4, 'rgba(0,0,0,0.25)');
+  // trunk
+  rect(ctx, ox+13, oy+42, 6, 18, '#6b3d1e');
+  rect(ctx, ox+14, oy+44, 1, 14, '#8b5c2e');
+  // canopy layers
+  rect(ctx, ox+6,  oy+28, 20, 16, '#2d7a2d');
+  rect(ctx, ox+4,  oy+16, 24, 16, '#3a9a3a');
+  rect(ctx, ox+8,  oy+6,  16, 14, '#4ab04a');
+  rect(ctx, ox+10, oy+2,  12, 8,  '#55c055');
+  // highlight
+  rect(ctx, ox+10, oy+8,  4,  6,  '#6adc5a');
+}
+
+// Draw a fence tile  (32×32)
+function drawFence(ctx, ox, oy) {
+  rect(ctx, ox, oy, 32, 32, 'rgba(0,0,0,0)');
+  rect(ctx, ox, oy+8,  32, 4, '#8b5c2e');
+  rect(ctx, ox, oy+20, 32, 4, '#8b5c2e');
+  rect(ctx, ox+4,  oy+4, 4, 24, '#a06c3e');
+  rect(ctx, ox+24, oy+4, 4, 24, '#a06c3e');
+}
+
+// Draw a sign  (32×32)
+function drawSign(ctx, ox, oy) {
+  // post
+  rect(ctx, ox+14, oy+20, 4, 12, '#6b3d1e');
+  // board
+  rect(ctx, ox+4, oy+6, 24, 16, '#c4a35a');
+  rect(ctx, ox+5, oy+7, 22, 14, '#d4b36a');
+  // writing lines
+  rect(ctx, ox+8, oy+10, 16, 2, '#7a5a20');
+  rect(ctx, ox+8, oy+15, 12, 2, '#7a5a20');
+}
+
+// Draw a flower  (32×32)
+function drawFlower(ctx, ox, oy, color) {
+  rect(ctx, ox, oy, 32, 32, 'rgba(0,0,0,0)');
+  // stem
+  px(ctx, ox+16, oy+22, '#2d7a2d');
+  px(ctx, ox+16, oy+23, '#2d7a2d');
+  px(ctx, ox+16, oy+24, '#2d7a2d');
+  // petals
+  [[15,18],[17,18],[14,19],[18,19],[15,21],[17,21]].forEach(([dx,dy]) => px(ctx, ox+dx, oy+dy, color));
+  // center
+  px(ctx, ox+16, oy+19, '#ffe066');
+  px(ctx, ox+16, oy+20, '#ffe066');
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Character spritesheet  (4 rows × 4 frames, each frame 16×24)
+//  Rows: down, left, right, up
+// ─────────────────────────────────────────────────────────────────────────────
+const CHAR_W = 16, CHAR_H = 24, CHAR_FRAMES = 4;
+
+function drawCharFrame(ctx, fx, fy, dir, frame) {
+  const ox = fx * CHAR_W, oy = fy * CHAR_H;
+  const skin = '#f0c080', hair = '#5a3010', shirt = '#3a7ac8', pants = '#2a3a6a', shoe = '#2a1a0a';
+
+  // clear
+  ctx.clearRect(ox, oy, CHAR_W, CHAR_H);
+
+  // legs / walk bob
+  const walkOffset = (frame === 1 || frame === 3) ? 0 : 1;
+  const legL = frame < 2 ? 1 : -1;
+
+  if (dir !== 3) { // not up — show shoes
+    rect(ctx, ox+3+legL, oy+18+walkOffset, 4, 4, pants);
+    rect(ctx, ox+9-legL, oy+18+walkOffset, 4, 4, pants);
+    rect(ctx, ox+3+legL, oy+21+walkOffset, 4, 3, shoe);
+    rect(ctx, ox+9-legL, oy+21+walkOffset, 4, 3, shoe);
+  } else {
+    rect(ctx, ox+3, oy+18, 10, 6, pants);
+  }
+
+  // body
+  rect(ctx, ox+3, oy+10, 10, 9, shirt);
+
+  // arms
+  if (dir !== 3) {
+    rect(ctx, ox+1, oy+10, 2, 7, skin);
+    rect(ctx, ox+13, oy+10, 2, 7, skin);
+  } else {
+    rect(ctx, ox+1, oy+10, 2, 6, shirt);
+    rect(ctx, ox+13, oy+10, 2, 6, shirt);
+  }
+
+  // head
+  rect(ctx, ox+3, oy+2, 10, 9, skin);
+
+  // hair
+  rect(ctx, ox+3, oy+2, 10, 3, hair);
+  if (dir === 3) { // up — show back of head
+    rect(ctx, ox+3, oy+2, 10, 5, hair);
+  }
+
+  // face (only for down/left/right)
+  if (dir === 0) { // down
+    rect(ctx, ox+5, oy+7, 2, 2, '#1a0a00'); // eyes
+    rect(ctx, ox+9, oy+7, 2, 2, '#1a0a00');
+    rect(ctx, ox+6, oy+10, 4, 1, '#c07050'); // mouth
+  } else if (dir === 1) { // left
+    rect(ctx, ox+5, oy+7, 2, 2, '#1a0a00');
+    rect(ctx, ox+5, oy+10, 3, 1, '#c07050');
+  } else if (dir === 2) { // right
+    rect(ctx, ox+9, oy+7, 2, 2, '#1a0a00');
+    rect(ctx, ox+8, oy+10, 3, 1, '#c07050');
+  }
+
+  // shadow
+  rect(ctx, ox+4, oy+23, 8, 1, 'rgba(0,0,0,0.3)');
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  NPC  (same size as player, different colours)
+// ─────────────────────────────────────────────────────────────────────────────
+function drawNPC(ctx, ox, oy) {
+  const skin = '#ffe0b0', hair = '#c05020', shirt = '#a03050', pants = '#3a2a6a', shoe = '#2a1a0a';
+  rect(ctx, ox+3, oy+18, 4, 6, pants);
+  rect(ctx, ox+9, oy+18, 4, 6, pants);
+  rect(ctx, ox+3, oy+21, 4, 3, shoe);
+  rect(ctx, ox+9, oy+21, 4, 3, shoe);
+  rect(ctx, ox+3, oy+10, 10, 9, shirt);
+  rect(ctx, ox+1, oy+10, 2, 7, skin);
+  rect(ctx, ox+13, oy+10, 2, 7, skin);
+  rect(ctx, ox+3, oy+2, 10, 9, skin);
+  rect(ctx, ox+3, oy+2, 10, 3, hair);
+  rect(ctx, ox+5, oy+7, 2, 2, '#1a0a00');
+  rect(ctx, ox+9, oy+7, 2, 2, '#1a0a00');
+  rect(ctx, ox+5, oy+10, 6, 1, '#c07050');
+  rect(ctx, ox+4, oy+23, 8, 1, 'rgba(0,0,0,0.3)');
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  MAP  (0=grass, 1=grass2, 2=path, 3=water, 4=tree, 5=fence, 6=sign, 7=flower)
+// ─────────────────────────────────────────────────────────────────────────────
+// T = tree, W = water, P = path, F = fence, S = sign, f = flower, . = grass
+const mapStr = [
+  'TWWWWWWWWWWWWWWWWWWT',
+  'TW..1....1....1...WT',
+  'TW.T.............TWT',
+  'TW...............fWT',
+  'TW.T..........f..fWT',
+  'TW....PPPPP......fWT',
+  'TWFF.P.....P.T...fWT',
+  'TW...P..S..P.....fWT',
+  'TW...P.....P.....fWT',
+  'TW...PPPPPPP.....fWT',
+  'TW.T.............TWT',
+  'TW...............fWT',
+  'TW.T..T..T..T....TWT',
+  'TW................WT',
+  'TWWWWWWWWWWWWWWWWWWT',
+].map(row => row.split(''));
+
+const TILE_IDX = { 'T': 4, 'W': 3, 'P': 2, 'F': 5, 'S': 6, 'f': 7, '.': 0, '1': 1 };
+const SOLID = new Set([3, 4, 5]); // water, tree, fence
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Phaser Game
+// ─────────────────────────────────────────────────────────────────────────────
+class GameScene extends Phaser.Scene {
+  constructor() { super('GameScene'); }
+
+  preload() {
+    // Build all textures programmatically — no external files needed
+    this._buildTileTextures();
+    this._buildCharTexture();
+    this._buildNPCTexture();
+  }
+
+  _buildTileTextures() {
+    // One canvas per tile type — avoids crop offset bugs
+    const add = (key, w, h, fn) => {
+      const c = makeCanvas(w, h);
+      fn(c.getContext('2d'));
+      this.textures.addCanvas(key, c);
+    };
+    add('t_grass',  32, 32, ctx => drawGrass(ctx, 0, 0, 0));
+    add('t_grass2', 32, 32, ctx => drawGrass(ctx, 0, 0, 1));
+    add('t_path',   32, 32, ctx => drawPath(ctx, 0, 0));
+    add('t_water',  32, 32, ctx => drawWater(ctx, 0, 0, 0));
+    add('t_water2', 32, 32, ctx => drawWater(ctx, 0, 0, 1));
+    add('t_tree',   32, 64, ctx => drawTree(ctx, 0, 0));
+    add('t_fence',  32, 32, ctx => drawFence(ctx, 0, 0));
+    add('t_sign',   32, 32, ctx => drawSign(ctx, 0, 0));
+    add('t_flower', 32, 32, ctx => drawFlower(ctx, 0, 0, '#ff6688'));
+  }
+
+  _buildCharTexture() {
+    // 4 dirs × 4 frames, each 16×24  → canvas 64×96
+    const c = makeCanvas(CHAR_W * CHAR_FRAMES, CHAR_H * 4);
+    const ctx = c.getContext('2d');
+    for (let dir = 0; dir < 4; dir++) {
+      for (let frame = 0; frame < CHAR_FRAMES; frame++) {
+        drawCharFrame(ctx, frame, dir, dir, frame);
+      }
+    }
+    this.textures.addCanvas('player', c);
+    this.textures.get('player').add('down0',  0,  0,  0, CHAR_W, CHAR_H);
+    this.textures.get('player').add('down1',  0, CHAR_W,  0, CHAR_W, CHAR_H);
+    this.textures.get('player').add('down2',  0, CHAR_W*2,0, CHAR_W, CHAR_H);
+    this.textures.get('player').add('down3',  0, CHAR_W*3,0, CHAR_W, CHAR_H);
+    for (let dir = 0; dir < 4; dir++) {
+      const dirName = ['down','left','right','up'][dir];
+      this.textures.get('player').add(`${dirName}0`, 0, 0,          dir*CHAR_H, CHAR_W, CHAR_H);
+      this.textures.get('player').add(`${dirName}1`, 0, CHAR_W,     dir*CHAR_H, CHAR_W, CHAR_H);
+      this.textures.get('player').add(`${dirName}2`, 0, CHAR_W*2,   dir*CHAR_H, CHAR_W, CHAR_H);
+      this.textures.get('player').add(`${dirName}3`, 0, CHAR_W*3,   dir*CHAR_H, CHAR_W, CHAR_H);
+    }
+  }
+
+  _buildNPCTexture() {
+    const c = makeCanvas(CHAR_W, CHAR_H);
+    const ctx = c.getContext('2d');
+    drawNPC(ctx, 0, 0);
+    this.textures.addCanvas('npc', c);
+  }
+
+  create() {
+    const scene = this;
+
+    // ── tilemap background ──────────────────────────────────────────────────
+    this.tileGfx = this.add.graphics();
+
+    // Separate sprite group for tall tiles (trees rendered above ground)
+    this.groundLayer = this.add.container(0, 0);
+    this.tallLayer   = this.add.container(0, 0);
+
+    // Solid-tile body array for collision
+    this.solidBodies = this.physics.add.staticGroup();
+
+    const TILE_KEY = ['t_grass','t_grass2','t_path','t_water','t_tree','t_fence','t_sign','t_flower'];
+
+    mapStr.forEach((row, ry) => {
+      row.forEach((ch, rx) => {
+        const tid = TILE_IDX[ch] ?? 0;
+        const wx = rx * TILE * SCALE;
+        const wy = ry * TILE * SCALE;
+
+        if (tid === 4) {
+          // grass base under tree
+          const g = this.add.image(wx, wy, 't_grass').setOrigin(0, 0).setScale(SCALE);
+          this.groundLayer.add(g);
+          // tall tree image: 32×64, origin top-left, placed one tile above ground row
+          const t = this.add.image(wx, wy - 32*SCALE, 't_tree').setOrigin(0, 0).setScale(SCALE).setDepth(5);
+          this.tallLayer.add(t);
+          // collision body (trunk area, lower portion)
+          const body = this.add.rectangle(wx + 16*SCALE, wy + 20*SCALE, 14*SCALE, 24*SCALE);
+          this.physics.add.existing(body, true);
+          this.solidBodies.add(body);
+        } else {
+          const key = TILE_KEY[tid] ?? 't_grass';
+          const img = this.add.image(wx, wy, key).setOrigin(0, 0).setScale(SCALE);
+          this.groundLayer.add(img);
+
+          if (SOLID.has(tid)) {
+            const body = this.add.rectangle(wx + 16*SCALE, wy + 16*SCALE, 32*SCALE, 32*SCALE);
+            this.physics.add.existing(body, true);
+            this.solidBodies.add(body);
+          }
+        }
+      });
+    });
+
+    // ── player ──────────────────────────────────────────────────────────────
+    this.player = this.physics.add.sprite(
+      5 * TILE * SCALE + CHAR_W * SCALE,
+      7 * TILE * SCALE + CHAR_H * SCALE,
+      'player'
+    );
+    this.player.setScale(SCALE);
+    this.player.setDepth(10);
+    this.player.body.setSize(10 * SCALE, 8 * SCALE);
+    this.player.body.setOffset(3 * SCALE, 16 * SCALE);
+
+    // ── animations ──────────────────────────────────────────────────────────
+    const dirs = ['down','left','right','up'];
+    dirs.forEach(dir => {
+      this.anims.create({
+        key: `walk-${dir}`,
+        frames: [0,1,2,3].map(i => ({ key: 'player', frame: `${dir}${i}` })),
+        frameRate: 8,
+        repeat: -1
+      });
+      this.anims.create({
+        key: `idle-${dir}`,
+        frames: [{ key: 'player', frame: `${dir}0` }],
+        frameRate: 1,
+        repeat: 0
+      });
+    });
+    this.player.play('idle-down');
+    this.facing = 'down';
+
+    // ── NPC ─────────────────────────────────────────────────────────────────
+    const npcX = 10 * TILE * SCALE + CHAR_W * SCALE;
+    const npcY =  7 * TILE * SCALE + CHAR_H * SCALE;
+    this.npc = this.add.image(npcX, npcY, 'npc').setScale(SCALE).setDepth(10);
+
+    // interaction zone around the sign (col 10, row 7)
+    const signX = 10 * TILE * SCALE + 16 * SCALE;
+    const signY =  7 * TILE * SCALE + 16 * SCALE;
+    this.interactZone = this.add.zone(signX, signY, 64 * SCALE, 64 * SCALE);
+    this.physics.add.existing(this.interactZone, true);
+
+    // ── dialogue box ─────────────────────────────────────────────────────────
+    this.dialogueActive = false;
+    this.dialogueBox = this.add.container(0, H * SCALE - 80).setDepth(50).setVisible(false);
+    const bg = this.add.rectangle(W * SCALE / 2, 30, W * SCALE - 40, 60, 0x000000, 0.82).setOrigin(0.5, 0);
+    const border = this.add.rectangle(W * SCALE / 2, 30, W * SCALE - 40, 60).setStrokeStyle(2, 0xffe066).setOrigin(0.5, 0);
+    this.dialogueText = this.add.text(W * SCALE / 2, 44, '', {
+      fontFamily: 'monospace',
+      fontSize: '13px',
+      color: '#fffbe8',
+      wordWrap: { width: W * SCALE - 80 },
+      align: 'center',
+    }).setOrigin(0.5, 0);
+    this.dialogueBox.add([bg, border, this.dialogueText]);
+
+    const LINES = [
+      '"Welcome, traveller! The harvest festival\nis just around the corner."',
+      '"I planted these flowers myself.\nThey bloom every spring!"',
+      '"They say the old well grants wishes\nif you toss in a golden seed…"',
+      '"Have you explored the forest path yet?\nStrange things happen at dusk."',
+    ];
+    this.lineIndex = 0;
+    this.allLines = LINES;
+
+    // ── input ────────────────────────────────────────────────────────────────
+    this.cursors = this.input.keyboard.createCursorKeys();
+    this.wasd = this.input.keyboard.addKeys({ up: 'W', left: 'A', down: 'S', right: 'D' });
+    this.spaceKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+
+    // Start audio on first keypress (browsers require user gesture)
+    this.audioStarted = false;
+    this.input.keyboard.on('keydown', () => {
+      if (!this.audioStarted) {
+        Audio.init();
+        Audio.startMusic();
+        this.audioStarted = true;
+      }
+    });
+
+    // ── colliders ────────────────────────────────────────────────────────────
+    this.physics.add.collider(this.player, this.solidBodies);
+
+    // ── camera ───────────────────────────────────────────────────────────────
+    this.cameras.main.setBounds(0, 0, W * SCALE, H * SCALE);
+    this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
+
+    // ── water tile animation ──────────────────────────────────────────────────
+    // swap t_water / t_water2 textures on all water images every 500ms
+    this.waterImages = [];
+    mapStr.forEach((row, ry) => {
+      row.forEach((ch, rx) => {
+        if (TILE_IDX[ch] === 3) {
+          const wx = rx * TILE * SCALE, wy = ry * TILE * SCALE;
+          // find the image in groundLayer children by position (already added above)
+        }
+      });
+    });
+    this.time.addEvent({
+      delay: 500, loop: true, callback: () => {
+        this.groundLayer.each(img => {
+          if (img.texture && img.texture.key === 't_water') img.setTexture('t_water2');
+          else if (img.texture && img.texture.key === 't_water2') img.setTexture('t_water');
+        });
+      }
+    });
+  }
+
+  update() {
+    const { cursors, wasd, player } = this;
+    const speed = 100 * SCALE;
+    let vx = 0, vy = 0;
+
+    const left  = cursors.left.isDown  || wasd.left.isDown;
+    const right = cursors.right.isDown || wasd.right.isDown;
+    const up    = cursors.up.isDown    || wasd.up.isDown;
+    const down  = cursors.down.isDown  || wasd.down.isDown;
+
+    // close dialogue on space
+    if (Phaser.Input.Keyboard.JustDown(this.spaceKey)) {
+      if (this.dialogueActive) {
+        this.lineIndex = (this.lineIndex + 1) % this.allLines.length;
+        this.dialogueBox.setVisible(false);
+        this.dialogueActive = false;
+        if (this.audioStarted) Audio.sfxClose();
+        return;
+      }
+      // open dialogue if near NPC / sign
+      const dist = Phaser.Math.Distance.Between(player.x, player.y, this.interactZone.x, this.interactZone.y);
+      if (dist < 80 * SCALE) {
+        this.dialogueText.setText(this.allLines[this.lineIndex]);
+        this.dialogueBox.setVisible(true);
+        this.dialogueActive = true;
+        if (this.audioStarted) Audio.sfxInteract();
+        return;
+      }
+    }
+
+    if (this.dialogueActive) {
+      player.setVelocity(0, 0);
+      player.play(`idle-${this.facing}`, true);
+      return;
+    }
+
+    if (left)  { vx = -speed; this.facing = 'left'; }
+    if (right) { vx =  speed; this.facing = 'right'; }
+    if (up)    { vy = -speed; this.facing = 'up'; }
+    if (down)  { vy =  speed; this.facing = 'down'; }
+
+    player.setVelocity(vx, vy);
+
+    if (vx !== 0 || vy !== 0) {
+      player.play(`walk-${this.facing}`, true);
+      if (this.audioStarted) Audio.sfxStep();
+    } else {
+      player.play(`idle-${this.facing}`, true);
+    }
+
+    // update player depth so it goes behind trees when above them
+    player.setDepth(10 + player.y / (H * SCALE));
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+const config = {
+  type: Phaser.AUTO,
+  width:  W * SCALE,
+  height: H * SCALE,
+  parent: 'game',
+  backgroundColor: '#1a1a2e',
+  pixelArt: true,
+  physics: {
+    default: 'arcade',
+    arcade: { gravity: { y: 0 }, debug: false }
+  },
+  scene: GameScene
+};
+
+new Phaser.Game(config);
