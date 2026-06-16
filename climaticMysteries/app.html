@@ -604,6 +604,13 @@ html, body {
   to { transform: scale(1.05); }
 }
 
+#prologue-bus-frame.rental-unpack.item-focused #prologue-vignette,
+#prologue-bus-frame.rental-unpack.item-focused #prologue-flash {
+  display: none !important;
+  opacity: 0;
+  animation: none;
+}
+
 #prologue-bus-frame.rental-unpack.item-focused {
   background: #141210;
 }
@@ -613,10 +620,6 @@ html, body {
   filter: none;
   object-fit: cover;
   object-position: center center;
-  transition: opacity 0.45s ease;
-}
-
-#prologue-bus-frame.rental-unpack.item-focused.keys-focus #prologue-backdrop {
   transition: opacity 0.45s ease;
 }
 
@@ -3218,9 +3221,8 @@ const UNPACK_OBJECTS = [
     id: "keys",
     label: "Rental keys",
     closeup: "scenes/unpack_closeups/keys",
-    displayFit: "cover",
+    displayFit: "contain",
     focus: "50% 50%",
-    displayScale: 1.28,
     monologue: "Rental keys on the table. Short stay, long story if this piece lands."
   }
 ];
@@ -3379,10 +3381,14 @@ function focusUnpackItem(obj) {
   if (!obj.closeup) return;
 
   frame.classList.add("item-focused");
-  frame.classList.toggle("keys-focus", obj.id === "keys");
   hideScenePin();
-  img.style.transform = obj.displayScale ? `scale(${obj.displayScale})` : "";
-  img.style.transformOrigin = obj.displayScale ? "center center" : "";
+  const flash = document.getElementById("prologue-flash");
+  const prologue = document.getElementById("prologue");
+  flash.classList.remove("pulse");
+  prologue.style.removeProperty("--pin-x");
+  prologue.style.removeProperty("--pin-y");
+  img.style.transform = "";
+  img.style.transformOrigin = "";
   img.style.objectFit = obj.displayFit || "";
   img.style.objectPosition = obj.focus || "";
   setPrologueBackdrop(obj.closeup, false);
@@ -3395,7 +3401,7 @@ function focusUnpackItem(obj) {
 function resetUnpackFocus() {
   const frame = document.getElementById("prologue-bus-frame");
   const img = document.getElementById("prologue-backdrop");
-  frame.classList.remove("item-focused", "keys-focus");
+  frame.classList.remove("item-focused");
   hideScenePin();
   img.style.transform = "";
   img.style.transformOrigin = "";
