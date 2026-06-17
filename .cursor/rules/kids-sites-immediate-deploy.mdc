@@ -7,7 +7,7 @@ alwaysApply: true
 
 When **public** kids static sites change — Halalit, Crocheter, hub — **do not deploy automatically**.
 
-**Owner-only** (Maestro's, envDyst, Climatic Mysteries): follow **`owner-only-auto-deploy`** — verify, then deploy without asking.
+**Owner-only** (Maestro's, envDyst, Climatic Mysteries, LoreKeeper): follow **`owner-only-auto-deploy`** — verify, then deploy without asking.
 
 When **all** paths in `deploy-kids-sites.sh` change but edits are **only** under `maestrosOdyssey/www/` or `envDyst/www/`, use the owner-only rule (script restarts all backends; public files on server are not replaced unless you changed them locally).
 
@@ -23,7 +23,7 @@ From **repo root** when approved:
 bash top/scripts/deploy-kids-sites.sh
 ```
 
-**Usually touched paths:** `maestrosOdyssey/www/`, `crocheter/www/`, `envDyst/www/`, `halalit/www/`, `top/directory/www/` (hub), `top/_shared/serve_static_https.py`.
+**Usually touched paths:** `maestrosOdyssey/www/`, `crocheter/www/`, `envDyst/www/`, `halalit/www/`, `lorekeeper/www/`, `top/directory/www/` (hub), `top/_shared/serve_static_https.py`, `lorekeeper/lorekeeper_api.py`, `top/nginx/oddtrove.art.conf` (LoreKeeper nginx — reload nginx separately after deploy script).
 
 **Halalit:** Same rule for `halalit/www/`. `halalit/.cursor/private/` design-notes are local-only and never deployed.
 

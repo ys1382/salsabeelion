@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Document — LoreKeeper</title>
+  <link rel="stylesheet" href="./lk-fonts-hosted.css?v=1" />
+  <link rel="stylesheet" href="./lk-shared.css?v=16" />
+  <link rel="stylesheet" href="./vendor/quill/1.3.7/dist/quill.snow.css" />
+  <script src="./lk-auth-gate.js"></script>
+</head>
+<body>
+  <div class="lk-wrap lk-doc-wrap">
+    <p class="header-nav"><a href="./index.html">← Documents</a> · <a href="https://oddtrove.art/">Odd Trove</a></p>
+    <p class="lk-auth-bar" id="lkAuthBar"></p>
+    <p class="lk-status lk-save-status" id="saveStatus" aria-live="polite">Saved</p>
+
+    <div class="lk-doc-layout">
+      <aside class="lk-doc-sidebar lk-panel">
+        <div class="lk-field">
+          <label for="docTitle">Document</label>
+          <input type="text" id="docTitle" autocomplete="off" />
+        </div>
+        <div class="lk-field">
+          <label for="docWork">Work title <span class="muted">(for Ask)</span></label>
+          <input type="text" id="docWork" autocomplete="off" />
+        </div>
+
+        <p class="lk-panel-title lk-doc-side-title">Page setup</p>
+        <p class="muted lk-side-hint">Letter portrait — same default as Google Docs.</p>
+        <div class="lk-field">
+          <label for="docMargins">Margins</label>
+          <select id="docMargins" aria-label="Page margins">
+            <option value="normal">Normal</option>
+            <option value="narrow">Narrow</option>
+            <option value="wide">Wide</option>
+          </select>
+        </div>
+        <div class="lk-field">
+          <label for="docLineSpacing">Line spacing</label>
+          <select id="docLineSpacing" aria-label="Line spacing">
+            <option value="1.15">1.15</option>
+            <option value="1">Single</option>
+            <option value="1.5">1.5</option>
+            <option value="2">Double</option>
+          </select>
+        </div>
+        <div class="lk-field">
+          <label for="docHeader">Header</label>
+          <input type="text" id="docHeader" autocomplete="off" placeholder="Optional — top of each page" />
+        </div>
+        <div class="lk-field">
+          <label for="docFooter">Footer</label>
+          <input type="text" id="docFooter" autocomplete="off" placeholder="Optional — bottom of each page" />
+        </div>
+        <label class="lk-check">
+          <input type="checkbox" id="docPageNumbers" checked />
+          Page numbers in footer
+        </label>
+        <button type="button" class="lk-btn secondary lk-page-break-btn" id="insertPageBreakBtn">Insert page break</button>
+
+        <div class="lk-field lk-font-field">
+          <label for="docFont">Font</label>
+          <select id="docFont" aria-label="Document font"></select>
+        </div>
+        <p class="lk-word-count muted" id="wordCount" aria-live="polite">0 words</p>
+        <button type="button" class="lk-btn secondary lk-delete-doc" id="deleteDocBtn">Delete document</button>
+      </aside>
+
+      <main class="lk-doc-main">
+        <div class="lk-doc-canvas" id="docCanvas">
+          <div class="lk-doc-sheet lk-margin-normal" id="docSheet">
+            <div id="docEditor" aria-label="Your writing"></div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+  <script src="./vendor/quill/1.3.7/dist/quill.min.js"></script>
+  <script src="./lk-api-config.js?v=5"></script>
+  <script src="./lk-account-storage.js?v=5"></script>
+  <script src="./lk-documents.js?v=6"></script>
+  <script src="./lk-font-catalog.js?v=1"></script>
+  <script src="./lk-doc-editor.js?v=10"></script>
+</body>
+</html>

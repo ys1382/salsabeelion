@@ -9,7 +9,7 @@ Match warnings to **who can see the site** and **what could touch reader progres
 
 ## Site tiers
 
-**Owner-only** (basically only you): Maestro's (`/maestros/`), envDyst (`/envdyst/`), Climatic Mysteries (`/climatic-mysteries/`). Low reader risk.
+**Owner-only** (basically only you): Maestro's (`/maestros/`), envDyst (`/envdyst/`), Climatic Mysteries (`/climatic-mysteries/`), LoreKeeper (`/lorekeeper/`). Low reader risk.
 
 **Public** (real readers): Halalit (`/halalit/`), Crocheter (`/crocheter/`), oddtrove.art hub when served.
 
@@ -39,14 +39,14 @@ Then deploy (if they asked) or ask **deploy now or local only?** (if they didn't
 
 ### Usually "Minor blip only" or "Won't mess"
 
-- Owner-only `www/` changes (no public paths in the rsync set)
+- Owner-only `www/` changes (Maestro's, envDyst, Climatic Mysteries, LoreKeeper — no public paths in the rsync set)
 - Public copy/CSS/layout with no shelf/vet/progress/account changes
 - Roster markdown only with no `halalit/www/` change → **no deploy needed**; say so
 
 ## When owner did NOT ask to deploy
 
 - **Public** changes — do not deploy. Give Deploy check if relevant, then ask **deploy now or local only?**
-- **Owner-only** changes (Maestro's, envDyst, Climatic Mysteries only) — follow **`owner-only-auto-deploy`**: verify, brief deploy check, deploy in the same turn.
+- **Owner-only** changes (Maestro's, envDyst, Climatic Mysteries, LoreKeeper) — follow **`owner-only-auto-deploy`**: verify, brief deploy check, deploy in the same turn without asking.
 
 ## When owner said "local only" / "don't deploy"
 
