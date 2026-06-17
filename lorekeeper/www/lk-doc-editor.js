@@ -1,7 +1,6 @@
 (function (global) {
   var PAGE_H = 1056;
-  var PAGE_GAP = 24;
-  var PAGE_UNIT = PAGE_H + PAGE_GAP;
+  var PAGE_GAP = 20;
   var MARGIN_PX = { narrow: 48, normal: 96, wide: 144 };
 
   var doc = null;
@@ -10,8 +9,6 @@
   var chromeTimer = null;
   var dirty = false;
   var loading = false;
-  var chromeOverlay = null;
-  var decorLayer = null;
 
   function docIdFromUrl() {
     return new URLSearchParams(global.location.search).get("d") || "";
@@ -89,12 +86,9 @@
 
     var m = marginPx();
     sheet.style.setProperty("--lk-page-h", PAGE_H + "px");
-    sheet.style.setProperty("--lk-page-unit", PAGE_UNIT + "px");
     el.style.setProperty("--lk-margin-x", m + "px");
     el.style.setProperty("--lk-margin-y", m + "px");
     el.style.lineHeight = doc.lineSpacing || "1.15";
-    el.style.background = "transparent";
-    el.style.backgroundColor = "transparent";
 
     schedulePageChrome();
   }
@@ -123,32 +117,6 @@
     el.textContent = n + " word" + (n === 1 ? "" : "s");
   }
 
-  function quillContainer() {
-    return document.querySelector("#docEditor .ql-container");
-  }
-
-  function ensureDecorLayer() {
-    if (decorLayer) return decorLayer;
-    var container = quillContainer();
-    if (!container) return null;
-    decorLayer = document.createElement("div");
-    decorLayer.className = "lk-page-decor-layer";
-    decorLayer.setAttribute("aria-hidden", "true");
-    container.insertBefore(decorLayer, container.firstChild);
-    return decorLayer;
-  }
-
-  function ensureChromeOverlay() {
-    if (chromeOverlay) return chromeOverlay;
-    var container = quillContainer();
-    if (!container) return null;
-    chromeOverlay = document.createElement("div");
-    chromeOverlay.className = "lk-page-chrome-layer";
-    chromeOverlay.setAttribute("aria-hidden", "true");
-    container.appendChild(chromeOverlay);
-    return chromeOverlay;
-  }
-
   function schedulePageChrome() {
     if (chromeTimer) clearTimeout(chromeTimer);
     chromeTimer = setTimeout(updatePageChrome, 60);
@@ -156,80 +124,35 @@
 
   function updatePageChrome() {
     var el = editorEl();
-    var decor = ensureDecorLayer();
-    var overlay = ensureChromeOverlay();
-    if (!el || !decor || !overlay || !doc) return;
-
+    if (!el) return;
     var pages = Math.max(1, Math.ceil(el.scrollHeight / PAGE_H));
     var minH = pages * PAGE_H + Math.max(0, pages - 1) * PAGE_GAP;
     el.style.minHeight = minH + "px";
-
-    pages = Math.max(1, Math.ceil(Math.max(el.scrollHeight, minH) / PAGE_H));
-    minH = pages * PAGE_H + Math.max(0, pages - 1) * PAGE_GAP;
-    el.style.minHeight = minH + "px";
-
-    decor.style.height = minH + "px";
-    decor.innerHTML = "";
-    overlay.style.height = minH + "px";
-    overlay.innerHTML = "";
-
-    for (var p = 0; p < pages; p++) {
-      var sheet = document.createElement("div");
-      sheet.className = "lk-page-sheet";
-      sheet.style.top = p * PAGE_UNIT + "px";
-      decor.appendChild(sheet);
-    }
-
-    var header = (doc.headerText || "").trim();
-    var footer = (doc.footerText || "").trim();
-    var numbers = doc.showPageNumbers !== false;
-    var m = marginPx();
-
-    for (var i = 0; i < pages; i++) {
-      var top = i * PAGE_UNIT;
-      if (header) {
-        var head = document.createElement("div");
-        head.className = "lk-page-chrome lk-page-chrome-header";
-        head.style.top = top + 28 + "px";
-        head.style.left = m + "px";
-        head.style.right = m + "px";
-        head.textContent = header;
-        overlay.appendChild(head);
-      }
-      if (footer || numbers) {
-        var foot = document.createElement("div");
-        foot.className = "lk-page-chrome lk-page-chrome-footer";
-        foot.style.top = top + PAGE_H - m + 8 + "px";
-        foot.style.left = m + "px";
-        foot.style.right = m + "px";
-        var parts = [];
-        if (footer) parts.push(footer);
-        if (numbers) parts.push(String(i + 1));
-        foot.textContent = parts.join(footer && numbers ? " · " : "");
-        overlay.appendChild(foot);
-      }
-    }
   }
 
   function registerPageBreakBlot() {
-    var BlockEmbed = global.Quill.import("blots/block/embed");
+    try {
+      var BlockEmbed = global.Quill.import("blots/block/embed");
 
-    function PageBreakBlot(domNode) {
-      BlockEmbed.call(this, domNode);
+      function PageBreakBlot(domNode) {
+        BlockEmbed.call(this, domNode);
+      }
+      PageBreakBlot.prototype = Object.create(BlockEmbed.prototype);
+      PageBreakBlot.prototype.constructor = PageBreakBlot;
+      PageBreakBlot.create = function () {
+        var node = global.document.createElement("div");
+        node.classList.add("lk-page-break");
+        node.setAttribute("contenteditable", "false");
+        node.setAttribute("aria-label", "Page break");
+        return node;
+      };
+      PageBreakBlot.blotName = "pageBreak";
+      PageBreakBlot.tagName = "div";
+
+      global.Quill.register(PageBreakBlot);
+    } catch (e) {
+      /* already registered */
     }
-    PageBreakBlot.prototype = Object.create(BlockEmbed.prototype);
-    PageBreakBlot.prototype.constructor = PageBreakBlot;
-    PageBreakBlot.create = function () {
-      var node = global.document.createElement("div");
-      node.classList.add("lk-page-break");
-      node.setAttribute("contenteditable", "false");
-      node.setAttribute("aria-label", "Page break");
-      return node;
-    };
-    PageBreakBlot.blotName = "pageBreak";
-    PageBreakBlot.tagName = "div";
-
-    global.Quill.register(PageBreakBlot);
   }
 
   function insertPageBreak() {
@@ -246,6 +169,7 @@
 
   function initFontPicker() {
     var sel = document.getElementById("docFont");
+    if (!sel || !global.LoreKeeperFontCatalog) return;
     LoreKeeperFontCatalog.FONTS.forEach(function (font) {
       var opt = document.createElement("option");
       opt.value = font.id;
@@ -261,6 +185,7 @@
   }
 
   function initQuill() {
+    if (quill || !global.Quill) return;
     registerPageBreakBlot();
     quill = new global.Quill("#docEditor", {
       theme: "snow",
@@ -330,13 +255,15 @@
     global.location.href = "./index.html";
   });
 
+  initFontPicker();
+  initQuill();
+
   LoreKeeperDocuments.ready.then(function () {
     if (!LoreKeeperAccountStorage.isSignedIn()) {
       LoreKeeperAccountStorage.ensureSignedIn();
       return;
     }
-    initFontPicker();
-    initQuill();
+    if (!quill) initQuill();
     var id = docIdFromUrl();
     var raw = LoreKeeperDocuments.load().filter(function (d) {
       return d.id === id;
