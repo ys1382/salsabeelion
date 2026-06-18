@@ -1,0 +1,34 @@
+---
+description: LoreKeeper — no server note peeks or live browser tests on real drafts unless owner says override
+globs: lorekeeper/**
+alwaysApply: false
+---
+
+# LoreKeeper — no draft access while debugging
+
+When fixing or planning LoreKeeper (`lorekeeper/`, Ask, recall, save, deploy):
+
+## Hard default — refuse unless owner says **override**
+
+If the owner asks for anything below (even casually), **do not run it**. Explain in plain English why, and offer a code-only or synthetic-test path instead.
+
+**Only bypass this rule when the owner deliberately types `override` in the same message** (e.g. “override — browser test Ask on my live notes”). Without that exact word, treat the request as **not approved**.
+
+## Do not read the owner's story data
+
+- **Never** SSH, `scp`, `curl`, or run server commands to open, copy, grep, or dump user note/document content (e.g. `lorekeeper-store.json`, `lorekeeper-data/`, `/api/user/data`, account blobs).
+- **Never** ask the owner to paste draft text, scenes, or note bodies to debug.
+- **Do** fix from repo code and **synthetic test text only** (fake names like Marcus/Kael — not the owner's real canon).
+
+Deploy scripts and `nginx` reload are fine; they do **not** require reading note bodies.
+
+## No browser tests on real drafts
+
+- **Do not** use browser automation on `oddtrove.art/lorekeeper/` (or any live LoreKeeper URL) to inspect Ask answers, notes, or documents.
+- Default: local reasoning and synthetic Python checks only.
+- With **`override`** only: owner accepts visibility risk; prefer throwaway test notes or signed-out session; do not quote real draft text back in chat.
+
+## Chat hygiene
+
+- Describe fixes in plain English — do not echo the owner's story from any source.
+- If unsure whether an action crosses this line, **stop and ask** — do not guess.
