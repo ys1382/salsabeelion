@@ -122,6 +122,6 @@
 
 ## Other cast
 
-**Full peoples detail:** `docs/WORLD-AND-CAST.md` — dragonfolk, lizardfolk, firefolk, desert dwellers, minotaurs (vegetarian dairy), croc riverfolk, centaurs, pegasi (understand SL; don’t produce it), griffins (sign SL for pegasi), giants, goblin smallfolk, aquatic/coastal peoples, snakefolk, manticores (expanded above), sphinxes (overhaul). **Legendary:** dragons, wyverns, **hydras** (see above).
+**Full peoples detail:** `docs/WORLD-AND-CAST.md` — dragonfolk, lizardfolk, firefolk, desert dwellers, minotaurs (vegetarian dairy), croc riverfolk, centaurs, pegasi (understand SL; don’t produce it), griffins (sign SL for pegasi), giants, goblin smallfolk, aquatic/coastal peoples, snakefolk, manticores (expanded above), sphinxes (overhaul), **vampires**, **werewolves**, **Çampire** (mixed heritage). **Legendary:** dragons, wyverns, **hydras** (see above). **Pre-train café plot:** `docs/DRAGONS-BREW-PRE-TRAIN.md`.
 
 When this lorebook and live copy disagree, **the lorebook wins** for direction.

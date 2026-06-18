@@ -15,16 +15,30 @@ CROCHETER_PORT="${CROCHETER_PORT:-8073}"
 HALALIT_PORT="${HALALIT_PORT:-8074}"
 RPG_PORT="${RPG_PORT:-8078}"
 HUB_OWNER_API_PORT="${HUB_OWNER_API_PORT:-8077}"
+LOREKEEPER_PORT="${LOREKEEPER_PORT:-8079}"
+LOREKEEPER_API_PORT="${LOREKEEPER_API_PORT:-8080}"
 BIND="${BIND:-127.0.0.1}"
 RPG_BIND="${RPG_BIND:-0.0.0.0}"
 
 echo "Syncing static sites to $HOST:~/$REMOTE_BASE/ ..."
-ssh "$HOST" "mkdir -p ~/$REMOTE_BASE/ssl ~/$REMOTE_BASE/hub ~/$REMOTE_BASE/maestros ~/$REMOTE_BASE/envdyst ~/$REMOTE_BASE/crocheter ~/$REMOTE_BASE/halalit ~/$REMOTE_BASE/rpg"
+ssh "$HOST" "mkdir -p ~/$REMOTE_BASE/ssl ~/$REMOTE_BASE/hub ~/$REMOTE_BASE/maestros ~/$REMOTE_BASE/envdyst ~/$REMOTE_BASE/crocheter ~/$REMOTE_BASE/halalit ~/$REMOTE_BASE/rpg ~/$REMOTE_BASE/lorekeeper ~/$REMOTE_BASE/lorekeeper-data"
 
 rsync -avz "$ROOT/top/_shared/serve_static_https.py" "$ROOT/top/_shared/hub_owner_api.py" "$HOST:~/$REMOTE_BASE/"
 rsync -avz "$ROOT/top/directory/www/" "$HOST:~/$REMOTE_BASE/hub/"
 rsync -avz "$ROOT/maestrosOdyssey/www/" "$HOST:~/$REMOTE_BASE/maestros/"
 rsync -avz "$ROOT/envDyst/www/" "$HOST:~/$REMOTE_BASE/envdyst/"
+if [[ -d "$ROOT/lorekeeper/www" ]]; then
+  if [[ ! -f "$ROOT/lorekeeper/www/vendor/quill/1.3.7/dist/quill.min.js" ]]; then
+    echo "Vendoring LoreKeeper Quill editor (self-hosted)..."
+    bash "$ROOT/lorekeeper/scripts/fetch-quill.sh"
+  fi
+  if [[ ! -f "$ROOT/lorekeeper/www/lk-fonts-hosted.css" ]] || [[ "${LOREKEEPER_FETCH_FONTS:-0}" == "1" ]]; then
+    echo "Fetching LoreKeeper self-hosted fonts..."
+    bash "$ROOT/lorekeeper/scripts/fetch-doc-fonts.sh"
+  fi
+  rsync -avz "$ROOT/lorekeeper/www/" "$HOST:~/$REMOTE_BASE/lorekeeper/"
+fi
+rsync -avz "$ROOT/lorekeeper/lorekeeper_api.py" "$ROOT/lorekeeper/lorekeeper_recall.py" "$ROOT/lorekeeper/lorekeeper_relations.py" "$ROOT/lorekeeper/lorekeeper_character_summary.py" "$ROOT/lorekeeper/lorekeeper_inference.py" "$HOST:~/$REMOTE_BASE/"
 rsync -avz "$ROOT/crocheter/www/" "$HOST:~/$REMOTE_BASE/crocheter/"
 if [[ -d "$ROOT/halalit/www" ]]; then
   rsync -avz "$ROOT/halalit/www/" "$HOST:~/$REMOTE_BASE/halalit/"
@@ -44,6 +58,8 @@ ssh "$HOST" \
   CROCHETER_PORT="$CROCHETER_PORT" \
   HALALIT_PORT="$HALALIT_PORT" \
   RPG_PORT="$RPG_PORT" \
+  LOREKEEPER_PORT="$LOREKEEPER_PORT" \
+  LOREKEEPER_API_PORT="$LOREKEEPER_API_PORT" \
   HUB_OWNER_API_PORT="$HUB_OWNER_API_PORT" \
   BIND="$BIND" \
   RPG_BIND="$RPG_BIND" \
@@ -62,10 +78,11 @@ PY="$BASE/serve_static_https.py"
 KEY="$SSL/key.pem"
 CERT="$SSL/cert.pem"
 
-for port in "$HUB_PORT" "$MAESTROS_PORT" "$ENVDYST_PORT" "$CROCHETER_PORT" "$HALALIT_PORT" "$RPG_PORT"; do
+for port in "$HUB_PORT" "$MAESTROS_PORT" "$ENVDYST_PORT" "$CROCHETER_PORT" "$HALALIT_PORT" "$RPG_PORT" "$LOREKEEPER_PORT"; do
   pkill -f "serve_static_https.py $port " 2>/dev/null || true
 done
 pkill -f "hub_owner_api.py" 2>/dev/null || true
+pkill -f "lorekeeper_api.py" 2>/dev/null || true
 sleep 0.6
 
 start_one() {
@@ -84,14 +101,33 @@ start_one "$HALALIT_PORT" "$BASE/halalit" "halalit"
 if [[ -d "$BASE/rpg" ]]; then
   start_one "$RPG_PORT" "$BASE/rpg" "rpg" "$RPG_BIND"
 fi
+start_one "$LOREKEEPER_PORT" "$BASE/lorekeeper" "lorekeeper"
+
+mkdir -p "$BASE/lorekeeper-data"
+pkill -f "lorekeeper_api.py" 2>/dev/null || true
+sleep 0.3
+nohup bash -c '
+  while true; do
+    LOREKEEPER_DATA_PATH="'"$BASE"'/lorekeeper-data/lorekeeper-store.json" \
+    LOREKEEPER_SECRET_PATH="'"$BASE"'/lorekeeper-data/lorekeeper.secret" \
+    ODDTROVE_LOREKEEPER_OWNER_EMAIL="'"${ODDTROVE_LOREKEEPER_OWNER_EMAIL:-nightofhonour@gmail.com}"'" \
+    LOREKEEPER_API_PORT="'"$LOREKEEPER_API_PORT"'" \
+    LOREKEEPER_API_BIND="'"$BIND"'" \
+      python3 "'"$BASE"'/lorekeeper_api.py" >>/tmp/lorekeeper-api.log 2>&1
+    echo "LoreKeeper API exited — restarting in 2s" >>/tmp/lorekeeper-api.log
+    sleep 2
+  done
+' </dev/null >/dev/null 2>&1 &
+echo "Started LoreKeeper API on port $LOREKEEPER_API_PORT ($BIND)"
 
 nohup python3 "$BASE/hub_owner_api.py" </dev/null >"/tmp/hub-owner-api.log" 2>&1 &
 echo "Started hub owner API on port $HUB_OWNER_API_PORT ($BIND)"
 
 sleep 1
-for port in "$HUB_PORT" "$MAESTROS_PORT" "$ENVDYST_PORT" "$CROCHETER_PORT" "$HALALIT_PORT" "$RPG_PORT"; do
+for port in "$HUB_PORT" "$MAESTROS_PORT" "$ENVDYST_PORT" "$CROCHETER_PORT" "$HALALIT_PORT" "$RPG_PORT" "$LOREKEEPER_PORT"; do
   curl -sk -o /dev/null -w "port ${port}: %{http_code}\n" "https://127.0.0.1:${port}/" || true
 done
+curl -s -o /dev/null -w "LoreKeeper API port ${LOREKEEPER_API_PORT}: %{http_code}\n" "http://127.0.0.1:${LOREKEEPER_API_PORT}/api/auth/me" || true
 REMOTE
 
 echo ""
@@ -100,4 +136,5 @@ echo "Maestro's Odyssey: https://157.230.130.12:${MAESTROS_PORT}/"
 echo "envDyst:          https://157.230.130.12:${ENVDYST_PORT}/"
 echo "Pixel Farm RPG:   https://157.230.130.12:${RPG_PORT}/"
 echo "Halalit (public):  https://oddtrove.art/halalit/"
+echo "LoreKeeper:       https://oddtrove.art/lorekeeper/ (owner gate)"
 echo "crocheter:        https://oddtrove.art/crocheter/"

@@ -1,0 +1,81 @@
+---
+description: LoreKeeper — owner-approved standalone creative-writing assistant (name and privacy non-negotiables).
+alwaysApply: true
+---
+
+# LoreKeeper
+
+**When to use:** Only when the conversation is about **LoreKeeper** — the standalone project, files under `lorekeeper/`, or LoreKeeper planning/build. If unrelated, ignore this rule.
+
+**Product name:** **LoreKeeper** (capital **L** and **K**). Not “Lore Keeper,” not “lorekeeper” as a display name unless the owner says otherwise for a URL slug.
+
+**What it is:** A place for **scatter-plotted writers** to keep lore, species, politics, and miscellaneous notes they **wrote themselves** — when those notes are a jumble — instead of a mess of Google Docs. Owner-only on Odd Trove at first; public for other writers when stable.
+
+**All content is human-written.** The author enters every note. LoreKeeper does **not** generate story, lore, prose, or canon — **not now, not later, not as an option.**
+
+**What “AI” means here (only):** help **recall**, **find**, and **sort** notes the author already wrote pell-mell — e.g. “where did I mention the northern faction?” or “this paragraph probably belongs under Species.” Suggestions the author **approves**; nothing auto-written into their canon.
+
+## Owner-approved non-negotiables
+
+1. **No AI-generated content — ever** — no drafting, no “fill in lore,” no auto-summaries that invent facts. AI is librarian/organizer only, on the author’s own words.
+2. **Memory helps one user only** — like Halalit Scroll Scanner remembering on device/account to be useful. Scoped to that writer’s work; not a shared corpus.
+3. **No cross-user sharing in the app** — writers’ notes never mix. No “writers like you,” no templates built from other people’s canon, no peeking at another user’s entries — **including the site owner via admin tools.**
+4. **Export to share** — download/export their own data; share outside LoreKeeper manually if they choose.
+5. **No training on user writing** — LoreKeeper does not aggregate user notes to improve the product for everyone. If recall/sort uses an API, pick providers/terms with **no training** and **minimal or no retention**; say so honestly in copy.
+6. **Doesn’t spy** — no cross-user reads, no blending notes, account delete removes their data when cloud sync exists. **Owner included:** backend and Owner’s Office must never return another account’s note text.
+7. **No public posting between writers** — same spirit as `warmth-without-social`: no comments, forums, or shared walls in LoreKeeper unless the owner clearly asks in that conversation.
+8. **Phasing** — **owner-only nginx gate** while unfinished; then **public site + open sign-ups** so anyone can create their own account. Owner’s Office **sign-ups** switch can pause new accounts without blocking sign-in.
+
+## Storage and accounts (from v0 — not later)
+
+**Sign-in required from the first build.** Notes save to the **signed-in account** on the server — not “device first, accounts later.” Halalit/Crocheter-style migration from anonymous localStorage is painful and easy to lose data; do not ship LoreKeeper that way.
+
+- **Owner-only beta:** site still behind nginx owner gate; LoreKeeper sign-ups can stay **paused** (owner account only) until public launch.
+- **Per-user isolation:** each account’s notes are separate keys/blobs — no cross-user reads.
+- **Export / import:** JSON download and upload still required so writers own their files.
+- **Pattern:** mirror Crocheter/Halalit — `account.html`, auth gate, account-storage module, `/api/auth/*` and `/api/user/data/*` — LoreKeeper-specific data keys only (e.g. entries blob), not shared with Halalit shelves.
+
+## Two gates + Owner’s Office (Halalit-style, LoreKeeper-tailored)
+
+**Layer 1 — nginx owner gate** on `/lorekeeper/` (like Maestro’s / envDyst): only you can reach the URL while the product is unfinished.
+
+**Layer 2 — LoreKeeper user accounts** (like Halalit / Crocheter): sign-in required; notes save to **that account** on the server; `isOwner` on your email unlocks **Owner’s Office**.
+
+**Do not copy Halalit’s book tools** (Bookcheck, vet lists, Scroll Scanner, My TBR). Copy the **shape**:
+
+| Halalit pattern | LoreKeeper use |
+|-----------------|----------------|
+| `account.html` + auth bar | Sign in / sign out; link to Owner’s Office when `isOwner` |
+| `halalit-account-storage.js` | Server-backed note blobs per user; sign-in required from v0 |
+| `/api/auth/me` → `isOwner` | Same — your owner email |
+| `owner.html` + `/api/owner/office` | **`office.html`** (or `owner.html`) — private admin page |
+| Owner’s Office sections | LoreKeeper-specific only (below) |
+| Crocheter `studio.html` | Simpler reference — stats, accounts, switches, private reader notes |
+
+**Owner’s Office — in scope**
+
+- Summary counts (e.g. writer accounts, private feedback messages — **not** other people’s note text)
+- **Writer accounts** table — email + joined date only; never passwords or note bodies
+- **Site switches** — at minimum **new sign-ups** on/off; later toggles for recall/sort assist if shipped
+- **Private feedback** — optional one-way tips from signed-in writers (not a public wall)
+
+**Owner’s Office — never**
+
+- Read, search, or browse **another writer’s entries** — **not even the site owner.** Creative writing is private to each account; admin sees accounts and switches only, never note bodies.
+- Cross-user analytics on note content
+- AI-generated content or “improve everyone’s lore” features
+
+**Public launch — user sign-ups**
+
+When the nginx owner gate comes off and LoreKeeper is public, **any visitor can create their own account** (email + password), same pattern as Halalit/Crocheter. **New sign-ups** toggle in Owner’s Office pauses registration without blocking existing sign-in. During owner-only beta: nginx gate + sign-ups usually **off** except your account.
+
+**Main app vs office:** You use the **same notes UI** as other writers for your own work. Owner’s Office is **admin/meta only**, like Halalit’s office vs the public reading site.
+
+**Owner email:** `nightofhonour@gmail.com` (`ODDTROVE_LOREKEEPER_OWNER_EMAIL` on server). Roadmap/todos: `lorekeeper/LOREKEEPER-ROADMAP-AND-TODO.md`.
+
+**Account sign-up copy:** Recommend **junk / throwaway email** (Halalit-style). Future **optional** LoreKeeper notifications may go to that address only if the writer opts in — not built yet; see roadmap.
+
+## Build notes
+
+- Read `ODDTROVE-CAPABILITIES.md` before implementation; follow `verdict-template-first` and `feasibility-check-first` for Odd Trove work.
+- **Rulebook** is general vocabulary (see `rulebook-not-bible.mdc`) — not the LoreKeeper product name or a branded in-app concept unless the owner asks.

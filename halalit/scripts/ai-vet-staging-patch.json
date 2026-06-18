@@ -1,0 +1,261 @@
+{
+  "remove": [
+    ["The Last Beekeeper", "Julie Carrick Dalton"],
+    ["Dragon's Gate", "Thomas Scarlet"],
+    ["Midnight Train", "Sage"]
+  ],
+  "upsert": [
+    {
+      "title": "The Oddmire series",
+      "author": "William Ritter",
+      "tier": "ai_manual_review",
+      "note": "MG changeling/goblin fantasy. Possible LGBTQ themes—flagged for LGBTQ screen; not hand-checked. Scary woods, baby-swap premise."
+    },
+    {
+      "title": "The Amazing Adventures of Kavalier & Clay",
+      "author": "Michael Chabon",
+      "tier": "ai_likely_reject",
+      "note": "LGBTQ content, adult romance, adult language. Outside Halalit family shelf. AI rejection—not manually checked."
+    },
+    {
+      "title": "The Cruel Prince / Folk of the Air series",
+      "author": "Holly Black",
+      "tier": "ai_likely_reject",
+      "note": "YA romantic relationship later in trilogy plus violence. Adult romance—outside family shelf. AI rejection—not manually checked."
+    },
+    {
+      "title": "The Great Zoo of China",
+      "author": "Matthew Reilly",
+      "tier": "ai_likely_reject",
+      "note": "Adult action/thriller; adult romance tags, drug/alcohol, violence, bloodletting. AI rejection—not manually checked."
+    },
+    {
+      "title": "The Elvenbane / Halfblood Chronicles",
+      "author": "Andre Norton & Mercedes Lackey",
+      "tier": "ai_likely_reject",
+      "note": "Adult fantasy; slavery, concubine oppression, assault themes, torture, child death, war. AI rejection—not manually checked."
+    },
+    {
+      "title": "Peas & Quiet",
+      "author": "Jen Lynning",
+      "tier": "ai_likely_reject",
+      "note": "Cozy romantasy; adult romance/spice framing. Outside family shelf. AI rejection—not manually checked."
+    },
+    {
+      "title": "How to Find a Nameless Fae",
+      "author": "A. J. Lancaster",
+      "tier": "ai_likely_reject",
+      "note": "Cozy fantasy romance with spice, enemies-to-lovers. Adult romance—outside family shelf. AI rejection—not manually checked."
+    },
+    {
+      "title": "Dawn of the Firebird",
+      "author": "Sarah Mughal Rana",
+      "tier": "ai_likely_reject",
+      "note": "Adult darker epic fantasy; battles, vengeance, grimdark tone—not youth hand-vet. AI rejection—not manually checked."
+    },
+    {
+      "title": "Ordinary Monsters",
+      "author": "J. M. Miro",
+      "tier": "ai_likely_reject",
+      "note": "Adult dark historical fantasy; body horror, child death, gore, abuse and coercion themes. AI rejection—not manually checked."
+    },
+    {
+      "title": "Song in the Silence",
+      "author": "Elizabeth Kerner",
+      "tier": "ai_likely_reject",
+      "note": "Adult high fantasy; fantasy-romance framing dominates plot. Adult romance—AI rejection—not manually checked."
+    },
+    {
+      "title": "Fire & Blood",
+      "author": "George R. R. Martin",
+      "tier": "ai_likely_reject",
+      "note": "Adult fantasy; assault, incest, slavery, torture, severe violence. AI rejection—not manually checked."
+    },
+    {
+      "title": "Vampire: The Masquerade comics",
+      "author": "Tim Seeley, Tini Howard",
+      "tier": "ai_likely_reject",
+      "note": "Adult vampire horror; LGBTQ context, graphic violence, 18+ content. AI rejection—not manually checked."
+    },
+    {
+      "title": "The Riyria Chronicles",
+      "author": "Michael J. Sullivan",
+      "tier": "ai_likely_reject",
+      "note": "Brothel references, assault threats, violence. AI rejection—not manually checked."
+    },
+    {
+      "title": "Dungeons & Dragons: Dungeon Club",
+      "author": "Molly Knox Ostertag & Xanthe Bouma",
+      "tier": "ai_likely_reject",
+      "note": "MG graphic novel; LGBTQ/gender-topic screen concerns, crush material, fantasy combat. AI rejection—not manually checked."
+    },
+    {
+      "title": "In the Shadow Garden",
+      "author": "Liz Parker",
+      "tier": "ai_likely_reject",
+      "note": "Adult magical mystery/romance; LGBTQ representation, alcohol, murders. AI rejection—not manually checked."
+    },
+    {
+      "title": "A Charade of Magic series",
+      "author": "Helen Harper",
+      "tier": "ai_likely_reject",
+      "note": "Adult urban fantasy; romance-indexed, open-door romance concerns. AI rejection—not manually checked."
+    },
+    {
+      "title": "The Iron Dragon's Daughter",
+      "author": "Michael Swanwick",
+      "tier": "ai_likely_reject",
+      "note": "Adult dark anti-fantasy; explicit adult romance, assault warnings, drug use, horrific violence. AI rejection—not manually checked."
+    },
+    {
+      "title": "The Dragon Heart Legacy trilogy",
+      "author": "Nora Roberts",
+      "tier": "ai_likely_reject",
+      "note": "Adult romantic fantasy; central slow-burn romance, battle scenes. AI rejection—not manually checked."
+    },
+    {
+      "title": "The Vine Witch series",
+      "author": "Luanne G. Smith",
+      "tier": "ai_likely_reject",
+      "note": "Adult witch/vineyard fantasy; wine magic, romance, profanity, demon imagery. AI rejection—not manually checked."
+    },
+    {
+      "title": "Not So Evil series",
+      "author": "Sofia Aves et al.",
+      "tier": "ai_likely_reject",
+      "note": "Adult paranormal romance multi-author line—not youth audited. AI rejection—not manually checked."
+    },
+    {
+      "title": "Monster Tamer Academy",
+      "author": "Robyn Wideman & Matt Herrmann",
+      "tier": "ai_likely_reject",
+      "note": "Adult Kindle LitRPG—no clean youth audit on file. AI rejection—not manually checked."
+    },
+    {
+      "title": "Dragon's Keep",
+      "author": "Janet Lee Carey",
+      "tier": "ai_manual_review",
+      "note": "YA fantasy; violence, witchcraft, witch-trial scene, minimal fairy-tale romance. Needs owner hand-read—not a hand reject."
+    },
+    {
+      "title": "Escape to Exile",
+      "author": "B. N. Rundell",
+      "tier": "ai_manual_review",
+      "note": "Frontier historical adventure—low audit; needs direct check for language, violence, and romance level."
+    },
+    {
+      "title": "Starlighter",
+      "author": "Bryan Davis",
+      "tier": "ai_manual_review",
+      "note": "YA Christian fantasy; slavery, torture, whipping, religious framing. Needs owner hand-read."
+    },
+    {
+      "title": "Dragons in Our Midst series",
+      "author": "Bryan Davis",
+      "tier": "ai_manual_review",
+      "note": "Christian YA; spiritual warfare, demons in later books, high peril. Needs owner hand-read."
+    },
+    {
+      "title": "Dragonsland / Dragonlands series",
+      "author": "Megg Jensen",
+      "tier": "ai_manual_review",
+      "note": "YA dark fantasy; foul magic, disappearances, romantic subplot. Needs owner hand-read."
+    },
+    {
+      "title": "The Demon Sword Asperides",
+      "author": "Sarah Jean Horwitz",
+      "tier": "ai_manual_review",
+      "note": "MG fantasy; demon sword, necromancer, war, body horror warnings. Needs owner hand-read."
+    },
+    {
+      "title": "Soara and the House of Monsters",
+      "author": "Hidenori Yamaji",
+      "tier": "ai_manual_review",
+      "note": "Fantasy manga; war backstory, prejudice themes—volume-by-volume audit needed."
+    },
+    {
+      "title": "The Crowfield Curse",
+      "author": "Pat Walsh",
+      "tier": "ai_manual_review",
+      "note": "Medieval abbey fantasy; ghosts, pagan gods, light-vs-dark danger. Needs owner hand-read."
+    },
+    {
+      "title": "Vampire Island series",
+      "author": "Adele Griffin",
+      "tier": "ai_manual_review",
+      "note": "MG vampire peril; middle-school crushes, blood-sucking threat. Needs owner hand-read."
+    },
+    {
+      "title": "Heartstrikers series / Nice Dragons Finish Last",
+      "author": "Rachel Aaron",
+      "tier": "ai_manual_review",
+      "note": "Adult urban fantasy; dragon politics, violence, slow-burn romance appears mild. Needs owner hand-read."
+    },
+    {
+      "title": "The Tales of the Frog Princess",
+      "author": "E. D. Baker",
+      "tier": "ai_manual_review",
+      "note": "MG fairy-tale; clean brief kissing, witches, captivity peril. Needs owner hand-read."
+    },
+    {
+      "title": "The Last Dragon / The Last Elf",
+      "author": "Silvana De Mari",
+      "tier": "ai_manual_review",
+      "note": "Children's fantasy; famine, imprisonment, hangings. Needs owner hand-read."
+    },
+    {
+      "title": "Island of the Blue Dolphins",
+      "author": "Scott O'Dell",
+      "tier": "ai_manual_review",
+      "note": "Children's survival; animal death, violence, older colonization portrayal. Needs owner hand-read."
+    },
+    {
+      "title": "Theo Tan and the Iron Fan",
+      "author": "Jesse Q. Sutanto",
+      "tier": "ai_manual_review",
+      "note": "MG Chinese-mythology afterlife; Diyu journey, grief, hell-peril. Needs owner hand-read."
+    },
+    {
+      "title": "The Last Dragon",
+      "author": "Jane Yolen",
+      "tier": "ai_manual_review",
+      "note": "YA graphic novel; dragon peril, fairy-tale romantic framing. Needs owner hand-read."
+    },
+    {
+      "title": "The Heir Chronicles",
+      "author": "Cinda Williams Chima",
+      "tier": "ai_manual_review",
+      "note": "YA fantasy; fight-to-the-death premise, combat, mild romance later in series. Needs owner hand-read."
+    },
+    {
+      "title": "Dragoneer Academy series",
+      "author": "E. E. Knight",
+      "tier": "ai_manual_review",
+      "note": "Crossover YA; assault concerns involving minor, war, ableism portrayals—series audit needed."
+    },
+    {
+      "title": "The Incorrigible Children of Ashton Place",
+      "author": "Maryrose Wood",
+      "tier": "ai_manual_review",
+      "note": "MG Victorian gothic; séance elements, mild peril, non-explicit pregnancy discussion. Needs owner hand-read."
+    },
+    {
+      "title": "Even the Darkest Stars duology",
+      "author": "Heather Fawcett",
+      "tier": "ai_manual_review",
+      "note": "YA climbing fantasy; witches, ghosts, clean-ish romance triangle. Needs owner hand-read."
+    },
+    {
+      "title": "Reflection",
+      "author": "Elizabeth Lim",
+      "tier": "ai_manual_review",
+      "note": "YA Disney Mulan retelling; Diyu underworld journey, spirit peril. Needs owner hand-read."
+    },
+    {
+      "title": "Loki of Midgard series",
+      "author": "Jennifer Meinking",
+      "tier": "ai_manual_review",
+      "note": "Historical fantasy; mythology, clean-romance framing—needs direct vet."
+    }
+  ]
+}

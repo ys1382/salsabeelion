@@ -7,83 +7,300 @@
   <style>
     :root {
       --bg: #121018;
-      --panel: #1c1828;
       --gold: #d4af6a;
       --text: #eae6f0;
       --dim: #7a7388;
     }
     * { box-sizing: border-box; }
-    body {
+    html, body {
       margin: 0;
-      min-height: 100vh;
-      background: linear-gradient(160deg, #1a1530 0%, var(--bg) 45%);
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+    body {
+      background: #5a4038;
       color: var(--text);
       font-family: "Georgia", "Palatino", serif;
-      line-height: 1.55;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    header {
-      width: 100%;
-      padding: 1.25rem clamp(1rem, 4vw, 2.5rem);
-      border-bottom: 1px solid rgba(212, 175, 106, 0.2);
-      text-align: center;
-    }
-    header h1 {
-      font-size: clamp(1.4rem, 3vw, 2rem);
-      font-weight: 400;
-      margin: 0 0 0.35rem;
-      color: var(--gold);
-    }
-    header p {
-      margin: 0 auto;
-      color: var(--dim);
-      font-size: 0.95rem;
-      max-width: 52ch;
-    }
-    main {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 1.5rem 1rem 2rem;
-      width: 100%;
     }
     .game-shell {
-      background: var(--panel);
-      border: 1px solid rgba(255, 255, 255, 0.06);
-      border-radius: 12px;
-      padding: 0.75rem;
-      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      background: #5a4038;
+    }
+    #game {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
     }
     #game canvas {
       display: block;
-      border-radius: 6px;
     }
-    #hint {
-      margin-top: 0.85rem;
-      color: var(--dim);
+    .controls-hints.is-hidden .controls-panel {
+      display: none;
+    }
+    .controls-panel {
+      position: fixed;
+      top: 3.1rem;
+      bottom: 0.45rem;
+      z-index: 25;
+      width: min(12.75rem, 27vw);
+      display: flex;
+      flex-direction: column;
+      pointer-events: none;
+    }
+    .controls-panel--left {
+      left: 0.45rem;
+    }
+    .controls-panel--right {
+      right: 0.45rem;
+    }
+    .controls-card {
+      position: relative;
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      width: 100%;
+      padding: 1rem 1.1rem 0.95rem;
+      pointer-events: auto;
+      background: rgba(18, 16, 24, 0.92);
+      border: 1px solid rgba(212, 175, 106, 0.45);
+      border-radius: 6px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
       font-family: system-ui, sans-serif;
-      font-size: 0.82rem;
-      letter-spacing: 0.04em;
-      text-align: center;
+      text-align: left;
+    }
+    .controls-card h2 {
+      margin: 0 2rem 0.65rem 0;
+      font-size: 0.9rem;
+      color: var(--gold);
+      font-family: "Georgia", "Palatino", serif;
+      font-weight: 400;
+    }
+    .controls-card ul {
+      margin: 0;
+      padding: 0 0 0 1rem;
+      color: var(--text);
+      font-size: clamp(0.72rem, 1.6vw, 0.8rem);
+      line-height: 1.5;
+    }
+    .controls-card li {
+      margin-bottom: 0.35rem;
+    }
+    .controls-card li:last-child {
+      margin-bottom: 0;
+    }
+    .controls-close {
+      position: absolute;
+      top: 0.45rem;
+      right: 0.5rem;
+      width: 1.75rem;
+      height: 1.75rem;
+      padding: 0;
+      border: none;
+      border-radius: 4px;
+      background: transparent;
+      color: var(--dim);
+      font-size: 1.25rem;
+      line-height: 1;
+      cursor: pointer;
+    }
+    .controls-close:hover,
+    .controls-close:focus {
+      color: var(--gold);
+      background: rgba(212, 175, 106, 0.12);
+      outline: none;
+    }
+    .mara-order-wrap {
+      position: fixed;
+      z-index: 55;
+      display: none;
+      box-sizing: border-box;
+    }
+    .mara-order-wrap.is-open {
+      display: block;
+    }
+    .mara-order-input {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0 14px;
+      box-sizing: border-box;
+      font-family: ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, monospace;
+      font-size: 13px;
+      line-height: 1.4;
+      color: #fffbe8;
+      background: rgba(0, 0, 0, 0.82);
+      border: 2px solid #ffe066;
+      border-radius: 0;
+      outline: none;
+      caret-color: #ffe066;
+    }
+    .mara-order-input::placeholder {
+      color: rgba(255, 251, 232, 0.35);
+    }
+    .mara-visit-wrap {
+      position: fixed;
+      z-index: 56;
+      display: none;
+      box-sizing: border-box;
+      padding: 14px 16px 10px;
+      font-family: ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, monospace;
+      font-size: 13px;
+      line-height: 1.45;
+      color: #fffbe8;
+      background: rgba(0, 0, 0, 0.88);
+      border: 2px solid #ffe066;
+      border-radius: 0;
+    }
+    .mara-visit-wrap.is-open {
+      display: block;
+    }
+    .mara-visit-text {
+      margin: 0 0 8px;
+      white-space: pre-wrap;
+    }
+    .mara-visit-hint {
+      margin: 0;
+      font-size: 11px;
+      color: rgba(255, 251, 232, 0.55);
+    }
+    .mo-day-hud {
+      position: fixed;
+      top: 0.65rem;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 20;
+      padding: 0.35rem 0.65rem;
+      font-family: system-ui, sans-serif;
+      font-size: clamp(0.72rem, 1.6vw, 0.82rem);
+      line-height: 1.35;
+      color: #fffbe8;
+      background: rgba(18, 16, 24, 0.82);
+      border: 1px solid rgba(212, 175, 106, 0.45);
+      border-radius: 4px;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+    .mo-learning-card-hud {
+      position: fixed;
+      top: 0.65rem;
+      right: 0.65rem;
+      z-index: 20;
+      padding: 0.35rem 0.65rem;
+      font-family: system-ui, sans-serif;
+      font-size: clamp(0.72rem, 1.6vw, 0.82rem);
+      line-height: 1.35;
+      color: #fffbe8;
+      background: rgba(18, 16, 24, 0.82);
+      border: 1px solid rgba(212, 175, 106, 0.45);
+      border-radius: 4px;
+      pointer-events: none;
+    }
+    .mo-restart-btn {
+      position: fixed;
+      top: 0.65rem;
+      left: 0.65rem;
+      z-index: 20;
+      padding: 0.35rem 0.65rem;
+      font-family: system-ui, sans-serif;
+      font-size: clamp(0.72rem, 1.6vw, 0.82rem);
+      line-height: 1.35;
+      color: #fffbe8;
+      background: rgba(18, 16, 24, 0.82);
+      border: 1px solid rgba(212, 175, 106, 0.45);
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .mo-restart-btn:hover {
+      background: rgba(36, 32, 48, 0.92);
     }
   </style>
 </head>
 <body>
-  <header>
-    <h1>Maestro’s Odyssey</h1>
-    <p>Walk the border village, meet neighbors, and listen for the stories between languages.</p>
-  </header>
-  <main>
-    <div class="game-shell">
-      <div id="game"></div>
+  <div class="game-shell">
+    <button type="button" id="mo-restart-btn" class="mo-restart-btn" title="Reset Mara intro and learning card for this tab">Restart</button>
+    <div id="mo-day-hud" class="mo-day-hud" aria-live="polite">Monday · café day 1</div>
+    <div id="mo-learning-card-hud" class="mo-learning-card-hud" aria-live="polite">Learning card: 200 pesos</div>
+    <div id="game"></div>
+    <div id="controls-hints" class="controls-hints">
+      <aside id="controls-hints-left" class="controls-panel controls-panel--left" role="complementary" aria-labelledby="controls-title-left">
+        <div class="controls-card">
+          <button type="button" class="controls-close" aria-label="Hide hints">×</button>
+          <h2 id="controls-title-left">How to play</h2>
+          <ul>
+            <li><strong>Move</strong> — arrow keys or WASD</li>
+            <li><strong>Enter café</strong> — walk to the door and step through</li>
+            <li><strong>R</strong> — read the drink menu, strike board, and house rules (wall behind the counter)</li>
+            <li><strong>E</strong> — talk to Mara (inside the café; read the menu first to practice ordering)</li>
+            <li><strong>T</strong> — stand on a chair or stool to sit; press T again to stand</li>
+            <li><strong>D / F</strong> — while seated, sip your drink (D) or eat (F) after you pick up your order</li>
+          </ul>
+        </div>
+      </aside>
+      <aside id="controls-hints-right" class="controls-panel controls-panel--right" role="complementary" aria-labelledby="controls-title-right">
+        <div class="controls-card">
+          <button type="button" class="controls-close" aria-label="Hide hints">×</button>
+          <h2 id="controls-title-right">During your visit</h2>
+          <ul>
+            <li><strong>Weekday</strong> — top center shows the fiction day (Monday first); one completed visit per day</li>
+            <li><strong>Menu</strong> — new drinks and food unlock as the week advances</li>
+            <li><strong>Finish your order</strong> — sit and finish your drink and/or food before the visit is done</li>
+            <li><strong>Restart</strong> (top left) — fresh Mara intro, café week, and learning-card balance in this tab</li>
+            <li><strong>Space, E, or R</strong> — close what you’re reading</li>
+          </ul>
+        </div>
+      </aside>
     </div>
-    <p id="hint">Arrow keys / WASD to move · Space to interact</p>
-  </main>
+    <div id="mara-order-wrap" class="mara-order-wrap" aria-hidden="true">
+      <input
+        type="text"
+        id="mara-order-input"
+        class="mara-order-input"
+        autocomplete="off"
+        autocorrect="off"
+        autocapitalize="off"
+        spellcheck="false"
+        placeholder="Type your order in Spanish, then Enter"
+        aria-label="Your order in Spanish"
+      />
+    </div>
+    <div id="mara-visit-wrap" class="mara-visit-wrap" aria-hidden="true">
+      <p id="mara-visit-text" class="mara-visit-text"></p>
+      <p class="mara-visit-hint">Space, E, or R — continue</p>
+    </div>
+  </div>
   <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
-  <script src="mo-farm-rpg.js"></script>
+  <script src="mo-learning-card.js?v=20260706"></script>
+  <script src="mo-game-days.js?v=20260618"></script>
+  <script src="mo-game-restart.js?v=20260618"></script>
+  <script src="mo-dragons-brew-menu.js?v=20260618"></script>
+  <script src="mo-farm-rpg.js?v=20260618"></script>
+  <script>
+    (function () {
+      var wrap = document.getElementById('controls-hints');
+      if (!wrap) return;
+      var dismissed = false;
+      function dismiss() {
+        dismissed = true;
+        wrap.classList.add('is-hidden');
+      }
+      wrap.querySelectorAll('.controls-close').forEach(function (btn) {
+        btn.addEventListener('click', dismiss);
+      });
+      window.MoControlsPanel = {
+        sync: function () {
+          if (!dismissed) wrap.classList.remove('is-hidden');
+        },
+        resetDismiss: function () {
+          dismissed = false;
+          wrap.classList.remove('is-hidden');
+        }
+      };
+    })();
+  </script>
 </body>
 </html>

@@ -23,8 +23,8 @@ Design and tasks **committed here**; implementation waits until you approve task
 
 - [ ] **#10** — Prologue elder + card grant (`www/` — owner gate)
 - [ ] **#11** — Tourist money vocab (`mo-tourist-vocab.js`, owner review)
-- [ ] **#12** — In-game days (same weekday tracking)
-- [ ] **#26** — Menu unlock schedule (3 drinks day 1 → +1/day to 8; stagger 10 foods)
+- [x] **#12** — In-game days (same weekday tracking)
+- [x] **#26** — Menu unlock schedule (3 drinks day 1 → +1/day to 8; stagger 10 foods)
 - [ ] **#27** — Day-2+ order depth (con/sin azúcar, upsell, Mara read-back)
 - [ ] **#13–19** — Week-one plot (one day per task)
 - [ ] **#25** — Vocab progress tracker (familiarity bands, elder prompts — no grade UI)
@@ -33,10 +33,10 @@ Design and tasks **committed here**; implementation waits until you approve task
 - [ ] **#24** — Train gate / next stage (after #28)
 - [ ] **#23** — Plaza floor (echo café words)
 - [ ] **#20–22** — Optional order check, goblin watch, evening vampire table
-- [ ] **Menu cleanup** — move latte/syrup pool out of Dragon’s Brew JS → future minotaur mountain menu
+- [x] **Menu cleanup** — move latte/syrup pool out of Dragon’s Brew JS → `MOUNTAIN_MENU_POOL` in `mo-dragons-brew-menu.js` (mountain menu when built)
 - [ ] **Day-8 balance tuning** — script 7 café days → 0 pesos on same weekday next week
 
-**Next approved build when mechanics stable:** #10 → #11 → #12 → #26 → #27 → #13 Monday.
+**Next approved build when mechanics stable:** #10 → #11 → #27 → #13 Monday.
 
 ---
 
@@ -139,7 +139,7 @@ Check when shipped to `www/` and play-tested locally.
 - [x] **#1 — Doors** — trigger from porch/threshold; spawn flush inside/outside; same column both maps; no gap. (`mo-farm-rpg.js`)
 - [x] **#2 — Collision** — can’t walk on roof/through walls; depth behind building when north; door + porch only walkable through facade. (`mo-farm-rpg.js`)
 - [x] **#3 — Complete one visit** — order submit → Mara reply → stub pay → drink → clear “done”. Any non-empty order OK. (`mo-farm-rpg.js`, `mo-dragons-brew-menu.js`)
-- [x] **#3 polish (cup + sit)** — cup on counter at drink beat; cup follows player after; T only south of floor tables (row 5+)
+- [x] **#3 polish (cup + sit)** — cup on counter at drink beat; cup follows player after; T sit at floor tables; **required dine** (sit, D sip, F eat) before visit completes; table cup orientation + sip drain fix (2026-06)
 
 **Smoke test after #1–3:** walk in → order → pay → drink → **see cup on counter** → continue → **cup with you** → T sit at floor table (south of brown table) → walk out.
 
@@ -161,8 +161,8 @@ Complete café visit after order (reply, stub pay, drink, done). mo-farm-rpg.js 
 
 Can wait until after #12 if you want story sooner; do before #13 if the room still feels wrong.
 
-- [ ] **#4 — Outside looks natural** — storefront, sidewalk, sign read as one building. (`mo-farm-rpg.js`)
-- [ ] **#5 — Inside looks natural** — counter, tables, boards; Mara reads behind counter. (`mo-farm-rpg.js`)
+- [x] **#4 — Outside looks natural** — storefront, sidewalk, sign read as one building. (`mo-farm-rpg.js`)
+- [x] **#5 — Inside looks natural** — counter, tables, boards; Mara reads behind counter. (`mo-farm-rpg.js`)
 
 **Example:** `MO task #4 — verdict first. Natural outside storefront. mo-farm-rpg.js only. No NPCs.`
 
@@ -192,7 +192,7 @@ Can wait until after #12 if you want story sooner; do before #13 if the room sti
 
 Needs **#3**.
 
-- [ ] **#12 — In-game days** — start Monday; advance after completed visit; day label on screen
+- [x] **#12 — In-game days** — start Monday; advance after completed visit; day label on screen
 
 ---
 
@@ -218,7 +218,7 @@ Needs **#3** and **#12**. Read `DRAGONS-BREW-PRE-TRAIN.md`.
 - [ ] **#23 — Plaza floor** (same learning card rules; echo café words on signs)
 - [ ] **#24 — Train gate / wider world** (after #28 elder upgrade)
 - [ ] **#25 — Wire vocab into progress tracker** (familiarity bands, elder prompt source, subtitle fade — no grade UI)
-- [ ] **#26 — Menu unlock schedule** — visit 1: 3 drinks; +1 drink/day to 8 total; stagger 10 foods per **Dragon’s Brew menu canon**; chalkboard “new today” ticks
+- [x] **#26 — Menu unlock schedule** — visit 1: 3 drinks; +1 drink/day to 8 total; stagger 10 foods per **Dragon’s Brew menu canon**; chalkboard “new today” ticks
 - [ ] **#27 — Day-2+ order depth** — *For your té — con azúcar or sin azúcar?*; same-or-different; one food upsell; Mara Spanish read-back before pay; no new specialty drinks
 - [ ] **#28 — Day-8 elder report** — 7 café days + card at 0 on same weekday next week; natural report conversation (not quiz UI); two elder lines only; card upgrade → #24
 - [ ] **#29 — Optional café revisit quest** — only when #28 “need to know more” branch; player brings back one asked detail; no block on train
@@ -260,8 +260,8 @@ Community elder → **prepaid learning card** (debit, in-game only, **no overdra
 
 | Works | Not built |
 |-------|-----------|
-| Visit + cup + T sit + Mara intro + learning card HUD + pay (#8–9) | Prologue elder (#10), day-8 elder report (#28) |
-| Doors + collision + complete visit (#1–3) | In-game days (#12), plot (#13+), menu unlock (#26) |
+| Visit + cup + T sit + required dine + Mara intro + learning card HUD + pay (#8–9) | Prologue elder (#10), day-8 elder report (#28) |
+| Doors + collision + complete visit (#1–3) + café space (#4–5) + fiction days (#12) + menu unlocks (#26) | Plot (#13+), order depth (#27) |
 | MXN menu prices (#7) | Plaza (#23), train (#24), tracker (#25) |
 
 ---

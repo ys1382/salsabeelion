@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Create or rotate HTTP basic auth for owner-only oddtrove.art paths (/maestros/, /envdyst/, /climatic-mysteries/).
+# Create or rotate HTTP basic auth for owner-only oddtrove.art paths (/envdyst/, /climatic-mysteries/).
 # Run on the VPS (or via ssh). Updates ODDTROVE-OWNER-ACCESS.local.md locally when run from repo root.
 set -euo pipefail
 

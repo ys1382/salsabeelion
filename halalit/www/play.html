@@ -1,0 +1,3875 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <title>Book Quest — Play</title>
+  <link rel="dns-prefetch" href="https://image.pollinations.ai" />
+  <link rel="preconnect" href="https://image.pollinations.ai" crossorigin />
+  <link rel="stylesheet" href="./halalit-mothers-day-theme.css" />
+  <link rel="stylesheet" href="./halalit-fathers-day-theme.css" />
+  <style>
+    :root {
+      --bg: #1a1410;
+      --panel: #2a2018;
+      --ink: #f4ead6;
+      --dim: #b8a684;
+      --accent: #e3b86a;
+      --accent-soft: #c98a3d;
+      --rule: rgba(227, 184, 106, 0.22);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(900px 480px at 12% 0%, #3a2a1c 0%, var(--bg) 55%),
+        var(--bg);
+      color: var(--ink);
+      font-family: "Georgia", "Palatino", serif;
+      line-height: 1.65;
+    }
+    .wrap {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 1.25rem clamp(1rem, 4vw, 2rem) 3rem;
+    }
+    nav.top {
+      font-family: system-ui, "Segoe UI", sans-serif;
+      font-size: 0.85rem;
+      margin-bottom: 1rem;
+    }
+    nav.top a { color: var(--accent); }
+    .scene-label {
+      font-family: system-ui, sans-serif;
+      font-size: 0.72rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--accent-soft);
+      margin: 0 0 0.35rem;
+    }
+    h1 {
+      font-size: 1.35rem;
+      font-weight: 500;
+      color: var(--accent);
+      margin: 0 0 1rem;
+    }
+    .panel {
+      background: var(--panel);
+      border-radius: 14px;
+      padding: 1.25rem 1.35rem;
+      border: 1px solid rgba(255,255,255,0.06);
+      margin-bottom: 1rem;
+    }
+    .panel p { margin: 0 0 0.85rem; }
+    .panel p:last-of-type { margin-bottom: 0; }
+    .scene-visual {
+      margin: 0 auto 1rem;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid rgba(227, 184, 106, 0.2);
+      background: rgba(0,0,0,0.35);
+      aspect-ratio: 16 / 9;
+      max-height: min(52vh, 440px);
+      /* When max-height caps the frame, also cap width so the box stays true 16:9 (avoids horizontal squash/stretch). */
+      width: min(100%, calc((16 / 9) * min(52vh, 440px)));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    .scene-visual img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      object-position: center center;
+    }
+    .scene-visual.scene-visual--empty {
+      display: none;
+    }
+    .choices {
+      display: flex;
+      flex-direction: column;
+      gap: 0.55rem;
+      margin-top: 1.1rem;
+    }
+    button.choice {
+      font-family: system-ui, "Segoe UI", sans-serif;
+      text-align: left;
+      padding: 0.65rem 0.85rem;
+      border-radius: 10px;
+      border: 1px solid var(--rule);
+      background: rgba(227, 184, 106, 0.08);
+      color: var(--ink);
+      cursor: pointer;
+      font-size: 0.92rem;
+      line-height: 1.45;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    @media (hover: hover) and (pointer: fine) {
+      button.choice:hover {
+        background: rgba(227, 184, 106, 0.16);
+        border-color: rgba(227, 184, 106, 0.45);
+      }
+    }
+    .end-book {
+      font-size: 1.05rem;
+      color: var(--accent);
+      margin: 0.5rem 0 0;
+    }
+    .muted { color: var(--dim); font-size: 0.95rem; }
+    .restart {
+      margin-top: 1rem;
+      font-family: system-ui, sans-serif;
+      font-size: 0.88rem;
+    }
+    .restart button {
+      background: transparent;
+      border: none;
+      color: var(--accent);
+      cursor: pointer;
+      text-decoration: underline;
+      padding: 0;
+      font: inherit;
+    }
+    .restart button:disabled {
+      color: var(--dim);
+      cursor: not-allowed;
+      text-decoration: none;
+    }
+    .review-block {
+      margin-top: 1.25rem;
+      padding-top: 1.1rem;
+      border-top: 1px solid var(--rule);
+    }
+    .review-block h2 {
+      font-family: system-ui, "Segoe UI", sans-serif;
+      font-size: 0.82rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--accent-soft);
+      margin: 0 0 0.5rem;
+    }
+    .review-block p.hint { font-size: 0.92rem; color: var(--dim); margin: 0 0 0.75rem; }
+    .review-options {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin: 0.5rem 0 0.75rem;
+    }
+    .review-options label {
+      font-family: system-ui, "Segoe UI", sans-serif;
+      font-size: 0.9rem;
+      cursor: pointer;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.45rem;
+      line-height: 1.4;
+    }
+    .review-options input { margin-top: 0.2rem; }
+    .aspect-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+      margin: 0.35rem 0 0.65rem;
+    }
+    .aspect-grid label {
+      font-family: system-ui, "Segoe UI", sans-serif;
+      font-size: 0.82rem;
+      cursor: pointer;
+      padding: 0.35rem 0.55rem;
+      border-radius: 8px;
+      border: 1px solid var(--rule);
+      background: rgba(227, 184, 106, 0.06);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+    .aspect-grid input { margin: 0; }
+    textarea.review-note {
+      width: 100%;
+      min-height: 4.5rem;
+      margin: 0.35rem 0 0.75rem;
+      padding: 0.55rem 0.65rem;
+      border-radius: 10px;
+      border: 1px solid var(--rule);
+      background: rgba(0,0,0,0.2);
+      color: var(--ink);
+      font-family: system-ui, "Segoe UI", sans-serif;
+      font-size: 0.88rem;
+      resize: vertical;
+    }
+    .review-finished-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem 0.75rem;
+      align-items: center;
+      margin: 0.25rem 0 0.85rem;
+      font-family: system-ui, "Segoe UI", sans-serif;
+      font-size: 0.85rem;
+      color: var(--dim);
+    }
+    .review-finished-row label.field {
+      flex: 0 0 auto;
+      color: var(--dim);
+    }
+    .review-finished-row input[type="date"],
+    .review-finished-row input[type="number"] {
+      padding: 0.4rem 0.55rem;
+      border-radius: 8px;
+      border: 1px solid var(--rule);
+      background: rgba(0,0,0,0.22);
+      color: var(--ink);
+      font-family: system-ui, "Segoe UI", sans-serif;
+      font-size: 0.86rem;
+    }
+    .review-finished-row input[type="number"] {
+      width: 5.5rem;
+    }
+    .review-finished-row .finished-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .review-finished-row .finished-toggle button {
+      font-family: system-ui, "Segoe UI", sans-serif;
+      font-size: 0.78rem;
+      padding: 0.25rem 0.55rem;
+      border-radius: 6px;
+      border: 1px solid var(--rule);
+      background: transparent;
+      color: var(--accent-soft);
+      cursor: pointer;
+    }
+    .review-finished-row .finished-toggle button[aria-pressed="true"] {
+      background: rgba(227, 184, 106, 0.18);
+      color: var(--ink);
+      border-color: rgba(227, 184, 106, 0.5);
+    }
+    .review-finished-row .muted {
+      flex: 1 1 100%;
+      color: var(--dim);
+      font-size: 0.78rem;
+      margin: 0;
+    }
+    button.review-submit {
+      font-family: system-ui, "Segoe UI", sans-serif;
+      padding: 0.55rem 1rem;
+      border-radius: 10px;
+      border: 1px solid rgba(227, 184, 106, 0.5);
+      background: rgba(227, 184, 106, 0.2);
+      color: var(--ink);
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+    @media (hover: hover) and (pointer: fine) {
+      button.review-submit:hover {
+        background: rgba(227, 184, 106, 0.3);
+      }
+    }
+    .gate-banner {
+      font-family: system-ui, "Segoe UI", sans-serif;
+      font-size: 0.88rem;
+      color: var(--dim);
+      margin-bottom: 0.75rem;
+      padding: 0.65rem 0.75rem;
+      border-radius: 10px;
+      border: 1px solid var(--rule);
+      background: rgba(227, 184, 106, 0.06);
+    }
+    .halalit-occasion-banner {
+      font-family: system-ui, "Segoe UI", sans-serif;
+      font-size: clamp(0.92rem, 2.2vw, 1.05rem);
+      text-align: center;
+      padding: 0.7rem clamp(1rem, 4vw, 2rem);
+      margin: 0;
+      border-bottom: 1px solid var(--rule);
+      background: linear-gradient(180deg, rgba(227, 184, 106, 0.18), rgba(227, 184, 106, 0.08));
+      color: var(--accent);
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+      align-items: center;
+    }
+    .halalit-occasion-banner__title {
+      font-weight: 600;
+    }
+    .halalit-occasion-banner__which {
+      display: block;
+      font-size: 0.82em;
+      font-weight: 400;
+      color: var(--dim);
+      letter-spacing: 0.01em;
+      max-width: 52ch;
+      line-height: 1.45;
+    }
+    .review-target-block {
+      margin: 0.75rem 0 1rem;
+      padding: 0.75rem 0.85rem;
+      border-radius: 10px;
+      border: 1px solid var(--rule);
+      background: rgba(0,0,0,0.12);
+    }
+    .review-target-block > p.lead {
+      font-family: system-ui, "Segoe UI", sans-serif;
+      font-size: 0.88rem;
+      color: var(--ink);
+      margin: 0 0 0.55rem;
+    }
+    .review-target-options label { margin-bottom: 0.35rem; }
+    .own-book-panel {
+      display: none;
+      margin-top: 0.65rem;
+      padding-top: 0.65rem;
+      border-top: 1px solid rgba(227, 184, 106, 0.15);
+    }
+    .own-book-panel.is-open { display: block; }
+    .own-book-panel label.field {
+      font-family: system-ui, "Segoe UI", sans-serif;
+      font-size: 0.85rem;
+      color: var(--dim);
+      display: block;
+      margin: 0 0 0.35rem;
+    }
+    .own-book-panel input[type="text"] {
+      width: 100%;
+      padding: 0.5rem 0.6rem;
+      border-radius: 10px;
+      border: 1px solid var(--rule);
+      background: rgba(0,0,0,0.2);
+      color: var(--ink);
+      font-family: system-ui, "Segoe UI", sans-serif;
+      font-size: 0.88rem;
+      margin-bottom: 0.65rem;
+    }
+    .guidelines-box {
+      font-family: system-ui, "Segoe UI", sans-serif;
+      font-size: 0.8rem;
+      color: var(--dim);
+      margin: 0 0 0.55rem;
+      padding: 0.55rem 0.65rem;
+      border-radius: 8px;
+      border: 1px solid rgba(227, 184, 106, 0.12);
+      background: rgba(227, 184, 106, 0.04);
+    }
+    .guidelines-box ul { margin: 0.35rem 0 0; padding-left: 1.1rem; }
+    .guidelines-box li { margin: 0.2rem 0; }
+    .affirm-row {
+      font-family: system-ui, "Segoe UI", sans-serif;
+      font-size: 0.84rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.45rem;
+      margin-top: 0.35rem;
+      line-height: 1.45;
+    }
+    .affirm-row input { margin-top: 0.2rem; }
+    .not-for-me-wrap {
+      display: none;
+      margin: 0.75rem 0 0;
+      padding: 0.65rem 0.85rem 0.75rem;
+      border-radius: 10px;
+      border: 1px solid rgba(227, 184, 106, 0.18);
+      background: rgba(0, 0, 0, 0.12);
+    }
+    .not-for-me-wrap.is-visible { display: block; }
+    .not-for-me-wrap .not-for-me-lead {
+      margin: 0 0 0.45rem;
+      font-size: 0.85rem;
+    }
+    .review-more-btn {
+      font-family: system-ui, "Segoe UI", sans-serif;
+      font-size: 0.82rem;
+      padding: 0.35rem 0.7rem;
+      border-radius: 8px;
+      border: 1px solid rgba(227, 184, 106, 0.28);
+      background: rgba(227, 184, 106, 0.1);
+      color: var(--accent);
+      cursor: pointer;
+    }
+    .review-more-btn:hover {
+      background: rgba(227, 184, 106, 0.18);
+    }
+    .review-more-btn:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+    .review-more-btn--nested {
+      margin: 0.45rem 0 0 0.35rem;
+      font-size: 0.8rem;
+    }
+    .review-more-body {
+      margin-top: 0.55rem;
+      padding-top: 0.5rem;
+      border-top: 1px solid rgba(227, 184, 106, 0.12);
+    }
+    .rules-more-block {
+      display: none;
+      margin-top: 0.35rem;
+      padding-left: 0.35rem;
+      border-left: 2px solid rgba(227, 184, 106, 0.22);
+    }
+    .rules-more-block.is-visible { display: block; }
+    .rules-flag-options label {
+      font-size: 0.84rem;
+      margin-bottom: 0.3rem;
+    }
+    .review-share-hint {
+      margin: 0 0 0.5rem;
+      font-size: 0.86rem;
+      line-height: 1.45;
+      color: var(--ink);
+    }
+    .review-share-hint .muted {
+      display: block;
+      margin-top: 0.2rem;
+      font-size: 0.8rem;
+    }
+    .catalog-lookup-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      align-items: center;
+      margin: 0.15rem 0 0.5rem;
+    }
+    button.catalog-lookup-btn {
+      font-family: system-ui, "Segoe UI", sans-serif;
+      font-size: 0.82rem;
+      padding: 0.45rem 0.75rem;
+      border-radius: 10px;
+      border: 1px solid var(--rule);
+      background: rgba(227, 184, 106, 0.12);
+      color: var(--ink);
+      cursor: pointer;
+    }
+    @media (hover: hover) and (pointer: fine) {
+      button.catalog-lookup-btn:hover {
+        background: rgba(227, 184, 106, 0.22);
+      }
+    }
+    button.catalog-lookup-btn:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+    .catalog-match-box {
+      font-family: system-ui, "Segoe UI", sans-serif;
+      font-size: 0.82rem;
+      color: var(--dim);
+      margin: 0 0 0.65rem;
+      padding: 0.55rem 0.65rem;
+      border-radius: 10px;
+      border: 1px solid rgba(227, 184, 106, 0.12);
+      background: rgba(0,0,0,0.15);
+      display: none;
+    }
+    .catalog-match-box.is-visible { display: block; }
+    .catalog-match-box .match-list {
+      margin: 0.45rem 0 0;
+      padding: 0;
+      list-style: none;
+    }
+    .catalog-match-box .match-list button {
+      display: block;
+      width: 100%;
+      text-align: left;
+      margin: 0.35rem 0 0;
+      padding: 0.45rem 0.55rem;
+      border-radius: 8px;
+      border: 1px solid var(--rule);
+      background: rgba(227, 184, 106, 0.06);
+      color: var(--ink);
+      cursor: pointer;
+      font: inherit;
+      font-size: 0.84rem;
+      line-height: 1.35;
+    }
+    @media (hover: hover) and (pointer: fine) {
+      .catalog-match-box .match-list button:hover {
+        background: rgba(227, 184, 106, 0.14);
+      }
+    }
+    .catalog-hint-ok { color: #a8c99a; }
+    .catalog-hint-neutral { color: var(--accent); }
+    .catalog-hint-warn { color: #d4a574; }
+    .catalog-hint-note { color: #c9b896; display: block; margin-top: 0.45rem; }
+    .bookquest-advanced-prefs {
+      margin: 1rem 0 0.35rem;
+      border-top: 1px solid rgba(201, 184, 150, 0.22);
+    }
+    .bookquest-advanced-prefs summary {
+      list-style: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      padding: 0.7rem 0;
+      font-family: system-ui, "Segoe UI", sans-serif;
+      font-size: 0.88rem;
+      line-height: 1.4;
+      color: var(--dim);
+      user-select: none;
+    }
+    .bookquest-advanced-prefs summary::-webkit-details-marker { display: none; }
+    .bookquest-advanced-prefs summary::marker { content: ""; }
+    .bookquest-advanced-prefs summary::after {
+      content: "";
+      flex-shrink: 0;
+      width: 0.45rem;
+      height: 0.45rem;
+      margin-top: -0.1rem;
+      border-right: 1.5px solid rgba(201, 184, 150, 0.75);
+      border-bottom: 1.5px solid rgba(201, 184, 150, 0.75);
+      transform: rotate(45deg);
+      transition: transform 0.15s ease;
+    }
+    .bookquest-advanced-prefs[open] summary::after {
+      margin-top: 0.15rem;
+      transform: rotate(-135deg);
+    }
+    .bookquest-advanced-prefs-body {
+      padding: 0 0 0.35rem;
+    }
+    .bookquest-advanced-prefs-lead {
+      margin: 0 0 0.35rem;
+      font-size: 0.82rem;
+    }
+    .bookquest-pref-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+      margin: 0.65rem 0 0.1rem;
+      font-family: system-ui, "Segoe UI", sans-serif;
+      font-size: 0.86rem;
+      line-height: 1.45;
+      color: var(--dim);
+    }
+    .bookquest-pref-row input { margin-top: 0.2rem; flex-shrink: 0; }
+    .bookquest-reader-age {
+      margin: 1rem 0 0.5rem;
+      padding: 0.85rem 0.9rem;
+      border: 1px solid rgba(201, 184, 150, 0.35);
+      border-radius: 10px;
+      background: rgba(227, 184, 106, 0.05);
+    }
+    .bookquest-reader-age legend {
+      font-family: system-ui, "Segoe UI", sans-serif;
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: var(--ink);
+      padding: 0 0.25rem;
+    }
+    .bookquest-reader-age-lead {
+      margin: 0.35rem 0 0.65rem;
+      font-size: 0.82rem;
+      line-height: 1.45;
+      color: var(--dim);
+    }
+    .bookquest-reader-age .bookquest-pref-row { margin-top: 0.45rem; }
+    .bookquest-age-gate-hint {
+      margin: 0.5rem 0 0;
+      font-size: 0.82rem;
+      color: var(--accent);
+    }
+    button.choice:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+    .halalit-suggestion-wrap {
+      position: fixed;
+      top: 0.55rem;
+      right: 0.55rem;
+      z-index: 120;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 0.35rem;
+      pointer-events: none;
+    }
+    .halalit-suggestion-wrap > * { pointer-events: auto; }
+    .halalit-suggestion-slot {
+      width: 3.15rem;
+      height: 3.35rem;
+      padding: 0;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.35));
+    }
+    .halalit-suggestion-slot svg { width: 100%; height: 100%; display: block; }
+    .halalit-suggestion-panel {
+      width: min(16rem, calc(100vw - 1.2rem));
+      padding: 0.75rem 0.85rem;
+      border-radius: 12px;
+      border: 1px solid rgba(227, 184, 106, 0.28);
+      background: #2a2018;
+      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+    }
+    .halalit-suggestion-panel h3 { margin: 0 0 0.35rem; font-size: 0.92rem; color: #e3b86a; }
+    .halalit-suggestion-panel p { margin: 0 0 0.5rem; font-family: system-ui, sans-serif; font-size: 0.78rem; color: #b8a684; }
+    .halalit-suggestion-panel textarea {
+      width: 100%; min-height: 3.5rem; margin-bottom: 0.45rem; padding: 0.45rem 0.55rem;
+      border-radius: 8px; border: 1px solid rgba(201, 184, 150, 0.35); background: rgba(0,0,0,0.22);
+      color: #f4ead6; font-family: system-ui, sans-serif; font-size: 0.85rem;
+    }
+    .halalit-suggestion-actions { display: flex; gap: 0.4rem; }
+    .halalit-suggestion-actions button {
+      font-family: system-ui, sans-serif; font-size: 0.78rem; padding: 0.35rem 0.65rem;
+      border-radius: 8px; border: 1px solid rgba(227, 184, 106, 0.35);
+      background: rgba(227, 184, 106, 0.16); color: #e3b86a; cursor: pointer;
+    }
+    .halalit-suggestion-actions button.secondary { background: transparent; color: #b8a684; }
+    .halalit-suggestion-status { font-family: system-ui, sans-serif; font-size: 0.75rem; color: #b8a684; margin: 0.35rem 0 0; }
+  </style>
+</head>
+<body>
+  <div class="halalit-suggestion-wrap" aria-label="Private suggestion to owner">
+    <div class="halalit-suggestion-panel" id="halalitSuggestionPanel" hidden>
+      <h3>Suggestion for the owner</h3>
+      <p>Private—not posted on the site. Sign in to send.</p>
+      <textarea id="halalitSuggestionText" maxlength="2000" placeholder="Site idea, book tip, or how Halalit helped…"></textarea>
+      <div class="halalit-suggestion-actions">
+        <button type="button" id="halalitSuggestionSend">Send</button>
+        <button type="button" class="secondary" id="halalitSuggestionClose">Close</button>
+      </div>
+      <p class="halalit-suggestion-status" id="halalitSuggestionStatus" aria-live="polite"></p>
+    </div>
+    <button type="button" class="halalit-suggestion-slot" id="halalitSuggestionSlot" aria-label="Send the owner a private suggestion" aria-expanded="false" title="Suggestion box">
+      <svg viewBox="0 0 64 72" aria-hidden="true">
+        <rect x="8" y="28" width="48" height="38" rx="4" fill="#3d2e22" stroke="#c9a86a" stroke-width="1.5"/>
+        <rect x="14" y="22" width="36" height="8" rx="2" fill="#2a2018" stroke="#8a7355" stroke-width="1"/>
+        <rect x="22" y="8" width="20" height="18" rx="2" fill="#f4ead6" stroke="#c9a86a" stroke-width="1" transform="rotate(-8 32 17)"/>
+        <path d="M26 12h12M25 16h14M27 20h10" stroke="#b8a684" stroke-width="1.2" stroke-linecap="round" opacity="0.55"/>
+      </svg>
+    </button>
+  </div>
+  <div class="wrap">
+    <nav class="top" aria-label="Site">
+      <a href="./index.html">About HalaLit</a><span aria-hidden="true"> · </span><a href="./index.html#library">Personal Library</a><span aria-hidden="true"> · </span><a href="./account.html">Sign in</a>
+    </nav>
+    <p class="scene-label" id="sceneLabel"></p>
+    <h1 id="title">Book Quest</h1>
+    <div class="panel" id="root"></div>
+  </div>
+  <script src="./halalit-bookcheck-config.js"></script>
+  <script src="./halalit-account-storage.js?v=20260610g"></script>
+  <script src="./halalit-owner-feedback.js"></script>
+  <script src="./halalit-site-flags.js"></script>
+  <script src="./halalit-pacific-occasion-banner.js?v=20260601b"></script>
+  <script src="./halalit-designer-gate.js"></script>
+  <script src="./halalit-personal-library.js"></script>
+  <script src="./halalit-want-to-read.js"></script>
+  <script src="./halalit-curated-shelf-warnings.js?v=20260605v"></script>
+  <script src="./halalit-catalog-pins.js?v=20260603g"></script>
+  <script src="./halalit-family-shelf-policy.js?v=20260605t"></script>
+  <script src="./halalit-bookquest-age-ratings.js?v=20260605t"></script>
+  <script src="./halalit-shelf-feedback.js?v=20260530d"></script>
+  <script>
+    Promise.all([
+      HalalitAccountStorage.ready,
+      window.HalalitSiteFlags ? HalalitSiteFlags.ready : Promise.resolve(),
+    ]).then(function () {
+    (function () {
+      if (window.HalalitSiteFlags && !HalalitSiteFlags.isEnabled("bookQuestEnabled")) {
+        document.getElementById("root").innerHTML =
+          "<p>Book Quest is paused right now. <a href=\"./index.html\">Back to Halalit</a></p>";
+        return;
+      }
+
+      function accountStore() {
+        return window.HalalitAccountStorage || null;
+      }
+
+      var READER_MODEL_KEY = "halalitReaderModel";
+      var PENDING_REVIEW_KEY = "halalitPendingReview";
+      /** Designer bypass: shared logic in halalit-designer-gate.js (?halalitDesigner=…, ?halalitDesigner=off). */
+      /** Crowd-sourced titles readers affirmed as Halalit-suitable (local only until a backend exists). */
+      var COMMUNITY_TITLES_KEY = "halalitCommunityTitleSubmissions";
+      var COMMUNITY_TITLES_CAP = 80;
+
+      function loadCommunityTitles() {
+        try {
+          var raw = accountStore() ? accountStore().getItem(COMMUNITY_TITLES_KEY) : null;
+          if (!raw) return [];
+          var arr = JSON.parse(raw);
+          return Array.isArray(arr) ? arr : [];
+        } catch (e) {
+          return [];
+        }
+      }
+
+      function saveCommunityTitles(list) {
+        try {
+          if (accountStore()) accountStore().setItem(COMMUNITY_TITLES_KEY, JSON.stringify(list));
+        } catch (e) {}
+      }
+
+      function normalizeTitleKey(title, author) {
+        return (
+          String(title || "")
+            .toLowerCase()
+            .replace(/\s+/g, " ")
+            .trim() +
+          "|" +
+          String(author || "")
+            .toLowerCase()
+            .replace(/\s+/g, " ")
+            .trim()
+        );
+      }
+
+      function inferCatalogFamilyHint(doc) {
+        var Policy = window.HalalitFamilyShelfPolicy;
+        if (Policy && typeof Policy.inferCatalogFamilyHint === "function") return Policy.inferCatalogFamilyHint(doc);
+        return { tier: "unclear", detail: "Catalog check unavailable—confirm the title fits Halalit’s family shelf rules yourself." };
+      }
+
+      function appendCommunityTitle(entry) {
+        var list = loadCommunityTitles();
+        var key = normalizeTitleKey(entry.titlePlain || entry.title, entry.author);
+        for (var i = list.length - 1; i >= 0; i--) {
+          if (normalizeTitleKey(list[i].titlePlain || list[i].title, list[i].author) === key) list.splice(i, 1);
+        }
+        list.push(entry);
+        if (list.length > COMMUNITY_TITLES_CAP) list = list.slice(list.length - COMMUNITY_TITLES_CAP);
+        saveCommunityTitles(list);
+      }
+
+      function buildOpenLibraryQueryUrl(title, author) {
+        var params = new URLSearchParams();
+        params.set("limit", "6");
+        var t = String(title || "").trim();
+        var a = String(author || "").trim();
+        if (t) params.set("title", t);
+        if (a) params.set("author", a);
+        if (!t && !a) return null;
+        return "https://openlibrary.org/search.json?" + params.toString();
+      }
+
+      function defaultReaderModel() {
+        return {
+          bias: { cautious: 0, bold: 0, social: 0, lone: 0 },
+          avoid: {},
+          completedRuns: 0,
+          /** Times the reader left the end screen for a new quest; reader-note cooldown starts once this is ≥ 1. */
+          playthroughsCompleted: 0,
+        };
+      }
+
+      function loadReaderModel() {
+        try {
+          var raw = accountStore() ? accountStore().getItem(READER_MODEL_KEY) : null;
+          if (!raw) return defaultReaderModel();
+          var o = JSON.parse(raw);
+          if (!o || typeof o !== "object") return defaultReaderModel();
+          o.bias = o.bias || defaultReaderModel().bias;
+          o.avoid = o.avoid || {};
+          if (!Number.isFinite(o.completedRuns)) o.completedRuns = 0;
+          if (!Number.isFinite(o.playthroughsCompleted)) {
+            o.playthroughsCompleted = o.completedRuns >= 1 ? Math.max(1, o.completedRuns) : 0;
+          }
+          return o;
+        } catch (e) {
+          return defaultReaderModel();
+        }
+      }
+
+      function saveReaderModel(m) {
+        try {
+          if (accountStore()) accountStore().setItem(READER_MODEL_KEY, JSON.stringify(m));
+        } catch (e) {}
+      }
+
+      /** Reader note + “between quests” gate only after the first full quest and “Play again” (second attempt onward). Designer bypass (this browser only) turns the gate off for QA. */
+      function readerFeedbackGateEnabled() {
+        if (window.HalalitDesignerGate && window.HalalitDesignerGate.designerBypassActive()) return false;
+        return (loadReaderModel().playthroughsCompleted || 0) >= 1;
+      }
+
+      function bumpPlaythroughsCompleted() {
+        var reader = loadReaderModel();
+        reader.playthroughsCompleted = (reader.playthroughsCompleted || 0) + 1;
+        saveReaderModel(reader);
+      }
+
+      function loadPendingReview() {
+        try {
+          var raw = accountStore() ? accountStore().getItem(PENDING_REVIEW_KEY) : null;
+          if (!raw) return null;
+          return JSON.parse(raw);
+        } catch (e) {
+          return null;
+        }
+      }
+
+      function savePendingReview(obj) {
+        try {
+          if (!accountStore()) return;
+          if (obj == null) accountStore().removeItem(PENDING_REVIEW_KEY);
+          else accountStore().setItem(PENDING_REVIEW_KEY, JSON.stringify(obj));
+        } catch (e) {}
+      }
+
+      /** Checkbox aspects → quiet nudges on the four axes (accumulated across sessions). */
+      var ASPECT_BIAS = {
+        gentle_pace: { cautious: 1 },
+        friendship: { social: 1 },
+        humor: { bold: 1, social: 1 },
+        animals_or_nature: { lone: 1, cautious: 1 },
+        adventure: { bold: 1 },
+        wilderness: { lone: 1 },
+        puzzles_or_mystery: { bold: 1, social: 1 },
+        mythic_or_epic: { bold: 1, lone: 1 },
+        teamwork: { social: 1 },
+        quiet_voice: { lone: 1, cautious: 1 },
+        courage_under_pressure: { bold: 1, cautious: 1 },
+      };
+
+      var MISMATCH_BUCKET_NUDGE = {
+        cautiousSocial: { bold: 2, lone: 1 },
+        boldSocial: { cautious: 2, lone: 1 },
+        cautiousLone: { bold: 1, social: 2 },
+        boldLone: { cautious: 1, social: 2 },
+      };
+
+      function clampBias(m) {
+        var keys = ["cautious", "bold", "social", "lone"];
+        for (var i = 0; i < keys.length; i++) {
+          var k = keys[i];
+          var v = m.bias[k];
+          if (!Number.isFinite(v)) m.bias[k] = 0;
+          else if (v > 8) m.bias[k] = 8;
+          else if (v < -6) m.bias[k] = -6;
+        }
+      }
+
+      function applyAspectsToReader(reader, aspectKeys) {
+        if (!aspectKeys || !aspectKeys.length) return;
+        for (var i = 0; i < aspectKeys.length; i++) {
+          var delta = ASPECT_BIAS[aspectKeys[i]];
+          if (!delta) continue;
+          for (var k in delta) {
+            if (reader.bias[k] != null) reader.bias[k] += delta[k];
+          }
+        }
+        clampBias(reader);
+      }
+
+      function applyMismatchToReader(reader, bucket) {
+        var n = MISMATCH_BUCKET_NUDGE[bucket];
+        if (!n) return;
+        for (var k in n) {
+          if (reader.bias[k] != null) reader.bias[k] += n[k];
+        }
+        clampBias(reader);
+      }
+
+      /** Inline list of the six reader-chosen shelves (matches `GENRE_CHOICES`). */
+      var HALALIT_SIX_SHELF_NAMES =
+        "<em>fantasy</em>, <em>science fiction</em>, <em>mystery</em>, <em>realistic fiction</em>, <em>nonfiction</em>, and <em>dystopian</em>";
+      var HALALIT_START_GENRE_BEAT =
+        "<p>They let a small silence do its work. <q>Before you take the corridor, I’ll ask you to name one of six shelves I keep for readers from all walks of life—" +
+        HALALIT_SIX_SHELF_NAMES +
+        ". The path of thresholds and tolls stays the same—but the title I press into your hands at the close will belong only to the shelf you choose.</q></p>";
+      var HALALIT_RULES_GENRE_BEAT =
+        "<p><q>When we finish with rules, I’ll offer those same six by name—" +
+        HALALIT_SIX_SHELF_NAMES +
+        "—and you’ll pick one. Your recommendation must honor it.</q></p>";
+
+      /**
+       * Same story beats, different rooms — which pack you see rotates with the playthrough counter.
+       */
+      var AREA_PACKS = [
+        {
+          start: {
+            label: "Prologue",
+            title: "The lantern room",
+            html:
+              "<p>The librarian slides a brass lamp toward you. Outside, rain writes thin lines on the glass.</p><p>\"One short quest,\" they say. \"At the end we’ll know what kind of story you actually want to live in next.\"</p>" +
+              HALALIT_START_GENRE_BEAT,
+          },
+          librarianRules: {
+            label: "Prologue",
+            title: "The lantern room",
+            html:
+              "<p>The librarian settles back, pleased you asked.</p><p>\"Short version: you’ll cross a threshold, pay a kind of toll, then stand before the shelf that remembers how you moved. Each choice nudges four quiet scores—caution, nerve, company, solitude—so the ending can suggest what sort of book might feel true next. Nothing here can trap you; it only listens.\"</p><p>They tilt the lamp toward the inner door. \"When you’re ready, the corridor is the first real step.\"</p>" +
+              HALALIT_RULES_GENRE_BEAT,
+          },
+          corridor: {
+            label: "First threshold",
+            title: "A door of many hinges",
+            html: "<p>The corridor ends at a door that rattles as if someone is arguing on the other side: a low voice, then a laugh.</p>",
+          },
+          afterKnockLead:
+            "<p>The air here tastes of paper and old varnish—familiar to anyone who has ever waited on a threshold.</p>",
+          afterHandleLead:
+            "<p>The floorboards remember other feet that chose the quicker way; you feel it through your soles.</p>",
+          shelf: {
+            default:
+              "<p>Beyond the guardian, shelves breathe—dust lifting in slow spirals. One empty slot glows faintly, waiting for a title you haven’t earned yet.</p>",
+            story:
+              "<p>Beyond the guardian, the shelves seem to lean closer, as if the small truthful thing you offered left a warmth the wood remembers.</p><p>One empty slot glows faintly, waiting for a title you haven’t earned yet.</p>",
+            riddle:
+              "<p>Beyond the guardian, somewhere high up, chalk squeaks once—someone finishing the riddle you bargained for—and the stacks shiver as if a joke has just landed.</p><p>One empty slot glows faintly, waiting for a title you haven’t earned yet.</p>",
+          },
+        },
+        {
+          start: {
+            label: "Prologue",
+            title: "The map alcove",
+            html:
+              "<p>You’re shown into a side room where unrolled charts cover a table like overlapping dreams. A small oil lamp hangs over the inkwell.</p><p>\"One short quest,\" the librarian says, tapping the coast of an island that isn’t on any atlas you know. \"Walk it honestly, and we’ll chart what kind of story you actually want next.\"</p>" +
+              HALALIT_START_GENRE_BEAT,
+          },
+          librarianRules: {
+            label: "Prologue",
+            title: "The map alcove",
+            html:
+              "<p>They weight a corner of the nearest chart with a smooth stone. \"Rules, then: you’ll cross a threshold, pay a toll in the old way, and stand where the shelves remember your stride. Your choices lean four quiet dials—caution, nerve, company, solitude—so the ending can suggest a book that fits who you were in motion.\"</p><p>They slide a wooden rule aside. \"The corridor beyond this room is the first real line on the map.\"</p>" +
+              HALALIT_RULES_GENRE_BEAT,
+          },
+          corridor: {
+            label: "First threshold",
+            title: "The compass corridor",
+            html:
+              "<p>The passage bends once, twice—then straightens toward a door painted with a compass rose so faded you can barely tell north from story.</p><p>From the other side comes the scrape of a chair, then someone humming off-key, as if they’re rehearsing a speech they’ll never give.</p>",
+          },
+          afterKnockLead:
+            "<p>The rose on the door seems to steady, needle-thin, as if your knock gave it a north.</p>",
+          afterHandleLead:
+            "<p>The compass paint flakes at the latch—your hand arrived before the map agreed.</p>",
+          shelf: {
+            default:
+              "<p>Beyond the guardian, shelves climb like cliffs; wind you cannot feel still lifts dust in spirals. One empty slot glows like a harbor lantern.</p>",
+            story:
+              "<p>Beyond the guardian, the stacks lean in kindly, as if your small honest story left a tide mark they mean to keep.</p><p>One empty slot glows like a harbor lantern.</p>",
+            riddle:
+              "<p>Beyond the guardian, chalk skates somewhere overhead, finishing the bargain you made; the wood answers with a chuckle deep in its grain.</p><p>One empty slot glows like a harbor lantern.</p>",
+          },
+        },
+        {
+          start: {
+            label: "Prologue",
+            title: "The winter garden window",
+            html:
+              "<p>Frost feathers the inside of a tall window; beyond it, a walled garden sleeps under a thin quilt of snow. The librarian sets a lantern on the sill.</p><p>\"One short quest,\" they say, breath fogging the glass for a heartbeat. \"When you return, we’ll know what kind of warmth you’ve been missing in your reading.\"</p>" +
+              HALALIT_START_GENRE_BEAT,
+          },
+          librarianRules: {
+            label: "Prologue",
+            title: "The winter garden window",
+            html:
+              "<p>They wipe the glass clear with a cuff. \"Plainly: you’ll cross a threshold, pay a toll, then meet the shelf that remembers how you carried yourself. Each choice tilts four quiet measures—caution, nerve, company, solitude—so the ending can name a book that suits the reader you were along the way.\"</p><p>They nod toward an inner door where draughts slip under like curious cats. \"The corridor waits when you are.\"</p>" +
+              HALALIT_RULES_GENRE_BEAT,
+          },
+          corridor: {
+            label: "First threshold",
+            title: "The storm door",
+            html:
+              "<p>The corridor ends at a door banded with iron, cold to the touch. Snowmelt tracks lead toward it—someone came in recently and forgot to dry their boots.</p><p>Behind the wood, a voice counts slowly, as if measuring patience against the weather.</p>",
+          },
+          afterKnockLead:
+            "<p>Your knock rings honest as a handbell; the counting stops mid-number, replaced by the soft shift of someone standing.</p>",
+          afterHandleLead:
+            "<p>The door gives before the storm in you has quite decided—cold air and lamplight trade places in a rush.</p>",
+          shelf: {
+            default:
+              "<p>Beyond the guardian, rows of spines rise like hedgerows after snow. One empty slot glows with the patient gold of a hearth not lit yet.</p>",
+            story:
+              "<p>Beyond the guardian, the shelves seem to thaw toward you, as if truth spoken aloud were a kind of heat they recognize.</p><p>One empty slot glows with the patient gold of a hearth not lit yet.</p>",
+            riddle:
+              "<p>Beyond the guardian, chalk taps once, twice—an answer being finished where you cannot see—and the stacks exhale mist and old paper.</p><p>One empty slot glows with the patient gold of a hearth not lit yet.</p>",
+          },
+        },
+        {
+          start: {
+            label: "Prologue",
+            title: "The bindery niche",
+            html:
+              "<p>You’re led past humming presses into a quiet niche hung with half-finished covers—leather, cloth, marbled paper curling at the edges. Thread and glue scent the air.</p><p>\"One short quest,\" the librarian murmurs, sliding a slim awl into their sleeve like a bookmark. \"At the end we’ll know which binding fits the story you’re ready to carry.\"</p>" +
+              HALALIT_START_GENRE_BEAT,
+          },
+          librarianRules: {
+            label: "Prologue",
+            title: "The bindery niche",
+            html:
+              "<p>They test a corner fold with their thumb. \"Listen: you’ll cross a threshold, pay a toll, then stand where the shelf reads your gait like a signature. Your choices adjust four quiet threads—caution, nerve, company, solitude—so the ending can suggest a book sewn to your measure.\"</p><p>They gesture past the presses. \"The corridor is the spine that leads outward.\"</p>" +
+              HALALIT_RULES_GENRE_BEAT,
+          },
+          corridor: {
+            label: "First threshold",
+            title: "The stitch-mark door",
+            html:
+              "<p>The corridor narrows until it frames a door scored with tiny stitch marks, as if someone once sewed it shut and thought better of it.</p><p>From within, you hear the papery whisper of pages being turned too fast for comfort.</p>",
+          },
+          afterKnockLead:
+            "<p>Your knock lands soft as a thimble; the hurried turning stills, thread-taut.</p>",
+          afterHandleLead:
+            "<p>The latch yields with the sound of a knot slipping—someone’s careful work undone in an instant.</p>",
+          shelf: {
+            default:
+              "<p>Beyond the guardian, shelves stand in neat signatures, each row a different hand. One empty slot glows like gilt catching lamplight.</p>",
+            story:
+              "<p>Beyond the guardian, the wood seems to remember your small true story the way leather remembers a palm.</p><p>One empty slot glows like gilt catching lamplight.</p>",
+            riddle:
+              "<p>Beyond the guardian, chalk answers itself somewhere in the stacks, finishing what you started; the shelves tighten like stitches pulled true.</p><p>One empty slot glows like gilt catching lamplight.</p>",
+          },
+        },
+      ];
+
+      function currentAreaPack() {
+        var idx = playthroughIndex % AREA_PACKS.length;
+        if (idx < 0) idx += AREA_PACKS.length;
+        return AREA_PACKS[idx];
+      }
+
+      /**
+       * Who blocks the way and how the door answers — rotates every playthrough.
+       * Toll mechanics stay fixed: same two choices, same “time, truth, or trouble” line.
+       */
+      var CROSSING_SKINS = [
+        {
+          crossingLabel: "Crossing",
+          crossingTitle: "The velvet keeper",
+          afterKnock:
+            "<p>You knock—two measured taps, patient and clear.</p>" +
+            "<p>On the other side, the voices stop mid-sentence. A latch lifts with a courteous click. Warm lamplight spills across your shoes as the door eases inward on well-oiled hinges. Someone exhales—not quite a laugh, not quite suspicion. You have their attention before anyone has spoken of tolls.</p>",
+          afterHandle:
+            "<p>The handle turns under your palm. The door swings before you have quite decided whether to commit.</p>" +
+            "<p>The half-heard conversation on the other side stops mid-word. Footsteps reach the gap—then stillness, and a single face in the widening light: alert, curious, the way a keeper looks when the story took a shortcut and they mean to hear the next line.</p>",
+          guardian: {
+            polite:
+              "<p>A figure in moth-eaten velvet fills the frame the way a bookmark holds a chapter—deliberate, not cruel. They have been listening since your knock.</p>" +
+              "<p>\"Civility first,\" they murmur, as if confirming a rumor they hoped was true. Then their mouth firms. \"Even so: one toll. Time, truth, or trouble—say how you mean to pay.\"</p>",
+            bold:
+              "<p>A figure in moth-eaten velvet meets you a step inside, already at ease with the quicker way you arrived—as if bold first steps are just another shelf in their catalogue.</p>" +
+              "<p>\"You took the short path in,\" they say, without heat. \"Fair enough. One toll—time, truth, or trouble. Name the coin you will spend.\"</p>",
+            default:
+              "<p>A figure in moth-eaten velvet blocks the way. \"One toll,\" they murmur. \"Time, truth, or trouble.\"</p>",
+          },
+        },
+        {
+          crossingLabel: "Crossing",
+          crossingTitle: "The ink-steward",
+          afterKnock:
+            "<p>You knock—wood answering wood with a scholar’s patience.</p>" +
+            "<p>The muttering on the other side resolves into a single set of footsteps. The door opens on a sleeve speckled with old ink; the steward blinks as if waking from a sum. Lamplight pools at your feet, polite as a fresh margin.</p>",
+          afterHandle:
+            "<p>The latch gives with the soft crackle of dried gum. The door swings wide before etiquette catches up.</p>" +
+            "<p>An ink-steward stands with a blotter half-raised, hair tied back with twine. Their eyebrows lift—not angry, only astonished that anyone would arrive by draft instead of draftsmanship.</p>",
+          guardian: {
+            polite:
+              "<p>The ink-steward inclines their head, blotter lowered like a white flag. \"You announced yourself properly,\" they say. \"The ledger likes that.\"</p>" +
+              "<p>They tap the doorframe once. \"Even so: one toll. Time, truth, or trouble—say how you mean to pay.\"</p>",
+            bold:
+              "<p>The ink-steward meets you in the doorway, sleeves rolled, chalk dust on one cheek. \"You came in like a blot spreading,\" they say, more amused than scolded.</p>" +
+              "<p>\"Fair enough. One toll—time, truth, or trouble. Name the coin you will spend.\"</p>",
+            default:
+              "<p>An ink-steward blocks the sill, blotter in hand. \"One toll,\" they murmur. \"Time, truth, or trouble.\"</p>",
+          },
+        },
+        {
+          crossingLabel: "Crossing",
+          crossingTitle: "The night porter",
+          afterKnock:
+            "<p>You knock—firm, friendly, the way you would at a cousin’s back door.</p>" +
+            "<p>A bolt slides; cold air trades places with lamplight. A porter in a patched coat peers out, ring of keys silent at their belt. \"Hush,\" they breathe, as if the building itself were sleeping one room over.</p>",
+          afterHandle:
+            "<p>The handle turns; hinges complain only once, then remember their manners.</p>" +
+            "<p>The porter is already there—how, you cannot say—one hand on a master key, the other raised palm-out in a gesture that means <em>wait, let the draft settle</em>. Snowmelt or rain—whichever the corridor carried—dots their shoulders like punctuation.</p>",
+          guardian: {
+            polite:
+              "<p>The porter’s shoulders ease. \"Good knock,\" they whisper. \"The old place hears courtesy.\"</p>" +
+              "<p>They gesture you inward with the key-ring hand. \"Even so: one toll. Time, truth, or trouble—say how you mean to pay.\"</p>",
+            bold:
+              "<p>The porter exhales through their teeth—not quite a whistle. \"Straight through, are we?\"</p>" +
+              "<p>They step aside anyway, boots squeaking once on stone. \"Fair enough. One toll—time, truth, or trouble. Name the coin you will spend.\"</p>",
+            default:
+              "<p>The night porter fills the doorway, keys at rest. \"One toll,\" they murmur. \"Time, truth, or trouble.\"</p>",
+          },
+        },
+        {
+          crossingLabel: "Crossing",
+          crossingTitle: "The bridge-sibling",
+          afterKnock:
+            "<p>You knock; the sound carries like a pebble dropped into a well.</p>" +
+            "<p>Two voices had been arguing in gentle overlap—now one laughs, low and kind, and the door opens on a person who might be the librarian’s younger cousin: same patience, different scarf. \"We heard you coming,\" they say, which cannot be true, yet feels true.</p>",
+          afterHandle:
+            "<p>The door yields; warmth rolls out, smelling of cedar and borrowed coats.</p>" +
+            "<p>The person on the other side was mid-gesture, finger raised as if finishing someone else’s sentence. They freeze, grin flickering. \"Shortcut,\" they say lightly. \"My favorite genre.\"</p>",
+          guardian: {
+            polite:
+              "<p>They fold their hands at their belt. \"Polite knocks make polite thresholds,\" they say. \"We keep score of small mercies here.\"</p>" +
+              "<p>Their eyes brighten—not teasing, testing. \"Even so: one toll. Time, truth, or trouble—say how you mean to pay.\"</p>",
+            bold:
+              "<p>They lean on the jamb, unoffended. \"Door-first, story-second—I know the type.\"</p>" +
+              "<p>\"Fair enough. One toll—time, truth, or trouble. Name the coin you will spend.\"</p>",
+            default:
+              "<p>A keeper in a borrowed coat blocks the warm gap. \"One toll,\" they say gently. \"Time, truth, or trouble.\"</p>",
+          },
+        },
+        {
+          crossingLabel: "Crossing",
+          crossingTitle: "The catalog ghost",
+          afterKnock:
+            "<p>You knock twice, then once more for luck—the rhythm feels right in this corridor.</p>" +
+            "<p>Silence, then paper: a card slid into view at the gap, printed with a single word—<em>Enter</em>—before the door swings. Someone stands just beyond the light, face half in shadow, smile fully present.</p>",
+          afterHandle:
+            "<p>The latch was never latched; the door admits you like a drawer sliding home.</p>" +
+            "<p>A clerkish figure waits with a pencil behind their ear, catalog cards fanned like a hand of patience. \"Fast hooves,\" they murmur, tapping the pencil once against their thumb.</p>",
+          guardian: {
+            polite:
+              "<p>They tuck the pencil away as if honoring a truce. \"You knocked like someone who reads footnotes,\" they say.</p>" +
+              "<p>\"Even so: one toll. Time, truth, or trouble—say how you mean to pay.\"</p>",
+            bold:
+              "<p>They do not flinch at your speed. \"Bold entries go in red ink in some libraries,\" they say, almost fondly.</p>" +
+              "<p>\"Here they only cost the usual. One toll—time, truth, or trouble. Name the coin you will spend.\"</p>",
+            default:
+              "<p>A catalog-keeper studies you from the threshold. \"One toll,\" they intone softly. \"Time, truth, or trouble.\"</p>",
+          },
+        },
+        {
+          crossingLabel: "Crossing",
+          crossingTitle: "The tape librarian",
+          afterKnock:
+            "<p>You knock; something on the other side rustles—tape, ribbon, the sound of patience being measured.</p>" +
+            "<p>The door opens on hands still holding a curl of cloth tape, as if the room were mid-repair. The librarian of this threshold bows slightly, not performing, only precise. \"Welcome to the seam,\" they say.</p>",
+          afterHandle:
+            "<p>The door jumps in its frame; tape unfurls from a hook and catches the light like a small banner.</p>" +
+            "<p>The tape librarian steadies the strip with two fingers, unhurried. \"Arrived by impulse,\" they note, without judgment. \"The seam remembers every kind of entrance.\"</p>",
+          guardian: {
+            polite:
+              "<p>They wind the tape neatly around one palm. \"Courtesy first—always,\" they say. \"It keeps the spines from arguing.\"</p>" +
+              "<p>\"Even so: one toll. Time, truth, or trouble—say how you mean to pay.\"</p>",
+            bold:
+              "<p>They snip the tape with thumbnail and tooth—<em>tsk</em>—and smile. \"Handle-turners make lively shelves,\" they admit.</p>" +
+              "<p>\"Fair enough. One toll—time, truth, or trouble. Name the coin you will spend.\"</p>",
+            default:
+              "<p>The tape librarian bars the way with a ribbon of red cotton. \"One toll,\" they murmur. \"Time, truth, or trouble.\"</p>",
+          },
+        },
+      ];
+
+      function currentCrossingSkin() {
+        var stride = AREA_PACKS.length > 1 ? AREA_PACKS.length - 1 : 1;
+        var idx = (playthroughIndex + stride) % CROSSING_SKINS.length;
+        if (idx < 0) idx += CROSSING_SKINS.length;
+        return CROSSING_SKINS[idx];
+      }
+
+      const scores = { cautious: 0, bold: 0, social: 0, lone: 0 };
+      /** Slug for the reader’s chosen shelf: drives which genre the final pick must belong to. */
+      let readerGenre = null;
+      /** Nonfiction-only: nature / cookbook / art flavor for final pick (see `nonfictionTrack` on REC_VARIANTS). */
+      let nonfictionTrack = null;
+      /** How the player crossed the corridor door — drives guardian tone (polite vs rash). */
+      let doorManner = null;
+      /** What the player offered the guardian — drives shelf beat. */
+      let tollKind = null;
+      /** How many hint beats the riddle-giver has already offered this toll (stays on riddle until answers). */
+      let riddleHintLevel = 0;
+      /**
+       * Each playthrough shows one prompt; `choices` are three honest tries (each advances to shelf).
+       * `hints` are extra lines if the player asks—never the outright answer.
+       */
+      const RIDDLE_ROUNDS = [
+        {
+          prompt: "What can you break without touching it?",
+          hints: [
+            "They squint at the slate. <q>Think less about what shatters under a hammer, and more about what a single voice can undo—without a hand laid on glass.</q>",
+            "They underline nothing, twice. <q>It isn’t an object you carry in your pocket. It’s what the room was holding a heartbeat before someone spoke.</q>",
+          ],
+          choices: [
+            {
+              text: "Silence—the kind that fills a room when everyone holds still.",
+              scores: { social: 1, cautious: 1 },
+              next: "shelf",
+            },
+            {
+              text: "A promise, if you mean the fragile sort that lives in words alone.",
+              scores: { lone: 1, cautious: 1 },
+              next: "shelf",
+            },
+            {
+              text: "Ice—or glass—something sharp that shatters if you only look away wrong.",
+              scores: { bold: 1, social: 1 },
+              next: "shelf",
+            },
+          ],
+        },
+        {
+          prompt: "What has hands but cannot clap?",
+          hints: [
+            "Chalk ticks once. <q>Picture something patient that faces you in a circle, marking the hours without applause.</q>",
+            "They mouth the word <em>hands</em> as if tasting it. <q>Not flesh—something that points, ticks, and never once claps for itself.</q>",
+          ],
+          choices: [
+            {
+              text: "A clock—its hands move all day, but they never applaud.",
+              scores: { social: 1, cautious: 1 },
+              next: "shelf",
+            },
+            {
+              text: "A statue’s frozen hands, if the riddle is being poetic.",
+              scores: { lone: 1, cautious: 1 },
+              next: "shelf",
+            },
+            {
+              text: "A tree in winter—branches like fingers, and not a clap among them.",
+              scores: { bold: 1, social: 1 },
+              next: "shelf",
+            },
+          ],
+        },
+        {
+          prompt: "What gets wetter as it dries?",
+          hints: [
+            "They sketch a small loop in the air. <q>Not weather running backward—think of humble work in a bathroom or after a bath.</q>",
+            "Their voice softens. <q>It grows heavy <em>doing</em> its job—even as it finishes the job of leaving <em>you</em> dry.</q>",
+          ],
+          choices: [
+            {
+              text: "A towel—it drinks up water while it’s busy drying you.",
+              scores: { social: 1, cautious: 1 },
+              next: "shelf",
+            },
+            {
+              text: "A cloud, if you squint at weather the wrong way round.",
+              scores: { lone: 1, cautious: 1 },
+              next: "shelf",
+            },
+            {
+              text: "A sponge—bold guess, but the riddle said *dries*, not *squeezes*.",
+              scores: { bold: 1, social: 1 },
+              next: "shelf",
+            },
+          ],
+        },
+        {
+          prompt: "The more of me you take, the more you leave behind. What am I?",
+          hints: [
+            "They tap the floorboards. <q>Whatever it is, you make more of it the farther you walk—without packing it in a bag.</q>",
+            "A small smile. <q>Children draw this trail behind themselves without thinking. So do honest adults, when no one’s watching.</q>",
+          ],
+          choices: [
+            {
+              text: "Footsteps—you carry yourself forward and leave the trail.",
+              scores: { social: 1, cautious: 1 },
+              next: "shelf",
+            },
+            {
+              text: "A secret, if every telling leaves a little more of it in the air.",
+              scores: { lone: 1, cautious: 1 },
+              next: "shelf",
+            },
+            {
+              text: "Holes in a belt of riddles—louder wrong, but you said it bravely.",
+              scores: { bold: 1, social: 1 },
+              next: "shelf",
+            },
+          ],
+        },
+        {
+          prompt: "What goes up and never comes down?",
+          hints: [
+            "They count on their fingers—upward only. <q>Everyone you meet carries this number quietly, whether they boast or hide it.</q>",
+            "The chalk squeaks once. <q>Birthdays stack it. No staircase leads back down—not for mortals, anyway.</q>",
+          ],
+          choices: [
+            {
+              text: "Your age—it climbs every birthday and never steps back down.",
+              scores: { social: 1, cautious: 1 },
+              next: "shelf",
+            },
+            {
+              text: "A memory you keep folded small—up in the mind, never quite landing.",
+              scores: { lone: 1, cautious: 1 },
+              next: "shelf",
+            },
+            {
+              text: "Smoke from a chimney—dramatic, visible, and not coming back as itself.",
+              scores: { bold: 1, social: 1 },
+              next: "shelf",
+            },
+          ],
+        },
+        {
+          prompt: "I’m tall when I’m young and I’m short when I’m old. What am I?",
+          hints: [
+            "They mime a shrinking line. <q>Something eats from one end while it stands bravely tall at the other—wax, wick, and courage.</q>",
+            "They glance toward an imaginary cake. <q>Birthdays know this guest well. So do power cuts, and quiet reading after dark.</q>",
+          ],
+          choices: [
+            {
+              text: "A candle—bright and towering at first, humble stub at the end.",
+              scores: { social: 1, cautious: 1 },
+              next: "shelf",
+            },
+            {
+              text: "A pencil worn down by careful homework—shorter for every right answer.",
+              scores: { lone: 1, cautious: 1 },
+              next: "shelf",
+            },
+            {
+              text: "A tree told backward in time—catchy image, but seasons disagree.",
+              scores: { bold: 1, social: 1 },
+              next: "shelf",
+            },
+          ],
+        },
+        {
+          prompt: "What has a neck but no head?",
+          hints: [
+            "They tilt an invisible vessel. <q>Look where you pour—cupboard, table, picnic. Glass, cork, a narrow throat.</q>",
+            "They draw a ring in the dust. <q><em>Neck</em> is plain here—not a metaphor for a path through the woods.</q>",
+          ],
+          choices: [
+            {
+              text: "A bottle—narrow neck, stopper for a crown instead of a head.",
+              scores: { social: 1, cautious: 1 },
+              next: "shelf",
+            },
+            {
+              text: "A river’s neck of land—geography’s quiet joke.",
+              scores: { lone: 1, cautious: 1 },
+              next: "shelf",
+            },
+            {
+              text: "A giraffe with the head edited out by mischief—not fair to the giraffe.",
+              scores: { bold: 1, social: 1 },
+              next: "shelf",
+            },
+          ],
+        },
+        {
+          prompt: "What belongs to you, but other people use it more than you do?",
+          hints: [
+            "They touch their own collar, thoughtful. <q>You still <em>own</em> it when others borrow it constantly—introductions, roll call, mail.</q>",
+            "Their eyes crinkle—not unkindly. <q>It’s the word that runs ahead of you into rooms you haven’t entered yet.</q>",
+          ],
+          choices: [
+            {
+              text: "Your name—yours on paper, but spoken most often by everyone else.",
+              scores: { social: 1, cautious: 1 },
+              next: "shelf",
+            },
+            {
+              text: "Your shadow—friends with the ground more than with you some days.",
+              scores: { lone: 1, cautious: 1 },
+              next: "shelf",
+            },
+            {
+              text: "Your chair when you stand up—bold to claim, but the room borrows it fast.",
+              scores: { bold: 1, social: 1 },
+              next: "shelf",
+            },
+          ],
+        },
+      ];
+
+      function currentRiddleRound() {
+        return RIDDLE_ROUNDS[playthroughIndex % RIDDLE_ROUNDS.length];
+      }
+
+      function riddleHintsForRound() {
+        var round = currentRiddleRound();
+        return round.hints && round.hints.length ? round.hints : [];
+      }
+
+      /** Fourth button: ask for another line (stays on riddle until all hints are spent). */
+      function riddleAskHintChoice() {
+        var hints = riddleHintsForRound();
+        if (riddleHintLevel >= hints.length) return null;
+        return {
+          text: "Say you aren’t sure yet—and ask for one more line before you commit.",
+          askHint: true,
+        };
+      }
+
+      function riddleChoicesForRender() {
+        var base = currentRiddleRound().choices.slice();
+        var hintCh = riddleAskHintChoice();
+        return hintCh ? base.concat([hintCh]) : base;
+      }
+
+      /** Advances on every load of this page and on “Play again” so the first run is not stuck on variant 0. */
+      var HALALIT_PT_KEY = "halalitBookQuestPt";
+      function bumpPlaythroughIndex() {
+        try {
+          var raw = sessionStorage.getItem(HALALIT_PT_KEY);
+          var n = parseInt(raw, 10);
+          if (!Number.isFinite(n)) {
+            n = Math.floor(Math.random() * 800000) + 100000;
+          } else {
+            n = n + 1;
+          }
+          sessionStorage.setItem(HALALIT_PT_KEY, String(n));
+          return n;
+        } catch (err) {
+          return Math.floor(Math.random() * 2000000000);
+        }
+      }
+      let playthroughIndex = 0;
+
+      const nodes = {
+        start: {
+          label: "Prologue",
+          title: "The lantern room",
+          html: "<p>The librarian slides a brass lamp toward you. Outside, rain writes thin lines on the glass.</p><p>\"One short quest,\" they say. \"At the end we’ll know what kind of story you actually want to live in next.\"</p>",
+          choices: [
+            { text: "Ask them to explain every rule before you move.", scores: { cautious: 2 }, next: "librarianRules" },
+            { text: "Step toward the inner door while they’re still talking.", scores: { bold: 2 }, next: "genreChoice" },
+          ],
+        },
+        librarianRules: {
+          label: "Prologue",
+          title: "The lantern room",
+          html: "<p>The librarian settles back, pleased you asked.</p><p>\"Short version: you’ll cross a threshold, pay a kind of toll, then stand before the shelf that remembers how you moved. Each choice nudges four quiet scores—caution, nerve, company, solitude—so the ending can suggest what sort of book might feel true next. Nothing here can trap you; it only listens.\"</p><p>They tilt the lamp toward the inner door. \"When you’re ready, the corridor is the first real step.\"</p>",
+          choices: [
+            { text: "Thank them—you’re ready to name the kind of shelf you want.", scores: { social: 1, cautious: 1 }, next: "genreChoice" },
+            { text: "Give a small nod and let them lead you to the shelf names.", scores: { lone: 1, cautious: 1 }, next: "genreChoice" },
+          ],
+        },
+        genreChoice: {
+          label: "Prologue",
+          title: "Six reading countries",
+          html: "",
+          choices: [],
+        },
+        corridor: {
+          label: "First threshold",
+          title: "A door of many hinges",
+          html: "<p>The corridor ends at a door that rattles as if someone is arguing on the other side: a low voice, then a laugh.</p>",
+          choices: [
+            { text: "Knock and introduce yourself politely.", scores: { social: 2, cautious: 1 }, next: "afterKnock", doorManner: "polite" },
+            { text: "Try the handle—maybe it isn’t locked.", scores: { bold: 2, lone: 1 }, next: "afterHandle", doorManner: "bold" },
+          ],
+        },
+        afterKnock: {
+          label: "First threshold",
+          title: "An answer to the knock",
+          html:
+            "<p>You knock—two measured taps, patient and clear.</p>" +
+            "<p>On the other side, the voices stop mid-sentence. A latch lifts with a courteous click. Warm lamplight spills across your shoes as the door eases inward on well-oiled hinges. Someone exhales—not quite a laugh, not quite suspicion. You have their attention before anyone has spoken of tolls.</p>",
+          choices: [
+            { text: "Give your name clearly, as you meant to when you knocked.", scores: { social: 1, cautious: 1 }, next: "guardian" },
+            { text: "Let courtesy lead: wait quietly on the threshold until you are invited in.", scores: { cautious: 2, social: 1 }, next: "guardian" },
+          ],
+        },
+        afterHandle: {
+          label: "First threshold",
+          title: "The door gives",
+          html:
+            "<p>The handle turns under your palm. The door swings before you have quite decided whether to commit.</p>" +
+            "<p>The half-heard conversation on the other side stops mid-word. Footsteps reach the gap—then stillness, and a single face in the widening light: alert, curious, the way a keeper looks when the story took a shortcut and they mean to hear the next line.</p>",
+          choices: [
+            { text: "Give them space on the threshold: \"I can wait here if you’d rather set the pace.\"", scores: { cautious: 1, social: 1 }, next: "guardian" },
+            { text: "Commit: step through as if you had been expected all along.", scores: { bold: 1, lone: 1 }, next: "guardian" },
+          ],
+        },
+        guardian: {
+          label: "Crossing",
+          title: "The guardian’s bargain",
+          html: "",
+          choices: [
+            {
+              text: "Offer a true story from your own life—nothing dramatic, just honest.",
+              scores: { social: 2, cautious: 1 },
+              next: "shelf",
+              tollKind: "story",
+            },
+            {
+              text: "Agree to solve a riddle they haven’t finished writing yet.",
+              scores: { bold: 2, lone: 1 },
+              next: "riddleToll",
+              tollKind: "riddle",
+            },
+          ],
+        },
+        riddleToll: {
+          label: "Crossing",
+          title: "The half-written riddle",
+          html: "",
+          /** Filled per playthrough from `currentRiddleRound().choices` in `render()`. */
+          choices: [],
+        },
+        shelf: {
+          label: "Heart",
+          title: "The moving shelf",
+          html: "",
+          choices: [
+            { text: "Trace a finger along the spines, reading names aloud.", scores: { social: 1, cautious: 1 }, next: "end" },
+            { text: "Choose the darkest gap and step through without looking back.", scores: { bold: 2, lone: 1 }, next: "end" },
+          ],
+        },
+        nonfictionField: {
+          label: "Nonfiction",
+          title: "What are you here to learn?",
+          html:
+            "<p>The librarian walks you past the rattling door to a sunlit alcove—globes, field journals, a bowl of wooden spoons, and a stack of sketchbooks tied with twine.</p>" +
+            "<p><q>True nonfiction doesn’t need the corridor bargain tonight,</q> they say. <q>Tell me the <em>field</em> you’re curious about. The shelves will answer in facts, recipes, or lines—not spells.</q></p>" +
+            "<p class=\"muted\">Pick the path that fits what you want to explore.</p>",
+          choices: [
+            {
+              text: "Trails, water, and living landscapes—how the real world works outdoors.",
+              scores: { cautious: 1, lone: 1 },
+              next: "nonfictionNatureWalk",
+            },
+            {
+              text: "Kitchens and recipes—ingredients I love and flavors I want to understand.",
+              scores: { social: 1, cautious: 1 },
+              next: "nonfictionCookbookStart",
+            },
+            {
+              text: "Drawing and making art—characters, creatures, or places I want to capture.",
+              scores: { social: 1, bold: 1 },
+              next: "nonfictionArtStart",
+            },
+          ],
+        },
+        nonfictionNatureWalk: {
+          label: "Nonfiction",
+          title: "Through the living landscape",
+          html:
+            "<p>You follow a chalk line out of the library and into open air—real sky, real wind, no magic, only attention.</p>" +
+            "<p>Pine needles soften your steps. A creek writes on stone. The librarian walks beside you, naming what you notice: watershed, shelter, the way a hillside holds rain.</p>" +
+            "<p><q>Nonfiction about nature rewards patience,</q> they murmur. <q>You looked with your whole body, not a wand.</q></p>",
+          choices: [
+            {
+              text: "Thank them—you’re ready to see which fact-book fits this walk.",
+              scores: { cautious: 1, social: 1 },
+              next: "nonfictionShelf",
+              nonfictionTrack: "nature",
+            },
+          ],
+        },
+        nonfictionCookbookStart: {
+          label: "Nonfiction",
+          title: "The ingredient market",
+          html:
+            "<p>Stone counters, baskets of herbs, and brass scales—no enchantment, only good smells and honest hunger for learning.</p>" +
+            "<p>The librarian invites you to linger where the produce is brightest. <q>Choose what your hands reach for first,</q> they say. <q>Halalit will listen to your appetite for <em>kinds</em> of cooking—not a grade in school.</q></p>",
+          choices: [
+            {
+              text: "Bright herbs, olive oil, chickpeas, lemon—za’atar and hummus kinds of flavors.",
+              scores: { social: 1, cautious: 1 },
+              next: "nonfictionShelf",
+              nonfictionTrack: "cookbook_levant",
+            },
+            {
+              text: "Butter, eggs, flour, sugar—warm baking and beginner-friendly comfort.",
+              scores: { cautious: 1, lone: 1 },
+              next: "nonfictionShelf",
+              nonfictionTrack: "cookbook_baking",
+            },
+            {
+              text: "A little of everything—I want a broad kitchen tour first.",
+              scores: { social: 1, bold: 1 },
+              next: "nonfictionShelf",
+              nonfictionTrack: "cookbook_mixed",
+            },
+          ],
+        },
+        nonfictionArtStart: {
+          label: "Nonfiction",
+          title: "The sketching studio",
+          html:
+            "<p>Pencils, charcoal, and paper clips in jam jars. Sun through high windows. No spells—only lines waiting for your hand.</p>" +
+            "<p><q>What kind of art mood calls to you?</q> the librarian asks. <q>Cute and playful, careful and real, or built from city stone?</q></p>",
+          choices: [
+            {
+              text: "Cute, friendly characters—talking food or animals with kawaii warmth (modest, no fanservice).",
+              scores: { social: 1, cautious: 1 },
+              next: "nonfictionShelf",
+              nonfictionTrack: "art_kawaii",
+            },
+            {
+              text: "Realistic nature—learning to draw creatures and people as they actually look.",
+              scores: { cautious: 1, lone: 1 },
+              next: "nonfictionShelf",
+              nonfictionTrack: "art_realistic",
+            },
+            {
+              text: "City and buildings—streets, windows, and architecture I want to sketch.",
+              scores: { bold: 1, social: 1 },
+              next: "nonfictionShelf",
+              nonfictionTrack: "art_city",
+            },
+          ],
+        },
+        nonfictionShelf: {
+          label: "Heart",
+          title: "The fact shelf",
+          html: "",
+          choices: [
+            { text: "Pull the title that matches the field you named.", scores: { cautious: 1, social: 1 }, next: "end" },
+            { text: "Slide the book into your bag and let the walk settle in memory.", scores: { lone: 1, bold: 1 }, next: "end" },
+          ],
+        },
+        end: {
+          label: "Epilogue",
+          title: "Your next book",
+          html: "",
+          choices: [],
+        },
+      };
+
+      function guardianHtml() {
+        var g = currentCrossingSkin().guardian || {};
+        if (doorManner === "polite") {
+          return g.polite || CROSSING_SKINS[0].guardian.polite;
+        }
+        if (doorManner === "bold") {
+          return g.bold || CROSSING_SKINS[0].guardian.bold;
+        }
+        return g.default || CROSSING_SKINS[0].guardian.default;
+      }
+
+      function riddleTollHtml() {
+        var riddleText = currentRiddleRound().prompt;
+        var riddle =
+          "<p class=\"muted\" style=\"font-style:italic;margin-top:0.25rem;\">" +
+          riddleText +
+          "</p>";
+        var hints = riddleHintsForRound();
+        var hintBlock = "";
+        for (var hi = 0; hi < riddleHintLevel && hi < hints.length; hi++) {
+          hintBlock += "<p>" + hints[hi] + "</p>";
+        }
+        if (hints.length && riddleHintLevel >= hints.length) {
+          hintBlock +=
+            "<p>They set the chalk down. <q>That’s every shadow I can cast without naming the thing. Pick the line that fits you best—the shelves forgive an honest miss.</q></p>";
+        }
+        if (doorManner === "polite") {
+          return (
+            "<p>Their eyes lift from your shoes to your face, plainly curious. \"A riddle half-drafted is still a binding sort of game,\" they murmur. \"Very well—listen while I find the ending.\"</p>" +
+            "<p>Chalk whispers on slate. They pause mid-line, one phrase left blank. \"I'm missing the twist, but the heart of it's clear enough. Answer this much, and we'll see whether the room accepts it.\"</p>" +
+            riddle +
+            "<p>They wait, chalk hovering, as if your first honest try might finish the line for them.</p>" +
+            hintBlock
+          );
+        }
+        if (doorManner === "bold") {
+          return (
+            "<p>They tilt their head, weighing your nerve. \"You'll answer what isn't finished yet? Then you carry the risk if the last line misbehaves.\" Chalk scrapes twice, then stalls.</p>" +
+            "<p>\"Here is what I have—rough chalk, no polished ending yet.\"</p>" +
+            riddle +
+            "<p>They hold your gaze. \"Give me an answer you mean—not a shrug. The shelves are listening.\"</p>" +
+            hintBlock
+          );
+        }
+        return (
+          "<p>The figure taps chalk against their palm. \"Half a riddle, then—fair is what we have.\"</p>" +
+          riddle +
+          "<p>\"Speak your try aloud; unfinished things still like a witness.\"</p>" +
+          hintBlock
+        );
+      }
+
+      function shelfHtml() {
+        var pack = currentAreaPack();
+        var sk = pack.shelf || {};
+        var base = sk.default;
+        if (tollKind === "story") base = sk.story || base;
+        else if (tollKind === "riddle") base = sk.riddle || base;
+        if (!base) {
+          base =
+            "<p>Beyond the guardian, shelves breathe—dust lifting in slow spirals. One empty slot glows faintly, waiting for a title you haven’t earned yet.</p>";
+        }
+        return base + "<p>You reach, and the room asks one last thing of you.</p>";
+      }
+
+      /** Librarian-led: reader must pick one before the corridor. `genreId` matches `REC_VARIANTS` entries’ `genre` field. */
+      var GENRE_CHOICES = [
+        { text: "Fantasy", genreId: "fantasy", scores: {}, next: "corridor" },
+        { text: "Science fiction", genreId: "science_fiction", scores: {}, next: "corridor" },
+        { text: "Mystery", genreId: "mystery", scores: {}, next: "corridor" },
+        { text: "Realistic fiction", genreId: "realistic_fiction", scores: {}, next: "corridor" },
+        { text: "Nonfiction", genreId: "nonfiction", scores: {}, next: "nonfictionField" },
+        { text: "Dystopian", genreId: "dystopian", scores: {}, next: "corridor" },
+      ];
+
+      var GENRE_LABELS = {
+        fantasy: "fantasy",
+        science_fiction: "science fiction",
+        mystery: "mystery",
+        realistic_fiction: "realistic fiction",
+        nonfiction: "nonfiction",
+        dystopian: "dystopian",
+      };
+
+      function genreChoiceHtml() {
+        return (
+          "<p>The librarian leans both palms on the desk. <q>I keep six gates for tonight’s quest—listen once, then answer with your voice.</q></p>" +
+          "<p><q>Will you read in <em>fantasy</em>? In <em>science fiction</em>? A <em>mystery</em>? <em>Realistic fiction</em> that stays grounded in our own world? True <em>nonfiction</em>? Or a <em>dystopian</em> shelf where societies bend and brave children ask hard questions?</q></p>" +
+          "<p>They slide open a shallow drawer; six catalog cards lie in a row like quiet witnesses—<em>fantasy</em>, <em>science fiction</em>, <em>mystery</em>, <em>realistic fiction</em>, <em>nonfiction</em>, <em>dystopian</em>.</p>" +
+          "<p><q>Before the corridor,</q> they murmur, <q>name the one country you mean to honor. Fantasy, science fiction, mystery, realistic fiction, and dystopian paths still cross the threshold and pay the old toll—but the title I give you at the close will come only from the shelf you claim now.</q></p>" +
+          "<p><q><em>Nonfiction</em> is different tonight: you’ll choose a real-world field—land, kitchen, or sketchbook—and the fact shelves will answer without a riddle at the door.</q></p>" +
+          "<p class=\"muted\">Tap the line that matches what you told me.</p>"
+        );
+      }
+
+      function nonfictionShelfHtml() {
+        var lead = "The fact shelves glow softly—not with magic, with usefulness.";
+        if (nonfictionTrack === "nature") {
+          lead =
+            "Your walk still carries pine, wind, and creek-water. The shelves offer stewardship and outdoor truth.";
+        } else if (nonfictionTrack === "cookbook_levant") {
+          lead =
+            "Your basket still remembers bright herbs, olive oil, and lemon. The shelves lean toward Levant-style home cooking.";
+        } else if (nonfictionTrack === "cookbook_baking") {
+          lead =
+            "Warm butter, flour, and sugar still hang in the air. The shelves lean toward baking you can grow into.";
+        } else if (nonfictionTrack === "cookbook_mixed") {
+          lead = "You wanted the whole market at once. The shelves offer a friendly first cookbook tone.";
+        } else if (nonfictionTrack === "art_kawaii") {
+          lead =
+            "Playful lines and friendly characters still dance behind your eyes. The shelves lean toward cute, modest how-to art.";
+        } else if (nonfictionTrack === "art_realistic") {
+          lead =
+            "You want honest lines for real creatures and people. The shelves lean toward observational drawing.";
+        } else if (nonfictionTrack === "art_city") {
+          lead = "Windows, cornices, and street perspective still pull your pencil. The shelves lean toward built-world sketching.";
+        }
+        return "<p>" + lead + "</p><p>You reach, and the room asks one last thing of you.</p>";
+      }
+
+      /** Curated family reads: no adult themes, romance-as-focus, illegitimate-children plot centers, group demonization, or other non-family-friendly material. Each entry has a `genre` slug matching `GENRE_CHOICES`. */
+      const REC_VARIANTS = {
+        cautiousSocial: [
+          {
+            id: "charlottes-web",
+            genre: "realistic_fiction",
+            titlePlain: "Charlotte’s Web by E. B. White",
+            aspects: ["gentle_pace", "friendship", "animals_or_nature"],
+            line: "You like steady hands, careful maps, and people who earn trust in small moments.",
+            book:
+              "<em>Charlotte’s Web</em> by E. B. White — friendship, barnyard courage, and small truthful acts that change everything.",
+          },
+          {
+            id: "winn-dixie",
+            genre: "realistic_fiction",
+            titlePlain: "Because of Winn-Dixie by Kate DiCamillo",
+            aspects: ["gentle_pace", "friendship", "humor"],
+            line: "You like stories where kindness is practical and friendships grow in ordinary places.",
+            book:
+              "<em>Because of Winn-Dixie</em> by Kate DiCamillo — a girl, a stray dog, and a town that softens one honest conversation at a time.",
+          },
+          {
+            id: "ameenas-ramadan-diary",
+            genre: "realistic_fiction",
+            titlePlain: "Ameena's Ramadan Diary by Sara Kabil",
+            aspects: ["gentle_pace", "quiet_voice", "friendship"],
+            line: "You want warm, everyday faith in school and home—not a lecture, just a lived Ramadan.",
+            book:
+              "<em>Ameena's Ramadan Diary</em> by Sara Kabil — a Muslim girl’s Ramadan journal: friends, family, and small honest choices.",
+          },
+          {
+            id: "ivan",
+            genre: "realistic_fiction",
+            titlePlain: "The One and Only Ivan by Katherine Applegate",
+            aspects: ["quiet_voice", "friendship", "gentle_pace"],
+            line: "You enjoy gentle stakes, loyal company, and characters who keep their promises.",
+            book:
+              "<em>The One and Only Ivan</em> by Katherine Applegate — a silverback gorilla’s voice, art, and courage told in spare, luminous chapters.",
+          },
+          {
+            id: "frisby",
+            genre: "science_fiction",
+            titlePlain: "Mrs. Frisby and the Rats of NIMH by Robert C. O’Brien",
+            aspects: ["puzzles_or_mystery", "courage_under_pressure", "teamwork"],
+            line: "You’re drawn to clever underdogs, warm humor, and families who stumble forward together.",
+            book:
+              "<em>Mrs. Frisby and the Rats of NIMH</em> by Robert C. O’Brien — bravery, ingenuity, and a mother’s love in a field-mouse-sized epic.",
+          },
+          {
+            id: "girl-who-drank-moon",
+            genre: "fantasy",
+            titlePlain: "The Girl Who Drank the Moon by Kelly Barnhill",
+            aspects: ["gentle_pace", "mythic_or_epic", "friendship"],
+            line: "You like lyrical magic, found family, and the feeling that kindness can rewrite an unfair story.",
+            book:
+              "<em>The Girl Who Drank the Moon</em> by Kelly Barnhill — a witch who rescues babies, a poet swamp monster, and a girl fed starlight.",
+          },
+          {
+            id: "tidesong",
+            genre: "fantasy",
+            titlePlain: "Tidesong by Wendy Xu",
+            aspects: ["gentle_pace", "mythic_or_epic", "friendship"],
+            line: "You want seaside magic, shy witches, and a dragon friend—cozy panels, big feelings, no rush.",
+            book:
+              "<em>Tidesong</em> by Wendy Xu — a graphic novel: a young witch, a memory-lost water dragon, and learning to trust your own magic.",
+          },
+          {
+            id: "kindred-dragons",
+            genre: "fantasy",
+            titlePlain: "Kindred Dragons by Sarah Mensinga",
+            aspects: ["gentle_pace", "mythic_or_epic", "teamwork"],
+            line: "You like dragon bonds, quiet courage, and graphic fantasy that feels hand-drawn and hopeful.",
+            book:
+              "<em>Kindred Dragons</em> by Sarah Mensinga — book 1 hand-vetted: dragon kinship, found family, and a gentle fantasy adventure in panels.",
+          },
+          {
+            id: "babymouse-queen",
+            genre: "realistic",
+            titlePlain: "Babymouse: Queen of the World by Jennifer L. Holm",
+            aspects: ["humor", "friendship", "courage_under_pressure"],
+            line: "You want bubbly humor, daydreamy panels, and a mouse who imagines herself queen of everything.",
+            book:
+              "<em>Babymouse: Queen of the World</em> by Jennifer L. Holm — a graphic novel: imagination, school drama, and cupcake dreams (skip the Beach Babe volume).",
+          },
+          {
+            id: "hidden-figures-young",
+            genre: "nonfiction",
+            titlePlain: "Hidden Figures (Young Readers’ Edition) by Margot Lee Shetterly",
+            aspects: ["teamwork", "courage_under_pressure", "puzzles_or_mystery"],
+            line: "You’re moved by real people who outthink barriers and lift each other while the math gets serious.",
+            book:
+              "<em>Hidden Figures (Young Readers’ Edition)</em> by Margot Lee Shetterly — the true story of NASA’s brilliant mathematicians who changed history.",
+          },
+          {
+            id: "green-deen",
+            genre: "nonfiction",
+            titlePlain: "Green Deen by Ibrahim Abdul-Matin",
+            aspects: ["animals_or_nature", "quiet_voice", "courage_under_pressure"],
+            line: "You want real stewardship—how faith and daily choices can guard the water, land, and air we share.",
+            book:
+              "<em>Green Deen</em> by Ibrahim Abdul-Matin — what Islam teaches about protecting the planet, told through waste, energy, water, and food.",
+            nonfictionTrack: "nature",
+          },
+          {
+            id: "nf-cookbook-levant",
+            genre: "nonfiction",
+            nonfictionTrack: "cookbook_levant",
+            titlePlain: "Green Deen by Ibrahim Abdul-Matin",
+            aspects: ["animals_or_nature", "quiet_voice", "teamwork"],
+            line:
+              "You reached for za’atar-bright, lemon, and chickpea flavors—home cooking that tastes like the Levant. Halalit will swap in a dedicated cookbook title when it is hand-vetted.",
+            book:
+              "<em>Green Deen</em> by Ibrahim Abdul-Matin — placeholder pick for now (food chapters touch stewardship); owner may replace with a Levant cookbook after vetting.",
+          },
+          {
+            id: "nf-cookbook-baking",
+            genre: "nonfiction",
+            nonfictionTrack: "cookbook_baking",
+            titlePlain: "Brown Girl Dreaming by Jacqueline Woodson",
+            aspects: ["gentle_pace", "quiet_voice", "friendship"],
+            line:
+              "You reached for butter, eggs, flour, and sugar—warm baking energy even when life is not only about cake. Halalit will swap in a dedicated baking cookbook when it is hand-vetted.",
+            book:
+              "<em>Brown Girl Dreaming</em> by Jacqueline Woodson — placeholder pick for now (memoir in verse, not a baking book); owner may replace after vetting.",
+          },
+          {
+            id: "nf-cookbook-mixed",
+            genre: "nonfiction",
+            nonfictionTrack: "cookbook_mixed",
+            titlePlain: "Green Deen by Ibrahim Abdul-Matin",
+            aspects: ["animals_or_nature", "teamwork", "quiet_voice"],
+            line: "You wanted the whole market first—Halalit hears curiosity about food and home kitchens broadly.",
+            book:
+              "<em>Green Deen</em> by Ibrahim Abdul-Matin — placeholder until a general family cookbook is hand-vetted.",
+          },
+          {
+            id: "nf-art-kawaii",
+            genre: "nonfiction",
+            nonfictionTrack: "art_kawaii",
+            titlePlain: "Hidden Figures (Young Readers’ Edition) by Margot Lee Shetterly",
+            aspects: ["teamwork", "puzzles_or_mystery", "courage_under_pressure"],
+            line:
+              "You want cute, friendly lines and playful characters—modest kawaii energy without fanservice. Halalit will swap in a how-to draw title when it is hand-vetted.",
+            book:
+              "<em>Hidden Figures (Young Readers’ Edition)</em> by Margot Lee Shetterly — placeholder pick for now; owner may replace with a modest art-how-to after vetting.",
+          },
+          {
+            id: "nf-art-realistic",
+            genre: "nonfiction",
+            nonfictionTrack: "art_realistic",
+            titlePlain: "Brown Girl Dreaming by Jacqueline Woodson",
+            aspects: ["quiet_voice", "gentle_pace", "friendship"],
+            line:
+              "You want to draw real creatures and people with honest observation. Halalit will swap in a realistic drawing guide when it is hand-vetted.",
+            book:
+              "<em>Brown Girl Dreaming</em> by Jacqueline Woodson — placeholder pick for now; owner may replace with a nature-sketch or figure-drawing title after vetting.",
+          },
+          {
+            id: "nf-art-city",
+            genre: "nonfiction",
+            nonfictionTrack: "art_city",
+            titlePlain: "Hidden Figures (Young Readers’ Edition) by Margot Lee Shetterly",
+            aspects: ["teamwork", "courage_under_pressure", "puzzles_or_mystery"],
+            line:
+              "You want city perspective—buildings, streets, and architecture. Halalit will swap in an urban sketching title when it is hand-vetted.",
+            book:
+              "<em>Hidden Figures (Young Readers’ Edition)</em> by Margot Lee Shetterly — placeholder pick for now; owner may replace after vetting.",
+          },
+          {
+            id: "the-giver",
+            genre: "dystopian",
+            titlePlain: "The Giver by Lois Lowry",
+            aspects: ["quiet_voice", "courage_under_pressure", "puzzles_or_mystery"],
+            line: "You lean toward moral questions asked quietly—what a community trades away for comfort, and what one brave child refuses to forget.",
+            book:
+              "<em>The Giver</em> by Lois Lowry — a boy chosen to hold memory in a world that chose sameness; a classic gentle dystopia.",
+          },
+          {
+            id: "fortunately-the-milk",
+            genre: "fantasy",
+            titlePlain: "Fortunately, the Milk by Neil Gaiman",
+            aspects: ["humor", "gentle_pace", "adventure"],
+            line: "You like tall tales told straight—dad went for milk and came back with pirates, dinosaurs, and a very good excuse.",
+            book:
+              "<em>Fortunately, the Milk</em> by Neil Gaiman — an illustrated short novel; best read-aloud for young listeners, still fun when you’re older.",
+          },
+        ],
+        boldSocial: [
+          {
+            id: "benedict-society",
+            genre: "mystery",
+            titlePlain: "The Mysterious Benedict Society by Trenton Lee Stewart",
+            aspects: ["puzzles_or_mystery", "teamwork", "humor"],
+            line: "You lean toward momentum, wit, and scenes where teamwork carries the day.",
+            book:
+              "<em>The Mysterious Benedict Society</em> by Trenton Lee Stewart — clever children, puzzles, and daring plans; brisk and very social.",
+          },
+          {
+            id: "fablehaven",
+            genre: "fantasy",
+            titlePlain: "Fablehaven by Brandon Mull",
+            aspects: ["mythic_or_epic", "adventure", "humor"],
+            line: "You like mythic speed, banter, and the feeling that no plan survives contact with monsters—happily.",
+            book:
+              "<em>Fablehaven</em> by Brandon Mull — secret preserves for mythical creatures, sibling teamwork, and danger that keeps its sense of wonder.",
+          },
+          {
+            id: "this-totally-bites",
+            genre: "fantasy",
+            titlePlain: "This Totally Bites! by Ruth Ames",
+            aspects: ["humor", "friendship", "adventure"],
+            line: "You want fang-friendly school drama—secret crushes, a prom on the horizon, and bite-sized stakes.",
+            book:
+              "<em>This Totally Bites!</em> by Ruth Ames (Poison Apple) — a new vampire queen bee, mean-girl politics, and a prom beat to preview.",
+          },
+          {
+            id: "at-first-bite",
+            genre: "fantasy",
+            titlePlain: "At First Bite by Ruth Ames",
+            aspects: ["humor", "puzzles_or_mystery", "friendship"],
+            line: "You like your monsters with sunscreen problems—L.A. secrets, school plays, and crushy subplots.",
+            book:
+              "<em>At First Bite</em> by Ruth Ames (Poison Apple) — vampire Ashlee in Hollywood, light romance, and a mystery when something hunts her school.",
+          },
+          {
+            id: "harriet-the-spy",
+            genre: "mystery",
+            titlePlain: "Harriet the Spy by Louise Fitzhugh",
+            aspects: ["puzzles_or_mystery", "humor", "friendship"],
+            line: "You like sharp-eyed narrators, neighborhood maps, and the messiness of truth told too loudly.",
+            book:
+              "<em>Harriet the Spy</em> by Louise Fitzhugh — notebooks, allies, and the hard lesson that watching people is also a kind of care.",
+          },
+          {
+            id: "half-moon-investigations",
+            genre: "mystery",
+            titlePlain: "Half Moon Investigations by Eoin Colfer",
+            aspects: ["puzzles_or_mystery", "humor", "teamwork"],
+            line: "You want a pint-sized detective agency, sharp banter, and cases that bite a little harder than they first look.",
+            book:
+              "<em>Half Moon Investigations</em> by Eoin Colfer — Fletcher Moon’s agency takes mysteries with extra snap; older-kid interest.",
+          },
+          {
+            id: "wolf-princess",
+            genre: "mystery",
+            titlePlain: "The Wolf Princess by Cathryn Constable",
+            aspects: ["puzzles_or_mystery", "mythic_or_epic", "friendship"],
+            line: "You want snow, secrets, and a palace where every glittering story might be a clue—or a trap.",
+            book:
+              "<em>The Wolf Princess</em> by Cathryn Constable — three friends, a Russian winter palace, wolves at the gates, and diamonds hidden in a fairy-tale past.",
+          },
+          {
+            id: "zita-spacegirl",
+            genre: "science_fiction",
+            titlePlain: "Zita the Spacegirl by Ben Hatke",
+            aspects: ["adventure", "teamwork", "humor"],
+            line: "You want portals, odd aliens, and a rescue mission that keeps its heart even when the cosmos glitches.",
+            book:
+              "<em>Zita the Spacegirl</em> by Ben Hatke — a graphic-novel rocket ride: friendship, bravery, and a cast of strange new friends.",
+          },
+          {
+            id: "city-of-ember",
+            genre: "dystopian",
+            titlePlain: "The City of Ember by Jeanne DuPrau",
+            aspects: ["puzzles_or_mystery", "teamwork", "courage_under_pressure"],
+            line: "You like ticking clocks, secret instructions, and kids who trust evidence when the grownups won’t.",
+            book:
+              "<em>The City of Ember</em> by Jeanne DuPrau — an underground city losing light, and two messengers who refuse to let the truth stay buried.",
+          },
+          {
+            id: "brown-girl-dreaming",
+            genre: "nonfiction",
+            titlePlain: "Brown Girl Dreaming by Jacqueline Woodson",
+            aspects: ["quiet_voice", "friendship", "gentle_pace"],
+            line: "You respond to memory told in bright fragments—family, place, and the slow discovery of your own voice.",
+            book:
+              "<em>Brown Girl Dreaming</em> by Jacqueline Woodson — a memoir in verse: childhood, change, and becoming a writer, all in true, spare lines.",
+          },
+        ],
+        cautiousLone: [
+          {
+            id: "my-side-mountain",
+            genre: "realistic_fiction",
+            titlePlain: "My Side of the Mountain by Jean Craighead George",
+            aspects: ["wilderness", "quiet_voice", "animals_or_nature"],
+            line: "You read for interior weather: solitude, patience, a mind working things through.",
+            book:
+              "<em>My Side of the Mountain</em> by Jean Craighead George — a boy learns to live alone in the wild with patience and craft.",
+          },
+          {
+            id: "hatchet",
+            genre: "realistic_fiction",
+            titlePlain: "Hatchet by Gary Paulsen",
+            aspects: ["wilderness", "courage_under_pressure", "adventure"],
+            line: "You like survival craft, quiet courage, and the sound of your own thoughts against the wind.",
+            book:
+              "<em>Hatchet</em> by Gary Paulsen — a boy alone in the north woods with a hatchet and no room for self-pity.",
+          },
+          {
+            id: "julie-wolves",
+            genre: "realistic_fiction",
+            titlePlain: "Julie of the Wolves by Jean Craighead George",
+            aspects: ["wilderness", "animals_or_nature", "quiet_voice"],
+            line: "You’re drawn to patient observation: tracks, weather, and the small victories of self-reliance.",
+            book:
+              "<em>Julie of the Wolves</em> by Jean Craighead George — an Inuit girl and a wolf pack; ice, hunger, and hard-won trust.",
+          },
+          {
+            id: "brians-winter",
+            genre: "realistic_fiction",
+            titlePlain: "Brian’s Winter by Gary Paulsen",
+            aspects: ["wilderness", "courage_under_pressure", "adventure"],
+            line: "You enjoy measured journeys where the landscape teaches as much as any mentor.",
+            book:
+              "<em>Brian’s Winter</em> by Gary Paulsen — a colder, grittier path for readers who want the wilderness to answer back.",
+          },
+          {
+            id: "echo-mountain",
+            genre: "realistic_fiction",
+            titlePlain: "Echo Mountain by Lauren Wolk",
+            aspects: ["wilderness", "gentle_pace", "quiet_voice"],
+            line: "You want a grounded family story—mountain work, grief, and the slow courage of learning to heal.",
+            book:
+              "<em>Echo Mountain</em> by Lauren Wolk — a Depression-era homestead, parents who hold the line, and a girl listening for what the mountain can teach.",
+          },
+          {
+            id: "tuck-everlasting",
+            genre: "fantasy",
+            titlePlain: "Tuck Everlasting by Natalie Babbitt",
+            aspects: ["gentle_pace", "quiet_voice", "courage_under_pressure"],
+            line: "You like springwater calm with a sharp question underneath—what time means, and what a single brave choice costs.",
+            book:
+              "<em>Tuck Everlasting</em> by Natalie Babbitt — a girl meets a family who drank from a secret spring; a gentle, unforgettable fable about living.",
+          },
+          {
+            id: "wrinkle-in-time",
+            genre: "science_fiction",
+            titlePlain: "A Wrinkle in Time by Madeleine L’Engle",
+            aspects: ["mythic_or_epic", "courage_under_pressure", "teamwork"],
+            line: "You want science and wonder braided tight—tesseracts, love as a force, and courage that starts in your own ribcage.",
+            book:
+              "<em>A Wrinkle in Time</em> by Madeleine L’Engle — Meg Murry crosses space and fear to find her father; a cornerstone of kid-friendly science fantasy.",
+          },
+          {
+            id: "when-you-reach-me",
+            genre: "science_fiction",
+            titlePlain: "When You Reach Me by Rebecca Stead",
+            aspects: ["puzzles_or_mystery", "quiet_voice", "friendship"],
+            line: "You like a city block that hums with clues—time, friendship, and a letter that shouldn’t be possible.",
+            book:
+              "<em>When You Reach Me</em> by Rebecca Stead — a New York girl pieces together a mystery that bends time; tender, brainy, and true.",
+          },
+          {
+            id: "the-giver-cl",
+            genre: "dystopian",
+            titlePlain: "The Giver by Lois Lowry",
+            aspects: ["quiet_voice", "courage_under_pressure", "puzzles_or_mystery"],
+            line: "You read for the hush before change—one mind waking up while the world pretends it sleeps.",
+            book:
+              "<em>The Giver</em> by Lois Lowry — memory, color, and the price of sameness; the same classic, matched to a more inward stride through the quest.",
+          },
+        ],
+        boldLone: [
+          {
+            id: "hobbit",
+            genre: "fantasy",
+            titlePlain: "The Hobbit by J. R. R. Tolkien",
+            aspects: ["mythic_or_epic", "adventure", "courage_under_pressure"],
+            line: "You like stakes, nerve, and the feeling that the world might tilt when the pressure rises.",
+            book:
+              "<em>The Hobbit</em> by J. R. R. Tolkien — a reluctant hero, a long road, and moral weather that turns on courage under pressure.",
+          },
+          {
+            id: "lord-of-the-rings",
+            genre: "fantasy",
+            titlePlain: "The Lord of the Rings by J. R. R. Tolkien",
+            aspects: ["mythic_or_epic", "adventure", "courage_under_pressure"],
+            line: "You want an epic march—fellowship, loss, and the long fight when the world’s weight is real.",
+            book:
+              "<em>The Lord of the Rings</em> by J. R. R. Tolkien — the trilogy: medieval feasts and ale are part of the world; Teens/Adults band. Book Quest skips this if you exclude alcohol or magic on the start screen.",
+          },
+          {
+            id: "wardrobe",
+            genre: "fantasy",
+            titlePlain: "The Lion, the Witch and the Wardrobe by C. S. Lewis",
+            aspects: ["mythic_or_epic", "adventure", "teamwork"],
+            line: "You want a door in the back of a wardrobe and the certainty that ordinary life was never the whole story.",
+            book:
+              "<em>The Lion, the Witch and the Wardrobe</em> by C. S. Lewis — four siblings, a frozen land, and courage tested in plain sight. Hand-vetted clean with comfort flags for fantasy magic and Christian allegory—Book Quest skips this if you exclude magic or deity/mythology on the start screen.",
+          },
+          {
+            id: "eragon",
+            genre: "fantasy",
+            titlePlain: "Eragon by Christopher Paolini",
+            aspects: ["mythic_or_epic", "adventure", "animals_or_nature"],
+            line: "You lean toward epic scope, dragons, and a hero who did not ask for the job but will not abandon it.",
+            book:
+              "<em>Eragon</em> by Christopher Paolini — a farm boy, a dragon egg, and a rebellion that starts with one reckless choice.",
+          },
+          {
+            id: "gregor-overlander",
+            genre: "fantasy",
+            titlePlain: "Gregor the Overlander by Suzanne Collins",
+            aspects: ["mythic_or_epic", "adventure", "courage_under_pressure"],
+            line: "You like mythic trials, riddles of power, and a protagonist who grows sharp under pressure.",
+            book:
+              "<em>Gregor the Overlander</em> by Suzanne Collins — a boy falls into an underworld of giant creatures, prophecy, and courage he never knew he had.",
+          },
+          {
+            id: "among-the-hidden",
+            genre: "dystopian",
+            titlePlain: "Among the Hidden by Margaret Peterson Haddix",
+            aspects: ["courage_under_pressure", "quiet_voice", "adventure"],
+            line: "You want forbidden rooms, third children, and the itch of a society that pretends fairness while it counts souls.",
+            book:
+              "<em>Among the Hidden</em> by Margaret Peterson Haddix — a shadow child dares to exist in a world where two is the legal limit.",
+          },
+          {
+            id: "westing-game",
+            genre: "mystery",
+            titlePlain: "The Westing Game by Ellen Raskin",
+            aspects: ["puzzles_or_mystery", "teamwork", "humor"],
+            line: "You like a game board of heirs, clues that bite back, and the feeling that every neighbor is a suspect with a heart.",
+            book:
+              "<em>The Westing Game</em> by Ellen Raskin — a will, a blizzard of puzzles, and a tower full of rivals who might become kin.",
+          },
+          {
+            id: "airman",
+            genre: "science_fiction",
+            titlePlain: "Airman by Eoin Colfer",
+            aspects: ["adventure", "courage_under_pressure", "puzzles_or_mystery"],
+            line: "You want airships, prison towers, and a hero who builds wings from scrap and nerve.",
+            book:
+              "<em>Airman</em> by Eoin Colfer — a heavier adventure: kidnapping, invention, and sky escapes; older kids and up.",
+          },
+          {
+            id: "last-kids-on-earth",
+            genre: "science_fiction",
+            titlePlain: "The Last Kids on Earth by Max Brallier",
+            aspects: ["adventure", "humor", "teamwork"],
+            line: "You want monster apocalypses served with jokes, tree-fort engineering, and friendship as survival gear.",
+            book:
+              "<em>The Last Kids on Earth</em> by Max Brallier — graphic-novel energy in prose: zombies, gadgets, and kids who refuse to be the last laugh.",
+          },
+          {
+            id: "we-are-the-ship",
+            genre: "nonfiction",
+            titlePlain: "We Are the Ship: The Story of Negro League Baseball by Kadir Nelson",
+            aspects: ["courage_under_pressure", "teamwork", "mythic_or_epic"],
+            line: "You lean toward epic true stories—voices that should have echoed louder, told with art and gravity.",
+            book:
+              "<em>We Are the Ship</em> by Kadir Nelson — a gorgeously illustrated nonfiction telling of Negro League courage, craft, and joy.",
+          },
+        ],
+      };
+
+      function effectiveScores() {
+        var r = loadReaderModel();
+        return {
+          cautious: scores.cautious + (r.bias.cautious || 0),
+          bold: scores.bold + (r.bias.bold || 0),
+          social: scores.social + (r.bias.social || 0),
+          lone: scores.lone + (r.bias.lone || 0),
+        };
+      }
+
+      function variantsMatchingGenre(genre) {
+        var out = [];
+        var buckets = Object.keys(REC_VARIANTS);
+        for (var i = 0; i < buckets.length; i++) {
+          var arr = REC_VARIANTS[buckets[i]];
+          for (var j = 0; j < arr.length; j++) {
+            if (arr[j].genre === genre) out.push(arr[j]);
+          }
+        }
+        return out;
+      }
+
+      function allRecVariants() {
+        var out = [];
+        var buckets = Object.keys(REC_VARIANTS);
+        for (var i = 0; i < buckets.length; i++) out = out.concat(REC_VARIANTS[buckets[i]]);
+        return out;
+      }
+
+      function bookQuestDeityPrefHtml() {
+        return (
+          "<label class=\"bookquest-pref-row\" for=\"bookquestExcludeDeityMythology\" title=\"When checked, Book Quest will skip hand-checked deity or mythology titles—even when they pass Halalit’s other rules.\">" +
+          "<input type=\"checkbox\" id=\"bookquestExcludeDeityMythology\" />" +
+          "<span>Exclude <strong>deity/mythology</strong> from Book Quest recommendations. " +
+          "<span class=\"muted\">Your account.</span></span></label>"
+        );
+      }
+
+      function bookQuestFamilyPrefHtml() {
+        return (
+          "<label class=\"bookquest-pref-row\" for=\"bookquestExcludeNegativeFamilyPortrayal\" title=\"When checked, Book Quest will skip titles where a parent or guardian is unfair, hostile, or cast as a villain—not merely annoying family friction or everyday arguments.\">" +
+          "<input type=\"checkbox\" id=\"bookquestExcludeNegativeFamilyPortrayal\" />" +
+          "<span>Exclude <strong>negative family portrayal</strong> from Book Quest recommendations—parents or guardians unfair or cast as villains, not merely annoying family members. " +
+          "<span class=\"muted\">Your account.</span></span></label>"
+        );
+      }
+
+      function bookQuestLightRomancePrefHtml() {
+        return (
+          "<label class=\"bookquest-pref-row\" for=\"bookquestExcludeLightRomance\" title=\"When checked, Book Quest will skip hand-checked light romance—crushes, light dating, or a prom—not adult, dark, or LGBTQ romance.\">" +
+          "<input type=\"checkbox\" id=\"bookquestExcludeLightRomance\" />" +
+          "<span>Exclude <strong>light romance</strong> from Book Quest recommendations. " +
+          "<span class=\"muted\">Your account.</span></span></label>"
+        );
+      }
+
+      function bookQuestMagicPrefHtml() {
+        return (
+          "<label class=\"bookquest-pref-row\" for=\"bookquestExcludeMagic\" title=\"When checked, Book Quest will skip hand-checked titles with fantasy magic—not dark occult or horror.\">" +
+          "<input type=\"checkbox\" id=\"bookquestExcludeMagic\" />" +
+          "<span>Exclude <strong>magic</strong> from Book Quest recommendations. " +
+          "<span class=\"muted\">Your account.</span></span></label>"
+        );
+      }
+
+      function bookQuestSubstancePrefHtml() {
+        return (
+          "<label class=\"bookquest-pref-row\" for=\"bookquestExcludeSubstance\" title=\"When checked, Book Quest will skip hand-checked light alcohol or similar mentions—Starry River of the Sky or Ranger's Apprentice level, not addiction arcs like Haymitch in The Hunger Games.\">" +
+          "<input type=\"checkbox\" id=\"bookquestExcludeSubstance\" />" +
+          "<span>Exclude <strong>alcohol/drug-related content</strong> from Book Quest recommendations. " +
+          "<span class=\"muted\">Your account.</span></span></label>"
+        );
+      }
+
+      function bookQuestCulturalPrefHtml() {
+        return (
+          "<label class=\"bookquest-pref-row\" for=\"bookquestExcludeCulturalMisrepresentation\" title=\"When checked, Book Quest will skip hand-checked cultural misrepresentation notes—not group demonization or calling a people less intelligent.\">" +
+          "<input type=\"checkbox\" id=\"bookquestExcludeCulturalMisrepresentation\" />" +
+          "<span>Exclude <strong>cultural misrepresentation</strong> of any kind from Book Quest recommendations. " +
+          "<span class=\"muted\">Your account.</span></span></label>"
+        );
+      }
+
+      function bookQuestMentalHealthPrefHtml() {
+        return (
+          "<label class=\"bookquest-pref-row\" for=\"bookquestExcludeMentalHealth\" title=\"When checked, Halalit skips hand-checked titles with mental-health weight for Older Child/Young Teen and Older Teen/Adult readers—not Young Child.\">" +
+          "<input type=\"checkbox\" id=\"bookquestExcludeMentalHealth\" />" +
+          "<span>Exclude <strong>mental-health weight</strong> from Book Quest recommendations. Applies to <strong>Older Child / Young Teen</strong> and <strong>Older Teen / Adult</strong> reader bands only. " +
+          "<span class=\"muted\">Your account.</span></span></label>"
+        );
+      }
+
+      function bookQuestPrefRowsHtml() {
+        return (
+          "<details class=\"bookquest-advanced-prefs\">" +
+          "<summary>Advanced recommendations settings</summary>" +
+          "<div class=\"bookquest-advanced-prefs-body\">" +
+          "<p class=\"muted bookquest-advanced-prefs-lead\">Halalit’s Book Quest includes hand-checked picks with these themes by default. Check a box to exclude that theme from recommendations. Saved to your account when you’re signed in.</p>" +
+          bookQuestDeityPrefHtml() +
+          bookQuestFamilyPrefHtml() +
+          bookQuestLightRomancePrefHtml() +
+          bookQuestMagicPrefHtml() +
+          bookQuestSubstancePrefHtml() +
+          bookQuestCulturalPrefHtml() +
+          bookQuestMentalHealthPrefHtml() +
+          "</div></details>"
+        );
+      }
+
+      function bookQuestShelfOpts(Policy, variant) {
+        var readerAgeBand =
+          Policy && typeof Policy.getBookQuestReaderAgeBand === "function" ? Policy.getBookQuestReaderAgeBand() : null;
+        return {
+          allowDeityMythology:
+            Policy && typeof Policy.bookQuestAllowsDeityMythology === "function" && Policy.bookQuestAllowsDeityMythology(),
+          allowFamilyCommunityTone:
+            Policy &&
+            typeof Policy.bookQuestAllowsFamilyCommunityTone === "function" &&
+            Policy.bookQuestAllowsFamilyCommunityTone(),
+          allowLightRomance:
+            Policy &&
+            typeof Policy.bookQuestAllowsLightRomance === "function" &&
+            Policy.bookQuestAllowsLightRomance(),
+          allowMagic:
+            Policy && typeof Policy.bookQuestAllowsMagic === "function" && Policy.bookQuestAllowsMagic(),
+          allowSubstance:
+            Policy && typeof Policy.bookQuestAllowsSubstance === "function" && Policy.bookQuestAllowsSubstance(),
+          allowCulturalMisrepresentation:
+            Policy &&
+            typeof Policy.bookQuestAllowsCulturalMisrepresentation === "function" &&
+            Policy.bookQuestAllowsCulturalMisrepresentation(),
+          allowMentalHealthComfort:
+            Policy &&
+            typeof Policy.bookQuestAllowsMentalHealthComfort === "function" &&
+            Policy.bookQuestAllowsMentalHealthComfort(),
+          requireReaderAgeBand: true,
+          readerAgeBand: readerAgeBand,
+          variantId: variant && variant.id ? variant.id : null,
+        };
+      }
+
+      function hasBookQuestReaderAgeSelected() {
+        var Policy = window.HalalitFamilyShelfPolicy;
+        return !!(Policy && typeof Policy.getBookQuestReaderAgeBand === "function" && Policy.getBookQuestReaderAgeBand());
+      }
+
+      function bookQuestReaderAgeHtml() {
+        var Policy = window.HalalitFamilyShelfPolicy;
+        var Age = window.HalalitBookQuestAgeRatings;
+        var B = Age && Age.BAND ? Age.BAND : {};
+        var current = Policy && Policy.getBookQuestReaderAgeBand ? Policy.getBookQuestReaderAgeBand() : null;
+        function row(id, value, label, detail) {
+          var checked = current === value ? " checked" : "";
+          return (
+            "<label class=\"bookquest-pref-row\" for=\"" +
+            id +
+            "\">" +
+            "<input type=\"radio\" name=\"bookquestReaderAge\" id=\"" +
+            id +
+            "\" value=\"" +
+            value +
+            "\"" +
+            checked +
+            " required />" +
+            "<span><strong>" +
+            label +
+            "</strong> — " +
+            detail +
+            "</span></label>"
+          );
+        }
+        return (
+          "<fieldset class=\"bookquest-reader-age\" id=\"bookquestReaderAgeFieldset\">" +
+          "<legend>Who is reading?</legend>" +
+          "<p class=\"bookquest-reader-age-lead muted\">Pick one before you begin. Halalit will only suggest hand-vetted titles that fit this reader’s age band and reading level—board books won’t be offered to older kids or teens (saved to your account).</p>" +
+          row(
+            "bookquestAgeYoung",
+            B.YOUNG_CHILD || "young_child",
+            "Young Child Reader",
+            "gentler picks (picture books and early chapter reads)."
+          ) +
+          row(
+            "bookquestAgeOlder",
+            B.OLDER_CHILD_YOUNG_TEEN || "older_child_young_teen",
+            "Older Child / Young Teen Reader",
+            "includes younger picks plus upper middle-grade."
+          ) +
+          row(
+            "bookquestAgeTeen",
+            B.OLDER_TEEN_ADULT || "older_teen_adult",
+            "Older Teen / Adult Reader",
+            "includes all bands when a title is still clean but heavier or more intense."
+          ) +
+          "<p class=\"bookquest-age-gate-hint\" id=\"bookquestAgeGateHint\"" +
+          (current ? " hidden" : "") +
+          ">Choose a reader band above to unlock the story choices.</p>" +
+          "</fieldset>"
+        );
+      }
+
+      function updateBookQuestStartGate(root) {
+        if (!root) return;
+        var ready = hasBookQuestReaderAgeSelected();
+        var hint = root.querySelector("#bookquestAgeGateHint");
+        if (hint) hint.hidden = ready;
+        root.querySelectorAll("button.choice").forEach(function (btn) {
+          btn.disabled = !ready;
+        });
+      }
+
+      function wireBookQuestReaderAge(root) {
+        var Policy = window.HalalitFamilyShelfPolicy;
+        if (!Policy || typeof Policy.setBookQuestReaderAgeBand !== "function") return;
+        var fieldset = root && root.querySelector("#bookquestReaderAgeFieldset");
+        if (!fieldset) return;
+        fieldset.querySelectorAll('input[name="bookquestReaderAge"]').forEach(function (radio) {
+          radio.onchange = function () {
+            if (radio.checked) Policy.setBookQuestReaderAgeBand(radio.value);
+            updateBookQuestStartGate(root);
+          };
+        });
+        updateBookQuestStartGate(root);
+      }
+
+      function wireBookQuestDeityPref(root) {
+        var Policy = window.HalalitFamilyShelfPolicy;
+        var box = root && root.querySelector("#bookquestExcludeDeityMythology");
+        if (!box || !Policy || typeof Policy.setBookQuestAllowsDeityMythology !== "function") return;
+        box.checked = !(
+          typeof Policy.bookQuestAllowsDeityMythology === "function" && Policy.bookQuestAllowsDeityMythology()
+        );
+        box.onchange = function () {
+          Policy.setBookQuestAllowsDeityMythology(!box.checked);
+        };
+      }
+
+      function wireBookQuestFamilyPref(root) {
+        var Policy = window.HalalitFamilyShelfPolicy;
+        var box = root && root.querySelector("#bookquestExcludeNegativeFamilyPortrayal");
+        if (!box || !Policy || typeof Policy.setBookQuestAllowsFamilyCommunityTone !== "function") return;
+        box.checked = !(
+          typeof Policy.bookQuestAllowsFamilyCommunityTone === "function" &&
+          Policy.bookQuestAllowsFamilyCommunityTone()
+        );
+        box.onchange = function () {
+          Policy.setBookQuestAllowsFamilyCommunityTone(!box.checked);
+        };
+      }
+
+      function wireBookQuestLightRomancePref(root) {
+        var Policy = window.HalalitFamilyShelfPolicy;
+        var box = root && root.querySelector("#bookquestExcludeLightRomance");
+        if (!box || !Policy || typeof Policy.setBookQuestAllowsLightRomance !== "function") return;
+        box.checked = !(
+          typeof Policy.bookQuestAllowsLightRomance === "function" && Policy.bookQuestAllowsLightRomance()
+        );
+        box.onchange = function () {
+          Policy.setBookQuestAllowsLightRomance(!box.checked);
+        };
+      }
+
+      function wireBookQuestMagicPref(root) {
+        var Policy = window.HalalitFamilyShelfPolicy;
+        var box = root && root.querySelector("#bookquestExcludeMagic");
+        if (!box || !Policy || typeof Policy.setBookQuestAllowsMagic !== "function") return;
+        box.checked = !(typeof Policy.bookQuestAllowsMagic === "function" && Policy.bookQuestAllowsMagic());
+        box.onchange = function () {
+          Policy.setBookQuestAllowsMagic(!box.checked);
+        };
+      }
+
+      function wireBookQuestSubstancePref(root) {
+        var Policy = window.HalalitFamilyShelfPolicy;
+        var box = root && root.querySelector("#bookquestExcludeSubstance");
+        if (!box || !Policy || typeof Policy.setBookQuestAllowsSubstance !== "function") return;
+        box.checked = !(typeof Policy.bookQuestAllowsSubstance === "function" && Policy.bookQuestAllowsSubstance());
+        box.onchange = function () {
+          Policy.setBookQuestAllowsSubstance(!box.checked);
+        };
+      }
+
+      function wireBookQuestCulturalPref(root) {
+        var Policy = window.HalalitFamilyShelfPolicy;
+        var box = root && root.querySelector("#bookquestExcludeCulturalMisrepresentation");
+        if (!box || !Policy || typeof Policy.setBookQuestAllowsCulturalMisrepresentation !== "function") return;
+        box.checked = !(
+          typeof Policy.bookQuestAllowsCulturalMisrepresentation === "function" &&
+          Policy.bookQuestAllowsCulturalMisrepresentation()
+        );
+        box.onchange = function () {
+          Policy.setBookQuestAllowsCulturalMisrepresentation(!box.checked);
+        };
+      }
+
+      function wireBookQuestMentalHealthPref(root) {
+        var Policy = window.HalalitFamilyShelfPolicy;
+        var box = root && root.querySelector("#bookquestExcludeMentalHealth");
+        if (!box || !Policy || typeof Policy.setBookQuestAllowsMentalHealthComfort !== "function") return;
+        box.checked = !(
+          typeof Policy.bookQuestAllowsMentalHealthComfort === "function" &&
+          Policy.bookQuestAllowsMentalHealthComfort()
+        );
+        box.onchange = function () {
+          Policy.setBookQuestAllowsMentalHealthComfort(!box.checked);
+        };
+      }
+
+      function wireBookQuestPrefs(root) {
+        wireBookQuestDeityPref(root);
+        wireBookQuestFamilyPref(root);
+        wireBookQuestLightRomancePref(root);
+        wireBookQuestMagicPref(root);
+        wireBookQuestSubstancePref(root);
+        wireBookQuestCulturalPref(root);
+        wireBookQuestMentalHealthPref(root);
+      }
+
+      /** Book Quest picks must pass the same family-shelf rules as Bookcheck and community titles. */
+      function variantPassesFamilyShelf(variant) {
+        var Policy = window.HalalitFamilyShelfPolicy;
+        if (!Policy || !variant || !variant.titlePlain) return false;
+        var parse =
+          window.HalalitPersonalLibrary && typeof window.HalalitPersonalLibrary.parseTitlePlain === "function"
+            ? window.HalalitPersonalLibrary.parseTitlePlain
+            : null;
+        var shelfOpts = bookQuestShelfOpts(Policy, variant);
+        if (typeof Policy.isTitlePlainEligible === "function") {
+          return Policy.isTitlePlainEligible(variant.titlePlain, parse, shelfOpts);
+        }
+        if (typeof Policy.isEligibleForFamilyShelf === "function" && parse) {
+          var p = parse(variant.titlePlain);
+          return Policy.isEligibleForFamilyShelf(p.title, p.author, null, shelfOpts);
+        }
+        return true;
+      }
+
+      function filterFamilyShelfVariants(list) {
+        if (!list || !list.length) return [];
+        var kept = list.filter(variantPassesFamilyShelf);
+        if (kept.length) return kept;
+        return allRecVariants().filter(variantPassesFamilyShelf);
+      }
+
+      /** True if this curated variant is already on Personal Library (by bookId or title+author key). */
+      function isBookOnPersonalShelf(variant) {
+        var Lib = window.HalalitPersonalLibrary;
+        if (!Lib || !variant) return false;
+        var vid = variant.id;
+        var shelf = Lib.load();
+        var vp = Lib.parseTitlePlain(variant.titlePlain);
+        var vKey = Lib.normalizeKey(vp.title, vp.author);
+        for (var i = 0; i < shelf.length; i++) {
+          var e = shelf[i];
+          if (vid && e.bookId != null && String(e.bookId) === String(vid)) return true;
+          var ep =
+            e.title != null || e.author != null
+              ? { title: e.title || "", author: e.author || "" }
+              : Lib.parseTitlePlain(e.titlePlain);
+          if (Lib.normalizeKey(ep.title, ep.author) === vKey) return true;
+        }
+        return false;
+      }
+
+      /** True if this curated variant is already on the Want to read list. */
+      function isBookOnWantShelf(variant) {
+        var Want = window.HalalitWantToRead;
+        var Lib = window.HalalitPersonalLibrary;
+        if (!Want || !Lib || !variant) return false;
+        var vid = variant.id;
+        var shelf = Want.load();
+        var vp = Lib.parseTitlePlain(variant.titlePlain);
+        var vKey = Lib.normalizeKey(vp.title, vp.author);
+        for (var i = 0; i < shelf.length; i++) {
+          var e = shelf[i];
+          if (vid && e.bookId != null && String(e.bookId) === String(vid)) return true;
+          var ep =
+            e.title != null || e.author != null
+              ? { title: e.title || "", author: e.author || "" }
+              : Lib.parseTitlePlain(e.titlePlain);
+          if (Lib.normalizeKey(ep.title, ep.author) === vKey) return true;
+        }
+        return false;
+      }
+
+      /** Queue Halalit’s pick on Want to read until the reader saves a note about that suggestion. */
+      function enqueueQuestSuggestionToWantToRead(rec) {
+        if (!rec || !rec.titlePlain) return;
+        var pseudo = { id: rec.bookId, titlePlain: rec.titlePlain };
+        if (!variantPassesFamilyShelf(pseudo)) return;
+        var Want = window.HalalitWantToRead;
+        if (!Want) return;
+        if (isBookOnPersonalShelf(pseudo)) return;
+        Want.add({ bookId: rec.bookId, titlePlain: rec.titlePlain, source: "quest_suggestion" });
+      }
+
+      function pickFromBucket(bucket, genre) {
+        var full = filterFamilyShelfVariants(REC_VARIANTS[bucket]);
+        var list =
+          genre && full.some(function (v) {
+            return v.genre === genre;
+          })
+            ? full.filter(function (v) {
+                return v.genre === genre;
+              })
+            : genre
+              ? filterFamilyShelfVariants(variantsMatchingGenre(genre))
+              : full.slice();
+        if (genre === "nonfiction" && nonfictionTrack) {
+          var trackHits = list.filter(function (v) {
+            return v.nonfictionTrack === nonfictionTrack;
+          });
+          if (trackHits.length) list = trackHits;
+        }
+        if (!list.length) list = full.slice();
+        if (!list.length) list = filterFamilyShelfVariants(allRecVariants());
+        var reader = loadReaderModel();
+        function avoided(id) {
+          var until = reader.avoid[id];
+          return until != null && reader.completedRuns < until;
+        }
+        var notOnShelf = list.filter(function (v) {
+          return !isBookOnPersonalShelf(v) && !isBookOnWantShelf(v);
+        });
+        var baseList = notOnShelf.length ? notOnShelf : list;
+        var candidates = baseList.filter(function (v) {
+          return !avoided(v.id);
+        });
+        if (!candidates.length) candidates = baseList.slice();
+        var slot = Math.abs(playthroughIndex + bucket.length * 7) % candidates.length;
+        return candidates[slot];
+      }
+
+      function recommendation() {
+        var ec = effectiveScores();
+        var c = ec.cautious;
+        var b = ec.bold;
+        var s = ec.social;
+        var l = ec.lone;
+        function pick(html, genreKey) {
+          var shelfKey = readerGenre || genreKey;
+          var gLabel = shelfKey ? GENRE_LABELS[shelfKey] || shelfKey : "your chosen shelf";
+          var nfNote =
+            shelfKey === "nonfiction" && nonfictionTrack
+              ? " <span class=\"muted\">(Matched to the nonfiction field you chose in Book Quest.)</span>"
+              : "";
+          return (
+            "Your next read: " +
+            html +
+            " <span class=\"muted\">(Hand-picked for your reader age band; this title sits on the " +
+            gLabel +
+            " shelf you named at the desk.)</span>" +
+            nfNote
+          );
+        }
+        var bucket;
+        if (c >= b && s >= l) bucket = "cautiousSocial";
+        else if (b > c && s >= l) bucket = "boldSocial";
+        else if (c >= b && l > s) bucket = "cautiousLone";
+        else bucket = "boldLone";
+        var rg = readerGenre || "realistic_fiction";
+        var v = pickFromBucket(bucket, rg);
+        return {
+          line: v.line,
+          pick: pick(v.book, v.genre),
+          bookId: v.id,
+          titlePlain: v.titlePlain,
+          aspects: v.aspects,
+          bucket: bucket,
+        };
+      }
+
+      let nodeId = "start";
+      /** After the reader saves a note on this run’s suggestion, “Play again” unlocks. */
+      let endReviewSubmitted = false;
+
+      function escapeHtml(str) {
+        return String(str)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/"/g, "&quot;");
+      }
+
+      /**
+       * Book Quest scene art (Pollinations URL). Canonical look reference:
+       * www/assets/halalit-reader-armchair-cat.png — URL-safe condensed string.
+       */
+      var BOOKQUEST_IMAGE_STYLE =
+        "Warm Halalit library mood walnut amber golden lamplight wood shelves cozy scholarly hush, soft stylized cinematic illustration calm slice-of-life, gentle anime-influenced linework normal realistic eye size not chibi not huge cartoon eyes, simplified symmetric faces two eyes one nose one mouth aligned no warp no melt no duplicate features, medium-wide or full shot never extreme facial close-up, modest long-sleeved layered dignified clothing when people appear, emotion mainly through posture hands and silhouette not facial micro-detail, burgundy cream dusty rose muted palette painterly shading, all-ages family-friendly consistent adult-youth height scale in frame, no photoreal skin texture no hyperdetail no glossy CGI";
+
+
+      function hashStringToSeed(s) {
+        var h = 0;
+        var str = String(s);
+        for (var i = 0; i < str.length; i++) {
+          h = (h << 5) - h + str.charCodeAt(i);
+          h |= 0;
+        }
+        var out = Math.abs(h) % 2000000000;
+        return out || 1;
+      }
+
+      function bookQuestPackIndex() {
+        var n = AREA_PACKS.length;
+        var i = playthroughIndex % n;
+        if (i < 0) i += n;
+        return i;
+      }
+
+      function bookQuestAreaSettingPhrase() {
+        var i = bookQuestPackIndex();
+        if (i === 1) {
+          return "map alcove rolled charts oil lamp atlas mood warm wood shelves";
+        }
+        if (i === 2) {
+          return "winter garden window frost glass snow outside iron storm door cold stone warmth inside";
+        }
+        if (i === 3) {
+          return "bindery niche marbled paper half-finished book covers thread and glue warm lamplight";
+        }
+        return "lantern room rain-streaked tall window brass lamp wooden desk cozy library prologue";
+      }
+
+      function bookQuestCrossingFigurePhrase() {
+        var stride = AREA_PACKS.length > 1 ? AREA_PACKS.length - 1 : 1;
+        var n = CROSSING_SKINS.length;
+        var i = (playthroughIndex + stride) % n;
+        if (i < 0) i += n;
+        if (i === 1) return "adult ink-steward keeper blotter layered coat scholarly threshold";
+        if (i === 2) return "adult night porter key ring patched heavy coat humble guardian";
+        if (i === 3) return "adult bridge-keeper friendly borrowed scarf warm cedar doorway";
+        if (i === 4) return "adult catalog clerk pencil catalog cards soft shadows gentle smile";
+        if (i === 5) return "adult tape librarian cloth ribbons layered sleeves calm precise hands";
+        return "adult kindly keeper in soft velvet layers relaxed posture doorway";
+      }
+
+      function bookQuestGenreMoodPhrase() {
+        if (!readerGenre) return "unnamed shelves yet all genres whisper in the dust";
+        var m = {
+          fantasy: "whisper of wonder soft moonlight on arches no recognizable IP",
+          science_fiction: "star charts brass curios soft lamp glow quiet curiosity",
+          mystery: "soft shadows cozy clue mood gentle intrigue all-ages",
+          realistic_fiction: "sunlit window everyday warmth reader at ease calm",
+          nonfiction: "globes journals fact shelves gentle studious hush",
+          dystopian: "soft cool light hopeful figure quiet resilience no gore",
+        };
+        return m[readerGenre] || m.fantasy;
+      }
+
+      function bookQuestSceneSubjectPrompt(sceneKey) {
+        var area = bookQuestAreaSettingPhrase();
+        var crossing = bookQuestCrossingFigurePhrase();
+        var genreM = bookQuestGenreMoodPhrase();
+        if (sceneKey === "start") {
+          return (
+            "Scene: one reader with one adult librarian together in " +
+            area +
+            ", quiet invitation, soft lantern glow, rain or charts or frost suggested, gentle wide composition, two people only clear height relationship"
+          );
+        }
+        if (sceneKey === "librarianRules") {
+          return "Same library chamber as before: " + area + ", same two people as prior scene, librarian explaining rules patiently, trust between two figures, soft warm lamplight";
+        }
+        if (sceneKey === "genreChoice") {
+          return (
+            "Librarian desk, six blank catalog cards in a row, reader choosing a reading country, figures at desk medium shot not tight facial close-up, " +
+            genreM +
+            ", gentle quiet focus"
+          );
+        }
+        if (sceneKey === "nonfictionField") {
+          return (
+            "Sunlit library alcove with globe field journals wooden spoons sketchbooks, reader and librarian choosing nonfiction field, studious cozy, no magic, " +
+            genreM
+          );
+        }
+        if (sceneKey === "nonfictionNatureWalk") {
+          return (
+            "Reader and librarian on pine trail beside gentle creek open sky nonfiction nature walk, calm observation, no fantasy magic, soft greens and stone"
+          );
+        }
+        if (sceneKey === "nonfictionCookbookStart") {
+          return (
+            "Indoor market-style counter herbs olive oil baskets brass scales reader choosing ingredients with librarian, warm kitchen learning mood, no magic"
+          );
+        }
+        if (sceneKey === "nonfictionArtStart") {
+          return (
+            "Bright sketch studio pencils jars sunlight reader choosing art mood with librarian, cute modest studio, no magic"
+          );
+        }
+        if (sceneKey === "nonfictionShelf") {
+          return (
+            "Fact shelves glowing softly reader choosing nonfiction title after field path, globes and journals nearby, cozy studious epilogue mood, " +
+            genreM
+          );
+        }
+        if (sceneKey === "corridor") {
+          var tail =
+            bookQuestPackIndex() === 1
+              ? "curving passage toward faded compass-rose door distant humming"
+              : bookQuestPackIndex() === 2
+                ? "stone passage to iron-banded door meltwater footprints draft under door"
+                : bookQuestPackIndex() === 3
+                  ? "narrow hall to door marked with stitch-like scores paper rustle beyond"
+                  : "corridor ends at rattling wooden door voices beyond warm dust motes";
+          return tail + ", " + area;
+        }
+        if (sceneKey === "afterKnock") {
+          return (
+            "Door opening after polite knock, soft lamplight on floorboards, " +
+            crossing +
+            " listening, calm threshold moment, medium shot doorway not facial macro"
+          );
+        }
+        if (sceneKey === "afterHandle") {
+          return (
+            "Door easing open after curious handle turn, gentle surprise, " +
+            crossing +
+            ", soft draft and quiet sidelight, medium shot not facial macro"
+          );
+        }
+        if (sceneKey === "guardian") {
+          return (
+            crossing +
+            " at inner threshold asking for toll with patience, calm body language, faces turned slightly or partly shadowed acceptable, chalk or keys small detail, " +
+            genreM
+          );
+        }
+        if (sceneKey === "riddleToll") {
+          var r0 = currentRiddleRound().prompt || "";
+          var rPlain = String(r0)
+            .replace(/[^a-z0-9 ,.'?-]/gi, " ")
+            .replace(/\s+/g, " ")
+            .trim()
+            .slice(0, 90);
+          return (
+            crossing +
+            " at chalk slate half-written riddle soft library dust, riddle mood: " +
+            rPlain +
+            ", hints spent " +
+            String(riddleHintLevel) +
+            ", quiet contemplative pause"
+          );
+        }
+        if (sceneKey === "shelf") {
+          var toll = tollKind === "story" ? "after honest story offered" : tollKind === "riddle" ? "after riddle bargain" : "quiet toll paid";
+          return (
+            "Tall gentle bookshelves, one softly glowing empty book slot, slow dust in lamplight, reader and guardian at normal human scale beside stacks not miniature figures, " +
+            toll +
+            ", cozy vertical composition, " +
+            genreM
+          );
+        }
+        if (sceneKey === "end") {
+          return (
+            "Epilogue: warm quiet library, soft amber light, empty shelf waiting kindly for next title, anonymous book spines no readable text, reader at ease, " +
+            genreM
+          );
+        }
+        if (sceneKey === "pendingGate") {
+          return "Between-quests hush: scholar desk folded note soft candle tea-steam stillness cozy same calm library world";
+        }
+        return "Quiet storybook library interior, soft emotional beat, " + area;
+      }
+
+      function bookQuestCastScalePhrase() {
+        var slot = Math.abs(playthroughIndex) % 3;
+        if (slot === 1) {
+          return "Scale lock for this quest: adult librarian or guardian only about one head taller than the reader when both stand, same simplified head-to-body template on every person, no extreme size gags";
+        }
+        if (slot === 2) {
+          return "Scale lock for this quest: reader reaches near adult shoulder line, adults never towering giants, reader never chibi-sized, matched stylization across whole figures not tight face crops";
+        }
+        return "Scale lock for this quest: believable adult-to-youth height ratio like a calm slice-of-life shot, consistent figure scale if multiple characters appear, same body language scale as previous scenes";
+      }
+
+      function bookQuestImageSeedMaterial(sceneKey) {
+        return [
+          sceneKey,
+          playthroughIndex,
+          readerGenre || "",
+          nonfictionTrack || "",
+          doorManner || "",
+          tollKind || "",
+          bookQuestPackIndex(),
+          (playthroughIndex + (AREA_PACKS.length > 1 ? AREA_PACKS.length - 1 : 1)) % CROSSING_SKINS.length,
+          nodeId,
+          riddleHintLevel,
+          currentRiddleRound().prompt || "",
+        ].join("|");
+      }
+
+      /** Flux + modest HD reduces mangled faces vs turbo; still 16:9. */
+      var BOOKQUEST_IMAGE_PIXEL_W = 768;
+      var BOOKQUEST_IMAGE_PIXEL_H = 432;
+
+      function buildBookQuestPollinationsUrl(fullPrompt, seed) {
+        var maxLen = 1280;
+        var p = String(fullPrompt);
+        if (p.length > maxLen) p = p.slice(0, maxLen);
+        var path = "https://image.pollinations.ai/prompt/" + encodeURIComponent(p);
+        var q =
+          "width=" +
+          String(BOOKQUEST_IMAGE_PIXEL_W) +
+          "&height=" +
+          String(BOOKQUEST_IMAGE_PIXEL_H) +
+          "&model=flux&nologo=true&enhance=false&seed=" +
+          encodeURIComponent(String(seed));
+        return path + "?" + q;
+      }
+
+      function sceneImageFigureHtml(sceneKey) {
+        var subject = bookQuestSceneSubjectPrompt(sceneKey);
+        var prompt = subject + ". " + bookQuestCastScalePhrase() + ". " + BOOKQUEST_IMAGE_STYLE;
+        var seed = hashStringToSeed(bookQuestImageSeedMaterial(sceneKey));
+        var url = buildBookQuestPollinationsUrl(prompt, seed);
+        var labelEl = document.getElementById("title");
+        var titleForAlt = labelEl ? labelEl.textContent || "Book Quest" : "Book Quest";
+        var alt = "Illustration — " + titleForAlt;
+        return (
+          "<figure class=\"scene-visual\" aria-label=\"Scene illustration\">" +
+          "<img src=\"" +
+          escapeHtml(url) +
+          "\" alt=\"" +
+          escapeHtml(alt) +
+          "\" width=\"" +
+          String(BOOKQUEST_IMAGE_PIXEL_W) +
+          "\" height=\"" +
+          String(BOOKQUEST_IMAGE_PIXEL_H) +
+          "\" loading=\"eager\" fetchpriority=\"high\" decoding=\"async\" referrerpolicy=\"no-referrer\" onerror=\"this.closest('figure').classList.add('scene-visual--empty')\" />" +
+          "</figure>"
+        );
+      }
+
+      function withSceneVisual(sceneKey, innerMarkup) {
+        return sceneImageFigureHtml(sceneKey) + innerMarkup;
+      }
+
+      function applyScores(delta) {
+        if (!delta) return;
+        for (const k of Object.keys(delta)) scores[k] += delta[k];
+      }
+
+      function resetRunState() {
+        for (const k of Object.keys(scores)) scores[k] = 0;
+        readerGenre = null;
+        nonfictionTrack = null;
+        doorManner = null;
+        tollKind = null;
+        riddleHintLevel = 0;
+        nodeId = "start";
+        endReviewSubmitted = false;
+      }
+
+      function commitReaderFeedback(rating, ctx) {
+        var reader = loadReaderModel();
+        /** Reader finished time with *some* qualifying book; curated signals only when the note is about Halalit’s pick. */
+        if (ctx.reviewSource === "own_list") {
+          reader.completedRuns += 1;
+          saveReaderModel(reader);
+          savePendingReview(null);
+          if (
+            ctx.communityEntry &&
+            ctx.communityEntry.titlePlain &&
+            ctx.communityEntry.eligibleForRecommendations !== false
+          ) {
+            appendCommunityTitle(ctx.communityEntry);
+          }
+          return;
+        }
+        var aspects = ctx.aspects || [];
+        if (rating === "not_for_me") {
+          applyMismatchToReader(reader, ctx.bucket);
+          reader.avoid[ctx.bookId] = reader.completedRuns + 3;
+        } else {
+          var keys = [];
+          if (rating === "loved" || rating === "liked") keys = aspects.slice();
+          else if (rating === "ok" && aspects.length) keys = [aspects[0]];
+          applyAspectsToReader(reader, keys);
+          if (rating === "loved" && keys.length) applyAspectsToReader(reader, keys);
+        }
+        reader.completedRuns += 1;
+        saveReaderModel(reader);
+        savePendingReview(null);
+        if (window.HalalitPersonalLibrary && ctx.titlePlain) {
+          window.HalalitPersonalLibrary.addFromSuggestedReview({
+            titlePlain: ctx.titlePlain,
+            bookId: ctx.bookId,
+            finishedAt: ctx.finishedAt,
+          });
+        }
+        if (window.HalalitWantToRead && ctx.titlePlain) {
+          window.HalalitWantToRead.removeMatching({
+            bookId: ctx.bookId,
+            titlePlain: ctx.titlePlain,
+          });
+        }
+        if (rating === "not_for_me" && ctx.shelfRuleFeedback && window.HalalitShelfFeedback) {
+          window.HalalitShelfFeedback.append(ctx.shelfRuleFeedback);
+        }
+        if (ctx.reviewFeedback && window.HalalitOwnerFeedback) {
+          window.HalalitOwnerFeedback.submitBookQuest(ctx.reviewFeedback);
+        }
+      }
+
+      function ruleFlagOptionsHtml() {
+        var FB = window.HalalitShelfFeedback;
+        var opts = FB && FB.RULE_FLAG_OPTIONS ? FB.RULE_FLAG_OPTIONS : [];
+        var html = "";
+        for (var i = 0; i < opts.length; i++) {
+          html +=
+            "<label><input type=\"checkbox\" name=\"halalitRuleFlag\" value=\"" +
+            escapeHtml(opts[i].id) +
+            "\" /> " +
+            escapeHtml(opts[i].label) +
+            "</label>";
+        }
+        return html;
+      }
+
+      function reviewSectionHtml(ctx) {
+        var submitLabel =
+          ctx.submitReviewLabel ||
+          "Save my note and unlock the next quest";
+        var suggestedTitle = escapeHtml(ctx.titlePlain);
+        var gate = ctx.gate
+          ? "<div class=\"gate-banner\">You still owe the shelf one honest reader note before the next full quest—either about <strong>" +
+            suggestedTitle +
+            "</strong>, Halalit’s suggestion, or about <strong>another title you’re already reading</strong> from your own want-to-read list, if that title fits Halalit’s reading standards (see below).</div>"
+          : "";
+        return (
+          gate +
+          "<div class=\"review-block\"><h2>Which book is your note about?</h2>" +
+          "<div class=\"review-target-block\">" +
+          "<p class=\"lead\">You don’t have to drop your current stack to humor the lamp. If you’re already deep in something else that fits the same family shelf rules, the shelf still wants your voice.</p>" +
+          "<div class=\"review-options review-target-options\">" +
+          "<label><input type=\"radio\" name=\"halalitReviewTarget\" value=\"suggested\" checked /> The title Halalit suggested above: <strong>" +
+          suggestedTitle +
+          "</strong></label>" +
+          "<label><input type=\"radio\" name=\"halalitReviewTarget\" value=\"own_list\" /> A different book I’m reading from my own list (want-to-read / in progress)</label>" +
+          "</div>" +
+          "<div class=\"own-book-panel\" id=\"halalitOwnBookPanel\">" +
+          "<p class=\"hint\" style=\"margin:0 0 0.55rem;font-size:0.88rem;\">Name the book you’re <em>actually</em> reading so Halalit can remember it separately from tonight’s suggestion. Optional: look it up in the public Open Library catalog—tags sometimes hint at age band, but they’re not perfect.</p>" +
+          "<label class=\"field\" for=\"halalitOwnBookTitle\">Title</label>" +
+          "<input type=\"text\" id=\"halalitOwnBookTitle\" autocomplete=\"off\" placeholder=\"e.g. The Penderwicks\" />" +
+          "<label class=\"field\" for=\"halalitOwnBookAuthor\">Author <span class=\"muted\">(optional but helps matching)</span></label>" +
+          "<input type=\"text\" id=\"halalitOwnBookAuthor\" autocomplete=\"off\" placeholder=\"e.g. Jeanne Birdsall\" />" +
+          "<div class=\"catalog-lookup-row\">" +
+          "<button type=\"button\" class=\"catalog-lookup-btn\" id=\"halalitCatalogLookup\">Look up title (Open Library)</button>" +
+          "<span class=\"muted\" id=\"halalitCatalogLookupStatus\" style=\"font-size:0.8rem;\"></span></div>" +
+          "<div class=\"catalog-match-box\" id=\"halalitCatalogMatchBox\" aria-live=\"polite\"><span id=\"halalitCatalogMatchLead\"></span><ul class=\"match-list\" id=\"halalitCatalogMatchList\"></ul></div>" +
+          "<div class=\"guidelines-box\"><strong>Halalit-only titles here</strong> — the same boundaries as our hand-picked list, for example:" +
+          "<ul>" +
+          "<li>All-ages appropriate</li>" +
+          "<li><strong>Never recommend:</strong> adult romance as the main story; no sexual content</li>" +
+          "<li><strong>Never recommend:</strong> stories centered on illegitimate children (children born out of wedlock)—juvenile fiction tags alone don’t qualify (e.g. <em>The Secret Starling</em>)</li>" +
+          "<li><strong>Never recommend:</strong> plot centered on LGBTQ identity or advocacy</li>" +
+          "<li><strong>Never recommend:</strong> harsh swearing or slurs; hardcore racist works that demonize an entire race, religion, ethnicity, or people group</li>" +
+          "<li><strong>Never recommend:</strong> pro-colonial narrative—imperial or colonial framing treated as natural or good (e.g. <em>A Little Princess</em>, <em>The Secret Garden</em>)</li>" +
+          "<li>No romanticized crime, cruelty, or vigilante “cool” harm</li>" +
+          "<li>No fanservice or sexualized outfit presentation—tight pants, revealing shirts in art, and similar. Ordinary chapter books (e.g. <em>The Baby-Sitters Club</em> #1) aren’t held to that panel-level bar; comics and graphic novels are hand-checked below</li>" +
+          "<li><span class=\"muted\">Advisory only (not a ban):</span> some otherwise clean books still show family as hostile or unfair—Halalit may add a <strong>Family is portrayed negatively</strong> note when we know a title (e.g. <em>Fresh Start</em> by Gale Galligan)</li>" +
+          "</ul>If you’re unsure, choose Halalit’s suggestion instead.</div>" +
+          "<label class=\"affirm-row\"><input type=\"checkbox\" id=\"halalitOwnBookAffirm\" /> This title fits those rules.</label>" +
+          "</div></div>" +
+          "<h2>How did that book land?</h2>" +
+          "<p class=\"hint\">Choose the line that fits best for the book you selected. You can add your own sentence below if you like.</p>" +
+          "<div class=\"review-options\">" +
+          "<label><input type=\"radio\" name=\"halalitOut\" value=\"loved\" /> I loved it</label>" +
+          "<label><input type=\"radio\" name=\"halalitOut\" value=\"liked\" checked /> I liked it</label>" +
+          "<label><input type=\"radio\" name=\"halalitOut\" value=\"ok\" /> It was ok</label>" +
+          "<label><input type=\"radio\" name=\"halalitOut\" value=\"not_for_me\" /> It wasn’t for me</label>" +
+          "</div>" +
+          "<div class=\"not-for-me-wrap\" id=\"halalitNotForMeWrap\">" +
+          "<p class=\"hint not-for-me-lead\">Optional — for whichever book you picked above.</p>" +
+          "<button type=\"button\" class=\"review-more-btn\" id=\"halalitNotForMeMore\" aria-expanded=\"false\" aria-controls=\"halalitNotForMeBody\">More</button>" +
+          "<div class=\"review-more-body\" id=\"halalitNotForMeBody\" hidden>" +
+          "<p class=\"hint\" style=\"margin:0 0 0.45rem\">Why wasn’t it for you?</p>" +
+          "<div class=\"review-options\">" +
+          "<label><input type=\"checkbox\" id=\"halalitWhyTaste\" /> Just not my taste or mood</label>" +
+          "<label><input type=\"checkbox\" id=\"halalitWhyRules\" /> Doesn’t meet Halalit’s shelf rules</label>" +
+          "</div>" +
+          "<div class=\"rules-more-block\" id=\"halalitRulesMoreBlock\">" +
+          "<button type=\"button\" class=\"review-more-btn review-more-btn--nested\" id=\"halalitRulesMore\" aria-expanded=\"false\" aria-controls=\"halalitRulesDetail\">More</button>" +
+          "<div class=\"review-more-body rules-flag-options\" id=\"halalitRulesDetail\" hidden>" +
+          "<p class=\"review-share-hint\"><strong>Learned something Halalit missed?</strong> Tell us by ticking what fits — pick as many boxes as you need.<span class=\"muted\">Saved privately to your account for the owner to improve Bookcheck—never a public wall.</span></p>" +
+          ruleFlagOptionsHtml() +
+          "</div></div></div></div>" +
+          "<div class=\"review-finished-row\">" +
+          "<span class=\"finished-toggle\" role=\"group\" aria-label=\"Finished date precision\">" +
+          "<button type=\"button\" id=\"halalitFinishedModeDate\" aria-pressed=\"false\">Exact date</button>" +
+          "<button type=\"button\" id=\"halalitFinishedModeYear\" aria-pressed=\"true\">Just the year</button>" +
+          "</span>" +
+          "<label class=\"field\" for=\"halalitFinishedDate\">When did you finish it? <span class=\"muted\" style=\"flex:0 0 auto\">(optional — older spines age on the shelf)</span></label>" +
+          "<input type=\"date\" id=\"halalitFinishedDate\" hidden />" +
+          "<input type=\"number\" id=\"halalitFinishedYear\" min=\"1900\" max=\"2100\" step=\"1\" placeholder=\"e.g. 2018\" />" +
+          "<p class=\"muted\">Leave blank if you’d rather not say. Personal Library spines fade gently the longer ago the book was finished.</p>" +
+          "</div>" +
+          "<label class=\"hint\" for=\"halalitNote\">In your own words (optional)</label>" +
+          "<p class=\"muted\" style=\"margin:0 0 0.35rem;font-size:0.82rem\">Loved it or liked it? Your note goes privately to the owner—not posted on the site.</p>" +
+          "<textarea id=\"halalitNote\" class=\"review-note\" rows=\"3\" placeholder=\"Example: What stayed with you after you closed the cover…\"></textarea>" +
+          "<button type=\"button\" class=\"review-submit\" id=\"halalitReviewSubmit\">" +
+          escapeHtml(submitLabel) +
+          "</button></div>"
+        );
+      }
+
+      function wireReviewForm(root, ctx, onDone) {
+        var catalogMeta = { workKey: null, hintTier: null, hintDetail: null, familyPortrayal: null, culturalRepresentation: null };
+        function syncOwnPanel() {
+          var t = root.querySelector("input[name=\"halalitReviewTarget\"]:checked");
+          var panel = root.querySelector("#halalitOwnBookPanel");
+          if (!panel) return;
+          if (t && t.value === "own_list") panel.classList.add("is-open");
+          else panel.classList.remove("is-open");
+        }
+        function resetCatalogUi() {
+          catalogMeta = { workKey: null, hintTier: null, hintDetail: null, familyPortrayal: null, culturalRepresentation: null };
+          var box = root.querySelector("#halalitCatalogMatchBox");
+          var list = root.querySelector("#halalitCatalogMatchList");
+          var lead = root.querySelector("#halalitCatalogMatchLead");
+          var st = root.querySelector("#halalitCatalogLookupStatus");
+          if (box) {
+            box.classList.remove("is-visible");
+            if (lead) lead.textContent = "";
+            if (list) list.innerHTML = "";
+          }
+          if (st) st.textContent = "";
+        }
+        function normalizeOlTitle(doc) {
+          var t = doc.title;
+          if (Array.isArray(t)) return String(t[0] || "").trim();
+          return String(t || "").trim();
+        }
+        function applyCatalogPick(doc) {
+          var titleIn = root.querySelector("#halalitOwnBookTitle");
+          var authorIn = root.querySelector("#halalitOwnBookAuthor");
+          var ttl = normalizeOlTitle(doc);
+          var auth = Array.isArray(doc.author_name) && doc.author_name.length ? doc.author_name.join(", ") : "";
+          if (titleIn) titleIn.value = ttl;
+          if (authorIn) authorIn.value = auth;
+          var hint = inferCatalogFamilyHint(doc);
+          catalogMeta.workKey = doc.key || (doc.seed && doc.seed[0]) || null;
+          catalogMeta.hintTier = hint.tier;
+          catalogMeta.hintDetail = hint.detail;
+          catalogMeta.familyPortrayal = hint.familyPortrayal || null;
+          catalogMeta.culturalRepresentation = hint.culturalRepresentation || null;
+          var box = root.querySelector("#halalitCatalogMatchBox");
+          var lead = root.querySelector("#halalitCatalogMatchLead");
+          if (box && lead) {
+            var cls =
+              hint.tier === "verified_clean"
+                ? "catalog-hint-ok"
+                : hint.tier === "flag_review" || hint.tier === "teen_caution"
+                  ? "catalog-hint-warn"
+                  : hint.tier === "deity_comfort"
+                    ? "catalog-hint-neutral"
+                  : hint.tier === "not_verified" || hint.tier === "unclear" || hint.tier === "likely_youth"
+                    ? "catalog-hint-neutral"
+                    : "";
+            var leadHtml =
+              "<span class=\"" +
+              cls +
+              "\">" +
+              escapeHtml(hint.detail) +
+              "</span>";
+            if (hint.familyPortrayal && hint.familyPortrayal.detail) {
+              leadHtml +=
+                ' <span class="catalog-hint-note"><strong>' +
+                escapeHtml(hint.familyPortrayal.label || "Family is portrayed negatively") +
+                "</strong> — " +
+                escapeHtml(hint.familyPortrayal.detail) +
+                "</span>";
+            }
+            if (
+              hint.culturalRepresentation &&
+              hint.culturalRepresentation.detail &&
+              Policy &&
+              typeof Policy.bookQuestAllowsCulturalMisrepresentation === "function" &&
+              Policy.bookQuestAllowsCulturalMisrepresentation()
+            ) {
+              leadHtml +=
+                ' <span class="catalog-hint-note"><strong>' +
+                escapeHtml(hint.culturalRepresentation.label || "Cultural misrepresentation") +
+                "</strong> — " +
+                escapeHtml(hint.culturalRepresentation.detail) +
+                "</span>";
+            }
+            if (hint.deityComfort && hint.deityComfort.detail) {
+              leadHtml +=
+                ' <span class="catalog-hint-note"><strong>' +
+                escapeHtml(hint.deityComfort.label || "Deity or mythology (comfort note)") +
+                "</strong> — " +
+                escapeHtml(hint.deityComfort.detail) +
+                "</span>";
+            }
+            lead.innerHTML =
+              leadHtml +
+              " <span class=\"muted\">— Open Library match: <strong>" +
+              escapeHtml(ttl) +
+              "</strong>" +
+              (auth ? " · " + escapeHtml(auth) : "") +
+              "</span>";
+            box.classList.add("is-visible");
+            var list = root.querySelector("#halalitCatalogMatchList");
+            if (list) list.innerHTML = "";
+          }
+        }
+        root.querySelectorAll("input[name=\"halalitReviewTarget\"]").forEach(function (el) {
+          el.addEventListener("change", function () {
+            syncOwnPanel();
+            resetCatalogUi();
+          });
+        });
+        syncOwnPanel();
+        var lookupBtn = root.querySelector("#halalitCatalogLookup");
+        if (lookupBtn) {
+          lookupBtn.onclick = function () {
+            var titleInput = root.querySelector("#halalitOwnBookTitle");
+            var authorInput = root.querySelector("#halalitOwnBookAuthor");
+            var ownTitle = titleInput ? String(titleInput.value || "").trim() : "";
+            var ownAuthor = authorInput ? String(authorInput.value || "").trim() : "";
+            var url = buildOpenLibraryQueryUrl(ownTitle, ownAuthor);
+            var st = root.querySelector("#halalitCatalogLookupStatus");
+            var box = root.querySelector("#halalitCatalogMatchBox");
+            var list = root.querySelector("#halalitCatalogMatchList");
+            var lead = root.querySelector("#halalitCatalogMatchLead");
+            if (!url) {
+              window.alert("Type at least a title (or title + author) before looking it up.");
+              return;
+            }
+            lookupBtn.disabled = true;
+            if (st) st.textContent = "Searching…";
+            resetCatalogUi();
+            catalogMeta = { workKey: null, hintTier: null, hintDetail: null, familyPortrayal: null, culturalRepresentation: null };
+            fetch(url)
+              .then(function (r) {
+                if (!r.ok) throw new Error("lookup failed");
+                return r.json();
+              })
+              .then(function (data) {
+                var docs = (data && data.docs) || [];
+                var pinMsg = null;
+                if (window.HalalitCatalogPins && typeof window.HalalitCatalogPins.filterCatalogDocs === "function") {
+                  var pinPack = window.HalalitCatalogPins.filterCatalogDocs(docs, ownTitle, ownAuthor);
+                  docs = pinPack.docs || docs;
+                  if (pinPack.pinned && pinPack.message) pinMsg = pinPack.message;
+                }
+                lookupBtn.disabled = false;
+                if (st) st.textContent = docs.length ? "Pick the closest match:" : "No hits—try a shorter title or a different spelling.";
+                if (!docs.length) return;
+                if (docs.length === 1) {
+                  applyCatalogPick(docs[0]);
+                  if (st) st.textContent = pinMsg || "Matched one catalog record.";
+                  return;
+                }
+                if (box && lead && list) {
+                  lead.textContent = "Several catalog matches—tap the one you mean:";
+                  box.classList.add("is-visible");
+                  list.innerHTML = "";
+                  for (var i = 0; i < docs.length; i++) {
+                    (function (doc) {
+                      var li = document.createElement("li");
+                      var b = document.createElement("button");
+                      b.type = "button";
+                      var a = Array.isArray(doc.author_name) && doc.author_name.length ? doc.author_name.join(", ") : "author unknown";
+                      b.textContent = (normalizeOlTitle(doc) || "Untitled") + " — " + a;
+                      b.onclick = function () {
+                        applyCatalogPick(doc);
+                      };
+                      li.appendChild(b);
+                      list.appendChild(li);
+                    })(docs[i]);
+                  }
+                }
+              })
+              .catch(function () {
+                lookupBtn.disabled = false;
+                if (st) st.textContent = "Couldn’t reach Open Library—try again later.";
+              });
+          };
+        }
+        root.querySelector("#halalitOwnBookTitle") &&
+          root.querySelector("#halalitOwnBookTitle").addEventListener("input", function () {
+            if (root.querySelector("input[name=\"halalitReviewTarget\"]:checked") && root.querySelector("input[name=\"halalitReviewTarget\"]:checked").value === "own_list") {
+              resetCatalogUi();
+            }
+          });
+        root.querySelector("#halalitOwnBookAuthor") &&
+          root.querySelector("#halalitOwnBookAuthor").addEventListener("input", function () {
+            if (root.querySelector("input[name=\"halalitReviewTarget\"]:checked") && root.querySelector("input[name=\"halalitReviewTarget\"]:checked").value === "own_list") {
+              resetCatalogUi();
+            }
+          });
+        var dateBtn = root.querySelector("#halalitFinishedModeDate");
+        var yearBtn = root.querySelector("#halalitFinishedModeYear");
+        var dateInput = root.querySelector("#halalitFinishedDate");
+        var yearInput = root.querySelector("#halalitFinishedYear");
+        function setFinishedMode(mode) {
+          var dateOn = mode === "date";
+          if (dateBtn) dateBtn.setAttribute("aria-pressed", dateOn ? "true" : "false");
+          if (yearBtn) yearBtn.setAttribute("aria-pressed", dateOn ? "false" : "true");
+          if (dateInput) dateInput.hidden = !dateOn;
+          if (yearInput) yearInput.hidden = dateOn;
+        }
+        if (dateBtn) {
+          dateBtn.onclick = function () {
+            setFinishedMode("date");
+          };
+        }
+        if (yearBtn) {
+          yearBtn.onclick = function () {
+            setFinishedMode("year");
+          };
+        }
+        function readFinishedAt() {
+          var Lib = window.HalalitPersonalLibrary;
+          if (dateInput && !dateInput.hidden && dateInput.value) {
+            return Lib ? Lib.normalizeFinishedAt(dateInput.value) : String(dateInput.value);
+          }
+          if (yearInput && !yearInput.hidden && yearInput.value) {
+            return Lib ? Lib.normalizeFinishedAt(yearInput.value) : String(yearInput.value);
+          }
+          return "";
+        }
+
+        function setReviewExpand(btn, body, open) {
+          if (!btn || !body) return;
+          body.hidden = !open;
+          btn.setAttribute("aria-expanded", open ? "true" : "false");
+          btn.textContent = open ? "Less" : "More";
+        }
+
+        function wireReviewExpand(btn, body) {
+          if (!btn || !body) return;
+          btn.addEventListener("click", function () {
+            setReviewExpand(btn, body, body.hidden);
+          });
+        }
+
+        function collapseNotForMeExpands() {
+          setReviewExpand(
+            root.querySelector("#halalitNotForMeMore"),
+            root.querySelector("#halalitNotForMeBody"),
+            false
+          );
+          setReviewExpand(
+            root.querySelector("#halalitRulesMore"),
+            root.querySelector("#halalitRulesDetail"),
+            false
+          );
+        }
+
+        function syncNotForMeWrap() {
+          var outEl = root.querySelector("input[name=\"halalitOut\"]:checked");
+          var wrap = root.querySelector("#halalitNotForMeWrap");
+          if (!wrap) return;
+          if (outEl && outEl.value === "not_for_me") {
+            wrap.classList.add("is-visible");
+            return;
+          }
+          wrap.classList.remove("is-visible");
+          collapseNotForMeExpands();
+          syncRulesMoreBlock();
+        }
+
+        function syncRulesMoreBlock() {
+          var rules = root.querySelector("#halalitWhyRules");
+          var block = root.querySelector("#halalitRulesMoreBlock");
+          if (!block) return;
+          if (rules && rules.checked) {
+            block.classList.add("is-visible");
+            return;
+          }
+          block.classList.remove("is-visible");
+          setReviewExpand(
+            root.querySelector("#halalitRulesMore"),
+            root.querySelector("#halalitRulesDetail"),
+            false
+          );
+        }
+
+        function readReviewFeedback(titlePlain, bookId, rating, reviewSource, noteText) {
+          if (reviewSource === "own_list") return null;
+          var whyRules = root.querySelector("#halalitWhyRules");
+          var whyTaste = root.querySelector("#halalitWhyTaste");
+          var ruleFlags = [];
+          root.querySelectorAll("input[name=\"halalitRuleFlag\"]:checked").forEach(function (el) {
+            if (el.value) ruleFlags.push(el.value);
+          });
+          var doesntMeetRules = !!(whyRules && whyRules.checked) || ruleFlags.length > 0;
+          return {
+            titlePlain: titlePlain,
+            bookId: bookId || "",
+            rating: rating,
+            reviewSource: reviewSource,
+            doesntMeetRules: doesntMeetRules,
+            notMyTaste: !!(whyTaste && whyTaste.checked),
+            ruleFlags: ruleFlags,
+            noteSnippet: noteText || "",
+          };
+        }
+
+        wireReviewExpand(
+          root.querySelector("#halalitNotForMeMore"),
+          root.querySelector("#halalitNotForMeBody")
+        );
+        wireReviewExpand(
+          root.querySelector("#halalitRulesMore"),
+          root.querySelector("#halalitRulesDetail")
+        );
+        root.querySelectorAll("input[name=\"halalitOut\"]").forEach(function (el) {
+          el.addEventListener("change", syncNotForMeWrap);
+        });
+        var whyRulesEl = root.querySelector("#halalitWhyRules");
+        if (whyRulesEl) whyRulesEl.addEventListener("change", syncRulesMoreBlock);
+        root.querySelectorAll("input[name=\"halalitRuleFlag\"]").forEach(function (el) {
+          el.addEventListener("change", function () {
+            if (!el.checked) return;
+            if (whyRulesEl) whyRulesEl.checked = true;
+            syncRulesMoreBlock();
+          });
+        });
+        syncNotForMeWrap();
+
+        root.querySelector("#halalitReviewSubmit").onclick = function () {
+          var targetEl = root.querySelector("input[name=\"halalitReviewTarget\"]:checked");
+          var reviewSource = targetEl && targetEl.value === "own_list" ? "own_list" : "suggested";
+          var finishedAt = readFinishedAt();
+          var communityEntry = null;
+          if (reviewSource === "own_list") {
+            var titleInput = root.querySelector("#halalitOwnBookTitle");
+            var authorInput = root.querySelector("#halalitOwnBookAuthor");
+            var ownTitle = titleInput ? String(titleInput.value || "").trim() : "";
+            var ownAuthor = authorInput ? String(authorInput.value || "").trim() : "";
+            if (!ownTitle) {
+              window.alert("Please type the title of the book from your list that you’re reviewing (add the author if you know it).");
+              return;
+            }
+            var affirm = root.querySelector("#halalitOwnBookAffirm");
+            if (!affirm || !affirm.checked) {
+              window.alert("Please confirm that your title fits Halalit’s reading standards, or switch back to Halalit’s suggestion.");
+              return;
+            }
+            var Policy = window.HalalitFamilyShelfPolicy;
+            if (Policy && typeof Policy.hardExclusionDetailForTitle === "function") {
+              var shelfExclusion = Policy.hardExclusionDetailForTitle(ownTitle, ownAuthor);
+              if (shelfExclusion) {
+                window.alert(shelfExclusion + " Choose Halalit’s suggestion or another title that fits the guidelines.");
+                return;
+              }
+            }
+            if (
+              Policy &&
+              typeof Policy.isEligibleForFamilyShelf === "function" &&
+              !Policy.isEligibleForFamilyShelf(ownTitle, ownAuthor, catalogMeta.hintTier, bookQuestShelfOpts(Policy, null))
+            ) {
+              if (
+                Policy &&
+                typeof Policy.bookQuestDeityMythologyBlock === "function" &&
+                Policy.bookQuestDeityMythologyBlock(ownTitle, ownAuthor) &&
+                Policy.bookQuestAllowsDeityMythology &&
+                !Policy.bookQuestAllowsDeityMythology()
+              ) {
+                window.alert(
+                  "Halalit would not suggest this title through Book Quest because of deity or mythology in the story—even when the book is otherwise hand-verified clean. Uncheck that exclusion in Advanced recommendations settings on the start screen, or choose another title."
+                );
+              } else if (catalogMeta.hintTier === "deity_comfort") {
+                window.alert(
+                  "Halalit would not suggest this title through Book Quest because of deity or mythology in the story—even when the book is otherwise clean. Uncheck that exclusion in Advanced recommendations settings on the start screen, or choose another title."
+                );
+              } else if (
+                Policy &&
+                typeof Policy.bookQuestNegativeFamilyPortrayalBlock === "function" &&
+                Policy.bookQuestNegativeFamilyPortrayalBlock(ownTitle, ownAuthor) &&
+                Policy.bookQuestAllowsFamilyCommunityTone &&
+                !Policy.bookQuestAllowsFamilyCommunityTone()
+              ) {
+                window.alert(
+                  "Halalit would not suggest this title through Book Quest because a parent or guardian is cast as unfair or villain-like—not merely annoying family friction. Uncheck that exclusion in Advanced recommendations settings on the start screen, or choose another title."
+                );
+              } else if (
+                Policy &&
+                typeof Policy.bookQuestLightRomanceBlock === "function" &&
+                Policy.bookQuestLightRomanceBlock(ownTitle, ownAuthor) &&
+                Policy.bookQuestAllowsLightRomance &&
+                !Policy.bookQuestAllowsLightRomance()
+              ) {
+                window.alert(
+                  "Halalit would not suggest this title through Book Quest because of light romance—crushes, light dating, or similar beats—not adult, dark, or LGBTQ romance. Uncheck that exclusion in Advanced recommendations settings on the start screen, or choose another title."
+                );
+              } else if (
+                Policy &&
+                typeof Policy.bookQuestMagicBlock === "function" &&
+                Policy.bookQuestMagicBlock(ownTitle, ownAuthor) &&
+                Policy.bookQuestAllowsMagic &&
+                !Policy.bookQuestAllowsMagic()
+              ) {
+                window.alert(
+                  "Halalit won’t use this pick in Book Quest while magic is turned off in Advanced settings—the book is still hand-verified clean. No magic in your stack? Choose another title, or allow magic on the start screen."
+                );
+              } else if (
+                Policy &&
+                typeof Policy.bookQuestSubstanceBlock === "function" &&
+                Policy.bookQuestSubstanceBlock(ownTitle, ownAuthor) &&
+                Policy.bookQuestAllowsSubstance &&
+                !Policy.bookQuestAllowsSubstance()
+              ) {
+                window.alert(
+                  "Halalit would not suggest this title through Book Quest because of alcohol or similar mentions—even when the book is otherwise clean. Think Starry River of the Sky or Ranger's Apprentice level, not addiction arcs like Haymitch. Uncheck that exclusion in Advanced recommendations settings on the start screen, or choose another title."
+                );
+              } else if (
+                Policy &&
+                typeof Policy.bookQuestCulturalMisrepresentationBlock === "function" &&
+                Policy.bookQuestCulturalMisrepresentationBlock(ownTitle, ownAuthor) &&
+                Policy.bookQuestAllowsCulturalMisrepresentation &&
+                !Policy.bookQuestAllowsCulturalMisrepresentation()
+              ) {
+                window.alert(
+                  "Halalit would not suggest this title through Book Quest because of cultural misrepresentation in the hand-checked notes—not group demonization. Uncheck that exclusion in Advanced recommendations settings on the start screen, or choose another title."
+                );
+              } else if (
+                Policy &&
+                typeof Policy.bookQuestMentalHealthComfortBlock === "function" &&
+                Policy.bookQuestMentalHealthComfortBlock(ownTitle, ownAuthor) &&
+                Policy.mentalHealthComfortAppliesToReaderBand &&
+                Policy.mentalHealthComfortAppliesToReaderBand(
+                  Policy.getBookQuestReaderAgeBand ? Policy.getBookQuestReaderAgeBand() : null
+                ) &&
+                Policy.bookQuestAllowsMentalHealthComfort &&
+                !Policy.bookQuestAllowsMentalHealthComfort()
+              ) {
+                window.alert(
+                  "Halalit would not suggest this title through Book Quest because of mental-health weight in the hand-checked notes—for the reader age band you chose. Uncheck that exclusion in Advanced recommendations settings on the start screen, pick Young Child if this title is for a younger reader, or choose another title."
+                );
+              } else if (
+                Policy &&
+                typeof Policy.bookQuestMatchesReaderAge === "function" &&
+                !Policy.bookQuestMatchesReaderAge(
+                  ownTitle,
+                  ownAuthor,
+                  null,
+                  Policy.getBookQuestReaderAgeBand ? Policy.getBookQuestReaderAgeBand() : null
+                )
+              ) {
+                window.alert(
+                  "This title is outside the reader age band you chose on the Book Quest start screen. Pick a different book, or start a new quest after choosing a different reader band."
+                );
+              } else {
+                window.alert(
+                  "Halalit can’t accept this title for the shared family shelf based on catalog checks or curated notes. Choose Halalit’s suggestion or another title that fits the guidelines."
+                );
+              }
+              return;
+            }
+            var titlePlain = ownAuthor ? ownTitle + " by " + ownAuthor : ownTitle;
+            var noteEl = root.querySelector("#halalitNote");
+            var noteText = noteEl ? String(noteEl.value || "").trim().slice(0, 2000) : "";
+            var outEl0 = root.querySelector("input[name=\"halalitOut\"]:checked");
+            var rating0 = outEl0 ? outEl0.value : "liked";
+            var storeTier =
+              catalogMeta.hintTier === "flag_review"
+                ? "catalog_flagged"
+                : catalogMeta.hintTier === "verified_clean"
+                  ? "catalog_verified_clean"
+                  : "affirmed_reader_only";
+            communityEntry = {
+              title: ownTitle,
+              author: ownAuthor,
+              titlePlain: titlePlain,
+              rating: rating0,
+              noteSnippet: noteText,
+              openLibraryKey: catalogMeta.workKey,
+              catalogFamilyTier: catalogMeta.hintTier,
+              catalogFamilyDetail: catalogMeta.hintDetail,
+              storedAs: storeTier,
+              readerGenreAtSave: readerGenre,
+              submittedAt: new Date().toISOString(),
+              finishedAt: finishedAt || null,
+              eligibleForRecommendations:
+                catalogMeta.hintTier !== "flag_review" &&
+                catalogMeta.hintTier !== "fanservice_caution" &&
+                (catalogMeta.hintTier !== "deity_comfort" ||
+                  (Policy &&
+                    typeof Policy.bookQuestAllowsDeityMythology === "function" &&
+                    Policy.bookQuestAllowsDeityMythology())) &&
+                (!Policy ||
+                  typeof Policy.isEligibleForFamilyShelf !== "function" ||
+                  Policy.isEligibleForFamilyShelf(
+                    ownTitle,
+                    ownAuthor,
+                    catalogMeta.hintTier,
+                    bookQuestShelfOpts(Policy, null)
+                  )),
+            };
+          }
+          var outEl = root.querySelector("input[name=\"halalitOut\"]:checked");
+          var rating = outEl ? outEl.value : "liked";
+          var noteEl = root.querySelector("#halalitNote");
+          var noteText = noteEl ? String(noteEl.value || "").trim().slice(0, 2000) : "";
+          var feedbackTitle =
+            reviewSource === "own_list" && communityEntry
+              ? communityEntry.titlePlain
+              : ctx.titlePlain;
+          var reviewFeedback = readReviewFeedback(
+            feedbackTitle,
+            ctx.bookId,
+            rating,
+            reviewSource,
+            noteText
+          );
+          var extended = Object.assign({}, ctx, {
+            reviewSource: reviewSource,
+            communityEntry: communityEntry,
+            finishedAt: finishedAt,
+            reviewFeedback: reviewFeedback,
+            shelfRuleFeedback: rating === "not_for_me" ? reviewFeedback : null,
+          });
+          commitReaderFeedback(rating, extended);
+          if (typeof onDone === "function") onDone();
+        };
+      }
+
+      function renderPendingGate(pending) {
+        var labelEl = document.getElementById("sceneLabel");
+        var titleEl = document.getElementById("title");
+        var root = document.getElementById("root");
+        labelEl.textContent = "Between quests";
+        titleEl.textContent = "Reader note";
+        var ctx = {
+          bookId: pending.bookId,
+          titlePlain: pending.titlePlain,
+          bucket: pending.bucket,
+          aspects: pending.aspects,
+          gate: true,
+        };
+        root.innerHTML = withSceneVisual("pendingGate", reviewSectionHtml(ctx));
+        wireReviewForm(root, ctx, function () {
+          initGame();
+        });
+      }
+
+      function render() {
+        const node = nodes[nodeId];
+        const labelEl = document.getElementById("sceneLabel");
+        const titleEl = document.getElementById("title");
+        const root = document.getElementById("root");
+        var pack = currentAreaPack();
+        var cross = currentCrossingSkin();
+
+        if (nodeId === "start") {
+          labelEl.textContent = pack.start.label;
+          titleEl.textContent = pack.start.title;
+        } else if (nodeId === "librarianRules") {
+          labelEl.textContent = pack.librarianRules.label;
+          titleEl.textContent = pack.librarianRules.title;
+        } else if (nodeId === "genreChoice") {
+          labelEl.textContent = node.label;
+          titleEl.textContent = node.title;
+        } else if (
+          nodeId === "nonfictionField" ||
+          nodeId === "nonfictionNatureWalk" ||
+          nodeId === "nonfictionCookbookStart" ||
+          nodeId === "nonfictionArtStart" ||
+          nodeId === "nonfictionShelf"
+        ) {
+          labelEl.textContent = nodes[nodeId].label;
+          titleEl.textContent = nodes[nodeId].title;
+        } else if (nodeId === "corridor") {
+          labelEl.textContent = pack.corridor.label;
+          titleEl.textContent = pack.corridor.title;
+        } else if (nodeId === "guardian" || nodeId === "riddleToll") {
+          labelEl.textContent = cross.crossingLabel || node.label;
+          titleEl.textContent = cross.crossingTitle || node.title;
+        } else {
+          labelEl.textContent = node.label;
+          titleEl.textContent = node.title;
+        }
+
+        if (nodeId === "end") {
+          const rec = recommendation();
+          enqueueQuestSuggestionToWantToRead(rec);
+          var gateOn = readerFeedbackGateEnabled();
+          if (gateOn && !endReviewSubmitted) {
+            savePendingReview({
+              bookId: rec.bookId,
+              titlePlain: rec.titlePlain,
+              bucket: rec.bucket,
+              aspects: rec.aspects,
+            });
+            var ctx = {
+              bookId: rec.bookId,
+              titlePlain: rec.titlePlain,
+              bucket: rec.bucket,
+              aspects: rec.aspects,
+              gate: false,
+            };
+            root.innerHTML = withSceneVisual(
+              "end",
+              "<p>" +
+                rec.line +
+                "</p>" +
+                "<p class=\"end-book\">" +
+                rec.pick +
+                "</p>" +
+                "<p class=\"muted\">Already reading something else from your own want-to-read pile? You can still leave your note on <em>that</em> title below, if it meets the same family shelf rules—Halalit doesn’t need you to switch books midstream.</p>" +
+                "<p class=\"muted\">This web build is a tiny stand-in for the fuller Halalit prototype—your choices here are only a sketch of the real game’s signals. Named titles are hand-picked for family-friendly shelves.</p>" +
+                reviewSectionHtml(ctx) +
+                "<p class=\"restart\"><button type=\"button\" id=\"again\" disabled>Play again</button> <span class=\"muted\" id=\"againHint\">(unlocks after you save your reader note)</span></p>"
+            );
+            wireReviewForm(root, ctx, function () {
+              endReviewSubmitted = true;
+              render();
+            });
+          } else if (gateOn && endReviewSubmitted) {
+            root.innerHTML = withSceneVisual(
+              "end",
+              "<p>" +
+                rec.line +
+                "</p>" +
+                "<p class=\"end-book\">" +
+                rec.pick +
+                "</p>" +
+                "<p class=\"muted\">Your note is saved—about Halalit’s pick or the title you named from your own list. The shelf will weigh it the next time it offers a title.</p>" +
+                "<p class=\"muted\">Affirmed “own list” titles that pass the automatic catalog family check are saved to your account for Halalit’s curated recommendation pool.</p>" +
+                "<p class=\"restart\"><button type=\"button\" id=\"again\">Play again</button></p>"
+            );
+            document.getElementById("again").onclick = function () {
+              bumpPlaythroughsCompleted();
+              resetRunState();
+              playthroughIndex = bumpPlaythroughIndex();
+              render();
+            };
+          } else {
+            if (!endReviewSubmitted) {
+              var ctxFirst = {
+                bookId: rec.bookId,
+                titlePlain: rec.titlePlain,
+                bucket: rec.bucket,
+                aspects: rec.aspects,
+                gate: false,
+                submitReviewLabel: "Save my reader note",
+              };
+              root.innerHTML = withSceneVisual(
+                "end",
+                "<p>" +
+                  rec.line +
+                  "</p>" +
+                  "<p class=\"end-book\">" +
+                  rec.pick +
+                  "</p>" +
+                  "<p class=\"muted\">Already reading something else? Name that title below, optionally look it up in Open Library for catalog age hints, and save a note—optional on this first full run. Titles you affirm as Halalit-suitable are saved to your account.</p>" +
+                  "<p class=\"muted\">This web build is a tiny stand-in for the fuller Halalit prototype—your choices here are only a sketch of the real game’s signals. Named titles are hand-picked for family-friendly shelves.</p>" +
+                  "<p class=\"muted\">From your next full quest onward, the shelf will ask for a short reader note before it unlocks another round—so suggestions can lean with you.</p>" +
+                  reviewSectionHtml(ctxFirst) +
+                  "<p class=\"restart\"><button type=\"button\" id=\"again\">Play again</button> <span class=\"muted\" id=\"againHint\">(reader note optional this round)</span></p>"
+              );
+              wireReviewForm(root, ctxFirst, function () {
+                endReviewSubmitted = true;
+                render();
+              });
+              document.getElementById("again").onclick = function () {
+                bumpPlaythroughsCompleted();
+                resetRunState();
+                playthroughIndex = bumpPlaythroughIndex();
+                render();
+              };
+            } else {
+              root.innerHTML = withSceneVisual(
+                "end",
+                "<p>" +
+                  rec.line +
+                  "</p>" +
+                  "<p class=\"end-book\">" +
+                  rec.pick +
+                  "</p>" +
+                  "<p class=\"muted\">Your note is saved—about Halalit’s pick or the title you named from your own list.</p>" +
+                  "<p class=\"muted\">This web build is a tiny stand-in for the fuller Halalit prototype—your choices here are only a sketch of the real game’s signals. Named titles are hand-picked for family-friendly shelves.</p>" +
+                  "<p class=\"muted\">From your next full quest onward, the shelf will ask for a short reader note before it unlocks another round—so suggestions can lean with you.</p>" +
+                  "<p class=\"restart\"><button type=\"button\" id=\"again\">Play again</button></p>"
+              );
+              document.getElementById("again").onclick = function () {
+                bumpPlaythroughsCompleted();
+                resetRunState();
+                playthroughIndex = bumpPlaythroughIndex();
+                render();
+              };
+            }
+          }
+          return;
+        }
+
+        var bodyHtml = node.html;
+        if (nodeId === "start") {
+          bodyHtml = pack.start.html;
+          bodyHtml +=
+            "<p class=\"muted\">A scrap by the lantern lists a riddle—you needn’t solve it unless you bargain for one later. <em>" +
+            currentRiddleRound().prompt +
+            "</em></p>" +
+            bookQuestReaderAgeHtml() +
+            bookQuestPrefRowsHtml();
+        } else if (nodeId === "librarianRules") {
+          bodyHtml = pack.librarianRules.html;
+        } else if (nodeId === "corridor") {
+          bodyHtml = pack.corridor.html;
+        } else if (nodeId === "genreChoice") {
+          bodyHtml = genreChoiceHtml();
+        } else if (nodeId === "nonfictionShelf") {
+          bodyHtml = nonfictionShelfHtml();
+        } else if (nodeId === "afterKnock") {
+          bodyHtml = (pack.afterKnockLead || "") + (cross.afterKnock || node.html);
+        } else if (nodeId === "afterHandle") {
+          bodyHtml = (pack.afterHandleLead || "") + (cross.afterHandle || node.html);
+        }
+        if (nodeId === "guardian") bodyHtml = guardianHtml();
+        if (nodeId === "riddleToll") bodyHtml = riddleTollHtml();
+        if (nodeId === "shelf") bodyHtml = shelfHtml();
+
+        var choiceList =
+          nodeId === "riddleToll" ? riddleChoicesForRender() : nodeId === "genreChoice" ? GENRE_CHOICES : node.choices;
+
+        let html = sceneImageFigureHtml(nodeId) + bodyHtml + "<div class=\"choices\">";
+        choiceList.forEach(function (ch, i) {
+          html += "<button type=\"button\" class=\"choice\" data-i=\"" + i + "\">" + ch.text + "</button>";
+        });
+        html += "</div>";
+        root.innerHTML = html;
+        if (nodeId === "start") {
+          wireBookQuestReaderAge(root);
+          wireBookQuestPrefs(root);
+        }
+        root.querySelectorAll("button.choice").forEach(function (btn) {
+          btn.onclick = function () {
+            const i = Number(btn.getAttribute("data-i"));
+            const ch = choiceList[i];
+            if (ch.askHint) {
+              var hintArr = riddleHintsForRound();
+              if (riddleHintLevel === 0) applyScores({ cautious: 2 });
+              else if (riddleHintLevel < hintArr.length) applyScores({ cautious: 1 });
+              if (riddleHintLevel < hintArr.length) riddleHintLevel += 1;
+              render();
+              return;
+            }
+            applyScores(ch.scores);
+            if (ch.genreId) readerGenre = ch.genreId;
+            if (ch.nonfictionTrack) nonfictionTrack = ch.nonfictionTrack;
+            if (ch.doorManner) doorManner = ch.doorManner;
+            if (ch.tollKind) tollKind = ch.tollKind;
+            if (nodeId === "riddleToll" && ch.next === "shelf") riddleHintLevel = 0;
+            nodeId = ch.next;
+            render();
+          };
+        });
+      }
+
+      function initGame() {
+        resetRunState();
+        playthroughIndex = bumpPlaythroughIndex();
+        render();
+      }
+
+      if (window.HalalitDesignerGate) window.HalalitDesignerGate.applyDesignerUrlParamOnce();
+      var pendingLoad = loadPendingReview();
+      if (pendingLoad && !readerFeedbackGateEnabled()) {
+        savePendingReview(null);
+        pendingLoad = null;
+      }
+      if (pendingLoad) {
+        renderPendingGate(pendingLoad);
+      } else {
+        initGame();
+      }
+    })();
+    });
+  </script>
+</body>
+</html>

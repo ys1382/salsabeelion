@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Owner’s Office — LoreKeeper</title>
+  <link rel="stylesheet" href="./lk-shared.css?v=1" />
+  <script src="./lk-auth-gate.js"></script>
+</head>
+<body>
+  <div class="lk-wrap">
+    <p class="header-nav"><a href="./index.html">← LoreKeeper</a> · <a href="./account.html">Your account</a></p>
+    <h1>Owner’s Office</h1>
+    <p class="lk-lead">Private to you. Account counts and switches only — never another writer’s notes.</p>
+    <p id="denied" class="lk-status" hidden>Sign in with your owner account to open this page.</p>
+
+    <div id="office" hidden>
+      <div class="stats" id="statsRow" aria-label="Summary counts"></div>
+
+      <details class="office-section" open>
+        <summary><span class="office-section__title"><strong>Writer accounts</strong></span></summary>
+        <div class="office-section__body">
+          <p class="muted">Emails and join dates only. Passwords and note text are never shown here.</p>
+          <table>
+            <thead><tr><th>Email</th><th>Joined</th></tr></thead>
+            <tbody id="accountsList"></tbody>
+          </table>
+        </div>
+      </details>
+
+      <details class="office-section">
+        <summary><span class="office-section__title"><strong>Private feedback</strong></span></summary>
+        <div class="office-section__body">
+          <p class="muted">One-way tips from signed-in writers — not a public wall.</p>
+          <div id="readerMessagesList"></div>
+        </div>
+      </details>
+
+      <details class="office-section">
+        <summary><span class="office-section__title"><strong>Site switches</strong></span></summary>
+        <div class="office-section__body">
+          <p class="muted">Turn new sign-ups off while LoreKeeper is owner-only on Odd Trove. Turn on when you go public.</p>
+          <label class="switch">
+            <input type="checkbox" id="flagSignups" />
+            <span><strong>New sign-ups</strong> — allow creating accounts (sign-in still works)</span>
+          </label>
+          <button type="button" class="lk-btn" id="saveSettingsBtn">Save switches</button>
+          <p class="lk-status" id="settingsStatus" hidden></p>
+        </div>
+      </details>
+    </div>
+  </div>
+  <script src="./lk-api-config.js?v=3"></script>
+  <script src="./lk-account-storage.js?v=3"></script>
+  <script src="./lk-auth.js?v=3"></script>
+  <script>
+    (function () {
+      function fmtDate(ts) {
+        if (!ts) return "—";
+        try {
+          return new Date(ts * 1000).toLocaleDateString(undefined, {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+          });
+        } catch (e) {
+          return "—";
+        }
+      }
+
+      function renderStats(stats) {
+        var row = document.getElementById("statsRow");
+        row.innerHTML = "";
+        [
+          ["Writer accounts", stats.writerAccounts || 0],
+          ["Private messages", stats.readerMessages || 0],
+        ].forEach(function (pair) {
+          var div = document.createElement("div");
+          div.className = "stat";
+          div.innerHTML = "<strong>" + pair[1] + "</strong><span>" + pair[0] + "</span>";
+          row.appendChild(div);
+        });
+      }
+
+      function renderReaderMessages(list) {
+        var root = document.getElementById("readerMessagesList");
+        root.innerHTML = "";
+        if (!list || !list.length) {
+          root.textContent = "No messages yet.";
+          return;
+        }
+        list.forEach(function (row) {
+          var div = document.createElement("div");
+          div.className = "feedback-item";
+          div.textContent =
+            (row.email ? row.email.split("@")[0] + " — " : "") +
+            "“" +
+            (row.message || "").slice(0, 200) +
+            "” · " +
+            fmtDate(row.createdAt);
+          root.appendChild(div);
+        });
+      }
+
+      function loadOffice() {
+        LoreKeeperAuth.loadOwnerOffice().then(function (res) {
+          if (!res || !res.ok) return;
+          renderStats(res.stats || {});
+          renderReaderMessages(res.readerMessages || []);
+          var acc = document.getElementById("accountsList");
+          acc.innerHTML = "";
+          (res.accounts || []).forEach(function (row) {
+            var tr = document.createElement("tr");
+            var tdE = document.createElement("td");
+            tdE.textContent = row.email + (row.isOwner ? " (you)" : "");
+            var tdD = document.createElement("td");
+            tdD.textContent = fmtDate(row.createdAt);
+            tr.appendChild(tdE);
+            tr.appendChild(tdD);
+            acc.appendChild(tr);
+          });
+          document.getElementById("flagSignups").checked = !!(res.settings && res.settings.signupsEnabled);
+        });
+      }
+
+      document.getElementById("saveSettingsBtn").addEventListener("click", function () {
+        LoreKeeperAuth.saveOwnerSettings({
+          signupsEnabled: document.getElementById("flagSignups").checked,
+        }).then(function (res) {
+          var st = document.getElementById("settingsStatus");
+          st.textContent = res && res.ok ? "Saved." : "Could not save.";
+          st.className = "lk-status" + (res && res.ok ? " ok" : "");
+          st.hidden = false;
+        });
+      });
+
+      LoreKeeperAccountStorage.ready.then(function () {
+        if (!LoreKeeperAccountStorage.isSignedIn() || !LoreKeeperAccountStorage.isOwner()) {
+          document.getElementById("denied").hidden = false;
+          if (!LoreKeeperAccountStorage.isSignedIn()) {
+            location.href = "./account.html?return=" + encodeURIComponent(location.pathname);
+          }
+          return;
+        }
+        document.getElementById("office").hidden = false;
+        loadOffice();
+      });
+    })();
+  </script>
+</body>
+</html>

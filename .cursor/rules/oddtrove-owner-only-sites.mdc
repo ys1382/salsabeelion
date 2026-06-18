@@ -13,7 +13,7 @@ alwaysApply: true
 
 ## Owner-only (HTTP basic auth on nginx)
 
-- `/maestros/`, `/envdyst/`, `/climatic-mysteries/`
+- `/maestros/`, `/envdyst/`, `/climatic-mysteries/`, `/lorekeeper/`
 - Directory hub at `/` is **not** served (404 except root redirect to Halalit)
 
 ## When the owner asks to open a private site (envDyst, Maestro's, Climatic Mysteries)

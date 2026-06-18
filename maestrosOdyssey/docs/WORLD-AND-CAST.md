@@ -2,7 +2,7 @@
 
 **Status:** Owner **cast bible** — peoples, jobs, languages, story shape. Live `www/` may lag until owner asks to ship aligned story.
 
-**See also:** `LOREBOOK.md` (hard rules: no man-eating, distorted dragon history, manticores/sphinx/dragons detail), `CONTRIBUTOR-GUIDELINES.txt` (tone gates, spine summary).
+**See also:** `LOREBOOK.md` (hard rules: no man-eating, distorted dragon history, manticores/sphinx/dragons detail), `DRAGONS-BREW-PRE-TRAIN.md` (committed café week-one plot), `CONTRIBUTOR-GUIDELINES.txt` (tone gates, spine summary).
 
 ---
 
@@ -27,7 +27,7 @@ The world was already running. The protagonist belongs here. Ordinary mornings i
 - **Fixed spine, variable body** — structural idea only (everyone gets the same opening beats; later paths diverge).
 - **Dragon's Brew first** — not a wake-up menu choice. Every run: thermos, barista, first Spanish-in-context beat (e.g. *azúcar*), neighborhood familiarity.
 - **Plaza floor required** — mercado, public square, market-under-tracks. Everyone gets **tourist-ready getting-around** Spanish: food, bag, price, hours, thanks — not fluent, not performing culture.
-- **Neighborhood phase (pre-train):** block-bound (café + plaza + tied errands) until basics done — same life everyone has before riding out without getting lost.
+- **Neighborhood phase (pre-train):** block-bound (café + plaza + tied errands) until basics done — same life everyone has before riding out without getting lost. **Dragon’s Brew** is the social crossroads (mixed species, overheard lore); **no** full grocery / general-store loop before the train — see `DRAGONS-BREW-PRE-TRAIN.md`.
 - **Train = wider world:** area independence opens — choose destinations, other registers and tongues ahead — **competence gate**, not prophecy.
 - **Body after train:** routes and inclinations diverge — supply-chain curiosity, environmental (merfolk/coastal), detective (dragonfolk intrigue), gardener (giants/land-care), etc. **Different paths, same anchored start.**
 
@@ -269,6 +269,24 @@ Slender-space specialists — **often misjudged** (famous villains skew the ster
 ## Sphinxes
 
 **Overhaul planned** — do not ship stock riddle-monster or sacred-mockery pastiche. Reserve until owner pass. Likely desert / Arabic–Turkic contact zones. See **`LOREBOOK.md`**.
+
+---
+
+## Vampires *(present-day)*
+
+People with dietary need for **blood**; sourcing is **tech / clinic** based (not fangs in public). **Vampire cafés** exist elsewhere — donation economy, ethical human blood allowed there; **not** on inclusive house menus like Dragon’s Brew. Individuals can be villains (corruption, mafia) — **not** a species default. See **`DRAGONS-BREW-PRE-TRAIN.md`** for week-one innocent bystander and mafia head thread.
+
+---
+
+## Werewolves *(present-day)*
+
+People; **form** presentation varies by individual and situation. Some present in **werewolf form** in public when comfortable; others control **human-form** read more strongly (mechanism and why **TBD** per lineage). Family customs (e.g. chaperone for public evenings) are cultural, not predator trope. See **`DRAGONS-BREW-PRE-TRAIN.md`**.
+
+---
+
+## Çampire *(mixed heritage)*
+
+Owner term for people with **vampire and werecat** ancestry **somewhere down the line** — not a slur. Presentation varies (e.g. wings, feline eyes/tail). Example: Dragon’s Brew barista **Mara**. See **`DRAGONS-BREW-PRE-TRAIN.md`**.
 
 ---
 

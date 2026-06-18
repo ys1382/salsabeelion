@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>LoreKeeper</title>
+  <link rel="stylesheet" href="./lk-shared.css?v=9" />
+  <script src="./lk-auth-gate.js"></script>
+</head>
+<body>
+  <div class="lk-wrap">
+    <p class="header-nav"><a href="https://oddtrove.art/">← Odd Trove</a> · <a href="./spinner.html">Idea spinner</a></p>
+    <h1>LoreKeeper</h1>
+    <p class="lk-lead"><strong>Documents</strong> are for full project writing — one flowing doc with formatting, like picking up where you left off on a computer. <strong>Notes</strong> are scattered scraps — relationships, intrigue, fonts, visual beats, anything jumbled. Same work title on both so Ask can search the whole project.</p>
+    <p class="lk-auth-bar" id="lkAuthBar"></p>
+    <p class="lk-privacy">Private to your account. Not shared with other writers. Your drafts live on the server — not in the public website code.</p>
+
+    <div class="lk-panel">
+      <h2 class="lk-panel-title">Documents</h2>
+      <p class="muted lk-section-lead">Long-form writing for a project. Open a doc, keep typing, auto-save.</p>
+      <div class="lk-toolbar">
+        <button type="button" class="lk-btn" id="newDocBtn">New document</button>
+        <button type="button" class="lk-btn secondary" id="continueBtn" hidden>Continue writing</button>
+        <button type="button" class="lk-btn secondary" id="exportDocsBtn">Export documents</button>
+      </div>
+      <p class="lk-status" id="libraryStatus"></p>
+      <ul class="lk-doc-list" id="docList" aria-live="polite"></ul>
+    </div>
+
+    <div class="lk-panel lk-new-doc-panel" id="newDocPanel" hidden>
+      <h2 class="lk-panel-title">New document</h2>
+      <div class="lk-field">
+        <label for="newDocTitle">Document title</label>
+        <input type="text" id="newDocTitle" autocomplete="off" placeholder="Smoke and Mirrors — first draft" />
+      </div>
+      <div class="lk-field">
+        <label for="newDocWork">Work title <span class="muted">(for Ask)</span></label>
+        <input type="text" id="newDocWork" autocomplete="off" placeholder="Smoke and Mirrors" />
+      </div>
+      <div class="lk-toolbar">
+        <button type="button" class="lk-btn" id="createDocBtn">Create &amp; open</button>
+        <button type="button" class="lk-btn secondary" id="cancelNewDocBtn">Cancel</button>
+      </div>
+      <p class="lk-status" id="newDocStatus"></p>
+    </div>
+
+    <div class="lk-panel">
+      <h2 class="lk-panel-title">Notes</h2>
+      <p class="muted lk-section-lead">Scattered bits — not full docs. One scrap per note, typed and tagged.</p>
+      <div class="lk-toolbar lk-notes-primary-toolbar">
+        <button type="button" class="lk-btn" id="newNoteBtn">New note</button>
+        <button type="button" class="lk-btn secondary" id="exportNotesBtn">Export notes</button>
+      </div>
+      <p class="muted lk-spell-hint">Local spelling in notes &amp; documents — <a href="./account.html">My spelling words</a> on your account page.</p>
+      <details class="lk-notes-more" id="notesMorePanel">
+        <summary class="lk-notes-more-summary">
+          <span class="lk-notes-more-label" id="notesMoreLabel">Your notes</span>
+          <span class="lk-notes-more-toggle" aria-hidden="true"></span>
+        </summary>
+        <div class="lk-notes-more-body">
+          <div class="lk-toolbar">
+            <select id="filterKind" aria-label="Filter by type">
+              <option value="">All types</option>
+            </select>
+            <input type="search" id="searchBox" placeholder="Search notes…" autocomplete="off" />
+          </div>
+          <ul class="lk-entry-list" id="noteList" aria-live="polite"></ul>
+          <p class="lk-status" id="noteListStatus"></p>
+        </div>
+      </details>
+    </div>
+
+    <div class="lk-panel" id="noteEditorPanel" hidden>
+      <h2 class="lk-panel-title" id="noteEditorHeading">Edit note</h2>
+      <div class="lk-field">
+        <label for="noteKind">Type</label>
+        <select id="noteKind"></select>
+      </div>
+      <div class="lk-field">
+        <label for="noteTitle">Title</label>
+        <input type="text" id="noteTitle" autocomplete="off" placeholder="Character beat, font idea, intrigue thread…" />
+      </div>
+      <div class="lk-field">
+        <label for="noteBody">Your note</label>
+        <div class="lk-spell-field">
+          <textarea id="noteBody" placeholder="Messy is fine — your words only." spellcheck="false" autocorrect="off" autocapitalize="off"></textarea>
+        </div>
+        <p class="lk-spell-flags" id="noteSpellFlags" hidden></p>
+        <p class="muted lk-spell-privacy">Spelling checks run locally — not sent to outside AI. Obvious typos fix when you <strong>Save</strong> (not while typing). Words on <a href="./account.html">My spelling words</a> are never flagged or changed.</p>
+      </div>
+      <div class="lk-field">
+        <label for="noteTags">Work title <span class="muted">(tag — same name as the project)</span></label>
+        <input type="text" id="noteTags" autocomplete="off" placeholder="Smoke and Mirrors" />
+      </div>
+      <div class="lk-toolbar">
+        <button type="button" class="lk-btn" id="saveNoteBtn">Save</button>
+        <button type="button" class="lk-btn secondary" id="cancelNoteBtn">Cancel</button>
+        <button type="button" class="lk-btn secondary" id="deleteNoteBtn">Delete</button>
+      </div>
+      <p class="lk-status" id="noteEditorStatus"></p>
+    </div>
+
+    <div class="lk-panel lk-ask-panel" id="ask">
+      <h2 class="lk-panel-title">Ask LoreKeeper</h2>
+      <p class="muted lk-ask-lead">
+        Searches <strong>documents and notes</strong> together. Name the work in your question. Local only — nothing sent to outside AI.
+      </p>
+      <p class="lk-privacy lk-ask-privacy">
+        <strong>Your words stay yours.</strong> Ask runs on the server from what you saved — no third-party AI reads your drafts.
+        If you use a coding assistant (e.g. Cursor) to fix LoreKeeper, that work is on the <em>app code</em> in the repo — not your story files on the server.
+        Don’t paste draft text into those chats if you want it to stay only here.
+      </p>
+      <div class="lk-field">
+        <label for="askQuestion">Your question</label>
+        <textarea id="askQuestion" rows="3" placeholder="e.g. In Smoke and Mirrors, summarize Character B"></textarea>
+      </div>
+      <div class="lk-toolbar">
+        <button type="button" class="lk-btn" id="askBtn">Ask</button>
+      </div>
+      <p class="lk-status" id="askStatus" hidden></p>
+      <div class="lk-ask-answer" id="askAnswer" hidden></div>
+      <ul class="lk-ask-sources" id="askSources" hidden aria-label="Sources"></ul>
+    </div>
+  </div>
+  <script src="./vendor/spell/typo.js"></script>
+  <script src="./lk-spell-words.js?v=3"></script>
+  <script src="./lk-spell.js?v=5"></script>
+  <script src="./lk-api-config.js?v=5"></script>
+  <script src="./lk-account-storage.js?v=6"></script>
+  <script src="./lk-documents.js?v=10"></script>
+  <script src="./lk-entries.js?v=3"></script>
+  <script src="./lk-recall.js?v=3"></script>
+  <script src="./lk-home.js?v=6"></script>
+</body>
+</html>

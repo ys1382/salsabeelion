@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Idea spinner — LoreKeeper</title>
+  <link rel="stylesheet" href="./lk-shared.css?v=22" />
+  <script src="./lk-auth-gate.js"></script>
+</head>
+<body>
+  <div class="lk-wrap">
+    <p class="header-nav"><a href="./index.html">← LoreKeeper home</a> · <a href="https://oddtrove.art/">Odd Trove</a></p>
+    <h1>Idea spinner</h1>
+    <p class="lk-lead">Stuck on where to go next? Spin for a <strong>nudge</strong> built from <strong>your</strong> word banks — not a story written for you. Use it, twist it, or ignore it.</p>
+    <p class="lk-auth-bar" id="lkAuthBar"></p>
+
+    <div class="lk-panel">
+      <div class="lk-toolbar">
+        <label class="lk-spin-template-pick">
+          Prompt style
+          <select id="templateSelect" aria-label="Prompt style">
+            <option value="nudge">What if…?</option>
+            <option value="question">Where could it go?</option>
+            <option value="next_beat">Possible next beat</option>
+            <option value="constraint">Try this constraint</option>
+          </select>
+        </label>
+        <button type="button" class="lk-btn lk-spin-btn" id="spinBtn">Spin</button>
+        <button type="button" class="lk-btn secondary" id="copyPromptBtn">Copy prompt</button>
+      </div>
+      <p class="lk-status" id="spinnerStatus" aria-live="polite"></p>
+      <div class="lk-spin-result" id="spinnerResult" aria-live="polite"></div>
+      <div class="lk-spin-columns" id="spinnerColumns"></div>
+    </div>
+
+    <div class="lk-panel">
+      <h2 class="lk-panel-title">Your word banks</h2>
+      <p class="muted lk-section-lead">One word or phrase per line. Empty columns are skipped when you spin.</p>
+      <div id="spinnerBanks"></div>
+    </div>
+  </div>
+  <script src="./lk-api-config.js?v=5"></script>
+  <script src="./lk-account-storage.js?v=5"></script>
+  <script src="./lk-spinner-store.js?v=1"></script>
+  <script src="./lk-spinner.js?v=3"></script>
+</body>
+</html>

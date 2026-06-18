@@ -115,7 +115,7 @@ const Audio = (() => {
 // ─────────────────────────────────────────────────────────────────────────────
 const TILE   = 32;   // pixels per tile
 const COLS   = 20;
-const ROWS   = 15;
+const ROWS   = 16;
 const W      = TILE * COLS;
 const H      = TILE * ROWS;
 const SCALE  = 2;   // pixel-art upscale
@@ -272,6 +272,14 @@ function drawSidewalk(ctx, ox, oy) {
   rect(ctx, ox, oy + 28, 32, 4, '#6a6058');
 }
 
+/** Neutral tile under the outside storefront — no grass bleed. */
+function drawBuildingFoundation(ctx, ox, oy) {
+  rect(ctx, ox, oy, 32, 32, '#6a6058');
+  rect(ctx, ox + 2, oy + 2, 28, 28, '#5a5850');
+  rect(ctx, ox, oy + 28, 32, 4, '#4a4840');
+  rect(ctx, ox, oy, 32, 2, '#7a7870');
+}
+
 function drawRoofTile(ctx, ox, oy) {
   rect(ctx, ox, oy, 32, 32, '#3a2830');
   for (let i = 0; i < 5; i++) {
@@ -375,6 +383,108 @@ function drawCafeWall(ctx, ox, oy) {
   rect(ctx, ox + 22, oy + 10, 4, 4, '#4a3848');
 }
 
+function drawCafeTrim(ctx, ox, oy) {
+  drawCafeFloor(ctx, ox, oy);
+  rect(ctx, ox, oy, 32, 3, '#3a2830');
+  rect(ctx, ox, oy + 3, 3, 29, '#3a2830');
+  rect(ctx, ox + 29, oy + 3, 3, 29, '#3a2830');
+}
+
+function isCafeWallChar(ch) {
+  return ch === '#' || ch === '|';
+}
+
+/** Neighbor-aware café wall tile — cleaner corners and long runs. */
+function drawCafeBorderTile(ctx, ox, oy, grid, rx, ry) {
+  const ch = grid[ry][rx];
+  const solid = (x, y) => {
+    if (y < 0 || y >= grid.length || x < 0 || x >= grid[0].length) return true;
+    const c = grid[y][x];
+    return isCafeWallChar(c) || c === '-';
+  };
+  const n = solid(rx, ry - 1);
+  const s = solid(rx, ry + 1);
+  const w = solid(rx - 1, ry);
+  const e = solid(rx + 1, ry);
+
+  if (ch === '#') {
+    rect(ctx, ox, oy, 32, 32, '#2a1820');
+    rect(ctx, ox + 2, oy + 2, 28, 28, '#3a2830');
+    if (!n) rect(ctx, ox + 2, oy + 2, 28, 4, '#4a3848');
+    if (!s) rect(ctx, ox + 2, oy + 26, 28, 4, '#4a3848');
+    if (!w) rect(ctx, ox + 2, oy + 2, 4, 28, '#4a3848');
+    if (!e) rect(ctx, ox + 26, oy + 2, 4, 28, '#4a3848');
+    return;
+  }
+
+  drawCafeWall(ctx, ox, oy);
+  if (!n) rect(ctx, ox + 4, oy, 24, 3, '#4a3848');
+  if (!s) rect(ctx, ox + 4, oy + 29, 24, 3, '#4a3848');
+  if (!w) rect(ctx, ox, oy + 4, 3, 24, '#4a3848');
+  if (!e) rect(ctx, ox + 29, oy + 4, 3, 24, '#4a3848');
+}
+
+function drawFoodSilhouette(ctx, x, y, key) {
+  if (key === 'muffin') {
+    rect(ctx, x, y + 4, 10, 8, '#c49a5a');
+    rect(ctx, x + 1, y + 2, 8, 4, '#d4aa6a');
+  } else if (key === 'croissant') {
+    rect(ctx, x, y + 6, 12, 5, '#d4af6a');
+    rect(ctx, x + 2, y + 3, 8, 4, '#c49a5a');
+  } else if (key === 'bagel') {
+    rect(ctx, x + 1, y + 4, 10, 8, '#b88858');
+    rect(ctx, x + 4, y + 6, 4, 4, '#5a4030');
+  } else {
+    rect(ctx, x, y + 5, 12, 6, '#d4b896');
+    rect(ctx, x + 1, y + 4, 10, 2, '#c49a5a');
+  }
+}
+
+function drawDisplayCaseWide(ctx, w, h, foodItems) {
+  const items = (foodItems || []).slice(0, 4);
+  rect(ctx, 0, h - 14, w, 14, '#6b3d1e');
+  rect(ctx, 0, h - 17, w, 4, '#8b5c2e');
+  rect(ctx, 4, 8, w - 8, h - 26, '#3a2830');
+  rect(ctx, 6, 10, w - 12, h - 30, '#88a8c8');
+  rect(ctx, 8, 12, w - 16, h - 34, 'rgba(200,220,240,0.35)');
+  const slotW = Math.floor((w - 16) / Math.max(1, items.length));
+  items.forEach((item, i) => {
+    const sx = 8 + i * slotW + Math.floor(slotW / 2) - 6;
+    drawFoodSilhouette(ctx, sx, 14, item.key);
+  });
+  rect(ctx, 4, h - 20, w - 8, 2, '#a06c3e');
+}
+
+function drawBarStool(ctx, ox, oy) {
+  drawCafeFloor(ctx, ox, oy);
+  rect(ctx, ox + 12, oy + 4, 8, 4, '#5a3020');
+  rect(ctx, ox + 14, oy + 8, 4, 12, '#6b4423');
+  rect(ctx, ox + 10, oy + 20, 12, 3, '#4a2818');
+}
+
+function drawPatronSeated(ctx, ox, oy, shirt, hair) {
+  rect(ctx, ox + 4, oy + 14, 8, 6, '#2a3048');
+  rect(ctx, ox + 5, oy + 8, 6, 7, shirt || '#48a868');
+  rect(ctx, ox + 5, oy + 2, 6, 5, hair || '#2a1810');
+  rect(ctx, ox + 6, oy + 5, 2, 2, '#1a0a00');
+  rect(ctx, ox + 9, oy + 5, 2, 2, '#1a0a00');
+}
+
+/** Plate on table — bites 0–3 (3 = full). */
+function drawFoodPlate(ctx, ox, oy, bites) {
+  const level = Math.max(0, Math.min(3, bites == null ? 3 : bites));
+  rect(ctx, ox + 1, oy + 6, 14, 8, '#e8e0d0');
+  rect(ctx, ox + 2, oy + 7, 12, 6, '#f0ece4');
+  if (level >= 3) {
+    rect(ctx, ox + 4, oy + 8, 8, 4, '#d4aa6a');
+    rect(ctx, ox + 5, oy + 7, 6, 2, '#c49a5a');
+  } else if (level >= 2) {
+    rect(ctx, ox + 5, oy + 8, 6, 3, '#d4aa6a');
+  } else if (level >= 1) {
+    rect(ctx, ox + 6, oy + 9, 4, 2, '#c49a5a');
+  }
+}
+
 function drawCounter(ctx, ox, oy) {
   drawCafeFloor(ctx, ox, oy);
   drawCounterBar(ctx, ox, oy);
@@ -395,8 +505,19 @@ function drawCounterBar(ctx, ox, oy) {
 
 function drawCafeTable(ctx, ox, oy) {
   drawCafeFloor(ctx, ox, oy);
-  rect(ctx, ox + 8, oy + 10, 16, 8, '#6b3d1e');
-  rect(ctx, ox + 14, oy + 18, 4, 8, '#5a3020');
+  rect(ctx, ox + 3, oy + 5, 26, 12, '#6b3d1e');
+  rect(ctx, ox + 5, oy + 7, 22, 8, '#9a7048');
+  rect(ctx, ox + 7, oy + 8, 18, 6, '#b88858');
+  rect(ctx, ox + 5, oy + 17, 4, 5, '#5a3020');
+  rect(ctx, ox + 23, oy + 17, 4, 5, '#5a3020');
+}
+
+/** Floor chair — sits on tile south of table; player faces up toward table. */
+function drawCafeChair(ctx, ox, oy) {
+  drawCafeFloor(ctx, ox, oy);
+  rect(ctx, ox + 9, oy + 2, 14, 5, '#5a3020');
+  rect(ctx, ox + 10, oy + 7, 12, 8, '#6b4423');
+  rect(ctx, ox + 9, oy + 15, 14, 3, '#4a2818');
 }
 
 function drawExitDoor(ctx, ox, oy) {
@@ -439,6 +560,42 @@ function drawBookOnFloor(ctx, ox, oy) {
   rect(ctx, ox + 10, oy + 14, 12, 8, '#8b4518');
   rect(ctx, ox + 11, oy + 15, 10, 6, '#d4b896');
   rect(ctx, ox + 12, oy + 16, 8, 1, '#6b3d1e');
+}
+
+/** fullness 0–4: visible drink layers in the cup (4 = full). forTable = rim toward seated player. */
+function drawDrinkCup(ctx, ox, oy, fullness, forTable) {
+  const level = Math.max(0, Math.min(4, fullness == null ? 4 : fullness));
+  if (forTable) {
+    rect(ctx, ox + 2, oy + 2, 8, 9, '#f0ece4');
+    rect(ctx, ox + 3, oy + 3, 6, 6, level > 0 ? '#e8dcc8' : '#f5f0e8');
+    rect(ctx, ox + 1, oy + 4, 2, 4, '#d4af6a');
+    rect(ctx, ox + 3, oy + 12, 6, 2, '#e8e0d0');
+    const bands = [
+      { y: oy + 9, h: 2, color: '#7a4e28' },
+      { y: oy + 7, h: 2, color: '#8b5a2b' },
+      { y: oy + 6, h: 1, color: '#9a6535' },
+      { y: oy + 5, h: 1, color: '#8b5a2b' },
+    ];
+    for (let i = 0; i < level; i++) {
+      const b = bands[i];
+      rect(ctx, ox + 3, b.y, 6, b.h, b.color);
+    }
+    return;
+  }
+  rect(ctx, ox + 2, oy + 5, 8, 9, '#f0ece4');
+  rect(ctx, ox + 3, oy + 6, 6, 6, level > 0 ? '#e8dcc8' : '#f5f0e8');
+  rect(ctx, ox + 1, oy + 7, 2, 4, '#d4af6a');
+  rect(ctx, ox + 3, oy + 3, 6, 2, '#e8e0d0');
+  const bands = [
+    { y: oy + 10, h: 2, color: '#7a4e28' },
+    { y: oy + 8, h: 2, color: '#8b5a2b' },
+    { y: oy + 7, h: 1, color: '#9a6535' },
+    { y: oy + 6, h: 1, color: '#8b5a2b' },
+  ];
+  for (let i = bands.length - 1; i >= bands.length - level; i--) {
+    const b = bands[i];
+    rect(ctx, ox + 3, b.y, 6, b.h, b.color);
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -574,7 +731,7 @@ const TILE_IDX = {
   '.': 0, '1': 1, 'P': 2, 'W': 3, 'T': 4, 'F': 5, 'S': 6, 'f': 7,
   '#': 8, 'D': 9, 'B': 10, '=': 11, '|': 12, '-': 13, '*': 14, '>': 15,
   'M': 16, 'K': 17, 'b': 18,
-  'h': 19, 'n': 20, 'w': 21, 'R': 22, 'A': 23, 'H': 24,
+  'h': 19, 'n': 20, 'w': 21, 'R': 22, 'A': 23, 'H': 24, 'o': 25,
 };
 
 const SOLID_TILES = new Set([3, 4, 5, 8, 12, 13, 14, 16, 17, 19, 20, 22, 23]);
@@ -620,7 +777,7 @@ const READABLES = [
 ];
 
 const OUTSIDE_BUILDING = { left: 5, top: 6, width: 8, height: 5, doorCol: 8, doorRow: 10 };
-const CAFE_DOOR_ROW = 9;
+const CAFE_DOOR_ROW = 10;
 
 const MAPS = {
   outside: {
@@ -647,6 +804,7 @@ const MAPS = {
       '#..S..f............#',
       '#..................#',
       '#..................#',
+      '#..................#',
       '####################',
     ].map(r => r.split('')),
   },
@@ -661,16 +819,18 @@ const MAPS = {
     mara: { col: 10, row: 2 },
     grid: [
       '####################',
-      '#||||||||||||||||||#',
-      '#|MKH.............|#',
-      '#=**===-------===**#',
+      '#|MKH..............|#',
+      '#|------------------|#',
       '#=................=#',
       '#=................=#',
+      '#=.*....*....*....=#',
+      '#=.c....c....c....=#',
+      '#=....*....*......=#',
+      '#=..o....c....o..=#',
       '#=................=#',
-      '#=................=#',
-      '#=................=#',
+      '#=........*.......=#',
       '#|||||||>||||||||||#',
-      '#=................=#',
+      '#=.........c......=#',
       '#=................=#',
       '#=................=#',
       '#=................=#',
@@ -678,6 +838,43 @@ const MAPS = {
     ].map(r => r.split('')),
   },
 };
+
+/** Floor dining — sit on `c` or bar stool `o`; table is `*` directly north when present. */
+function buildCafeSeats() {
+  const grid = MAPS.cafe.grid;
+  const seats = [];
+  grid.forEach((row, ry) => {
+    row.forEach((ch, rx) => {
+      if (ch !== 'c' && ch !== 'o') return;
+      const tableRow = ry - 1;
+      const hasTable = tableRow >= 0 && grid[tableRow][rx] === '*';
+      if (ch === 'c' && !hasTable) return;
+      seats.push({
+        col: rx,
+        row: ry,
+        facing: 'up',
+        barStool: ch === 'o',
+        tableCol: hasTable ? rx : null,
+        tableRow: hasTable ? tableRow : null,
+      });
+    });
+  });
+  return seats;
+}
+
+const CAFE_SEATS = buildCafeSeats();
+const CAFE_COUNTER = { row: 3, left: 3, right: 16 };
+const COUNTER_CUP = { col: 11, row: 3 };
+const COUNTER_PLATE = { col: 13, row: 3 };
+
+/** Silent background customers — visual only until Monday plot (#13). */
+const CAFE_PATRONS = [
+  { seatCol: 3, seatRow: 6, shirt: '#c85848', hair: '#2a1810' },
+  { seatCol: 15, seatRow: 6, shirt: '#48a868', hair: '#1a1010' },
+  { seatCol: 10, seatRow: 8, shirt: '#8868c8', hair: '#4a3018' },
+];
+/** Player center Y when seated — over chair cushion (see drawCafeChair oy+7..15). */
+const CAFE_CHAIR_SIT_Y = 11;
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  Phaser Game
@@ -690,6 +887,7 @@ class GameScene extends Phaser.Scene {
     this._buildTileTextures();
     this._buildCharTexture();
     this._buildNPCTexture();
+    this._buildCupTexture();
   }
 
   _buildTileTextures() {
@@ -721,12 +919,28 @@ class GameScene extends Phaser.Scene {
     add('t_counter',32, 32, ctx => drawCounter(ctx, 0, 0));
     add('t_counter_bar', 32, 32, ctx => drawCounterBar(ctx, 0, 0));
     add('t_ctable', 32, 32, ctx => drawCafeTable(ctx, 0, 0));
+    add('t_cchair', 32, 32, ctx => drawCafeChair(ctx, 0, 0));
     add('t_exit',   32, 32, ctx => drawExitDoor(ctx, 0, 0));
     add('t_menu',   32, 32, ctx => drawMenuBoard(ctx, 0, 0));
     add('t_strike', 32, 32, ctx => drawStrikeBoard(ctx, 0, 0));
     add('t_hrules', 32, 32, ctx => drawHouseRulesBoard(ctx, 0, 0));
     add('t_book',   32, 32, ctx => drawBookOnFloor(ctx, 0, 0));
     add('t_street', 32, 32, ctx => drawStreetPath(ctx, 0, 0));
+    add('t_bfoundation', 32, 32, ctx => drawBuildingFoundation(ctx, 0, 0));
+    add('t_ctrim', 32, 32, ctx => drawCafeTrim(ctx, 0, 0));
+    add('t_bstool', 32, 32, ctx => drawBarStool(ctx, 0, 0));
+    const cw = (CAFE_COUNTER.right - CAFE_COUNTER.left + 1) * 32;
+    const cc = makeCanvas(cw, 32);
+    const foodItems = window.DragonsBrewMenu && DragonsBrewMenu.getVisibleItems
+      ? DragonsBrewMenu.getVisibleItems().food
+      : [];
+    drawDisplayCaseWide(cc.getContext('2d'), cw, 32, foodItems);
+    this.textures.addCanvas('cafe_display_case', cc);
+    CAFE_PATRONS.forEach((p, i) => {
+      const pc = makeCanvas(16, 24);
+      drawPatronSeated(pc.getContext('2d'), 0, 0, p.shirt, p.hair);
+      this.textures.addCanvas('patron_' + i, pc);
+    });
     const bc = makeCanvas(OUTSIDE_BUILDING.width * 32, OUTSIDE_BUILDING.height * 32);
     drawStreetBuildingFacade(bc.getContext('2d'), bc.width, bc.height);
     this.textures.addCanvas('street_building', bc);
@@ -760,6 +974,22 @@ class GameScene extends Phaser.Scene {
     const ctx = c.getContext('2d');
     drawNPC(ctx, 0, 0);
     this.textures.addCanvas('npc', c);
+  }
+
+  _buildCupTexture() {
+    for (let level = 0; level <= 4; level++) {
+      const c = makeCanvas(12, 16);
+      drawDrinkCup(c.getContext('2d'), 0, 0, level, false);
+      this.textures.addCanvas(`drink_cup_${level}`, c);
+      const ct = makeCanvas(12, 16);
+      drawDrinkCup(ct.getContext('2d'), 0, 0, level, true);
+      this.textures.addCanvas(`drink_cup_table_${level}`, ct);
+    }
+    for (let bites = 0; bites <= 3; bites++) {
+      const c = makeCanvas(16, 16);
+      drawFoodPlate(c.getContext('2d'), 0, 0, bites);
+      this.textures.addCanvas(`food_plate_${bites}`, c);
+    }
   }
 
   create() {
@@ -800,6 +1030,18 @@ class GameScene extends Phaser.Scene {
     this.dialogueActive = false;
     this.dialogueKind = null;
     this.orderInputActive = false;
+    this.visitPanelActive = false;
+    this.playerSeated = false;
+    this.seatAnchor = null;
+    this.sitHintAt = 0;
+    this.drinkCup = null;
+    this.cupWithPlayer = false;
+    this.cupFullness = 0;
+    this.foodPlate = null;
+    this.plateWithPlayer = false;
+    this.plateFullness = 0;
+    this.patronSprites = [];
+    this.cafeDisplayCase = null;
     this.dialogueBox = this.add.container(0, 0).setDepth(50).setScrollFactor(0).setVisible(false);
     this.dialogueBg = this.add.rectangle(0, 0, W * SCALE - DIALOGUE_PAD_X * 2, DIALOGUE_MIN_H, 0x000000, 0.82).setOrigin(0.5, 0);
     this.dialogueBorder = this.add.rectangle(0, 0, W * SCALE - DIALOGUE_PAD_X * 2, DIALOGUE_MIN_H).setStrokeStyle(2, 0xffe066).setOrigin(0.5, 0);
@@ -820,10 +1062,12 @@ class GameScene extends Phaser.Scene {
       '"You\'re fine, there\'s not a lot of my kind in this area. I\'m a Çampire—' +
       'vampire and werecat ancestry somewhere down the line. The wings plus the tail are a fun conversation starter."';
     this.maraOrderHint =
-      '(Give your order in spanish by typing on keyboard. Hold letters to see the forms they can take to type it in spanish.)';
+      'Type your order in Spanish in the box below, then press Enter.\n(Hold letters to see accent forms.)';
 
     this.maraOrderWrap = document.getElementById('mara-order-wrap');
     this.maraOrderInput = document.getElementById('mara-order-input');
+    this.maraVisitWrap = document.getElementById('mara-visit-wrap');
+    this.maraVisitText = document.getElementById('mara-visit-text');
     if (this.maraOrderInput) {
       const stopKeyBubble = (e) => {
         if (!this.orderInputActive) return;
@@ -851,6 +1095,9 @@ class GameScene extends Phaser.Scene {
     this.spaceKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
     this.eKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.E);
     this.rKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.R);
+    this.tKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.T);
+    this.dKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
+    this.fKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.F);
 
     this.audioStarted = false;
     this.input.keyboard.on('keydown', () => {
@@ -911,7 +1158,9 @@ class GameScene extends Phaser.Scene {
 
   _outsideGroundKey(rx, ry) {
     const ch = MAPS.outside.grid[ry][rx];
+    if (this._isOutsideBuildingCell(rx, ry)) return 't_bfoundation';
     if (ch === 'P' && ry >= 10) return 't_street';
+    if (ch === 'P' && ry === OUTSIDE_BUILDING.doorRow) return 't_street';
     return 't_grass';
   }
 
@@ -952,6 +1201,55 @@ class GameScene extends Phaser.Scene {
     };
   }
 
+  _placeCafeChairs() {
+    const u = TILE * SCALE;
+    CAFE_SEATS.forEach((seat) => {
+      const key = seat.barStool ? 't_bstool' : 't_cchair';
+      const chair = this.add.image(seat.col * u, seat.row * u, key)
+        .setOrigin(0, 0)
+        .setScale(SCALE)
+        .setDepth(9);
+      this.groundLayer.add(chair);
+    });
+  }
+
+  _placeCafePatrons() {
+    if (this.patronSprites.length) {
+      this.patronSprites.forEach((s) => s.destroy());
+      this.patronSprites = [];
+    }
+    const u = TILE * SCALE;
+    CAFE_PATRONS.forEach((p, i) => {
+      const pos = this._seatedPlayerPos({ col: p.seatCol, row: p.seatRow });
+      const spr = this.add.image(pos.x, pos.y, 'patron_' + i)
+        .setScale(SCALE)
+        .setDepth(11);
+      this.patronSprites.push(spr);
+    });
+  }
+
+  _placeCafeCounter() {
+    const u = TILE * SCALE;
+    const c = CAFE_COUNTER;
+    if (this.cafeDisplayCase) {
+      this.cafeDisplayCase.destroy();
+      this.cafeDisplayCase = null;
+    }
+    this.cafeDisplayCase = this.add.image(
+      c.left * u,
+      c.row * u,
+      'cafe_display_case'
+    ).setOrigin(0, 0).setScale(SCALE).setDepth(11);
+    this.tallLayer.add(this.cafeDisplayCase);
+    for (let col = c.left; col <= c.right; col++) {
+      const wx = col * u + 16 * SCALE;
+      const wy = c.row * u + 16 * SCALE;
+      const body = this.add.rectangle(wx, wy, 32 * SCALE, 32 * SCALE);
+      this.physics.add.existing(body, true);
+      this.solidBodies.add(body);
+    }
+  }
+
   _spawnPlayer(spawn) {
     const u = TILE * SCALE;
     this.player.setPosition(
@@ -976,6 +1274,15 @@ class GameScene extends Phaser.Scene {
     if (this.streetBuildingImg) {
       this.streetBuildingImg.destroy();
       this.streetBuildingImg = null;
+    }
+
+    if (this.cafeDisplayCase) {
+      this.cafeDisplayCase.destroy();
+      this.cafeDisplayCase = null;
+    }
+    if (this.patronSprites.length) {
+      this.patronSprites.forEach((s) => s.destroy());
+      this.patronSprites = [];
     }
 
     this.cameras.main.setBackgroundColor(mapData.backgroundColor);
@@ -1017,19 +1324,33 @@ class GameScene extends Phaser.Scene {
           const body = this.add.rectangle(wx + 16 * SCALE, wy + 20 * SCALE, 14 * SCALE, 24 * SCALE);
           this.physics.add.existing(body, true);
           this.solidBodies.add(body);
-        } else if (tid === 13) {
+        } else if (tid === 13 && mapKey === 'cafe') {
           const floor = this.add.image(wx, wy, 't_cfloor').setOrigin(0, 0).setScale(SCALE);
           this.groundLayer.add(floor);
-          const bar = this.add.image(wx, wy, 't_counter_bar').setOrigin(0, 0).setScale(SCALE).setDepth(11);
-          this.tallLayer.add(bar);
           const body = this.add.rectangle(wx + 16 * SCALE, wy + 16 * SCALE, 32 * SCALE, 32 * SCALE);
           this.physics.add.existing(body, true);
           this.solidBodies.add(body);
+        } else if (mapKey === 'cafe' && (ch === 'c' || ch === 'o')) {
+          const floor = this.add.image(wx, wy, 't_cfloor').setOrigin(0, 0).setScale(SCALE);
+          this.groundLayer.add(floor);
         } else if (mapKey === 'cafe' && ch === '>') {
           const floor = this.add.image(wx, wy, 't_cfloor').setOrigin(0, 0).setScale(SCALE);
           this.groundLayer.add(floor);
           const door = this.add.image(wx, wy, 't_exit').setOrigin(0, 0).setScale(SCALE).setDepth(11);
           this.tallLayer.add(door);
+        } else if (mapKey === 'cafe' && (ch === '#' || ch === '|')) {
+          const c = makeCanvas(32, 32);
+          drawCafeBorderTile(c.getContext('2d'), 0, 0, grid, rx, ry);
+          const key = 'cafe_border_' + rx + '_' + ry;
+          if (!this.textures.exists(key)) this.textures.addCanvas(key, c);
+          const img = this.add.image(wx, wy, key).setOrigin(0, 0).setScale(SCALE);
+          this.groundLayer.add(img);
+          const body = this.add.rectangle(wx + 16 * SCALE, wy + 16 * SCALE, 32 * SCALE, 32 * SCALE);
+          this.physics.add.existing(body, true);
+          this.solidBodies.add(body);
+        } else if (mapKey === 'cafe' && ch === '=') {
+          const img = this.add.image(wx, wy, 't_ctrim').setOrigin(0, 0).setScale(SCALE);
+          this.groundLayer.add(img);
         } else {
           const useStreet = mapKey === 'outside' && ch === 'P' && ry >= 10;
           let key = useStreet ? 't_street' : (TILE_KEY[tid] ?? 't_grass');
@@ -1068,6 +1389,12 @@ class GameScene extends Phaser.Scene {
 
     this._spawnPlayer(spawn || mapData.playerStart);
 
+    if (mapKey === 'cafe') {
+      this._placeCafeCounter();
+      this._placeCafeChairs();
+      this._placeCafePatrons();
+    }
+
     if (mapData.mara) {
       const m = mapData.mara;
       this.npc.setVisible(true);
@@ -1081,12 +1408,260 @@ class GameScene extends Phaser.Scene {
     }
 
     this.transitionCooldown = 150;
+    this.playerSeated = false;
+    this.seatAnchor = null;
+    this.player.body.moves = true;
+    this.player.body.setVelocity(0, 0);
     if (this.dialogueActive) this._closeDialogue();
     if (this.orderInputActive) this._closeMaraOrderInput();
+    if (this.visitPanelActive) this._closeVisitPanel();
+    if (mapKey !== 'cafe' && window.DragonsBrewMenu && typeof DragonsBrewMenu.abandonVisit === 'function') {
+      DragonsBrewMenu.abandonVisit();
+    }
+    if (mapKey !== 'cafe') {
+      this._hideCup();
+      this._hidePlate();
+    }
+
+    if (window.MoControlsPanel && typeof window.MoControlsPanel.sync === 'function') {
+      window.MoControlsPanel.sync();
+    }
+  }
+
+  _ensurePlateSprite() {
+    if (!this.foodPlate) {
+      this.foodPlate = this.add.image(0, 0, 'food_plate_3').setScale(SCALE).setDepth(14).setVisible(false);
+    }
+    return this.foodPlate;
+  }
+
+  _applyPlateBitesVisual() {
+    if (!this.foodPlate) return;
+    const level = Math.max(0, Math.min(3, this.plateFullness | 0));
+    this.foodPlate.setTexture(`food_plate_${level}`);
+  }
+
+  _hidePlate() {
+    this.plateWithPlayer = false;
+    this.plateFullness = 0;
+    if (this.foodPlate) this.foodPlate.setVisible(false);
+  }
+
+  _showCounterOrder() {
+    if (this.currentMap !== 'cafe') return;
+    const menuApi = window.DragonsBrewMenu;
+    const u = TILE * SCALE;
+    if (menuApi && menuApi.orderHasDrink && menuApi.orderHasDrink()) {
+      const cup = this._ensureCupSprite();
+      cup.setPosition(
+        COUNTER_CUP.col * u + u / 2,
+        COUNTER_CUP.row * u + u - 4 * SCALE
+      );
+      this.cupFullness = 4;
+      this._applyCupFullnessVisual();
+      cup.setVisible(true);
+      this.cupWithPlayer = false;
+      cup.setDepth(14);
+    }
+    if (menuApi && menuApi.orderHasFood && menuApi.orderHasFood()) {
+      const plate = this._ensurePlateSprite();
+      plate.setPosition(
+        COUNTER_PLATE.col * u + u / 2,
+        COUNTER_PLATE.row * u + u / 2
+      );
+      this.plateFullness = 3;
+      this._applyPlateBitesVisual();
+      plate.setVisible(true);
+      this.plateWithPlayer = false;
+      plate.setDepth(14);
+    }
+  }
+
+  _pickupOrderFromCounter() {
+    const menuApi = window.DragonsBrewMenu;
+    if (menuApi && menuApi.orderHasDrink && menuApi.orderHasDrink()) {
+      this.cupFullness = 4;
+      this._applyCupFullnessVisual();
+      this.cupWithPlayer = true;
+      this._ensureCupSprite().setVisible(true);
+    } else {
+      if (this.drinkCup) this.drinkCup.setVisible(false);
+      this.cupWithPlayer = false;
+    }
+    if (menuApi && menuApi.orderHasFood && menuApi.orderHasFood()) {
+      this.plateFullness = 3;
+      this._applyPlateBitesVisual();
+      this.plateWithPlayer = true;
+      this._ensurePlateSprite().setVisible(true);
+    } else {
+      if (this.foodPlate) this.foodPlate.setVisible(false);
+      this.plateWithPlayer = false;
+    }
+    this._syncCupPosition();
+    this._syncPlatePosition();
+  }
+
+  _isDinePhase() {
+    const menuApi = window.DragonsBrewMenu;
+    return menuApi && menuApi.getVisitPhase && menuApi.getVisitPhase() === 'dine';
+  }
+
+  _needsDrinkForVisit() {
+    const menuApi = window.DragonsBrewMenu;
+    return menuApi && menuApi.orderHasDrink && menuApi.orderHasDrink();
+  }
+
+  _needsFoodForVisit() {
+    const menuApi = window.DragonsBrewMenu;
+    return menuApi && menuApi.orderHasFood && menuApi.orderHasFood();
+  }
+
+  _checkDineComplete() {
+    if (!this._isDinePhase() || !this.playerSeated) return false;
+    if (this._needsDrinkForVisit() && this.cupFullness > 0) return false;
+    if (this._needsFoodForVisit() && this.plateFullness > 0) return false;
+    return true;
+  }
+
+  _tryCompleteDine() {
+    if (!this._checkDineComplete()) return;
+    const menuApi = window.DragonsBrewMenu;
+    if (menuApi && typeof menuApi.completeVisit === 'function') menuApi.completeVisit();
+    this._hideCup();
+    this._hidePlate();
+    this._showDialogue('You finish at the table. Mara smiles from the counter — "See you tomorrow."');
+    if (this.audioStarted) Audio.sfxInteract();
+  }
+
+  _eatFood() {
+    if (!this.plateWithPlayer || !this.foodPlate || !this.foodPlate.visible) return;
+    if (!this.playerSeated && this._isDinePhase()) return;
+    if (this.plateFullness <= 0) return;
+    this.plateFullness -= 1;
+    this._applyPlateBitesVisual();
+    if (this.audioStarted) Audio.sfxInteract();
+    this._tryCompleteDine();
+  }
+
+  _syncPlatePosition() {
+    if (!this.foodPlate || !this.foodPlate.visible || !this.plateWithPlayer) return;
+    const u = TILE * SCALE;
+
+    if (this.playerSeated && this.seatAnchor && this.seatAnchor.tableCol != null) {
+      const tc = this.seatAnchor.tableCol;
+      const tr = this.seatAnchor.tableRow;
+      this.foodPlate.setPosition(tc * u + u / 2 + 8 * SCALE, tr * u + u / 2 + 2 * SCALE);
+      this.foodPlate.setDepth(10 + (tr * u + u / 2) / (H * SCALE));
+      return;
+    }
+
+    const hand = 9 * SCALE;
+    let dx = hand;
+    let dy = 10 * SCALE;
+    if (this.facing === 'left') { dx = -hand; dy = 10 * SCALE; }
+    else if (this.facing === 'right') { dx = hand; dy = 10 * SCALE; }
+    else if (this.facing === 'up') { dx = hand * 0.75; dy = 8 * SCALE; }
+    else { dx = hand * 0.55; dy = hand * 0.95; }
+    this.foodPlate.setPosition(this.player.x + dx, this.player.y + dy);
+    this.foodPlate.setDepth(this.player.depth + 1);
+  }
+
+  _ensureCupSprite() {
+    if (!this.drinkCup) {
+      this.drinkCup = this.add.image(0, 0, 'drink_cup_4')
+        .setScale(SCALE)
+        .setDepth(14)
+        .setVisible(false);
+    }
+    return this.drinkCup;
+  }
+
+  _cupOnTable() {
+    return !!(this.playerSeated && this.seatAnchor && this.seatAnchor.tableCol != null);
+  }
+
+  _applyCupFullnessVisual() {
+    if (!this.drinkCup) return;
+    const level = Math.max(0, Math.min(4, this.cupFullness | 0));
+    const prefix = this._cupOnTable() ? 'drink_cup_table_' : 'drink_cup_';
+    this.drinkCup.setTexture(`${prefix}${level}`);
+  }
+
+  _sipDrink() {
+    if (!this.cupWithPlayer || !this.drinkCup || !this.drinkCup.visible) return;
+    if (this._isDinePhase() && !this.playerSeated) return;
+    if (this.cupFullness <= 0) return;
+    this.cupFullness -= 1;
+    this._applyCupFullnessVisual();
+    if (this.audioStarted) Audio.sfxInteract();
+    this._tryCompleteDine();
+  }
+
+  _showCounterCup() {
+    if (this.currentMap !== 'cafe') return;
+    const cup = this._ensureCupSprite();
+    const u = TILE * SCALE;
+    cup.setPosition(
+      COUNTER_CUP.col * u + u / 2,
+      COUNTER_CUP.row * u + u / 2 - 6 * SCALE
+    );
+    cup.setVisible(true);
+    this.cupWithPlayer = false;
+    cup.setDepth(14);
+  }
+
+  _giveCupToPlayer() {
+    if (this.currentMap !== 'cafe') return;
+    const cup = this._ensureCupSprite();
+    this.cupFullness = 4;
+    this._applyCupFullnessVisual();
+    cup.setVisible(true);
+    this.cupWithPlayer = true;
+    this._syncCupPosition();
+  }
+
+  _hideCup() {
+    this.cupWithPlayer = false;
+    this.cupFullness = 0;
+    if (this.drinkCup) this.drinkCup.setVisible(false);
+  }
+
+  _syncCupPosition() {
+    if (!this.drinkCup || !this.drinkCup.visible || !this.cupWithPlayer) return;
+    const u = TILE * SCALE;
+
+    if (this.playerSeated && this.seatAnchor && this.seatAnchor.tableCol != null) {
+      const tc = this.seatAnchor.tableCol;
+      const tr = this.seatAnchor.tableRow;
+      this.drinkCup.setPosition(tc * u + u / 2, tr * u + u / 2 + 2 * SCALE);
+      this.drinkCup.setDepth(10 + (tr * u + u / 2) / (H * SCALE));
+      this._applyCupFullnessVisual();
+      return;
+    }
+
+    const hand = 9 * SCALE;
+    let dx = hand;
+    let dy = 6 * SCALE;
+    if (this.facing === 'left') { dx = -hand; dy = 6 * SCALE; }
+    else if (this.facing === 'right') { dx = hand; dy = 6 * SCALE; }
+    else if (this.facing === 'up') { dx = hand * 0.75; dy = 4 * SCALE; }
+    else { dx = hand * 0.55; dy = hand * 0.85; }
+    this.drinkCup.setPosition(this.player.x + dx, this.player.y + dy);
+    this.drinkCup.setDepth(this.player.depth + 1);
+    this._applyCupFullnessVisual();
+  }
+
+  _syncVisitPhaseCup() {
+    const menuApi = window.DragonsBrewMenu;
+    if (!menuApi) return;
+    if (menuApi.getVisitPhase && menuApi.getVisitPhase() === 'pickup') {
+      this._showCounterOrder();
+    }
   }
 
   _checkDoorTransition() {
     if (this.transitionCooldown > 0) return;
+    if (this._isDinePhase()) return;
 
     const conf = MAPS[this.currentMap];
     if (!this._canUseDoor(conf)) return;
@@ -1097,12 +1672,102 @@ class GameScene extends Phaser.Scene {
   }
 
   _closeDialogue() {
-    const openOrderInput = this.dialogueKind === 'mara_order';
+    const kind = this.dialogueKind;
+    if (kind === 'mara_order' && this.orderInputActive) {
+      this.dialogueBox.setVisible(false);
+      this.dialogueActive = false;
+      this.dialogueKind = null;
+      if (this.audioStarted) Audio.sfxClose();
+      return;
+    }
+    if (kind === 'visit_beat') {
+      const menuApi = window.DragonsBrewMenu;
+      const prevPhase = menuApi && menuApi.getVisitPhase ? menuApi.getVisitPhase() : '';
+      this.dialogueBox.setVisible(false);
+      this.dialogueActive = false;
+      this.dialogueKind = null;
+      if (this.audioStarted) Audio.sfxClose();
+      if (menuApi && typeof menuApi.advanceVisitPhase === 'function') {
+        const nextText = menuApi.advanceVisitPhase();
+        const newPhase = menuApi.getVisitPhase ? menuApi.getVisitPhase() : '';
+        if (nextText) {
+          this._showDialogue(nextText, 'visit_beat');
+          this._syncVisitPhaseCup();
+        } else if (prevPhase === 'pickup' && newPhase === 'dine') {
+          this._pickupOrderFromCounter();
+          this._showDialogue(
+            'Sit at a table — press D to sip your drink, F to eat if you ordered food. Finish before you go.'
+          );
+        }
+      }
+      return;
+    }
+    if (kind === 'mara_intro' && window.DragonsBrewMenu) {
+      DragonsBrewMenu.markMaraIntroDone();
+    }
     this.dialogueBox.setVisible(false);
     this.dialogueActive = false;
     this.dialogueKind = null;
     if (this.audioStarted) Audio.sfxClose();
-    if (openOrderInput) this._openMaraOrderInput();
+    if (kind === 'mara_order') this._openMaraOrderInput();
+  }
+
+  _syncVisitPanelPosition() {
+    if (!this.maraVisitWrap || !this.game.canvas) return;
+    const cam = this.cameras.main;
+    const rect = this.game.canvas.getBoundingClientRect();
+    const scaleX = rect.width / cam.width;
+    const scaleY = rect.height / cam.height;
+    const boxW = cam.width - DIALOGUE_PAD_X * 2;
+    const lines = (this.maraVisitText && this.maraVisitText.textContent || '').split('\n').length;
+    const boxH = Math.min(
+      cam.height - DIALOGUE_MARGIN - DIALOGUE_TOP_CLEARANCE,
+      Math.max(DIALOGUE_MIN_H, 56 + lines * 18)
+    );
+    const top = rect.top + (cam.height - DIALOGUE_MARGIN - boxH) * scaleY;
+    this.maraVisitWrap.style.left = (rect.left + DIALOGUE_PAD_X * scaleX) + 'px';
+    this.maraVisitWrap.style.width = (boxW * scaleX) + 'px';
+    this.maraVisitWrap.style.top = top + 'px';
+    this.maraVisitWrap.style.fontSize = Math.max(11, Math.round(13 * scaleY)) + 'px';
+  }
+
+  _showVisitPanel(text) {
+    if (!this.maraVisitWrap || !this.maraVisitText) return;
+    if (this.dialogueActive) {
+      this.dialogueBox.setVisible(false);
+      this.dialogueActive = false;
+      this.dialogueKind = null;
+    }
+    this.visitPanelActive = true;
+    this.maraVisitText.textContent = text;
+    this.maraVisitWrap.classList.add('is-open');
+    this.maraVisitWrap.setAttribute('aria-hidden', 'false');
+    this._syncVisitPanelPosition();
+    if (this.audioStarted) Audio.sfxInteract();
+  }
+
+  _closeVisitPanel() {
+    if (!this.maraVisitWrap) return;
+    this.visitPanelActive = false;
+    this.maraVisitWrap.classList.remove('is-open');
+    this.maraVisitWrap.setAttribute('aria-hidden', 'true');
+    if (this.audioStarted) Audio.sfxClose();
+  }
+
+  _advanceVisitPanel() {
+    const menuApi = window.DragonsBrewMenu;
+    if (!menuApi || typeof menuApi.advanceVisitPhase !== 'function') {
+      this._closeVisitPanel();
+      return;
+    }
+    const nextText = menuApi.advanceVisitPhase();
+    if (nextText) {
+      this.maraVisitText.textContent = nextText;
+      this._syncVisitPanelPosition();
+      if (this.audioStarted) Audio.sfxInteract();
+      return;
+    }
+    this._closeVisitPanel();
   }
 
   _syncMaraOrderInputPosition() {
@@ -1148,23 +1813,34 @@ class GameScene extends Phaser.Scene {
     });
   }
 
-  _closeMaraOrderInput() {
+  _closeMaraOrderInput(playCloseSfx) {
     if (!this.maraOrderWrap || !this.maraOrderInput) return;
     this.orderInputActive = false;
     this._setGameKeyboardForOrderInput(false);
     this.maraOrderWrap.classList.remove('is-open');
     this.maraOrderWrap.setAttribute('aria-hidden', 'true');
     this.maraOrderInput.blur();
-    if (this.audioStarted) Audio.sfxClose();
+    if (playCloseSfx !== false && this.audioStarted) Audio.sfxClose();
   }
 
   _submitMaraOrder() {
     const text = (this.maraOrderInput && this.maraOrderInput.value || '').trim();
-    this._closeMaraOrderInput();
-    if (window.DragonsBrewMenu) {
-      DragonsBrewMenu.recordOrderSuccess(!!text);
+    const menuApi = window.DragonsBrewMenu;
+    this._closeMaraOrderInput(false);
+    if (!text) {
+      this._showDialogue(
+        'Mara waits patiently. "Take your time — look at the board again if you need to."'
+      );
+      return;
     }
-    if (text && this.audioStarted) Audio.sfxInteract();
+    if (!menuApi || typeof menuApi.beginVisitAfterOrder !== 'function') {
+      this._showDialogue(
+        'Something didn\'t load right — hard-refresh the page (Shift+reload) and try again.'
+      );
+      return;
+    }
+    menuApi.beginVisitAfterOrder(text);
+    this._showDialogue(menuApi.getVisitDialogue('reply'), 'visit_beat');
   }
 
   _pinDialogueBox() {
@@ -1209,6 +1885,7 @@ class GameScene extends Phaser.Scene {
   _onDialogueResize() {
     if (this.dialogueActive) this._layoutDialogueBox();
     if (this.orderInputActive) this._syncMaraOrderInputPosition();
+    if (this.visitPanelActive) this._syncVisitPanelPosition();
   }
 
   _showDialogue(text, kind) {
@@ -1263,6 +1940,56 @@ class GameScene extends Phaser.Scene {
     if (this.audioStarted) Audio.sfxInteract();
   }
 
+  /** Feet tile must be `c` on the café map — no snap from adjacent floor. */
+  _chairUnderPlayer() {
+    if (this.currentMap !== 'cafe') return null;
+    const cell = this._playerGridCell();
+    if (cell.col < 0 || cell.col >= COLS || cell.row < 0 || cell.row >= ROWS) return null;
+    if (MAPS.cafe.grid[cell.row][cell.col] !== 'c' && MAPS.cafe.grid[cell.row][cell.col] !== 'o') return null;
+    return CAFE_SEATS.find((s) => s.col === cell.col && s.row === cell.row) || null;
+  }
+
+  _seatedPlayerPos(seat) {
+    const u = TILE * SCALE;
+    return {
+      x: seat.col * u + u / 2,
+      y: seat.row * u + CAFE_CHAIR_SIT_Y * SCALE,
+    };
+  }
+
+  _showSitHint() {
+    const now = this.time.now;
+    if (this.dialogueActive || now - this.sitHintAt < 2200) return;
+    this.sitHintAt = now;
+    this._showDialogue('Stand on the chair.');
+  }
+
+  _sitAt(seat) {
+    this.playerSeated = true;
+    this.seatAnchor = seat;
+    this.facing = 'up';
+    const pos = this._seatedPlayerPos(seat);
+    this.player.setPosition(pos.x, pos.y);
+    this.player.body.setVelocity(0, 0);
+    this.player.body.moves = false;
+    this.player.body.updateFromGameObject();
+    this.player.setDepth(11);
+    this.player.play('idle-up', true);
+    this._syncCupPosition();
+    this._syncPlatePosition();
+  }
+
+  _standUp() {
+    this.playerSeated = false;
+    this.seatAnchor = null;
+    this.player.body.moves = true;
+    this.player.body.setVelocity(0, 0);
+    this._syncCupPosition();
+    this._syncPlatePosition();
+    this._applyPlayerDepth();
+    if (this.audioStarted) Audio.sfxInteract();
+  }
+
   _canTalkToMara() {
     if (this.currentMap !== 'cafe' || !this.npc.visible) return false;
     const dx = this.npc.x - this.player.x;
@@ -1274,9 +2001,27 @@ class GameScene extends Phaser.Scene {
 
   _openMaraDialogue() {
     var menuApi = window.DragonsBrewMenu;
-    if (!menuApi || !menuApi.hasMaraMet()) {
-      if (menuApi) menuApi.markMaraMet();
-      this._showDialogue(this.maraFirstDialogue);
+    if (!menuApi || !menuApi.hasMaraIntroDone()) {
+      if (menuApi && typeof menuApi.abandonVisit === 'function') menuApi.abandonVisit();
+      this._hideCup();
+      this._hidePlate();
+      this._showDialogue(this.maraFirstDialogue, 'mara_intro');
+    } else if (window.MoGameDays && window.MoGameDays.isDay8OrLater && window.MoGameDays.isDay8OrLater()) {
+      this._showDialogue(
+        'Mara smiles. "Week two already — your elder will check in soon. For now, the room is yours."'
+      );
+    } else if (window.MoGameDays && window.MoGameDays.hasCompletedVisitToday && window.MoGameDays.hasCompletedVisitToday()) {
+      this._showDialogue(
+        'Mara sets down a rag. "That\'s the visit for today — come back tomorrow when the week turns."'
+      );
+    } else if (menuApi.isVisitInProgress()) {
+      const phase = menuApi.getVisitPhase();
+      if (phase === 'dine') {
+        this._showDialogue('Mara glances your way. "Take your time at the table — finish up when you\'re ready."');
+      } else {
+        this._showDialogue(menuApi.getVisitDialogue(phase), 'visit_beat');
+        this._syncVisitPhaseCup();
+      }
     } else if (menuApi.canTakeMaraOrder()) {
       menuApi.markMaraTalk();
       this._showDialogue(
@@ -1288,7 +2033,7 @@ class GameScene extends Phaser.Scene {
         'Mara nods toward the drink menu on the wall. "Take a look at the board first—then come back when you\'re ready to order."'
       );
     } else {
-      this._showDialogue(this.maraFirstDialogue);
+      this._showDialogue(this.maraFirstDialogue, 'mara_intro');
     }
     if (this.audioStarted) Audio.sfxInteract();
   }
@@ -1345,6 +2090,39 @@ class GameScene extends Phaser.Scene {
       return;
     }
 
+    if (this.playerSeated) {
+      if (Phaser.Input.Keyboard.JustDown(this.tKey)) {
+        this._standUp();
+        return;
+      }
+      if (Phaser.Input.Keyboard.JustDown(this.dKey)) {
+        this._sipDrink();
+        return;
+      }
+      if (Phaser.Input.Keyboard.JustDown(this.fKey)) {
+        this._eatFood();
+        return;
+      }
+      player.setVelocity(0, 0);
+      this.facing = 'up';
+      player.setDepth(11);
+      this._syncCupPosition();
+      this._syncPlatePosition();
+      return;
+    }
+
+    if (Phaser.Input.Keyboard.JustDown(this.tKey)) {
+      const seat = this._chairUnderPlayer();
+      if (seat) {
+        this._sitAt(seat);
+        if (this.audioStarted) Audio.sfxInteract();
+        return;
+      }
+      if (this.currentMap === 'cafe') {
+        this._showSitHint();
+      }
+    }
+
     if (left)  { vx = -speed; this.facing = 'left'; }
     if (right) { vx =  speed; this.facing = 'right'; }
     if (up)    { vy = -speed; this.facing = 'up'; }
@@ -1361,6 +2139,8 @@ class GameScene extends Phaser.Scene {
 
     // update player depth — behind storefront when approaching from the north
     this._applyPlayerDepth();
+    this._syncCupPosition();
+    this._syncPlatePosition();
 
     this._checkDoorTransition();
   }
@@ -1391,4 +2171,5 @@ const config = {
 };
 
 const game = new Phaser.Game(config);
+window.__moGame = game;
 window.addEventListener('resize', () => game.scale.refresh());

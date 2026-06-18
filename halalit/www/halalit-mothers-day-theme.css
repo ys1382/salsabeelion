@@ -1,0 +1,124 @@
+/**
+ * Halalit — Mother's Week only (body.halalit-mothers-day).
+ * US Mother's Day (2nd Sunday in May) plus the following six days.
+ * Full-width soft purple occasion banner above the site header, pink page below,
+ * gold-orange poppy icons in the banner row (not neon).
+ */
+
+/* ---- Whole top section: soft purple band (the occasion banner, not a hairline) ---- */
+body.halalit-mothers-day .halalit-occasion-banner.halalit-occasion-banner--mothers {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem 1.1rem;
+  width: 100%;
+  max-width: none;
+  box-sizing: border-box;
+  min-height: clamp(4.75rem, 12vw, 6.25rem);
+  padding: clamp(1rem, 3.2vw, 1.55rem) clamp(0.65rem, 3vw, 1.75rem);
+  margin: 0;
+  border-bottom: 1px solid rgba(105, 85, 125, 0.28);
+  background: linear-gradient(185deg, #e4daf2 0%, #d8cce8 35%, #cec0df 72%, #c4b6d6 100%);
+  color: #4f3d5c;
+  text-align: center;
+}
+
+body.halalit-mothers-day .halalit-occasion-banner--mothers .halalit-occasion-banner__inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  flex: 1 1 12rem;
+  min-width: min(100%, 12rem);
+  max-width: 40rem;
+}
+
+body.halalit-mothers-day .halalit-occasion-banner__title {
+  color: #4a3a56;
+}
+body.halalit-mothers-day .halalit-occasion-banner__which {
+  color: #5d4a66;
+}
+
+/* ---- Poppies sit in the purple banner row (left / right of the message) ---- */
+.halalit-occasion-banner--mothers .halalit-mothers-poppy {
+  position: relative;
+  flex: 0 0 auto;
+  top: auto;
+  left: auto;
+  right: auto;
+  z-index: 1;
+  opacity: 0.92;
+  filter: drop-shadow(0 1px 2px rgba(95, 72, 38, 0.12));
+}
+
+.halalit-occasion-banner--mothers .halalit-mothers-poppy .halalit-poppy__bloom {
+  transform-box: fill-box;
+  transform-origin: 50% 48%;
+  animation: halalit-poppy-sway 5.2s ease-in-out infinite;
+}
+.halalit-occasion-banner--mothers .halalit-mothers-poppy--right .halalit-poppy__bloom {
+  animation-delay: -2.6s;
+}
+
+@keyframes halalit-poppy-sway {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-2.5deg);
+  }
+  50% {
+    transform: translateY(2px) rotate(2.5deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .halalit-occasion-banner--mothers .halalit-mothers-poppy .halalit-poppy__bloom {
+    animation: none !important;
+  }
+}
+
+@media (max-width: 520px) {
+  .halalit-occasion-banner--mothers .halalit-mothers-poppy {
+    transform: scale(0.9);
+    transform-origin: center center;
+  }
+}
+
+/* ---- Page: soft pink “paper” under the purple band ---- */
+body.halalit-mothers-day {
+  --bg: #efd8e0;
+  --panel: #f6e4eb;
+  --ink: #342a2e;
+  --dim: #6b5a62;
+  --accent: #8a5f72;
+  --accent-soft: #7a5568;
+  --rule: rgba(122, 85, 104, 0.28);
+  background:
+    radial-gradient(980px 520px at 14% 0%, rgba(255, 242, 248, 0.95) 0%, transparent 52%),
+    radial-gradient(800px 420px at 92% 12%, rgba(248, 220, 232, 0.55) 0%, transparent 45%),
+    linear-gradient(185deg, #fceef3 0%, #f3d9e4 42%, #ebcad8 100%) !important;
+  color: var(--ink);
+}
+
+body.halalit-mothers-day header {
+  border-bottom-color: rgba(122, 85, 104, 0.22);
+}
+
+body.halalit-mothers-day .site-tabs {
+  border-bottom-color: rgba(122, 85, 104, 0.22);
+}
+
+body.halalit-mothers-day a.play-primary {
+  background: linear-gradient(165deg, rgba(200, 160, 190, 0.45), rgba(180, 130, 165, 0.28));
+  border-color: rgba(122, 85, 104, 0.4);
+  color: #2a2226;
+}
+
+body.halalit-mothers-day .gate-banner {
+  border-color: rgba(122, 85, 104, 0.28);
+  background: rgba(255, 248, 252, 0.5);
+  color: var(--dim);
+}

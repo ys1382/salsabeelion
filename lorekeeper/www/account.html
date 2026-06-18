@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sign in — LoreKeeper</title>
+  <link rel="stylesheet" href="./lk-shared.css?v=8" />
+</head>
+<body>
+  <div class="lk-wrap" style="max-width:28rem">
+    <p class="header-nav"><a href="https://oddtrove.art/">← Odd Trove</a></p>
+    <h1>Your account</h1>
+    <p class="lk-lead">Your notes save to your account — private to you, not mixed with other writers.</p>
+
+    <div id="signedInView" hidden>
+      <div class="lk-panel">
+        <p>You’re signed in as <strong id="signedInEmail"></strong>.</p>
+        <button type="button" class="lk-btn" id="signOutBtn">Sign out</button>
+        <button type="button" class="lk-btn secondary" id="backToNotesBtn">Back to notes</button>
+      </div>
+      <div class="lk-panel" id="spellWordsPanel">
+        <h2 class="lk-panel-title" style="font-size:1rem">My spelling words</h2>
+        <p class="muted lk-section-lead">Names and terms LoreKeeper should never flag. Saved to your account only — not shared with other writers.</p>
+        <div class="lk-toolbar">
+          <input type="text" id="spellWordInput" placeholder="Etherei" autocomplete="off" spellcheck="false" />
+          <button type="button" class="lk-btn" id="spellWordAddBtn">Add</button>
+        </div>
+        <ul class="lk-spell-word-list" id="spellWordList" aria-live="polite"></ul>
+        <p class="lk-status" id="spellWordStatus" role="status"></p>
+        <p class="muted lk-spell-privacy">Spelling checks run locally in your browser — not sent to outside AI.</p>
+      </div>
+    </div>
+
+    <div id="authView">
+      <p class="lk-privacy">
+        LoreKeeper recommends a <strong>throwaway or junk email</strong> and a password you don’t use anywhere else.
+        We can’t tell if an address is disposable—but we’d rather you <strong>not</strong> share personal info you don’t need to.
+      </p>
+      <div class="lk-toolbar" role="tablist" style="margin-bottom:1rem">
+        <button type="button" class="lk-btn" role="tab" id="tabSignIn" aria-selected="true">Sign in</button>
+        <button type="button" class="lk-btn secondary" role="tab" id="tabSignUp" aria-selected="false">Create account</button>
+      </div>
+      <div class="lk-panel" id="formSignIn" role="tabpanel">
+        <form id="signInForm" novalidate>
+          <div class="lk-field">
+            <label for="signInEmail">Email</label>
+            <input type="email" id="signInEmail" autocomplete="username" required />
+          </div>
+          <div class="lk-field">
+            <label for="signInPassword">Password</label>
+            <input type="password" id="signInPassword" autocomplete="current-password" required minlength="8" />
+          </div>
+          <button type="submit" class="lk-btn">Sign in</button>
+        </form>
+      </div>
+      <div class="lk-panel" id="formSignUp" role="tabpanel" hidden>
+        <form id="signUpForm" novalidate>
+          <div class="lk-field">
+            <label for="signUpEmail">Email (junk / throwaway OK)</label>
+            <input type="email" id="signUpEmail" autocomplete="username" required />
+          </div>
+          <div class="lk-field">
+            <label for="signUpPassword">Password (8+ characters)</label>
+            <input type="password" id="signUpPassword" autocomplete="new-password" required minlength="8" />
+          </div>
+          <button type="submit" class="lk-btn">Create account</button>
+        </form>
+      </div>
+      <p class="lk-status" id="authError" role="alert"></p>
+    </div>
+  </div>
+  <script src="./lk-api-config.js?v=3"></script>
+  <script src="./lk-account-storage.js?v=7"></script>
+  <script src="./lk-spell-words.js?v=3"></script>
+  <script src="./lk-spell-settings.js?v=2"></script>
+  <script src="./lk-auth.js?v=3"></script>
+  <script>
+    (function () {
+      var params = new URLSearchParams(location.search);
+      var returnUrl = params.get("return") || "./index.html";
+
+      function notesUrl() {
+        if (returnUrl === "/lorekeeper/" || returnUrl === "/lorekeeper") return "./index.html";
+        if (returnUrl.charAt(0) === "/" && returnUrl.indexOf("/lorekeeper") === 0) {
+          var rest = returnUrl.slice("/lorekeeper".length).replace(/^\//, "");
+          return rest ? "./" + rest : "./index.html";
+        }
+        return returnUrl;
+      }
+      var errEl = document.getElementById("authError");
+
+      function showError(msg) {
+        errEl.textContent = msg || "";
+        errEl.hidden = !msg;
+        if (msg) errEl.scrollIntoView({ block: "nearest" });
+      }
+
+      function setBusy(formId, busy) {
+        var form = document.getElementById(formId);
+        if (!form) return;
+        form.querySelectorAll("button, input").forEach(function (el) {
+          el.disabled = !!busy;
+        });
+      }
+
+      document.getElementById("tabSignIn").addEventListener("click", function () {
+        document.getElementById("formSignIn").hidden = false;
+        document.getElementById("formSignUp").hidden = true;
+        showError("");
+      });
+      document.getElementById("tabSignUp").addEventListener("click", function () {
+        document.getElementById("formSignUp").hidden = false;
+        document.getElementById("formSignIn").hidden = true;
+        showError("");
+      });
+
+      if (params.get("api_down") === "1") {
+        showError("LoreKeeper could not reach the server. Wait a moment, then try Sign in again.");
+        document.getElementById("tabSignIn").click();
+      }
+
+      if (params.get("signup") === "1") document.getElementById("tabSignUp").click();
+
+      document.getElementById("signInForm").addEventListener("submit", function (e) {
+        e.preventDefault();
+        showError("");
+        var email = document.getElementById("signInEmail").value.trim();
+        var pass = document.getElementById("signInPassword").value;
+        if (!email || !pass) {
+          showError("Enter your email and password.");
+          return;
+        }
+        setBusy("signInForm", true);
+        LoreKeeperAuth.signIn(email, pass)
+          .then(function (res) {
+            if (res && res.ok) return LoreKeeperAuth.afterAuthSuccess(returnUrl);
+            showError(LoreKeeperAuth.friendlyError(res && res.error));
+          })
+          .catch(function () {
+            showError("Could not reach LoreKeeper. Try again in a moment.");
+          })
+          .finally(function () {
+            setBusy("signInForm", false);
+          });
+      });
+
+      document.getElementById("signUpForm").addEventListener("submit", function (e) {
+        e.preventDefault();
+        showError("");
+        var email = document.getElementById("signUpEmail").value.trim();
+        var pass = document.getElementById("signUpPassword").value;
+        if (!email || !pass) {
+          showError("Enter your email and password.");
+          return;
+        }
+        if (pass.length < 8) {
+          showError("Password needs at least 8 characters.");
+          return;
+        }
+        setBusy("signUpForm", true);
+        LoreKeeperAuth.signUp(email, pass)
+          .then(function (res) {
+            if (res && res.ok) return LoreKeeperAuth.afterAuthSuccess(returnUrl);
+            showError(LoreKeeperAuth.friendlyError(res && res.error));
+            if (res && (res.error === "email_taken" || res.error === "signups_disabled")) {
+              showError("You already have an account — sign in with the same email and password.");
+              document.getElementById("tabSignIn").click();
+            }
+          })
+          .catch(function () {
+            showError("Could not reach LoreKeeper. Try again in a moment.");
+          })
+          .finally(function () {
+            setBusy("signUpForm", false);
+          });
+      });
+
+      function injectOwnerPanel() {
+        if (!LoreKeeperAccountStorage.isOwner()) return;
+        var host = document.getElementById("signedInView");
+        if (!host || document.getElementById("ownerPanel")) return;
+        var panel = document.createElement("div");
+        panel.className = "lk-panel";
+        panel.id = "ownerPanel";
+        panel.style.marginTop = "0.75rem";
+        panel.innerHTML =
+          "<h2 style=\"margin:0 0 0.5rem;font-size:1rem;color:var(--accent)\">Owner’s Office</h2>" +
+          '<p class="muted">Site switches and account list — never other writers’ notes.</p>' +
+          '<p><a href="./office.html">Open Owner’s Office →</a></p>';
+        host.appendChild(panel);
+      }
+
+      LoreKeeperAccountStorage.ready.then(function () {
+        if (LoreKeeperAccountStorage.isSignedIn() && LoreKeeperAccountStorage.getEmail()) {
+          document.getElementById("authView").hidden = true;
+          document.getElementById("signedInView").hidden = false;
+          document.getElementById("signedInEmail").textContent = LoreKeeperAccountStorage.getEmail();
+          injectOwnerPanel();
+          LoreKeeperSpellSettings.refresh();
+        }
+      });
+
+      document.getElementById("signOutBtn").addEventListener("click", function () {
+        LoreKeeperAccountStorage.signOut().then(function () {
+          location.reload();
+        });
+      });
+      document.getElementById("backToNotesBtn").addEventListener("click", function () {
+        location.href = notesUrl();
+      });
+    })();
+  </script>
+</body>
+</html>

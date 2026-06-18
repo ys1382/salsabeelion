@@ -1,0 +1,121 @@
+/**
+ * Halalit — Father's Week only (body.halalit-fathers-day).
+ * US Father's Day (3rd Sunday in June) plus the following six days.
+ * Full-width soft blue-gray occasion banner above the site header; calm page below.
+ */
+
+body.halalit-fathers-day .halalit-occasion-banner.halalit-occasion-banner--fathers {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem 1.1rem;
+  width: 100%;
+  max-width: none;
+  box-sizing: border-box;
+  min-height: clamp(4.75rem, 12vw, 6.25rem);
+  padding: clamp(1rem, 3.2vw, 1.55rem) clamp(0.65rem, 3vw, 1.75rem);
+  margin: 0;
+  border-bottom: 1px solid rgba(72, 92, 118, 0.24);
+  background: linear-gradient(185deg, #d9e4ef 0%, #ccdbe8 35%, #c0d0e0 72%, #b4c6d8 100%);
+  color: #3a4858;
+  text-align: center;
+}
+
+body.halalit-fathers-day .halalit-occasion-banner--fathers .halalit-occasion-banner__inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  flex: 1 1 12rem;
+  min-width: min(100%, 12rem);
+  max-width: 40rem;
+}
+
+body.halalit-fathers-day .halalit-occasion-banner__title {
+  color: #344656;
+}
+body.halalit-fathers-day .halalit-occasion-banner__which {
+  color: #4a5c6e;
+}
+
+/* Same gold poppies as Mother's Week — in the blue Father's Week banner row */
+.halalit-occasion-banner--fathers .halalit-mothers-poppy {
+  position: relative;
+  flex: 0 0 auto;
+  top: auto;
+  left: auto;
+  right: auto;
+  z-index: 1;
+  opacity: 0.92;
+  filter: drop-shadow(0 1px 2px rgba(95, 72, 38, 0.12));
+}
+
+.halalit-occasion-banner--fathers .halalit-mothers-poppy .halalit-poppy__bloom {
+  transform-box: fill-box;
+  transform-origin: 50% 48%;
+  animation: halalit-poppy-sway 5.2s ease-in-out infinite;
+}
+.halalit-occasion-banner--fathers .halalit-mothers-poppy--right .halalit-poppy__bloom {
+  animation-delay: -2.6s;
+}
+
+@keyframes halalit-poppy-sway {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-2.5deg);
+  }
+  50% {
+    transform: translateY(2px) rotate(2.5deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .halalit-occasion-banner--fathers .halalit-mothers-poppy .halalit-poppy__bloom {
+    animation: none !important;
+  }
+}
+
+@media (max-width: 520px) {
+  .halalit-occasion-banner--fathers .halalit-mothers-poppy {
+    transform: scale(0.9);
+    transform-origin: center center;
+  }
+}
+
+body.halalit-fathers-day {
+  --bg: #dce6ef;
+  --panel: #e8f0f6;
+  --ink: #2a323c;
+  --dim: #5a6674;
+  --accent: #4a6578;
+  --accent-soft: #5c7386;
+  --rule: rgba(74, 101, 120, 0.26);
+  background:
+    radial-gradient(980px 520px at 14% 0%, rgba(248, 252, 255, 0.95) 0%, transparent 52%),
+    radial-gradient(800px 420px at 92% 12%, rgba(210, 228, 242, 0.55) 0%, transparent 45%),
+    linear-gradient(185deg, #eef4f9 0%, #dfe9f2 42%, #d2e0eb 100%) !important;
+  color: var(--ink);
+}
+
+body.halalit-fathers-day header {
+  border-bottom-color: rgba(74, 101, 120, 0.22);
+}
+
+body.halalit-fathers-day .site-tabs {
+  border-bottom-color: rgba(74, 101, 120, 0.22);
+}
+
+body.halalit-fathers-day a.play-primary {
+  background: linear-gradient(165deg, rgba(160, 190, 215, 0.45), rgba(130, 165, 195, 0.28));
+  border-color: rgba(74, 101, 120, 0.4);
+  color: #222830;
+}
+
+body.halalit-fathers-day .gate-banner {
+  border-color: rgba(74, 101, 120, 0.28);
+  background: rgba(248, 252, 255, 0.5);
+  color: var(--dim);
+}

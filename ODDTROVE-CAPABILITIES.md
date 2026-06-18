@@ -88,6 +88,25 @@ Last updated: 2026-06-14
 
 ---
 
+### LoreKeeper (`lorekeeper/www/` → owner-only `/lorekeeper/`)
+
+**Is:** Private notes for scatter-plotted writers — human-written entries (species, places, factions, etc.) saved per account. No AI-generated content.
+
+**Can do now:**
+- Sign-in required; notes on server per account (`lorekeeper/lorekeeper_api.py`)
+- Entry list, edit, search, export/import JSON
+- **Ask LoreKeeper** — recall and restate relationships from your own entries (local only; nothing sent to outside AI)
+- Owner’s Office — account list, sign-up switch, private feedback (never other writers’ note text)
+- Hub **Owner sites** link (visible only after hub owner sign-in)
+
+**Cannot do without new work:**
+- Public access (nginx owner gate still on)
+- Owner reading another account’s entries (by design)
+
+**Deploy:** `deploy-kids-sites.sh` + nginx `/lorekeeper/` and `/lorekeeper/api/` blocks in `top/nginx/oddtrove.art.conf`.
+
+---
+
 ### Climatic Mysteries (`climaticMysteries/` → owner-only `/climatic-mysteries/`)
 
 **Is:** Godot web export shell (`app.html`, `godot.html`, wasm/js) + HTML/JS narrative shell.

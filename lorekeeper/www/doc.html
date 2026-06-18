@@ -4,16 +4,15 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Document — LoreKeeper</title>
-  <link rel="stylesheet" href="./lk-fonts-hosted.css?v=1" />
-  <link rel="stylesheet" href="./lk-shared.css?v=21" />
+  <link rel="stylesheet" href="./lk-fonts-hosted.css?v=47" />
   <link rel="stylesheet" href="./vendor/quill/1.3.7/dist/quill.snow.css" />
+  <link rel="stylesheet" href="./lk-shared.css?v=47" />
   <script src="./lk-auth-gate.js"></script>
 </head>
 <body>
   <div class="lk-wrap lk-doc-wrap">
     <p class="header-nav"><a href="./index.html">← Documents</a> · <a href="https://oddtrove.art/">Odd Trove</a></p>
     <p class="lk-auth-bar" id="lkAuthBar"></p>
-    <p class="lk-status lk-save-status" id="saveStatus" aria-live="polite">Saved</p>
 
     <div class="lk-doc-layout">
       <aside class="lk-doc-sidebar lk-panel">
@@ -63,7 +62,14 @@
           <label for="docFont">Font</label>
           <select id="docFont" aria-label="Document font"></select>
         </div>
+        <p class="lk-save-status is-idle" id="saveStatus" aria-live="polite" role="status"></p>
         <p class="lk-word-count muted" id="wordCount" aria-live="polite">0 words</p>
+        <p class="lk-spell-flags" id="docSpellFlags" hidden></p>
+        <p class="muted lk-spell-privacy">Spelling checks run locally — not sent to outside AI.</p>
+        <div class="lk-doc-backup" id="docBackupBlock" hidden>
+          <p class="muted lk-backup-hint" id="docBackupHint"></p>
+          <button type="button" class="lk-btn secondary lk-restore-backup" id="restoreBackupBtn">Restore last backup</button>
+        </div>
         <button type="button" class="lk-btn secondary lk-delete-doc" id="deleteDocBtn">Delete document</button>
       </aside>
 
@@ -76,11 +82,14 @@
       </main>
     </div>
   </div>
+  <script src="./vendor/spell/typo.js"></script>
+  <script src="./lk-spell-words.js?v=3"></script>
+  <script src="./lk-spell.js?v=5"></script>
   <script src="./vendor/quill/1.3.7/dist/quill.min.js"></script>
-  <script src="./lk-api-config.js?v=5"></script>
-  <script src="./lk-account-storage.js?v=5"></script>
-  <script src="./lk-documents.js?v=6"></script>
-  <script src="./lk-font-catalog.js?v=1"></script>
-  <script src="./lk-doc-editor.js?v=15"></script>
+  <script src="./lk-api-config.js?v=47"></script>
+  <script src="./lk-account-storage.js?v=47"></script>
+  <script src="./lk-documents.js?v=47"></script>
+  <script src="./lk-font-catalog.js?v=47"></script>
+  <script src="./lk-doc-editor.js?v=47"></script>
 </body>
 </html>

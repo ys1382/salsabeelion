@@ -1,0 +1,1253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Owner’s Office — Halalit</title>
+  <link rel="stylesheet" href="./halalit-owner-testing-lab.css?v=20260611f" />
+  <style>
+    :root {
+      --bg: #1a1410;
+      --panel: #2a2018;
+      --ink: #f4ead6;
+      --dim: #b8a684;
+      --accent: #e3b86a;
+      --rule: rgba(227, 184, 106, 0.22);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: radial-gradient(1100px 520px at 12% 0%, #3a2a1c 0%, var(--bg) 55%), var(--bg);
+      color: var(--ink);
+      font-family: Georgia, Palatino, serif;
+      line-height: 1.55;
+      padding: clamp(1rem, 4vw, 2rem);
+    }
+    .wrap { max-width: 52rem; margin: 0 auto; }
+    h1 { color: var(--accent); font-weight: 400; font-size: 1.85rem; margin: 0 0 0.25rem; }
+    .lead { color: var(--dim); margin: 0 0 1.25rem; font-size: 0.95rem; }
+    h2 {
+      font-size: 1.05rem;
+      color: var(--accent);
+      margin: 0 0 0.65rem;
+      font-weight: 600;
+    }
+    .panel,
+    .office-section {
+      background: var(--panel);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 14px;
+      padding: 1.15rem 1.25rem;
+      margin-bottom: 0.65rem;
+    }
+    .office-section summary {
+      list-style: none;
+      cursor: pointer;
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 0.75rem;
+      user-select: none;
+    }
+    .office-section summary::-webkit-details-marker { display: none; }
+    .office-section summary::marker { content: ""; }
+    .office-section__title { flex: 1 1 auto; min-width: 0; }
+    .office-section__title strong {
+      font-size: 1.05rem;
+      color: var(--accent);
+      font-weight: 600;
+    }
+    .office-section__toggle {
+      flex: 0 0 2.35rem;
+      text-align: right;
+      font-family: system-ui, sans-serif;
+      font-size: 0.78rem;
+      color: var(--accent);
+      text-decoration: underline;
+      text-underline-offset: 0.12em;
+    }
+    .office-section__toggle::after { content: "More"; }
+    .office-section[open] .office-section__toggle::after { content: "Less"; }
+    .office-section__body {
+      margin-top: 0.65rem;
+      padding-top: 0.65rem;
+      border-top: 1px solid rgba(227, 184, 106, 0.12);
+    }
+    .office-section .hint { margin-bottom: 0.65rem; }
+    .office-section h2 { display: none; }
+    .office-section--nested {
+      margin-bottom: 0.45rem;
+      padding: 0.75rem 0.9rem;
+      background: rgba(0, 0, 0, 0.18);
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.04);
+    }
+    .office-section--nested:last-child { margin-bottom: 0; }
+    .office-section--nested .office-section__title strong { font-size: 0.95rem; }
+    .office-section--nested .office-section__body {
+      margin-top: 0.5rem;
+      padding-top: 0.5rem;
+    }
+    .hint {
+      font-family: system-ui, "Segoe UI", sans-serif;
+      font-size: 0.84rem;
+      color: var(--dim);
+      margin: 0 0 0.75rem;
+    }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+      gap: 0.65rem;
+      margin-bottom: 1rem;
+    }
+    .stat {
+      background: var(--panel);
+      border: 1px solid var(--rule);
+      border-radius: 12px;
+      padding: 0.75rem 0.9rem;
+      text-align: center;
+    }
+    .stat strong {
+      display: block;
+      font-size: 1.5rem;
+      color: var(--accent);
+      font-weight: 600;
+    }
+    .stat span {
+      font-family: system-ui, sans-serif;
+      font-size: 0.78rem;
+      color: var(--dim);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: system-ui, "Segoe UI", sans-serif;
+      font-size: 0.84rem;
+    }
+    th, td {
+      text-align: left;
+      padding: 0.45rem 0.5rem;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      vertical-align: top;
+    }
+    th { color: var(--dim); font-weight: 600; }
+    .copy-btn {
+      font-family: system-ui, sans-serif;
+      font-size: 0.75rem;
+      padding: 0.2rem 0.45rem;
+      border-radius: 6px;
+      border: 1px solid var(--rule);
+      background: rgba(227, 184, 106, 0.12);
+      color: var(--accent);
+      cursor: pointer;
+    }
+    .feedback-item {
+      font-family: system-ui, sans-serif;
+      font-size: 0.84rem;
+      padding: 0.55rem 0;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .feedback-item:last-child { border-bottom: none; }
+    .switch {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.55rem;
+      font-family: system-ui, sans-serif;
+      font-size: 0.9rem;
+      margin: 0.55rem 0;
+    }
+    .switch input { margin-top: 0.2rem; }
+    button.save-settings {
+      margin-top: 0.75rem;
+      padding: 0.55rem 1rem;
+      border-radius: 10px;
+      border: 1px solid var(--rule);
+      background: rgba(227, 184, 106, 0.2);
+      color: var(--accent);
+      cursor: pointer;
+      font-size: 0.95rem;
+    }
+    .denied, .status { font-family: system-ui, sans-serif; font-size: 0.9rem; color: var(--dim); }
+    .status.ok { color: #9fd4a8; }
+    a { color: var(--accent); }
+    .owner-vet-form {
+      display: grid;
+      gap: 0.55rem;
+      font-family: system-ui, sans-serif;
+      font-size: 0.88rem;
+      max-width: 36rem;
+    }
+    .owner-vet-field { display: flex; flex-direction: column; gap: 0.2rem; }
+    .owner-vet-field input, .owner-vet-field select, .owner-vet-field textarea {
+      font: inherit; padding: 0.45rem 0.55rem; border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2); color: var(--ink);
+    }
+    .owner-vet-flags { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; font-size: 0.82rem; }
+    .owner-vet-flags label { display: inline-flex; align-items: flex-start; gap: 0.35rem; max-width: 100%; }
+    .owner-vet-flags-lead { margin: 0 0 0.35rem; width: 100%; font-size: 0.78rem; }
+    .owner-vet-list-item {
+      font-family: system-ui, sans-serif; font-size: 0.84rem;
+      padding: 0.45rem 0; border-bottom: 1px solid rgba(255,255,255,0.06);
+      display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem;
+    }
+    .owner-vet-list-item strong { flex: 1 1 auto; min-width: 10rem; }
+    button.owner-vet-save {
+      margin-top: 0.35rem;
+      padding: 0.55rem 1.15rem;
+      border-radius: 10px;
+      border: 1px solid rgba(227, 184, 106, 0.38);
+      background: #3a2d1e;
+      color: #f0e2c8;
+      cursor: pointer;
+      font-family: system-ui, "Segoe UI", sans-serif;
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+    @media (hover: hover) and (pointer: fine) {
+      button.owner-vet-save:hover {
+        background: #4a3826;
+        border-color: rgba(227, 184, 106, 0.52);
+        color: var(--accent);
+      }
+    }
+    button.owner-vet-save--discretion {
+      background: #3a3020;
+      border-color: rgba(210, 170, 90, 0.45);
+      color: #f0e6d0;
+    }
+    @media (hover: hover) and (pointer: fine) {
+      button.owner-vet-save--discretion:hover {
+        background: #4a3c28;
+        border-color: rgba(210, 170, 90, 0.58);
+      }
+    }
+    button.owner-vet-save--reject {
+      background: #3a2420;
+      border-color: rgba(200, 120, 100, 0.42);
+      color: #f0ddd6;
+    }
+    @media (hover: hover) and (pointer: fine) {
+      button.owner-vet-save--reject:hover {
+        background: #4a2e28;
+        border-color: rgba(200, 120, 100, 0.55);
+      }
+    }
+    .owner-vet-mode-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin: 0 0 0.65rem;
+    }
+    .owner-vet-series-lead {
+      margin: 0 0 0.55rem;
+      font-size: 0.82rem;
+      line-height: 1.45;
+    }
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <p><a href="./index.html">← Halalit</a> · <a href="./account.html">Your account</a></p>
+    <h1>Owner’s Office</h1>
+    <p class="lead">Private to you. Nothing here is shown on the public site.</p>
+
+    <p id="denied" class="denied" hidden>Sign in with your owner email to open this page.</p>
+
+    <div id="office" hidden>
+      <div class="stats" id="statsRow" aria-label="Summary counts"></div>
+
+      <details class="office-section panel" id="ownerTestingLabSection" open>
+        <summary class="office-section__summary">
+          <span class="office-section__title"><strong>Testing lab</strong></span>
+          <span class="office-section__toggle" aria-hidden="true"></span>
+        </summary>
+        <div class="office-section__body">
+          <p class="owner-testing-lab-banner" role="note">
+            <strong>Private sandbox.</strong> Try Scroll Scanner and Bookcheck here while you vet—not as a reader on the public site.
+            Test runs are <strong>not</strong> logged to reader lookup lists, My TBR, scanner malfunction alerts, or “hand vet in progress” messages. The <strong>cover preview</strong> animates from the camera box on its own — even when title/author OCR is wrong, use <strong>Did you mean?</strong> or type by hand for Bookcheck.
+          </p>
+          <div class="scroll-scanner-panel" id="ownerTestScannerPanel">
+            <p class="scroll-scanner-lead">Same camera flow as the public Scroll Scanner. For cover preview, fill the dashed box with the jacket — animation does not need a correct title read. For Bookcheck, use <strong>Did you mean?</strong> when OCR swaps title and author.</p>
+            <div class="scroll-scanner-controls">
+              <div class="scroll-scanner-mode" role="group" aria-label="Scan mode">
+                <button type="button" class="import-btn scroll-scanner-mode-btn scroll-scanner-mode-btn--active" data-scanner="modeCover">Front cover</button>
+                <button type="button" class="import-btn scroll-scanner-mode-btn" data-scanner="modeBarcode">Barcode</button>
+              </div>
+              <div class="scroll-scanner-camera-wrap" data-scanner="cameraWrap">
+                <video data-scanner="video" class="scroll-scanner-video" playsinline muted aria-label="Testing lab camera"></video>
+                <button type="button" class="import-btn scroll-scanner-torch" data-scanner="torch" hidden aria-pressed="false" aria-label="Scanner light off">Light off</button>
+                <div class="scroll-scanner-frame-guide" aria-hidden="true"></div>
+                <div class="scroll-scanner-live" data-scanner="live" hidden aria-live="polite">
+                  <p class="scroll-scanner-live__hint" data-scanner="liveHint">Reading cover</p>
+                  <p class="scroll-scanner-live__title" data-scanner="liveTitle"></p>
+                  <p class="scroll-scanner-live__author" data-scanner="liveAuthor"></p>
+                </div>
+              </div>
+            </div>
+
+            <div class="owner-cover-preview-host" id="ownerTestCoverPreviewHost">
+              <h3>Cover preview (testing only)</h3>
+            </div>
+
+            <canvas data-scanner="canvas" class="scroll-scanner-canvas" aria-hidden="true"></canvas>
+            <canvas data-scanner="ocrCanvas" class="scroll-scanner-canvas" aria-hidden="true"></canvas>
+            <p class="scroll-scanner-status" data-scanner="status" aria-live="polite"></p>
+            <div class="scroll-scanner-actions">
+              <button type="button" class="import-btn" data-scanner="start">Start camera</button>
+              <button type="button" class="import-btn" data-scanner="confirm" disabled>Run test Bookcheck</button>
+              <button type="button" class="import-btn" data-scanner="rescan">Scan again</button>
+            </div>
+            <div class="scroll-scanner-edit">
+              <p class="scroll-scanner-edit-lead muted">Fix the read before Bookcheck, or type by hand below.</p>
+              <label class="scroll-scanner-field" for="ownerTestScannerTitleEdit">Title</label>
+              <input type="text" id="ownerTestScannerTitleEdit" data-scanner="titleEdit" autocomplete="off" placeholder="What the cover says" />
+              <label class="scroll-scanner-field" for="ownerTestScannerAuthorEdit">Author <span class="muted">(optional)</span></label>
+              <input type="text" id="ownerTestScannerAuthorEdit" data-scanner="authorEdit" autocomplete="off" placeholder="e.g. Peter S. Beagle" />
+            </div>
+            <div class="scroll-scanner-catalog" data-scanner="catalog" hidden>
+              <p class="scroll-scanner-catalog__lead muted">Did you mean?</p>
+              <ul class="scroll-scanner-alt-list" data-scanner="catalogList"></ul>
+            </div>
+          </div>
+
+          <div class="owner-test-bookcheck" id="ownerTestBookcheckPanel">
+            <h3>Test Bookcheck</h3>
+            <p class="hint" style="margin-top:0">Full Bookcheck verdict here—same rules as the public tab, without counting as a reader search.</p>
+            <label class="bookcheck-field" for="ownerTestBcTitle">Title</label>
+            <input type="text" id="ownerTestBcTitle" autocomplete="off" placeholder="e.g. The Penderwicks" />
+            <label class="bookcheck-field" for="ownerTestBcAuthor">Author <span class="muted">(optional)</span></label>
+            <input type="text" id="ownerTestBcAuthor" autocomplete="off" placeholder="e.g. Jeanne Birdsall" />
+            <div class="catalog-lookup-row">
+              <button type="button" class="import-btn" id="ownerTestBcLookup">Run test Bookcheck</button>
+              <span class="muted" id="ownerTestBcStatus" style="font-size:0.85rem" aria-live="polite"></span>
+            </div>
+            <div class="catalog-match-box" id="ownerTestBcMatchBox" aria-live="polite"><span id="ownerTestBcMatchLead"></span><ul class="match-list" id="ownerTestBcMatchList"></ul></div>
+            <div class="bookcheck-verdict" id="ownerTestBcVerdict" hidden tabindex="-1" aria-live="polite"></div>
+            <div class="bookcheck-series-note" id="ownerTestBcSeriesNote" hidden aria-live="polite"></div>
+            <p class="bookcheck-wiki-note muted" id="ownerTestBcWikiNote" hidden></p>
+            <p class="bookcheck-wiki-note muted" id="ownerTestBcWikidataNote" hidden></p>
+          </div>
+        </div>
+      </details>
+
+      <details class="office-section panel" id="ownerMyTbrSection" open>
+        <summary class="office-section__summary">
+          <span class="office-section__title"><strong>My TBR List</strong> <span class="muted" id="myTbrCountLabel"></span></span>
+          <span class="office-section__toggle" aria-hidden="true"></span>
+        </summary>
+        <div class="office-section__body">
+          <p class="hint">Built from the <strong>most-checked Bookcheck lookups</strong> by signed-in readers. Only titles that are <strong>not</strong> hand-vetted clean, hand-rejected, or reader-discretion yet. Private to you — <strong>not</strong> on the public Halalit site.</p>
+          <table>
+            <thead>
+              <tr><th>Title</th><th>Author</th><th>Lookups</th><th>Readers</th><th>Last</th><th></th></tr>
+            </thead>
+            <tbody id="myTbrFromLookups"></tbody>
+          </table>
+        </div>
+      </details>
+
+      <details class="office-section panel" id="ownerVetStation">
+        <summary class="office-section__summary">
+          <span class="office-section__title"><strong>Hand-vet, discretion &amp; reject on site</strong></span>
+          <span class="office-section__toggle" aria-hidden="true"></span>
+        </summary>
+        <div class="office-section__body">
+          <p class="hint">Only you see this. Clean vets, reader discretion, and rejects all save live on Bookcheck—no Cursor needed. On-site entries override static code for the same title.</p>
+
+          <details class="office-section office-section--nested" id="ownerVetFormSection">
+            <summary class="office-section__summary">
+              <span class="office-section__title"><strong>Vet, discretion, or reject a title</strong></span>
+              <span class="office-section__toggle" aria-hidden="true"></span>
+            </summary>
+            <div class="office-section__body">
+              <div class="owner-vet-mode-row" role="group" aria-label="Vet, discretion, or reject mode">
+                <button type="button" class="copy-btn" id="officeVetModeClean">Vet clean</button>
+                <button type="button" class="copy-btn" id="officeVetModeDiscretion">User's discretion</button>
+                <button type="button" class="copy-btn" id="officeVetModeReject">Reject</button>
+              </div>
+              <div id="officeOwnerVetFormHost"></div>
+            </div>
+          </details>
+
+          <details class="office-section office-section--nested" id="ownerVetListSection">
+            <summary class="office-section__summary">
+              <span class="office-section__title"><strong>Recent on-site vets</strong></span>
+              <span class="office-section__toggle" aria-hidden="true"></span>
+            </summary>
+            <div class="office-section__body">
+              <div id="officeOwnerVetList"></div>
+            </div>
+          </details>
+        </div>
+      </details>
+
+      <details class="office-section panel">
+        <summary class="office-section__summary">
+          <span class="office-section__title"><strong>Books readers looked up (most often)</strong></span>
+          <span class="office-section__toggle" aria-hidden="true"></span>
+        </summary>
+        <div class="office-section__body">
+          <p class="hint">From Bookcheck — <strong>reader accounts only</strong> (your scans are at the bottom). Use <strong>Vet</strong>, <strong>Discretion</strong>, or <strong>Reject</strong> on rows that still need an on-site call.</p>
+          <table>
+            <thead>
+              <tr><th>Title</th><th>Author</th><th>Readers</th><th></th></tr>
+            </thead>
+            <tbody id="popularLookups"></tbody>
+          </table>
+        </div>
+      </details>
+
+      <details class="office-section panel">
+        <summary class="office-section__summary">
+          <span class="office-section__title"><strong>Latest lookups (newest first)</strong></span>
+          <span class="office-section__toggle" aria-hidden="true"></span>
+        </summary>
+        <div class="office-section__body">
+          <p class="hint">Reader accounts only — your scans are not mixed in here. Repeat scans from one person fold together with no number.</p>
+          <table>
+            <thead>
+              <tr><th>Title</th><th>Author</th><th>Readers</th><th></th></tr>
+            </thead>
+            <tbody id="recentLookups"></tbody>
+          </table>
+        </div>
+      </details>
+
+      <details class="office-section panel">
+        <summary class="office-section__summary">
+          <span class="office-section__title"><strong>Scroll Scanner — mixed-up cover reads</strong></span>
+          <span class="office-section__toggle" aria-hidden="true"></span>
+        </summary>
+        <div class="office-section__body">
+          <p class="hint">When the camera grabbed the wrong words off a cover (or someone tried Bookcheck on a bad read). These are <strong>not</strong> listed in the lookup tables above.</p>
+          <table>
+            <thead>
+              <tr><th>What the scanner saw</th><th>When</th></tr>
+            </thead>
+            <tbody id="scannerAlerts"></tbody>
+          </table>
+        </div>
+      </details>
+
+      <details class="office-section panel">
+        <summary class="office-section__summary">
+          <span class="office-section__title"><strong>Suggestions &amp; “how we did” notes</strong></span>
+          <span class="office-section__toggle" aria-hidden="true"></span>
+        </summary>
+        <div class="office-section__body">
+          <p class="hint">Tips box, Bookcheck tab, and Book Quest reviews (liked / loved / wasn’t for me)—private to you.</p>
+          <div id="readerMessagesList"></div>
+        </div>
+      </details>
+
+      <details class="office-section panel">
+        <summary class="office-section__summary">
+          <span class="office-section__title"><strong>Reader feedback from Book Quest</strong></span>
+          <span class="office-section__toggle" aria-hidden="true"></span>
+        </summary>
+        <div class="office-section__body">
+          <p class="hint">“Learned something Halalit missed?” — private notes, not a public wall.</p>
+          <div id="feedbackList"></div>
+        </div>
+      </details>
+
+      <details class="office-section panel">
+        <summary class="office-section__summary">
+          <span class="office-section__title"><strong>Reader accounts</strong></span>
+          <span class="office-section__toggle" aria-hidden="true"></span>
+        </summary>
+        <div class="office-section__body">
+          <p class="hint">Emails only (passwords are never stored in plain text). Junk addresses are expected.</p>
+          <table>
+            <thead>
+              <tr><th>Email</th><th>Joined</th></tr>
+            </thead>
+            <tbody id="accountsList"></tbody>
+          </table>
+        </div>
+      </details>
+
+      <details class="office-section panel">
+        <summary class="office-section__summary">
+          <span class="office-section__title"><strong>Site switches</strong></span>
+          <span class="office-section__toggle" aria-hidden="true"></span>
+        </summary>
+        <div class="office-section__body">
+          <p class="hint">Turn Halalit features off without redeploying. Readers see a short “paused” note when something is off.</p>
+          <label class="switch">
+            <input type="checkbox" id="flagBookQuest" checked />
+            <span><strong>Book Quest</strong> — play link and quest page</span>
+          </label>
+          <label class="switch">
+            <input type="checkbox" id="flagBookcheck" checked />
+            <span><strong>Bookcheck</strong> — title lookup tab</span>
+          </label>
+          <label class="switch">
+            <input type="checkbox" id="flagScrollScanner" checked />
+            <span><strong>Scroll Scanner</strong> — camera scan tab</span>
+          </label>
+          <label class="switch">
+            <input type="checkbox" id="flagSignups" checked />
+            <span><strong>New sign-ups</strong> — allow creating accounts (sign-in still works)</span>
+          </label>
+          <button type="button" class="save-settings" id="saveSettingsBtn">Save switches</button>
+          <p class="status" id="settingsStatus" hidden></p>
+        </div>
+      </details>
+
+      <details class="office-section panel" id="ownerYourScans">
+        <summary class="office-section__summary">
+          <span class="office-section__title"><strong>Your scans</strong></span>
+          <span class="office-section__toggle" aria-hidden="true"></span>
+        </summary>
+        <div class="office-section__body">
+          <p class="hint">Your Bookcheck &amp; Scroll Scanner lookups — kept separate from the reader lists above. On-site vets you saved are grouped below.</p>
+          <table>
+            <thead>
+              <tr><th>Title</th><th>Author</th><th>Last</th></tr>
+            </thead>
+            <tbody id="ownerScansList"></tbody>
+          </table>
+
+          <details class="office-section office-section--nested" id="ownerScansVettedSection">
+            <summary class="office-section__summary">
+              <span class="office-section__title"><strong>Vetted</strong> <span class="muted" id="ownerScansVettedCount"></span></span>
+              <span class="office-section__toggle" aria-hidden="true"></span>
+            </summary>
+            <div class="office-section__body">
+              <p class="hint">Hand-checked clean — your Cursor roster plus on-site saves (on-site wins if both).</p>
+              <div id="ownerScansVettedList"></div>
+            </div>
+          </details>
+
+          <details class="office-section office-section--nested" id="ownerScansDiscretionSection">
+            <summary class="office-section__summary">
+              <span class="office-section__title"><strong>User's discretion</strong> <span class="muted" id="ownerScansDiscretionCount"></span></span>
+              <span class="office-section__toggle" aria-hidden="true"></span>
+            </summary>
+            <div class="office-section__body">
+              <p class="hint">Some content to weigh—not fanservice, LGBTQ, or adult-romance auto-reject. Cursor roster plus on-site saves.</p>
+              <div id="ownerScansDiscretionList"></div>
+            </div>
+          </details>
+
+          <details class="office-section office-section--nested" id="ownerScansRejectedSection">
+            <summary class="office-section__summary">
+              <span class="office-section__title"><strong>Rejected / flagged</strong> <span class="muted" id="ownerScansRejectedCount"></span></span>
+              <span class="office-section__toggle" aria-hidden="true"></span>
+            </summary>
+            <div class="office-section__body">
+              <p class="hint">Parked, flagged, and removed — Cursor roster plus on-site saves (on-site wins if both).</p>
+              <div id="ownerScansRejectedList"></div>
+            </div>
+          </details>
+        </div>
+      </details>
+    </div>
+  </div>
+  <script src="./halalit-bookcheck-config.js"></script>
+  <script src="./halalit-account-storage.js?v=20260610g"></script>
+  <script src="./halalit-owner-vets-runtime.js?v=20260611f"></script>
+  <script src="./halalit-personal-library.js?v=20260610g"></script>
+  <script src="./halalit-series-expand.js?v=20260528b"></script>
+  <script src="./halalit-curated-shelf-warnings.js?v=20260605v"></script>
+  <script src="./halalit-ai-vet-staging.js?v=20260611a"></script>
+  <script src="./halalit-family-shelf-policy.js?v=20260605t"></script>
+  <script src="./halalit-bookcheck-vet-source.js?v=20260611b"></script>
+  <script src="./halalit-owner-vet-flags.js?v=20260611a"></script>
+  <script src="./halalit-owner-vet-ui.js?v=20260611h"></script>
+  <script src="./halalit-shelf-themes.js?v=20260531c"></script>
+  <script src="./halalit-theme-index-data.js?v=20260529b"></script>
+  <script src="./halalit-theme-index.js?v=20260529b"></script>
+  <script src="./halalit-catalog-pins.js?v=20260605a"></script>
+  <script src="./halalit-bookcheck-report.js?v=20260611a"></script>
+  <script src="./halalit-wikipedia-shelf-hint.js?v=20260529a"></script>
+  <script src="./halalit-wikidata-shelf-hint.js?v=20260529b"></script>
+  <script src="./halalit-bookcheck-ai.js?v=20260604a"></script>
+  <script src="./halalit-lookup-quality.js?v=20260610c"></script>
+  <script src="./halalit-scroll-scanner.js?v=20260611f"></script>
+  <script src="./halalit-owner-cover-preview.js?v=20260611f"></script>
+  <script src="./halalit-bookcheck.js?v=20260611d"></script>
+  <script src="./halalit-auth.js"></script>
+  <script>
+    (function () {
+      function fmtDate(ts) {
+        if (!ts) return "—";
+        try {
+          return new Date(ts * 1000).toLocaleDateString(undefined, {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+          });
+        } catch (e) {
+          return "—";
+        }
+      }
+
+      function copyLine(title, author) {
+        var line = title + (author ? " by " + author : "");
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(line);
+        } else {
+          window.prompt("Copy:", line);
+        }
+      }
+
+      function renderStats(stats) {
+        var row = document.getElementById("statsRow");
+        row.innerHTML = "";
+        var items = [
+          ["Reader accounts", stats.readerAccounts || 0],
+          ["Feedback batches", stats.feedbackBatches || 0],
+          ["Unique looked-up titles", stats.uniqueLookups || 0],
+          ["Scanner mixed-up reads", stats.scannerAlerts || 0],
+          ["Suggestions & feedback", stats.readerMessages || 0],
+        ];
+        items.forEach(function (pair) {
+          var div = document.createElement("div");
+          div.className = "stat";
+          div.innerHTML = "<strong>" + pair[1] + "</strong><span>" + pair[0] + "</span>";
+          row.appendChild(div);
+        });
+      }
+
+      function openOwnerVetForm(title, author, presetTier) {
+        var station = document.getElementById("ownerVetStation");
+        var formSection = document.getElementById("ownerVetFormSection");
+        var Ui = window.HalalitOwnerVetUi;
+        if (station && Ui) {
+          station.open = true;
+          if (formSection) formSection.open = true;
+          Ui.fillForm(station, title, author, {
+            idPrefix: "officeOwnerVet",
+            presetTier: presetTier,
+          });
+          station.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }
+
+      function vetLookupTitle(title, author) {
+        openOwnerVetForm(title, author, "verified_clean");
+      }
+
+      function discretionLookupTitle(title, author) {
+        openOwnerVetForm(title, author, "user_discretion");
+      }
+
+      function rejectLookupTitle(title, author) {
+        openOwnerVetForm(title, author, "flag_review");
+      }
+
+      var cursorVetRoster = null;
+      var lastPopularLookups = [];
+
+      function vetNormKey(title, author) {
+        return String(title || "")
+          .toLowerCase()
+          .trim()
+          .replace(/\s+/g, " ") +
+          "|" +
+          String(author || "")
+            .toLowerCase()
+            .trim()
+            .replace(/\s+/g, " ");
+      }
+
+      function mergeCursorRoster(onSiteList, bucket) {
+        var out = (onSiteList || []).slice();
+        var seen = {};
+        out.forEach(function (entry) {
+          seen[vetNormKey(entry.title, entry.author)] = true;
+        });
+        var cursor = cursorVetRoster && cursorVetRoster[bucket];
+        if (cursor && cursor.length) {
+          cursor.forEach(function (entry) {
+            var key = vetNormKey(entry.title, entry.author);
+            if (!seen[key]) {
+              seen[key] = true;
+              out.push(entry);
+            }
+          });
+        }
+        out.sort(function (a, b) {
+          var ta = String(a.title || "").toLowerCase();
+          var tb = String(b.title || "").toLowerCase();
+          if (ta !== tb) return ta < tb ? -1 : 1;
+          var aa = String(a.author || "").toLowerCase();
+          var ab = String(b.author || "").toLowerCase();
+          return aa < ab ? -1 : aa > ab ? 1 : 0;
+        });
+        return out;
+      }
+
+      function rosterSettled(title, author) {
+        if (!cursorVetRoster) return false;
+        var key = vetNormKey(title, author);
+        var titleNorm = String(title || "")
+          .toLowerCase()
+          .trim()
+          .replace(/\s+/g, " ");
+        function inBucket(list) {
+          if (!list || !list.length) return false;
+          for (var i = 0; i < list.length; i++) {
+            var e = list[i];
+            if (vetNormKey(e.title, e.author) === key) return true;
+            var et = String(e.title || "")
+              .toLowerCase()
+              .trim()
+              .replace(/\s+/g, " ");
+            if (et === titleNorm && !String(e.author || "").trim()) return true;
+          }
+          return false;
+        }
+        return inBucket(cursorVetRoster.vetted) || inBucket(cursorVetRoster.rejected);
+      }
+
+      function needsHandVetForTbr(title, author) {
+        var Ui = window.HalalitOwnerVetUi;
+        if (Ui && typeof Ui.isHandSettled === "function" && Ui.isHandSettled(title, author)) return false;
+        if (rosterSettled(title, author)) return false;
+        return true;
+      }
+
+      function buildMyTbrRows(popularLookups) {
+        var rows = (popularLookups || []).filter(function (row) {
+          return needsHandVetForTbr(row.title, row.author);
+        });
+        rows.sort(function (a, b) {
+          var lc = (b.lookupCount || 0) - (a.lookupCount || 0);
+          if (lc) return lc;
+          var ac = (b.accountCount || 0) - (a.accountCount || 0);
+          if (ac) return ac;
+          return (b.lastAt || 0) - (a.lastAt || 0);
+        });
+        return rows;
+      }
+
+      function renderMyTbrFromLookups(popularLookups) {
+        lastPopularLookups = popularLookups || [];
+        var tbody = document.getElementById("myTbrFromLookups");
+        var countLabel = document.getElementById("myTbrCountLabel");
+        if (!tbody) return;
+        tbody.innerHTML = "";
+        var rows = buildMyTbrRows(lastPopularLookups);
+        if (countLabel) {
+          countLabel.textContent = rows.length ? "(" + rows.length + " to hand-read)" : "";
+        }
+        if (!rows.length) {
+          var tr0 = document.createElement("tr");
+          var td0 = document.createElement("td");
+          td0.colSpan = 6;
+          td0.textContent =
+            lastPopularLookups.length
+              ? "Every popular lookup is already hand-vetted or hand-rejected in code or on-site."
+              : "No reader Bookcheck lookups logged yet — this list fills as people search.";
+          tr0.appendChild(td0);
+          tbody.appendChild(tr0);
+          return;
+        }
+        rows.forEach(function (row) {
+          var tr = document.createElement("tr");
+          var tdT = document.createElement("td");
+          tdT.textContent = row.title || "—";
+          var tdA = document.createElement("td");
+          tdA.textContent = row.author || "—";
+          var tdL = document.createElement("td");
+          tdL.textContent = row.lookupCount != null ? String(row.lookupCount) : "—";
+          var tdR = document.createElement("td");
+          tdR.textContent = row.accountCount != null ? String(row.accountCount) : "";
+          var tdD = document.createElement("td");
+          tdD.textContent = fmtDate(row.lastAt);
+          tr.appendChild(tdT);
+          tr.appendChild(tdA);
+          tr.appendChild(tdL);
+          tr.appendChild(tdR);
+          tr.appendChild(tdD);
+          var tdBtn = document.createElement("td");
+          if (showVetButton(row.title, row.author)) {
+            var vetBtn = document.createElement("button");
+            vetBtn.type = "button";
+            vetBtn.className = "copy-btn";
+            vetBtn.textContent = "Vet";
+            vetBtn.addEventListener("click", function () {
+              vetLookupTitle(row.title, row.author);
+            });
+            tdBtn.appendChild(vetBtn);
+          }
+          if (showDiscretionButton(row.title, row.author)) {
+            var discretionBtn = document.createElement("button");
+            discretionBtn.type = "button";
+            discretionBtn.className = "copy-btn";
+            discretionBtn.textContent = "Discretion";
+            discretionBtn.addEventListener("click", function () {
+              discretionLookupTitle(row.title, row.author);
+            });
+            tdBtn.appendChild(discretionBtn);
+          }
+          if (showRejectButton(row.title, row.author)) {
+            var rejectBtn = document.createElement("button");
+            rejectBtn.type = "button";
+            rejectBtn.className = "copy-btn";
+            rejectBtn.textContent = "Reject";
+            rejectBtn.addEventListener("click", function () {
+              rejectLookupTitle(row.title, row.author);
+            });
+            tdBtn.appendChild(rejectBtn);
+          }
+          var copyBtn = document.createElement("button");
+          copyBtn.type = "button";
+          copyBtn.className = "copy-btn";
+          copyBtn.textContent = "Copy";
+          if (tdBtn.children.length) copyBtn.style.marginLeft = "0.35rem";
+          copyBtn.addEventListener("click", function () {
+            copyLine(row.title, row.author);
+          });
+          tdBtn.appendChild(copyBtn);
+          tr.appendChild(tdBtn);
+          tbody.appendChild(tr);
+        });
+      }
+
+      function loadCursorVetRoster() {
+        return fetch("./halalit-hand-vet-roster.json?v=20260611a")
+          .then(function (res) {
+            return res.ok ? res.json() : null;
+          })
+          .catch(function () {
+            return null;
+          });
+      }
+
+      function refreshOwnerVetListsFromRuntime() {
+        var Runtime = window.HalalitOwnerVetsRuntime;
+        var Ui = window.HalalitOwnerVetUi;
+        if (!Runtime || !Ui) return;
+        var all = Runtime.getEntries();
+        renderOnSiteVets(all);
+        var vetted = [];
+        var discretion = [];
+        var rejected = [];
+        all.forEach(function (entry) {
+          if (entry.tier === "verified_clean") vetted.push(entry);
+          else if (entry.tier === "user_discretion") discretion.push(entry);
+          else rejected.push(entry);
+        });
+        renderOwnerVetSubset(
+          mergeCursorRoster(vetted, "vetted"),
+          "ownerScansVettedList",
+          "No vetted titles on your Cursor roster or saved on-site yet.",
+          "ownerScansVettedCount"
+        );
+        renderOwnerVetSubset(
+          discretion,
+          "ownerScansDiscretionList",
+          "No reader-discretion titles saved on-site yet.",
+          "ownerScansDiscretionCount"
+        );
+        renderOwnerVetSubset(
+          mergeCursorRoster(rejected, "rejected"),
+          "ownerScansRejectedList",
+          "No rejected or flagged titles on your Cursor roster or saved on-site yet.",
+          "ownerScansRejectedCount"
+        );
+        renderMyTbrFromLookups(lastPopularLookups);
+      }
+
+      function lookupReaderCount(row) {
+        if (!row || !row.accountCount || row.accountCount < 2) return null;
+        return row.accountCount;
+      }
+
+      function showVetButton(title, author) {
+        var Ui = window.HalalitOwnerVetUi;
+        return !(Ui && typeof Ui.isCleanVetted === "function" && Ui.isCleanVetted(title, author));
+      }
+
+      function showDiscretionButton(title, author) {
+        var Ui = window.HalalitOwnerVetUi;
+        return !(Ui && typeof Ui.hasOnSiteDiscretion === "function" && Ui.hasOnSiteDiscretion(title, author));
+      }
+
+      function showRejectButton(title, author) {
+        var Ui = window.HalalitOwnerVetUi;
+        return !(Ui && typeof Ui.hasOnSiteReject === "function" && Ui.hasOnSiteReject(title, author));
+      }
+
+      function addLookupRow(tbody, title, author, count) {
+        var tr = document.createElement("tr");
+        var tdT = document.createElement("td");
+        tdT.textContent = title || "—";
+        var tdA = document.createElement("td");
+        tdA.textContent = author || "—";
+        tr.appendChild(tdT);
+        tr.appendChild(tdA);
+        var tdC = document.createElement("td");
+        tdC.textContent = count != null && count > 1 ? String(count) : "";
+        tr.appendChild(tdC);
+        var tdBtn = document.createElement("td");
+        if (showVetButton(title, author)) {
+          var vetBtn = document.createElement("button");
+          vetBtn.type = "button";
+          vetBtn.className = "copy-btn";
+          vetBtn.textContent = "Vet";
+          vetBtn.addEventListener("click", function () {
+            vetLookupTitle(title, author);
+          });
+          tdBtn.appendChild(vetBtn);
+        }
+        if (showDiscretionButton(title, author)) {
+          var discretionBtn = document.createElement("button");
+          discretionBtn.type = "button";
+          discretionBtn.className = "copy-btn";
+          discretionBtn.textContent = "Discretion";
+          discretionBtn.addEventListener("click", function () {
+            discretionLookupTitle(title, author);
+          });
+          tdBtn.appendChild(discretionBtn);
+        }
+        if (showRejectButton(title, author)) {
+          var rejectBtn = document.createElement("button");
+          rejectBtn.type = "button";
+          rejectBtn.className = "copy-btn";
+          rejectBtn.textContent = "Reject";
+          rejectBtn.addEventListener("click", function () {
+            rejectLookupTitle(title, author);
+          });
+          tdBtn.appendChild(rejectBtn);
+        }
+        var copyBtn = document.createElement("button");
+        copyBtn.type = "button";
+        copyBtn.className = "copy-btn";
+        copyBtn.textContent = "Copy";
+        if (tdBtn.children.length) copyBtn.style.marginLeft = "0.35rem";
+        copyBtn.addEventListener("click", function () {
+          copyLine(title, author);
+        });
+        tdBtn.appendChild(copyBtn);
+        tr.appendChild(tdBtn);
+        tbody.appendChild(tr);
+      }
+
+      function renderOnSiteVets(list) {
+        var Ui = window.HalalitOwnerVetUi;
+        var Runtime = window.HalalitOwnerVetsRuntime;
+        var box = document.getElementById("officeOwnerVetList");
+        if (!Ui || !box) return;
+        Ui.renderVetList(box, list, function (entry) {
+          if (!Runtime || !Runtime.deleteVet) return;
+          Runtime.deleteVet(entry.id).then(function () {
+            renderOnSiteVets(Runtime.getEntries());
+          });
+        });
+      }
+
+      function renderOwnerScans(scans) {
+        var tbody = document.getElementById("ownerScansList");
+        if (!tbody) return;
+        tbody.innerHTML = "";
+        if (!scans || !scans.length) {
+          var tr = document.createElement("tr");
+          var td = document.createElement("td");
+          td.colSpan = 3;
+          td.textContent = "No scans logged on your account yet — use Bookcheck or Scroll Scanner while signed in.";
+          tr.appendChild(td);
+          tbody.appendChild(tr);
+          return;
+        }
+        scans.forEach(function (row) {
+          var tr = document.createElement("tr");
+          var tdT = document.createElement("td");
+          tdT.textContent = row.title || "—";
+          var tdA = document.createElement("td");
+          tdA.textContent = row.author || "—";
+          var tdD = document.createElement("td");
+          tdD.textContent = fmtDate(row.lastAt);
+          tr.appendChild(tdT);
+          tr.appendChild(tdA);
+          tr.appendChild(tdD);
+          tbody.appendChild(tr);
+        });
+      }
+
+      function renderOwnerVetSubset(list, containerId, emptyText, countId) {
+        var Ui = window.HalalitOwnerVetUi;
+        var box = document.getElementById(containerId);
+        var countEl = document.getElementById(countId);
+        if (countEl) countEl.textContent = list && list.length ? "(" + list.length + ")" : "";
+        if (!Ui || !box) return;
+        if (!list || !list.length) {
+          box.textContent = emptyText;
+          return;
+        }
+        Ui.renderVetList(box, list, null);
+      }
+
+      function renderFeedback(list) {
+        var root = document.getElementById("feedbackList");
+        root.innerHTML = "";
+        if (!list || !list.length) {
+          root.textContent = "No reader feedback yet.";
+          return;
+        }
+        list.forEach(function (batch) {
+          var items = batch.items || [];
+          items.forEach(function (item) {
+            var div = document.createElement("div");
+            div.className = "feedback-item";
+            var title = item.titlePlain || item.title || "Unknown title";
+            var flags = (item.ruleFlags || []).join(", ");
+            var note = item.noteSnippet || "";
+            var rating = item.rating ? " · " + item.rating : "";
+            div.textContent =
+              title +
+              rating +
+              (flags ? " — flags: " + flags : "") +
+              (note ? " — “" + note + "”" : "") +
+              " · " +
+              fmtDate(batch.createdAt);
+            root.appendChild(div);
+          });
+        });
+      }
+
+      function renderReaderMessages(list) {
+        var root = document.getElementById("readerMessagesList");
+        if (!root) return;
+        root.innerHTML = "";
+        if (!list || !list.length) {
+          root.textContent = "No suggestions or Bookcheck notes yet.";
+          return;
+        }
+        list.forEach(function (row) {
+          var div = document.createElement("div");
+          div.className = "feedback-item";
+          var label = row.source === "tips_box" ? "Suggestion box" : row.source === "bookcheck" ? "Bookcheck" : "Book Quest";
+          var meta = row.meta || {};
+          var extra = meta.title ? " · " + meta.title : "";
+          if (meta.author) extra += " · " + meta.author;
+          if (meta.rating) extra += " · " + meta.rating;
+          div.textContent = label + extra + " — “" + (row.message || "").slice(0, 200) + "” · " + fmtDate(row.createdAt);
+          root.appendChild(div);
+        });
+      }
+
+      function applySettings(flags) {
+        document.getElementById("flagBookQuest").checked = !!flags.bookQuestEnabled;
+        document.getElementById("flagBookcheck").checked = !!flags.bookcheckEnabled;
+        document.getElementById("flagScrollScanner").checked = !!flags.scrollScannerEnabled;
+        document.getElementById("flagSignups").checked = !!flags.signupsEnabled;
+      }
+
+      function loadOffice() {
+        HalalitAuth.loadOwnerOffice().then(function (res) {
+          if (!res || !res.ok) return;
+          renderStats(res.stats || {});
+          renderMyTbrFromLookups(res.popularLookups || []);
+          var pop = document.getElementById("popularLookups");
+          pop.innerHTML = "";
+          (res.popularLookups || []).forEach(function (row) {
+            addLookupRow(pop, row.title, row.author, lookupReaderCount(row));
+          });
+          if (!pop.children.length) {
+            var tr = document.createElement("tr");
+            var td = document.createElement("td");
+            td.colSpan = 4;
+            td.textContent = "No lookups logged yet.";
+            tr.appendChild(td);
+            pop.appendChild(tr);
+          }
+          var rec = document.getElementById("recentLookups");
+          rec.innerHTML = "";
+          (res.recentLookups || []).forEach(function (row) {
+            addLookupRow(rec, row.title, row.author, lookupReaderCount(row));
+          });
+          if (!rec.children.length) {
+            var trR = document.createElement("tr");
+            var tdR = document.createElement("td");
+            tdR.colSpan = 4;
+            tdR.textContent = "No lookups logged yet.";
+            trR.appendChild(tdR);
+            rec.appendChild(trR);
+          }
+          renderFeedback(res.feedback || []);
+          renderReaderMessages(res.readerMessages || []);
+          var scan = document.getElementById("scannerAlerts");
+          scan.innerHTML = "";
+          (res.scannerAlerts || []).forEach(function (row) {
+            var tr = document.createElement("tr");
+            var tdT = document.createElement("td");
+            var label = (row.title || "?") + (row.author ? " · " + row.author : "");
+            if (row.phase === "bookcheck_blocked") label += " (tried Bookcheck)";
+            else if (row.phase === "bookcheck_attempt") label += " (AI scan blocked)";
+            tdT.textContent = label;
+            var tdD = document.createElement("td");
+            tdD.textContent = fmtDate(row.createdAt);
+            tr.appendChild(tdT);
+            tr.appendChild(tdD);
+            scan.appendChild(tr);
+          });
+          if (!scan.children.length) {
+            var tr0 = document.createElement("tr");
+            var td0 = document.createElement("td");
+            td0.colSpan = 2;
+            td0.textContent = "No mixed-up scanner reads reported yet.";
+            tr0.appendChild(td0);
+            scan.appendChild(tr0);
+          }
+          var acc = document.getElementById("accountsList");
+          acc.innerHTML = "";
+          (res.accounts || []).forEach(function (row) {
+            var tr = document.createElement("tr");
+            var tdE = document.createElement("td");
+            tdE.textContent = row.email + (row.isOwner ? " (you)" : "");
+            var tdD = document.createElement("td");
+            tdD.textContent = fmtDate(row.createdAt);
+            tr.appendChild(tdE);
+            tr.appendChild(tdD);
+            acc.appendChild(tr);
+          });
+          applySettings(res.settings || {});
+          renderOnSiteVets(res.onSiteVets || []);
+          renderOwnerScans(res.ownerScans || []);
+          renderOwnerVetSubset(
+            mergeCursorRoster(res.ownerVetVetted || [], "vetted"),
+            "ownerScansVettedList",
+            "No vetted titles on your Cursor roster or saved on-site yet.",
+            "ownerScansVettedCount"
+          );
+          renderOwnerVetSubset(
+            res.ownerVetDiscretion || [],
+            "ownerScansDiscretionList",
+            "No reader-discretion titles saved on-site yet.",
+            "ownerScansDiscretionCount"
+          );
+          renderOwnerVetSubset(
+            mergeCursorRoster(res.ownerVetRejected || [], "rejected"),
+            "ownerScansRejectedList",
+            "No rejected or flagged titles on your Cursor roster or saved on-site yet.",
+            "ownerScansRejectedCount"
+          );
+        });
+      }
+
+      document.getElementById("saveSettingsBtn").addEventListener("click", function () {
+        var flags = {
+          bookQuestEnabled: document.getElementById("flagBookQuest").checked,
+          bookcheckEnabled: document.getElementById("flagBookcheck").checked,
+          scrollScannerEnabled: document.getElementById("flagScrollScanner").checked,
+          signupsEnabled: document.getElementById("flagSignups").checked,
+        };
+        HalalitAuth.saveOwnerSettings(flags).then(function (res) {
+          var st = document.getElementById("settingsStatus");
+          if (res && res.ok) {
+            st.textContent = "Saved.";
+            st.className = "status ok";
+          } else {
+            st.textContent = "Could not save.";
+            st.className = "status";
+          }
+          st.hidden = false;
+        });
+      });
+
+      Promise.all([
+        HalalitAccountStorage.ready,
+        window.HalalitOwnerVetsRuntime && window.HalalitOwnerVetsRuntime.ready
+          ? window.HalalitOwnerVetsRuntime.ready
+          : Promise.resolve(),
+        loadCursorVetRoster(),
+      ]).then(function (results) {
+        cursorVetRoster = results[2] || null;
+        if (!HalalitAccountStorage.isSignedIn() || !HalalitAccountStorage.isOwner()) {
+          document.getElementById("denied").hidden = false;
+          if (!HalalitAccountStorage.isSignedIn()) {
+            location.href = "./account.html?return=" + encodeURIComponent(location.pathname);
+          }
+          return;
+        }
+        document.getElementById("office").hidden = false;
+        var station = document.getElementById("ownerVetStation");
+        var host = document.getElementById("officeOwnerVetFormHost");
+        var Ui = window.HalalitOwnerVetUi;
+        if (station && host && Ui) {
+          host.innerHTML = Ui.formHtml({ idPrefix: "officeOwnerVet" });
+          Ui.wireForm(station, {
+            idPrefix: "officeOwnerVet",
+            onSaved: function () {
+              refreshOwnerVetListsFromRuntime();
+            },
+          });
+          var vetCleanBtn = document.getElementById("officeVetModeClean");
+          var vetDiscretionBtn = document.getElementById("officeVetModeDiscretion");
+          var vetRejectBtn = document.getElementById("officeVetModeReject");
+          if (vetCleanBtn) {
+            vetCleanBtn.addEventListener("click", function () {
+              Ui.presetFormMode(station, { idPrefix: "officeOwnerVet", presetTier: "verified_clean" });
+            });
+          }
+          if (vetDiscretionBtn) {
+            vetDiscretionBtn.addEventListener("click", function () {
+              Ui.presetFormMode(station, { idPrefix: "officeOwnerVet", presetTier: "user_discretion" });
+            });
+          }
+          if (vetRejectBtn) {
+            vetRejectBtn.addEventListener("click", function () {
+              Ui.presetFormMode(station, { idPrefix: "officeOwnerVet", presetTier: "flag_review" });
+            });
+          }
+        }
+        loadOffice();
+        initOwnerTestingLab();
+      });
+
+      function initOwnerTestingLab() {
+        var coverHost = document.getElementById("ownerTestCoverPreviewHost");
+        var coverPreview =
+          coverHost && window.HalalitOwnerCoverPreview && typeof window.HalalitOwnerCoverPreview.init === "function"
+            ? window.HalalitOwnerCoverPreview.init(coverHost)
+            : null;
+        var scanPanel = document.getElementById("ownerTestScannerPanel");
+        if (scanPanel && window.HalalitScrollScannerInit) {
+          window.HalalitScrollScannerInit(scanPanel, {
+            primary: false,
+            ownerTesting: true,
+            bookcheckPanelId: "ownerTestBookcheckPanel",
+            coverPreview: coverPreview,
+          });
+        }
+        var bcPanel = document.getElementById("ownerTestBookcheckPanel");
+        if (bcPanel && window.HalalitBookcheck && typeof window.HalalitBookcheck.init === "function") {
+          window.HalalitBookcheck.init(bcPanel, {
+            primary: false,
+            ownerTesting: true,
+            ids: {
+              title: "ownerTestBcTitle",
+              author: "ownerTestBcAuthor",
+              lookup: "ownerTestBcLookup",
+              status: "ownerTestBcStatus",
+              matchBox: "ownerTestBcMatchBox",
+              matchLead: "ownerTestBcMatchLead",
+              matchList: "ownerTestBcMatchList",
+              verdict: "ownerTestBcVerdict",
+              seriesNote: "ownerTestBcSeriesNote",
+              wikiNote: "ownerTestBcWikiNote",
+              wikidataNote: "ownerTestBcWikidataNote",
+            },
+          });
+        }
+        var labSection = document.getElementById("ownerTestingLabSection");
+        if (labSection && window.HalalitScrollScanner && typeof window.HalalitScrollScanner.setPanelActive === "function") {
+          labSection.addEventListener("toggle", function () {
+            window.HalalitScrollScanner.setPanelActive("ownerTestScannerPanel", labSection.open);
+          });
+          if (labSection.open) {
+            window.HalalitScrollScanner.setPanelActive("ownerTestScannerPanel", true);
+          }
+        }
+      }
+    })();
+  </script>
+</body>
+</html>

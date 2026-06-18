@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Halalit — lofi reader nook demo (archived)</title>
+  <link rel="dns-prefetch" href="https://image.pollinations.ai" />
+  <link rel="preconnect" href="https://image.pollinations.ai" crossorigin />
+  <link rel="stylesheet" href="./demo-styles.css" />
+</head>
+<body>
+  <h1>Lofi reader nook — archived demo</h1>
+  <p class="lead">
+    Not shipped on the public Halalit site. This page shows the framed Pollinations reading-nook illustration
+    under sample CSS spines — the combo we set aside until art style matches the shelf.
+  </p>
+
+  <section class="panel reader-look-panel" aria-labelledby="reader-look-heading">
+    <h2 id="reader-look-heading">Your reader in the library</h2>
+    <p class="lead" style="margin-bottom:1rem;font-size:0.95rem">
+      Describe outfit, hair, and skin tone. Save, then the nook illustration below refreshes (Pollinations, online only).
+    </p>
+    <div class="reader-look-field">
+      <label for="readerLookOutfit">Clothes and style</label>
+      <textarea id="readerLookOutfit" rows="3" maxlength="280" placeholder="long burgundy cardigan, long skirt…"></textarea>
+    </div>
+    <div class="reader-look-field" style="margin-top:0.75rem">
+      <label for="readerLookHair">Hair (optional)</label>
+      <input id="readerLookHair" type="text" maxlength="280" autocomplete="off" />
+    </div>
+    <div class="reader-look-field" style="margin-top:0.75rem">
+      <label for="readerLookSkinTone">Skin tone (optional)</label>
+      <input id="readerLookSkinTone" type="text" maxlength="280" autocomplete="off" />
+    </div>
+    <p style="margin-top:1rem">
+      <button type="button" class="import-btn" id="readerLookSave">Save my reader</button>
+      <span id="readerLookStatus" style="margin-left:0.75rem;font-family:system-ui,sans-serif;font-size:0.88rem;color:var(--dim)"></span>
+    </p>
+  </section>
+
+  <div class="library-stage" id="libraryStage" aria-live="polite"></div>
+
+  <p class="note" style="margin-top:1rem">
+    See <code>README.md</code> in this folder. Public site: interactive spines only in <code>halalit/www/index.html</code>.
+  </p>
+
+  <script src="./halalit-reader-look.js"></script>
+  <script src="./halalit-library-scene.js"></script>
+  <script>
+    (function () {
+      function renderDemoShelf() {
+        var stage = document.getElementById("libraryStage");
+        var Scene = window.HalalitLibraryScene;
+        var nook =
+          Scene && typeof Scene.readerNookPaintHtml === "function"
+            ? '<div class="library-reader-nook">' + Scene.readerNookPaintHtml() + "</div>"
+            : "";
+        var spines =
+          '<div class="library-shelf-row">' +
+          '<span class="book-spine">The Hobbit</span>' +
+          '<span class="book-spine">Charlotte’s Web</span>' +
+          '<span class="book-spine">Where the Mountain Meets the Moon</span>' +
+          "</div>";
+        stage.innerHTML =
+          '<div class="library-diorama library-diorama--with-reader library-diorama--paint-in-nook">' +
+          '<div class="library-diorama__shelf-veil" aria-hidden="true"></div>' +
+          '<div class="library-room library-room--with-reader">' +
+          spines +
+          nook +
+          '<div class="library-floor" aria-hidden="true"></div>' +
+          "</div></div>";
+      }
+      renderDemoShelf();
+      window.addEventListener("halalit-reader-look-saved", renderDemoShelf);
+    })();
+  </script>
+</body>
+</html>
