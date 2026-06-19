@@ -530,6 +530,16 @@ function drawExitDoor(ctx, ox, oy) {
   rect(ctx, ox + 3, oy + 28, 26, 4, '#4a3028');
 }
 
+/** Tiny green cross-star for door twinkle overlay. */
+function drawDoorSpark(ctx, ox, oy) {
+  rect(ctx, ox + 3, oy, 2, 8, '#9affc8');
+  rect(ctx, ox, oy + 3, 8, 2, '#9affc8');
+  px(ctx, ox + 3, oy + 3, '#e8fff4');
+  px(ctx, ox + 4, oy + 3, '#e8fff4');
+  px(ctx, ox + 3, oy + 4, '#e8fff4');
+  px(ctx, ox + 4, oy + 4, '#e8fff4');
+}
+
 function drawMenuBoard(ctx, ox, oy) {
   drawCafeWall(ctx, ox, oy);
   rect(ctx, ox + 3, oy + 5, 26, 22, '#e8e0d0');
@@ -779,6 +789,48 @@ const READABLES = [
 const OUTSIDE_BUILDING = { left: 5, top: 6, width: 8, height: 5, doorCol: 8, doorRow: 10 };
 const CAFE_DOOR_ROW = 10;
 
+/** Sparkle anchors on the door panel (local px) — clustered center, not frame edges. */
+function doorSparkleLocalPoints(mapKey) {
+  if (mapKey === 'outside') {
+    const bw = OUTSIDE_BUILDING.width * TILE;
+    const dx = Math.floor(bw / 2) - 28;
+    const cx = dx + 28;
+    const cy = 138;
+    return [
+      [cx - 10, cy - 6], [cx + 2, cy - 8], [cx + 10, cy - 5],
+      [cx - 6, cy + 1], [cx + 6, cy + 2], [cx - 2, cy + 6],
+      [cx + 12, cy + 1], [cx - 12, cy - 2], [cx + 4, cy + 8],
+    ];
+  }
+  if (mapKey === 'cafe') {
+    const cx = 16;
+    const cy = 18;
+    return [
+      [cx - 5, cy - 4], [cx + 1, cy - 5], [cx + 6, cy - 2],
+      [cx - 3, cy + 1], [cx + 4, cy + 2], [cx - 6, cy + 3],
+      [cx + 7, cy + 1], [cx, cy + 5], [cx - 1, cy - 1],
+    ];
+  }
+  return [];
+}
+
+function doorSparkleWorldPoints(mapKey) {
+  const s = SCALE;
+  const locs = doorSparkleLocalPoints(mapKey);
+  if (!locs.length) return [];
+  if (mapKey === 'outside') {
+    const b = OUTSIDE_BUILDING;
+    const bx = b.left * TILE;
+    const by = b.top * TILE;
+    return locs.map(([x, y]) => ({ x: (bx + x) * s, y: (by + y) * s }));
+  }
+  const { col } = MAPS.cafe.doorPos;
+  const row = 11; // visual exit tile ('>' row)
+  const tx = col * TILE;
+  const ty = row * TILE;
+  return locs.map(([x, y]) => ({ x: (tx + x) * s, y: (ty + y) * s }));
+}
+
 const MAPS = {
   outside: {
     backgroundColor: '#1a1a2e',
@@ -929,6 +981,7 @@ class GameScene extends Phaser.Scene {
     add('t_bfoundation', 32, 32, ctx => drawBuildingFoundation(ctx, 0, 0));
     add('t_ctrim', 32, 32, ctx => drawCafeTrim(ctx, 0, 0));
     add('t_bstool', 32, 32, ctx => drawBarStool(ctx, 0, 0));
+    add('t_spark', 8, 8, ctx => drawDoorSpark(ctx, 0, 0));
     const cw = (CAFE_COUNTER.right - CAFE_COUNTER.left + 1) * 32;
     const cc = makeCanvas(cw, 32);
     const foodItems = window.DragonsBrewMenu && DragonsBrewMenu.getVisibleItems
@@ -1263,6 +1316,55 @@ class GameScene extends Phaser.Scene {
     this.player.body.updateFromGameObject();
   }
 
+  _destroyDoorSparkles() {
+    if (this.doorSparkleTimer) {
+      this.doorSparkleTimer.remove(false);
+      this.doorSparkleTimer = null;
+    }
+    if (this.doorSparkleGfx) {
+      this.doorSparkleGfx.destroy();
+      this.doorSparkleGfx = null;
+    }
+    this.doorSparklePts = null;
+    this.doorSparkPhase = null;
+  }
+
+  _drawDoorSparkles() {
+    const g = this.doorSparkleGfx;
+    const pts = this.doorSparklePts;
+    if (!g || !pts || !pts.length) return;
+    g.clear();
+    const t = this.time.now * 0.001;
+    pts.forEach((pt, i) => {
+      const phase = this.doorSparkPhase[i];
+      const pulse = 0.5 + 0.5 * Math.sin(t * (1.4 + i * 0.13) + phase);
+      const alpha = 0.12 + pulse * 0.45;
+      const size = i % 4 === 0 ? 2 : 1;
+      g.fillStyle(0x9affc8, alpha);
+      g.fillRect(pt.x - size / 2, pt.y - size / 2, size, size);
+      if (pulse > 0.75) {
+        g.fillStyle(0xe8fff4, alpha * 0.5);
+        g.fillRect(pt.x, pt.y, 1, 1);
+      }
+    });
+  }
+
+  _createDoorSparkles() {
+    this._destroyDoorSparkles();
+    const pts = doorSparkleWorldPoints(this.currentMap);
+    if (!pts.length) return;
+
+    this.doorSparklePts = pts;
+    this.doorSparkPhase = pts.map(() => Math.random() * Math.PI * 2);
+    this.doorSparkleGfx = this.add.graphics().setDepth(11);
+    this._drawDoorSparkles();
+    this.doorSparkleTimer = this.time.addEvent({
+      delay: 90,
+      loop: true,
+      callback: () => this._drawDoorSparkles(),
+    });
+  }
+
   _loadMap(mapKey, spawn) {
     this.currentMap = mapKey;
     const mapData = MAPS[mapKey];
@@ -1271,6 +1373,7 @@ class GameScene extends Phaser.Scene {
     this.groundLayer.removeAll(true);
     this.tallLayer.removeAll(true);
     this.solidBodies.clear(true, true);
+    this._destroyDoorSparkles();
     if (this.streetBuildingImg) {
       this.streetBuildingImg.destroy();
       this.streetBuildingImg = null;
@@ -1426,6 +1529,8 @@ class GameScene extends Phaser.Scene {
     if (window.MoControlsPanel && typeof window.MoControlsPanel.sync === 'function') {
       window.MoControlsPanel.sync();
     }
+
+    this._createDoorSparkles();
   }
 
   _ensurePlateSprite() {
