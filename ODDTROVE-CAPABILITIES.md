@@ -82,6 +82,8 @@ Last updated: 2026-06-14
 
 **Is:** Single-page **concept pitch** — perception/aliveness meter, not a full game.
 
+**Planning:** `envDyst/MCOC-ROADMAP-AND-TODO.md` (plot + phases; not deployed). **Live game scope (owner):** chore minigames (Phase 3 dishes/laundry) documented in roadmap but **not** planned for live ship; other minigames may ship when built.
+
 **Can do now:** Copy, styling, light client-side interaction on one page.
 
 **Not built yet:** Map, quests, save system, multiplayer, backend.
