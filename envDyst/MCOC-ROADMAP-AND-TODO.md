@@ -9,13 +9,15 @@
 
 ## Live ship scope (owner — pinned)
 
-**Plot, phases, and full design stay in this file** (source of truth in git). **Live builds may ship a narrower interaction set** without rewriting story.
+**Plot, phases, and full design stay in this file** (source of truth in git). **Live builds ship story + atmosphere**, not filler minigames.
 
-**Chore minigames — not on live (owner):** Phase 3 **dishes** and **laundry** playable minigames (Cookingdom / Decor Life–style) are **documented below for full design** but **do not ship** on the live game unless the owner explicitly reverses this. **Live Wednesday** matches **Tuesday’s chore pattern:** short **animation-led** home beat (dishes/laundry happen off-screen or as cozy watch beats) with **drift + refocus click only** — same story slot, no step-by-step chore UI.
+**Drift-away — kept (core live mechanic):** Protagonist **zones out** at work, grocery, home, etc. into **retreat memories** (vibrant nature) or **pre-trip routine** — player **clicks to refocus**. This is how the game shows **how impactful their time in nature was** without lecturing. **Work drifts especially** land the Phase 3 contrast (computer screen, notes, lunch plate fills with daydream color). **~3 drifts/day** in Phase 3, **~10 sec** each — tune in playtest. Fast-forward (Day 2+) can still skip low-story stretches **after** Day 1 teaches the drift pattern.
 
-**Minigames that may still ship on live:** grocery **basket pack**; humane-society shifts (dog/cat/etc. when animation exists); Phase 3 **trip keepsake review**; other non-chore interactives as wired.
+**Minigames — not on live (owner):** Playable filler minigames are **documented below as full design / cut ideas** but **do not ship**. That includes grocery **basket pack**, humane-society **socializer** shifts (dog/cat/rabbit/etc.), **dishes** + **laundry**, and similar score/step games. **Live instead:** short **animation-led** beats (errands, shelter shift, chores) with **drift + refocus** where the story needs focus struggle — same calendar slots, less click homework.
 
-**Narrative unchanged:** Phase 5A still treats hand-wash dishes as a **habit** (extension pool) — that is story/world, not a chore minigame gate.
+**Story interactives (not filler — may ship):** Job pick · retreat pick · checklist + compass grocery (no pack game) · Phase 3 **trip keepsake review** (click favorites → flashbacks) · light choices / fast-forward — narrative beats, not padding.
+
+**Narrative unchanged:** Plot, phases, job paths, and Phase 5A habits stay as written; only **how** some beats play changes on live.
 
 ---
 
@@ -151,7 +153,7 @@ Player goes to a **grocery store** to learn everyday city rhythm. **They don’t
   - **Author only:** **ink refill** (pen/printer — pick one in implementation)
 - Purpose: teach how errands and the store **function** without making shopping the long-term focus. **Phase 1:** keep the run **tight** for ~2 min prologue (same list, minimal friction). **Phase 3 Tuesday:** same checklist + **drift** beats (see Phase 3 Day 2).
 
-**Grocery minigame (owner — FTTB, all shopping trips for now):** After the player **finds every checklist item**, **basket pack** only — add other games later **if feedback asks for it**.
+**Grocery (owner — live):** **Checklist + compass to register** only (Untitled Goose Game–style gather). **Full design (doc only):** **basket pack** minigame after all items found — cut as filler; not live.
 
 - **Basket pack (fruit-clash / block-blast vibe):** Grocery pieces **fall**; player **arranges** them to **fit together** in a **small shopping basket** (tight footprint — Tetris-adjacent, not full Block Blast campaign). **Lose** if anything lands **outside the basket** → **retry** (quick restart, not a harsh penalty). **Tune:** engaging enough that it’s **not** a guaranteed one-try win every time, but **not** frustrating — short attempts, fair physics/readability, no rage-quit pacing.
 
@@ -520,20 +522,20 @@ It is mostly emotional and sensory:
 | Day | Order (after any commute) |
 |-----|---------------------------|
 | **Monday** | **Job** (drift; **no fast-forward**) → **evening:** catch-up → reading → bed. **Humane society:** shift 2 — **Cat Socializer / TLC**. Other jobs: work (pixels OK FTTB). |
-| **Tuesday** | **Job** if humane society (**shift 3 — rabbits & guinea pigs/hamsters**) → **grocery** (checklist + **basket pack minigame**, checkout drift; **fast-forward** OK) → **light chores, no minigame** (dinner / dishes / laundry — **animation-led**, not click-heavy; player **clicks to refocus** on **drift** only) → bed. *For later; animation needed* for chore motion/polish beyond drift clicks. |
-| **Wednesday** | **Job** if humane society (**shift 4 — reptiles**, **observe/rehab**, not hands-on minigame) → **grocery, no minigame** (quick errand) → **home chores** → **trip keepsake review** → bed. **Live:** chores = **animation-led, no minigame** (same as Tue — drift + refocus only). **Full design (doc only):** optional **dishes + laundry minigames** — see sections below; **not live**. **Drift (~3/day)** during job, grocery, and/or home — refocus targets include dish/laundry silhouettes when zoned out. |
+| **Tuesday** | **Job** if humane society (**shift 3 — rabbits & guinea pigs/hamsters**) → **grocery** (checklist + compass; checkout **drift**; **fast-forward** OK) → **home** (animation-led; **drift + refocus** only) → bed. |
+| **Wednesday** | **Job** if humane society (**shift 4 — reptiles**, **observe/rehab**) → **grocery** (quick errand) → **home** (animation-led; **drift + refocus** only) → **trip keepsake review** → bed. **Drift (~3/day)** at **work**, grocery, and/or home — **work drifts** carry retreat contrast. |
 
 *Other jobs:* **Mon** = job only (+ Mon evening). **Tue/Wed** = no job block — start with **grocery** or **grocery → chores** as in the table.
 
 *Drive drift* and **extra work moments** on other days — parked unless you add variety later.
 
-**Drift-away mechanic (focus click):** Protagonist **zones out** into **daydream / memory flashbacks** — **retreat** (beautiful, vibrant nature) or **pre-retreat** workplace/home (reads different enough from **now** to stay interesting, **not** annoying). **Frequency (owner):** **~3 drift-offs per Phase 3 day** (each day’s main location — work, grocery, home). **Length (owner):** **~10 seconds real time** per drift (memory fill; player clicks to refocus — tune in playtest).
+**Drift-away mechanic (focus click) — live core:** Protagonist **zones out** into **daydream / memory flashbacks** — **retreat** (beautiful, vibrant nature) or **pre-retreat** workplace/home. **This is the main way the game shows how impactful nature was** — especially **at work** after Phase 3 lands. **Frequency (owner):** **~3 drift-offs per Phase 3 day**. **Length (owner):** **~10 seconds real time** per drift (player clicks to refocus — tune in playtest).
 
 **Drift visual (work, home, and same idea elsewhere):** Whatever they should focus on keeps a **faint outline**; the inside **fills with daydream colors** (retreat or pre-trip memory) — like a **window reflection**, but **more outline than reflection**. **Work examples:** **computer** screen, **lunch** plate/food, journalist **notebook**, humane-society **animal/person** silhouette, doctor **notes** or **food** — outline stays, memory paints the interior until the player clicks to refocus.
 
-**Grocery checkout (Phase 3 — owner):** Drift at **checkout** (register / self-checkout); line moves while zoned out → refocus **at front**. **Tuesday** = full shop + **basket pack** minigame. **Wednesday** = **quick grocery, no minigame**.
+**Grocery checkout (Phase 3 — owner):** Drift at **checkout** (register / self-checkout); line moves while zoned out → refocus **at front**. **Tuesday** = full shop (checklist + compass; **no basket pack** on live). **Wednesday** = quick errand.
 
-**Wednesday (Phase 3 — owner):** After job + quick grocery, **home chores** then **trip keepsake review**. **Live:** chores are **not** playable minigames — animation-led + **drift** only (see **Live ship scope**). **Full design (doc only):** **dishes + laundry** minigames spec’d below; if ever built for a non-live prototype, drift refocus targets can include sponge, dishcloth, cupboard, washer/dryer/fold. **Wednesday remains a drift day**.
+**Wednesday (Phase 3 — owner):** After job + quick grocery, **home** beat then **trip keepsake review**. **Live:** home = animation-led + **drift** only (see **Live ship scope**). **Full design (doc only):** dishes + laundry minigame specs below. **Wednesday remains a drift day** — **work** is the main contrast beat.
 
 | Job | Refocus click target | Drift rhythm (FTTB) |
 |-----|----------------------|---------------------|
@@ -549,10 +551,10 @@ It is mostly emotional and sensory:
 
 - **Sunday:** **Movie** — FTTB: **colorful pixels** on screen; interactivity low (cozy beat, then bed). **Later (Phase 5+, toward restoration arc — Phase 6 is last *named* phase so far, not “final”):** clicking the **TV screen** can open **short real documentary clips** — nature/environment topics, **SciGirls-style reference only** (accessible science vibe) but **more nature, less people-on-camera**. *For later; animation needed* for placeholder → clips pipeline.
 - **Monday:** **Catch-up** (per job — see **At work** bullets) → **reading** → bed. **Light interaction**; not a deep sim.
-- **Tuesday (after job):** **Grocery minigame** → **light chores without minigame** (watch/simple beats; **drift + refocus click** only — not interaction-heavy) → bed. *For later; animation needed.*
-- **Wednesday (after job):** **Quick grocery** → **home chores** (live: drift-only; full design: dishes + laundry minigames — doc only) → **trip keepsake review** → bed.
+- **Tuesday (after job):** **Grocery** (checklist + compass) → **home** (animation + **drift** only) → bed.
+- **Wednesday (after job):** **Quick grocery** → **home** (animation + **drift** only) → **trip keepsake review** → bed.
 
-*Minigames (live):* **Tue** = grocery basket pack; **Wed** = keepsake review (+ chore **drift**, not chore minigame); **humane society** = per-shift table (dog/cat minigames after animation; reptiles observe/rehab; birds + enrichment Phase 4). *Full-design-only:* dishes + laundry minigame specs below.
+*Live interaction:* **drift + refocus** at work/grocery/home; **keepsake review** (story); **no filler minigames** (basket pack, HS socializer games, dishes/laundry — doc only). Humane-society shifts = **animation-led care beats** + work **drift** when applicable.
 
 **Drift (set — tune in playtest):** **~3 drift-offs per Phase 3 day**, **~10 seconds real time** each (see **Drift-away mechanic**).
 
@@ -683,7 +685,7 @@ Not activism. Not saving the world. Just small acts of care in places they perso
 
 - **No** rinsing all plastic before recycling (time, water, soggy paper in mixed bins).
 - **No** guilt about packaged food or plastic when that’s what feeds people that week.
-- **Dishes / water (owner — pinned):** **Parents** washing after a **kids’ dinner** — **no** guilt beat on water use; feeding people comes first. **Kids** often have enough free time to **hand-wash before dishes pile up** — valid lane in the world’s “who can when.” **Students** (not **med-student**-level overloaded): often **smaller, simpler meals** for themselves — **hand-wash before pile-up** is **doable**; if a **working parent** sometimes manages dishes, a **student with a lighter plate** can too. Protagonist **lives alone** — Phase 3 **dishes minigame** already models solo hand-wash; Phase 5A treats **keep up before pile-up** as an **extension** habit when schedule allows, **not** a detergent ad or water lecture.
+- **Dishes / water (owner — pinned):** **Parents** washing after a **kids’ dinner** — **no** guilt beat on water use; feeding people comes first. **Kids** often have enough free time to **hand-wash before dishes pile up** — valid lane in the world’s “who can when.” **Students** (not **med-student**-level overloaded): often **smaller, simpler meals** for themselves — **hand-wash before pile-up** is **doable**; if a **working parent** sometimes manages dishes, a **student with a lighter plate** can too. Protagonist **lives alone** — Phase 5A treats **keep up before pile-up** as an **extension** habit when schedule allows, **not** a detergent ad or water lecture (no dishes minigame on live).
 - **No** extra trips, LED preaching, or perfect-shopper framing.
 - **Garden/plant beats:** **native or native-friendly** at minimum when planting or tending. **Can’t always trust seed swaps** — prefer labeled local natives, trusted ID, or keepsake-list reference; no blind swap-table invasives.
 - **Compost, line-dry, bike, yard invasives, birdbath, decals:** only when the player **already has** the setup or is **already** in that context — offered from the pool, not forced defaults.
@@ -2013,7 +2015,7 @@ Maps to phases: **1–3** discomfort/awareness · **4–5** understanding/skepti
 - **No charts/tables in chat** for My Change, Our Change unless the owner explicitly asks for them (plot summaries, roadmaps, status — use prose and short lists instead).
 - **Plot-summary gaps:** Use **for later; animation needed** when the blocker is the 2D animation pipeline — not “full blocking” wording.
 - **Keepsake sheets (owner):** **24–25** clickable labels per player; **Sheet A / Sheet B** alternate per player (same flip pattern as gorge locale). Full cell lists under **Keepsake sheets — 24–25 cells, player alternation**. Sheet **text/layout** not animation-blocked; **scan capture + flashbacks** still → *for later; animation needed*.
-- **Phase 3 / keepsake (owner):** Keepsake arc is animation-dependent (HS minigames, scan UI, flashback playback, etc.). **Chore minigames** = full-design doc only — **not live** (see **Live ship scope**); live chores = drift-only beats.
+- **Phase 3 / keepsake (owner):** Keepsake **flashbacks** + scan UI still animation-dependent. **Drift at work** = live core. **Filler minigames** (HS socializer, basket pack, chores) = doc only — **not live** (see **Live ship scope**).
 - **Retreat locales (owner — FTTB, all California):** **Newport Beach** (beach cottage), **Lake Tahoe** (woods cabin), **Yosemite *or* Russian River** (gorge card — **auto-alternate** per player, not player-picked). *Optional later:* more locations as in-game choices — see **Your additions**.
 - **Retreat species lists:** See **Retreat species lists** section. **Russian River** = owner. **Lake Tahoe / Newport / Yosemite** = pinned (high-confidence sources only). **Web fetch:** `tahoe.ucdavis.edu` often Cloudflare-blocked — owner paste for lake AIS add-ons.
 - **Humane society shelter (owner):** **No-kill** — no euthanasia-for-space beats. See **Humane society path**.
@@ -2037,7 +2039,8 @@ Maps to phases: **1–3** discomfort/awareness · **4–5** understanding/skepti
 
 ## Your additions
 
-- [x] **Live ship — no chore minigames (owner):** Dishes + laundry playable minigames stay in this roadmap as **full design** but **do not ship live**; Phase 3 Wed chores = animation + drift only. Other minigames (grocery basket pack, HS shifts, keepsake review, etc.) may still ship. See **Live ship scope**.
+- [x] **Live ship — no filler minigames (owner):** Basket pack, HS socializer games, dishes/laundry, and similar cut from live; **drift-away at work** (and grocery/home) stays as the core beat showing nature’s impact. Story interactives (retreat pick, keepsake flashbacks, etc.) may still ship. See **Live ship scope**.
+- [x] **Live ship — no chore minigames (owner):** *(superseded by no filler minigames above; dishes/laundry specs remain as doc-only reference.)*
 - [ ] **Fast-forward usage feedback (after ship or next publish — not yet):** Once the full game is out *or* MCOC is published again, set up a way to **update the owner** with the **ratio of players who click the Phase 3 fast-forward control** (Day 2+ unlock). Use for pacing/tuning (is skip too tempting vs drift still landing?). Aggregate metric is enough unless owner asks for more detail later.
 - [ ] **Suburbs home option (later — not FTTB):** Pitch toggle can stay for return-drive copy; **game defaults to city** because suburbs usually **don’t contrast with nature** as sharply as the city does. Revisit only if a suburb branch is worth the art/copy split.
 - [ ] **More retreat locations (optional — later in-game):** After FTTB trio (**Newport Beach**, **Lake Tahoe**, **Yosemite / Russian River** gorge), add **additional California (or other) locales** as extra nature-retreat choices — not required for first ship.

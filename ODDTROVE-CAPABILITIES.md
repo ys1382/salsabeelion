@@ -82,7 +82,7 @@ Last updated: 2026-06-14
 
 **Is:** Single-page **concept pitch** — perception/aliveness meter, not a full game.
 
-**Planning:** `envDyst/MCOC-ROADMAP-AND-TODO.md` (plot + phases; not deployed). **Live game scope (owner):** chore minigames (Phase 3 dishes/laundry) documented in roadmap but **not** planned for live ship; other minigames may ship when built.
+**Planning:** `envDyst/MCOC-ROADMAP-AND-TODO.md` (plot + phases; not deployed). **Live game scope (owner):** **drift-away** (especially at work) is core; **filler minigames** (grocery pack, shelter socializer games, chores, etc.) documented but **not** planned for live — animation-led beats + story interactives instead.
 
 **Can do now:** Copy, styling, light client-side interaction on one page.
 
