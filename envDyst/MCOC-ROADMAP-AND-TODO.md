@@ -9,23 +9,23 @@
 
 ## Live ship scope (owner — pinned)
 
-**Plot, phases, and full design stay in this file** (source of truth in git). **Live builds** prioritize **environmental story mechanics** over domestic filler games.
+**Plot, phases, and full design stay in this file** (source of truth in git).
 
-### Core live (ship these)
+### Main throughline (what the game is mostly about)
 
-**Drift-away:** Protagonist **zones out** at **work**, grocery, home, etc. into **retreat memories** or **pre-trip routine** — player **clicks to refocus**. Shows **how impactful their time in nature was** without lecturing. **Work drifts especially** land Phase 3 contrast. **~3 drifts/day** in Phase 3, **~10 sec** each. Fast-forward (Day 2+) after Day 1 teaches the pattern.
+**Story + perception arc** — prologue, retreat contrast, Phase 3–5 emotional beats, small actions, restoration. **Drift-away** is the main **interactive** expression of “nature changed how they see the city” — zoning out at **work** (and elsewhere), retreat memory bleeding in, player clicks to refocus. **~3 drifts/day** in Phase 3, **~10 sec** each. Fast-forward (Day 2+) after Day 1 teaches the pattern.
 
-**Environmental keepsake / bingo (core — not filler):** The **species bingo** (woods), **sketchbook** (beach), and **journal** (gorge) arc is **specifically environmental** — natives, invasives, landforms, locale lists, player alternation (Sheet A/B). **Phase 2:** **scan capture** on retreat walks (outline tap → sticker to notebook). **Phase 3 Wednesday:** **trip keepsake review** — click favorites → **flashbacks** → seeds **Phase 4+ research**. This is **not** in the same category as laundry/dishes/basket pack; it carries the game’s ecological literacy thread. **Bingo sheet text/layout** can be locked early; **scan UI + flashback playback** are live priorities when animation exists.
+### Ships on live — environmentally on-theme (not the main thing, not filler)
 
-### Cut from live (domestic / filler — doc only)
+**Keepsake / bingo / sketchbook / journal** — **more directly tied to environmental themes** than laundry, dishes, or basket pack (species, natives/invasives, locale lists, Sheet A/B alternation). **Ships on live** when built: Phase 2 **scan capture**, Phase 3 **keepsake review** (favorites → flashbacks), Phase 4+ **research** from those favorites. Important for ecological literacy — **not** the spine of the game the way drift and story are. **Not** cut as domestic padding. Sheet text/layout can be locked early; scan + flashback playback are live build targets (unlike cut chore games).
 
-Playable **filler** minigames stay documented below but **do not ship:** grocery **basket pack**, humane-society **socializer** games (dog/cat/rabbit click games), **dishes** + **laundry**, and similar step/score padding. **Live instead:** checklist + compass errands; shelter shifts as **animation-led care beats** + **drift**; home as cozy animation + **drift** — same calendar slots, no chore homework.
+### Cut from live (domestic filler — doc only)
+
+**Laundry**, **dishes**, grocery **basket pack**, humane-society **socializer** click games, and similar step/score padding — cozy homework, **weak environmental tie**. Documented below; **do not ship**. **Live instead:** checklist + compass errands; shelter/home as **animation-led** beats + **drift**.
 
 ### Other live interactives
 
 Job pick · retreat pick · checklist + compass grocery · light choices / fast-forward.
-
-**Narrative unchanged:** Plot, phases, job paths, species lists, and Phase 4+ research branches stay as written.
 
 ---
 
@@ -562,13 +562,13 @@ It is mostly emotional and sensory:
 - **Tuesday (after job):** **Grocery** (checklist + compass) → **home** (animation + **drift** only) → bed.
 - **Wednesday (after job):** **Quick grocery** → **home** (animation + **drift** only) → **trip keepsake review** → bed.
 
-*Live interaction:* **drift + refocus** at work/grocery/home; **environmental keepsake / bingo** (Phase 2 scan + Phase 3 review + Phase 4 research — **core**); **no domestic filler** (basket pack, HS socializer click games, dishes/laundry — doc only). Humane-society shifts = **animation-led care beats** + work **drift**.
+*Live interaction:* **drift + refocus** (main interactive beat); **keepsake / bingo** when built (environmentally on-theme — ships, not cut); **no domestic filler** (basket pack, HS socializer click games, dishes/laundry — doc only).
 
 **Drift (set — tune in playtest):** **~3 drift-offs per Phase 3 day**, **~10 seconds real time** each (see **Drift-away mechanic**).
 
-**Trip keepsake review (owner — Phase 3 Wednesday evening; core live):** **Environmental centerpiece** — not domestic filler. They **give in** and reopen what they brought back — **woods** → **nature bingo** sheet; **beach** → **sketchbook**; **gorge** → **journal**. Player **clicks favorite subjects** among their **24–25 labels** (see **Keepsake sheets — 24–25 cells, player alternation**). Each click plays a **flashback** to **that** trip moment. Favorites drive **Phase 4+ active research** (online, library, bookstore, apps).
+**Trip keepsake review (owner — Phase 3 Wednesday evening):** They **give in** and reopen what they brought back — **woods** → **nature bingo** sheet; **beach** → **sketchbook**; **gorge** → **journal**. Player **clicks favorite subjects** among their **24–25 labels** (see **Keepsake sheets — 24–25 cells, player alternation**). Each click plays a **flashback** to **that** trip moment. Favorites drive **Phase 4+ active research**. **Live ship** — environmentally on-theme (unlike cut chore minigames); **not** the game’s main spine (that’s drift + story arc).
 
-- **Subject mix:** **Native** plants/animals/landforms per **locked locale** — **Newport Beach** (sketchbook), **Lake Tahoe** (bingo), **Yosemite or Russian River** (journal). **Some invasive species** on **Lake Tahoe** bingo where it fits. **Sheet text/layout** not animation-blocked. **Live ship:** Phase 2 **scan capture** + Phase 3 **flashback playback** — environmental core; prioritize in animation pipeline (unlike cut domestic minigames).
+- **Subject mix:** **Native** plants/animals/landforms per **locked locale**. **Live ship:** Phase 2 **scan capture** + Phase 3 **flashback playback** — on-theme, build when animation exists (not cut like domestic minigames).
 - **Phase 2 vs Phase 3:** On-trip days stay **short** via scan capture; deep revisiting lives on **Wednesday** keepsake review.
 
 **Laundry minigame (owner — Phase 3 Wednesday, full design only — not live):** Two parts — **quick wash/dry clicks**, then **fold & place** (the main beat). **Live ship:** skip; use Tue-style animation + drift beat instead.
@@ -2022,7 +2022,7 @@ Maps to phases: **1–3** discomfort/awareness · **4–5** understanding/skepti
 - **No charts/tables in chat** for My Change, Our Change unless the owner explicitly asks for them (plot summaries, roadmaps, status — use prose and short lists instead).
 - **Plot-summary gaps:** Use **for later; animation needed** when the blocker is the 2D animation pipeline — not “full blocking” wording.
 - **Keepsake sheets (owner):** **24–25** clickable labels per player; **Sheet A / Sheet B** alternate per player (same flip pattern as gorge locale). Full cell lists under **Keepsake sheets — 24–25 cells, player alternation**. Sheet **text/layout** not animation-blocked; **scan capture + flashbacks** still → *for later; animation needed*.
-- **Phase 3 / keepsake (owner):** **Environmental bingo / sketchbook / journal** = **core live** (scan capture, flashbacks, Phase 4 research). **Drift at work** = core live. **Domestic filler minigames** (basket pack, HS socializer click games, dishes/laundry) = doc only — **not live**. See **Live ship scope**.
+- **Phase 3 / keepsake (owner):** **Drift at work** = main interactive beat. **Bingo / sketchbook / journal** = ships on live (environmental themes); not cut like domestic filler. See **Live ship scope**.
 - **Retreat locales (owner — FTTB, all California):** **Newport Beach** (beach cottage), **Lake Tahoe** (woods cabin), **Yosemite *or* Russian River** (gorge card — **auto-alternate** per player, not player-picked). *Optional later:* more locations as in-game choices — see **Your additions**.
 - **Retreat species lists:** See **Retreat species lists** section. **Russian River** = owner. **Lake Tahoe / Newport / Yosemite** = pinned (high-confidence sources only). **Web fetch:** `tahoe.ucdavis.edu` often Cloudflare-blocked — owner paste for lake AIS add-ons.
 - **Humane society shelter (owner):** **No-kill** — no euthanasia-for-space beats. See **Humane society path**.
@@ -2046,8 +2046,7 @@ Maps to phases: **1–3** discomfort/awareness · **4–5** understanding/skepti
 
 ## Your additions
 
-- [x] **Live ship — environmental keepsake / bingo is core (owner):** Species bingo, sketchbook, journal, Phase 2 scan capture, Phase 3 keepsake review, and Phase 4+ research branches **ship** — specifically environmental, not filler. See **Live ship scope**.
-- [x] **Live ship — no domestic filler minigames (owner):** Basket pack, HS socializer click games, dishes/laundry cut from live; **drift-away at work** stays. See **Live ship scope**.
+- [x] **Live ship — keepsake / bingo ships, laundry etc. cut (owner):** Bingo/sketchbook/journal arc **ships** — environmentally on-theme, not the main spine. Domestic filler (basket pack, HS socializer click games, dishes/laundry) **cut**. Drift + story stay central. See **Live ship scope**.
 - [ ] **Fast-forward usage feedback (after ship or next publish — not yet):** Once the full game is out *or* MCOC is published again, set up a way to **update the owner** with the **ratio of players who click the Phase 3 fast-forward control** (Day 2+ unlock). Use for pacing/tuning (is skip too tempting vs drift still landing?). Aggregate metric is enough unless owner asks for more detail later.
 - [ ] **Suburbs home option (later — not FTTB):** Pitch toggle can stay for return-drive copy; **game defaults to city** because suburbs usually **don’t contrast with nature** as sharply as the city does. Revisit only if a suburb branch is worth the art/copy split.
 - [ ] **More retreat locations (optional — later in-game):** After FTTB trio (**Newport Beach**, **Lake Tahoe**, **Yosemite / Russian River** gorge), add **additional California (or other) locales** as extra nature-retreat choices — not required for first ship.

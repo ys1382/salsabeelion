@@ -82,7 +82,7 @@ Last updated: 2026-06-14
 
 **Is:** Single-page **concept pitch** — perception/aliveness meter, not a full game.
 
-**Planning:** `envDyst/MCOC-ROADMAP-AND-TODO.md` (plot + phases; not deployed). **Live game scope (owner):** **drift-away** + **environmental keepsake/bingo** (scan, flashbacks, research) are core; **domestic filler** (grocery pack, shelter socializer click games, chores) is doc-only.
+**Planning:** `envDyst/MCOC-ROADMAP-AND-TODO.md` (plot + phases; not deployed). **Live scope (owner):** **drift + story** = main spine; **keepsake/bingo** ships (environmental themes); **domestic filler** (chores, basket pack, etc.) cut.
 
 **Can do now:** Copy, styling, light client-side interaction on one page.
 
