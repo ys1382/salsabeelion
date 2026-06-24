@@ -2034,13 +2034,53 @@ Maps to phases: **1–3** discomfort/awareness · **4–5** understanding/skepti
 - **Buy less / buy better (owner):** Learned **naturally Phase 4** when budget can’t cover all eco-labeled cart — not a lecture. See **Budget awareness**, **Consumption philosophy**.
 - **It’s not your fault (owner — core message):** Reject greenwashing’s personal blame (*reusable bottle = everything fixed*). Habits matter; **system failure isn’t on the player**. Phase **4+**; see **Greenwashing & system discovery**, Phase **4** mindset.
 - **Phase 7 vs 8 scale (owner — locked):** **7** = picnics + river cleanups with **friends**; **8+** = **community-wide** picnics, cleanups, elders, no-wrappers sequence.
-- **Incoming owner ideas (routing):** **Phase 7 or later only** — **not** Phases **1–6**. Phase 7 = **friend-scale** gathering arc; **community-wide** → **Phase 8+**.
+- **Incoming owner ideas (routing):** **Later in game (owner parking)** → **Owner batch**; default **Phase 7+** — **not** Phases **1–6**. Actionable ship/todo pins can also go in **Your additions**.
 - **Maintenance not permanent victory (owner — Phase 8+):** No one-time “fixed forever” wins; **spectrum** health; river + business examples; **needed not trapped**; maintenance as **relationship**; core line — *saved that animal’s world*; **stable care & cross-place ripple** (*wolves-change-rivers* ref only). See **Phase 8+**.
 - **Picnic sequence (owner — Phase 8+ community):** After **first community** river cleanup → wrapper-heavy picnic → elders’ wrapper-light → realization. Phase **7** friend picnics/cleanups **without** that click. See **Community picnics & cleanups**, **no wrappers realization**, **river cleanup (maintenance)**.
 - **Positive overflow (owner — Phase 8+):** Wins spill beyond one mission — connected environments, aha links, river→consumption, business adaptation, ideas via people, momentum, world learns. Core line — *helped something else improve too.* See **positive overflow**; pairs **stable care & cross-place ripple**.
 - **4E pacing (owner):** **Phase 8** = local community spread; **end 8 / start 9** = travel & word of mouth at **extended distance**. See **ideas spread through people (overflow)**, **Phase 9** stub.
 - **City vs nature (owner — game-wide):** Not opposites; city **alive**; nature = **contrast** not utopia; systemic pressures; restore city **as city**. Core — *city still worth saving.* See **Creative direction — City vs nature**, Phases **1–3** cross-refs.
 - **Design pillars (owner):** business adaptation · trade-offs · consumption · soft horror · audio · visual · sanctuary · greenwashing · **children stewardship** · luxury/treats · present-day dystopia · core emotional goal — under **Creative direction**. Picnic-heavy beats stay Phase **7–8**.
+
+---
+
+## Later in game (owner parking)
+
+**Use this section** for beats, mechanics, settings, and arcs that **might ship after first live** — not FTTB, not locked for Phases 1–6. Full phase write-ups stay in **Roadmap** above; this is the **scratch pad** for new pins and “someday” ideas.
+
+**Routing (owner):**
+- Default **Phase 7+** (friend scale → community → overflow). Do **not** backfill Phases 1–6 unless you explicitly say so.
+- **Cross-ref** detailed stubs already in Roadmap (Phase 7–9, civic/school/workplace lists under Phase 6) instead of duplicating prose here.
+- Verbal **“add for later”** / **“might come later in game”** → append under **Owner batch** below with `[ ]` checkbox.
+
+### Already sketched elsewhere (pointers)
+
+| Rough when | What | Where detailed |
+|------------|------|----------------|
+| Phase 5+ | Home **TV documentary clips** (nature footage; SciGirls-adjacent ref) | Phase 3 Sunday movie · Phase 5 home TV |
+| Phase 6+ | **Workplace culture** beats (bottle hook, café BYO, litter walk — after NPC culture caught up) | Phase 6 — Workplace & regular haunts |
+| Phase 6+ | **Civic & voting** (comments, ballot — optional; may never ship) | Phase 6 — Civic & systems |
+| Phase 6+ | **School / youth orbit** (bond, garden club, guest nature hour) | Phase 6 — School & youth orbit |
+| Phase 7 | **Friend picnics & river cleanups** (ideas incoming) | Phase 7 section |
+| Phase 8+ | Community picnics, maintenance, overflow, elders, no-wrappers arc | Phase 8+ section |
+| Phase 9 | **Extended-distance overflow** (travel, word of mouth far away) | Phase 9 stub |
+| Any | **Suburbs home** branch | Your additions |
+| Any | **More retreat locations** (beyond CA trio) | Your additions · Phase 2 |
+| Any | **Meadow inn / farm-edge** countryside retreats | Phase 2 (parked) |
+| Doc only | **Domestic filler minigames** (basket pack, dishes, laundry, HS click games) — full specs in Roadmap | Live ship scope |
+
+### Mechanics & polish (later)
+
+- [ ] **Workplace beat variety** — more job scenes as game progresses (work not long-term focus, but less repeat).
+- [ ] **Optional budget UI** — simple money view (opt-in); prices tuned in playtest.
+- [ ] **Drive drift** + extra work moments on days beyond Phase 3 Mon–Wed — parked unless pacing needs it.
+- [ ] **Lake Tahoe AIS beat** — [UC Davis AIS](https://tahoe.ucdavis.edu/ais) add-on if owner pastes species (site often Cloudflare-blocked for agents).
+
+### Owner batch — add here
+
+*(New “might come later” ideas — one line or short bullet each.)*
+
+- [ ] *(empty — owner adds next)*
 
 ---
 
