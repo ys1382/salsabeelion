@@ -2083,6 +2083,10 @@ Maps to phases: **1–3** discomfort/awareness · **4–5** understanding/skepti
 
 - [ ] **Restoration spheres / terrarium biomes (owner — much later):** **Cocoon**-style **spheres** in the world — click a sphere → enter an interior that reads like a **spherical terrarium** (contained biome vignette, not a full open-world sim).
 
+  **When it starts (owner):** **Directly after** the player **restores their own home space** (native pots, living area, sensory “more alive” home payoff — exact home-restoration beat *TBD* in main arc, likely late Phase 6 / post-5B). That personal win is the springboard; spheres = **what’s next beyond your doorstep**.
+
+  **Entry beat (owner):** A **journalist** comes to the protagonist — *“What will you restore next?”* The protagonist **does not answer aloud**. Instead the **screen shifts bit by bit** (gradual transition, not a hard cut) to **spheres hovering in space** — the player’s **visual answer**. Show, don’t tell; no lecture. *TBD:* journalist as generic press vs tie-in if player chose **Journalist** job; where interview happens (doorstep, park, post-home-reveal).
+
   **Six main biome types (each anthropogenically devastated):** **Jungle** · **Temperate forest** · **Desert** · **Tundra** · **Meadow** · **Ocean**.
 
   **Player goal:** Restore each sphere **one way or another** — not a single win button; multiple care paths.
@@ -2093,7 +2097,7 @@ Maps to phases: **1–3** discomfort/awareness · **4–5** understanding/skepti
   - **Host-plant care** — tend the **native host** (e.g. **milkweed** for caterpillars / butterflies) rather than only the consumer.
   - **Site care** — **remove litter** from the organism’s **immediate living area** (local patch, not “saved the whole biome” fantasy).
 
-  **Tone / guardrails:** Believable macro ecology; **native-first** (pairs Phase 5A/6 plant beats, keepsake species literacy); devastation = **human-caused**, restoration = **felt** progress (color, sound, life returning) — not stat grind. **Not FTTB.** *TBD:* when in arc (likely **late** — after city-scale restoration groundwork); how spheres connect to map/sanctuary/overflow.
+  **Tone / guardrails:** Believable macro ecology; **native-first** (pairs Phase 5A/6 plant beats, keepsake species literacy); devastation = **human-caused**, restoration = **felt** progress (color, sound, life returning) — not stat grind. **Not FTTB.** *TBD:* sphere pick order; link to Phase 8+ overflow / sanctuary pillars.
 
 - [ ] *(empty — owner adds next)*
 
