@@ -2097,7 +2097,18 @@ Maps to phases: **1–3** discomfort/awareness · **4–5** understanding/skepti
   - **Host-plant care** — tend the **native host** (e.g. **milkweed** for caterpillars / butterflies) rather than only the consumer.
   - **Site care** — **remove litter** from the organism’s **immediate living area** (local patch, not “saved the whole biome” fantasy).
 
-  **Tone / guardrails:** Believable macro ecology; **native-first** (pairs Phase 5A/6 plant beats, keepsake species literacy); devastation = **human-caused**, restoration = **felt** progress (color, sound, life returning) — not stat grind. **Not FTTB.** *TBD:* sphere pick order; link to Phase 8+ overflow / sanctuary pillars.
+  **Upstream habits / source of harm (owner):** Picking up litter **never seems to end** — the natural next question: *“Where is all of this coming from?”* Spheres add a **second layer** beyond local cleanup: trace harm **upstream** and **decrease or cease the habits** that keep producing it. **Gradual** — not one lecture, not instant fix; unhealthy inputs taper over play.
+
+  **Nuance (owner — not all annoyance = equal harm):** Someone tossing **food** out a car window may be **annoying** but is **not** the same class of problem as a **plastic candy wrapper** or **cigarette butt** — those **add up** and stay in the system. Game should **show** the difference (material, persistence, who it hurts) without a morality scorecard. Pairs **trade-offs & nuance** + Phase **4** consumption / disposables threads.
+
+  **Problem type varies by sphere (owner):** The “stop the source” beat is **not always litter**. Depends on **what devastated that biome:**
+  - **Litter / waste stream** — wrappers, butts, persistent plastic (car window, shore, trail — *TBD* per sphere).
+  - **Invasive species** — spread pathways to **reduce or interrupt** (pairs keepsake invasive cells, Phase 6 invasive pull guardrails — know your target).
+  - **Overharvesting** — **ease off** or **stop** the harvest habit pressuring that system (*TBD* which sphere — e.g. ocean/meadow candidates).
+
+  **Same attitude across types:** Whether the lever is **less litter**, **fewer invasives introduced**, or **less overharvesting** — player **decreases / ceases unhealthy habits** that feed the problem, not only symptoms. Cleanup + nurture still matter; **source reduction** is how a sphere **stays** restored (pairs **maintenance not permanent victory**, Phase 8+).
+
+  **Tone / guardrails:** Believable macro ecology; **native-first** (pairs Phase 5A/6 plant beats, keepsake species literacy); devastation = **human-caused**, restoration = **felt** progress (color, sound, life returning) — not stat grind. **Not FTTB.** *TBD:* sphere pick order; how upstream habits surface in UI (NPC habits, player choices, background reduction — show don’t preach); link to Phase 8+ overflow / sanctuary pillars.
 
 - [ ] *(empty — owner adds next)*
 
