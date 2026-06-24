@@ -2067,6 +2067,7 @@ Maps to phases: **1–3** discomfort/awareness · **4–5** understanding/skepti
 | Any | **Suburbs home** branch | Your additions |
 | Any | **More retreat locations** (beyond CA trio) | Your additions · Phase 2 |
 | Any | **Meadow inn / farm-edge** countryside retreats | Phase 2 (parked) |
+| Much later | **Restoration spheres / terrarium biomes** (Cocoon-like) | Owner batch — Restoration spheres |
 | Doc only | **Domestic filler minigames** (basket pack, dishes, laundry, HS click games) — full specs in Roadmap | Live ship scope |
 
 ### Mechanics & polish (later)
@@ -2079,6 +2080,20 @@ Maps to phases: **1–3** discomfort/awareness · **4–5** understanding/skepti
 ### Owner batch — add here
 
 *(New “might come later” ideas — one line or short bullet each.)*
+
+- [ ] **Restoration spheres / terrarium biomes (owner — much later):** **Cocoon**-style **spheres** in the world — click a sphere → enter an interior that reads like a **spherical terrarium** (contained biome vignette, not a full open-world sim).
+
+  **Six main biome types (each anthropogenically devastated):** **Jungle** · **Temperate forest** · **Desert** · **Tundra** · **Meadow** · **Ocean**.
+
+  **Player goal:** Restore each sphere **one way or another** — not a single win button; multiple care paths.
+
+  **Restoration paths (examples):**
+  - **Nurture natives** — plants, animals, and other **macroorganisms** only (**realistic scope — no microscopic / microbiome sim**).
+  - **Direct care** — e.g. **water** a native plant, **feed** an animal when that’s the right beat.
+  - **Host-plant care** — tend the **native host** (e.g. **milkweed** for caterpillars / butterflies) rather than only the consumer.
+  - **Site care** — **remove litter** from the organism’s **immediate living area** (local patch, not “saved the whole biome” fantasy).
+
+  **Tone / guardrails:** Believable macro ecology; **native-first** (pairs Phase 5A/6 plant beats, keepsake species literacy); devastation = **human-caused**, restoration = **felt** progress (color, sound, life returning) — not stat grind. **Not FTTB.** *TBD:* when in arc (likely **late** — after city-scale restoration groundwork); how spheres connect to map/sanctuary/overflow.
 
 - [ ] *(empty — owner adds next)*
 
