@@ -94,8 +94,8 @@ const spawnOut = MoDoors.resolveExitSpawn(
   { x: 0, y: 0 },
 );
 assert(
-  spawnOut.x === expectedWorldX && spawnOut.feetRow === 10 && spawnOut.facing === 'down' && spawnOut.y === undefined,
-  'resolveExitSpawn to outside uses tile X and feetRow 10',
+  spawnOut.x === expectedWorldX && spawnOut.feetRow === 11 && spawnOut.facing === 'down' && spawnOut.y === undefined,
+  'resolveExitSpawn to outside uses tile X and feetRow 11 (porch approach)',
 );
 
 const spawnIn = MoDoors.resolveExitSpawn(
@@ -103,8 +103,8 @@ const spawnIn = MoDoors.resolveExitSpawn(
   { x: 0, y: 0 },
 );
 assert(
-  spawnIn.x === expectedWorldX && spawnIn.feetRow === 11 && spawnIn.facing === 'up' && spawnIn.y === undefined,
-  'resolveExitSpawn to café uses tile X and feetRow 11',
+  spawnIn.x === expectedWorldX && spawnIn.feetRow === 10 && spawnIn.facing === 'up' && spawnIn.y === undefined,
+  'resolveExitSpawn to café uses tile X and feetRow 10 (one step inside)',
 );
 
 if (failed) {

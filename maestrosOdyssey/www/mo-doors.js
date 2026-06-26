@@ -124,7 +124,7 @@
       passageRect: outsideDoorPassageRect(),
       outsideExitSpawnX: worldX,
       outsideExitSpawnY: spriteCenterYForFeetRow(b.doorRow),
-      insideEnterSpawnY: spriteCenterYForFeetRow(CAFE_EXIT_DOOR_ROW),
+      insideEnterSpawnY: spriteCenterYForFeetRow(CAFE_DOOR_ROW),
     };
   }
 
@@ -223,11 +223,11 @@
     var spawn = Object.assign({}, mapConf.exitSpawn || fallbackStart);
     spawn.x = anchor.worldX;
     if (mapConf.exitTo === 'cafe') {
-      spawn.feetRow = anchor.insideExitRow;
+      spawn.feetRow = anchor.insideEnterRow;
       spawn.facing = spawn.facing || 'up';
       delete spawn.y;
     } else if (mapConf.exitTo === 'outside') {
-      spawn.feetRow = anchor.outsideRow;
+      spawn.feetRow = anchor.outsideApproachRow;
       spawn.facing = spawn.facing || 'down';
       delete spawn.y;
     }

@@ -154,7 +154,7 @@ assert_true(
   "resolveExitSpawn snaps X to anchor.worldX",
 )
 assert_true(
-  re.search(r"spawn\.feetRow\s*=\s*anchor\.(insideExitRow|outsideRow)", doors_text) is not None,
+  re.search(r"spawn\.feetRow\s*=\s*anchor\.(insideEnterRow|outsideApproachRow)", doors_text) is not None,
   "resolveExitSpawn sets feetRow for map transitions",
 )
 
