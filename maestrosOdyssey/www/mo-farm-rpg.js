@@ -172,12 +172,37 @@ function drawPath(ctx, ox, oy) {
   rect(ctx, ox, oy + 28, 32, 4, '#6a6058');
 }
 
-function drawStreetPath(ctx, ox, oy) {
-  rect(ctx, ox, oy, 32, 32, '#5a5850');
-  [[4,8],[14,4],[22,12],[8,18],[18,24]].forEach(([dx, dy]) => {
-    rect(ctx, ox + dx, oy + dy, 3, 2, '#4a4840');
+function drawStreetPath(ctx, ox, oy, topGrassGap = 0) {
+  const y0 = topGrassGap;
+  const h = 32 - topGrassGap;
+  rect(ctx, ox, oy + y0, 32, h, '#5a5850');
+  [[4, 8], [14, 4], [22, 12], [8, 18], [18, 24]].forEach(([dx, dy]) => {
+    if (dy + 2 > y0) rect(ctx, ox + dx, oy + dy, 3, 2, '#4a4840');
   });
-  rect(ctx, ox, oy, 32, 2, '#6a6860');
+  rect(ctx, ox, oy + y0, 32, 2, '#6a6860');
+}
+
+/** Single flat flagstone overlay — sits on grass or porch; narrow, path-toned. */
+function drawStepStoneOverlay(ctx, ox, oy, variant) {
+  const sizes = [
+    { w: 14, h: 11, y: 16, jx: 0 },
+    { w: 12, h: 9, y: 18, jx: -1 },
+    { w: 13, h: 10, y: 15, jx: 1 },
+  ];
+  const sz = sizes[variant % 3];
+  const s = {
+    x: ox + Math.floor((32 - sz.w) / 2) + sz.jx,
+    y: oy + sz.y,
+    w: sz.w,
+    h: sz.h,
+  };
+  rect(ctx, s.x + 1, s.y + 2, s.w, s.h, 'rgba(0,0,0,0.2)');
+  rect(ctx, s.x, s.y, s.w, s.h, '#6a6560');
+  rect(ctx, s.x + 1, s.y + 1, s.w - 2, s.h - 2, '#8a8078');
+  rect(ctx, s.x + 2, s.y + 2, s.w - 5, s.h - 4, '#9a9088');
+  rect(ctx, s.x + s.w - 4, s.y + s.h - 3, 3, 2, '#5a5550');
+  px(ctx, s.x + 4, s.y + 4, '#5a5550');
+  px(ctx, s.x + s.w - 6, s.y + 5, '#7a7570');
 }
 
 // Draw a water tile  (32×32)
@@ -215,16 +240,34 @@ function drawFence(ctx, ox, oy) {
   rect(ctx, ox+24, oy+4, 4, 24, '#a06c3e');
 }
 
-// Draw a sign  (32×32)
+// Draw a wooden post sign  (32×32) — freestanding sidewalk prop
 function drawSign(ctx, ox, oy) {
-  // post
-  rect(ctx, ox+14, oy+20, 4, 12, '#6b3d1e');
-  // board
-  rect(ctx, ox+4, oy+6, 24, 16, '#c4a35a');
-  rect(ctx, ox+5, oy+7, 22, 14, '#d4b36a');
-  // writing lines
-  rect(ctx, ox+8, oy+10, 16, 2, '#7a5a20');
-  rect(ctx, ox+8, oy+15, 12, 2, '#7a5a20');
+  rect(ctx, ox + 14, oy + 20, 4, 12, '#6b3d1e');
+  rect(ctx, ox + 4, oy + 6, 24, 16, '#c4a35a');
+  rect(ctx, ox + 5, oy + 7, 22, 14, '#d4b36a');
+  rect(ctx, ox + 8, oy + 10, 16, 2, '#7a5a20');
+  rect(ctx, ox + 8, oy + 15, 12, 2, '#7a5a20');
+}
+
+/** County-park style neighborhood bulletin kiosk (32×32). */
+function drawCommunityBoard(ctx, ox, oy) {
+  rect(ctx, ox + 5, oy + 17, 3, 12, '#5a4030');
+  rect(ctx, ox + 24, oy + 17, 3, 12, '#5a4030');
+  rect(ctx, ox + 5, oy + 27, 22, 2, '#6b5038');
+  rect(ctx, ox + 4, oy + 8, 24, 14, '#8a7050');
+  rect(ctx, ox + 5, oy + 9, 22, 12, '#a08058');
+  rect(ctx, ox + 3, oy + 7, 26, 2, '#4a3828');
+  rect(ctx, ox + 3, oy + 21, 26, 2, '#4a3828');
+  rect(ctx, ox + 3, oy + 7, 2, 16, '#4a3828');
+  rect(ctx, ox + 27, oy + 7, 2, 16, '#4a3828');
+  for (let i = 0; i < 5; i++) {
+    rect(ctx, ox + 9 + i, oy + 2 + i, 14 - 2 * i, 2, '#3a5038');
+  }
+  rect(ctx, ox + 7, oy + 6, 18, 2, '#4a6048');
+  rect(ctx, ox + 7, oy + 11, 8, 5, '#e8dcc8');
+  rect(ctx, ox + 17, oy + 10, 7, 6, '#d4c8a8');
+  px(ctx, ox + 10, oy + 10, '#8a3030');
+  px(ctx, ox + 20, oy + 9, '#8a3030');
 }
 
 // Draw a flower  (32×32)
@@ -308,21 +351,17 @@ function drawDoorEnter(ctx, ox, oy) {
   rect(ctx, ox + 6, oy + 28, 20, 4, '#5a4030');
 }
 
-function drawBrewSign(ctx, ox, oy) {
-  drawFacadeWall(ctx, ox, oy);
-  rect(ctx, ox + 2, oy + 5, 28, 20, '#2a1810');
-  rect(ctx, ox + 4, oy + 7, 24, 3, '#d4af6a');
-  rect(ctx, ox + 4, oy + 12, 20, 2, '#c49a5a');
-  rect(ctx, ox + 4, oy + 16, 16, 2, '#c49a5a');
-  rect(ctx, ox + 4, oy + 20, 12, 2, '#a08040');
+/** Freestanding Dragon's Brew sidewalk sign — miniature wooden post sign. */
+function drawFreestandingBrewSign(ctx, ox, oy) {
+  drawSign(ctx, ox, oy);
 }
 
-// One cohesive storefront (8×5 tiles) — no grass gaps, reads as a real building
-function outsideFacadeDoorMetrics(bw) {
+// One cohesive storefront (12×7 tiles) — no grass gaps, reads as a real building
+function outsideFacadeDoorMetrics(bw, bh) {
   const dw = 22;
   const dh = 40;
   const dx = Math.floor(bw / 2) - Math.floor(dw / 2);
-  const dy = 114;
+  const dy = bh - 46;
   const panelTop = dy + 5;
   const panelH = dh - 10;
   return {
@@ -334,6 +373,17 @@ function outsideFacadeDoorMetrics(bw) {
 
 function drawStreetBuildingFacade(ctx, bw, bh) {
   const brick = '#7a5848', brickD = '#6a4838', trim = '#5a3828';
+  const gap = 2;
+  const foundationH = 8;
+  const doorH = 40;
+  const awningH = 8;
+  const winW = 72;
+  const winH = 58;
+  const winInset = 44;
+
+  const door = outsideFacadeDoorMetrics(bw, bh);
+  const awningY = door.dy - gap - awningH;
+  const winY = awningY - gap - winH;
 
   // roof + overhang shadow
   rect(ctx, 0, 0, bw, 38, '#3a2830');
@@ -345,38 +395,32 @@ function drawStreetBuildingFacade(ctx, bw, bh) {
 
   // main wall
   rect(ctx, 0, 42, bw, bh - 42, brick);
-  for (let y = 48; y < bh - 8; y += 10) rect(ctx, 4, y, bw - 8, 1, brickD);
+  for (let y = 48; y < bh - foundationH; y += 10) rect(ctx, 4, y, bw - 8, 1, brickD);
   for (let x = 20; x < bw - 16; x += 28) {
-    for (let y = 44; y < bh - 12; y += 10) rect(ctx, x, y, 1, 8, brickD);
+    for (let y = 44; y < bh - foundationH - 4; y += 10) rect(ctx, x, y, 1, 8, brickD);
   }
 
-  // left window
-  rect(ctx, 28, 58, 52, 44, trim);
-  rect(ctx, 34, 64, 40, 32, '#3a4858');
-  rect(ctx, 36, 66, 14, 12, '#6a8898');
+  // two side windows — taller/wider, clear of door and awning
+  const winSlots = [winInset, bw - winInset - winW];
+  winSlots.forEach((wx) => {
+    rect(ctx, wx, winY, winW, winH, trim);
+    rect(ctx, wx + 6, winY + 6, winW - 12, winH - 12, '#3a4858');
+    rect(ctx, wx + 10, winY + 10, 18, 14, '#6a8898');
+    rect(ctx, wx + winW - 28, winY + winH - 24, 18, 14, '#5a7888');
+  });
 
-  // right window
-  rect(ctx, bw - 80, 58, 52, 44, trim);
-  rect(ctx, bw - 74, 64, 40, 32, '#3a4858');
-  rect(ctx, bw - 72, 66, 14, 12, '#6a8898');
-
-  // sign board (center)
-  rect(ctx, 88, 52, 80, 50, '#2a1810');
-  rect(ctx, 92, 58, 72, 4, '#d4af6a');
-  rect(ctx, 92, 66, 58, 3, '#c49a5a');
-  rect(ctx, 92, 74, 44, 3, '#a08040');
-  rect(ctx, 92, 82, 30, 3, '#806030');
-
-  // awning (nudged up; shorter drop so it clears the door top)
-  const AWNING_Y = 104;
-  const AWNING_H = 8;
-  for (let i = 0; i < 6; i++) {
-    rect(ctx, 52 + i * 26, AWNING_Y, 22, AWNING_H, i % 2 === 0 ? '#8a3040' : '#d4af6a');
+  // awning — stripes only over the door bay
+  const stripeW = 22;
+  const stripeGap = 26;
+  const stripeCount = 6;
+  const awningSpan = stripeCount * stripeGap - 4;
+  const awningStart = door.cx - awningSpan / 2;
+  for (let i = 0; i < stripeCount; i++) {
+    rect(ctx, awningStart + i * stripeGap, awningY, stripeW, awningH, i % 2 === 0 ? '#8a3040' : '#d4af6a');
   }
-  rect(ctx, 48, AWNING_Y + AWNING_H, bw - 96, 3, trim);
+  rect(ctx, awningStart - 4, awningY + awningH, awningSpan + 8, 3, trim);
 
   // door (center-bottom — narrow portrait rectangle, real-world proportions)
-  const door = outsideFacadeDoorMetrics(bw);
   rect(ctx, door.dx, door.dy, door.dw, door.dh, '#3a2820');
   rect(ctx, door.dx + 2, door.dy + 2, door.dw - 4, door.dh - 4, '#1a1008');
   rect(ctx, door.dx + 4, door.dy + 5, door.dw - 8, door.dh - 10, '#3a3028');
@@ -385,7 +429,7 @@ function drawStreetBuildingFacade(ctx, bw, bh) {
   rect(ctx, door.dx, door.dy + door.dh - 2, door.dw, 3, '#4a3828');
 
   // foundation sill
-  rect(ctx, 0, bh - 8, bw, 8, trim);
+  rect(ctx, 0, bh - foundationH, bw, foundationH, trim);
 }
 
 function drawCafeFloor(ctx, ox, oy) {
@@ -408,8 +452,25 @@ function drawCafeTrim(ctx, ox, oy) {
   rect(ctx, ox + 29, oy + 3, 3, 29, '#3a2830');
 }
 
+/** Trim tile — skip side pillars when outer wall is already beside this cell. */
+function drawCafeTrimTile(ctx, ox, oy, grid, rx, ry) {
+  const wallEastWest = (x) => {
+    if (x < 0 || x >= grid[0].length) return true;
+    const c = grid[ry][x];
+    return isCafeWallChar(c) || c === '-';
+  };
+  drawCafeFloor(ctx, ox, oy);
+  rect(ctx, ox, oy, 32, 3, '#3a2830');
+  if (!wallEastWest(rx - 1)) rect(ctx, ox, oy + 3, 3, 29, '#3a2830');
+  if (!wallEastWest(rx + 1)) rect(ctx, ox + 29, oy + 3, 3, 29, '#3a2830');
+}
+
 function isCafeWallChar(ch) {
   return ch === '#' || ch === '|';
+}
+
+function isCafeFloorChar(ch) {
+  return ch === '.' || ch === '>' || ch === 'c' || ch === 'o' || ch === '*' || ch === 'M' || ch === 'K' || ch === 'H' || ch === 'b';
 }
 
 /** Neighbor-aware café wall tile — cleaner corners and long runs. */
@@ -418,6 +479,7 @@ function drawCafeBorderTile(ctx, ox, oy, grid, rx, ry) {
   const solid = (x, y) => {
     if (y < 0 || y >= grid.length || x < 0 || x >= grid[0].length) return true;
     const c = grid[y][x];
+    if (isCafeFloorChar(c) || c === '=') return true;
     return isCafeWallChar(c) || c === '-';
   };
   const n = solid(rx, ry - 1);
@@ -631,7 +693,7 @@ function drawDrinkCup(ctx, ox, oy, fullness, forTable) {
 //  Rows: down, left, right, up
 // ─────────────────────────────────────────────────────────────────────────────
 const CHAR_W = 16, CHAR_H = 24, CHAR_FRAMES = 4;
-const PLAYER_LOOK_ART_REV = 'p';
+const PLAYER_LOOK_ART_REV = 's';
 const NPC_W = 28, NPC_H = CHAR_H; // wider canvas so wings read at 2× scale
 
 function tri(ctx, x1, y1, x2, y2, x3, y3, color) {
@@ -674,11 +736,11 @@ function drawCharFace(ctx, ox, oy, dir, skin) {
 /** Per-direction face regions — hijab cheek cols never overlap faceSkin. */
 const HIJAB_FACE_LAYOUT = {
   0: {
-    faceSkin: { x: 5, y: 4, w: 7, h: 8 },
+    faceSkin: { x: 5, y: 5, w: 7, h: 7 },
     eyes: [{ x: 6, y: 7 }, { x: 9, y: 7 }],
     hijabCheeks: [
       { col: 4, crownX: 3, crownW: 2 },
-      { col: 12, crownX: 11, crownW: 2 },
+      { col: 12, crownX: 12, crownW: 1 },
     ],
   },
   1: {
@@ -714,10 +776,11 @@ function drawHijabSmile(ctx, ox, oy, dir) {
 }
 
 /** Hijab cheek accent on columns strictly outside faceSkin. */
-function drawHijabCheekAccents(ctx, ox, oy, cheeks, hijab, hijabDark) {
+function drawHijabCheekAccents(ctx, ox, oy, cheeks, hijab, hijabDark, dir) {
+  const crownY = dir === 0 ? 4 : 5;
   for (let i = 0; i < cheeks.length; i++) {
     const c = cheeks[i];
-    rect(ctx, ox + c.crownX, oy + 5, c.crownW, 2, hijab);
+    rect(ctx, ox + c.crownX, oy + crownY, c.crownW, 2, hijab);
     px(ctx, ox + c.col, oy + 6, hijabDark);
     rect(ctx, ox + c.col, oy + 7, 1, 2, hijab);
   }
@@ -739,9 +802,11 @@ function drawHijabFaceFromLayout(ctx, ox, oy, dir, skin, hijab) {
 
   if (dir === 0) {
     rect(ctx, ox + 3, oy + 1, 10, 3, hijab);
-    rect(ctx, ox + 4, oy + 4, 8, 1, hijabDark);
     rect(ctx, ox + 2, oy + 3, 2, 3, hijab);
     rect(ctx, ox + 12, oy + 3, 2, 3, hijab);
+    rect(ctx, ox + 5, oy + 4, 7, 1, hijab);
+    rect(ctx, ox + 4, oy + 4, 1, 1, hijabDark);
+    rect(ctx, ox + 12, oy + 4, 1, 1, hijabDark);
     rect(ctx, ox + 1, oy + 9, 2, 2, hijab);
     rect(ctx, ox + 13, oy + 9, 2, 2, hijab);
     rect(ctx, ox + 3, oy + 12, 10, 1, hijabDark);
@@ -768,7 +833,7 @@ function drawHijabFaceFromLayout(ctx, ox, oy, dir, skin, hijab) {
     rect(ctx, ox + e.x, oy + e.y, 2, 2, HIJAB_COLORS.eye);
   }
   drawHijabSmile(ctx, ox, oy, dir);
-  drawHijabCheekAccents(ctx, ox, oy, layout.hijabCheeks, hijab, hijabDark);
+  drawHijabCheekAccents(ctx, ox, oy, layout.hijabCheeks, hijab, hijabDark, dir);
 }
 
 /** Hijab + jilbab — per-direction head (no bare back, no ear skin, open face). */
@@ -973,14 +1038,14 @@ const READABLES = [
   {
     map: 'outside',
     col: 3,
-    row: 12,
+    row: 13,
     title: 'Neighborhood board',
     text: 'Dragon\'s Brew — down the brick path, mornings.\nPlaza market beyond the train station when you\'re ready to venture out.',
   },
   {
     map: 'outside',
-    col: 8,
-    row: 7,
+    col: 6,
+    row: 12,
     title: 'Dragon\'s Brew — storefront sign',
     text: 'Warm drinks and breakfast. All species welcome at the counter.\nStep through the door when it\'s open.',
   },
@@ -1008,13 +1073,27 @@ const READABLES = [
   },
 ];
 
-const OUTSIDE_BUILDING = { left: 5, top: 6, width: 8, height: 5, doorCol: 8, doorRow: 10 };
-const CAFE_DOOR_ROW = 10;
+const OUTSIDE_BUILDING = MoDoors.OUTSIDE_BUILDING;
+const COMMUNITY_BOARD = { col: 3, row: 12 };
+const BOARD_SIDEWALK = { col: 3, row: 13 };
+/** Clear grass pixels between stacked outside props (board above sidewalk). */
+const PROP_GRASS_GAP = 1;
+/** Three flagstones: porch sill → grass → grass lip before sidewalk (not on sidewalk row). */
+const CAFE_STEP_STONES = [
+  { row: 10, variant: 0 },
+  { row: 11, variant: 1 },
+  { row: 12, variant: 2 },
+];
+
+function cafeStepStoneWorldX() {
+  return MoDoors.outsideDoorWorldX();
+}
 
 /** Sparkle anchors on the door frame (local px) — jamb, header, sill; not the panel. */
 function doorSparkleLocalPoints(mapKey) {
   if (mapKey === 'outside') {
-    const { dx, dy, dw, dh } = outsideFacadeDoorMetrics(OUTSIDE_BUILDING.width * TILE);
+    const bh = OUTSIDE_BUILDING.height * TILE;
+    const { dx, dy, dw, dh } = MoDoors.facadeDoorMetrics(OUTSIDE_BUILDING.width * TILE, bh);
     return [
       [dx + 4, dy + 2], [dx + Math.floor(dw / 2), dy + 1], [dx + dw - 4, dy + 2],
       [dx + 1, dy + 10], [dx + 1, dy + 22], [dx + 1, dy + 32],
@@ -1047,11 +1126,10 @@ function doorSparkleWorldPoints(mapKey) {
     const by = b.top * TILE;
     return locs.map(([x, y]) => ({ x: (bx + x) * s, y: (by + y) * s }));
   }
-  const { col } = MAPS.cafe.doorPos;
-  const row = 11; // visual exit tile ('>' row)
-  const tx = col * TILE;
-  const ty = row * TILE;
-  return locs.map(([x, y]) => ({ x: (tx + x) * s, y: (ty + y) * s }));
+  const anchor = MoDoors.getDoorAnchor();
+  const doorLeft = anchor.worldX - (TILE * s) / 2;
+  const ty = anchor.insideExitRow * TILE * s;
+  return locs.map(([x, y]) => ({ x: doorLeft + x * s, y: ty + y * s }));
 }
 
 function readableBoardFrameLocs(col, row, bx, by, bw, bh) {
@@ -1068,24 +1146,8 @@ function readableBoardFrameLocs(col, row, bx, by, bw, bh) {
 
 /** Blue sparkle anchors on readable sign frames (READABLES only — not UI hints). */
 function readableSparkleLocalPoints(item) {
-  if (item.map === 'outside' && item.col === 8 && item.row === 7) {
-    const b = OUTSIDE_BUILDING;
-    const bx = b.left * TILE;
-    const by = b.top * TILE;
-    const sx = 88;
-    const sy = 52;
-    const sw = 80;
-    const sh = 50;
-    return [
-      [bx + sx + 6, by + sy + 5], [bx + sx + Math.floor(sw / 2), by + sy + 3], [bx + sx + sw - 6, by + sy + 5],
-      [bx + sx + 2, by + sy + 14], [bx + sx + sw - 2, by + sy + 14],
-      [bx + sx + 2, by + sy + 26], [bx + sx + sw - 2, by + sy + 32],
-      [bx + sx + 10, by + sy + sh - 4], [bx + sx + sw - 10, by + sy + sh - 4],
-      [bx + sx + Math.floor(sw / 2), by + sy + sh - 6],
-    ];
-  }
-  if (item.map === 'outside' && item.col === 3) {
-    const tx = 3 * TILE;
+  if (item.map === 'outside' && item.col === 6) {
+    const tx = 6 * TILE;
     const ty = 11 * TILE;
     return [
       [tx + 6, ty + 7], [tx + 16, ty + 6], [tx + 26, ty + 7],
@@ -1093,6 +1155,17 @@ function readableSparkleLocalPoints(item) {
       [tx + 8, ty + 10], [tx + 24, ty + 10],
       [tx + 10, ty + 20], [tx + 22, ty + 20],
       [tx + 16, ty + 21],
+    ];
+  }
+  if (item.map === 'outside' && item.col === 3) {
+    const tx = 3 * TILE;
+    const ty = 12 * TILE;
+    return [
+      [tx + 4, ty + 8], [tx + 16, ty + 3], [tx + 28, ty + 8],
+      [tx + 3, ty + 12], [tx + 29, ty + 12],
+      [tx + 3, ty + 20], [tx + 29, ty + 20],
+      [tx + 8, ty + 14], [tx + 22, ty + 16],
+      [tx + 6, ty + 24], [tx + 26, ty + 24],
     ];
   }
   if (item.map === 'cafe' && item.id === 'dragons_brew_menu') {
@@ -1108,8 +1181,7 @@ function readableSparkleLocalPoints(item) {
 }
 
 function readableSparkleStyle(item) {
-  if (item.map === 'outside' && item.col === 8 && item.row === 7) return 'storefront';
-  if (item.map === 'outside' && item.col === 3) return 'wood';
+  if (item.map === 'outside' && (item.col === 6 || item.col === 3)) return 'wood';
   return 'light';
 }
 
@@ -1185,10 +1257,14 @@ const MAPS = {
   outside: {
     backgroundColor: '#1a1a2e',
     doorTile: 'D',
-    doorPos: { col: OUTSIDE_BUILDING.doorCol, row: OUTSIDE_BUILDING.doorRow },
+    doorPos: { col: MoDoors.getDoorAnchor().gridCol, row: MoDoors.getDoorAnchor().outsideRow },
     doorFacing: 'up',
     exitTo: 'cafe',
-    exitSpawn: { col: OUTSIDE_BUILDING.doorCol, row: CAFE_DOOR_ROW, facing: 'up' },
+    exitSpawn: {
+      x: MoDoors.getDoorAnchor().worldX,
+      y: MoDoors.getDoorAnchor().insideEnterSpawnY,
+      facing: 'up',
+    },
     playerStart: { col: 4, row: 11 },
     mara: null,
     grid: [
@@ -1202,10 +1278,10 @@ const MAPS = {
       '#..................#',
       '#..................#',
       '#..................#',
-      '#...PPPPPPPPPP.....#',
-      '#..S..f............#',
-      '#..................#',
-      '#..................#',
+      '#..PPPPPPPPPPPP....#',
+      '#.f...B............#',
+      '#..S...............#',
+      '#PPPPPPPPPPPPPPPPPP#',
       '#..................#',
       '####################',
     ].map(r => r.split('')),
@@ -1213,11 +1289,19 @@ const MAPS = {
   cafe: {
     backgroundColor: '#241818',
     doorTile: '>',
-    doorPos: { col: OUTSIDE_BUILDING.doorCol, row: CAFE_DOOR_ROW },
+    doorPos: { col: MoDoors.getDoorAnchor().gridCol, row: MoDoors.getDoorAnchor().insideExitRow },
     doorFacing: 'down',
     exitTo: 'outside',
-    exitSpawn: { col: OUTSIDE_BUILDING.doorCol, row: OUTSIDE_BUILDING.doorRow, facing: 'down' },
-    playerStart: { col: OUTSIDE_BUILDING.doorCol, row: CAFE_DOOR_ROW, facing: 'up' },
+    exitSpawn: {
+      x: MoDoors.getDoorAnchor().outsideExitSpawnX,
+      y: MoDoors.getDoorAnchor().outsideExitSpawnY,
+      facing: 'down',
+    },
+    playerStart: {
+      x: MoDoors.getDoorAnchor().worldX,
+      y: MoDoors.getDoorAnchor().insideEnterSpawnY,
+      facing: 'up',
+    },
     mara: { col: 10, row: 2 },
     grid: [
       '####################',
@@ -1231,11 +1315,11 @@ const MAPS = {
       '#=..o....c....o..=#',
       '#=................=#',
       '#=........*.......=#',
-      '#|||||||>||||||||||#',
-      '#=.........c......=#',
-      '#=................=#',
-      '#=................=#',
-      '#=................=#',
+      '#.|||||||>||||||||.#',
+      '#.......|||c.......#',
+      '#..................#',
+      '#..................#',
+      '#..................#',
       '####################',
     ].map(r => r.split('')),
   },
@@ -1306,11 +1390,11 @@ class GameScene extends Phaser.Scene {
     add('t_water2', 32, 32, ctx => drawWater(ctx, 0, 0, 1));
     add('t_tree',   32, 64, ctx => drawTree(ctx, 0, 0));
     add('t_fence',  32, 32, ctx => drawFence(ctx, 0, 0));
-    add('t_sign',   32, 32, ctx => drawSign(ctx, 0, 0));
+    add('t_sign',   32, 32, ctx => drawCommunityBoard(ctx, 0, 0));
     add('t_flower', 32, 32, ctx => drawFlower(ctx, 0, 0, '#ff6688'));
     add('t_wall',   32, 32, ctx => drawBuildingWall(ctx, 0, 0));
     add('t_door',   32, 32, ctx => drawDoorEnter(ctx, 0, 0));
-    add('t_brew',   32, 32, ctx => drawBrewSign(ctx, 0, 0));
+    add('t_brew',   32, 32, ctx => drawFreestandingBrewSign(ctx, 0, 0));
     add('t_facade', 32, 32, ctx => drawFacadeWall(ctx, 0, 0));
     add('t_fwin',   32, 32, ctx => drawFacadeWindow(ctx, 0, 0));
     add('t_swalk',  32, 32, ctx => drawSidewalk(ctx, 0, 0));
@@ -1328,6 +1412,10 @@ class GameScene extends Phaser.Scene {
     add('t_hrules', 32, 32, ctx => drawHouseRulesBoard(ctx, 0, 0));
     add('t_book',   32, 32, ctx => drawBookOnFloor(ctx, 0, 0));
     add('t_street', 32, 32, ctx => drawStreetPath(ctx, 0, 0));
+    add('t_street_pad', 32, 32, ctx => drawStreetPath(ctx, 0, 0, PROP_GRASS_GAP));
+    for (let v = 0; v < 3; v++) {
+      add('t_step_ov_' + v, 32, 32, ctx => drawStepStoneOverlay(ctx, 0, 0, v));
+    }
     add('t_bfoundation', 32, 32, ctx => drawBuildingFoundation(ctx, 0, 0));
     add('t_ctrim', 32, 32, ctx => drawCafeTrim(ctx, 0, 0));
     add('t_bstool', 32, 32, ctx => drawBarStool(ctx, 0, 0));
@@ -1546,6 +1634,15 @@ class GameScene extends Phaser.Scene {
 
     this.streetBuildingImg = null;
 
+    if (window.MoDoors) {
+      MoDoors.validateDoorLink(MAPS.cafe.grid);
+    }
+    this.doorDebugEnabled = typeof location !== 'undefined'
+      && new URLSearchParams(location.search).get('doorDebug') === '1';
+    if (this.doorDebugEnabled) {
+      this.doorDebugGfx = this.add.graphics().setDepth(99999);
+    }
+
     this._loadMap('outside');
   }
 
@@ -1554,23 +1651,17 @@ class GameScene extends Phaser.Scene {
     return rx >= b.left && rx < b.left + b.width && ry >= b.top && ry < b.top + b.height;
   }
 
-  _isOutsideDoorCell(rx, ry) {
-    const b = OUTSIDE_BUILDING;
-    return rx === b.doorCol && ry === b.doorRow;
+  _playerFeetWorld() {
+    return {
+      x: this.player.x,
+      y: this.player.y + this.player.displayHeight * (1 - this.player.originY),
+    };
   }
 
-  /** Solid walls except the door, sidewalk path, and façade cells above walkable porch. */
+  /** Solid café footprint except the narrow façade door opening. */
   _isOutsideBuildingSolid(rx, ry) {
     if (!this._isOutsideBuildingCell(rx, ry)) return false;
-    if (this._isOutsideDoorCell(rx, ry)) return false;
-    const porchRow = OUTSIDE_BUILDING.top + OUTSIDE_BUILDING.height - 1;
-    const grid = MAPS.outside.grid;
-    if (ry === porchRow && grid[ry][rx] === 'P') return false;
-    // row above porch — player hitbox needs headroom to stand on the threshold
-    if (ry === porchRow - 1 && rx >= OUTSIDE_BUILDING.left && rx < OUTSIDE_BUILDING.left + OUTSIDE_BUILDING.width) {
-      if (grid[porchRow][rx] === 'P') return false;
-    }
-    return true;
+    return MoDoors.tileSolidRectsAgainstPassage(rx, ry, MoDoors.outsideDoorPassageRect()).length > 0;
   }
 
   /** When north of the café facade, draw the player behind the building image. */
@@ -1619,27 +1710,34 @@ class GameScene extends Phaser.Scene {
   }
 
   _playerOnDoorTile(conf) {
+    if (this.currentMap === 'outside' || this.currentMap === 'cafe') {
+      const feet = this._playerGridCell();
+      return MoDoors.playerOnDoorTrigger(
+        feet.col, feet.row, this.currentMap, this._doorInputKeys(), this._playerFeetWorld()
+      );
+    }
     const feet = this._playerGridCell();
     const center = this._playerCenterCell();
     const on = (cell) => this._isDoorTile(conf, conf.grid, cell.col, cell.row);
     return on(feet) || on(center);
   }
 
-  _intentFacingDoor(conf) {
-    const need = conf.doorFacing;
-    if (!need) return true;
-    if (this.facing === need) return true;
+  _doorInputKeys() {
     const { cursors, wasd } = this;
-    if (need === 'up' && (cursors.up.isDown || wasd.up.isDown)) return true;
-    if (need === 'down' && (cursors.down.isDown || wasd.down.isDown)) return true;
-    if (need === 'left' && (cursors.left.isDown || wasd.left.isDown)) return true;
-    if (need === 'right' && (cursors.right.isDown || wasd.right.isDown)) return true;
-    return false;
+    return {
+      up: cursors.up.isDown || wasd.up.isDown,
+      down: cursors.down.isDown || wasd.down.isDown,
+      left: cursors.left.isDown || wasd.left.isDown,
+      right: cursors.right.isDown || wasd.right.isDown,
+    };
   }
 
   _canUseDoor(conf) {
-    if (!this._playerOnDoorTile(conf)) return false;
-    return this._intentFacingDoor(conf);
+    const feet = this._playerGridCell();
+    return MoDoors.canUseDoor(
+      feet.col, feet.row, this.currentMap, this.facing, this._doorInputKeys(), conf.doorFacing,
+      this._playerFeetWorld()
+    );
   }
 
   _isDoorTile(conf, grid, col, row) {
@@ -1647,11 +1745,6 @@ class GameScene extends Phaser.Scene {
     const dp = conf.doorPos;
     if (dp && col === dp.col && row === dp.row) return true;
     if (grid[row][col] === conf.doorTile) return true;
-    // outside porch — narrow door sits on a wider walkable threshold
-    if (dp && conf.doorFacing === 'up' && row === dp.row
-        && grid[row][col] === 'P' && col >= dp.col - 1 && col <= dp.col + 1) {
-      return true;
-    }
     return false;
   }
 
@@ -1713,10 +1806,20 @@ class GameScene extends Phaser.Scene {
 
   _spawnPlayer(spawn) {
     const u = TILE * SCALE;
-    this.player.setPosition(
-      spawn.col * u + u / 2,
-      spawn.row * u + u / 2
-    );
+    const x = spawn.x != null ? spawn.x : spawn.col * u + u / 2;
+    let y;
+    if (spawn.y != null) {
+      y = spawn.y;
+    } else if (spawn.feetRow != null) {
+      const feetY = spawn.feetRow * u + u * 0.5;
+      const footDrop = this.player.displayHeight * (1 - this.player.originY);
+      y = feetY - footDrop;
+    } else if (spawn.row != null) {
+      y = spawn.row * u + u / 2;
+    } else {
+      y = 0;
+    }
+    this.player.setPosition(x, y);
     if (spawn.facing) {
       this.facing = spawn.facing;
       this.player.play(`idle-${this.facing}`, true);
@@ -1931,6 +2034,14 @@ class GameScene extends Phaser.Scene {
           const body = this.add.rectangle(wx + 16 * SCALE, wy + 20 * SCALE, 14 * SCALE, 24 * SCALE);
           this.physics.add.existing(body, true);
           this.solidBodies.add(body);
+        } else if (tid === 6 || tid === 7 || tid === 10) {
+          let gKey = 't_grass';
+          if (mapKey === 'outside') gKey = this._outsideGroundKey(rx, ry);
+          const g = this.add.image(wx, wy, gKey).setOrigin(0, 0).setScale(SCALE);
+          this.groundLayer.add(g);
+          const overlayKey = tid === 6 ? 't_sign' : tid === 7 ? 't_flower' : 't_brew';
+          const s = this.add.image(wx, wy, overlayKey).setOrigin(0, 0).setScale(SCALE).setDepth(5);
+          this.tallLayer.add(s);
         } else if (tid === 13 && mapKey === 'cafe') {
           const floor = this.add.image(wx, wy, 't_cfloor').setOrigin(0, 0).setScale(SCALE);
           this.groundLayer.add(floor);
@@ -1943,12 +2054,15 @@ class GameScene extends Phaser.Scene {
         } else if (mapKey === 'cafe' && ch === '>') {
           const floor = this.add.image(wx, wy, 't_cfloor').setOrigin(0, 0).setScale(SCALE);
           this.groundLayer.add(floor);
-          const door = this.add.image(wx, wy, 't_exit').setOrigin(0, 0).setScale(SCALE).setDepth(11);
+          const door = this.add.image(MoDoors.outsideDoorWorldX(), wy, 't_exit')
+            .setOrigin(0.5, 0)
+            .setScale(SCALE)
+            .setDepth(11);
           this.tallLayer.add(door);
         } else if (mapKey === 'cafe' && (ch === '#' || ch === '|')) {
           const c = makeCanvas(32, 32);
           drawCafeBorderTile(c.getContext('2d'), 0, 0, grid, rx, ry);
-          const key = 'cafe_border_' + rx + '_' + ry;
+          const key = 'cafe_border_v2_' + rx + '_' + ry;
           if (!this.textures.exists(key)) this.textures.addCanvas(key, c);
           const img = this.add.image(wx, wy, key).setOrigin(0, 0).setScale(SCALE);
           this.groundLayer.add(img);
@@ -1956,14 +2070,27 @@ class GameScene extends Phaser.Scene {
           this.physics.add.existing(body, true);
           this.solidBodies.add(body);
         } else if (mapKey === 'cafe' && ch === '=') {
-          const img = this.add.image(wx, wy, 't_ctrim').setOrigin(0, 0).setScale(SCALE);
+          const c = makeCanvas(32, 32);
+          drawCafeTrimTile(c.getContext('2d'), 0, 0, grid, rx, ry);
+          const key = 'cafe_trim_v2_' + rx + '_' + ry;
+          if (!this.textures.exists(key)) this.textures.addCanvas(key, c);
+          const img = this.add.image(wx, wy, key).setOrigin(0, 0).setScale(SCALE);
           this.groundLayer.add(img);
         } else {
           const useStreet = mapKey === 'outside' && ch === 'P' && ry >= 10;
-          let key = useStreet ? 't_street' : (TILE_KEY[tid] ?? 't_grass');
-          if (mapKey === 'cafe' && (tid === 0 || tid === 1)) key = 't_cfloor';
-          const img = this.add.image(wx, wy, key).setOrigin(0, 0).setScale(SCALE);
-          this.groundLayer.add(img);
+          const boardWalk = mapKey === 'outside' && rx === BOARD_SIDEWALK.col && ry === BOARD_SIDEWALK.row;
+          if (boardWalk) {
+            const gKey = this._outsideGroundKey(rx, ry);
+            const g = this.add.image(wx, wy, gKey).setOrigin(0, 0).setScale(SCALE);
+            this.groundLayer.add(g);
+            const img = this.add.image(wx, wy, 't_street_pad').setOrigin(0, 0).setScale(SCALE);
+            this.groundLayer.add(img);
+          } else {
+            let key = useStreet ? 't_street' : (TILE_KEY[tid] ?? 't_grass');
+            if (mapKey === 'cafe' && (tid === 0 || tid === 1)) key = 't_cfloor';
+            const img = this.add.image(wx, wy, key).setOrigin(0, 0).setScale(SCALE);
+            this.groundLayer.add(img);
+          }
 
           if (SOLID_TILES.has(tid)) {
             const body = this.add.rectangle(wx + 16 * SCALE, wy + 16 * SCALE, 32 * SCALE, 32 * SCALE);
@@ -1982,16 +2109,33 @@ class GameScene extends Phaser.Scene {
         'street_building'
       ).setOrigin(0, 0).setScale(SCALE).setDepth(6);
 
+      const passage = MoDoors.outsideDoorPassageRect();
+      const s = SCALE;
       for (let ry = b.top; ry < b.top + b.height; ry++) {
         for (let rx = b.left; rx < b.left + b.width; rx++) {
-          if (!this._isOutsideBuildingSolid(rx, ry)) continue;
-          const wx = rx * TILE * SCALE + 16 * SCALE;
-          const wy = ry * TILE * SCALE + 16 * SCALE;
-          const body = this.add.rectangle(wx, wy, 32 * SCALE, 32 * SCALE);
-          this.physics.add.existing(body, true);
-          this.solidBodies.add(body);
+          const clips = MoDoors.tileSolidRectsAgainstPassage(rx, ry, passage);
+          clips.forEach((clip) => {
+            const w = (clip.right - clip.left) * s;
+            const h = (clip.bottom - clip.top) * s;
+            if (w < 1 || h < 1) return;
+            const wx = (clip.left + clip.right) / 2 * s;
+            const wy = (clip.top + clip.bottom) / 2 * s;
+            const body = this.add.rectangle(wx, wy, w, h);
+            this.physics.add.existing(body, true);
+            this.solidBodies.add(body);
+          });
         }
       }
+
+      CAFE_STEP_STONES.forEach((st) => {
+        const wx = cafeStepStoneWorldX();
+        const wy = st.row * TILE * SCALE;
+        const img = this.add.image(wx, wy, 't_step_ov_' + st.variant)
+          .setOrigin(0, 0)
+          .setScale(SCALE)
+          .setDepth(7);
+        this.groundLayer.add(img);
+      });
     }
 
     this._spawnPlayer(spawn || mapData.playerStart);
@@ -2281,7 +2425,7 @@ class GameScene extends Phaser.Scene {
       }
     }
 
-    const spawn = conf.exitSpawn || MAPS[conf.exitTo].playerStart;
+    const spawn = MoDoors.resolveExitSpawn(conf, MAPS[conf.exitTo].playerStart, this.player.x);
     this._loadMap(conf.exitTo, spawn);
     if (this.audioStarted) Audio.sfxInteract();
   }
@@ -2809,6 +2953,30 @@ class GameScene extends Phaser.Scene {
     this._syncPlatePosition();
 
     this._checkDoorTransition();
+    if (this.doorDebugEnabled && this.doorDebugGfx) {
+      this._drawDoorDebug();
+    }
+  }
+
+  _drawDoorDebug() {
+    const g = this.doorDebugGfx;
+    g.clear();
+    const walkBands = MoDoors.walkBandRectsScaled(this.currentMap);
+    walkBands.forEach((band) => {
+      g.fillStyle(0x00ff00, 0.25);
+      g.fillRect(band.left, band.top, band.right - band.left, band.bottom - band.top);
+    });
+    const facade = MoDoors.facadeDoorWorldRectScaled();
+    if (this.currentMap === 'outside') {
+      g.lineStyle(2, 0x88ff88, 0.5);
+      g.strokeRect(facade.left, facade.top, facade.right - facade.left, facade.bottom - facade.top);
+    }
+    const keys = this._doorInputKeys();
+    const triggers = MoDoors.triggerCellRectScaled(this.currentMap, keys) || [];
+    triggers.forEach((trigger) => {
+      g.fillStyle(0xffff00, 0.45);
+      g.fillRect(trigger.left, trigger.top, trigger.right - trigger.left, trigger.bottom - trigger.top);
+    });
   }
 }
 
