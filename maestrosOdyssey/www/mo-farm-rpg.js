@@ -357,20 +357,6 @@ function drawFreestandingBrewSign(ctx, ox, oy) {
 }
 
 // One cohesive storefront (12×7 tiles) — no grass gaps, reads as a real building
-function outsideFacadeDoorMetrics(bw, bh) {
-  const dw = 22;
-  const dh = 40;
-  const dx = Math.floor(bw / 2) - Math.floor(dw / 2);
-  const dy = bh - 46;
-  const panelTop = dy + 5;
-  const panelH = dh - 10;
-  return {
-    dx, dy, dw, dh,
-    cx: dx + dw / 2,
-    cy: panelTop + panelH / 2,
-  };
-}
-
 function drawStreetBuildingFacade(ctx, bw, bh) {
   const brick = '#7a5848', brickD = '#6a4838', trim = '#5a3828';
   const gap = 2;
@@ -381,7 +367,7 @@ function drawStreetBuildingFacade(ctx, bw, bh) {
   const winH = 58;
   const winInset = 44;
 
-  const door = outsideFacadeDoorMetrics(bw, bh);
+  const door = MoDoors.facadeDoorMetrics(bw, bh);
   const awningY = door.dy - gap - awningH;
   const winY = awningY - gap - winH;
 
@@ -2425,7 +2411,7 @@ class GameScene extends Phaser.Scene {
       }
     }
 
-    const spawn = MoDoors.resolveExitSpawn(conf, MAPS[conf.exitTo].playerStart, this.player.x);
+    const spawn = MoDoors.resolveExitSpawn(conf, MAPS[conf.exitTo].playerStart);
     this._loadMap(conf.exitTo, spawn);
     if (this.audioStarted) Audio.sfxInteract();
   }

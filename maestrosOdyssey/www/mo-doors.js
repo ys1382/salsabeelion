@@ -1,6 +1,11 @@
 /**
  * Maestro's Odyssey — door anchor, collision passage, transition triggers, spawn.
- * X alignment follows the painted façade door; rows follow the sidewalk/threshold.
+ *
+ * Invariants (tests enforce these):
+ * - gridCol is derived from painted façade center, never hand-tuned
+ * - café grid row 11 ">" must match gridCol (validateDoorLink)
+ * - collision passage contains outside walk bands (rows 10–11)
+ * - resolveExitSpawn always snaps X to door center (worldX)
  */
 (function (root) {
   'use strict';
@@ -10,7 +15,7 @@
   var CHAR_H = 24;
   var ROWS = 16;
 
-  var OUTSIDE_BUILDING = { left: 3, top: 4, width: 12, height: 7, doorCol: 9, doorRow: 10 };
+  var OUTSIDE_BUILDING = { left: 3, top: 4, width: 12, height: 7, doorRow: 10 };
   var CAFE_DOOR_ROW = 10;
   var CAFE_EXIT_DOOR_ROW = 11;
 
@@ -26,6 +31,19 @@
       cx: dx + dw / 2,
       cy: panelTop + panelH / 2,
     };
+  }
+
+  /** Grid column under the painted door center — single source for triggers and café ">". */
+  function deriveDoorCol(building) {
+    var bw = building.width * TILE;
+    var bh = building.height * TILE;
+    var door = facadeDoorMetrics(bw, bh);
+    var worldCx = building.left * TILE + door.cx;
+    return Math.round(worldCx / TILE);
+  }
+
+  function buildingDoorCol() {
+    return deriveDoorCol(OUTSIDE_BUILDING);
   }
 
   /** Painted door panel in unscaled world pixels (building-local + map offset). */
@@ -45,7 +63,13 @@
 
   function facadeDoorXBand() {
     var f = facadeDoorWorldRect();
-    return { left: f.left, right: f.right };
+    var doorCol = buildingDoorCol();
+    var tileLeft = doorCol * TILE;
+    var tileRight = tileLeft + TILE;
+    return {
+      left: Math.min(f.left, tileLeft + 1),
+      right: Math.max(f.right, tileRight - 1),
+    };
   }
 
   function facadeDoorXBandScaled() {
@@ -83,11 +107,12 @@
 
   function getDoorAnchor() {
     var b = OUTSIDE_BUILDING;
+    var doorCol = buildingDoorCol();
     var x = facadeDoorXBand();
     var worldX = ((x.left + x.right) / 2) * SCALE;
     return {
       worldX: worldX,
-      gridCol: b.doorCol,
+      gridCol: doorCol,
       outsideRow: b.doorRow,
       outsideApproachRow: 11,
       insideExitRow: CAFE_EXIT_DOOR_ROW,
@@ -113,9 +138,10 @@
     return getDoorAnchor().gridCol;
   }
 
-  function feetInDoorXBand(feetWorld) {
+  function feetInDoorXBand(feetWorld, feetCol) {
     var band = facadeDoorXBandScaled();
-    return feetWorld.x >= band.left && feetWorld.x < band.right;
+    if (feetWorld.x >= band.left && feetWorld.x < band.right) return true;
+    return feetCol === getDoorAnchor().gridCol;
   }
 
   function doorTriggerRows(mapKey, keys) {
@@ -164,7 +190,7 @@
   }
 
   function playerOnDoorTrigger(feetCol, feetRow, mapKey, keys, feetWorld) {
-    if (!feetWorld || !feetInDoorXBand(feetWorld)) return false;
+    if (!feetWorld || !feetInDoorXBand(feetWorld, feetCol)) return false;
     var rows = doorTriggerRows(mapKey, keys);
     for (var i = 0; i < rows.length; i++) {
       if (feetRow === rows[i]) return true;
@@ -188,14 +214,10 @@
     return intentFacingDoor(facing, keys, doorFacing);
   }
 
-  function resolveExitSpawn(mapConf, fallbackStart, playerX) {
+  function resolveExitSpawn(mapConf, fallbackStart) {
     var base = mapConf.exitSpawn || fallbackStart;
     var spawn = Object.assign({}, base);
-    spawn.x = playerX;
-    var band = facadeDoorXBandScaled();
-    if (spawn.x < band.left || spawn.x >= band.right) {
-      spawn.x = getDoorAnchor().worldX;
-    }
+    spawn.x = getDoorAnchor().worldX;
     return spawn;
   }
 
@@ -277,16 +299,17 @@
   function validateDoorLink(cafeGrid) {
     var errors = [];
     var b = OUTSIDE_BUILDING;
+    var doorCol = buildingDoorCol();
     var anchor = getDoorAnchor();
     var facade = facadeDoorWorldRect();
-    var tileCx = b.doorCol * TILE + TILE / 2;
+    var tileCx = doorCol * TILE + TILE / 2;
     var facadeCx = (facade.left + facade.right) / 2;
     if (Math.abs(tileCx - facadeCx) > TILE * 0.6) {
-      errors.push('doorCol ' + b.doorCol + ' center drifts from painted door');
+      errors.push('derived doorCol ' + doorCol + ' center drifts from painted door');
     }
 
-    if (b.doorCol < b.left || b.doorCol >= b.left + b.width) {
-      errors.push('doorCol ' + b.doorCol + ' outside building footprint');
+    if (doorCol < b.left || doorCol >= b.left + b.width) {
+      errors.push('derived doorCol ' + doorCol + ' outside building footprint');
     }
     if (b.doorRow < b.top || b.doorRow >= b.top + b.height) {
       errors.push('doorRow ' + b.doorRow + ' outside building footprint');
@@ -327,6 +350,7 @@
     CAFE_DOOR_ROW: CAFE_DOOR_ROW,
     CAFE_EXIT_DOOR_ROW: CAFE_EXIT_DOOR_ROW,
     facadeDoorMetrics: facadeDoorMetrics,
+    deriveDoorCol: deriveDoorCol,
     facadeDoorWorldRect: facadeDoorWorldRect,
     facadeDoorWorldRectScaled: facadeDoorWorldRectScaled,
     facadeDoorXBandScaled: facadeDoorXBandScaled,

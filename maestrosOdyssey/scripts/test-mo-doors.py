@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Pure-math checks for mo-doors.js — run from repo root:
+Door invariant checks for mo-doors.js — run from repo root:
   python3 maestrosOdyssey/scripts/test-mo-doors.py
 """
 import json
@@ -11,7 +11,11 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 DOORS_JS = ROOT / "www" / "mo-doors.js"
+FARM_RPG = ROOT / "www" / "mo-farm-rpg.js"
+MJS = ROOT / "scripts" / "test-mo-doors.mjs"
 
+TILE = 32
+SCALE = 2
 failed = 0
 
 
@@ -24,73 +28,115 @@ def assert_true(cond, msg):
         print("ok:", msg)
 
 
-def run_js(expr):
-    """Evaluate MoDoors API via node if available, else quickjs, else inline regex checks."""
-    wrapper = f"""
-const fs = require('fs');
-const vm = require('vm');
-const code = fs.readFileSync({json.dumps(str(DOORS_JS))}, 'utf8');
-const sandbox = {{ window: {{}}, console }};
-sandbox.window = sandbox;
-vm.runInContext(code, vm.createContext(sandbox));
-const r = (function() {{ {expr} }})();
-if (typeof r === 'object') console.log(JSON.stringify(r));
-else console.log(String(r));
-"""
-    for cmd in (["node", "/opt/homebrew/bin/node", "/usr/local/bin/node"]):
+def parse_outside_building(text):
+    m = re.search(
+        r"OUTSIDE_BUILDING\s*=\s*\{\s*left:\s*(\d+),\s*top:\s*(\d+),\s*width:\s*(\d+),\s*height:\s*(\d+),\s*doorRow:\s*(\d+)\s*\}",
+        text,
+    )
+    if not m:
+        raise ValueError("could not parse OUTSIDE_BUILDING from mo-doors.js")
+    return {
+        "left": int(m.group(1)),
+        "top": int(m.group(2)),
+        "width": int(m.group(3)),
+        "height": int(m.group(4)),
+        "doorRow": int(m.group(5)),
+    }
+
+
+def facade_door_metrics(bw, bh):
+    dw = 22
+    dh = 40
+    dx = (bw // 2) - (dw // 2)
+    dy = bh - 46
+    panel_top = dy + 5
+    panel_h = dh - 10
+    return {
+        "dx": dx,
+        "dy": dy,
+        "dw": dw,
+        "dh": dh,
+        "cx": dx + dw / 2,
+        "cy": panel_top + panel_h / 2,
+    }
+
+
+def derive_door_col(building):
+    bw = building["width"] * TILE
+    bh = building["height"] * TILE
+    door = facade_door_metrics(bw, bh)
+    world_cx = building["left"] * TILE + door["cx"]
+    return round(world_cx / TILE)
+
+
+def parse_cafe_exit_row_grid(farm_text):
+    """Find café grid row with '>' exit tile."""
+    in_cafe = False
+    row_idx = 0
+    for line in farm_text.splitlines():
+        stripped = line.strip()
+        if stripped == "cafe: {":
+            in_cafe = True
+            row_idx = 0
+            continue
+        if in_cafe and stripped.startswith("outside:"):
+            break
+        if in_cafe and stripped.startswith("'#") and stripped.endswith("',"):
+            content = stripped.strip("',")
+            if ">" in content:
+                col = content.index(">")
+                return row_idx, col, content
+            row_idx += 1
+    raise ValueError('could not find café grid row with ">" in mo-farm-rpg.js')
+
+
+def run_node_mjs():
+    for cmd in ("node", "/opt/homebrew/bin/node", "/usr/local/bin/node"):
         try:
-            out = subprocess.check_output([cmd, "-e", wrapper], text=True, stderr=subprocess.DEVNULL)
-            line = out.strip().splitlines()[-1]
-            try:
-                return json.loads(line)
-            except json.JSONDecodeError:
-                return line
+            subprocess.check_call([cmd, str(MJS)], cwd=ROOT.parent)
+            return True
         except (FileNotFoundError, subprocess.CalledProcessError):
             continue
-    return None
+    return False
 
 
-# Fallback: static checks without JS runtime
-anchor_col = 8
-anchor_out_row = 10
-inside_exit_row = 11
-tile = 32
-scale = 2
+doors_text = DOORS_JS.read_text()
+farm_text = FARM_RPG.read_text()
 
-assert_true(anchor_col == 8 and anchor_out_row == 10, "door constants col 8 row 10 (static)")
-assert_true(inside_exit_row == 11, "café exit row 11 (static)")
+building = parse_outside_building(doors_text)
+door_col = derive_door_col(building)
 
-world_x = run_js("return MoDoors.getDoorAnchor().worldX;")
-if world_x is not None:
-    expected_x = (8 * tile + tile / 2) * scale
-    assert_true(abs(float(world_x) - expected_x) < 0.01, "door worldX at col 8 center")
+assert_true(door_col == 9, f"derived doorCol is 9 (got {door_col})")
+assert_true(building["doorRow"] == 10, "outside doorRow is 10")
 
-    on_out = run_js("return MoDoors.playerOnDoorTrigger(8, 10, 'outside');")
-    porch = run_js("return MoDoors.playerOnDoorTrigger(8, 11, 'outside');")
-    on_cafe = run_js("return MoDoors.playerOnDoorTrigger(8, 11, 'cafe');")
-    cafe_row10 = run_js("return MoDoors.playerOnDoorTrigger(8, 10, 'cafe');")
-    assert_true(on_out is True, "on outside door tile")
-    assert_true(porch is False, "porch row 11 does not trigger outside enter")
-    assert_true(on_cafe is True, "on café exit tile")
-    assert_true(cafe_row10 is False, "café row 10 does not trigger exit")
+assert_true(
+    "doorCol:" not in doors_text.split("OUTSIDE_BUILDING")[1].split("};")[0],
+    "OUTSIDE_BUILDING has no hand-tuned doorCol",
+)
 
-    grid = [["."] * 20 for _ in range(16)]
-    grid[11][8] = ">"
-    ok = run_js(
-        "const g = " + json.dumps(grid) + "; return MoDoors.validateDoorLink(g);"
-    )
-    grid[11][8] = "#"
-    bad = run_js(
-        "const g = " + json.dumps(grid) + "; return MoDoors.validateDoorLink(g);"
-    )
-    assert_true(ok is True, "validateDoorLink passes with > at exit cell")
-    assert_true(bad is False, "validateDoorLink fails when > missing")
+assert_true(
+    "outsideFacadeDoorMetrics" not in farm_text,
+    "mo-farm-rpg.js does not duplicate outsideFacadeDoorMetrics",
+)
+
+assert_true(
+    "MoDoors.facadeDoorMetrics" in farm_text,
+    "mo-farm-rpg.js uses MoDoors.facadeDoorMetrics for façade art",
+)
+
+assert_true(
+    re.search(r"spawn\.x\s*=\s*getDoorAnchor\(\)\.worldX", doors_text) is not None,
+    "resolveExitSpawn snaps X to getDoorAnchor().worldX",
+)
+
+exit_row, exit_col, exit_line = parse_cafe_exit_row_grid(farm_text)
+assert_true(exit_row == 11, f"café exit row is 11 (got {exit_row})")
+assert_true(exit_col == door_col, f'café ">" at col {exit_col} matches derived doorCol {door_col}')
+
+if run_node_mjs():
+    print("ok: test-mo-doors.mjs passed via node")
 else:
-    text = DOORS_JS.read_text()
-    assert_true("playerOnDoorTrigger" in text, "mo-doors.js defines playerOnDoorTrigger")
-    assert_true("doorTriggerCell" in text, "mo-doors.js defines doorTriggerCell")
-    assert_true("validateDoorLink" in text, "mo-doors.js defines validateDoorLink")
-    print("note: no node runtime — ran static checks only")
+    print("note: node not available — python invariants only")
 
 if failed:
     print(f"\n{failed} assertion(s) failed")

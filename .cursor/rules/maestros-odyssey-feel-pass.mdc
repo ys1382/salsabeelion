@@ -10,6 +10,7 @@ After **any** change to MO gameplay feel — maps, building art, door tiles, spa
 
 ## Self-check rule
 
+0. Run **`bash maestrosOdyssey/scripts/verify-maestros.sh`** from repo root (door invariants — must pass before browser or deploy).
 1. Make the change.
 2. **Open the game locally** and walk through the checks below.
 3. If anything regressed, fix it and re-check.
@@ -36,7 +37,7 @@ If port 8765 is busy, pick another (e.g. `8766`). Open `http://127.0.0.1:<port>/
 3. **Spawn facing** — entering faces into the room; leaving faces the street.
 4. **Porch / sidewalk** — path (`P`) tiles in front of the café stay walkable; upper building walls stay solid (no walking through the sides).
 5. **Ground under facade** — building footprint cells still draw street/grass under the sprite (never leave empty tiles that flash black).
-6. **Single source of truth** — `OUTSIDE_BUILDING.doorCol` / `doorRow`, `doorPos`, and exit spawns stay in sync.
+6. **Single source of truth** — `doorCol` is derived from painted façade math in `mo-doors.js`; café `>` must match. Run `verify-maestros.sh` before deploy.
 
 ### Dragon's Brew — Mara + order (required when dialogue, menu, or order input changed)
 
