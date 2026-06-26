@@ -5,7 +5,7 @@
  * - gridCol is derived from painted façade center, never hand-tuned
  * - café grid row 11 ">" must match gridCol (validateDoorLink)
  * - collision passage contains outside walk bands (rows 10–11)
- * - resolveExitSpawn always snaps X to door center (worldX)
+ * - resolveExitSpawn snaps X to door tile center and Y via feetRow (actual sprite height)
  */
 (function (root) {
   'use strict';
@@ -105,11 +105,15 @@
     return feetY - (CHAR_H * SCALE * 0.5);
   }
 
+  function doorTileCenterWorldX() {
+    var doorCol = buildingDoorCol();
+    return (doorCol * TILE + TILE / 2) * SCALE;
+  }
+
   function getDoorAnchor() {
     var b = OUTSIDE_BUILDING;
     var doorCol = buildingDoorCol();
-    var x = facadeDoorXBand();
-    var worldX = ((x.left + x.right) / 2) * SCALE;
+    var worldX = doorTileCenterWorldX();
     return {
       worldX: worldX,
       gridCol: doorCol,
@@ -215,9 +219,18 @@
   }
 
   function resolveExitSpawn(mapConf, fallbackStart) {
-    var base = mapConf.exitSpawn || fallbackStart;
-    var spawn = Object.assign({}, base);
-    spawn.x = getDoorAnchor().worldX;
+    var anchor = getDoorAnchor();
+    var spawn = Object.assign({}, mapConf.exitSpawn || fallbackStart);
+    spawn.x = anchor.worldX;
+    if (mapConf.exitTo === 'cafe') {
+      spawn.feetRow = anchor.insideExitRow;
+      spawn.facing = spawn.facing || 'up';
+      delete spawn.y;
+    } else if (mapConf.exitTo === 'outside') {
+      spawn.feetRow = anchor.outsideRow;
+      spawn.facing = spawn.facing || 'down';
+      delete spawn.y;
+    }
     return spawn;
   }
 
@@ -351,6 +364,7 @@
     CAFE_EXIT_DOOR_ROW: CAFE_EXIT_DOOR_ROW,
     facadeDoorMetrics: facadeDoorMetrics,
     deriveDoorCol: deriveDoorCol,
+    doorTileCenterWorldX: doorTileCenterWorldX,
     facadeDoorWorldRect: facadeDoorWorldRect,
     facadeDoorWorldRectScaled: facadeDoorWorldRectScaled,
     facadeDoorXBandScaled: facadeDoorXBandScaled,

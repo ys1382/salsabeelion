@@ -90,6 +90,31 @@ def parse_cafe_exit_row_grid(farm_text):
     raise ValueError('could not find café grid row with ">" in mo-farm-rpg.js')
 
 
+def run_js(expr):
+    wrapper = f"""
+const fs = require('fs');
+const vm = require('vm');
+const code = fs.readFileSync({json.dumps(str(DOORS_JS))}, 'utf8');
+const sandbox = {{ window: {{}}, console }};
+sandbox.window = sandbox;
+vm.runInContext(code, vm.createContext(sandbox));
+const r = (function() {{ {expr} }})();
+if (typeof r === 'object') console.log(JSON.stringify(r));
+else console.log(String(r));
+"""
+    for cmd in ("node", "/opt/homebrew/bin/node", "/usr/local/bin/node"):
+        try:
+            out = subprocess.check_output([cmd, "-e", wrapper], text=True, stderr=subprocess.DEVNULL)
+            line = out.strip().splitlines()[-1]
+            try:
+                return json.loads(line)
+            except json.JSONDecodeError:
+                return line
+        except (FileNotFoundError, subprocess.CalledProcessError):
+            continue
+    return None
+
+
 def run_node_mjs():
     for cmd in ("node", "/opt/homebrew/bin/node", "/usr/local/bin/node"):
         try:
@@ -125,9 +150,18 @@ assert_true(
 )
 
 assert_true(
-    re.search(r"spawn\.x\s*=\s*getDoorAnchor\(\)\.worldX", doors_text) is not None,
-    "resolveExitSpawn snaps X to getDoorAnchor().worldX",
+  re.search(r"spawn\.x\s*=\s*anchor\.worldX", doors_text) is not None,
+  "resolveExitSpawn snaps X to anchor.worldX",
 )
+assert_true(
+  re.search(r"spawn\.feetRow\s*=\s*anchor\.(insideExitRow|outsideRow)", doors_text) is not None,
+  "resolveExitSpawn sets feetRow for map transitions",
+)
+
+expected_world_x = (door_col * TILE + TILE / 2) * SCALE
+if run_js("return MoDoors.getDoorAnchor().worldX;") is not None:
+    world_x = run_js("return MoDoors.getDoorAnchor().worldX;")
+    assert_true(abs(float(world_x) - expected_world_x) < 0.01, f"worldX at tile center {expected_world_x}")
 
 exit_row, exit_col, exit_line = parse_cafe_exit_row_grid(farm_text)
 assert_true(exit_row == 11, f"café exit row is 11 (got {exit_row})")

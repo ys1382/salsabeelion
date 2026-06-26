@@ -38,9 +38,11 @@ assert(anchor.gridCol === derivedCol, 'anchor.gridCol matches deriveDoorCol');
 assert(anchor.outsideRow === 10, 'outside trigger row 10');
 assert(anchor.insideExitRow === 11, 'café exit row 11');
 
+const expectedWorldX = (derivedCol * TILE + TILE / 2) * SCALE;
+assert(anchor.worldX === expectedWorldX, 'worldX is door tile center (col 9 → 608)');
 assert(
-  anchor.worldX === ((MoDoors.facadeDoorXBandScaled().left + MoDoors.facadeDoorXBandScaled().right) / 2),
-  'worldX is center of façade X band (scaled)',
+  anchor.worldX === MoDoors.doorTileCenterWorldX(),
+  'worldX matches doorTileCenterWorldX',
 );
 
 const spawnY = MoDoors.spriteCenterYForFeetRow(10);
@@ -87,13 +89,22 @@ assert(
   'café vestibule row 10 triggers exit',
 );
 
-const spawn = MoDoors.resolveExitSpawn(
-  { exitSpawn: { x: 100, y: 200, facing: 'up' } },
+const spawnOut = MoDoors.resolveExitSpawn(
+  { exitTo: 'outside', exitSpawn: { x: 100, y: 200, facing: 'down' } },
   { x: 0, y: 0 },
 );
 assert(
-  spawn.x === MoDoors.getDoorAnchor().worldX && spawn.y === 200 && spawn.facing === 'up',
-  'resolveExitSpawn snaps X to door center',
+  spawnOut.x === expectedWorldX && spawnOut.feetRow === 10 && spawnOut.facing === 'down' && spawnOut.y === undefined,
+  'resolveExitSpawn to outside uses tile X and feetRow 10',
+);
+
+const spawnIn = MoDoors.resolveExitSpawn(
+  { exitTo: 'cafe', exitSpawn: { x: 50, y: 99, facing: 'up' } },
+  { x: 0, y: 0 },
+);
+assert(
+  spawnIn.x === expectedWorldX && spawnIn.feetRow === 11 && spawnIn.facing === 'up' && spawnIn.y === undefined,
+  'resolveExitSpawn to café uses tile X and feetRow 11',
 );
 
 if (failed) {
