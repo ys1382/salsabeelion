@@ -119,14 +119,16 @@ const ROWS   = 16;
 const W      = TILE * COLS;
 const H      = TILE * ROWS;
 const SCALE  = 2;   // pixel-art upscale
-const DIALOGUE_MARGIN = 36;
+const DIALOGUE_MARGIN = 40;
 const DIALOGUE_PAD_X = 40;
-const DIALOGUE_TEXT_PAD_Y = 14;
-const DIALOGUE_TEXT_SLACK = 14;
-const DIALOGUE_MIN_H = 80;
-const DIALOGUE_TOP_CLEARANCE = 56;
-const DIALOGUE_BASE_FONT = 13;
-const DIALOGUE_MIN_FONT = 9;
+const DIALOGUE_TEXT_PAD_Y = 18;
+const DIALOGUE_TEXT_SLACK = 18;
+const DIALOGUE_MIN_H = 96;
+const DIALOGUE_TOP_CLEARANCE = 72;
+const DIALOGUE_BASE_FONT = 17;
+const DIALOGUE_MIN_FONT = 12;
+const DIALOGUE_LINE_HEIGHT = 26;
+const DIALOGUE_ORDER_BOX_H = 54;
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  Pixel drawing helpers  (draws onto an offscreen canvas → Phaser texture)
@@ -316,6 +318,20 @@ function drawBrewSign(ctx, ox, oy) {
 }
 
 // One cohesive storefront (8×5 tiles) — no grass gaps, reads as a real building
+function outsideFacadeDoorMetrics(bw) {
+  const dw = 22;
+  const dh = 40;
+  const dx = Math.floor(bw / 2) - Math.floor(dw / 2);
+  const dy = 114;
+  const panelTop = dy + 5;
+  const panelH = dh - 10;
+  return {
+    dx, dy, dw, dh,
+    cx: dx + dw / 2,
+    cy: panelTop + panelH / 2,
+  };
+}
+
 function drawStreetBuildingFacade(ctx, bw, bh) {
   const brick = '#7a5848', brickD = '#6a4838', trim = '#5a3828';
 
@@ -351,20 +367,22 @@ function drawStreetBuildingFacade(ctx, bw, bh) {
   rect(ctx, 92, 74, 44, 3, '#a08040');
   rect(ctx, 92, 82, 30, 3, '#806030');
 
-  // awning
+  // awning (nudged up; shorter drop so it clears the door top)
+  const AWNING_Y = 104;
+  const AWNING_H = 8;
   for (let i = 0; i < 6; i++) {
-    rect(ctx, 52 + i * 26, 108, 22, 18, i % 2 === 0 ? '#8a3040' : '#d4af6a');
+    rect(ctx, 52 + i * 26, AWNING_Y, 22, AWNING_H, i % 2 === 0 ? '#8a3040' : '#d4af6a');
   }
-  rect(ctx, 48, 124, bw - 96, 4, trim);
+  rect(ctx, 48, AWNING_Y + AWNING_H, bw - 96, 3, trim);
 
-  // door (center-bottom)
-  const dx = Math.floor(bw / 2) - 28;
-  rect(ctx, dx, 118, 56, 38, '#3a2820');
-  rect(ctx, dx + 4, 122, 48, 30, '#1a1008');
-  rect(ctx, dx + 10, 128, 36, 20, '#3a3028');
-  rect(ctx, dx + 14, 132, 8, 8, '#d4a860');
-  rect(ctx, dx + 44, 142, 3, 4, '#d4af6a');
-  rect(ctx, dx + 2, 152, 52, 6, '#4a3828');
+  // door (center-bottom — narrow portrait rectangle, real-world proportions)
+  const door = outsideFacadeDoorMetrics(bw);
+  rect(ctx, door.dx, door.dy, door.dw, door.dh, '#3a2820');
+  rect(ctx, door.dx + 2, door.dy + 2, door.dw - 4, door.dh - 4, '#1a1008');
+  rect(ctx, door.dx + 4, door.dy + 5, door.dw - 8, door.dh - 10, '#3a3028');
+  rect(ctx, door.dx + 7, door.dy + 10, 5, 5, '#d4a860');
+  rect(ctx, door.dx + door.dw - 6, door.dy + door.dh - 14, 2, 3, '#d4af6a');
+  rect(ctx, door.dx, door.dy + door.dh - 2, door.dw, 3, '#4a3828');
 
   // foundation sill
   rect(ctx, 0, bh - 8, bw, 8, trim);
@@ -613,6 +631,7 @@ function drawDrinkCup(ctx, ox, oy, fullness, forTable) {
 //  Rows: down, left, right, up
 // ─────────────────────────────────────────────────────────────────────────────
 const CHAR_W = 16, CHAR_H = 24, CHAR_FRAMES = 4;
+const PLAYER_LOOK_ART_REV = 'p';
 const NPC_W = 28, NPC_H = CHAR_H; // wider canvas so wings read at 2× scale
 
 function tri(ctx, x1, y1, x2, y2, x3, y3, color) {
@@ -625,64 +644,267 @@ function tri(ctx, x1, y1, x2, y2, x3, y3, color) {
   ctx.fill();
 }
 
-function drawCharFrame(ctx, fx, fy, dir, frame) {
+function getProtagonistLook() {
+  if (window.MoProtagonistLook && typeof window.MoProtagonistLook.getLook === 'function') {
+    const look = window.MoProtagonistLook.getLook();
+    if (look) return look;
+  }
+  return 'man_short';
+}
+
+/** Same eyes + mouth as casual looks — keeps every protagonist readable at 16×24. */
+function drawCharFace(ctx, ox, oy, dir, skin) {
+  skin = skin || '#f0c080';
+  if (dir === 3) return;
+  rect(ctx, ox + 3, oy + 2, 10, 9, skin);
+  if (dir === 0) {
+    rect(ctx, ox + 5, oy + 7, 2, 2, '#1a0a00');
+    rect(ctx, ox + 9, oy + 7, 2, 2, '#1a0a00');
+    rect(ctx, ox + 6, oy + 10, 4, 1, '#c07050');
+  } else if (dir === 1) {
+    rect(ctx, ox + 5, oy + 7, 2, 2, '#1a0a00');
+    rect(ctx, ox + 5, oy + 10, 3, 1, '#c07050');
+  } else if (dir === 2) {
+    rect(ctx, ox + 9, oy + 7, 2, 2, '#1a0a00');
+    rect(ctx, ox + 8, oy + 10, 3, 1, '#c07050');
+  }
+}
+
+// BEGIN HIJAB_FACE_DRAW
+/** Per-direction face regions — hijab cheek cols never overlap faceSkin. */
+const HIJAB_FACE_LAYOUT = {
+  0: {
+    faceSkin: { x: 5, y: 4, w: 7, h: 8 },
+    eyes: [{ x: 6, y: 7 }, { x: 9, y: 7 }],
+    hijabCheeks: [
+      { col: 4, crownX: 3, crownW: 2 },
+      { col: 12, crownX: 11, crownW: 2 },
+    ],
+  },
+  1: {
+    faceSkin: { x: 5, y: 4, w: 3, h: 7 },
+    eyes: [{ x: 5, y: 7 }],
+    hijabCheeks: [{ col: 4, crownX: 4, crownW: 1 }],
+  },
+  2: {
+    faceSkin: { x: 9, y: 4, w: 3, h: 7 },
+    eyes: [{ x: 9, y: 7 }],
+    hijabCheeks: [{ col: 8, crownX: 8, crownW: 1 }],
+  },
+};
+
+const HIJAB_COLORS = { skin: '#f0c080', hijab: '#5a6878', hijabDark: '#4a5668', eye: '#1a0a00' };
+
+/** Small pixel smile for hijab face (all facings). */
+function drawHijabSmile(ctx, ox, oy, dir) {
+  const lip = '#c07050';
+  if (dir === 0) {
+    px(ctx, ox + 7, oy + 10, lip);
+    px(ctx, ox + 9, oy + 10, lip);
+    rect(ctx, ox + 7, oy + 11, 3, 1, lip);
+  } else if (dir === 1) {
+    px(ctx, ox + 5, oy + 10, lip);
+    px(ctx, ox + 6, oy + 11, lip);
+    px(ctx, ox + 7, oy + 11, lip);
+  } else if (dir === 2) {
+    px(ctx, ox + 10, oy + 10, lip);
+    px(ctx, ox + 8, oy + 11, lip);
+    px(ctx, ox + 9, oy + 11, lip);
+  }
+}
+
+/** Hijab cheek accent on columns strictly outside faceSkin. */
+function drawHijabCheekAccents(ctx, ox, oy, cheeks, hijab, hijabDark) {
+  for (let i = 0; i < cheeks.length; i++) {
+    const c = cheeks[i];
+    rect(ctx, ox + c.crownX, oy + 5, c.crownW, 2, hijab);
+    px(ctx, ox + c.col, oy + 6, hijabDark);
+    rect(ctx, ox + c.col, oy + 7, 1, 2, hijab);
+  }
+}
+
+function drawHijabFaceFromLayout(ctx, ox, oy, dir, skin, hijab) {
+  const hijabDark = HIJAB_COLORS.hijabDark;
+  skin = skin || HIJAB_COLORS.skin;
+
+  if (dir === 3) {
+    rect(ctx, ox + 2, oy + 2, 12, 9, hijab);
+    rect(ctx, ox + 3, oy + 3, 10, 7, hijabDark);
+    rect(ctx, ox + 4, oy + 5, 8, 2, hijab);
+    return;
+  }
+
+  const layout = HIJAB_FACE_LAYOUT[dir];
+  if (!layout) return;
+
+  if (dir === 0) {
+    rect(ctx, ox + 3, oy + 1, 10, 3, hijab);
+    rect(ctx, ox + 4, oy + 4, 8, 1, hijabDark);
+    rect(ctx, ox + 2, oy + 3, 2, 3, hijab);
+    rect(ctx, ox + 12, oy + 3, 2, 3, hijab);
+    rect(ctx, ox + 1, oy + 9, 2, 2, hijab);
+    rect(ctx, ox + 13, oy + 9, 2, 2, hijab);
+    rect(ctx, ox + 3, oy + 12, 10, 1, hijabDark);
+  } else if (dir === 1) {
+    rect(ctx, ox + 8, oy + 1, 7, 10, hijab);
+    rect(ctx, ox + 2, oy + 1, 12, 3, hijab);
+    rect(ctx, ox + 2, oy + 3, 2, 3, hijab);
+    rect(ctx, ox + 4, oy + 4, 3, 1, hijabDark);
+    rect(ctx, ox + 1, oy + 9, 2, 2, hijab);
+    rect(ctx, ox + 1, oy + 10, 3, 2, hijabDark);
+  } else if (dir === 2) {
+    rect(ctx, ox + 1, oy + 1, 7, 10, hijab);
+    rect(ctx, ox + 2, oy + 1, 12, 3, hijab);
+    rect(ctx, ox + 12, oy + 3, 2, 3, hijab);
+    rect(ctx, ox + 9, oy + 4, 3, 1, hijabDark);
+    rect(ctx, ox + 13, oy + 9, 2, 2, hijab);
+    rect(ctx, ox + 12, oy + 10, 3, 2, hijabDark);
+  }
+
+  const fs = layout.faceSkin;
+  rect(ctx, ox + fs.x, oy + fs.y, fs.w, fs.h, skin);
+  for (let i = 0; i < layout.eyes.length; i++) {
+    const e = layout.eyes[i];
+    rect(ctx, ox + e.x, oy + e.y, 2, 2, HIJAB_COLORS.eye);
+  }
+  drawHijabSmile(ctx, ox, oy, dir);
+  drawHijabCheekAccents(ctx, ox, oy, layout.hijabCheeks, hijab, hijabDark);
+}
+
+/** Hijab + jilbab — per-direction head (no bare back, no ear skin, open face). */
+function drawHijabFace(ctx, ox, oy, dir, skin, hijab) {
+  drawHijabFaceFromLayout(ctx, ox, oy, dir, skin, hijab);
+}
+// END HIJAB_FACE_DRAW
+
+function drawCharFrame(ctx, fx, fy, dir, frame, look) {
   const ox = fx * CHAR_W, oy = fy * CHAR_H;
-  const skin = '#f0c080', hair = '#5a3010', shirt = '#3a7ac8', pants = '#2a3a6a', shoe = '#2a1a0a';
-
-  // clear
-  ctx.clearRect(ox, oy, CHAR_W, CHAR_H);
-
-  // legs / walk bob
+  look = look || getProtagonistLook();
+  const skin = '#f0c080';
   const walkOffset = (frame === 1 || frame === 3) ? 0 : 1;
   const legL = frame < 2 ? 1 : -1;
+  const shoe = '#2a1a0a';
 
-  if (dir !== 3) { // not up — show shoes
-    rect(ctx, ox+3+legL, oy+18+walkOffset, 4, 4, pants);
-    rect(ctx, ox+9-legL, oy+18+walkOffset, 4, 4, pants);
-    rect(ctx, ox+3+legL, oy+21+walkOffset, 4, 3, shoe);
-    rect(ctx, ox+9-legL, oy+21+walkOffset, 4, 3, shoe);
-  } else {
-    rect(ctx, ox+3, oy+18, 10, 6, pants);
+  ctx.clearRect(ox, oy, CHAR_W, CHAR_H);
+
+  if (look === 'man_kufi') {
+    const thobe = '#f2ece2', thobeShade = '#ddd4c8', kufi = '#f8f6f0', kufiLine = '#c8c0b4';
+    if (dir !== 3) {
+      rect(ctx, ox + 3 + legL, oy + 18 + walkOffset, 4, 4, thobeShade);
+      rect(ctx, ox + 9 - legL, oy + 18 + walkOffset, 4, 4, thobeShade);
+      rect(ctx, ox + 3 + legL, oy + 21 + walkOffset, 4, 3, shoe);
+      rect(ctx, ox + 9 - legL, oy + 21 + walkOffset, 4, 3, shoe);
+    } else {
+      rect(ctx, ox + 3, oy + 18, 10, 6, thobeShade);
+    }
+    rect(ctx, ox + 2, oy + 10, 12, 9, thobe);
+    if (dir !== 3) {
+      rect(ctx, ox + 1, oy + 10, 2, 6, thobe);
+      rect(ctx, ox + 13, oy + 10, 2, 6, thobe);
+      rect(ctx, ox + 1, oy + 16, 2, 2, skin);
+      rect(ctx, ox + 13, oy + 16, 2, 2, skin);
+    } else {
+      rect(ctx, ox + 1, oy + 10, 2, 7, thobe);
+      rect(ctx, ox + 13, oy + 10, 2, 7, thobe);
+      rect(ctx, ox + 3, oy + 2, 10, 5, kufi);
+    }
+    if (dir !== 3) {
+      drawCharFace(ctx, ox, oy, dir, skin);
+      rect(ctx, ox + 3, oy + 1, 10, 2, kufi);
+      rect(ctx, ox + 4, oy + 2, 8, 1, kufiLine);
+    }
+    rect(ctx, ox + 4, oy + 23, 8, 1, 'rgba(0,0,0,0.3)');
+    return;
   }
 
-  // body
-  rect(ctx, ox+3, oy+10, 10, 9, shirt);
+  if (look === 'woman_jilbab') {
+    const hijab = '#5a6878', jilbab = '#4a5668', jilbabLight = '#6a7888', shoeD = '#2a3040';
+    if (dir !== 3) {
+      rect(ctx, ox + 3 + legL, oy + 18 + walkOffset, 4, 4, jilbab);
+      rect(ctx, ox + 9 - legL, oy + 18 + walkOffset, 4, 4, jilbab);
+      rect(ctx, ox + 3 + legL, oy + 21 + walkOffset, 4, 3, shoeD);
+      rect(ctx, ox + 9 - legL, oy + 21 + walkOffset, 4, 3, shoeD);
+    } else {
+      rect(ctx, ox + 2, oy + 10, 12, 14, jilbab);
+      drawHijabFace(ctx, ox, oy, dir, skin, hijab);
+      rect(ctx, ox + 4, oy + 23, 8, 1, 'rgba(0,0,0,0.3)');
+      return;
+    }
+    rect(ctx, ox + 2, oy + 10, 12, 9, jilbab);
+    rect(ctx, ox + 1, oy + 17, 14, 4, jilbab);
+    if (dir !== 3) {
+      rect(ctx, ox + 1, oy + 11, 2, 5, jilbabLight);
+      rect(ctx, ox + 13, oy + 11, 2, 5, jilbabLight);
+    }
+    drawHijabFace(ctx, ox, oy, dir, skin, hijab);
+    rect(ctx, ox + 4, oy + 23, 8, 1, 'rgba(0,0,0,0.3)');
+    return;
+  }
 
-  // arms — shirt sleeves to wrist, bare hands
+  const hair = look === 'woman_long' ? '#4a2818' : '#5a3010';
+  const shirt = look === 'woman_long' ? '#4a88b8' : '#3a7ac8';
+  const pants = '#2a3a6a';
+
   if (dir !== 3) {
-    rect(ctx, ox+1, oy+10, 2, 6, shirt);
-    rect(ctx, ox+13, oy+10, 2, 6, shirt);
-    rect(ctx, ox+1, oy+16, 2, 2, skin);
-    rect(ctx, ox+13, oy+16, 2, 2, skin);
+    rect(ctx, ox + 3 + legL, oy + 18 + walkOffset, 4, 4, pants);
+    rect(ctx, ox + 9 - legL, oy + 18 + walkOffset, 4, 4, pants);
+    rect(ctx, ox + 3 + legL, oy + 21 + walkOffset, 4, 3, shoe);
+    rect(ctx, ox + 9 - legL, oy + 21 + walkOffset, 4, 3, shoe);
   } else {
-    rect(ctx, ox+1, oy+10, 2, 7, shirt);
-    rect(ctx, ox+13, oy+10, 2, 7, shirt);
+    rect(ctx, ox + 3, oy + 18, 10, 6, pants);
   }
 
-  // head
-  rect(ctx, ox+3, oy+2, 10, 9, skin);
+  rect(ctx, ox + 3, oy + 10, 10, 9, shirt);
 
-  // hair
-  rect(ctx, ox+3, oy+2, 10, 3, hair);
-  if (dir === 3) { // up — show back of head
-    rect(ctx, ox+3, oy+2, 10, 5, hair);
+  if (dir !== 3) {
+    rect(ctx, ox + 1, oy + 10, 2, 6, shirt);
+    rect(ctx, ox + 13, oy + 10, 2, 6, shirt);
+    rect(ctx, ox + 1, oy + 16, 2, 2, skin);
+    rect(ctx, ox + 13, oy + 16, 2, 2, skin);
+  } else {
+    rect(ctx, ox + 1, oy + 10, 2, 7, shirt);
+    rect(ctx, ox + 13, oy + 10, 2, 7, shirt);
   }
 
-  // face (only for down/left/right)
-  if (dir === 0) { // down
-    rect(ctx, ox+5, oy+7, 2, 2, '#1a0a00'); // eyes
-    rect(ctx, ox+9, oy+7, 2, 2, '#1a0a00');
-    rect(ctx, ox+6, oy+10, 4, 1, '#c07050'); // mouth
-  } else if (dir === 1) { // left
-    rect(ctx, ox+5, oy+7, 2, 2, '#1a0a00');
-    rect(ctx, ox+5, oy+10, 3, 1, '#c07050');
-  } else if (dir === 2) { // right
-    rect(ctx, ox+9, oy+7, 2, 2, '#1a0a00');
-    rect(ctx, ox+8, oy+10, 3, 1, '#c07050');
+  rect(ctx, ox + 3, oy + 2, 10, 9, skin);
+
+  if (look === 'woman_long') {
+    rect(ctx, ox + 3, oy + 2, 10, 3, hair);
+    if (dir === 0) {
+      rect(ctx, ox + 2, oy + 4, 2, 8, hair);
+      rect(ctx, ox + 12, oy + 4, 2, 8, hair);
+      rect(ctx, ox + 4, oy + 11, 2, 2, hair);
+      rect(ctx, ox + 10, oy + 11, 2, 2, hair);
+    } else if (dir === 1) {
+      rect(ctx, ox + 2, oy + 3, 3, 9, hair);
+      rect(ctx, ox + 4, oy + 11, 2, 2, hair);
+    } else if (dir === 2) {
+      rect(ctx, ox + 11, oy + 3, 3, 9, hair);
+      rect(ctx, ox + 10, oy + 11, 2, 2, hair);
+    }
+    if (dir === 3) {
+      rect(ctx, ox + 2, oy + 2, 12, 8, hair);
+    }
+  } else {
+    rect(ctx, ox + 3, oy + 2, 10, 3, hair);
+    if (dir === 3) {
+      rect(ctx, ox + 3, oy + 2, 10, 5, hair);
+    }
   }
 
-  // shadow
-  rect(ctx, ox+4, oy+23, 8, 1, 'rgba(0,0,0,0.3)');
+  if (dir === 0) {
+    rect(ctx, ox + 5, oy + 7, 2, 2, '#1a0a00');
+    rect(ctx, ox + 9, oy + 7, 2, 2, '#1a0a00');
+    rect(ctx, ox + 6, oy + 10, 4, 1, '#c07050');
+  } else if (dir === 1) {
+    rect(ctx, ox + 5, oy + 7, 2, 2, '#1a0a00');
+    rect(ctx, ox + 5, oy + 10, 3, 1, '#c07050');
+  } else if (dir === 2) {
+    rect(ctx, ox + 9, oy + 7, 2, 2, '#1a0a00');
+    rect(ctx, ox + 8, oy + 10, 3, 1, '#c07050');
+  }
+
+  rect(ctx, ox + 4, oy + 23, 8, 1, 'rgba(0,0,0,0.3)');
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -789,26 +1011,27 @@ const READABLES = [
 const OUTSIDE_BUILDING = { left: 5, top: 6, width: 8, height: 5, doorCol: 8, doorRow: 10 };
 const CAFE_DOOR_ROW = 10;
 
-/** Sparkle anchors on the door panel (local px) — clustered center, not frame edges. */
+/** Sparkle anchors on the door frame (local px) — jamb, header, sill; not the panel. */
 function doorSparkleLocalPoints(mapKey) {
   if (mapKey === 'outside') {
-    const bw = OUTSIDE_BUILDING.width * TILE;
-    const dx = Math.floor(bw / 2) - 28;
-    const cx = dx + 28;
-    const cy = 138;
+    const { dx, dy, dw, dh } = outsideFacadeDoorMetrics(OUTSIDE_BUILDING.width * TILE);
     return [
-      [cx - 10, cy - 6], [cx + 2, cy - 8], [cx + 10, cy - 5],
-      [cx - 6, cy + 1], [cx + 6, cy + 2], [cx - 2, cy + 6],
-      [cx + 12, cy + 1], [cx - 12, cy - 2], [cx + 4, cy + 8],
+      [dx + 4, dy + 2], [dx + Math.floor(dw / 2), dy + 1], [dx + dw - 4, dy + 2],
+      [dx + 1, dy + 10], [dx + 1, dy + 22], [dx + 1, dy + 32],
+      [dx + dw - 2, dy + 10], [dx + dw - 2, dy + 22], [dx + dw - 2, dy + 32],
+      [dx + 5, dy + dh - 3], [dx + dw - 5, dy + dh - 3],
     ];
   }
   if (mapKey === 'cafe') {
-    const cx = 16;
-    const cy = 18;
+    const fx = 4;
+    const fy = 8;
+    const fw = 24;
+    const fh = 22;
     return [
-      [cx - 5, cy - 4], [cx + 1, cy - 5], [cx + 6, cy - 2],
-      [cx - 3, cy + 1], [cx + 4, cy + 2], [cx - 6, cy + 3],
-      [cx + 7, cy + 1], [cx, cy + 5], [cx - 1, cy - 1],
+      [fx + 4, fy + 1], [fx + Math.floor(fw / 2), fy + 1], [fx + fw - 4, fy + 1],
+      [fx + 1, fy + 6], [fx + 1, fy + 14], [fx + 1, fy + 19],
+      [fx + fw - 2, fy + 6], [fx + fw - 2, fy + 14], [fx + fw - 2, fy + 19],
+      [fx + 6, fy + fh - 2], [fx + fw - 6, fy + fh - 2],
     ];
   }
   return [];
@@ -831,6 +1054,133 @@ function doorSparkleWorldPoints(mapKey) {
   return locs.map(([x, y]) => ({ x: (tx + x) * s, y: (ty + y) * s }));
 }
 
+function readableBoardFrameLocs(col, row, bx, by, bw, bh) {
+  const tx = col * TILE;
+  const ty = row * TILE;
+  const x = tx + bx;
+  const y = ty + by;
+  return [
+    [x + 3, y + 2], [x + Math.floor(bw / 2), y + 1], [x + bw - 3, y + 2],
+    [x + 1, y + Math.floor(bh / 2)], [x + bw - 1, y + Math.floor(bh / 2)],
+    [x + 4, y + bh - 2], [x + bw - 4, y + bh - 2],
+  ];
+}
+
+/** Blue sparkle anchors on readable sign frames (READABLES only — not UI hints). */
+function readableSparkleLocalPoints(item) {
+  if (item.map === 'outside' && item.col === 8 && item.row === 7) {
+    const b = OUTSIDE_BUILDING;
+    const bx = b.left * TILE;
+    const by = b.top * TILE;
+    const sx = 88;
+    const sy = 52;
+    const sw = 80;
+    const sh = 50;
+    return [
+      [bx + sx + 6, by + sy + 5], [bx + sx + Math.floor(sw / 2), by + sy + 3], [bx + sx + sw - 6, by + sy + 5],
+      [bx + sx + 2, by + sy + 14], [bx + sx + sw - 2, by + sy + 14],
+      [bx + sx + 2, by + sy + 26], [bx + sx + sw - 2, by + sy + 32],
+      [bx + sx + 10, by + sy + sh - 4], [bx + sx + sw - 10, by + sy + sh - 4],
+      [bx + sx + Math.floor(sw / 2), by + sy + sh - 6],
+    ];
+  }
+  if (item.map === 'outside' && item.col === 3) {
+    const tx = 3 * TILE;
+    const ty = 11 * TILE;
+    return [
+      [tx + 6, ty + 7], [tx + 16, ty + 6], [tx + 26, ty + 7],
+      [tx + 5, ty + 12], [tx + 27, ty + 12],
+      [tx + 8, ty + 10], [tx + 24, ty + 10],
+      [tx + 10, ty + 20], [tx + 22, ty + 20],
+      [tx + 16, ty + 21],
+    ];
+  }
+  if (item.map === 'cafe' && item.id === 'dragons_brew_menu') {
+    return readableBoardFrameLocs(2, 1, 3, 5, 26, 22);
+  }
+  if (item.map === 'cafe' && item.col === 3) {
+    return readableBoardFrameLocs(3, 1, 4, 6, 24, 20);
+  }
+  if (item.map === 'cafe' && item.col === 4) {
+    return readableBoardFrameLocs(4, 1, 3, 5, 26, 22);
+  }
+  return [];
+}
+
+function readableSparkleStyle(item) {
+  if (item.map === 'outside' && item.col === 8 && item.row === 7) return 'storefront';
+  if (item.map === 'outside' && item.col === 3) return 'wood';
+  return 'light';
+}
+
+const READABLE_SPARKLE_STYLES = {
+  wood: { main: 0x98d8ff, peak: 0xf0faff, alphaBase: 0.32, alphaPulse: 0.52 },
+  storefront: { main: 0xa8e0ff, peak: 0xf4fcff, alphaBase: 0.30, alphaPulse: 0.54 },
+  light: { main: 0x2a60b8, peak: 0x5090e8, alphaBase: 0.38, alphaPulse: 0.50, outline: 0x143060 },
+};
+
+function readableSparkleWorldPoints(mapKey) {
+  const s = SCALE;
+  const out = [];
+  READABLES.forEach((item) => {
+    if (item.map !== mapKey) return;
+    const style = readableSparkleStyle(item);
+    readableSparkleLocalPoints(item).forEach(([x, y]) => {
+      out.push({ x: x * s, y: y * s, style });
+    });
+  });
+  return out;
+}
+
+function seatSparkleLocalPoints(seat) {
+  const tx = seat.col * TILE;
+  const ty = seat.row * TILE;
+  if (seat.barStool) {
+    return [
+      [tx + 13, ty + 5], [tx + 19, ty + 5],
+      [tx + 14, ty + 10], [tx + 18, ty + 10],
+      [tx + 11, ty + 21], [tx + 21, ty + 21],
+    ];
+  }
+  return [
+    [tx + 11, ty + 3], [tx + 21, ty + 3],
+    [tx + 10, ty + 9], [tx + 22, ty + 9],
+    [tx + 12, ty + 16], [tx + 20, ty + 16],
+  ];
+}
+
+function talkableSparkleLocalPoints(npc) {
+  const ox = npc.col * TILE;
+  const oy = npc.row * TILE;
+  const cx = ox + NPC_W / 2;
+  return [
+    [ox + 1, oy + 6], [cx, oy + 1], [ox + NPC_W - 1, oy + 6],
+    [ox - 1, oy + 11], [ox + NPC_W + 1, oy + 11],
+    [ox + 4, oy + 20], [ox + NPC_W - 4, oy + 20],
+    [ox + 20, oy + 18], [ox - 4, oy + 18],
+  ];
+}
+
+function seatSparkleWorldPoints(mapKey) {
+  if (mapKey !== 'cafe') return [];
+  const s = SCALE;
+  return CAFE_SEATS.flatMap((seat) =>
+    seatSparkleLocalPoints(seat).map(([x, y]) => ({ x: x * s, y: y * s, style: 'seat' }))
+  );
+}
+
+function talkableSparkleWorldPoints(mapKey) {
+  const mara = MAPS[mapKey].mara;
+  if (!mara) return [];
+  const s = SCALE;
+  return talkableSparkleLocalPoints(mara).map(([x, y]) => ({ x: x * s, y: y * s, style: 'talk' }));
+}
+
+const SEAT_TALK_SPARKLE_STYLES = {
+  seat: { main: 0xff6868, peak: 0xffd4d4, alphaBase: 0.28, alphaPulse: 0.48 },
+  talk: { main: 0xff80c8, peak: 0xffe4f4, alphaBase: 0.28, alphaPulse: 0.50 },
+};
+
 const MAPS = {
   outside: {
     backgroundColor: '#1a1a2e',
@@ -846,12 +1196,12 @@ const MAPS = {
       '#1................1#',
       '#..1....1....1.....#',
       '#..................#',
-      '#...wwwwwwwwww.....#',
-      '#...w........w.....#',
-      '#...w........w.....#',
-      '#...w........w.....#',
-      '#...w........w.....#',
-      '#...w........w.....#',
+      '#..................#',
+      '#..................#',
+      '#..................#',
+      '#..................#',
+      '#..................#',
+      '#..................#',
       '#...PPPPPPPPPP.....#',
       '#..S..f............#',
       '#..................#',
@@ -999,26 +1349,63 @@ class GameScene extends Phaser.Scene {
     this.textures.addCanvas('street_building', bc);
   }
 
-  _buildCharTexture() {
-    // 4 dirs × 4 frames, each 16×24  → canvas 64×96
+  _ensurePlayerTexture(look) {
+    look = look || getProtagonistLook();
+    const texKey = 'player_' + look + '_' + PLAYER_LOOK_ART_REV;
+    if (this.textures.exists(texKey)) return texKey;
+
     const c = makeCanvas(CHAR_W * CHAR_FRAMES, CHAR_H * 4);
     const ctx = c.getContext('2d');
     for (let dir = 0; dir < 4; dir++) {
       for (let frame = 0; frame < CHAR_FRAMES; frame++) {
-        drawCharFrame(ctx, frame, dir, dir, frame);
+        drawCharFrame(ctx, frame, dir, dir, frame, look);
       }
     }
-    this.textures.addCanvas('player', c);
-    this.textures.get('player').add('down0',  0,  0,  0, CHAR_W, CHAR_H);
-    this.textures.get('player').add('down1',  0, CHAR_W,  0, CHAR_W, CHAR_H);
-    this.textures.get('player').add('down2',  0, CHAR_W*2,0, CHAR_W, CHAR_H);
-    this.textures.get('player').add('down3',  0, CHAR_W*3,0, CHAR_W, CHAR_H);
+    this.textures.addCanvas(texKey, c);
+    const tex = this.textures.get(texKey);
     for (let dir = 0; dir < 4; dir++) {
-      const dirName = ['down','left','right','up'][dir];
-      this.textures.get('player').add(`${dirName}0`, 0, 0,          dir*CHAR_H, CHAR_W, CHAR_H);
-      this.textures.get('player').add(`${dirName}1`, 0, CHAR_W,     dir*CHAR_H, CHAR_W, CHAR_H);
-      this.textures.get('player').add(`${dirName}2`, 0, CHAR_W*2,   dir*CHAR_H, CHAR_W, CHAR_H);
-      this.textures.get('player').add(`${dirName}3`, 0, CHAR_W*3,   dir*CHAR_H, CHAR_W, CHAR_H);
+      const dirName = ['down', 'left', 'right', 'up'][dir];
+      for (let frame = 0; frame < CHAR_FRAMES; frame++) {
+        tex.add(`${dirName}${frame}`, 0, frame * CHAR_W, dir * CHAR_H, CHAR_W, CHAR_H);
+      }
+    }
+    return texKey;
+  }
+
+  _buildCharTexture() {
+    this._ensurePlayerTexture(getProtagonistLook());
+  }
+
+  _rebuildPlayerAnims(texKey) {
+    const dirs = ['down', 'left', 'right', 'up'];
+    dirs.forEach(dir => {
+      if (this.anims.exists(`walk-${dir}`)) this.anims.remove(`walk-${dir}`);
+      if (this.anims.exists(`idle-${dir}`)) this.anims.remove(`idle-${dir}`);
+      this.anims.create({
+        key: `walk-${dir}`,
+        frames: [0, 1, 2, 3].map(i => ({ key: texKey, frame: `${dir}${i}` })),
+        frameRate: 8,
+        repeat: -1
+      });
+      this.anims.create({
+        key: `idle-${dir}`,
+        frames: [{ key: texKey, frame: `${dir}0` }],
+        frameRate: 1,
+        repeat: 0
+      });
+    });
+  }
+
+  refreshPlayerAppearance() {
+    if (!this.player) return;
+    const facing = this.facing || 'down';
+    const texKey = this._ensurePlayerTexture();
+    this._rebuildPlayerAnims(texKey);
+    this.player.setTexture(texKey, `${facing}0`);
+    const animKey = (this.player.body && (this.player.body.velocity.x !== 0 || this.player.body.velocity.y !== 0))
+      ? `walk-${facing}` : `idle-${facing}`;
+    if (this.anims.exists(animKey)) {
+      this.player.play(animKey, true);
     }
   }
 
@@ -1053,27 +1440,15 @@ class GameScene extends Phaser.Scene {
     this.tallLayer   = this.add.container(0, 0);
     this.solidBodies = this.physics.add.staticGroup();
 
-    this.player = this.physics.add.sprite(0, 0, 'player');
+    const playerTex = this._ensurePlayerTexture(getProtagonistLook() || 'man_short');
+    this.player = this.physics.add.sprite(0, 0, playerTex);
     this.player.setScale(SCALE);
     this.player.setDepth(10);
     this.player.body.setSize(10 * SCALE, 8 * SCALE);
     this.player.body.setOffset(3 * SCALE, 16 * SCALE);
 
     const dirs = ['down','left','right','up'];
-    dirs.forEach(dir => {
-      this.anims.create({
-        key: `walk-${dir}`,
-        frames: [0,1,2,3].map(i => ({ key: 'player', frame: `${dir}${i}` })),
-        frameRate: 8,
-        repeat: -1
-      });
-      this.anims.create({
-        key: `idle-${dir}`,
-        frames: [{ key: 'player', frame: `${dir}0` }],
-        frameRate: 1,
-        repeat: 0
-      });
-    });
+    this._rebuildPlayerAnims(playerTex);
     this.player.play('idle-down');
     this.facing = 'down';
 
@@ -1083,6 +1458,8 @@ class GameScene extends Phaser.Scene {
     this.dialogueActive = false;
     this.dialogueKind = null;
     this.orderInputActive = false;
+    this.orderInputMode = 'order';
+    this.quizItem = null;
     this.visitPanelActive = false;
     this.playerSeated = false;
     this.seatAnchor = null;
@@ -1100,8 +1477,8 @@ class GameScene extends Phaser.Scene {
     this.dialogueBorder = this.add.rectangle(0, 0, W * SCALE - DIALOGUE_PAD_X * 2, DIALOGUE_MIN_H).setStrokeStyle(2, 0xffe066).setOrigin(0.5, 0);
     this.dialogueText = this.add.text(0, DIALOGUE_TEXT_PAD_Y, '', {
       fontFamily: 'monospace',
-      fontSize: '13px',
-      lineSpacing: 4,
+      fontSize: DIALOGUE_BASE_FONT + 'px',
+      lineSpacing: 6,
       color: '#fffbe8',
       wordWrap: { width: W * SCALE - DIALOGUE_PAD_X * 2 - 40 },
       align: 'center',
@@ -1115,7 +1492,8 @@ class GameScene extends Phaser.Scene {
       '"You\'re fine, there\'s not a lot of my kind in this area. I\'m a Çampire—' +
       'vampire and werecat ancestry somewhere down the line. The wings plus the tail are a fun conversation starter."';
     this.maraOrderHint =
-      'Type your order in Spanish in the box below, then press Enter.\n(Hold letters to see accent forms.)';
+      'Type your order in the language you chose for the café, then press Enter.\n' +
+      '(Spanish: hold letters for accents. Arabic: romanization like Qahwa is fine.)';
 
     this.maraOrderWrap = document.getElementById('mara-order-wrap');
     this.maraOrderInput = document.getElementById('mara-order-input');
@@ -1181,12 +1559,17 @@ class GameScene extends Phaser.Scene {
     return rx === b.doorCol && ry === b.doorRow;
   }
 
-  /** Solid walls except the door and sidewalk path on the porch row. */
+  /** Solid walls except the door, sidewalk path, and façade cells above walkable porch. */
   _isOutsideBuildingSolid(rx, ry) {
     if (!this._isOutsideBuildingCell(rx, ry)) return false;
     if (this._isOutsideDoorCell(rx, ry)) return false;
     const porchRow = OUTSIDE_BUILDING.top + OUTSIDE_BUILDING.height - 1;
-    if (ry === porchRow && MAPS.outside.grid[ry][rx] === 'P') return false;
+    const grid = MAPS.outside.grid;
+    if (ry === porchRow && grid[ry][rx] === 'P') return false;
+    // row above porch — player hitbox needs headroom to stand on the threshold
+    if (ry === porchRow - 1 && rx >= OUTSIDE_BUILDING.left && rx < OUTSIDE_BUILDING.left + OUTSIDE_BUILDING.width) {
+      if (grid[porchRow][rx] === 'P') return false;
+    }
     return true;
   }
 
@@ -1235,16 +1618,41 @@ class GameScene extends Phaser.Scene {
     };
   }
 
+  _playerOnDoorTile(conf) {
+    const feet = this._playerGridCell();
+    const center = this._playerCenterCell();
+    const on = (cell) => this._isDoorTile(conf, conf.grid, cell.col, cell.row);
+    return on(feet) || on(center);
+  }
+
+  _intentFacingDoor(conf) {
+    const need = conf.doorFacing;
+    if (!need) return true;
+    if (this.facing === need) return true;
+    const { cursors, wasd } = this;
+    if (need === 'up' && (cursors.up.isDown || wasd.up.isDown)) return true;
+    if (need === 'down' && (cursors.down.isDown || wasd.down.isDown)) return true;
+    if (need === 'left' && (cursors.left.isDown || wasd.left.isDown)) return true;
+    if (need === 'right' && (cursors.right.isDown || wasd.right.isDown)) return true;
+    return false;
+  }
+
   _canUseDoor(conf) {
-    const cell = this._playerCenterCell();
-    if (!this._isDoorTile(conf, conf.grid, cell.col, cell.row)) return false;
-    return !conf.doorFacing || this.facing === conf.doorFacing;
+    if (!this._playerOnDoorTile(conf)) return false;
+    return this._intentFacingDoor(conf);
   }
 
   _isDoorTile(conf, grid, col, row) {
     if (row < 0 || row >= ROWS || col < 0 || col >= COLS) return false;
-    if (conf.doorPos && col === conf.doorPos.col && row === conf.doorPos.row) return true;
-    return grid[row][col] === conf.doorTile;
+    const dp = conf.doorPos;
+    if (dp && col === dp.col && row === dp.row) return true;
+    if (grid[row][col] === conf.doorTile) return true;
+    // outside porch — narrow door sits on a wider walkable threshold
+    if (dp && conf.doorFacing === 'up' && row === dp.row
+        && grid[row][col] === 'P' && col >= dp.col - 1 && col <= dp.col + 1) {
+      return true;
+    }
+    return false;
   }
 
   _tilePos(col, row) {
@@ -1317,9 +1725,9 @@ class GameScene extends Phaser.Scene {
   }
 
   _destroyDoorSparkles() {
-    if (this.doorSparkleTimer) {
-      this.doorSparkleTimer.remove(false);
-      this.doorSparkleTimer = null;
+    if (this.sparkleTimer) {
+      this.sparkleTimer.remove(false);
+      this.sparkleTimer = null;
     }
     if (this.doorSparkleGfx) {
       this.doorSparkleGfx.destroy();
@@ -1327,41 +1735,137 @@ class GameScene extends Phaser.Scene {
     }
     this.doorSparklePts = null;
     this.doorSparkPhase = null;
+    if (this.readableSparkleGfx) {
+      this.readableSparkleGfx.destroy();
+      this.readableSparkleGfx = null;
+    }
+    this.readableSparklePts = null;
+    this.readableSparkPhase = null;
+    if (this.seatSparkleGfx) {
+      this.seatSparkleGfx.destroy();
+      this.seatSparkleGfx = null;
+    }
+    this.seatSparklePts = null;
+    this.seatSparkPhase = null;
+    if (this.talkSparkleGfx) {
+      this.talkSparkleGfx.destroy();
+      this.talkSparkleGfx = null;
+    }
+    this.talkSparklePts = null;
+    this.talkSparkPhase = null;
   }
 
-  _drawDoorSparkles() {
-    const g = this.doorSparkleGfx;
-    const pts = this.doorSparklePts;
-    if (!g || !pts || !pts.length) return;
-    g.clear();
+  _drawSparkleSet(gfx, pts, phases, mainColor, peakColor, alphaBase, alphaPulse, styleLookup) {
+    if (!gfx || !pts || !pts.length) return;
     const t = this.time.now * 0.001;
     pts.forEach((pt, i) => {
-      const phase = this.doorSparkPhase[i];
+      const phase = phases[i];
       const pulse = 0.5 + 0.5 * Math.sin(t * (1.4 + i * 0.13) + phase);
-      const alpha = 0.12 + pulse * 0.45;
-      const size = i % 4 === 0 ? 2 : 1;
-      g.fillStyle(0x9affc8, alpha);
-      g.fillRect(pt.x - size / 2, pt.y - size / 2, size, size);
-      if (pulse > 0.75) {
-        g.fillStyle(0xe8fff4, alpha * 0.5);
-        g.fillRect(pt.x, pt.y, 1, 1);
+      const st = (styleLookup && pt.style && styleLookup[pt.style])
+        ? styleLookup[pt.style]
+        : { main: mainColor, peak: peakColor, alphaBase, alphaPulse };
+      const alpha = st.alphaBase + pulse * st.alphaPulse;
+      const size = i % 2 === 0 ? 3 : 2;
+      if (st.outline) {
+        gfx.fillStyle(st.outline, alpha * 0.65);
+        gfx.fillRect(pt.x - size / 2 - 1, pt.y - size / 2 - 1, size + 2, size + 2);
+      }
+      gfx.fillStyle(st.main, alpha);
+      gfx.fillRect(pt.x - size / 2, pt.y - size / 2, size, size);
+      if (pulse > 0.55) {
+        gfx.fillStyle(st.peak, alpha * 0.8);
+        gfx.fillRect(pt.x - 1, pt.y - 1, 2, 2);
       }
     });
   }
 
+  _drawAmbientSparkles() {
+    if (this.doorSparkleGfx) {
+      this.doorSparkleGfx.clear();
+      this._drawSparkleSet(
+        this.doorSparkleGfx,
+        this.doorSparklePts,
+        this.doorSparkPhase,
+        0xb2ffd8,
+        0xf0fff8,
+        this.currentMap === 'outside' ? 0.24 : 0.22,
+        this.currentMap === 'outside' ? 0.44 : 0.40
+      );
+    }
+    if (this.readableSparkleGfx) {
+      this.readableSparkleGfx.clear();
+      this._drawSparkleSet(
+        this.readableSparkleGfx,
+        this.readableSparklePts,
+        this.readableSparkPhase,
+        0x88c8ff,
+        0xe8f4ff,
+        0.24,
+        0.44,
+        READABLE_SPARKLE_STYLES
+      );
+    }
+    if (this.seatSparkleGfx) {
+      this.seatSparkleGfx.clear();
+      this._drawSparkleSet(
+        this.seatSparkleGfx,
+        this.seatSparklePts,
+        this.seatSparkPhase,
+        0xff6868,
+        0xffd4d4,
+        0.28,
+        0.48,
+        SEAT_TALK_SPARKLE_STYLES
+      );
+    }
+    if (this.talkSparkleGfx) {
+      this.talkSparkleGfx.clear();
+      this._drawSparkleSet(
+        this.talkSparkleGfx,
+        this.talkSparklePts,
+        this.talkSparkPhase,
+        0xff80c8,
+        0xffe4f4,
+        0.28,
+        0.50,
+        SEAT_TALK_SPARKLE_STYLES
+      );
+    }
+  }
+
   _createDoorSparkles() {
     this._destroyDoorSparkles();
-    const pts = doorSparkleWorldPoints(this.currentMap);
-    if (!pts.length) return;
+    const doorPts = doorSparkleWorldPoints(this.currentMap);
+    const readPts = readableSparkleWorldPoints(this.currentMap);
+    const seatPts = seatSparkleWorldPoints(this.currentMap);
+    const talkPts = talkableSparkleWorldPoints(this.currentMap);
+    if (!doorPts.length && !readPts.length && !seatPts.length && !talkPts.length) return;
 
-    this.doorSparklePts = pts;
-    this.doorSparkPhase = pts.map(() => Math.random() * Math.PI * 2);
-    this.doorSparkleGfx = this.add.graphics().setDepth(11);
-    this._drawDoorSparkles();
-    this.doorSparkleTimer = this.time.addEvent({
+    if (doorPts.length) {
+      this.doorSparklePts = doorPts;
+      this.doorSparkPhase = doorPts.map(() => Math.random() * Math.PI * 2);
+      this.doorSparkleGfx = this.add.graphics().setDepth(11);
+    }
+    if (readPts.length) {
+      this.readableSparklePts = readPts;
+      this.readableSparkPhase = readPts.map(() => Math.random() * Math.PI * 2);
+      this.readableSparkleGfx = this.add.graphics().setDepth(11);
+    }
+    if (seatPts.length) {
+      this.seatSparklePts = seatPts;
+      this.seatSparkPhase = seatPts.map(() => Math.random() * Math.PI * 2);
+      this.seatSparkleGfx = this.add.graphics().setDepth(10);
+    }
+    if (talkPts.length) {
+      this.talkSparklePts = talkPts;
+      this.talkSparkPhase = talkPts.map(() => Math.random() * Math.PI * 2);
+      this.talkSparkleGfx = this.add.graphics().setDepth(13);
+    }
+    this._drawAmbientSparkles();
+    this.sparkleTimer = this.time.addEvent({
       delay: 90,
       loop: true,
-      callback: () => this._drawDoorSparkles(),
+      callback: () => this._drawAmbientSparkles(),
     });
   }
 
@@ -1403,7 +1907,7 @@ class GameScene extends Phaser.Scene {
         const wy = ry * TILE * SCALE;
         const b = OUTSIDE_BUILDING;
 
-        if (mapKey === 'outside' && ch === 'w' && rx >= b.left && rx < b.left + b.width) {
+        if (mapKey === 'outside' && ch === 'w' && rx >= b.left - 1 && rx <= b.left + b.width) {
           if (!this._isOutsideBuildingCell(rx, ry)) {
             const g = this.add.image(wx, wy, 't_grass').setOrigin(0, 0).setScale(SCALE);
             this.groundLayer.add(g);
@@ -1510,7 +2014,7 @@ class GameScene extends Phaser.Scene {
       this.npc.setVisible(false);
     }
 
-    this.transitionCooldown = 150;
+    this.transitionCooldown = 400;
     this.playerSeated = false;
     this.seatAnchor = null;
     this.player.body.moves = true;
@@ -1634,7 +2138,7 @@ class GameScene extends Phaser.Scene {
     if (menuApi && typeof menuApi.completeVisit === 'function') menuApi.completeVisit();
     this._hideCup();
     this._hidePlate();
-    this._showDialogue('You finish at the table. Mara smiles from the counter — "See you tomorrow."');
+    this._showDialogue('You finish at the table. Mara smiles from the counter — "Step outside when you\'re ready — that\'s when the week turns."');
     if (this.audioStarted) Audio.sfxInteract();
   }
 
@@ -1771,6 +2275,12 @@ class GameScene extends Phaser.Scene {
     const conf = MAPS[this.currentMap];
     if (!this._canUseDoor(conf)) return;
 
+    if (this.currentMap === 'cafe' && conf.exitTo === 'outside') {
+      if (window.MoGameDays && typeof window.MoGameDays.advanceDayOnExit === 'function') {
+        window.MoGameDays.advanceDayOnExit();
+      }
+    }
+
     const spawn = conf.exitSpawn || MAPS[conf.exitTo].playerStart;
     this._loadMap(conf.exitTo, spawn);
     if (this.audioStarted) Audio.sfxInteract();
@@ -1814,7 +2324,8 @@ class GameScene extends Phaser.Scene {
     this.dialogueActive = false;
     this.dialogueKind = null;
     if (this.audioStarted) Audio.sfxClose();
-    if (kind === 'mara_order') this._openMaraOrderInput();
+    if (kind === 'mara_order') this._openMaraOrderInput('order');
+    if (kind === 'mara_quiz') this._openMaraOrderInput('quiz');
   }
 
   _syncVisitPanelPosition() {
@@ -1827,13 +2338,14 @@ class GameScene extends Phaser.Scene {
     const lines = (this.maraVisitText && this.maraVisitText.textContent || '').split('\n').length;
     const boxH = Math.min(
       cam.height - DIALOGUE_MARGIN - DIALOGUE_TOP_CLEARANCE,
-      Math.max(DIALOGUE_MIN_H, 56 + lines * 18)
+      Math.max(DIALOGUE_MIN_H, 68 + lines * DIALOGUE_LINE_HEIGHT)
     );
     const top = rect.top + (cam.height - DIALOGUE_MARGIN - boxH) * scaleY;
     this.maraVisitWrap.style.left = (rect.left + DIALOGUE_PAD_X * scaleX) + 'px';
     this.maraVisitWrap.style.width = (boxW * scaleX) + 'px';
+    this.maraVisitWrap.style.height = (boxH * scaleY) + 'px';
     this.maraVisitWrap.style.top = top + 'px';
-    this.maraVisitWrap.style.fontSize = Math.max(11, Math.round(13 * scaleY)) + 'px';
+    this.maraVisitWrap.style.fontSize = Math.max(14, Math.round(DIALOGUE_BASE_FONT * scaleY)) + 'px';
   }
 
   _showVisitPanel(text) {
@@ -1882,14 +2394,14 @@ class GameScene extends Phaser.Scene {
     const scaleX = rect.width / cam.width;
     const scaleY = rect.height / cam.height;
     const boxW = cam.width - DIALOGUE_PAD_X * 2;
-    const boxH = 44;
+    const boxH = DIALOGUE_ORDER_BOX_H;
     const top = rect.top + (cam.height - DIALOGUE_MARGIN - boxH) * scaleY;
     this.maraOrderWrap.style.left = (rect.left + DIALOGUE_PAD_X * scaleX) + 'px';
     this.maraOrderWrap.style.width = (boxW * scaleX) + 'px';
     this.maraOrderWrap.style.top = top + 'px';
     this.maraOrderWrap.style.height = (boxH * scaleY) + 'px';
     if (this.maraOrderInput) {
-      this.maraOrderInput.style.fontSize = Math.max(11, Math.round(13 * scaleY)) + 'px';
+      this.maraOrderInput.style.fontSize = Math.max(14, Math.round(DIALOGUE_BASE_FONT * scaleY)) + 'px';
     }
   }
 
@@ -1905,11 +2417,22 @@ class GameScene extends Phaser.Scene {
     }
   }
 
-  _openMaraOrderInput() {
+  _openMaraOrderInput(mode) {
     if (!this.maraOrderWrap || !this.maraOrderInput) return;
+    this.orderInputMode = mode === 'quiz' ? 'quiz' : 'order';
     this.orderInputActive = true;
     this._setGameKeyboardForOrderInput(true);
     this.maraOrderInput.value = '';
+    if (this.maraOrderInput) {
+      var langApi = window.MoCafeLanguage;
+      var placeholder = langApi && typeof langApi.orderPlaceholder === 'function'
+        ? langApi.orderPlaceholder(this.orderInputMode === 'quiz' ? 'quiz' : 'order')
+        : (this.orderInputMode === 'quiz'
+          ? 'Type the word from the board, then Enter'
+          : 'Type your order, then Enter');
+      this.maraOrderInput.placeholder = placeholder;
+      if (langApi && typeof langApi.syncOrderInputUi === 'function') langApi.syncOrderInputUi();
+    }
     this.maraOrderWrap.classList.add('is-open');
     this.maraOrderWrap.setAttribute('aria-hidden', 'false');
     this._syncMaraOrderInputPosition();
@@ -1921,6 +2444,8 @@ class GameScene extends Phaser.Scene {
   _closeMaraOrderInput(playCloseSfx) {
     if (!this.maraOrderWrap || !this.maraOrderInput) return;
     this.orderInputActive = false;
+    this.orderInputMode = 'order';
+    this.quizItem = null;
     this._setGameKeyboardForOrderInput(false);
     this.maraOrderWrap.classList.remove('is-open');
     this.maraOrderWrap.setAttribute('aria-hidden', 'true');
@@ -1931,7 +2456,23 @@ class GameScene extends Phaser.Scene {
   _submitMaraOrder() {
     const text = (this.maraOrderInput && this.maraOrderInput.value || '').trim();
     const menuApi = window.DragonsBrewMenu;
+    const quizApi = window.MoMenuQuiz;
+    const mode = this.orderInputMode;
+    const quizItem = this.quizItem;
     this._closeMaraOrderInput(false);
+    if (mode === 'quiz' && quizApi && typeof quizApi.evaluateAnswer === 'function') {
+      if (!text) {
+        var langName = window.MoCafeLanguage && window.MoCafeLanguage.orderLanguageName
+          ? window.MoCafeLanguage.orderLanguageName()
+          : 'your café language';
+        this._showDialogue('Mara waits. "Peek at the board — then tell me the ' + langName + ' word when you\'re ready."');
+        return;
+      }
+      const result = quizApi.evaluateAnswer(quizItem, text);
+      this._showDialogue(result.line || 'Mara nods toward the menu board.');
+      this.quizItem = null;
+      return;
+    }
     if (!text) {
       this._showDialogue(
         'Mara waits patiently. "Take your time — look at the board again if you need to."'
@@ -2115,9 +2656,23 @@ class GameScene extends Phaser.Scene {
       this._showDialogue(
         'Mara smiles. "Week two already — your elder will check in soon. For now, the room is yours."'
       );
+    } else if (window.MoGameDays && window.MoGameDays.hasAwaitingDayAdvance && window.MoGameDays.hasAwaitingDayAdvance()) {
+      this._showDialogue(
+        'Mara wipes the counter. "Whenever you\'re ready — step outside. The weekday turns when you leave the café."'
+      );
+    } else if (window.MoMenuQuiz && window.MoMenuQuiz.shouldOfferQuiz && window.MoMenuQuiz.shouldOfferQuiz()) {
+      const quizItem = window.MoMenuQuiz.pickQuizItem();
+      if (quizItem) {
+        this.quizItem = quizItem;
+        this._showDialogue(window.MoMenuQuiz.promptFor(quizItem), 'mara_quiz');
+      } else {
+        this._showDialogue(
+          'Mara checks your card. "Not quite enough for the board today — read the menu and we\'ll practice what you haven\'t ordered yet."'
+        );
+      }
     } else if (window.MoGameDays && window.MoGameDays.hasCompletedVisitToday && window.MoGameDays.hasCompletedVisitToday()) {
       this._showDialogue(
-        'Mara sets down a rag. "That\'s the visit for today — come back tomorrow when the week turns."'
+        'Mara sets down a rag. "You already finished this café day — the next weekday is ready when you are."'
       );
     } else if (menuApi.isVisitInProgress()) {
       const phase = menuApi.getVisitPhase();
@@ -2153,6 +2708,12 @@ class GameScene extends Phaser.Scene {
     }
 
     if (this.orderInputActive) {
+      player.setVelocity(0, 0);
+      player.play(`idle-${this.facing}`, true);
+      return;
+    }
+
+    if (window.MoVisitSetup && window.MoVisitSetup.needsSetup && window.MoVisitSetup.needsSetup()) {
       player.setVelocity(0, 0);
       player.play(`idle-${this.facing}`, true);
       return;
