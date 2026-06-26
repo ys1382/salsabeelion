@@ -1113,7 +1113,7 @@ function doorSparkleWorldPoints(mapKey) {
     return locs.map(([x, y]) => ({ x: (bx + x) * s, y: (by + y) * s }));
   }
   const anchor = MoDoors.getDoorAnchor();
-  const doorLeft = anchor.worldX - (TILE * s) / 2;
+  const doorLeft = MoDoors.outsideDoorWorldX() - (TILE * s) / 2;
   const ty = anchor.insideExitRow * TILE * s;
   return locs.map(([x, y]) => ({ x: doorLeft + x * s, y: ty + y * s }));
 }
@@ -1246,11 +1246,6 @@ const MAPS = {
     doorPos: { col: MoDoors.getDoorAnchor().gridCol, row: MoDoors.getDoorAnchor().outsideRow },
     doorFacing: 'up',
     exitTo: 'cafe',
-    exitSpawn: {
-      x: MoDoors.getDoorAnchor().worldX,
-      y: MoDoors.getDoorAnchor().insideEnterSpawnY,
-      facing: 'up',
-    },
     playerStart: { col: 4, row: 11 },
     mara: null,
     grid: [
@@ -1278,14 +1273,9 @@ const MAPS = {
     doorPos: { col: MoDoors.getDoorAnchor().gridCol, row: MoDoors.getDoorAnchor().insideExitRow },
     doorFacing: 'down',
     exitTo: 'outside',
-    exitSpawn: {
-      x: MoDoors.getDoorAnchor().outsideExitSpawnX,
-      y: MoDoors.getDoorAnchor().outsideExitSpawnY,
-      facing: 'down',
-    },
     playerStart: {
-      x: MoDoors.getDoorAnchor().worldX,
-      y: MoDoors.getDoorAnchor().insideEnterSpawnY,
+      col: MoDoors.getDoorAnchor().gridCol,
+      feetRow: MoDoors.getDoorAnchor().insideEnterRow,
       facing: 'up',
     },
     mara: { col: 10, row: 2 },
@@ -1699,7 +1689,7 @@ class GameScene extends Phaser.Scene {
     if (this.currentMap === 'outside' || this.currentMap === 'cafe') {
       const feet = this._playerGridCell();
       return MoDoors.playerOnDoorTrigger(
-        feet.col, feet.row, this.currentMap, this._doorInputKeys(), this._playerFeetWorld()
+        feet.col, feet.row, this.currentMap, this._doorInputKeys()
       );
     }
     const feet = this._playerGridCell();
@@ -1721,8 +1711,7 @@ class GameScene extends Phaser.Scene {
   _canUseDoor(conf) {
     const feet = this._playerGridCell();
     return MoDoors.canUseDoor(
-      feet.col, feet.row, this.currentMap, this.facing, this._doorInputKeys(), conf.doorFacing,
-      this._playerFeetWorld()
+      feet.col, feet.row, this.currentMap, this.facing, this._doorInputKeys(), conf.doorFacing
     );
   }
 
@@ -1792,18 +1781,27 @@ class GameScene extends Phaser.Scene {
 
   _spawnPlayer(spawn) {
     const u = TILE * SCALE;
-    const x = spawn.x != null ? spawn.x : spawn.col * u + u / 2;
+    let x;
     let y;
-    if (spawn.y != null) {
-      y = spawn.y;
-    } else if (spawn.feetRow != null) {
-      const feetY = spawn.feetRow * u + u * 0.5;
-      const footDrop = this.player.displayHeight * (1 - this.player.originY);
-      y = feetY - footDrop;
-    } else if (spawn.row != null) {
-      y = spawn.row * u + u / 2;
+    if (spawn.col != null && spawn.feetRow != null && window.MoDoors) {
+      const pos = MoDoors.spritePosFromGrid(
+        spawn.col, spawn.feetRow, this.player.displayHeight, this.player.originY
+      );
+      x = pos.x;
+      y = pos.y;
     } else {
-      y = 0;
+      x = spawn.x != null ? spawn.x : spawn.col * u + u / 2;
+      if (spawn.y != null) {
+        y = spawn.y;
+      } else if (spawn.feetRow != null) {
+        const feetY = spawn.feetRow * u + u * 0.5;
+        const footDrop = this.player.displayHeight * (1 - this.player.originY);
+        y = feetY - footDrop;
+      } else if (spawn.row != null) {
+        y = spawn.row * u + u / 2;
+      } else {
+        y = 0;
+      }
     }
     this.player.setPosition(x, y);
     if (spawn.facing) {
@@ -2411,7 +2409,8 @@ class GameScene extends Phaser.Scene {
       }
     }
 
-    const spawn = MoDoors.resolveExitSpawn(conf, MAPS[conf.exitTo].playerStart);
+    const spawn = MoDoors.spawnForTransition(conf.exitTo);
+    if (!spawn) return;
     this._loadMap(conf.exitTo, spawn);
     if (this.audioStarted) Audio.sfxInteract();
   }

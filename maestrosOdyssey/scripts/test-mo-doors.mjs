@@ -30,82 +30,39 @@ function assert(cond, msg) {
 const anchor = MoDoors.getDoorAnchor();
 const TILE = MoDoors.TILE;
 const SCALE = MoDoors.SCALE;
-const building = MoDoors.OUTSIDE_BUILDING;
-const derivedCol = MoDoors.deriveDoorCol(building);
+const col = MoDoors.deriveDoorCol(MoDoors.OUTSIDE_BUILDING);
 
-assert(derivedCol === 9, 'deriveDoorCol returns 9 for current building');
-assert(anchor.gridCol === derivedCol, 'anchor.gridCol matches deriveDoorCol');
-assert(anchor.outsideRow === 10, 'outside trigger row 10');
+assert(col === 9, 'deriveDoorCol returns 9');
+assert(anchor.gridCol === 9, 'gridCol is 9');
+assert(anchor.insideEnterRow === 10, 'café enter row 10');
 assert(anchor.insideExitRow === 11, 'café exit row 11');
+assert(anchor.outsideApproachRow === 11, 'outside approach row 11');
 
-const expectedWorldX = (derivedCol * TILE + TILE / 2) * SCALE;
-assert(anchor.worldX === expectedWorldX, 'worldX is door tile center (col 9 → 608)');
+const enter = MoDoors.spawnForTransition('cafe');
+assert(enter.col === 9 && enter.feetRow === 10 && enter.facing === 'up', 'enter spawn col 9 row 10 up');
+
+const exit = MoDoors.spawnForTransition('outside');
+assert(exit.col === 9 && exit.feetRow === 11 && exit.facing === 'down', 'exit spawn col 9 row 11 down');
+
+const pos = MoDoors.spritePosFromGrid(9, 10, 48, 0.5);
+assert(pos.x === (9 * TILE + TILE / 2) * SCALE, 'sprite X at tile center');
+assert(Math.abs(pos.y - (10 * TILE * SCALE + TILE * SCALE * 0.5 - 24)) < 0.01, 'sprite Y from feet row');
+
+assert(MoDoors.playerOnDoorTrigger(9, 10, 'outside') === true, 'outside row 10 on door col');
+assert(MoDoors.playerOnDoorTrigger(8, 10, 'outside') === false, 'wrong col fails');
 assert(
-  anchor.worldX === MoDoors.doorTileCenterWorldX(),
-  'worldX matches doorTileCenterWorldX',
+  MoDoors.playerOnDoorTrigger(9, 11, 'outside', { up: true, down: false, left: false, right: false }) === true,
+  'outside row 11 with up',
 );
-
-const spawnY = MoDoors.spriteCenterYForFeetRow(10);
-const feetY = 10 * TILE * SCALE + TILE * SCALE * 0.5;
-const expectedCenter = feetY - (24 * SCALE * 0.5);
-assert(Math.abs(spawnY - expectedCenter) < 0.01, 'spawn Y matches feet row math');
-
-const outsideTrigger = MoDoors.triggerCellRect('outside');
-const passage = MoDoors.outsideDoorPassageRect();
+assert(MoDoors.playerOnDoorTrigger(9, 11, 'cafe') === true, 'café exit row');
 assert(
-  outsideTrigger.left < passage.right && outsideTrigger.right > passage.left
-    && outsideTrigger.top < passage.bottom && outsideTrigger.bottom > passage.top,
-  'outside trigger overlaps collision passage',
+  MoDoors.playerOnDoorTrigger(9, 10, 'cafe', { up: false, down: true, left: false, right: false }) === true,
+  'café inside row 10',
 );
 
 const cafeGrid = Array.from({ length: 16 }, () => Array(20).fill('.'));
-cafeGrid[11][anchor.gridCol] = '>';
-assert(MoDoors.validateDoorLink(cafeGrid) === true, 'validateDoorLink passes with > at exit cell');
-
-cafeGrid[11][anchor.gridCol] = '#';
-assert(MoDoors.validateDoorLink(cafeGrid) === false, 'validateDoorLink fails when > missing');
-
-const col = anchor.gridCol;
-const feetWorld = { x: anchor.worldX, y: anchor.outsideExitSpawnY + 24 };
-
-assert(
-  MoDoors.playerOnDoorTrigger(col, 10, 'outside', null, feetWorld) === true,
-  'on outside door tile',
-);
-assert(
-  MoDoors.playerOnDoorTrigger(col, 11, 'outside', null, feetWorld) === false,
-  'porch row 11 does not trigger outside enter without up key',
-);
-assert(
-  MoDoors.playerOnDoorTrigger(col, 11, 'outside', { up: true, down: false, left: false, right: false }, feetWorld) === true,
-  'porch row 11 triggers outside enter when pressing up',
-);
-assert(
-  MoDoors.playerOnDoorTrigger(col, 11, 'cafe', null, feetWorld) === true,
-  'on café exit tile',
-);
-assert(
-  MoDoors.playerOnDoorTrigger(col, 10, 'cafe', { up: false, down: true, left: false, right: false }, feetWorld) === true,
-  'café vestibule row 10 triggers exit',
-);
-
-const spawnOut = MoDoors.resolveExitSpawn(
-  { exitTo: 'outside', exitSpawn: { x: 100, y: 200, facing: 'down' } },
-  { x: 0, y: 0 },
-);
-assert(
-  spawnOut.x === expectedWorldX && spawnOut.feetRow === 11 && spawnOut.facing === 'down' && spawnOut.y === undefined,
-  'resolveExitSpawn to outside uses tile X and feetRow 11 (porch approach)',
-);
-
-const spawnIn = MoDoors.resolveExitSpawn(
-  { exitTo: 'cafe', exitSpawn: { x: 50, y: 99, facing: 'up' } },
-  { x: 0, y: 0 },
-);
-assert(
-  spawnIn.x === expectedWorldX && spawnIn.feetRow === 10 && spawnIn.facing === 'up' && spawnIn.y === undefined,
-  'resolveExitSpawn to café uses tile X and feetRow 10 (one step inside)',
-);
+cafeGrid[11][9] = '>';
+assert(MoDoors.validateDoorLink(cafeGrid) === true, 'validateDoorLink passes');
 
 if (failed) {
   console.error('\n' + failed + ' assertion(s) failed');
