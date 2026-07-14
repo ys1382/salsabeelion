@@ -68,7 +68,7 @@ _rate_lock = threading.Lock()
 _last_bc_fetch = 0.0
 
 _NON_ALNUM = re.compile(r"[^a-z0-9]+")
-_ARTICLES = re.compile(r"^(the|a|an)\s+")
+_STOP = frozenset({"the", "a", "an", "and", "of", "or", "book", "vol", "volume", "bk"})
 
 
 def _norm_text(s: str) -> str:
@@ -79,14 +79,33 @@ def _norm_text(s: str) -> str:
     return t
 
 
+def _tokens(s: str) -> list[str]:
+    return [t for t in _norm_text(s).split() if t and t not in _STOP]
+
+
 def _title_core(title: str) -> str:
-    t = _norm_text(title)
-    t = _ARTICLES.sub("", t)
-    # Drop subtitle / series noise after colon or slash when comparing
-    for sep in (":", "/", "—", "–"):
-        if sep in t:
-            t = t.split(sep, 1)[0].strip()
-    return t
+    """Normalized title words (no article stopwords), keeping full phrase."""
+    return " ".join(_tokens(title))
+
+
+def _split_series_volume(title: str, series_name: str = "") -> tuple[str, str]:
+    """
+    Return (series_hint, volume_title).
+    Handles "Series: Volume", "Series — Volume", and an explicit seriesName field.
+    """
+    raw = str(title or "").strip()
+    series_hint = str(series_name or "").strip()
+    volume = raw
+    for sep in (":", "—", "–", " - "):
+        if sep in raw:
+            left, right = raw.split(sep, 1)
+            left, right = left.strip(), right.strip()
+            if left and right and len(right) >= 2:
+                if not series_hint:
+                    series_hint = left
+                volume = right
+                break
+    return series_hint, volume
 
 
 def _author_core(author: str) -> str:
@@ -112,8 +131,15 @@ def _author_surname(author: str) -> str:
     return toks[-1] if toks else ""
 
 
-def _cache_key(title: str, author: str, isbn: str) -> str:
-    return "|".join([_title_core(title), _author_core(author), re.sub(r"[^0-9Xx]", "", isbn or "")])
+def _cache_key(title: str, author: str, isbn: str, series_name: str = "") -> str:
+    return "|".join(
+        [
+            _norm_text(title),
+            _norm_text(series_name),
+            _author_core(author),
+            re.sub(r"[^0-9Xx]", "", isbn or ""),
+        ]
+    )
 
 
 def _cache_get(key: str) -> dict[str, Any] | None:
@@ -211,6 +237,24 @@ def _bib_authors(bib: dict[str, Any]) -> list[str]:
     return out
 
 
+def _bib_series_names(bib: dict[str, Any]) -> list[str]:
+    brief = bib.get("briefInfo") if isinstance(bib.get("briefInfo"), dict) else {}
+    raw = brief.get("series") or bib.get("series") or []
+    if isinstance(raw, str):
+        return [raw] if raw.strip() else []
+    if not isinstance(raw, list):
+        return []
+    out: list[str] = []
+    for row in raw:
+        if isinstance(row, str) and row.strip():
+            out.append(row.strip())
+        elif isinstance(row, dict):
+            name = str(row.get("name") or row.get("sortName") or "").strip()
+            if name:
+                out.append(name)
+    return out
+
+
 def _super_formats(bib: dict[str, Any]) -> set[str]:
     brief = bib.get("briefInfo") if isinstance(bib.get("briefInfo"), dict) else {}
     raw = brief.get("superFormats") or []
@@ -226,29 +270,77 @@ def _is_holdable_policy(bib: dict[str, Any]) -> bool:
     return True
 
 
-def _title_matches(query_title: str, bib_title: str) -> bool:
-    q = _title_core(query_title)
-    b = _title_core(bib_title)
-    if not q or not b:
-        return False
-    if q == b:
+def _token_equal(a: list[str], b: list[str]) -> bool:
+    return bool(a) and a == b
+
+
+def _token_soft_equal(a: list[str], b: list[str]) -> bool:
+    """Same words, or one is the other with at most one extra trailing word."""
+    if _token_equal(a, b):
         return True
-    # Allow short cores contained as whole phrase (e.g. query shorter)
-    if len(q) >= 6 and (q in b or b in q):
-        # Reject if bib adds a long unrelated prefix like "Spiritual Insights From Classic Literature"
-        if b.startswith(q) or q.startswith(b):
+    if not a or not b:
+        return False
+    shorter, longer = (a, b) if len(a) <= len(b) else (b, a)
+    if len(longer) - len(shorter) > 1:
+        return False
+    return longer[: len(shorter)] == shorter
+
+
+def _series_matches(series_hint: str, bib: dict[str, Any]) -> bool:
+    hint_toks = _tokens(series_hint)
+    if not hint_toks:
+        return True
+    for name in _bib_series_names(bib):
+        name_toks = _tokens(name)
+        if _token_soft_equal(hint_toks, name_toks):
             return True
-        # Contained as phrase but require similar length (avoid "web" in long titles)
-        shorter, longer = (q, b) if len(q) <= len(b) else (b, q)
-        if len(shorter) / max(len(longer), 1) >= 0.72:
+        # "revenge of magic" vs "revenge magic" after stopword strip already aligned
+        if hint_toks and all(t in name_toks for t in hint_toks):
             return True
+        if name_toks and all(t in hint_toks for t in name_toks):
+            return True
+    # Series words sometimes appear only in the catalog title
+    title_toks = _tokens(_bib_title(bib))
+    if hint_toks and all(t in title_toks for t in hint_toks):
+        return True
     return False
+
+
+def _title_matches_bib(query_title: str, series_name: str, bib: dict[str, Any]) -> bool:
+    """True when this bib is the same work the wishlist row means."""
+    series_hint, volume = _split_series_volume(query_title, series_name)
+    bib_title = _bib_title(bib)
+    vol_toks = _tokens(volume)
+    full_toks = _tokens(query_title)
+    bib_toks = _tokens(bib_title)
+
+    if not bib_toks:
+        return False
+
+    volume_hit = _token_soft_equal(vol_toks, bib_toks) or _token_soft_equal(full_toks, bib_toks)
+
+    # "Revenge of Magic The Chosen One" (no colon): bib title is suffix, series is prefix
+    if not volume_hit and len(full_toks) > len(bib_toks) and full_toks[-len(bib_toks) :] == bib_toks:
+        prefix_toks = full_toks[: -len(bib_toks)]
+        if prefix_toks and _series_matches(" ".join(prefix_toks), bib):
+            return True
+        if series_hint and _series_matches(series_hint, bib):
+            return True
+
+    if not volume_hit:
+        return False
+
+    if series_hint:
+        return _series_matches(series_hint, bib)
+
+    # No series hint: exact-ish volume title only (avoids "Chosen One" → "Chosen Ones")
+    return _token_soft_equal(vol_toks, bib_toks) or _token_soft_equal(full_toks, bib_toks)
 
 
 def _author_matches(query_author: str, bib_authors: list[str]) -> bool:
     q = _author_core(query_author)
     if not q:
-        return True  # author unknown — rely on title strictness
+        return True  # author unknown — rely on title/series strictness
     surname = _author_surname(query_author)
     for raw in bib_authors:
         a = _author_core(raw)
@@ -256,7 +348,7 @@ def _author_matches(query_author: str, bib_authors: list[str]) -> bool:
             continue
         if q == a or q in a or a in q:
             return True
-        if surname and len(surname) >= 3 and surname in a:
+        if surname and len(surname) >= 3 and surname in a.split():
             return True
     return False
 
@@ -300,12 +392,14 @@ def _is_digital_format(bib: dict[str, Any]) -> bool:
 
 
 def _pick_strict_matches(
-    bibs: list[tuple[str, dict[str, Any]]], title: str, author: str
+    bibs: list[tuple[str, dict[str, Any]]],
+    title: str,
+    author: str,
+    series_name: str = "",
 ) -> list[tuple[str, dict[str, Any]]]:
     matched: list[tuple[str, dict[str, Any]]] = []
     for mid, bib in bibs:
-        bt = _bib_title(bib)
-        if not _title_matches(title, bt):
+        if not _title_matches_bib(title, series_name, bib):
             continue
         if not _author_matches(author, _bib_authors(bib)):
             continue
@@ -320,27 +414,67 @@ def _pick_strict_matches(
     return print_first if print_first else matched
 
 
-def _search_bibs(title: str, author: str, isbn: str) -> list[tuple[str, dict[str, Any]]]:
-    if isbn.strip():
-        clean = re.sub(r"[^0-9Xx]", "", isbn.strip())
-        if len(clean) in (10, 13):
-            params = urllib.parse.urlencode(
-                {"query": clean, "searchType": "keyword", "locale": "en-US"}
-            )
-            url = f"{GATEWAY}/{LIBRARY_ID}/bibs/search?{params}"
-            data = _fetch_json(url, SEARCH_TIMEOUT_SEC)
-            bibs = (data.get("entities") or {}).get("bibs") or {}
-            if isinstance(bibs, dict) and bibs:
-                return [(str(k), v) for k, v in bibs.items() if isinstance(v, dict)]
+def _merge_bibs(
+    bags: list[list[tuple[str, dict[str, Any]]]],
+) -> list[tuple[str, dict[str, Any]]]:
+    seen: set[str] = set()
+    out: list[tuple[str, dict[str, Any]]] = []
+    for bag in bags:
+        for mid, bib in bag:
+            if mid in seen:
+                continue
+            seen.add(mid)
+            out.append((mid, bib))
+    return out
 
-    q = title.strip()
-    params = urllib.parse.urlencode({"query": q, "searchType": "title", "locale": "en-US"})
+
+def _run_search(query: str, search_type: str = "title") -> list[tuple[str, dict[str, Any]]]:
+    q = str(query or "").strip()
+    if not q:
+        return []
+    params = urllib.parse.urlencode(
+        {"query": q, "searchType": search_type, "locale": "en-US"}
+    )
     url = f"{GATEWAY}/{LIBRARY_ID}/bibs/search?{params}"
     data = _fetch_json(url, SEARCH_TIMEOUT_SEC)
     bibs = (data.get("entities") or {}).get("bibs") or {}
     if not isinstance(bibs, dict):
         return []
     return [(str(k), v) for k, v in bibs.items() if isinstance(v, dict)]
+
+
+def _search_bibs(
+    title: str, author: str, isbn: str, series_name: str = ""
+) -> list[tuple[str, dict[str, Any]]]:
+    bags: list[list[tuple[str, dict[str, Any]]]] = []
+
+    if isbn.strip():
+        clean = re.sub(r"[^0-9Xx]", "", isbn.strip())
+        if len(clean) in (10, 13):
+            bags.append(_run_search(clean, "keyword"))
+
+    series_hint, volume = _split_series_volume(title, series_name)
+    queries: list[tuple[str, str]] = []
+
+    # Prefer keyword when we have series + volume — BC title search often misses combined forms
+    if series_hint and volume and _norm_text(series_hint) != _norm_text(volume):
+        queries.append((f"{volume} {series_hint}", "keyword"))
+        queries.append((volume, "title"))
+    queries.append((title.strip(), "keyword"))
+    if volume and _norm_text(volume) != _norm_text(title):
+        queries.append((volume, "keyword"))
+    if author.strip() and volume:
+        queries.append((f"{volume} {author.strip()}", "keyword"))
+
+    seen_q: set[str] = set()
+    for q, st in queries:
+        key = f"{st}:{_norm_text(q)}"
+        if not q.strip() or key in seen_q:
+            continue
+        seen_q.add(key)
+        bags.append(_run_search(q, st))
+
+    return _merge_bibs(bags)
 
 
 def _item_is_central_park(item: dict[str, Any]) -> bool:
@@ -394,18 +528,21 @@ def _probe_availability(metadata_id: str) -> tuple[bool, bool, dict[str, Any] | 
     return has_cp, False, sample
 
 
-def check_title(title: str, author: str = "", isbn: str = "") -> dict[str, Any]:
+def check_title(
+    title: str, author: str = "", isbn: str = "", series_name: str = ""
+) -> dict[str, Any]:
     """
     Check one title against Santa Clara Central Park Library.
 
     status:
       yes — borrowable copy at Central Park
-      no — strict match in city catalog, but no borrowable CP copy
-      uncertain — no strict match / catalog error
+      no — not borrowable at Central Park (missing from system, other branch only, or use-only)
+      uncertain — catalog unreachable / could not finish check
     """
     title = str(title or "").strip()[:300]
     author = str(author or "").strip()[:200]
     isbn = str(isbn or "").strip()[:32]
+    series_name = str(series_name or "").strip()[:200]
     search_url = catalog_search_url(title, author)
 
     base = {
@@ -416,6 +553,7 @@ def check_title(title: str, author: str = "", isbn: str = "") -> dict[str, Any]:
         "branchName": BRANCH_NAME,
         "title": title,
         "author": author,
+        "seriesName": series_name or None,
         "catalogUrl": search_url,
     }
 
@@ -428,14 +566,14 @@ def check_title(title: str, author: str = "", isbn: str = "") -> dict[str, Any]:
             "error": "title_required",
         }
 
-    key = _cache_key(title, author, isbn)
+    key = _cache_key(title, author, isbn, series_name)
     cached = _cache_get(key)
     if cached is not None:
         cached["cached"] = True
         return cached
 
     try:
-        bibs = _search_bibs(title, author, isbn)
+        bibs = _search_bibs(title, author, isbn, series_name)
     except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, ValueError, json.JSONDecodeError) as e:
         out = {
             **base,
@@ -449,12 +587,16 @@ def check_title(title: str, author: str = "", isbn: str = "") -> dict[str, Any]:
         # Don't cache hard failures long — skip cache
         return out
 
-    matches = _pick_strict_matches(bibs, title, author)
+    matches = _pick_strict_matches(bibs, title, author, series_name)
     if not matches:
+        # Common short titles without author/series can collide — stay uncertain.
+        # Otherwise treat as not in this library system (hence not at Central Park).
+        series_hint, volume = _split_series_volume(title, series_name)
+        ambiguous = (not author) and (not series_hint) and len(_tokens(volume)) <= 3
         out = {
             **base,
-            "status": "uncertain",
-            "reason": "no_strict_match",
+            "status": "uncertain" if ambiguous else "no",
+            "reason": "ambiguous_title" if ambiguous else "not_in_catalog",
             "matchTitle": None,
             "matchId": None,
             "libraryStatus": None,
@@ -462,12 +604,34 @@ def check_title(title: str, author: str = "", isbn: str = "") -> dict[str, Any]:
         _cache_set(key, out)
         return out
 
+    # If several different authors match a bare title and no author/series was given, don't guess.
+    if not author and not _split_series_volume(title, series_name)[0]:
+        authors_seen: set[str] = set()
+        for _mid, bib in matches:
+            for a in _bib_authors(bib):
+                sn = _author_surname(a)
+                if sn:
+                    authors_seen.add(sn)
+        if len(authors_seen) > 1:
+            out = {
+                **base,
+                "status": "uncertain",
+                "reason": "ambiguous_author",
+                "matchTitle": None,
+                "matchId": None,
+                "libraryStatus": None,
+            }
+            _cache_set(key, out)
+            return out
+
     saw_cp_non_borrowable = False
     last_match: tuple[str, dict[str, Any]] | None = None
+    probed_ok = False
     for mid, bib in matches[:MAX_BIBS_TO_PROBE]:
         last_match = (mid, bib)
         try:
             has_cp, borrowable, sample = _probe_availability(mid)
+            probed_ok = True
         except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, ValueError, json.JSONDecodeError):
             continue
         if borrowable:
@@ -490,6 +654,17 @@ def check_title(title: str, author: str = "", isbn: str = "") -> dict[str, Any]:
             return out
         if has_cp:
             saw_cp_non_borrowable = True
+
+    if not probed_ok:
+        out = {
+            **base,
+            "status": "uncertain",
+            "reason": "availability_unreachable",
+            "matchTitle": _bib_title(last_match[1]) if last_match else None,
+            "matchId": last_match[0] if last_match else None,
+            "libraryStatus": None,
+        }
+        return out
 
     mid, bib = last_match if last_match else matches[0]
     if saw_cp_non_borrowable:

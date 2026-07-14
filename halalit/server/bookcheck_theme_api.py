@@ -1022,11 +1022,12 @@ class Handler(BaseHTTPRequestHandler):
             title = str(body.get("title") or "").strip()[:300]
             author = str(body.get("author") or "").strip()[:200]
             isbn = str(body.get("isbn") or "").strip()[:32]
+            series_name = str(body.get("seriesName") or body.get("series") or "").strip()[:200]
             if not title:
                 json_response(self, 400, {"ok": False, "error": "title_required", "status": "uncertain"})
                 return
             try:
-                result = library_check_title(title, author, isbn)
+                result = library_check_title(title, author, isbn, series_name)
             except Exception as e:
                 json_response(
                     self,

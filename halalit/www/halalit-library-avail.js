@@ -33,9 +33,12 @@
       .replace(/"/g, "&quot;");
   }
 
-  function statusLabel(status) {
+  function statusLabel(status, reason) {
     if (status === "yes") return "Borrowable at Central Park";
-    if (status === "no") return "Not at Central Park";
+    if (status === "no") {
+      if (reason === "not_in_catalog") return "Not in this library’s catalog";
+      return "Not at Central Park";
+    }
     return "Couldn’t confirm";
   }
 
@@ -65,6 +68,7 @@
         title: entry.title || "",
         author: entry.author || "",
         isbn: entry.isbn || "",
+        seriesName: entry.seriesName || "",
       }),
     })
       .then(function (res) {
@@ -136,7 +140,7 @@
           statusClass(r.status) +
           '">' +
           '<span class="library-avail-row__status">' +
-          escapeHtml(statusLabel(r.status)) +
+          escapeHtml(statusLabel(r.status, r.reason)) +
           "</span>" +
           '<span class="library-avail-row__title">' +
           escapeHtml(label) +
