@@ -17,7 +17,7 @@
 
 ### Ships on live — environmentally on-theme (not the main thing, not filler)
 
-**Keepsake / bingo / sketchbook / journal** — **more directly tied to environmental themes** than laundry, dishes, or basket pack (species, natives/invasives, locale lists, Sheet A/B alternation). **Ships on live** when built: Phase 2 **scan capture**, Phase 3 **keepsake review** (favorites → flashbacks), Phase 4+ **research** from those favorites. Important for ecological literacy — **not** the spine of the game the way drift and story are. **Not** cut as domestic padding. Sheet text/layout can be locked early; scan + flashback playback are live build targets (unlike cut chore games).
+**Keepsake / bingo / sketchbook / journal** — **more directly tied to environmental themes** than laundry, dishes, or basket pack (species, natives/invasives, locale lists, Sheet A/B alternation). **Woods bingo** = **find-the-organism-in-scene** beats — **macro natives** tucked into **habitat-matched vignettes** (*Highlights hidden-pictures vibe as reference only*, not a copy; see **Nature bingo — hidden-picture feel**). **Ships on live** when built: Phase 2 **find capture** (hidden subject → sticker → notebook), Phase 3 **keepsake review** (favorites → flashbacks), Phase 4+ **research** from those favorites. Important for ecological literacy — **not** the spine of the game the way drift and story are. **Not** cut as domestic padding. Sheet text/layout can be locked early; scene art + flashback playback are live build targets (unlike cut chore games). **Illustration / animation pipeline — owner TBD** (not blocking sheet species lists).
 
 ### Cut from live (domestic filler — doc only)
 
@@ -252,7 +252,7 @@ They may not fully understand why it feels different yet, but the contrast stays
 
 - **Arrival:** uses **shared arrival** (drive-up → book at lodging → store at dusk); gorge window scenery matches **Yosemite** or **Russian River** assignment.
 - **Day 1:** **Explore the valley**; on the way back, **low-key restaurant** for **lunch** (small, not a flashy resort meal).
-- **Day 2 — hike + sketch:** Scenic walk on the close mountains / gorge — **not** a climb and **not** an all-day grind. They **sketch** in the **nature journal** (book they **bring home** for Phase 3): **forest birds**, **trees**, **grasses**, **mountain path** — environment around them on the trail. *Optional on-trip:* **scan capture** for outlines they sketch or notice (see woods bingo scan note).
+- **Day 2 — hike + sketch:** Scenic walk on the close mountains / gorge — **not** a climb and **not** an all-day grind. They **sketch** in the **nature journal** (book they **bring home** for Phase 3): **forest birds**, **trees**, **grasses**, **mountain path** — environment around them on the trail. *Optional on-trip:* **outline capture** for subjects they sketch or notice (journal/sketchbook style — **not** hidden-picture bingo; see **Keepsake sheets**).
 - **Day 3 — journal, then fish & bird:** **Journaling first** (day after the hike sketches). Entries in the same **nature journal** — excited, personal tone, not a field guide. Pull subjects from **Retreat species lists** when gorge = **Russian River** or **Yosemite** (owner list). **Example beat (voice reference):** river path wildlife moment — species TBD per assigned gorge list. Then **fishing** (morning, while fresher), then **birdwatching** (walking-around pace OK).
 - **Last night (before departure morning):** **Campfire** with **s’mores**.
 - *TBD:* small filler between fishing and birding on Day 3 if needed.
@@ -265,7 +265,7 @@ They may not fully understand why it feels different yet, but the contrast stays
 
 **Day 1 (calmer)**
 
-- **Nature sketchbook — seashells:** Find shells along the shore; hold them briefly to **sketch** in the **nature sketchbook** (pages they **bring home** for Phase 3). **Empty shells only** — nothing living inside. When done, **return** each shell: found on **dry sand** → back in a **sandy spot**; found **in or near the sea** → **shallow water** (not kept as souvenirs). *Optional on-trip:* **scan capture** (outline tap → sticker to notebook icon) for subjects they sketch or spot — see **Woods cabin — beats** scan note; *for later; animation needed*.
+- **Nature sketchbook — seashells:** Find shells along the shore; hold them briefly to **sketch** in the **nature sketchbook** (pages they **bring home** for Phase 3). **Empty shells only** — nothing living inside. When done, **return** each shell: found on **dry sand** → back in a **sandy spot**; found **in or near the sea** → **shallow water** (not kept as souvenirs). *Optional on-trip:* **outline capture** (tap subject → sticker to notebook icon) for subjects they sketch or spot — sketchbook style, **not** hidden-picture bingo; *for later; animation needed*.
 - **Nature sketchbook — seabirds:** Sketch **shore birds** (same book; calm observation beat).
 - **Reading** on the beach.
 - **Binoculars** from the **boardwalk** — look out and **spot whales** (quiet overlook walk, not carnival boardwalk energy).
@@ -316,8 +316,8 @@ They may not fully understand why it feels different yet, but the contrast stays
 - **Group breakfast**
 - **Quiet time**
 - **Lunch:** overall quieter; **some campers eat alone** — **player does lunch alone**
-- **Nature bingo** = the **group** birdwatching / animal-seeking walk — **bingo only exists as a group activity**; solo or non-group nature time (e.g. Day 2 sketchbook) is **not** bingo. Bingo sheet = **basic outline on someone’s notebook**. Cells from **Lake Tahoe** list under **Retreat species lists** (Gateway Park reference — natives + invasives). **Bingo sheet content is not animation-blocked** — can be written/locked before the 2D pipeline; walk presentation and scan capture still → *for later; animation needed*.
-  - *Phase 2 capture (owner — TBD timing):* **Scan mode** — camera-lens view over the environment; player **clicks/taps outlines** (animal, tree, rock, landform, etc.). First tap on each subject **captures** it: a **sticker-like still** shrinks and flies to a **notebook icon** (bottom-left). Already-captured subjects don’t re-sticker. Full moment replays as **flashback** on **Phase 3 Wednesday** when that cell/label is picked (see **Trip keepsake review**). Playing every bingo/journal spot as a long present-time scene would run too long — scan capture keeps the walk/hike short.
+- **Nature bingo** = the **group** birdwatching / animal-seeking walk — **bingo only exists as a group activity**; solo or non-group nature time (e.g. Day 2 sketchbook) is **not** bingo. Bingo sheet = **basic outline on someone’s notebook**. Cells from **Lake Tahoe** list under **Retreat species lists** (Gateway Park reference — natives + invasives). **Bingo sheet content is not art-blocked** — species labels and Sheet A/B can be written/locked now; **hidden-picture scene art** and walk presentation → *for later; animation / illustration needed (owner TBD)*.
+  - *Phase 2 capture (owner — TBD timing):* **Hidden-in-scene finds** — each cell opens a **small habitat vignette** where a **macro organism** from the sheet is **part of the scenery** (camouflaged / tucked in — e.g. **mule deer** in Sierra understory, **spotted owl** in pine boughs; mood refs like *fawn in fall leaves* or *snow leopard on a snowy slope* = **habitat pairing**, not species for every retreat). *Feel reference:* kid-magazine **hidden-picture** puzzles (e.g. Highlights) — **vibe only**, MCOC’s own art and locales. Player **finds and taps** the subject. First find **captures** it: a **sticker-like still** shrinks and flies to a **notebook icon** (bottom-left). Already-captured subjects don’t re-sticker. Full moment replays as **flashback** on **Phase 3 Wednesday** when that cell/label is picked (see **Trip keepsake review**). Playing every bingo spot as a long present-time scene would run too long — short hidden finds keep the group walk cozy.
   - Walk **somewhat spread out** — not too far apart, but **not** everyone converging (would spook birds/animals)
   - **~2 people per group**; **same-gender pairs** unless **family members** together
 - **Quiet time** — a **few hours** in-fiction; **~3 minutes** real time after bingo / break camp prep
@@ -334,6 +334,16 @@ They may not fully understand why it feels different yet, but the contrast stays
 
 *Phase 3 opens after* **shared leaving** → Sunday drive with **soft retreat-themed border fade** (see Phase 3).
 
+#### Nature bingo — hidden-picture feel (owner)
+
+**Player-facing read:** **Find the organism in the scene** — organism woven into habitat art, not a generic “camera over the trail” scavenger hunt. *Reference only (not a copy):* hidden-picture puzzles in kids’ magazines like **Highlights** — same **cozy find-it** energy, **MCOC’s** species and scenes. Each bingo cell is a **find-the-organism** beat: a **macro** plant or animal (**visible** scale — bear, deer, owl, pine, manzanita; not microscope / microbe focus) **native to the protagonist’s retreat locale** (woods = **Lake Tahoe** Sheet A/B pool), shown **in habitat** — the subject belongs in the scene (understory, snow line, duff, marsh edge, etc.).
+
+**Examples (mood only — actual cells = locked locale lists):** fawn in **fall leaves**; snow leopard on a **snowy mountain** (illustrates *habitat match* — use **Sierra-true** species on Tahoe sheets, not Himalaya fauna unless a future retreat says so).
+
+**Scope:** **Bingo group walk only** (woods cabin Day 3). Beach **sketchbook** and gorge **journal** keep sketch/journal capture — not hidden-picture bingo.
+
+**Art / animation (owner — TBD):** How scenes are drawn or animated is **not decided yet** — static illustrated panels, light motion, or full animation pipeline all TBD. **Does not block** locking sheet text, species lists, or Wednesday flashback labels. Ship hidden finds when an art approach exists.
+
 ### Retreat species lists (owner-provided)
 
 **Source of truth:** **Russian River** = owner-curated. **Lake Tahoe bingo** = [Gateway Park](https://gatewayparktahoe.org/species/) — **forest natives + clear non-natives only** (see Lake Tahoe). **Yosemite gorge** = **NPS** + [Yosemite Conservancy pollinators](https://yosemite.org/buzzworthy-pollinators/) + NPS invasives. **Newport sketchbook** = [Newport Bay wildlife](https://newportbay.org/wildlife/) (+ optional CNPS OC emergent invasives for extra plant cells). *Use **iNaturalist** / **Audubon climate** pages only as “commonly seen” inspiration — not for native/invasive sorting.*
@@ -347,9 +357,9 @@ They may not fully understand why it feels different yet, but the contrast stays
 - Each player gets **24–25 clickable labels** on their sheet (bingo cell, journal heading, or sketch label).
 - **Two full sheets — Sheet A and Sheet B** — same layout/categories; **different species** (and **different rock/landform** cells on gorge journals) in comparable slots (e.g. Sheet A bird cell = California spotted owl → Sheet B bird cell = Clark’s nutcracker; Newport example: least tern ↔ Belding’s savannah sparrow — *not* goldfinch/waxwing/oystercatcher unless added to Newport pool later).
 - **Alternate per player** (same idea as gorge **Yosemite ↔ Russian River** flip): if the last player got **Sheet A**, the next player gets **Sheet B**, and vice versa. Persist in save/local flag.
-- Phase 2 **scan capture** only needs stickers for **that player’s 24–25** — not both sheets in one playthrough.
+- Phase 2 capture only needs art/stickers for **that player’s 24–25** — not both sheets in one playthrough. **Woods bingo** = hidden-picture vignettes per cell; **sketchbook / journal** = outline/sketch capture as pinned for those retreats.
 - **N** = native, **I** = invasive/non-native/exotic per lists above.
-- **Rocks/landforms (gorge only — FTTB):** Reserve **1–2 cells per sheet** for local **rock or landform** labels (e.g. granite outcrop vs river cobble on Russian River; granite vs glacial polish on Yosemite) — **split across A/B** so combined coverage includes geology without extra cells on one player. Exact rock names *TBD* per assigned gorge locale; scan capture treats them like other outline subjects.
+- **Rocks/landforms (gorge only — FTTB):** Reserve **1–2 cells per sheet** for local **rock or landform** labels (e.g. granite outcrop vs river cobble on Russian River; granite vs glacial polish on Yosemite) — **split across A/B** so combined coverage includes geology without extra cells on one player. Exact rock names *TBD* per assigned gorge locale; journal capture treats them like other outline subjects.
 
 **Lake Tahoe — Sheet A (25)**  
 Lodgepole Pine N · Sugar Pine N · Douglas Fir N · Incense Cedar N · Ponderosa Pine N · White Fir N · Greenleaf Manzanita N · Western Serviceberry N · Bitter Cherry N · Arroyo Willow N · Tule N · American Black Bear N · Mule Deer N · Mountain Chipmunk N · Sierra Nevada Mountain Beaver N · California Spotted Owl N · Southern Long-toed Salamander N · Sierran Chorus Frog N · Foothill Yellow-Legged Frog N · Northwestern Pond Turtle N · Western Fence Lizard N · Western Bumble Bee N · Monarch Butterfly N · European Paper Wasp I · American Honeybee I
@@ -568,8 +578,8 @@ It is mostly emotional and sensory:
 
 **Trip keepsake review (owner — Phase 3 Wednesday evening):** They **give in** and reopen what they brought back — **woods** → **nature bingo** sheet; **beach** → **sketchbook**; **gorge** → **journal**. Player **clicks favorite subjects** among their **24–25 labels** (see **Keepsake sheets — 24–25 cells, player alternation**). Each click plays a **flashback** to **that** trip moment. Favorites drive **Phase 4+ active research**. **Live ship** — environmentally on-theme (unlike cut chore minigames); **not** the game’s main spine (that’s drift + story arc).
 
-- **Subject mix:** **Native** plants/animals/landforms per **locked locale**. **Live ship:** Phase 2 **scan capture** + Phase 3 **flashback playback** — on-theme, build when animation exists (not cut like domestic minigames).
-- **Phase 2 vs Phase 3:** On-trip days stay **short** via scan capture; deep revisiting lives on **Wednesday** keepsake review.
+- **Subject mix:** **Native** plants/animals/landforms per **locked locale**. **Woods bingo:** hidden-picture habitat vignettes per cell (see **Nature bingo — hidden-picture feel**). **Live ship:** Phase 2 **find capture** + Phase 3 **flashback playback** — on-theme, build when illustration/animation approach exists (not cut like domestic minigames).
+- **Phase 2 vs Phase 3:** On-trip days stay **short** via quick finds (bingo hidden pictures; sketchbook/journal capture as pinned); deep revisiting lives on **Wednesday** keepsake review.
 
 **Laundry minigame (owner — Phase 3 Wednesday, full design only — not live):** Two parts — **quick wash/dry clicks**, then **fold & place** (the main beat). **Live ship:** skip; use Tue-style animation + drift beat instead.
 
@@ -657,7 +667,7 @@ They increasingly suspect the retreat vs home gap has **real causes**:
 | Branch | Phase 4+ research examples (from favorites clicked Wed) |
 |--------|--------------------------------------------------------|
 | **Beach sketchbook** *(Newport Beach)* | **Sea snails** (shell sketch) — online → library/bookstore book. **Seabirds** — online → **fictional bird-ID app** (Merlin-style **reference only**) → library/bookstore book. *Pier page:* optional; no thread required unless added. |
-| **Woods bingo** *(Lake Tahoe)* | Native/invasive cells — **Retreat species lists** (Gateway Park reference); exact bingo subset TBD; **online** → library/bookstore per favorite. |
+| **Woods bingo** *(Lake Tahoe)* | **Hidden-picture** native/invasive cells — **Retreat species lists** (Gateway Park reference); habitat-matched finds per Sheet A/B; **online** → library/bookstore per favorite. |
 | **Gorge journal** *(Yosemite or Russian River)* | e.g. **snake on path**, sketched birds/trees/grasses — **online** (venomous? local species?) → library/bookstore; rock/mineral entries if player sketched them — TBD. |
 
 *Timing inside Phase 4* and which favorite unlocks which beat — TBD. One subject at a time keeps it cozy, not homework dump.
@@ -2021,7 +2031,7 @@ Maps to phases: **1–3** discomfort/awareness · **4–5** understanding/skepti
 - **Roadmap naming (owner):** **Phase numbers** (Phase 1, 5A, 8+) = fine. **Category names** for beats and pillars — avoid stacking extra list/topic/piece numbers on top (e.g. say **peer stewardship**, not “Phase 6 List 1”).
 - **No charts/tables in chat** for My Change, Our Change unless the owner explicitly asks for them (plot summaries, roadmaps, status — use prose and short lists instead).
 - **Plot-summary gaps:** Use **for later; animation needed** when the blocker is the 2D animation pipeline — not “full blocking” wording.
-- **Keepsake sheets (owner):** **24–25** clickable labels per player; **Sheet A / Sheet B** alternate per player (same flip pattern as gorge locale). Full cell lists under **Keepsake sheets — 24–25 cells, player alternation**. Sheet **text/layout** not animation-blocked; **scan capture + flashbacks** still → *for later; animation needed*.
+- **Keepsake sheets (owner):** **24–25** clickable labels per player; **Sheet A / Sheet B** alternate per player (same flip pattern as gorge locale). Full cell lists under **Keepsake sheets — 24–25 cells, player alternation**. Sheet **text/layout** not art-blocked; **woods bingo hidden-picture scenes + flashbacks** → *for later; illustration/animation needed (owner TBD)*.
 - **Phase 3 / keepsake (owner):** **Drift at work** = main interactive beat. **Bingo / sketchbook / journal** = ships on live (environmental themes); not cut like domestic filler. See **Live ship scope**.
 - **Retreat locales (owner — FTTB, all California):** **Newport Beach** (beach cottage), **Lake Tahoe** (woods cabin), **Yosemite *or* Russian River** (gorge card — **auto-alternate** per player, not player-picked). *Optional later:* more locations as in-game choices — see **Your additions**.
 - **Retreat species lists:** See **Retreat species lists** section. **Russian River** = owner. **Lake Tahoe / Newport / Yosemite** = pinned (high-confidence sources only). **Web fetch:** `tahoe.ucdavis.edu` often Cloudflare-blocked — owner paste for lake AIS add-ons.
@@ -2117,6 +2127,7 @@ Maps to phases: **1–3** discomfort/awareness · **4–5** understanding/skepti
 ## Your additions
 
 - [x] **Live ship — keepsake / bingo ships, laundry etc. cut (owner):** Bingo/sketchbook/journal arc **ships** — environmentally on-theme, not the main spine. Domestic filler (basket pack, HS socializer click games, dishes/laundry) **cut**. Drift + story stay central. See **Live ship scope**.
+- [x] **Nature bingo — hidden-in-scene finds (owner):** Woods group walk = **find macro organisms native to the retreat** in **habitat-matched vignettes** (not generic trail-camera tap). *Highlights-style hidden pictures = reference vibe only.* See **Nature bingo — hidden-picture feel**. **Illustration/animation pipeline TBD** — does not block sheet species lists.
 - [ ] **Fast-forward usage feedback (after ship or next publish — not yet):** Once the full game is out *or* MCOC is published again, set up a way to **update the owner** with the **ratio of players who click the Phase 3 fast-forward control** (Day 2+ unlock). Use for pacing/tuning (is skip too tempting vs drift still landing?). Aggregate metric is enough unless owner asks for more detail later.
 - [ ] **Suburbs home option (later — not FTTB):** Pitch toggle can stay for return-drive copy; **game defaults to city** because suburbs usually **don’t contrast with nature** as sharply as the city does. Revisit only if a suburb branch is worth the art/copy split.
 - [ ] **More retreat locations (optional — later in-game):** After FTTB trio (**Newport Beach**, **Lake Tahoe**, **Yosemite / Russian River** gorge), add **additional California (or other) locales** as extra nature-retreat choices — not required for first ship.

@@ -5,7 +5,7 @@
   var DOCUMENTS_KEY = "lorekeeper_documents_v1";
   var DOCUMENT_BACKUPS_KEY = "lorekeeper_document_backups_v1";
   var LAST_DOC_KEY = "lorekeeper_last_doc_v1";
-  var MAX_SNAPSHOTS = 5;
+  var MAX_SNAPSHOTS = 2;
 
   function uid(prefix) {
     return (prefix || "d") + "_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 9);
@@ -93,22 +93,41 @@
     return Store.setItem(DOCUMENT_BACKUPS_KEY, JSON.stringify(map || {}));
   }
 
+  function dedupeSnapshotsByText(snapshots) {
+    var out = [];
+    var seen = {};
+    var list = Array.isArray(snapshots) ? snapshots : [];
+    for (var i = 0; i < list.length; i++) {
+      var snap = list[i];
+      if (!snap || isEmptyHtml(snap.bodyHtml)) continue;
+      var plain = bodyPlainText(snap.bodyHtml);
+      if (!plain || seen[plain]) continue;
+      seen[plain] = true;
+      out.push(snap);
+    }
+    return out;
+  }
+
   function pushSnapshot(docId, bodyHtml, reason, title) {
     if (!docId || isEmptyHtml(bodyHtml)) return false;
     var map = loadBackups();
     var entry = map[docId] || { snapshots: [] };
-    var snapshots = Array.isArray(entry.snapshots) ? entry.snapshots.slice() : [];
+    var snapshots = dedupeSnapshotsByText(
+      Array.isArray(entry.snapshots) ? entry.snapshots.slice() : []
+    );
+    var nextPlain = bodyPlainText(bodyHtml);
     var next = {
       bodyHtml: bodyHtml,
       at: Date.now(),
       reason: reason || "save",
       title: title || "",
     };
-    if (snapshots.length && snapshots[0].bodyHtml === bodyHtml) {
+    if (snapshots.length && bodyPlainText(snapshots[0].bodyHtml) === nextPlain) {
       snapshots[0] = next;
     } else {
       snapshots.unshift(next);
     }
+    snapshots = dedupeSnapshotsByText(snapshots);
     if (snapshots.length > MAX_SNAPSHOTS) snapshots = snapshots.slice(0, MAX_SNAPSHOTS);
     map[docId] = { snapshots: snapshots, latest: snapshots[0] };
     saveBackups(map);
@@ -144,15 +163,8 @@
     return null;
   }
 
-  function snapshotBeforeEdit(doc) {
-    if (!doc || !doc.id) return false;
-    var html = doc.bodyHtml || "";
-    if (isEmptyHtml(html) && doc.pages && doc.pages.length) {
-      doc = migrateToFlow(Object.assign({}, doc));
-      html = doc.bodyHtml || "";
-    }
-    if (isEmptyHtml(html)) return false;
-    return pushSnapshot(doc.id, html, "open", doc.title);
+  function snapshotBeforeEdit() {
+    return false;
   }
 
   function restoreBodyIfNeeded(doc) {
@@ -254,6 +266,7 @@
     if (doc.footerText == null) doc.footerText = "";
     if (doc.showPageNumbers == null) doc.showPageNumbers = true;
     if (!doc.font) doc.font = "arial";
+    if (doc.loreTermsEnabled == null) doc.loreTermsEnabled = false;
     return doc;
   }
 
@@ -282,8 +295,20 @@
     return doc;
   }
 
+  function compactBackupsForDoc(docId) {
+    if (!docId) return;
+    var map = loadBackups();
+    var entry = map[docId];
+    if (!entry || !Array.isArray(entry.snapshots) || !entry.snapshots.length) return;
+    var snapshots = dedupeSnapshotsByText(entry.snapshots).slice(0, MAX_SNAPSHOTS);
+    if (snapshots.length === entry.snapshots.length) return;
+    map[docId] = { snapshots: snapshots, latest: snapshots[0] || entry.latest };
+    saveBackups(map);
+  }
+
   function saveDocument(doc) {
     if (!doc || !doc.id) return false;
+    compactBackupsForDoc(doc.id);
     touchDoc(doc);
     var docs = loadRaw();
     var found = false;
@@ -354,6 +379,21 @@
     }
   }
 
+  function formatWhenRelative(ts) {
+    if (!ts) return "";
+    var diff = Math.max(0, Date.now() - ts);
+    var sec = Math.floor(diff / 1000);
+    if (sec < 45) return "just now";
+    var min = Math.floor(sec / 60);
+    if (min < 60) return min === 1 ? "1 minute ago" : min + " minutes ago";
+    var hr = Math.floor(min / 60);
+    if (hr < 24) return hr === 1 ? "about an hour ago" : "about " + hr + " hours ago";
+    var day = Math.floor(hr / 24);
+    if (day === 1) return "yesterday";
+    if (day < 7) return day + " days ago";
+    return formatWhen(ts);
+  }
+
   function exportJson() {
     return JSON.stringify(
       { version: 2, exportedAt: new Date().toISOString(), documents: loadRaw() },
@@ -403,6 +443,7 @@
     setLastDocId: setLastDocId,
     getLastDocId: getLastDocId,
     formatWhen: formatWhen,
+    formatWhenRelative: formatWhenRelative,
     exportJson: exportJson,
     normalizeBodyHtml: normalizeBodyHtml,
     bodyPlainText: bodyPlainText,
@@ -412,7 +453,7 @@
     restorableSnapshot: restorableSnapshot,
     listSnapshots: function (docId) {
       var entry = loadBackups()[docId];
-      return entry && entry.snapshots ? entry.snapshots.slice() : [];
+      return dedupeSnapshotsByText(entry && entry.snapshots ? entry.snapshots.slice() : []);
     },
     restoreSnapshot: restoreSnapshot,
   };

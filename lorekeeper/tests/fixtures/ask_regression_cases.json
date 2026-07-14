@@ -1,0 +1,245 @@
+{
+  "description": "Synthetic Ask regression pack (#33). Add cases from Owner's Office export; never commit real canon.",
+  "cases": [
+    {
+      "id": "who_etherei_composed",
+      "label": "Who-is returns composed summary, not scattered",
+      "corpusFixture": "smoke_and_mirrors_corpus.json",
+      "question": "In Smoke and Mirrors, who is Etherei?",
+      "assert": {
+        "questionKind": "who",
+        "materialState": "summarizable",
+        "answerContains": ["protagonist", "Etherei"],
+        "answerNotContains": ["too scattered", "•"]
+      }
+    },
+    {
+      "id": "relationship_etherei_character_b",
+      "label": "Relationship-only — brother, not full profile",
+      "corpusFixture": "smoke_and_mirrors_corpus.json",
+      "question": "In Smoke and Mirrors, how are Etherei and Character B related?",
+      "assert": {
+        "questionKind": "relationship",
+        "materialState": "summarizable",
+        "answerContains": ["brother", "Character B"],
+        "answerNotContains": ["protagonist", "married to Character C"],
+        "answerMaxChars": 220
+      }
+    },
+    {
+      "id": "strict_work_no_leak",
+      "label": "Wrong work — nothing saved, no cross-leak",
+      "entries": [
+        {
+          "id": "e1",
+          "title": "Kael",
+          "body": "Kael is the antagonist.",
+          "tags": ["River Crown"],
+          "kind": "character"
+        }
+      ],
+      "question": "In Ashford Saga, who is Character M?",
+      "assert": {
+        "materialState": "nothing_saved",
+        "answerContains": ["Ashford"],
+        "answerNotContains": ["Kael"]
+      }
+    },
+    {
+      "id": "implicit_brother_phrase",
+      "label": "Implicit brother-to Character B line parses",
+      "entries": [
+        {
+          "id": "rel1",
+          "title": "Cast ties",
+          "body": "Character M is the lead. Brother to Character B.",
+          "tags": ["Ashford Saga"],
+          "kind": "relationship"
+        }
+      ],
+      "question": "In Ashford Saga, how are Character M and Character B related?",
+      "assert": {
+        "questionKind": "relationship",
+        "answerContains": ["brother", "Character B"],
+        "answerNotContains": ["lead", "protagonist"]
+      }
+    },
+    {
+      "id": "knowledge_pov_elara_marcus",
+      "label": "POV knowledge — knower not misparsed about-tail",
+      "entries": [
+        {
+          "id": "kp1",
+          "title": "Elara note",
+          "body": "Elara knows Marcus watches her at the gate. She suspects his interest is not purely romantic.",
+          "tags": ["Smoke and Mirrors"],
+          "kind": "note"
+        }
+      ],
+      "question": "In Smoke and Mirrors, what does Elara know about Marcus's interest in Elara?",
+      "assert": {
+        "questionKind": "knowledge",
+        "answerContains": ["Elara", "Marcus"],
+        "answerNotContains": ["nothing saved yet that describes"]
+      }
+    },
+    {
+      "id": "prologue_not_work_title",
+      "label": "In the Prologue is section scope — not a work title",
+      "entries": [
+        {
+          "id": "d1",
+          "title": "Smoke and Mirrors",
+          "body": "<p>Prologue</p><p>Etherei fled the hunters.</p><p>Chapter 1</p><p>Later.</p>",
+          "tags": ["Smoke and Mirrors"],
+          "kind": "document"
+        }
+      ],
+      "question": "What happened to Etherei in the Prologue?",
+      "assert": {
+        "materialState": "summarizable",
+        "answerContains": ["Etherei"],
+        "answerNotContains": ["Nothing saved for The Prologue", "only in your head"]
+      }
+    },
+    {
+      "id": "portrait_includes_species",
+      "label": "What-is includes stated species",
+      "entries": [
+        {
+          "id": "c1",
+          "title": "Duke Dijon",
+          "body": "Duke Dijon is a Eurasian Lynx. Second cousin of Lord Tenebris.",
+          "tags": ["Smoke and Mirrors"],
+          "kind": "character"
+        }
+      ],
+      "question": "In Smoke and Mirrors, what is Duke Dijon?",
+      "assert": {
+        "answerContains": ["Lynx"],
+        "answerNotContains": ["Nothing saved"]
+      }
+    },
+    {
+      "id": "awareness_predator_prey_not_scene",
+      "label": "Awareness — knowledge sentences, not meadow scene",
+      "entries": [
+        {
+          "id": "n1",
+          "title": "Scene",
+          "body": "Agitated, but not with the fury he had seen on the faces of foxes and other predators in the meadow, as Etherei's blood glittered on his fangs.",
+          "tags": ["Smoke and Mirrors"],
+          "kind": "note"
+        },
+        {
+          "id": "n2",
+          "title": "Awareness",
+          "body": "Etherei suspects the unspoken rules of the predator-prey situation but has not spoken to any lord about it yet.",
+          "tags": ["Smoke and Mirrors"],
+          "kind": "note"
+        }
+      ],
+      "question": "How aware is Etherei of the Predator-Prey situation right now in Smoke and Mirrors?",
+      "assert": {
+        "questionKind": "knowledge",
+        "recallEngine": "local",
+        "answerContains": ["suspects", "predator"],
+        "answerNotContains": ["blood", "fangs", "meadow"]
+      }
+    },
+    {
+      "label": "How aware — focused answer, not profile dump",
+      "entries": [
+        {
+          "id": "n1",
+          "title": "Predator prey",
+          "body": "Character M is only partly aware of the predator-prey rules in the capital.",
+          "tags": ["Ashford Saga"],
+          "kind": "note"
+        }
+      ],
+      "question": "In Ashford Saga, how aware is Character M of the predator-prey situation right now?",
+      "assert": {
+        "questionKind": "knowledge",
+        "answerContains": ["aware", "predator"],
+        "answerNotContains": ["CAST CARD", "Key Ties"]
+      }
+    },
+    {
+      "id": "who_thin_escalates_not_gap_only",
+      "label": "Who-is with draft mention — not fake character gap stub",
+      "corpusFixture": "smoke_and_mirrors_corpus.json",
+      "question": "In Smoke and Mirrors, who is Etherei?",
+      "assert": {
+        "questionKind": "who",
+        "answerContains": ["Etherei"],
+        "answerNotContains": ["couldn't find anything about Etherei"]
+      }
+    },
+    {
+      "id": "spot_check_awareness_smoke_corpus",
+      "label": "Spot-check Q1 — full recall finds awareness note in corpus",
+      "corpusFixture": "smoke_and_mirrors_corpus.json",
+      "question": "How aware is Etherei of the Predator-Prey situation right now in Smoke and Mirrors?",
+      "spotCheck": true,
+      "assert": {
+        "questionKind": "knowledge",
+        "recallEngine": "local",
+        "answerContains": ["suspects", "predator"],
+        "answerNotContains": ["plans to draw", "fangs", "meadow"]
+      }
+    },
+    {
+      "id": "spot_check_portrait_duke_smoke_corpus",
+      "label": "Spot-check Q2 — portrait from character note, not planning meta",
+      "corpusFixture": "smoke_and_mirrors_corpus.json",
+      "question": "In Smoke and Mirrors, what is Duke Dijon?",
+      "spotCheck": true,
+      "assert": {
+        "answerContains": ["Lynx"],
+        "answerNotContains": ["I wrote", "Initially"]
+      }
+    },
+    {
+      "id": "notes_on_expression_not_work_title",
+      "label": "all my notes on that expression is not a fake work title",
+      "entries": [
+        {
+          "id": "n1",
+          "title": "POV chase beat",
+          "body": "Character A — soft stunned look as the POV cuts, right before Character B catches Character C. Jaw loose, eyes wide, not angry.",
+          "tags": ["Ashford Saga"],
+          "kind": "note"
+        }
+      ],
+      "question": "Ashford Saga: Describe for me the look on Character A's face right as Character A's POV ends before Character B catches up to Character C. all my notes on that expression",
+      "assert": {
+        "materialStateNot": "nothing_saved",
+        "answerContains": ["Character A", "stunned"],
+        "answerNotContains": [
+          "Nothing saved for Notes On That Expression",
+          "Notes On That Expression",
+          "only in your head"
+        ]
+      }
+    },
+    {
+      "id": "my_work_notes_still_scopes",
+      "label": "my Work notes still extracts real work title",
+      "entries": [
+        {
+          "id": "n1",
+          "title": "Task",
+          "body": "planned: rewrite ballroom for Ashford Saga.",
+          "tags": ["Ashford Saga"],
+          "kind": "note"
+        }
+      ],
+      "question": "Can you tell me my Ashford Saga notes?",
+      "assert": {
+        "answerContains": ["ballroom"],
+        "answerNotContains": ["Nothing saved for Notes"]
+      }
+    }
+  ]
+}

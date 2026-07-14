@@ -20,6 +20,7 @@ HOSTED=(
   "Archivo" "Titillium Web" "Heebo" "Kanit" "Signika" "Signika Negative"
   "Arimo" "Tinos" "Cousine" "Cardo" "Vollkorn" "Alegreya" "Alegreya Sans"
   "IBM Plex Sans" "IBM Plex Serif" "IBM Plex Mono"
+  "Elsie Swash Caps" "Kaushan Script" "Cinzel" "Uncial Antiqua" "Special Elite"
 )
 
 UA="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
@@ -27,16 +28,23 @@ UA="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, l
 echo "/* Self-hosted open fonts for LoreKeeper — SIL OFL / Apache licensed Google Fonts */" >> "$CSS"
 
 for NAME in "${HOSTED[@]}"; do
-  python3 - "$NAME" "$OUT" "$CSS" "$UA" <<'PY'
+  case "$NAME" in
+    Spectral) W="0,400;0,500;0,600;0,700;0,800;1,400" ;;
+    "Grenze Gotisch") W="0,400;0,500;0,600;0,700;0,900;1,400" ;;
+    *) W="0,400;0,700;1,400" ;;
+  esac
+  python3 - "$NAME" "$OUT" "$CSS" "$UA" "$W" <<'PY'
 import re, subprocess, sys, urllib.parse
 
-name, out_dir, css_path, ua = sys.argv[1:5]
+name, out_dir, css_path, ua, wght_spec = sys.argv[1:6]
 slug = name.lower().replace(" ", "-")
 enc = urllib.parse.quote(name)
 url = (
     "https://fonts.googleapis.com/css2?family="
     + enc.replace(" ", "+")
-    + ":ital,wght@0,400;0,700;1,400&display=swap"
+    + ":ital,wght@"
+    + wght_spec
+    + "&display=swap"
 )
 proc = subprocess.run(
     ["curl", "-fsSL", url, "-H", f"User-Agent: {ua}"],

@@ -50,6 +50,10 @@
     if (!look.setLook(pendingLook)) return false;
     hidePicker();
     refreshPlayerSprite();
+    if (window.MoPrologue && window.MoPrologue.isInSetupPhase && window.MoPrologue.isInSetupPhase()) {
+      window.MoPrologue.onSetupComplete();
+      return true;
+    }
     return true;
   }
 
@@ -87,6 +91,9 @@
 
     overlay.querySelectorAll("[data-cafe-lane]").forEach(function (btn) {
       btn.addEventListener("click", function () {
+        if (window.MoAudio && typeof window.MoAudio.unlock === "function") {
+          window.MoAudio.unlock();
+        }
         pendingLane = btn.getAttribute("data-cafe-lane") || "";
         markSelected("data-cafe-lane", pendingLane);
         syncContinueButton();
@@ -95,6 +102,9 @@
 
     overlay.querySelectorAll("[data-protagonist-look]").forEach(function (btn) {
       btn.addEventListener("click", function () {
+        if (window.MoAudio && typeof window.MoAudio.unlock === "function") {
+          window.MoAudio.unlock();
+        }
         pendingLook = btn.getAttribute("data-protagonist-look") || "";
         markSelected("data-protagonist-look", pendingLook);
         syncContinueButton();
@@ -105,12 +115,17 @@
     if (cont) {
       cont.addEventListener("click", function () {
         if (cont.disabled) return;
+        if (window.MoAudio && typeof window.MoAudio.unlock === "function") {
+          window.MoAudio.unlock();
+        }
         applySetup();
       });
     }
 
     if (needsSetup()) {
-      showPicker();
+      if (!(window.MoPrologue && window.MoPrologue.needsPrologue && window.MoPrologue.needsPrologue())) {
+        showPicker();
+      }
     } else if (window.MoCafeLanguage && typeof window.MoCafeLanguage.syncOrderInputUi === "function") {
       window.MoCafeLanguage.syncOrderInputUi();
       if (window.MoLearningCard && typeof window.MoLearningCard.refreshHud === "function") {

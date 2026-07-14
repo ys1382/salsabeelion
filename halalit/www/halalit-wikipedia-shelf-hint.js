@@ -177,34 +177,55 @@
    *   url: string
    * }|null>}
    */
-  function fetchShelfHint(title, author) {
+  function buildHintFromHit(hit, fetchPlot) {
+    if (!hit) return Promise.resolve(null);
+    return pageExtract(hit.title).then(function (intro) {
+      intro = intro || "";
+      if (!fetchPlot || intro.length >= 120) {
+        if (!intro || intro.length < 40) return null;
+        return {
+          text: intro,
+          intro: intro,
+          plot: "",
+          plotSectionTitle: "",
+          pageTitle: hit.title,
+          url: "https://en.wikipedia.org/wiki/" + encodeURIComponent(hit.title.replace(/ /g, "_")),
+        };
+      }
+      return pagePlotSection(hit.title).then(function (plotBlock) {
+        plotBlock = plotBlock || { title: "", text: "" };
+        var plot = plotBlock.text || "";
+        var combined = intro;
+        if (plot) combined += (combined ? "\n\n" : "") + plot;
+        if (!combined || combined.length < 40) return null;
+        return {
+          text: combined,
+          intro: intro,
+          plot: plot,
+          plotSectionTitle: plotBlock.title || "Plot",
+          pageTitle: hit.title,
+          url: "https://en.wikipedia.org/wiki/" + encodeURIComponent(hit.title.replace(/ /g, "_")),
+        };
+      });
+    });
+  }
+
+  function fetchShelfHint(title, author, opts) {
+    opts = opts || {};
+    var fast = !!opts.fast;
     var t = String(title || "").trim();
     var a = String(author || "").trim();
     if (!t) return Promise.resolve(null);
-    var queries = [t + (a ? " " + a : ""), t + " book", t + " novel"];
+    var queries = fast
+      ? [t + (a ? " " + a : "")]
+      : [t + (a ? " " + a : ""), t + " book", t + " novel"];
     var chain = Promise.resolve(null);
     queries.forEach(function (q) {
       chain = chain.then(function (found) {
         if (found) return found;
         return searchPages(q).then(function (hits) {
           var hit = pickBestSearchHit(t, a, hits);
-          if (!hit) return null;
-          return Promise.all([pageExtract(hit.title), pagePlotSection(hit.title)]).then(function (parts) {
-            var intro = parts[0] || "";
-            var plotBlock = parts[1] || { title: "", text: "" };
-            var plot = plotBlock.text || "";
-            var combined = intro;
-            if (plot) combined += (combined ? "\n\n" : "") + plot;
-            if (!combined || combined.length < 40) return null;
-            return {
-              text: combined,
-              intro: intro,
-              plot: plot,
-              plotSectionTitle: plotBlock.title || "Plot",
-              pageTitle: hit.title,
-              url: "https://en.wikipedia.org/wiki/" + encodeURIComponent(hit.title.replace(/ /g, "_")),
-            };
-          });
+          return buildHintFromHit(hit, !fast);
         });
       });
     });

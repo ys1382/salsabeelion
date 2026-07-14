@@ -1,0 +1,47 @@
+{
+  "workTag": "Smoke and Mirrors",
+  "entries": [
+    {
+      "id": "sam-char",
+      "title": "Etherei",
+      "body": "Etherei is the protagonist. Grey-skinned arcanist who guards the north gate.",
+      "tags": ["Smoke and Mirrors"],
+      "kind": "character"
+    },
+    {
+      "id": "sam-rel",
+      "title": "Alliances",
+      "body": "Etherei is married to Character C. Brother to Character B.",
+      "tags": ["Smoke and Mirrors"],
+      "kind": "relationship"
+    },
+    {
+      "id": "sam-draft#p0",
+      "title": "Smoke and Mirrors draft",
+      "body": "Etherei turned toward the gate. The hall fell silent when Etherei entered.",
+      "tags": ["Smoke and Mirrors"],
+      "kind": "document"
+    },
+    {
+      "id": "sam-scene",
+      "title": "Gate scene",
+      "body": "Etherei speaks softly at the threshold.",
+      "tags": ["Smoke and Mirrors"],
+      "kind": "scene"
+    },
+    {
+      "id": "sam-awareness",
+      "title": "Etherei — Predator-Prey awareness",
+      "body": "Etherei suspects the unspoken rules of the predator-prey situation but has not spoken to any lord about it yet.",
+      "tags": ["Smoke and Mirrors"],
+      "kind": "note"
+    },
+    {
+      "id": "sam-duke",
+      "title": "Duke Dijon",
+      "body": "Duke Dijon is a Eurasian Lynx noble tied to the northern court.",
+      "tags": ["Smoke and Mirrors"],
+      "kind": "character"
+    }
+  ]
+}

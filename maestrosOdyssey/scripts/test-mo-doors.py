@@ -79,6 +79,92 @@ def parse_cafe_exit_row_grid(farm_text):
     raise ValueError('could not find café grid row with ">" in mo-farm-rpg.js')
 
 
+def parse_outside_grid(farm_text):
+    in_outside = False
+    in_grid = False
+    grid = []
+    for line in farm_text.splitlines():
+        stripped = line.strip()
+        if stripped == "outside: {":
+            in_outside = True
+            continue
+        if in_outside and stripped.startswith("cafe:"):
+            break
+        if in_outside and stripped == "grid: [":
+            in_grid = True
+            continue
+        if in_outside and in_grid:
+            if stripped.startswith("'") and stripped.endswith("',"):
+                grid.append(list(stripped.strip("',")))
+            elif stripped.startswith("].map"):
+                break
+    if not grid:
+        raise ValueError("could not parse outside grid from mo-farm-rpg.js")
+    return grid
+
+
+def parse_outside_layout(farm_text):
+    block = re.search(r"const OUTSIDE_LAYOUT\s*=\s*\{([\s\S]*?)\};", farm_text)
+    if not block:
+        raise ValueError("could not parse OUTSIDE_LAYOUT from mo-farm-rpg.js")
+    body = block.group(1)
+
+    def field_int(name):
+        m = re.search(rf"{name}:\s*(\d+)", body)
+        if not m:
+            raise ValueError(f"OUTSIDE_LAYOUT missing {name}")
+        return int(m.group(1))
+
+    board_col = field_int("col")
+    board_row_m = re.search(r"board:\s*\{\s*col:\s*\d+,\s*row:\s*(\d+)\s*\}", body)
+    if not board_row_m:
+        raise ValueError("OUTSIDE_LAYOUT missing board.row")
+    return {
+        "propsRow": field_int("propsRow"),
+        "boardCol": board_col,
+        "boardRow": int(board_row_m.group(1)),
+        "sidewalkRow": field_int("sidewalkRow"),
+        "flowerCol": re.search(r"flowerCol:\s*(\d+)", body).group(1),
+        "brewSignCol": int(re.search(r"brewSignCol:\s*(\d+)", body).group(1)),
+        "sidewalkStartCol": field_int("sidewalkStartCol"),
+        "sidewalkEndCol": field_int("sidewalkEndCol"),
+    }
+
+
+def check_outside_layout(farm_text):
+    layout = parse_outside_layout(farm_text)
+    grid = parse_outside_grid(farm_text)
+    pr = layout["propsRow"]
+    br = layout["boardRow"]
+    bc = layout["boardCol"]
+    sr = layout["sidewalkRow"]
+    fc = int(layout["flowerCol"])
+    bsc = layout["brewSignCol"]
+    ss = layout["sidewalkStartCol"]
+    se = layout["sidewalkEndCol"]
+
+    assert_true(len(grid) > sr, f"outside grid has row {sr}")
+    assert_true(grid[pr][fc] == "f", f"flower at col {fc} row {pr}")
+    assert_true(grid[pr][bsc] == "B", f"brew sign at col {bsc} row {pr}")
+    assert_true(grid[br][bc] == "S", f"community board at col {bc} row {br}")
+
+    sidewalk = grid[sr]
+    for c in range(ss, se + 1):
+        assert_true(sidewalk[c] == "P", f"sidewalk P at col {c} row {sr} (got {sidewalk[c]!r})")
+
+    for ry in range(sr):
+        assert_true("P" not in grid[ry], f"no sidewalk P above row {sr} (row {ry} has P)")
+
+    m = re.search(r"OUTSIDE_SIDEWALK_ROW\s*=\s*OUTSIDE_LAYOUT\.sidewalkRow", farm_text)
+    assert_true(m is not None, "OUTSIDE_SIDEWALK_ROW derived from OUTSIDE_LAYOUT.sidewalkRow")
+
+    m2 = re.search(
+        rf"playerStart:\s*\{{\s*col:\s*\d+,\s*feetRow:\s*OUTSIDE_LAYOUT\.sidewalkRow",
+        farm_text,
+    )
+    assert_true(m2 is not None, "player spawn feetRow uses OUTSIDE_LAYOUT.sidewalkRow")
+
+
 def run_node_mjs():
     for cmd in ("node", "/opt/homebrew/bin/node", "/usr/local/bin/node"):
         try:
@@ -105,6 +191,8 @@ assert_true("exitSpawn:" not in farm_text, "no duplicate exitSpawn in MAPS")
 exit_row, exit_col = parse_cafe_exit_row_grid(farm_text)
 assert_true(exit_row == 11, f"café exit row is 11 (got {exit_row})")
 assert_true(exit_col == door_col, f'café ">" col {exit_col} matches doorCol {door_col}')
+
+check_outside_layout(farm_text)
 
 if run_node_mjs():
     print("ok: test-mo-doors.mjs passed via node")

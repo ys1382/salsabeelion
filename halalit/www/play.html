@@ -10,6 +10,7 @@
   <link rel="preconnect" href="https://image.pollinations.ai" crossorigin />
   <link rel="stylesheet" href="./halalit-mothers-day-theme.css" />
   <link rel="stylesheet" href="./halalit-fathers-day-theme.css" />
+  <link rel="stylesheet" href="./halalit-cover-thumb.css?v=20260622a" />
   <style>
     :root {
       --bg: #1a1410;
@@ -665,8 +666,9 @@
   <script src="./halalit-designer-gate.js"></script>
   <script src="./halalit-personal-library.js"></script>
   <script src="./halalit-want-to-read.js"></script>
-  <script src="./halalit-curated-shelf-warnings.js?v=20260605v"></script>
-  <script src="./halalit-catalog-pins.js?v=20260603g"></script>
+  <script src="./halalit-curated-shelf-warnings.js?v=20260702a"></script>
+  <script src="./halalit-catalog-pins.js?v=20260626e"></script>
+  <script src="./halalit-cover-thumb.js?v=20260623b"></script>
   <script src="./halalit-family-shelf-policy.js?v=20260605t"></script>
   <script src="./halalit-bookquest-age-ratings.js?v=20260605t"></script>
   <script src="./halalit-shelf-feedback.js?v=20260530d"></script>
@@ -1844,6 +1846,16 @@
             nonfictionTrack: "nature",
           },
           {
+            id: "girls-looked-under-rocks",
+            genre: "nonfiction",
+            titlePlain: "Girls Who Looked Under Rocks by Jeannine Atkins",
+            aspects: ["animals_or_nature", "quiet_voice", "courage_under_pressure"],
+            line: "You like turning over real leaves and logs—curious girls who became scientists by paying close attention.",
+            book:
+              "<em>Girls Who Looked Under Rocks</em> by Jeannine Atkins — short true stories of women naturalists who kept looking closer.",
+            nonfictionTrack: "nature",
+          },
+          {
             id: "nf-cookbook-levant",
             genre: "nonfiction",
             nonfictionTrack: "cookbook_levant",
@@ -2334,6 +2346,7 @@
           requireReaderAgeBand: true,
           readerAgeBand: readerAgeBand,
           variantId: variant && variant.id ? variant.id : null,
+          variantGenre: variant && variant.genre ? variant.genre : null,
         };
       }
 
@@ -2609,7 +2622,17 @@
           });
           if (trackHits.length) list = trackHits;
         }
-        if (!list.length) list = full.slice();
+        if (!list.length && genre === "nonfiction") {
+          list = filterFamilyShelfVariants(allRecVariants()).filter(function (v) {
+            return v.genre === "nonfiction";
+          });
+        } else if (!list.length && genre === "realistic_fiction") {
+          list = filterFamilyShelfVariants(allRecVariants()).filter(function (v) {
+            return v.genre === "realistic_fiction" || v.genre === "realistic";
+          });
+        } else if (!list.length) {
+          list = full.slice();
+        }
         if (!list.length) list = filterFamilyShelfVariants(allRecVariants());
         var reader = loadReaderModel();
         function avoided(id) {
@@ -2624,6 +2647,7 @@
           return !avoided(v.id);
         });
         if (!candidates.length) candidates = baseList.slice();
+        if (!candidates.length) return null;
         var slot = Math.abs(playthroughIndex + bucket.length * 7) % candidates.length;
         return candidates[slot];
       }
@@ -2657,6 +2681,18 @@
         else bucket = "boldLone";
         var rg = readerGenre || "realistic_fiction";
         var v = pickFromBucket(bucket, rg);
+        if (!v) {
+          return {
+            line:
+              "Halalit only recommends nonfiction or adult-range realistic fiction the owner has hand-vetted—not from catalog tags alone.",
+            pick:
+              "<span class=\"muted\">Pick another genre at the desk, or preview a title you already trust on your own shelf.</span>",
+            bookId: null,
+            titlePlain: null,
+            aspects: [],
+            bucket: bucket,
+          };
+        }
         return {
           line: v.line,
           pick: pick(v.book, v.genre),
@@ -2676,6 +2712,33 @@
           .replace(/&/g, "&amp;")
           .replace(/</g, "&lt;")
           .replace(/"/g, "&quot;");
+      }
+
+      function attachQuestCoverThumb(host, titlePlain) {
+        var Cover = window.HalalitCoverThumb;
+        var Lib = window.HalalitPersonalLibrary;
+        var Policy = window.HalalitFamilyShelfPolicy;
+        if (!host || !titlePlain || !Cover || !Lib || typeof Cover.fetchCoverDoc !== "function") return;
+        var parsed = Lib.parseTitlePlain(titlePlain);
+        if (!parsed || !parsed.title) return;
+        if (
+          Policy &&
+          typeof Policy.isTitlePlainEligible === "function" &&
+          !Policy.isTitlePlainEligible(titlePlain, Lib.parseTitlePlain, { requireReaderAgeBand: true })
+        ) {
+          return;
+        }
+        Cover.fetchCoverDoc(parsed.title, parsed.author, { requireEligible: false }).then(function (doc) {
+          if (!doc || !host.isConnected) return;
+          var url = Cover.coverUrlFromDoc(doc);
+          if (!url) return;
+          var endBook = host.querySelector(".end-book");
+          if (!endBook || host.querySelector(".halalit-cover-thumb--quest")) return;
+          var wrap = document.createElement("div");
+          wrap.className = "halalit-cover-thumb halalit-cover-thumb--quest";
+          wrap.innerHTML = Cover.thumbHtml(url, parsed.title);
+          endBook.parentNode.insertBefore(wrap, endBook);
+        });
       }
 
       /**
@@ -3710,6 +3773,7 @@
               endReviewSubmitted = true;
               render();
             });
+            attachQuestCoverThumb(root, rec.titlePlain);
           } else if (gateOn && endReviewSubmitted) {
             root.innerHTML = withSceneVisual(
               "end",
@@ -3729,6 +3793,7 @@
               playthroughIndex = bumpPlaythroughIndex();
               render();
             };
+            attachQuestCoverThumb(root, rec.titlePlain);
           } else {
             if (!endReviewSubmitted) {
               var ctxFirst = {
@@ -3763,6 +3828,7 @@
                 playthroughIndex = bumpPlaythroughIndex();
                 render();
               };
+              attachQuestCoverThumb(root, rec.titlePlain);
             } else {
               root.innerHTML = withSceneVisual(
                 "end",
@@ -3783,6 +3849,7 @@
                 playthroughIndex = bumpPlaythroughIndex();
                 render();
               };
+              attachQuestCoverThumb(root, rec.titlePlain);
             }
           }
           return;

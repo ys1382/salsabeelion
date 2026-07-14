@@ -33,8 +33,13 @@
       font-family: system-ui, sans-serif;
       font-size: 0.95rem;
       margin-bottom: 0.4rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem 0.85rem;
     }
-    .nav a { color: var(--accent); font-weight: 600; }
+    .nav a { color: var(--accent); font-weight: 600; text-decoration: none; }
+    .nav a:hover { text-decoration: underline; }
+    .nav a[aria-current="page"] { color: var(--ink); text-decoration: underline; }
     h1 { margin: 0.15rem 0 0.25rem; font-size: clamp(1.35rem, 3vw, 1.85rem); }
     p { margin: 0; color: var(--soft); max-width: 70ch; }
     main {
@@ -141,7 +146,11 @@
 </head>
 <body>
   <header>
-    <nav class="nav"><a href="./index.html#patterns">← Patterns</a></nav>
+    <nav class="nav" aria-label="Site sections">
+      <a href="./index.html#patterns">← Patterns</a>
+      <a href="./stitch-calculator.html" aria-current="page">Stitch calculator</a>
+      <a href="./ask.html">Crochet Help</a>
+    </nav>
     <h1>Crochet Stitch Calculator</h1>
     <p>Private helper for row position, repeat position, and stitch count metadata. It does not output full pattern instructions.</p>
   </header>

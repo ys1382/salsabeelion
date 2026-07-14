@@ -116,11 +116,15 @@
    *   scanText: string
    * }|null>}
    */
-  function fetchShelfHint(title, author) {
+  function fetchShelfHint(title, author, opts) {
+    opts = opts || {};
+    var fast = !!opts.fast;
     var t = String(title || "").trim();
     var a = String(author || "").trim();
     if (!t) return Promise.resolve(null);
-    var queries = [t + (a ? " " + a : ""), t + " book", t];
+    var queries = fast
+      ? [t + (a ? " " + a : "")]
+      : [t + (a ? " " + a : ""), t + " book", t];
     var chain = Promise.resolve(null);
     queries.forEach(function (q) {
       chain = chain.then(function (found) {

@@ -182,6 +182,7 @@
           return {
             tier: "verified_clean",
             detail: verified.detail,
+            ownerAiThemeAbsent: verified.ownerAiThemeAbsent || null,
             signals: [],
             familyAction:
               Policy && typeof Policy.familyActionLine === "function"
@@ -209,6 +210,7 @@
         return {
           tier: matched.tier,
           detail: matched.detail,
+          agentFlag: !!matched.agentFlag,
           signals: [],
           familyAction:
             Policy && typeof Policy.familyActionLine === "function"
@@ -269,7 +271,7 @@
   }
 
   /**
-   * @returns {'hand_vetted'|'owner_rejected'|'ai_staging_likely_pass'|'ai_staging_manual_review'|'ai_staging_likely_reject'|'ai_themes'|'catalog_only'}
+   * @returns {'hand_vetted'|'owner_rejected'|'agent_flagged'|'ai_staging_likely_pass'|'ai_staging_manual_review'|'ai_staging_likely_reject'|'ai_themes'|'catalog_only'}
    */
   function resolveVetSource(title, author, hintTier, opts) {
     opts = opts || {};
@@ -277,8 +279,17 @@
     if (Policy && typeof Policy.hardExclusionDetailForTitle === "function") {
       if (Policy.hardExclusionDetailForTitle(title, author)) return "owner_rejected";
     }
+    var hand = resolveHandVetHint(title, author);
+    if (hand && hand.agentFlag) return "agent_flagged";
+    var curated = curatedMatch(title, author);
+    if (curated && curated.agentFlag) return "agent_flagged";
+    if (hand && SETTLED_HAND_TIERS[hand.tier]) return "hand_vetted";
     if (hintTier === "verified_clean" || hintTier === "user_discretion") return "hand_vetted";
-    if (curatedMatch(title, author) && SETTLED_HAND_TIERS[hintTier]) return "hand_vetted";
+    var Cur = global.HalalitCuratedShelfWarnings;
+    if (Cur && typeof Cur.verifiedCleanMatch === "function" && Cur.verifiedCleanMatch(title, author)) {
+      return "hand_vetted";
+    }
+    if (curated && SETTLED_HAND_TIERS[hintTier]) return "hand_vetted";
     if (opts.aiStaging && opts.aiStaging.tier) {
       var staged = vetSourceForAiStaging(opts.aiStaging.tier);
       if (staged) return staged;
@@ -289,6 +300,7 @@
 
   function bannerHtml(vetSource, opts) {
     opts = opts || {};
+    var experienced = !!opts.experienced;
     var parts = [];
     if (vetSource === "hand_vetted") {
       parts.push(
@@ -300,37 +312,73 @@
         '<p class="bookcheck-vet-banner bookcheck-vet-banner--reject"><strong>Halalit hand rule.</strong> ' +
           "This title is on our won’t-recommend or flag list.</p>"
       );
+    } else if (vetSource === "agent_flagged") {
+      parts.push(
+        '<p class="bookcheck-vet-banner bookcheck-vet-banner--agent-flag"><strong>Halalit agent flag — not hand-read.</strong> ' +
+          (experienced
+            ? "Plot flag from agent scan."
+            : "Plot flag from Halalit’s agent scan—you haven’t hand-read this book.") +
+          "</p>"
+      );
     } else if (vetSource === "ai_staging_likely_pass") {
       parts.push(
-        '<p class="bookcheck-vet-banner bookcheck-vet-banner--ai-staging-pass"><strong>AI likely okay — not hand-checked.</strong> ' +
-          "Theme scan only. The owner has not read this cover to cover—it is not verified clean.</p>"
+        '<p class="bookcheck-vet-banner bookcheck-vet-banner--ai-staging-pass"><strong>' +
+          (experienced ? "AI likely okay — not hand-checked." : "AI likely okay — not hand-checked.") +
+          "</strong> " +
+          (experienced
+            ? "Theme scan only."
+            : "Theme scan only. The owner has not read this cover to cover—it is not verified clean.") +
+          "</p>"
       );
     } else if (vetSource === "ai_staging_manual_review") {
       parts.push(
-        '<p class="bookcheck-vet-banner bookcheck-vet-banner--ai-staging-review"><strong>AI flagged for review — not hand-checked.</strong> ' +
-          "Possible concerns from AI—not a hand reject. Owner still needs to read it.</p>"
+        '<p class="bookcheck-vet-banner bookcheck-vet-banner--ai-staging-review"><strong>' +
+          (experienced ? "AI flagged — not hand-checked." : "AI flagged for review — not hand-checked.") +
+          "</strong> " +
+          (experienced
+            ? "Possible concerns from AI."
+            : "Possible concerns from AI—not a hand reject. Owner still needs to read it.") +
+          "</p>"
       );
     } else if (vetSource === "ai_staging_likely_reject") {
       parts.push(
-        '<p class="bookcheck-vet-banner bookcheck-vet-banner--ai-staging-reject"><strong>AI likely rejection — not manually checked.</strong> ' +
-          "AI thinks this may fail Halalit rules. Not hand-vetted or hand-rejected by the owner yet.</p>"
+        '<p class="bookcheck-vet-banner bookcheck-vet-banner--ai-staging-reject"><strong>' +
+          (experienced ? "AI likely reject — not hand-checked." : "AI likely rejection — not manually checked.") +
+          "</strong> " +
+          (experienced
+            ? "AI thinks this may fail Halalit rules."
+            : "AI thinks this may fail Halalit rules. Not hand-vetted or hand-rejected by the owner yet.") +
+          "</p>"
       );
     } else if (vetSource === "ai_themes") {
       parts.push(
-        '<p class="bookcheck-vet-banner bookcheck-vet-banner--ai"><strong>AI-checked for themes; human vetting takes time.</strong> ' +
-          "Google AI scanned for Halalit’s theme list (LGBTQ, magic, romance, etc.). " +
-          "This is <em>not</em> a hand-read pass and does not mean the book is “safe.”</p>"
+        '<p class="bookcheck-vet-banner bookcheck-vet-banner--ai"><strong>' +
+          (experienced ? "AI theme scan — not hand-read." : "AI-checked for themes; human vetting takes time.") +
+          "</strong> " +
+          (experienced
+            ? ""
+            : "Google AI scanned for Halalit’s theme list (LGBTQ, magic, romance, etc.). " +
+              "This is <em>not</em> a hand-read pass and does not mean the book is “safe.”") +
+          "</p>"
       );
     } else {
       parts.push(
-        '<p class="bookcheck-vet-banner bookcheck-vet-banner--catalog muted"><strong>Catalog and public sources only.</strong> ' +
-          "AI theme scan did not run or was unavailable—preview if you’re unsure.</p>"
+        '<p class="bookcheck-vet-banner bookcheck-vet-banner--catalog muted"><strong>' +
+          (experienced ? "Catalog only — no AI scan." : "Catalog and public sources only.") +
+          "</strong> " +
+          (experienced ? "" : "AI theme scan did not run or was unavailable—preview if you’re unsure.") +
+          "</p>"
       );
     }
     if (opts.fanserviceNotChecked) {
       parts.push(
-        '<p class="bookcheck-vet-banner bookcheck-vet-banner--fanservice muted"><strong>Fanservice / panel art:</strong> ' +
-          "not checked yet. Halalit does not use AI for comic or manga art—hand-vet or preview the panels yourself.</p>"
+        '<p class="bookcheck-vet-banner bookcheck-vet-banner--fanservice muted"><strong>' +
+          (experienced ? "Comics — preview panels yourself." : "Fanservice / panel art:") +
+          "</strong> " +
+          (experienced
+            ? ""
+            : "not checked yet. Halalit does not use AI for comic or manga art—hand-vet or preview the panels yourself.") +
+          "</p>"
       );
     }
     if (opts.aiSeriesNote) {

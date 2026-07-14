@@ -21,14 +21,14 @@ Design and tasks **committed here**; implementation waits until you approve task
 
 ### Build queue (in order — all `[ ]` until shipped locally + owner OK)
 
-- [ ] **#10** — Prologue elder + card grant (`www/` — owner gate)
+- [x] **#10** — Prologue elder + card grant (`www/` — shipped locally; deploy when owner OK)
 - [ ] **#11** — Café lane vocab — **Spanish or Arabic** menu lemmas (`mo-cafe-language.js` + menu `ar` labels; owner review Arabic per `docs/LANGUAGE-VOCAB-WORKFLOW.md`)
 - [x] **#12** — In-game days (same weekday tracking)
 - [x] **#26** — Menu unlock schedule (3 drinks day 1 → espresso day 2; stagger 5 foods through day 4)
 - [ ] **#27** — Day-2+ order depth (con/sin azúcar, upsell, Mara read-back)
 - [ ] **#13–19** — Week-one **mellow room** (species + language basics; one day per task — see **Your additions**)
 - [ ] **#25** — Vocab progress tracker (familiarity bands, **menu fade**, tourism gate, elder prompts — no grade UI)
-- [ ] **#28** — Day-8 elder report call (two lines only; not a quiz screen)
+- [x] **#28** — Day-8 elder report call (two lines only; not a quiz screen)
 - [ ] **#29** — Café revisit when elder asks player to go back and find out more
 - [ ] **#24** — Train gate / next stage (after #28)
 - [ ] **#23** — Plaza floor (echo café words)
@@ -180,7 +180,7 @@ Can wait until after #12 if you want story sooner; do before #13 if the room sti
 - [x] **#7 — Prices on menu wall** — `pricePesos` per item; display `NN pesos` or `NN MXN` (`mo-dragons-brew-menu.js`)
 - [x] **#8 — Learning card (stub)** — on-screen balance; `localStorage` wallet; stub start **200 MXN** until #10. Copy says **learning card**, not “pretend coins.” No real payment APIs.
 - [x] **#9 — Pay with card at Mara** — order total in pesos; confirm; **balance down**; at **0** can’t complete sale. Replaces stub pay dialogue.
-- [ ] **#10 — Prologue elder + card grant** — elder explains card; sets balance. **Not on `www/` until owner says ship prologue.** Replaces #8 stub when shipped.
+- [x] **#10 — Prologue elder + card grant** — Stardew-shaped opener → language/look picker → gender-matched elder overlay → **400** week budget on grant. Replaces #8 stub for new runs.
 - [ ] **#11 — Tourist money vocab** — draft `mo-tourist-vocab.js`; owner review per `docs/LANGUAGE-VOCAB-WORKFLOW.md`
 
 **Example — task #7:**  
@@ -220,7 +220,7 @@ Needs **#3** and **#12**. **Tone:** nature-wonder café week — friendly regula
 - [ ] **#25 — Wire vocab into progress tracker** (familiarity bands, **bilingual menu fade**, **tourism competence gate**, elder prompt source, subtitle fade — no grade UI)
 - [x] **#26 — Menu unlock schedule** — visit 1: 3 drinks + 2 foods; day 2: espresso + croissant; foods through day 4 per **generic menu canon**; chalkboard “new today” ticks
 - [ ] **#27 — Day-2+ order depth** — *For your té — con azúcar or sin azúcar?* (or AR lane equivalent); same-or-different; one food upsell; Mara read-back in player’s **active café lane** before pay; no new specialty drinks
-- [ ] **#28 — Day-8 elder report** — 7 café days + card at 0 on same weekday next week; natural report conversation (not quiz UI); two elder lines only; card upgrade → #24
+- [x] **#28 — Day-8 elder report** — fiction week 2 + language week goal; natural report conversation (not quiz UI); two elder lines only; card upgrade; revisit flag when under hood pass
 - [ ] **#29 — Café revisit quest** — when #28 “go back and find out more” branch; player brings back one asked detail; train opens after elder pass (≥80% under hood)
 
 **Build order note:** #12 days → #26 unlocks → #27 order depth → #13–19 plot → #25 tracker (can start earlier for elder) → #28 → #24.
@@ -269,7 +269,7 @@ Community elder → **prepaid learning card** (debit, in-game only, **no overdra
 
 - [x] **Mara order echo — week 1** — repeat matched items in **native café script** (e.g. `qahwa` → `قهوة`), not the player’s romanization or English.
 - [x] **Mara order echo — week 2+** — basic joined phrase in the active lane (e.g. `قهوة وشاي`, `café y té`); not full free-form sentences week one.
-- [ ] **Day-8 elder report (#28)** — natural conversation, not a quiz UI. **Pass (≥80%)** under hood → *“That sounds lovely, dear.”* **Not yet** → *“I love that place. Can you go back and find out more for me?”* Player never sees a score or percentage; **80% is elder test only** (not café quiz / menu familiarity).
+- [x] **Day-8 elder report (#28)** — natural conversation, not a quiz UI. **Pass (≥80%)** under hood → *“That sounds lovely, dear.”* **Not yet** → *“I love that place. Can you go back and find out more for me?”* Player never sees a score or percentage; **80% is elder test only** (not café quiz / menu familiarity). **Language week goal** (3+ distinct orders + 1 memorized, or 4+ orders, or 2 memorized) gates the call — not balance = 0.
 - [ ] **Week 3 train (#24)** — station opens when fiction week 3 starts **if** elder pass; otherwise more neighborhood time (#29 revisit) until pass — no fail screen, no lost progress.
 
 ---
@@ -278,9 +278,10 @@ Community elder → **prepaid learning card** (debit, in-game only, **no overdra
 
 | Works | Not built |
 |-------|-----------|
-| Visit + cup + T sit + required dine + Mara intro + learning card HUD + pay (#8–9) | Prologue elder (#10), day-8 elder report (#28) |
-| Doors + collision + complete visit (#1–3) + café space (#4–5) + fiction days (#12) + menu unlocks (#26) | Mellow week-one room (#13+), bilingual fade + gate (#25), order depth (#27) |
-| MXN menu prices (#7) | Bilingual ES+AR wall (#11), plaza (#23), train (#24), detective arc (later) |
+| Visit + cup + T sit + required dine + Mara intro + learning card HUD + pay (#8–9) | Mellow week-one room (#13+), bilingual fade + gate (#25), order depth (#27) |
+| Prologue elder + card grant (#10) + day-8 elder report (#28) | Café revisit (#29), train (#24), detective arc (later) |
+| Doors + collision + complete visit (#1–3) + café space (#4–5) + fiction days (#12) + menu unlocks (#26) | Bilingual ES+AR wall (#11), plaza (#23), train (#24), detective arc (later) |
+| MXN menu prices (#7) | |
 
 ---
 

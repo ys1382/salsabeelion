@@ -151,6 +151,8 @@
           "<span><strong>Pattern library</strong> — hub and pattern pages</span></label>" +
           '<label class="switch"><input type="checkbox" id="flagStitchCalculator" checked />' +
           "<span><strong>Stitch calculator</strong></span></label>" +
+          '<label class="switch"><input type="checkbox" id="flagAskHelper" checked />' +
+          "<span><strong>Crochet Help</strong> (Ask)</span></label>" +
           '<label class="switch"><input type="checkbox" id="flagDictionary" checked />' +
           "<span><strong>Dictionary</strong></span></label>" +
           '<label class="switch"><input type="checkbox" id="flagStitchLearning" checked />' +
@@ -202,6 +204,7 @@
       function applySettings(flags) {
         document.getElementById("flagPatterns").checked = !!flags.patternsEnabled;
         document.getElementById("flagStitchCalculator").checked = !!flags.stitchCalculatorEnabled;
+        document.getElementById("flagAskHelper").checked = !!flags.askHelperEnabled;
         document.getElementById("flagDictionary").checked = !!flags.dictionaryEnabled;
         document.getElementById("flagStitchLearning").checked = !!flags.stitchLearningEnabled;
         document.getElementById("flagSignups").checked = !!flags.signupsEnabled;
@@ -212,6 +215,7 @@
           var flags = {
             patternsEnabled: document.getElementById("flagPatterns").checked,
             stitchCalculatorEnabled: document.getElementById("flagStitchCalculator").checked,
+            askHelperEnabled: document.getElementById("flagAskHelper").checked,
             dictionaryEnabled: document.getElementById("flagDictionary").checked,
             stitchLearningEnabled: document.getElementById("flagStitchLearning").checked,
             signupsEnabled: document.getElementById("flagSignups").checked,

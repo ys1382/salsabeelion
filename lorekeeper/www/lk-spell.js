@@ -2,7 +2,8 @@
  * LoreKeeper — local spellcheck (Typo.js + Hunspell). No outside AI; flags typos only.
  */
 (function (global) {
-  var WORD_RE = /\b[A-Za-z']+\b/g;
+  /** Words + contractions (isn't, don't) — old regex split at the apostrophe into "isn". */
+  var WORD_RE = /\b[A-Za-z]+(?:['\u2019][A-Za-z]+)?\b/g;
   var typo = null;
   var loadFailed = false;
   var readyResolve;
@@ -10,6 +11,108 @@
     readyResolve = resolve;
   });
   var debounceTimers = new WeakMap();
+  var FLAG_HOLD_MS = 480;
+  var FLAG_MOVE_PX = 10;
+  var textareaJump = { key: "", indices: [], cursor: 0, textarea: null };
+
+  /** Latin / fixed phrases — do not flag pieces like "se" in "per se". */
+  var ALLOWED_PHRASES = [
+    "per se",
+    "ad hoc",
+    "et cetera",
+    "de facto",
+    "et al",
+    "et al.",
+    "vice versa",
+    "status quo",
+    "bona fide",
+    "a priori",
+    "a posteriori",
+    "per capita",
+    "pro bono",
+    "ad nauseam",
+    "modus operandi",
+    "quid pro quo",
+    "de jure",
+    "vis-a-vis",
+    "vis à vis",
+    "prima facie",
+    "sui generis",
+    "ipso facto",
+    "in situ",
+    "in vitro",
+    "in vivo",
+    "per annum",
+    "mea culpa",
+    "alma mater",
+    "ex officio",
+    "post hoc",
+    "inter alia",
+    "mutatis mutandis",
+    "deus ex machina",
+    "persona non grata",
+  ];
+
+  /** Valid English the US Hunspell list often misses — not story names. */
+  var EXTRA_DICT_WORDS = {
+    amongst: true,
+    whilst: true,
+    okay: true,
+    ok: true,
+    grey: true,
+    fulfil: true,
+    fulfilment: true,
+    focussed: true,
+    furore: true,
+    judgement: true,
+    learnt: true,
+    smelt: true,
+    spelt: true,
+    dreamt: true,
+    burnt: true,
+    spoilt: true,
+  };
+
+  function escapeRegExp(s) {
+    return String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  }
+
+  function phrasePattern(phrase) {
+    var parts = String(phrase).trim().split(/\s+/);
+    return new RegExp("\\b" + parts.map(escapeRegExp).join("\\s+") + "\\b", "gi");
+  }
+
+  function getPhraseRanges(text) {
+    var ranges = [];
+    if (!text) return ranges;
+    ALLOWED_PHRASES.forEach(function (phrase) {
+      var re = phrasePattern(phrase);
+      var m;
+      re.lastIndex = 0;
+      while ((m = re.exec(text))) {
+        ranges.push([m.index, m.index + m[0].length]);
+      }
+    });
+    return ranges;
+  }
+
+  function isInAllowedPhrase(index, length, ranges) {
+    var end = index + length;
+    var i;
+    for (i = 0; i < ranges.length; i++) {
+      if (index >= ranges[i][0] && end <= ranges[i][1]) return true;
+    }
+    return false;
+  }
+
+  function normalizeSpellText(text) {
+    return String(text || "").replace(/[\u2018\u2019\u2032`´]/g, "'");
+  }
+
+  function isContractionPrefix(word, text, index) {
+    if (index == null || !text) return false;
+    return /^['\u2019][a-z]{1,3}\b/i.test(text.slice(index + word.length));
+  }
 
   function spellBase() {
     var loc = global.location;
@@ -55,17 +158,51 @@
     return false;
   }
 
+  function looksLikeProperNoun(word) {
+    if (!word || word.length < 2) return false;
+    if (/^[A-Z][a-z]+(?:'[a-z]+)?$/.test(word)) return true;
+    if (/^[A-Z][a-z]*[A-Z][a-z]+$/.test(word)) return true;
+    return false;
+  }
+
   function isOk(word) {
     if (!word) return true;
-    if (word.length < 2) return true;
+    if (word.length <= 2) return true;
     if (/^\d+$/.test(word)) return true;
     if (/^[A-Z]{2,}$/.test(word) && word.length <= 4) return true;
+    if (looksLikeProperNoun(word)) return true;
+    if (EXTRA_DICT_WORDS[word.toLowerCase()]) return true;
     if (global.LoreKeeperSpellWords) {
       if (global.LoreKeeperSpellWords.has(word)) return true;
       var base = stripPossessive(word);
       if (base !== word && global.LoreKeeperSpellWords.has(base)) return true;
     }
     return dictOk(word);
+  }
+
+  function likelyTypo(word) {
+    if (confidentSuggestion(word)) return true;
+    if (!typo || word !== word.toLowerCase() || word.length < 3) return false;
+    var suggestions = typo.suggest(word);
+    if (!suggestions || !suggestions.length) return false;
+    var top = suggestions[0];
+    if (!top || top.toLowerCase() === word.toLowerCase() || !dictOk(top)) return false;
+    var dist = levenshtein(word.toLowerCase(), top.toLowerCase());
+    if (dist === 1) return !suggestionTie(word.toLowerCase(), suggestions, levenshtein, 1);
+    if (word.length >= 5 && dist === 2) {
+      return !suggestionTie(word.toLowerCase(), suggestions, levenshtein, 2);
+    }
+    return false;
+  }
+
+  function shouldFlagWord(word, text, index, phraseRanges) {
+    if (isOk(word)) return false;
+    if (looksLikeProperNoun(word)) return false;
+    if (isContractionPrefix(word, text, index)) return false;
+    if (index != null && phraseRanges && isInAllowedPhrase(index, word.length, phraseRanges)) {
+      return false;
+    }
+    return likelyTypo(word);
   }
 
   function levenshtein(a, b) {
@@ -142,6 +279,9 @@
 
   function confidentSuggestion(word) {
     if (!typo || isOk(word)) return null;
+    if (word !== word.toLowerCase()) return null;
+    if (word.length < 4) return null;
+
     var suggestions = typo.suggest(word);
     if (!suggestions || !suggestions.length) return null;
     var top = suggestions[0];
@@ -157,17 +297,7 @@
       return matchCase(word, top);
     }
 
-    if (word.length === top.length && word.length >= 4 && letterKey(word) === letterKey(top)) {
-      var j;
-      for (j = 1; j < Math.min(suggestions.length, 5); j++) {
-        if (letterKey(suggestions[j]) === letterKey(word) && suggestions[j].toLowerCase() !== tl) {
-          return null;
-        }
-      }
-      return matchCase(word, top);
-    }
-
-    if (hasAdjacentSwap(wl, tl)) {
+    if (word.length >= 5 && hasAdjacentSwap(wl, tl)) {
       if (suggestionTie(wl, suggestions, function (a, b) {
         return hasAdjacentSwap(a, b) ? 1 : 99;
       }, 1)) {
@@ -180,27 +310,20 @@
   }
 
   function autocorrectText(text) {
-    if (!text || !typo || loadFailed) return { text: text, fixed: [] };
-    var fixed = [];
-    var out = text.replace(WORD_RE, function (word) {
-      if (isOk(word)) return word;
-      var rep = confidentSuggestion(word);
-      if (!rep) return word;
-      fixed.push({ from: word, to: rep });
-      return rep;
-    });
-    return { text: out, fixed: fixed };
+    return { text: text, fixed: [] };
   }
 
   function findMisspellings(text) {
     if (!text || !typo) return [];
+    var normalized = normalizeSpellText(text);
     var out = [];
     var seen = {};
+    var phraseRanges = getPhraseRanges(normalized);
     var m;
     WORD_RE.lastIndex = 0;
-    while ((m = WORD_RE.exec(text))) {
+    while ((m = WORD_RE.exec(normalized))) {
       var w = m[0];
-      if (isOk(w)) continue;
+      if (!shouldFlagWord(w, normalized, m.index, phraseRanges)) continue;
       var key = w.toLowerCase();
       if (seen[key]) continue;
       seen[key] = true;
@@ -216,6 +339,123 @@
       .replace(/"/g, "&quot;");
   }
 
+  function findWordIndicesSimple(text, word) {
+    if (!word) return [];
+    var re = new RegExp("\\b" + escapeRegExp(word) + "\\b", "gi");
+    var out = [];
+    var m;
+    while ((m = re.exec(text))) {
+      out.push(m.index);
+    }
+    return out;
+  }
+
+  function showJumpToast(message) {
+    if (global.LoreKeeperDocLongPress && global.LoreKeeperDocLongPress.showToast) {
+      global.LoreKeeperDocLongPress.showToast(message, "typo");
+      return;
+    }
+    var el = document.getElementById("lkSpellJumpToast");
+    if (!el) {
+      el = document.createElement("p");
+      el.id = "lkSpellJumpToast";
+      el.className = "lk-longpress-toast is-typo";
+      el.setAttribute("role", "status");
+      el.setAttribute("aria-live", "polite");
+      el.hidden = true;
+      document.body.appendChild(el);
+    }
+    el.textContent = message;
+    el.hidden = false;
+    clearTimeout(showJumpToast._timer);
+    showJumpToast._timer = setTimeout(function () {
+      el.hidden = true;
+    }, 2800);
+  }
+
+  function jumpInTextarea(textarea, word) {
+    if (!textarea || !word) return;
+    var text = textarea.value || "";
+    var key = word.toLowerCase();
+    var indices = findWordIndicesSimple(text, word);
+    if (!indices.length) {
+      showJumpToast("No matches for “" + word + "” in this note.");
+      return;
+    }
+    if (textareaJump.key !== key || textareaJump.textarea !== textarea) {
+      textareaJump.key = key;
+      textareaJump.textarea = textarea;
+      textareaJump.indices = indices;
+      textareaJump.cursor = 0;
+    } else {
+      textareaJump.cursor = (textareaJump.cursor + 1) % indices.length;
+    }
+    var at = indices[textareaJump.cursor];
+    textarea.focus();
+    textarea.setSelectionRange(at, at + word.length);
+    var lineHeight = parseInt(global.getComputedStyle(textarea).lineHeight, 10) || 20;
+    var line = (text.slice(0, at).match(/\n/g) || []).length + 1;
+    textarea.scrollTop = Math.max(0, (line - 2) * lineHeight);
+    textarea.classList.add("is-typo-jump-flash");
+    setTimeout(function () {
+      textarea.classList.remove("is-typo-jump-flash");
+    }, 650);
+    showJumpToast(
+      "Typo “" +
+        word +
+        "”: " +
+        (textareaJump.cursor + 1) +
+        " of " +
+        indices.length +
+        " — hold the flag again for next"
+    );
+  }
+
+  function bindSpellFlagBtn(btn, word, jumpOpts) {
+    var pending = null;
+    var didHold = false;
+
+    btn.addEventListener("pointerdown", function (e) {
+      if (e.button !== 0) return;
+      didHold = false;
+      pending = {
+        x: e.clientX,
+        y: e.clientY,
+        timer: setTimeout(function () {
+          didHold = true;
+          btn.classList.add("is-flag-hold");
+          if (jumpOpts && jumpOpts.onJump) jumpOpts.onJump(word);
+          pending = null;
+          setTimeout(function () {
+            btn.classList.remove("is-flag-hold");
+          }, 220);
+        }, FLAG_HOLD_MS),
+      };
+    });
+
+    function cancel() {
+      if (pending && pending.timer) clearTimeout(pending.timer);
+      pending = null;
+    }
+
+    btn.addEventListener("pointermove", function (e) {
+      if (!pending) return;
+      if (Math.hypot(e.clientX - pending.x, e.clientY - pending.y) > FLAG_MOVE_PX) cancel();
+    });
+    btn.addEventListener("pointerup", cancel);
+    btn.addEventListener("pointercancel", cancel);
+
+    btn.addEventListener("click", function (e) {
+      if (didHold) {
+        e.preventDefault();
+        e.stopPropagation();
+        didHold = false;
+        return;
+      }
+      if (global.LoreKeeperSpellWords) global.LoreKeeperSpellWords.add(word);
+    });
+  }
+
   function showSpellStatus(flagsEl) {
     if (!flagsEl) return;
     if (loadFailed) {
@@ -228,7 +468,7 @@
     flagsEl.className = "lk-spell-flags";
   }
 
-  function renderFlags(container, words) {
+  function renderFlags(container, words, jumpOpts) {
     if (!container) return;
     if (loadFailed) {
       showSpellStatus(container);
@@ -243,22 +483,26 @@
     container.hidden = false;
     var lead = document.createElement("span");
     lead.className = "lk-spell-flags-lead";
-    lead.textContent = "Possible typos: ";
+    lead.textContent = "Possible typos (won't change your text): ";
     container.appendChild(lead);
     words.forEach(function (word) {
       var btn = document.createElement("button");
       btn.type = "button";
       btn.className = "lk-spell-flag";
       btn.textContent = word;
-      btn.title = "Add “" + word + "” to My words so it is never flagged";
-      btn.addEventListener("click", function () {
-        if (global.LoreKeeperSpellWords) global.LoreKeeperSpellWords.add(word);
-      });
+      btn.title =
+        jumpOpts && jumpOpts.onJump
+          ? "Hold to find “" + word + "” in your text — tap to keep in My words"
+          : "Add “" + word + "” to My words so it is never flagged";
+      bindSpellFlagBtn(btn, word, jumpOpts);
       container.appendChild(btn);
     });
     var hint = document.createElement("span");
     hint.className = "muted lk-spell-flags-hint";
-    hint.textContent = " — tap a word to keep it";
+    hint.textContent =
+      jumpOpts && jumpOpts.onJump
+        ? " — hold a flagged word to find it, tap to keep"
+        : " — tap a word to keep it";
     container.appendChild(hint);
   }
 
@@ -278,8 +522,18 @@
     textarea.setAttribute("autocapitalize", "off");
 
     function run() {
-      renderFlags(flagsEl, findMisspellings(textarea.value));
+      renderFlags(flagsEl, findMisspellings(textarea.value), {
+        onJump: function (word) {
+          jumpInTextarea(textarea, word);
+        },
+      });
     }
+
+    textarea.addEventListener("input", function () {
+      textareaJump.key = "";
+      textareaJump.indices = [];
+      textareaJump.cursor = 0;
+    });
 
     debounceInput(textarea, run, 450);
     global.addEventListener("lorekeeper-spell-words-changed", run);
@@ -312,11 +566,12 @@
   function applyQuillSpellMarks(quill) {
     if (!quill || !typo) return;
     clearQuillSpellMarks(quill);
-    var text = quill.getText();
+    var text = normalizeSpellText(quill.getText());
+    var phraseRanges = getPhraseRanges(text);
     var m;
     WORD_RE.lastIndex = 0;
     while ((m = WORD_RE.exec(text))) {
-      if (!isOk(m[0])) {
+      if (shouldFlagWord(m[0], text, m.index, phraseRanges)) {
         quill.formatText(m.index, m[0].length, "lkSpell", true, "silent");
       }
     }
@@ -332,7 +587,13 @@
     }
 
     function run() {
-      renderFlags(flagsEl, findMisspellings(quill.getText()));
+      renderFlags(flagsEl, findMisspellings(quill.getText()), {
+        onJump: function (word) {
+          if (global.LoreKeeperDocTypoJump && global.LoreKeeperDocTypoJump.advance) {
+            global.LoreKeeperDocTypoJump.advance(quill, word, null, null);
+          }
+        },
+      });
       applyQuillSpellMarks(quill);
     }
 
@@ -354,10 +615,61 @@
   }
 
   function init() {
-    Promise.all([
-      global.LoreKeeperSpellWords ? global.LoreKeeperSpellWords.ready : Promise.resolve(),
-      global.LoreKeeperAccountStorage ? global.LoreKeeperAccountStorage.ready : Promise.resolve(),
-    ])
+    var path = String((global.location && global.location.pathname) || "");
+    if (/doc\.html$/i.test(path)) {
+      startDictionaryLoad();
+      return;
+    }
+    readyResolve();
+  }
+
+  var dictLoadStarted = false;
+
+  function loadScript(src) {
+    return new Promise(function (resolve, reject) {
+      if (!global.document) {
+        reject(new Error("no_document"));
+        return;
+      }
+      if (global.document.querySelector('script[src="' + src + '"]')) {
+        resolve();
+        return;
+      }
+      var tag = global.document.createElement("script");
+      tag.src = src;
+      tag.onload = function () {
+        resolve();
+      };
+      tag.onerror = function () {
+        reject(new Error("script_load"));
+      };
+      global.document.head.appendChild(tag);
+    });
+  }
+
+  function spellAssetBase() {
+    var base = spellBase();
+    return base.indexOf("/vendor/spell/") >= 0 ? base.replace(/vendor\/spell\/$/, "") : "./";
+  }
+
+  function startDictionaryLoad() {
+    if (dictLoadStarted) return ready;
+    dictLoadStarted = true;
+    var assetBase = spellAssetBase();
+    Promise.resolve()
+      .then(function () {
+        if (!global.Typo) return loadScript(assetBase + "vendor/spell/typo.js");
+      })
+      .then(function () {
+        if (!global.LoreKeeperSpellWords) return loadScript(assetBase + "lk-spell-words.js?v=3");
+      })
+      .then(function () {
+        var waits = [global.LoreKeeperAccountStorage ? global.LoreKeeperAccountStorage.ready : Promise.resolve()];
+        if (global.LoreKeeperSpellWords && global.LoreKeeperSpellWords.ready) {
+          waits.push(global.LoreKeeperSpellWords.ready);
+        }
+        return Promise.all(waits);
+      })
       .then(loadDictionary)
       .then(function () {
         readyResolve();
@@ -366,11 +678,19 @@
         loadFailed = true;
         readyResolve();
       });
+    return ready;
+  }
+
+  function ensureLoaded() {
+    if (typo || loadFailed) return ready;
+    return startDictionaryLoad();
   }
 
   global.LoreKeeperSpell = {
     ready: ready,
+    ensureLoaded: ensureLoaded,
     isOk: isOk,
+    shouldFlagWord: shouldFlagWord,
     findMisspellings: findMisspellings,
     autocorrectText: autocorrectText,
     bindTextarea: bindTextarea,

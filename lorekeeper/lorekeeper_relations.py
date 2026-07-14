@@ -209,7 +209,26 @@ def _extract_from_sentence(sentence: str, entry_title: str) -> list[dict[str, An
 
 def extract_relationships(text: str, entry_title: str = "") -> list[dict[str, Any]]:
     all_facts: list[dict[str, Any]] = []
+    last_subject = _clean_name(entry_title) if entry_title else ""
     for sentence in _split_sentences(text):
+        subj_match = re.search(rf"^({NAME})\s+is\b", sentence, re.I)
+        if subj_match:
+            last_subject = _clean_name(subj_match.group(1)) or last_subject
+        implicit = re.match(rf"^(?i:(brother|sister))\s+to\s+({NAME})\b", sentence.strip())
+        if implicit and last_subject:
+            other = _clean_name(implicit.group(2))
+            rel = implicit.group(1).lower()
+            if other and _name_key(last_subject) != _name_key(other):
+                all_facts.append(
+                    {
+                        "kind": "sibling",
+                        "a": last_subject,
+                        "b": other,
+                        "label": rel,
+                        "source": sentence,
+                        "entryTitle": entry_title,
+                    }
+                )
         all_facts.extend(_extract_from_sentence(sentence, entry_title))
     return _dedupe_facts(all_facts)
 
@@ -427,3 +446,126 @@ def restate_relationships(
 
     lines.append("\n— Restated from what you wrote. Nothing added.")
     return "\n".join(lines)
+
+
+_REL_BETWEEN_RE = re.compile(
+    r"(?i)\b(?:"
+    r"how are (.+?) and (.+?) related|"
+    r"relationship between (.+?) and (.+?)|"
+    r"what is the relationship between (.+?) and (.+?)|"
+    r"how (?:is|are) (.+?) related to (.+?)"
+    r")\??\s*$"
+)
+
+
+def is_relationship_between_question(question: str) -> bool:
+    if relationship_between_pair(question) is not None:
+        return True
+    q = (question or "").strip()
+    return bool(
+        re.search(
+            r"(?i)\b(?:how are .+ and .+ related|relationship between|related to)\b",
+            q,
+        )
+    )
+
+
+def _clean_pair_name(raw: str) -> str:
+    name = re.sub(r"\s+", " ", (raw or "").strip(" \t.,;:!?\"'"))
+    name = re.sub(r"^(?:in|for|from|about)\s+.+?(?:,\s*|\s+who\s+)", "", name, flags=re.I)
+    m = re.fullmatch(r"character\s+([a-z0-9]+)", name, re.I)
+    if m:
+        return f"Character {m.group(1).upper()}"
+    return _clean_name(name)
+
+
+def relationship_between_pair(question: str) -> tuple[str, str] | None:
+    q = (question or "").strip()
+    m = _REL_BETWEEN_RE.search(q)
+    if m:
+        groups = [g for g in m.groups() if g]
+        if len(groups) >= 2:
+            a = _clean_pair_name(groups[0])
+            b = _clean_pair_name(groups[1])
+            if a and b and _name_key(a) != _name_key(b):
+                return a, b
+    m2 = re.search(
+        r"(?i)how are (.+?) and (.+?) related",
+        q,
+    )
+    if m2:
+        a = _clean_pair_name(m2.group(1))
+        b = _clean_pair_name(m2.group(2))
+        if a and b and _name_key(a) != _name_key(b):
+            return a, b
+    m3 = re.search(r"(?i)how (?:is|are) (.+?) related to (.+?)(?:\?|$)", q)
+    if m3:
+        a = _clean_pair_name(m3.group(1))
+        b = _clean_pair_name(m3.group(2))
+        if a and b and _name_key(a) != _name_key(b):
+            return a, b
+    return None
+
+
+def _fact_links_pair(fact: dict[str, Any], a: str, b: str) -> bool:
+    ak, bk = _name_key(a), _name_key(b)
+    if fact["kind"] in ("spouse", "sibling", "cousin"):
+        fa, fb = _name_key(fact["a"]), _name_key(fact["b"])
+        return {fa, fb} == {ak, bk}
+    if fact["kind"] == "parent":
+        parents = {_name_key(fact["parent"])}
+        children = {_name_key(fact["child"])}
+        return (ak in parents and bk in children) or (bk in parents and ak in children)
+    return False
+
+
+def _line_for_pair_fact(fact: dict[str, Any], a: str, b: str) -> str:
+    if fact["kind"] == "sibling":
+        return f"{fact['a']} is {fact['b']}'s {fact.get('label', 'sibling')}."
+    if fact["kind"] == "cousin":
+        return f"{fact['a']} is {fact['b']}'s cousin."
+    if fact["kind"] == "spouse":
+        return _spouse_line(fact)
+    if fact["kind"] == "parent":
+        return _parent_line(fact)
+    return ""
+
+
+def answer_relationship_between(
+    question: str, entries: list[dict[str, Any]]
+) -> tuple[str, list[str]] | None:
+    """Focused answer for how A and B are related — both names must appear in saved facts."""
+    pair = relationship_between_pair(question)
+    if not pair:
+        return None
+    a, b = pair
+    matched: list[dict[str, Any]] = []
+    source_ids: list[str] = []
+    for entry in entries:
+        if not isinstance(entry, dict):
+            continue
+        body = str(entry.get("body") or "")
+        if not body.strip():
+            continue
+        eid = str(entry.get("id") or "")
+        title = str(entry.get("title") or "Untitled")
+        for fact in extract_relationships(body, title):
+            if _fact_links_pair(fact, a, b):
+                matched.append(fact)
+                if eid and eid not in source_ids:
+                    source_ids.append(eid)
+    matched = _dedupe_facts(matched)
+    if not matched:
+        return (
+            f"Your saved notes mention {a} and {b}, but nothing states how they are related yet.",
+            source_ids,
+        )
+    lines = [_line_for_pair_fact(fact, a, b) for fact in matched]
+    lines = [ln for ln in lines if ln]
+    if not lines:
+        return None
+    answer = lines[0]
+    if len(lines) > 1:
+        answer = lines[0] + "\n\nAlso stated: " + lines[1]
+    answer += "\n\n— Restated from what you wrote. Nothing added."
+    return answer, source_ids

@@ -26,4 +26,4 @@ alwaysApply: true
 ## Deploy
 
 - Nginx: `top/nginx/oddtrove.art.conf` → server `/etc/nginx/sites-available/oddtrove.art`, `nginx -t && systemctl reload nginx`
-- Static sites: `bash top/scripts/deploy-kids-sites.sh` (backends bind **127.0.0.1** only)
+- Static sites: `bash top/scripts/deploy-kids-sites.sh` (full sync). LoreKeeper-only: `bash top/scripts/deploy-lorekeeper.sh` (see `ODDTROVE-OPS.md`). Backends bind **127.0.0.1** only.

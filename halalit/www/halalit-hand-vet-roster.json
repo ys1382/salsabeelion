@@ -107,12 +107,12 @@
       "notes": "Owner: Kids"
     },
     {
-      "title": "Black Beauty",
-      "author": "Anna Sewell",
+      "title": "Bioluminescence",
+      "author": "Marc Zimmer",
       "source": "cursor_roster",
       "tier": "verified_clean",
       "ageBand": "older_kids",
-      "notes": "Owner: fine for older kids"
+      "notes": "Owner: nature/science nonfiction; animal photos only; thin book—Older kids, not learn-to-read"
     },
     {
       "title": "Book Scavenger",
@@ -251,12 +251,28 @@
       "notes": "Owner: fine for older kids"
     },
     {
+      "title": "Easy Guide to American Sign Language",
+      "author": "Lora Heller",
+      "source": "cursor_roster",
+      "tier": "verified_clean",
+      "ageBand": "older_kids",
+      "notes": "Owner: hand-verified clean nonfiction ASL reference (ed.); content fine for kids; interest Older kids"
+    },
+    {
       "title": "Echo Mountain",
       "author": "Lauren Wolk",
       "source": "cursor_roster",
       "tier": "verified_clean",
       "ageBand": "older_kids",
       "notes": "Clean; family survival; grief + injured father—preview"
+    },
+    {
+      "title": "Escape: A Survivor's Guide",
+      "author": "Margaret Hynes",
+      "source": "cursor_roster",
+      "tier": "verified_clean",
+      "ageBand": "older_kids",
+      "notes": "Owner: juvenile nonfiction survival; comic-style art; playful fantasy escape bits; mild immodesty possible, not bikini-level"
     },
     {
       "title": "Edgar and Allan Poe",
@@ -625,6 +641,14 @@
       "tier": "verified_clean",
       "ageBand": "older_kids",
       "notes": "Owner: hand-verified clean — pro-nature; magic opt-in (not Chris Baron)"
+    },
+    {
+      "title": "Snow and Rose",
+      "author": "Emily Winfield Martin",
+      "source": "cursor_roster",
+      "tier": "verified_clean",
+      "ageBand": "older_kids",
+      "notes": "Owner: great family read; scary huntsman beats; Mother's Week + Father's Week pick; fairy-tale magic opt-in"
     },
     {
       "title": "Spirit Animals",
@@ -1198,6 +1222,13 @@
       "source": "cursor_roster",
       "tier": "parked",
       "notes": "Most volumes hand-vetted; skip <em>Beach Babe</em> (parent discretion, beach/bikini); **Book Quest** when otherwise clean"
+    },
+    {
+      "title": "Black Beauty",
+      "author": "Anna Sewell",
+      "source": "cursor_roster",
+      "tier": "parked",
+      "notes": "Owner: plot clean; `user_discretion`—sad horse-abuse beats (Older kids); uses \"gypsies\"; ridicules Muslim name Abdullah; off Book Quest; not auto-reject"
     },
     {
       "title": "Cupcake Diaries",

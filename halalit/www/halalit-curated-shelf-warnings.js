@@ -226,6 +226,42 @@
       ]),
     },
     {
+      titleRe: /\bgirls who look(?:ed)? under rocks\b/i,
+      authorRe: /atkins|jeannine/i,
+      detail: bookNote("Girls Who Looked Under Rocks (Jeannine Atkins)", [
+        "Hand-verified clean in owner scope—owner called it a fun younger nonfiction read.",
+        "Chapter-book biographies of women naturalists—not a toddler board book; best for school-age readers.",
+        "Book Quest nonfiction nature track when reader age band fits.",
+      ]),
+    },
+    {
+      titleRe: /\bbioluminescence\b/i,
+      authorRe: /zimmer|marc/i,
+      detail: bookNote("Bioluminescence (Marc Zimmer)", [
+        "Hand-verified clean in owner scope—nature and science nonfiction; animal photos only, no human pictures.",
+        "Thin volume; best for Older kids—not a learn-to-read board book, not a dense teen science text in owner scope.",
+        "Book Quest nonfiction nature track when reader age band fits.",
+      ]),
+    },
+    {
+      titleRe: /\bescape\b.*\bsurvivor(?:'s|s)?\s*guide\b|\bsurvivor(?:'s|s)?\s*guide\b/i,
+      authorRe: /hynes|margaret/i,
+      detail: bookNote("Escape: A Survivor's Guide (Margaret Hynes)", [
+        "Hand-verified clean in owner scope—juvenile nonfiction survival guide with playful fantasy escape scenarios (e.g. vampires, aliens).",
+        "Comic-style illustrated characters; owner scope: possible mild physical immodesty, not bikini-level fanservice.",
+        "Book Quest nonfiction when reader age band fits.",
+      ]),
+    },
+    {
+      titleRe: /\beasy guide to american sign language\b/i,
+      authorRe: /heller|lora/i,
+      detail: bookNote("Easy Guide to American Sign Language (Lora Heller, ed.)", [
+        "Hand-verified clean in owner scope—nonfiction ASL reference with illustrated signs and basic phrases.",
+        "Content is fine for kids; younger children probably would not choose this on their own—best fit for Older kids learning practical signs.",
+        "Book Quest nonfiction when reader age band fits.",
+      ]),
+    },
+    {
       titleRe: /\bseekers of the (?:wild )?realm\b|\blegend of the realm\b/i,
       authorRe: /ott|alexandra/i,
       detail: bookNote("Seekers of the Wild Realm (Alexandra Ott, duology)", [
@@ -868,14 +904,6 @@
       ]),
     },
     {
-      titleRe: /\bblack beauty\b/i,
-      authorRe: /sewell|anna/i,
-      detail: bookNote("Black Beauty (Anna Sewell)", [
-        "Hand-verified clean overall.",
-        "Contains a racist reference tied to Muslim names—preview if that matters for your family.",
-      ]),
-    },
-    {
       titleRe: /\bthe twits\b|\btwits\b/i,
       authorRe: /dahl|roald/i,
       detail: "Hand-verified for Halalit’s family shelf: The Twits reads as clean.",
@@ -1120,9 +1148,13 @@
     {
       titleRe: /\bmeesh the bad demon\b|\bmeesh\b.*\bbad demon\b/i,
       authorRe: /lam|michelle/i,
+      ownerAiThemeAbsent: { lgbtq: true, deity_mythology: true },
       detail: bookNote("Meesh the Bad Demon (Michelle Lam)", [
         "Hand-verified clean in owner scope.",
+        "Owner read: no explicit LGBTQ—awkward girl friendship reads as introversion and demon/fairy tension, not romance.",
+        "Fantasy “demons” are a species—not religious demonology or worship.",
         "Some parent-bashing beats toward family—not only imperfect-family friction.",
+        GRAPHIC_PHYSICAL_IMMODESTY_NOTE,
       ]),
     },
     /* Owner vet batch — Jun 2026: recommend with comfort toggles / flags (not hard ban) */
@@ -1569,6 +1601,18 @@
       ]),
     },
     {
+      titleRe: /\bsnow and rose\b|\bsnow & rose\b/i,
+      authorRe: /winfield\s*martin|emily\s*winfield/i,
+      requiresMagicOptIn: true,
+      detail: bookNote("Snow and Rose (Emily Winfield Martin)", [
+        "Hand-verified clean in owner scope—great family read; sisters, mother, and a father who vanishes into the woods.",
+        "Owner Mother’s Week and Father’s Week pick.",
+        "Some scary beats—a huntsman who enjoys killing forest animals, not only for food; preview for sensitive readers.",
+        "Fairy-tale fantasy (enchanted woods, spells)—Book Quest includes when otherwise clean; exclude magic in Advanced recommendations settings on the play page if needed.",
+        "Best for Older kids—not a learn-to-read picture book.",
+      ]),
+    },
+    {
       titleRe: /\bsquire & knight|squire and knight\b/i,
       authorRe: /chantler|scott/i,
       detail: bookNote("Squire & Knight (Scott Chantler, graphic novels)", [
@@ -1753,6 +1797,9 @@
   var USER_DISCRETION_PARENT_WARNING_CLOSING =
     "Parent discretion—see as we go, not a hardest auto-reject. Preview panels and outfits arc by arc; you decide for your home.";
 
+  var USER_DISCRETION_PREVIEW_CLOSING =
+    "Parent discretion—not a hardest auto-reject. Halalit won't suggest it in Book Quest—preview and decide for your home.";
+
   var POKEMON_GOLD_SILVER_CRYSTAL_TITLE_RE =
     /\bpokemon\b.*\b(gold|silver)\b|\b(gold and silver|gold & silver|goldsilver)\b.*\bpokemon\b|\bpokemon adventures\b.*\bcrystal\b|\bcrystal\b.*\b(pokemon adventures|pocket monsters)\b/i;
 
@@ -1767,6 +1814,18 @@
    * @type {Array<{titleRe: RegExp, authorRe?: RegExp, detail: string, requiresMentalHealthComfortOptIn?: boolean, requiresCulturalMisrepresentationOptIn?: boolean}>}
    */
   var USER_DISCRETION_PARKED = [
+    {
+      titleRe: /\bblack beauty\b/i,
+      authorRe: /sewell|anna/i,
+      requiresCulturalMisrepresentationOptIn: true,
+      detail: bookNote("Black Beauty (Anna Sewell)", [
+        "Parked on Halalit's parent-discretion list—not a hardest auto-reject.",
+        "Plot reads clean in owner scope—horse autobiography with sad, realistic beats about horse abuse and cruelty; best for Older kids, not young children.",
+        "Uses the outdated word \"gypsies\" (Roma stereotyping)—flag for readers.",
+        "Ridicules the Muslim name Abdullah—cultural misrepresentation flag; preview if that matters for your family.",
+        "Not on Book Quest; Halalit won't auto-recommend.",
+      ], USER_DISCRETION_PREVIEW_CLOSING),
+    },
     {
       titleRe: POKEMON_GOLD_SILVER_CRYSTAL_TITLE_RE,
       detail: bookNote("Pokemon Adventures — Gold & Silver arc (Crystal main character)", [
@@ -1845,6 +1904,17 @@
         "Beach scenes in some volumes or graphic editions may show bikinis—preview those; otherwise dating/kissing and light wine or smoking notes apply.",
         "Often harsh family attitude in some volumes—e.g. Jessi’s Secret Language: parents won’t learn sign for their deaf child.",
         "Halalit won’t auto-recommend—preview volume by volume, then you decide.",
+      ], USER_DISCRETION_PARENT_WARNING_CLOSING),
+    },
+    {
+      titleRe:
+        /\baspca\b.*\b(guide to cats|complete guide to cats)\b|\b(guide to cats|complete guide to cats)\b.*\baspca\b|\baspca complete guide to cats\b/i,
+      authorRe: /aspca|american society|prevention of cruelty|o'?neil|oneil|jacqueline/i,
+      requiresCulturalMisrepresentationOptIn: true,
+      detail: bookNote("ASPCA Complete Guide to Cats", [
+        "Parked parent discretion—not a hardest auto-reject.",
+        "Owner scope: at least one brief beat of cultural misrepresentation—preview before you share.",
+        "Pet-care nonfiction; not on Book Quest; Halalit won’t auto-recommend—preview and decide for your home.",
       ], USER_DISCRETION_PARENT_WARNING_CLOSING),
     },
   ];
@@ -1962,6 +2032,27 @@
 
   var WARNINGS = [
     {
+      titleRe: /\bthe chosen\b|\bcontender\b/i,
+      authorRe: /matharu|taran\s*matharu/i,
+      tier: "flag_review",
+      detail: bookNote("The Chosen / Contender (Taran Matharu)", [
+        "Harsh crude profanity in dialogue—not Halalit's all-ages shelf.",
+        "Brief mild immodesty beat (skinny-dip scene reported).",
+        "YA gladiatorial sci-fi with intense arena violence.",
+        "No on-page LGBTQ; age-appropriate crush subplot only.",
+      ]),
+    },
+    {
+      titleRe: /\bmornings in jenin\b/i,
+      authorRe: /abulhawa|susan/i,
+      tier: "flag_review",
+      detail: bookNote("Mornings in Jenin (Susan Abulhawa)", [
+        "Outside Halalit’s family shelf—owner rejected for sexual content.",
+        "Owner also flags cultural misrepresentation in this line.",
+        "No Book Quest or auto-recommend.",
+      ]),
+    },
+    {
       titleRe: CHRISTIE_POIROT_TITLE_RE,
       authorRe: /christie|agatha\s*christie/i,
       tier: "flag_review",
@@ -2030,6 +2121,33 @@
         ],
         "Outside Halalit recommendations and Book Quest."
       ),
+    },
+    {
+      titleRe: /\bmy aunt is a monster\b/i,
+      authorRe: /yee|reimena\s*yee/i,
+      tier: "flag_review",
+      detail: bookNote(
+        "My Aunt Is a Monster (Reimena Yee, graphic novel)",
+        [
+          "Hand-checked—supporting-cast LGBTQ: Professor Doctor Cecilia Choi (Pineapple Tart) is non-binary (author-confirmed).",
+          "Not plot-centered LGBTQ advocacy—the adventure stands alone—but the rep is on the page.",
+          "Middle-grade graphic novel; blind heroine Safia is capable—preview Aunt Whimsy’s early deception about Safia’s curse.",
+          GRAPHIC_PHYSICAL_IMMODESTY_NOTE,
+        ],
+        "Outside Halalit recommendations and Book Quest."
+      ),
+    },
+    {
+      titleRe: /\btwins\b/i,
+      authorRe: /varian\s*johnson|johnson\s*&\s*shannon|shannon\s*wright/i,
+      tier: "flag_review",
+      agentFlag: true,
+      detail: bookNote("Twins (Varian Johnson & Shannon Wright, graphic novel)", [
+        "Middle-school twin-sister story—sister rivalry, crushes, and friendship tension (not adult romance).",
+        "Explicit in-story LGBTQ beat: stepbrother Curtis tells Maureen it would not matter if she were attracted to her female friend Amber—don’t assume straight.",
+        "Catalog/AI scans often miss that line while only flagging mild romance.",
+        GRAPHIC_PHYSICAL_IMMODESTY_NOTE,
+      ], "Outside Halalit recommendations and Book Quest."),
     },
     {
       titleRe:
@@ -2685,14 +2803,15 @@
       ], "Won’t Book Quest—not inappropriate."),
     },
     {
-      titleRe: /\bstudy hall of justice|secret hero society\b/i,
+      titleRe: /\bstudy hall of justice|secret hero society|fort solitude\b/i,
       authorRe: /fridolfs|derek/i,
       tier: "flag_review",
       detail: bookNote("Secret Hero Society (Derek Fridolfs, graphic novels)", [
-        "Plot reads clean in owner scope but panels include fanservice risk.",
+        "Fort Solitude (book 2): Harley Quinn says winning does not matter when her partner went missing—on-page hint at canonical Ivy/Harley LGBTQ relationship.",
+        "Plot otherwise reads clean in owner scope but panels include fanservice risk.",
         "Halalit won’t recommend without a graphic hand-check.",
         GRAPHIC_PHYSICAL_IMMODESTY_NOTE,
-      ]),
+      ], "Outside Halalit recommendations and Book Quest."),
     },
     {
       titleRe: /\bsheets\b/i,
@@ -4205,6 +4324,7 @@
         requiresMentalHealthComfortOptIn: !!e.requiresMentalHealthComfortOptIn,
         negativeFamilyPortrayal: !!e.negativeFamilyPortrayal,
         excludesBookQuest: !!e.excludesBookQuest,
+        ownerAiThemeAbsent: e.ownerAiThemeAbsent || null,
       };
     }
     return null;
@@ -4261,7 +4381,7 @@
       var w = WARNINGS[i];
       if (!w.titleRe.test(tl)) continue;
       if (w.authorRe && al && !w.authorRe.test(al)) continue;
-      return { tier: w.tier, detail: w.detail };
+      return { tier: w.tier, detail: w.detail, agentFlag: !!w.agentFlag };
     }
     return null;
   }

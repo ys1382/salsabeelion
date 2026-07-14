@@ -29,6 +29,67 @@
         <p class="lk-status" id="spellWordStatus" role="status"></p>
         <p class="muted lk-spell-privacy">Spelling checks run locally in your browser — not sent to outside AI.</p>
       </div>
+      <div class="lk-panel" id="writingGlossaryPanel">
+        <h2 class="lk-panel-title" style="font-size:1rem">Mobile writing shortcuts</h2>
+        <p class="muted lk-section-lead">Snippets and pinned names for phone chips and word completion — your account only.</p>
+        <p class="lk-panel-title" style="font-size:0.92rem;margin-top:0.85rem">Snippets</p>
+        <div class="lk-toolbar">
+          <input type="text" id="writingSnippetShortcut" placeholder="ms" autocomplete="off" spellcheck="false" aria-label="Shortcut" />
+          <input type="text" id="writingSnippetText" placeholder="Marcus" autocomplete="off" spellcheck="false" aria-label="Inserts" />
+          <button type="button" class="lk-btn" id="writingSnippetAddBtn">Add</button>
+        </div>
+        <ul class="lk-spell-word-list" id="writingSnippetList" aria-live="polite"></ul>
+        <p class="lk-panel-title" style="font-size:0.92rem;margin-top:0.85rem">Pinned names</p>
+        <div class="lk-toolbar">
+          <input type="text" id="writingPinnedInput" placeholder="Northern Gate" autocomplete="off" spellcheck="false" />
+          <button type="button" class="lk-btn" id="writingPinnedAddBtn">Pin</button>
+        </div>
+        <ul class="lk-spell-word-list" id="writingPinnedList" aria-live="polite"></ul>
+        <p class="lk-status" id="writingGlossaryStatus" role="status"></p>
+      </div>
+      <div class="lk-panel" id="mobileHandoffPanel">
+        <h2 class="lk-panel-title" style="font-size:1rem">Phone → computer</h2>
+        <p class="muted lk-section-lead">Optional. After you save a long doc on your phone, LoreKeeper can remind you that the same account opens on a computer. Off by default on this device.</p>
+        <label class="lk-tier-a-check">
+          <input type="checkbox" id="mobileHandoffEnabled" />
+          <span>Desktop handoff reminder after mobile saves</span>
+        </label>
+        <button type="button" class="lk-btn secondary" id="mobileHandoffResetBtn" style="margin-top:0.65rem">Reset reminders on this device</button>
+        <p class="lk-status" id="mobileHandoffStatus" role="status"></p>
+      </div>
+      <div class="lk-panel" id="notifyPrefsPanel">
+        <h2 class="lk-panel-title" style="font-size:1rem">Email notifications (opt-in)</h2>
+        <p class="muted lk-section-lead">Mail goes only to your sign-up address. Password reset emails are sent when you ask; reminder and product-update mail are still not sent yet.</p>
+        <label class="lk-tier-a-check">
+          <input type="checkbox" id="notifyExportReminder" />
+          <span>Monthly export reminder — nudge to download your JSON backup</span>
+        </label>
+        <label class="lk-tier-a-check">
+          <input type="checkbox" id="notifyProductUpdates" />
+          <span>Product updates — rare notes when Ask or storage improves</span>
+        </label>
+        <button type="button" class="lk-btn secondary" id="saveNotifyPrefsBtn">Save notification preferences</button>
+        <p class="lk-status" id="notifyPrefsStatus" role="status"></p>
+      </div>
+      <div class="lk-panel" id="deleteAccountPanel">
+        <h2 class="lk-panel-title" style="font-size:1rem">Delete account</h2>
+        <p class="muted lk-section-lead">Export your notes first — deletion is permanent. Owner account cannot be deleted here.</p>
+        <button type="button" class="lk-btn secondary" id="exportBeforeDeleteBtn">Download my data (JSON)</button>
+        <div class="lk-field" style="margin-top:1rem">
+          <label for="deletePassword">Password</label>
+          <input type="password" id="deletePassword" autocomplete="current-password" />
+        </div>
+        <div class="lk-field">
+          <label for="deleteConfirm">Type DELETE to confirm</label>
+          <input type="text" id="deleteConfirm" autocomplete="off" spellcheck="false" />
+        </div>
+        <label class="lk-tier-a-check">
+          <input type="checkbox" id="deleteExportAck" />
+          <span>I exported my data or don’t need a copy</span>
+        </label>
+        <button type="button" class="lk-btn" id="deleteAccountBtn">Delete my account permanently</button>
+        <p class="lk-status" id="deleteAccountStatus" role="alert"></p>
+      </div>
     </div>
 
     <div id="authView">
@@ -52,6 +113,7 @@
           </div>
           <button type="submit" class="lk-btn">Sign in</button>
         </form>
+        <p style="margin:0.85rem 0 0;font-size:0.9rem"><a href="./reset-password.html">Forgot password?</a></p>
       </div>
       <div class="lk-panel" id="formSignUp" role="tabpanel" hidden>
         <form id="signUpForm" novalidate>
@@ -70,10 +132,13 @@
     </div>
   </div>
   <script src="./lk-api-config.js?v=3"></script>
-  <script src="./lk-account-storage.js?v=7"></script>
+  <script src="./lk-account-storage.js?v=8"></script>
   <script src="./lk-spell-words.js?v=3"></script>
+  <script src="./lk-writing-glossary.js?v=1"></script>
   <script src="./lk-spell-settings.js?v=2"></script>
-  <script src="./lk-auth.js?v=3"></script>
+  <script src="./lk-writing-snippet-settings.js?v=1"></script>
+  <script src="./lk-mobile-handoff.js?v=1"></script>
+  <script src="./lk-auth.js?v=6"></script>
   <script>
     (function () {
       var params = new URLSearchParams(location.search);
@@ -197,6 +262,10 @@
           document.getElementById("signedInEmail").textContent = LoreKeeperAccountStorage.getEmail();
           injectOwnerPanel();
           LoreKeeperSpellSettings.refresh();
+          loadNotifyPrefs();
+          if (window.LoreKeeperMobileHandoff && LoreKeeperMobileHandoff.initAccountSettings) {
+            LoreKeeperMobileHandoff.initAccountSettings();
+          }
         }
       });
 
@@ -208,6 +277,81 @@
       document.getElementById("backToNotesBtn").addEventListener("click", function () {
         location.href = notesUrl();
       });
+
+      function setPanelStatus(id, msg, ok) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        el.textContent = msg || "";
+        el.hidden = !msg;
+        el.className = "lk-status" + (ok ? " ok" : msg ? "" : "");
+      }
+
+      function loadNotifyPrefs() {
+        LoreKeeperAuth.loadNotifyPrefs().then(function (res) {
+          if (!res || !res.ok || !res.prefs) return;
+          document.getElementById("notifyExportReminder").checked = !!res.prefs.exportReminder;
+          document.getElementById("notifyProductUpdates").checked = !!res.prefs.productUpdates;
+        });
+      }
+
+      document.getElementById("saveNotifyPrefsBtn").addEventListener("click", function () {
+        var prefs = {
+          exportReminder: document.getElementById("notifyExportReminder").checked,
+          productUpdates: document.getElementById("notifyProductUpdates").checked,
+        };
+        LoreKeeperAuth.saveNotifyPrefs(prefs).then(function (res) {
+          setPanelStatus("notifyPrefsStatus", res && res.ok ? "Saved." : "Could not save.", !!(res && res.ok));
+        });
+      });
+
+      document.getElementById("exportBeforeDeleteBtn").addEventListener("click", function () {
+        var base = LoreKeeperAccountStorage.apiBase();
+        fetch(base + "/user/data?profile=full", { credentials: "include" })
+          .then(function (res) {
+            return res.json();
+          })
+          .then(function (payload) {
+            if (!payload || !payload.ok) {
+              setPanelStatus("deleteAccountStatus", "Could not download data.", false);
+              return;
+            }
+            var blob = new Blob([JSON.stringify(payload.data || {}, null, 2)], {
+              type: "application/json",
+            });
+            var a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = "lorekeeper-account-export.json";
+            a.click();
+            URL.revokeObjectURL(a.href);
+            document.getElementById("deleteExportAck").checked = true;
+            setPanelStatus("deleteAccountStatus", "Download started.", true);
+          });
+      });
+
+      document.getElementById("deleteAccountBtn").addEventListener("click", function () {
+        if (!confirm("Delete your LoreKeeper account permanently? This cannot be undone.")) return;
+        var password = document.getElementById("deletePassword").value;
+        var confirmPhrase = document.getElementById("deleteConfirm").value;
+        var exportAck = document.getElementById("deleteExportAck").checked;
+        LoreKeeperAuth.deleteAccount(password, confirmPhrase, exportAck).then(function (res) {
+          if (res && res.ok) {
+            location.href = "./account.html?deleted=1";
+            return;
+          }
+          setPanelStatus(
+            "deleteAccountStatus",
+            LoreKeeperAuth.friendlyError(res && res.error),
+            false
+          );
+        });
+      });
+
+      if (params.get("deleted") === "1") {
+        showError("");
+        document.getElementById("authView").hidden = false;
+        document.getElementById("signedInView").hidden = true;
+        showError("Your account was deleted.");
+      }
     })();
   </script>
 </body>

@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "kidModeAge": "up to 13",
+  "parentModeAge": "14+ or adult (unlock gate not built yet — owner beta)",
+  "ruleOfThumb": [
+    "Kids: only destinations chosen on purpose (allowlist + filtered open web).",
+    "Parents: more destinations; same hard blocks on streaming, fanfic, porn, hate, gambling, fanservice hubs, bypass tools.",
+    "Allowlist gate: public or funded, school-standard, or owner personally vetted — never guess unknown locals.",
+    "Parent-only: mixed catalogs, UGC forums, shopping, app stores, anime, fandom wikis, Wikipedia, AI, art boards, most gaming publishers.",
+    "Open web: allowed when search preview passes snippet filters.",
+    "Unsure sites: parent-only now; owner survey before kids allowlist."
+  ],
+  "surveyQueue": [
+    "amazon.com — kids allowlist?",
+    "abcmouse.com",
+    "timeforkids.com",
+    "kids.nationalgeographic.com",
+    "commonsensemedia.org",
+    "spotify.com",
+    "coolmathgames.com",
+    "poki.com",
+    "crazygames.com",
+    "openlibrary.org",
+    "gutenberg.org",
+    "discord.com",
+    "telegram.org",
+    "code.org",
+    "prodigygame.com",
+    "kidshealth.org",
+    "nasa.gov",
+    "target.com",
+    "walmart.com",
+    "merriam-webster.com — if ads turn unfriendly",
+    "dictionary.com — if ads turn unfriendly",
+    "marvel.com / dc.com — maybe blocklist later",
+    "sega.com / Sonic-only paths"
+  ],
+  "roadmapNotInV0": [
+    "Kidsproof parent-mode unlock (adults only, not a kid toggle)",
+    "Structured parent survey on surveyQueue sites",
+    "Structured kid feedback for 100% clean site suggestions",
+    "Owner review queue to promote sites from feedback or survey"
+  ]
+}

@@ -122,8 +122,8 @@
   {
     "title": "Twins",
     "author": "Varian Johnson & Shannon Wright",
-    "tier": "ai_likely_pass",
-    "note": "Likely pass. No LGBTQ in book; middle-school crushes/friendship/twin tension."
+    "tier": "ai_likely_reject",
+    "note": "Stepbrother explicitly tells Maureen it would not matter if she were attracted to female friend Amber—LGBTQ dialogue on page. Middle-school twin rivalry/romance tension; graphic novel."
   },
   {
     "title": "The Wild Book",
@@ -708,6 +708,12 @@
     "note": "YA dystopian romance premise; romance central. AI likely reject."
   },
   {
+    "title": "The Deal",
+    "author": "Elle Kennedy",
+    "tier": "ai_likely_reject",
+    "note": "New-adult college hockey romance; mature-rated relationship central. AI likely reject."
+  },
+  {
     "title": "The Secret of Dreadwillow Carse",
     "author": "Brian Farrey",
     "tier": "ai_likely_reject",
@@ -1040,8 +1046,8 @@
   {
     "title": "The Demon Sword Asperides",
     "author": "Sarah Jean Horwitz",
-    "tier": "ai_manual_review",
-    "note": "MG fantasy; demon sword, necromancer, war, body horror warnings. Needs owner hand-read."
+    "tier": "ai_likely_reject",
+    "note": "AI-checked: queer secondary characters / LGBTQ representation confirmed in reviews—not Halalit family shelf. MG fantasy; demon sword, necromancer, war, body horror warnings also noted. Not owner hand-vetted."
   },
   {
     "title": "Soara and the House of Monsters",
@@ -1132,5 +1138,53 @@
     "author": "Jennifer Meinking",
     "tier": "ai_manual_review",
     "note": "Historical fantasy; mythology, clean-romance framing—needs direct vet."
+  },
+  {
+    "title": "Fort Solitude",
+    "author": "Derek Fridolfs",
+    "tier": "ai_likely_reject",
+    "note": "Secret Hero Society book 2; Harley calls missing partner—canonical Ivy/Harley LGBTQ hint. Middle-grade DC graphic novel; fanservice risk in panels."
+  },
+  {
+    "title": "Secret Hero Society",
+    "author": "Derek Fridolfs",
+    "tier": "ai_likely_reject",
+    "note": "DC middle-grade graphic novels; Fort Solitude (book 2) has Ivy/Harley partner hint. Fanservice risk in panels—series not hand-vetted clean."
+  },
+  {
+    "title": "The Menagerie series",
+    "author": "Tui T. Sutherland & Kari Sutherland",
+    "tier": "ai_likely_pass",
+    "note": "Middle-grade magical-creature adventure; family abandonment note; no confirmed major shelf-rule flags found. Probably okay but not fully audited."
+  },
+  {
+    "title": "Potion Masters series",
+    "author": "Frank L. Cole",
+    "tier": "ai_manual_review",
+    "note": "Potion magic, secrecy/sneaking, and reports that children hiding things from parents is treated too normally; also violence concerns later in the series."
+  },
+  {
+    "title": "Wizard for Hire",
+    "author": "Obert Skye",
+    "tier": "ai_likely_pass",
+    "note": "Kid hires a questionable “wizard”; kidnapped parents and minor violence, but no confirmed major romance/sexual/LGBTQ/profanity flags found. Probably okay but not fully audited; manual if wizard-magic is an issue."
+  },
+  {
+    "title": "The River Witch",
+    "author": "Helena Rookwood",
+    "tier": "ai_manual_review",
+    "note": "Young witch, fae/Celtic myth, ritual, possible romantic-fantasy tone, and later thieves/liars/assassins setting."
+  },
+  {
+    "title": "Magebreakers",
+    "author": "Ben S. Dobson",
+    "tier": "ai_likely_reject",
+    "note": "Adult-feeling magical murder investigations, mages/magical creatures/spirit content, murders, assassination/war stakes, and life-sapping magic. AI likely reject—not hand-rejected."
+  },
+  {
+    "title": "Tree of Ages",
+    "author": "Sara C. Roethle",
+    "tier": "ai_likely_reject",
+    "note": "Gods/Tuatha/mythic magic, war/death, central transformation magic, and some reader reports of romance intensity. AI likely reject—not hand-rejected."
   }
 ]

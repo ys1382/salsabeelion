@@ -198,6 +198,76 @@
     return "No hand note yet and nothing strong in the catalog we pulled.";
   }
 
+  function themeBriefDeniesIssue(text) {
+    var AI = global.HalalitBookcheckAi;
+    if (AI && typeof AI.themeBriefDeniesPresence === "function") {
+      if (AI.themeBriefDeniesPresence("", text)) return true;
+    }
+    var t = String(text || "").replace(/\s+/g, " ").trim();
+    if (!t) return false;
+    if (lgbtqBriefDeniesContent(t)) return true;
+    return (
+      /\b(?:no (?:explicit )?(?:mention of )?|without (?:explicit )?|(?:do|does|don't|doesn't) not (?:contain|include|feature|indicate|show|depict|mention|suggest)|not indicate any|no evidence of)\b/i.test(
+        t
+      ) ||
+      /\b(?:not mature[- ]rated|not a mature[- ]rated|not mature[- ]rated or explicit|clean and age[- ]appropriate|typical for a ya|published (?:and marketed )?as (?:a )?(?:young adult|ya)|age[- ]appropriate romantic subplot|perceived subtext is reader projection)\b/i.test(
+        t
+      ) ||
+      /\b(?:plot|summaries|reviews|catalog)[^.]{0,48}(?:do|does) not (?:indicate|mention|suggest|show|contain|include)\b/i.test(
+        t
+      )
+    );
+  }
+
+  function explainerIsLowValueRejectReason(text) {
+    if (themeBriefDeniesIssue(text) || lgbtqBriefDeniesContent(text)) return true;
+    return /\bpublished (?:and marketed )?as (?:a )?(?:young adult|ya)|(?:young adult|ya) fantasy with a teenage protagonist|teenage protagonist|typical for a ya|not mature[- ]rated|not a mature[- ]rated|without adult romance|no confirmed on[- ]page|reader (?:speculation|projection)|perceived subtext is reader projection|age[- ]appropriate romantic subplot|clean,? age[- ]appropriate romantic/i.test(
+      String(text || "")
+    );
+  }
+
+  function meaningfulAutoRejectFallback(report, hint) {
+    hint = hint || {};
+    if (hint.detail && !isGraphicUnvettedDetail(hint.detail)) {
+      if (!hintDetailIsLgbtqPolicy(hint.detail) || !lgbtqStanceAbsent(report, hint)) {
+        var detailEx = explainerFromCuratedBullet(hint.detail, report, hint);
+        if (detailEx && !explainerIsLowValueRejectReason(detailEx)) return [detailEx];
+      }
+    }
+    if (report && report.dimensions) {
+      for (var i = 0; i < report.dimensions.length; i++) {
+        var row = report.dimensions[i];
+        if (!row || row.status !== "concern") continue;
+        if (row.id === "lgbtq" && lgbtqStanceAbsent(report, hint)) continue;
+        if (row.id === "policy" && hintDetailIsLgbtqPolicy(row.note) && lgbtqStanceAbsent(report, hint)) continue;
+        var dimEx = explainerFromDimension(row, report, hint);
+        if (dimEx && !explainerIsLowValueRejectReason(dimEx) && !isBoilerplateExplainer(dimEx)) return [dimEx];
+      }
+    }
+    if (report && report.aiThemes) {
+      for (var a = 0; a < report.aiThemes.length; a++) {
+        var aiEx = explainerFromAiTheme(report.aiThemes[a], report, hint);
+        if (aiEx && !explainerIsLowValueRejectReason(aiEx)) return [aiEx];
+      }
+    }
+    return ["outside Halalit's family shelf rules—see the notes below"];
+  }
+
+  function prioritizeAutoRejectExplainers(explainers, report, hint) {
+    if (!explainers || !explainers.length) return meaningfulAutoRejectFallback(report, hint);
+    var strong = [];
+    for (var i = 0; i < explainers.length; i++) {
+      if (!explainerIsLowValueRejectReason(explainers[i])) strong.push(explainers[i]);
+    }
+    if (strong.length) return strong.slice(0, 3);
+    return meaningfulAutoRejectFallback(report, hint);
+  }
+
+  function scanRowNoteIsAbsenceOnly(note, tagHits) {
+    if (tagHits && tagHits.length) return false;
+    return themeBriefDeniesIssue(note);
+  }
+
   function scanRowFromEvidence(topic, subjects, description, blobText) {
     var Policy = global.HalalitFamilyShelfPolicy;
     if (topic.id === "crude_profanity") {
@@ -219,7 +289,12 @@
     }
     var tagHits = subjectsHit(subjects, topic.subjectRe);
     var descHit = snippetFromDescription(description, topic.textRe);
+    if (descHit && themeBriefDeniesIssue(descHit)) descHit = "";
     var inBlob = topic.textRe.test(blobText);
+    if (inBlob && themeBriefDeniesIssue(description + " " + blobText)) inBlob = false;
+    if (topic.id === "lgbtq" && !tagHits.length && lgbtqBriefDeniesContent(description + " " + blobText)) {
+      return null;
+    }
     if (!tagHits.length && !descHit && !inBlob) return null;
 
     var status = "caution";
@@ -240,6 +315,8 @@
       noteParts.push("Open Library tag: “" + tagHits.slice(0, 4).join("”; “") + "”");
     if (descHit) noteParts.push('Description: “' + descHit + "”");
     if (!tagHits.length && !descHit && inBlob) noteParts.push("Mentioned in combined catalog text for this edition.");
+
+    if (scanRowNoteIsAbsenceOnly(noteParts.join(" · "), tagHits)) return null;
 
     return { id: topic.id, label: topic.label, status: status, note: noteParts.join(" · ") };
   }
@@ -574,15 +651,27 @@
     }
 
     if (hint.signals && hint.signals.length) {
+      var aiScanNotes = [];
       for (var si = 0; si < hint.signals.length; si++) {
         var sig = String(hint.signals[si] || "").trim();
         if (!/^AI scan:/i.test(sig)) continue;
-        rows.push({
-          id: "ai_signal_" + si,
-          label: "AI theme scan",
-          status: "caution",
-          note: sig.replace(/^AI scan:\s*/i, ""),
+        var aiNote = sig.replace(/^AI scan:\s*/i, "");
+        if (aiNote && themeBriefEmbedsLgbtqDenial(aiNote)) continue;
+        if (aiNote && themeBriefDeniesIssue(aiNote)) continue;
+        if (aiNote && aiScanNotes.indexOf(aiNote) === -1) aiScanNotes.push(aiNote);
+      }
+      if (aiScanNotes.length) {
+        var hasHardConcern = rows.some(function (r) {
+          return r && r.status === "concern";
         });
+        if (!hasHardConcern) {
+          rows.push({
+            id: "ai_scan",
+            label: "AI theme scan",
+            status: "caution",
+            note: aiScanNotes.join("; "),
+          });
+        }
       }
     }
 
@@ -600,18 +689,6 @@
         status: "caution",
         note:
           "This edition is tagged or titled as comics/manga—Open Library rarely describes panel-level fanservice.",
-      });
-    }
-
-    if (catalogOnly.length) {
-      rows.push({
-        id: "catalog_silent",
-        label: "Catalog didn’t mention",
-        status: "unknown",
-        note:
-          catalogOnly.slice(0, 6).join(", ") +
-          (catalogOnly.length > 6 ? ", …" : "") +
-          "—still possible in the story; Halalit adds hand notes when we’ve read a series.",
       });
     }
 
@@ -680,6 +757,92 @@
     return report;
   }
 
+  function applyOwnerAiThemeAbsent(report, hint) {
+    if (!report || !hint || !hint.ownerAiThemeAbsent) return report;
+    var absent = hint.ownerAiThemeAbsent;
+    var r = Object.assign({}, report);
+
+    if (absent.lgbtq) {
+      r.aiLgbtqPresent = false;
+      r.aiLgbtqDenied = true;
+      r.aiThemes = (report.aiThemes || []).filter(function (theme) {
+        return !(theme && theme.id === "lgbtq");
+      });
+    }
+
+    var stripIds = [];
+    if (absent.deity_mythology) stripIds.push("deity_mythology", "deity");
+    if (absent.romantic_tension) stripIds.push("romantic_tension", "romance");
+    if (stripIds.length) {
+      r.aiThemes = (r.aiThemes || []).filter(function (theme) {
+        return !(theme && stripIds.indexOf(theme.id) >= 0);
+      });
+    }
+
+    if (absent.deity_mythology) {
+      r.deityComfort = null;
+    }
+
+    r.dimensions = (report.dimensions || []).filter(function (row) {
+      if (!row) return false;
+      if (absent.lgbtq && row.id === "lgbtq") return false;
+      if (absent.deity_mythology && (row.id === "deity" || row.id === "deity_hand" || /deity or mythology/i.test(row.label || ""))) {
+        return false;
+      }
+      if (absent.romantic_tension && (row.id === "romance" || /romance or dating/i.test(row.label || ""))) return false;
+      if (row.id === "ai_scan") {
+        var note = String(row.note || "");
+        if (absent.lgbtq && /lgbtq/i.test(note)) return false;
+        if (absent.deity_mythology && /deity|mythology/i.test(note)) return false;
+        if (absent.romantic_tension && /romantic/i.test(note)) return false;
+      }
+      return true;
+    });
+
+    if (report.external) {
+      r.external = Object.assign({}, report.external);
+      if (r.external.catalogHits) {
+        r.external.catalogHits = r.external.catalogHits.filter(function (hit) {
+          if (!hit) return false;
+          if (absent.lgbtq && (hit.id === "lgbtq" || /lgbtq/i.test(hit.label || ""))) return false;
+          if (absent.deity_mythology && (hit.id === "deity_mythology" || hit.id === "deity" || /deity|mythology/i.test(hit.label || ""))) {
+            return false;
+          }
+          if (absent.romantic_tension && (hit.id === "romantic_tension" || hit.id === "romance" || /romance/i.test(hit.label || ""))) {
+            return false;
+          }
+          return true;
+        });
+      }
+      if (r.external.wikipediaHits) {
+        r.external.wikipediaHits = r.external.wikipediaHits.filter(function (hit) {
+          if (!hit) return false;
+          if (absent.lgbtq && (hit.id === "lgbtq" || textLooksLikeLgbtqWarning((hit.label || "") + " " + (hit.snippet || "")))) {
+            return false;
+          }
+          if (absent.deity_mythology && (hit.id === "deity_mythology" || /deity|mythology/i.test((hit.label || "") + " " + (hit.snippet || "")))) {
+            return false;
+          }
+          return true;
+        });
+      }
+      if (r.external.wikidataHits) {
+        r.external.wikidataHits = r.external.wikidataHits.filter(function (hit) {
+          if (!hit) return false;
+          if (absent.lgbtq && (hit.id === "lgbtq" || textLooksLikeLgbtqWarning((hit.label || "") + " " + (hit.snippet || "")))) {
+            return false;
+          }
+          if (absent.deity_mythology && (hit.id === "deity_mythology" || /deity|mythology/i.test((hit.label || "") + " " + (hit.snippet || "")))) {
+            return false;
+          }
+          return true;
+        });
+      }
+    }
+
+    return r;
+  }
+
   function buildBookcheckReport(opts) {
     var title = opts.title || normalizeOlTitle(opts.doc) || "";
     var author = opts.author || authorsFromDoc(opts.doc) || "";
@@ -701,13 +864,24 @@
     report.aiScanOk = !!opts.aiScanOk;
     report.fanserviceNotChecked = !!opts.fanserviceNotChecked;
     report.aiSeriesNote = opts.aiSeriesNote || "";
+    report.aiThemes = opts.aiThemes || [];
+    report.aiLgbtqDenied = !!opts.aiLgbtqDenied;
+    report.aiLgbtqPresent = !!opts.aiLgbtqPresent;
     report.hintTier = (opts.hint && opts.hint.tier) || report.tier;
     report.hintDetail = (opts.hint && opts.hint.detail) || "";
+    report.agentFlag = !!(opts.hint && opts.hint.agentFlag);
+    if (Cur && !report.agentFlag) {
+      var agentHit = Cur.match(title, author);
+      if (agentHit && agentHit.agentFlag) report.agentFlag = true;
+    }
     if (report.isGraphic == null) {
       var descBlob = (opts.descriptionOnly || "") + " " + (opts.supplementText || "");
       report.isGraphic = titleLooksGraphic(title, descBlob.toLowerCase());
     }
-    return attachExternalEvidence(report, opts);
+    return applyOwnerAiThemeAbsent(
+      applyLgbtqStanceFilters(attachExternalEvidence(report, opts), opts.hint),
+      opts.hint
+    );
   }
 
   var GRAPHIC_UNVETTED_DETAIL_RE =
@@ -757,6 +931,7 @@
   function shouldShowYouDecideLine(report, hint, opts) {
     hint = hint || {};
     opts = opts || {};
+    if (opts.experienced) return false;
     if (vetSourceIsAiOrHand(opts.vetSource)) return false;
     if (report && report.mode === "curated") return false;
     var tier = hint.tier || (report && (report.hintTier || report.tier)) || "";
@@ -782,8 +957,725 @@
     return '<p class="bookcheck-you-decide muted"><strong>You decide:</strong> ' + escapeHtml(YOU_DECIDE_LINE) + "</p>";
   }
 
+  var REJECT_AI_THEME_IDS = {
+    lgbtq: true,
+    adult_romance: true,
+    illegitimate_children: true,
+    crude_profanity: true,
+    group_demonization: true,
+    pro_colonial_narrative: true,
+    teen_ya_age: true,
+    violence_intense: true,
+    romanticized_crime: true,
+    family_portrayed_negatively: true,
+    cultural_stereotype: true,
+    substance: true,
+    deity_mythology: true,
+  };
+
+  function isGenericAutoRejectBrief(brief) {
+    return /^(LGBTQ representation noted in scan text|mentioned in combined catalog)/i.test(
+      String(brief || "").trim()
+    );
+  }
+
+  function lgbtqBriefDeniesContent(text) {
+    var AI = global.HalalitBookcheckAi;
+    if (AI && typeof AI.lgbtqBriefDeniesContent === "function") {
+      return AI.lgbtqBriefDeniesContent(text);
+    }
+    return /\b(?:do|does) not (?:contain|include|feature|indicate|show|depict)|not indicate any lgbtq|no lgbtq\b|(?:no|not) confirmed on[- ]page|reader speculation or subtext only|not confirmed on[- ]page lgbtq|(?:does|do) not feature confirmed on[- ]page|heterosexual romance\b[^.!?]{0,96}\b(?:does|do) not feature\b/i.test(
+      String(text || "")
+    );
+  }
+
+  function themeBriefEmbedsLgbtqDenial(text) {
+    var AI = global.HalalitBookcheckAi;
+    if (AI && typeof AI.themeBriefEmbedsLgbtqDenial === "function") {
+      return AI.themeBriefEmbedsLgbtqDenial(text);
+    }
+    return lgbtqBriefDeniesContent(text);
+  }
+
+  function stripEmbeddedLgbtqDenial(text) {
+    var AI = global.HalalitBookcheckAi;
+    if (AI && typeof AI.stripLgbtqDenialClause === "function") {
+      return AI.stripLgbtqDenialClause(text);
+    }
+    return String(text || "");
+  }
+
+  function scanNoteHidesLgbtqDenial(note, report, hint) {
+    var n = String(note || "");
+    if (!n) return false;
+    if (themeBriefDeniesIssue(n) || themeBriefEmbedsLgbtqDenial(n)) {
+      if (lgbtqStancePresent(report, hint)) return true;
+    }
+    return false;
+  }
+
+  function hintDetailIsLgbtqPolicy(detail) {
+    var Policy = global.HalalitFamilyShelfPolicy;
+    if (Policy && typeof Policy.hintDetailIsLgbtqPolicy === "function") {
+      return Policy.hintDetailIsLgbtqPolicy(detail);
+    }
+    return /lgbtq identity|lgbtq themes|mention lgbtq|flags lgbtq representation/i.test(String(detail || ""));
+  }
+
+  function catalogReportAffirmsLgbtq(report) {
+    if (!report) return false;
+    if (report.external && report.external.catalogHits) {
+      for (var c = 0; c < report.external.catalogHits.length; c++) {
+        var hit = report.external.catalogHits[c];
+        if (hit && (hit.id === "lgbtq" || /lgbtq/i.test(hit.label || ""))) return true;
+      }
+    }
+    if (report.dimensions) {
+      for (var d = 0; d < report.dimensions.length; d++) {
+        var row = report.dimensions[d];
+        if (row && row.id === "lgbtq" && /open library tag/i.test(String(row.note || ""))) return true;
+      }
+    }
+    return false;
+  }
+
+  function catalogDescriptionAffirmsLgbtq(report, hint) {
+    hint = hint || {};
+    if (hint.detail && hintDetailIsLgbtqPolicy(hint.detail)) return true;
+    if (!report || !report.dimensions) return false;
+    for (var i = 0; i < report.dimensions.length; i++) {
+      var row = report.dimensions[i];
+      if (!row || row.id !== "lgbtq") continue;
+      var note = String(row.note || "");
+      if (/open library tag/i.test(note)) continue;
+      if (textLooksLikeLgbtqWarning(note) && !lgbtqBriefDeniesContent(note)) return true;
+    }
+    return false;
+  }
+
+  function curatedNoteAffirmsLgbtq(report) {
+    if (!report || report.mode !== "curated" || !report.parsedNote || !report.parsedNote.bullets) return false;
+    for (var b = 0; b < report.parsedNote.bullets.length; b++) {
+      var bullet = String(report.parsedNote.bullets[b] || "");
+      if (textLooksLikeLgbtqWarning(bullet) && !lgbtqBriefDeniesContent(bullet)) return true;
+    }
+    return false;
+  }
+
+  function reportAiAffirmsLgbtq(report) {
+    if (!report) return false;
+    if (report.aiLgbtqPresent) return true;
+    if (report.aiThemes) {
+      for (var i = 0; i < report.aiThemes.length; i++) {
+        if (report.aiThemes[i] && report.aiThemes[i].id === "lgbtq") return true;
+      }
+    }
+    return false;
+  }
+
+  /** @returns {'present'|'absent'|'unknown'} */
+  function resolveLgbtqStance(report, hint) {
+    hint = hint || {};
+    if (hint.ownerAiThemeAbsent && hint.ownerAiThemeAbsent.lgbtq) return "absent";
+    if (report && report.aiLgbtqDenied) return "absent";
+    if (catalogReportAffirmsLgbtq(report) || reportAiAffirmsLgbtq(report)) return "present";
+    if (curatedNoteAffirmsLgbtq(report)) return "present";
+    if (catalogDescriptionAffirmsLgbtq(report, hint)) return "present";
+    return "unknown";
+  }
+
+  function lgbtqStanceAbsent(report, hint) {
+    return resolveLgbtqStance(report, hint) === "absent";
+  }
+
+  function lgbtqStancePresent(report, hint) {
+    return resolveLgbtqStance(report, hint) === "present";
+  }
+
+  function textLooksLikeLgbtqWarning(text) {
+    var t = String(text || "").toLowerCase();
+    if (lgbtqBriefDeniesContent(t)) return false;
+    return /lgbtq|same[- ]sex|two[- ]moms|two[- ]dads|gay character|lesbian|queer character|transgender|non[- ]binary identity/.test(
+      t
+    );
+  }
+
+  function stripLgbtqDenialFromAiScanNote(note) {
+    var parts = String(note || "").split(/\s*;\s*/);
+    var kept = [];
+    for (var i = 0; i < parts.length; i++) {
+      var chunk = parts[i];
+      if (themeBriefEmbedsLgbtqDenial(chunk)) {
+        chunk = stripEmbeddedLgbtqDenial(chunk);
+        if (!chunk || themeBriefEmbedsLgbtqDenial(chunk)) continue;
+      }
+      if (lgbtqBriefDeniesContent(chunk) && /lgbtq/i.test(chunk)) continue;
+      kept.push(chunk);
+    }
+    return kept.join("; ");
+  }
+
+  function applyLgbtqStanceFilters(report, hint) {
+    if (!report) return report;
+    var stance = resolveLgbtqStance(report, hint);
+    if (stance === "unknown") return report;
+    var r = Object.assign({}, report);
+
+    if (stance === "absent") {
+      r.aiThemes = (report.aiThemes || []).filter(function (theme) {
+        return !(theme && theme.id === "lgbtq");
+      });
+      r.dimensions = (report.dimensions || []).filter(function (row) {
+        if (!row) return false;
+        if (row.id === "lgbtq") return false;
+        if (row.id === "policy" && hintDetailIsLgbtqPolicy(row.note)) return false;
+        if (textLooksLikeLgbtqWarning(row.note) && /lgbtq/i.test(String(row.label || ""))) return false;
+        return true;
+      });
+      if (report.external) {
+        r.external = Object.assign({}, report.external);
+        r.external.catalogHits = (report.external.catalogHits || []).filter(function (hit) {
+          return !(hit && (hit.id === "lgbtq" || /lgbtq/i.test(hit.label || "")));
+        });
+        r.external.wikipediaHits = (report.external.wikipediaHits || []).filter(function (hit) {
+          return !(hit && (hit.id === "lgbtq" || textLooksLikeLgbtqWarning((hit.label || "") + " " + (hit.snippet || ""))));
+        });
+        r.external.wikidataHits = (report.external.wikidataHits || []).filter(function (hit) {
+          return !(hit && (hit.id === "lgbtq" || textLooksLikeLgbtqWarning((hit.label || "") + " " + (hit.snippet || ""))));
+        });
+      }
+      if (hintDetailIsLgbtqPolicy(r.hintDetail)) r.hintDetail = "";
+    }
+
+    if (stance === "present") {
+      r.dimensions = (report.dimensions || [])
+        .map(function (row) {
+          if (!row) return row;
+          if (row.id === "lgbtq" && lgbtqBriefDeniesContent(row.note)) return null;
+          if (themeBriefEmbedsLgbtqDenial(row.note)) {
+            if (row.id === "ai_scan" || row.id === "romance" || /romantic/i.test(String(row.label || ""))) {
+              var cleanedNote = stripLgbtqDenialFromAiScanNote(row.note);
+              if (!cleanedNote || themeBriefEmbedsLgbtqDenial(cleanedNote)) return null;
+              return Object.assign({}, row, { note: cleanedNote });
+            }
+            return null;
+          }
+          if (row.id === "ai_scan" && lgbtqBriefDeniesContent(row.note)) {
+            var cleaned = stripLgbtqDenialFromAiScanNote(row.note);
+            if (!cleaned) return null;
+            return Object.assign({}, row, { note: cleaned });
+          }
+          return row;
+        })
+        .filter(Boolean);
+      r.aiThemes = (report.aiThemes || []).filter(function (theme) {
+        if (!theme) return false;
+        if (theme.id === "lgbtq" && lgbtqBriefDeniesContent(theme.brief)) return false;
+        if (theme.id !== "lgbtq" && themeBriefEmbedsLgbtqDenial(theme.brief)) return false;
+        return true;
+      });
+    }
+
+    return r;
+  }
+
+  function reportAiDeniesLgbtq(report, hint) {
+    return lgbtqStanceAbsent(report, hint);
+  }
+
+  function cleanAutoRejectExplainer(text) {
+    var t = stripCjk(text).replace(/\s+/g, " ").trim();
+    t = t.replace(/^Owner:\s*/i, "");
+    t = t.replace(/^Halalit\s+/i, "");
+    t = t.replace(/\s*[—–-]\s*Halalit won't.*$/i, "");
+    t = t.replace(/\s*Halalit won't recommend.*$/i, "");
+    if (t.length > 220) t = t.slice(0, 217) + "…";
+    return t;
+  }
+
+  function lowercaseExplainerStart(s) {
+    s = String(s || "").trim();
+    if (!s) return s;
+    return s.charAt(0).toLowerCase() + s.slice(1);
+  }
+
+  function lgbtqExplainerFromText(text) {
+    var t = String(text || "").toLowerCase();
+    if (/two[- ]dads?|two fathers|both (?:his |her |the )?(?:dad|father)s?\b|gay (?:dad|father|parent)s?/.test(t)) {
+      return "the protagonist's parents are both men";
+    }
+    if (/two[- ]moms?|two mothers|both (?:his |her |the )?(?:mom|mother)s?\b|lesbian (?:parent|mother|couple)/.test(t)) {
+      return "the protagonist's parents are both women";
+    }
+    if (/same[- ]sex (?:couple|relationship|romance|crush|kiss|dating|marriage)/.test(t)) {
+      return "it includes a same-sex romantic relationship";
+    }
+    if (/non[- ]binary|transgender|gender[- ]fluid|they\/them/.test(t)) {
+      return "it includes transgender or non-binary identity in the cast";
+    }
+    return "";
+  }
+
+  var MATURE_ADULT_ROMANCE_RE =
+    /\b(?:college|university|campus|new adult|\bna fiction\b|mature[- ]rated|explicit|open[- ]door|sexual content|erotic romance|graphic romance|off[- ]campus|hockey romance)\b/i;
+
+  var EXPLICIT_ADULT_ROMANCE_RE =
+    /\b(?:explicit|open[- ]door|sexual content|sex scenes|erotic romance|graphic romance)\b/i;
+
+  function romanceBandFromText(text) {
+    var t = String(text || "").toLowerCase();
+    if (EXPLICIT_ADULT_ROMANCE_RE.test(t)) return "explicit_adult";
+    if (MATURE_ADULT_ROMANCE_RE.test(t)) return "mature_adult";
+    return "";
+  }
+
+  function romanceExplainerFromText(text) {
+    var t = String(text || "");
+    var band = romanceBandFromText(t);
+    if (band === "explicit_adult") {
+      return "the plot centers on an explicit mature-rated romantic relationship—not all-ages";
+    }
+    if (band === "mature_adult") {
+      if (/college|university|campus|students?/i.test(t)) {
+        return "the plot centers on a mature-rated college romance—not all-ages";
+      }
+      return "the plot centers on a mature-rated romantic relationship—not all-ages";
+    }
+    return "";
+  }
+
+  function topicExplainerTemplate(id, note) {
+    var blob = String(note || "").toLowerCase();
+    if (id === "lgbtq") {
+      var lg = lgbtqExplainerFromText(blob);
+      if (lg) return lg;
+      return "it includes LGBTQ characters or relationships";
+    }
+    if (id === "romance" || id === "adult_romance" || id === "romantic_tension") {
+      var rom = romanceExplainerFromText(note || blob);
+      if (rom) return rom;
+      if (id === "adult_romance") {
+        if (/explicit|sexual|erotic/.test(blob)) {
+          return "the plot centers on an explicit mature-rated romantic relationship—not all-ages";
+        }
+        return "the plot centers on a mature-rated romantic relationship—not all-ages";
+      }
+      if (/explicit|sexual|erotic|college|university|new adult|mature/.test(blob)) {
+        return "the plot centers on a mature-rated romantic relationship—not all-ages";
+      }
+      return "";
+    }
+    if (id === "modesty") return "sexual content or fanservice shows up in catalog or plot text";
+    if (id === "audience" || id === "teen_ya_age") return "it's written for teen or YA—not Halalit's all-ages shelf";
+    if (id === "illegitimacy" || id === "illegitimate_children") {
+      return "the plot centers on a child born out of wedlock";
+    }
+    if (id === "violence" || id === "violence_intense") return "violence or horror is prominent";
+    if (id === "crude_profanity") return "harsh swearing or slurs appear in the story";
+    if (id === "substance") return "alcohol, drugs, or smoking is part of the story";
+    if (id === "deity" || id === "deity_mythology") return "deity or mythology is treated as real in the story";
+    if (id === "format") return "it's comics or manga Halalit hasn't hand-vetted panel-by-panel";
+    if (id === "family_tone" || id === "family_portrayed_negatively") {
+      return "parents or family are portrayed harshly";
+    }
+    if (id === "crime_tone" || id === "romanticized_crime") return "crime or cruelty is romanticized";
+    if (id === "group_demonization") return "it condemns an entire people group";
+    if (id === "pro_colonial_narrative") return "it frames colonial or imperial rule as natural or good";
+    if (id === "cultural_stereotype") return "it relies on shallow or false cultural stereotypes";
+    if (note && note.length <= 180) return lowercaseExplainerStart(cleanAutoRejectExplainer(note));
+    return "";
+  }
+
+  function explainerFromAiTheme(theme, report, hint) {
+    if (!theme || !theme.id || !REJECT_AI_THEME_IDS[theme.id]) return "";
+    if (hint && hint.ownerAiThemeAbsent && hint.ownerAiThemeAbsent[theme.id]) return "";
+    if (themeBriefDeniesIssue(theme.brief)) return "";
+    if (theme.id === "lgbtq" && lgbtqStanceAbsent(report, hint)) return "";
+    if (theme.id === "teen_ya_age") return topicExplainerTemplate("teen_ya_age", theme.brief);
+    var brief = cleanAutoRejectExplainer(theme.brief || "");
+    var lg = lgbtqExplainerFromText(brief);
+    if (lg) return lg;
+    if (theme.id === "adult_romance" || theme.id === "romantic_tension") {
+      var romAi = romanceExplainerFromText(brief);
+      if (romAi) return romAi;
+    }
+    if (brief && !isGenericAutoRejectBrief(brief) && !explainerIsLowValueRejectReason(brief)) {
+      return lowercaseExplainerStart(brief);
+    }
+    return topicExplainerTemplate(theme.id, brief);
+  }
+
+  function explainerFromDimension(row, report, hint) {
+    if (!row) return "";
+    if (themeBriefDeniesIssue(row.note)) return "";
+    if (row.id === "lgbtq" && lgbtqStanceAbsent(report, hint)) return "";
+    if (lgbtqBriefDeniesContent(row.note) && lgbtqStancePresent(report, hint)) return "";
+    var note = stripCjk(row.note || "");
+    var descMatch = note.match(/Description:\s*[“"]([^”"]+)[”"]/i);
+    if (descMatch && descMatch[1]) {
+      var snippet = descMatch[1].trim();
+      if (row.id === "lgbtq") {
+        var lg = lgbtqExplainerFromText(snippet);
+        if (lg) return lg;
+        return lowercaseExplainerStart(snippet);
+      }
+      return lowercaseExplainerStart(snippet);
+    }
+
+    if (row.id === "ai_scan") {
+      var parts = note.split(/\s*;\s*/);
+      for (var p = 0; p < parts.length; p++) {
+        var chunk = parts[p];
+        var dash = chunk.indexOf(" — ");
+        if (dash >= 0) chunk = chunk.slice(dash + 3);
+        chunk = cleanAutoRejectExplainer(chunk.replace(/^[^:]+:\s*/, ""));
+        if (chunk.length < 16 || isGenericAutoRejectBrief(chunk)) continue;
+        if (themeBriefDeniesIssue(chunk) || themeBriefEmbedsLgbtqDenial(chunk)) continue;
+        var lgScan = lgbtqExplainerFromText(chunk);
+        if (lgScan) return lgScan;
+        var romScan = romanceExplainerFromText(chunk);
+        if (romScan) return romScan;
+        return lowercaseExplainerStart(chunk);
+      }
+    }
+
+    if (row.id && String(row.id).indexOf("halalit_bullet_") === 0) {
+      return lowercaseExplainerStart(cleanAutoRejectExplainer(note));
+    }
+
+    if (row.id === "blocklist" || row.id === "policy" || row.id === "hand_check") {
+      var block = cleanAutoRejectExplainer(note);
+      if (block) return lowercaseExplainerStart(block);
+    }
+
+    if (row.id === "lgbtq") {
+      var lgbtq = lgbtqExplainerFromText(note);
+      if (lgbtq) return lgbtq;
+      if (/open library tag/i.test(note)) {
+        return "the Open Library record tags this edition with LGBTQ-related subjects";
+      }
+    }
+
+    return topicExplainerTemplate(row.id, note);
+  }
+
+  function explainerFromCuratedBullet(bullet, report, hint) {
+    var b = cleanAutoRejectExplainer(bullet);
+    if (!b) return "";
+    var policy = explainerFromPolicyDetail(b, report, hint);
+    if (policy) return policy;
+    var lg = lgbtqExplainerFromText(b);
+    if (lg) return lg;
+    var first = b.match(/^[^.!?]+[.!?]?/);
+    if (first && first[0].length >= 20) b = first[0].trim();
+    return lowercaseExplainerStart(b);
+  }
+
+  function isBoilerplateExplainer(text) {
+    return /^(it falls outside|outside halalit.?s family shelf|shelf rules)/i.test(String(text || "").trim());
+  }
+
+  function explainerFromPolicyDetail(detail, report, hint) {
+    var d = String(detail || "").toLowerCase();
+    if (/tags mention lgbtq|lgbtq identity or related themes/.test(d)) {
+      if (lgbtqStanceAbsent(report, hint)) return "";
+      return "catalog tags point to LGBTQ characters or relationships in this edition";
+    }
+    if (/description or notes mention lgbtq|flags lgbtq representation/.test(d)) {
+      if (lgbtqStanceAbsent(report, hint)) return "";
+      return "the catalog description or notes mention LGBTQ themes";
+    }
+    if (/tags mention illegitimacy|born out of wedlock/.test(d)) {
+      return "catalog tags point to an illegitimate-child storyline";
+    }
+    if (/adult romance|mature[- ]rated|college romance|new adult romance|explicit mature/.test(d)) {
+      return romanceExplainerFromText(detail) || "the plot centers on a mature-rated romantic relationship—not all-ages";
+    }
+    if (/romantic tension|romance as the main/.test(d)) {
+      var romPol = romanceExplainerFromText(detail);
+      if (romPol) return romPol;
+      if (/notes mention romantic tension|even when romance isn/i.test(d)) {
+        return "it includes romantic tension or a love triangle in a teen/YA story—not Halalit's all-ages family shelf";
+      }
+    }
+    if (/teen\/ya tags plus romance|teen\/ya tags plus romance/i.test(d)) {
+      return "Open Library tags it as teen/YA with romance—not Halalit's all-ages family shelf";
+    }
+    if (/harsh swearing|slurs|profan/.test(d)) {
+      return "catalog or plot text flags harsh swearing or slurs";
+    }
+    if (/pro[- ]colonial|colonial framing/.test(d)) {
+      return "it carries a pro-colonial or imperial framing";
+    }
+    if (/group demon|condemn an entire/.test(d)) {
+      return "it condemns an entire people group";
+    }
+    if (/teen|young adult|ya fiction/.test(d)) {
+      return "it's tagged or written for teen or YA—not Halalit's all-ages shelf";
+    }
+    if (/fanservice|sexualized|comics, manga/.test(d)) {
+      return "it's comics or manga with content Halalit hasn't hand-vetted panel-by-panel";
+    }
+    return "";
+  }
+
+  function explainerFromReasonText(reason, report, hint) {
+    var r = stripCjk(reason).trim();
+    if (!r) return "";
+    var parts = r.match(/^([^:]+):\s*(.+)$/);
+    if (parts) {
+      var label = parts[1].trim();
+      var note = parts[2].trim();
+      var idByLabel = {
+        "LGBTQ themes": "lgbtq",
+        "Romance or dating": "romance",
+        "Sexual content or fanservice": "modesty",
+        "Age band": "audience",
+        "Illegitimate-children plot": "illegitimacy",
+        "Violence or horror": "violence",
+        "Harsh swearing or slurs": "crude_profanity",
+        "Alcohol, smoking, or drugs": "substance",
+        "Deity or mythology": "deity",
+        "Comics or manga": "format",
+        "Family portrayed harshly": "family_tone",
+        "Crime or cruelty tone": "crime_tone",
+        "Halalit blocklist": "blocklist",
+        "Halalit rule": "policy",
+      };
+      var ex = explainerFromDimension(
+        {
+          id: idByLabel[label] || "",
+          note: note,
+          status: "concern",
+        },
+        report,
+        hint
+      );
+      if (ex && !isBoilerplateExplainer(ex)) return ex;
+    }
+    var policy = explainerFromPolicyDetail(r, report, hint);
+    if (policy) return policy;
+    return explainerFromCuratedBullet(r, report, hint);
+  }
+
+  function vagueExplainerFallback(report, hint) {
+    hint = hint || {};
+    if (report && report.dimensions) {
+      for (var i = 0; i < report.dimensions.length; i++) {
+        var row = report.dimensions[i];
+        if (!row || row.status !== "concern" || row.id === "catalog_silent") continue;
+        var t = explainerFromDimension(row, report, hint);
+        if (t && !isBoilerplateExplainer(t) && !explainerIsLowValueRejectReason(t)) return [t];
+      }
+    }
+    if (hint.detail && !isGraphicUnvettedDetail(hint.detail)) {
+      var policy = explainerFromPolicyDetail(hint.detail, report, hint);
+      if (policy) return [policy];
+      var curated = explainerFromCuratedBullet(hint.detail, report, hint);
+      if (curated && !isBoilerplateExplainer(curated)) return [curated];
+    }
+    if (report && report.external && report.external.catalogHits && report.external.catalogHits.length) {
+      var hit = report.external.catalogHits[0];
+      if (hit && hit.label && hit.tags && hit.tags.length) {
+        return [
+          "the Open Library record flags " +
+            hit.label.toLowerCase() +
+            " (" +
+            hit.tags.slice(0, 3).join(", ") +
+            ")",
+        ];
+      }
+    }
+    return [
+      "catalog and theme clues point to a family-shelf concern, but Halalit doesn't have a specific plot beat on file for this edition yet",
+    ];
+  }
+
+  function explainerAffirmsLgbtq(text) {
+    var t = String(text || "");
+    if (!t || lgbtqBriefDeniesContent(t) || themeBriefDeniesIssue(t)) return false;
+    return textLooksLikeLgbtqWarning(t) || /catalog description or notes mention lgbtq|catalog tags point to lgbtq/i.test(t);
+  }
+
+  function dedupeLgbtqAutoRejectExplainers(explainers, report, hint) {
+    if (!explainers || !explainers.length) return explainers || [];
+    var affirm = [];
+    var deny = [];
+    var other = [];
+    for (var i = 0; i < explainers.length; i++) {
+      var ex = explainers[i];
+      if (lgbtqBriefDeniesContent(ex) || themeBriefEmbedsLgbtqDenial(ex) || /not confirmed on[- ]page|reader speculation or subtext only/i.test(ex)) {
+        deny.push(ex);
+      } else if (explainerAffirmsLgbtq(ex)) {
+        affirm.push(ex);
+      } else {
+        other.push(ex);
+      }
+    }
+    if (affirm.length && deny.length) {
+      if (lgbtqStanceAbsent(report, hint)) {
+        if (other.length) return other.slice(0, 3);
+        if (affirm.length) return affirm.concat(other).slice(0, 3);
+        return [];
+      }
+      return affirm.concat(other).slice(0, 3);
+    }
+    if (lgbtqStanceAbsent(report, hint)) {
+      var kept = other.concat(affirm).filter(function (ex) {
+        return (
+          !lgbtqBriefDeniesContent(ex) &&
+          !themeBriefEmbedsLgbtqDenial(ex) &&
+          !themeBriefDeniesIssue(ex) &&
+          !explainerIsLowValueRejectReason(ex) &&
+          !/not confirmed on[- ]page|reader (?:speculation|projection)|perceived subtext is reader projection/i.test(ex)
+        );
+      });
+      if (kept.length) return kept.slice(0, 3);
+      return [];
+    }
+    if (lgbtqStancePresent(report, hint) && deny.length) {
+      other = other.filter(function (ex) {
+        return !themeBriefEmbedsLgbtqDenial(ex);
+      });
+      return affirm.concat(other).slice(0, 3);
+    }
+    return explainers.slice(0, 3);
+  }
+
+  function policyDetailAutoRejectExplainer(detail, report, hint) {
+    if (!detail) return "";
+    var policy = explainerFromPolicyDetail(detail, report, hint);
+    if (policy) return policy;
+    var curated = explainerFromCuratedBullet(detail, report, hint);
+    if (curated && !isBoilerplateExplainer(curated) && !explainerIsLowValueRejectReason(curated)) return curated;
+    return "";
+  }
+
+  function finalizeAutoRejectExplainers(report, hint, reasons) {
+    hint = hint || {};
+    var explainers = [];
+    var seen = {};
+
+    if (hint.detail && (hint.tier === "flag_review" || (report && report.hintTier === "flag_review"))) {
+      var policyEx = policyDetailAutoRejectExplainer(hint.detail, report, hint);
+      if (policyEx) {
+        explainers.push(policyEx);
+        seen[policyEx.toLowerCase()] = true;
+      }
+    }
+
+    if (reasons && reasons.length) {
+      for (var r = 0; r < reasons.length && explainers.length < 3; r++) {
+        var ex = explainerFromReasonText(reasons[r], report, hint);
+        if (!ex || isBoilerplateExplainer(ex) || themeBriefDeniesIssue(ex) || explainerIsLowValueRejectReason(ex)) continue;
+        if (lgbtqStancePresent(report, hint) && themeBriefEmbedsLgbtqDenial(ex)) continue;
+        var key = ex.toLowerCase();
+        if (seen[key]) continue;
+        seen[key] = true;
+        explainers.push(ex);
+      }
+    }
+    if (!explainers.length) explainers = collectAutoRejectExplainers(report, hint);
+    if (!explainers.length) explainers = vagueExplainerFallback(report, hint);
+    explainers = prioritizeAutoRejectExplainers(explainers.slice(0, 6), report, hint);
+    return dedupeLgbtqAutoRejectExplainers(explainers.slice(0, 3), report, hint);
+  }
+
+  function collectAutoRejectExplainers(report, hint) {
+    hint = hint || {};
+    var explainers = [];
+    var seen = {};
+    var tier = hint.tier || (report && (report.hintTier || report.tier)) || "";
+
+    function add(text) {
+      var e = cleanAutoRejectExplainer(text);
+      if (!e || explainerIsLowValueRejectReason(e) || themeBriefDeniesIssue(e)) return;
+      if (lgbtqStancePresent(report, hint) && themeBriefEmbedsLgbtqDenial(e)) return;
+      if (lgbtqBriefDeniesContent(e) && lgbtqStancePresent(report, hint)) return;
+      if (textLooksLikeLgbtqWarning(e) && lgbtqStanceAbsent(report, hint)) return;
+      var key = e.toLowerCase();
+      if (seen[key]) return;
+      seen[key] = true;
+      explainers.push(lowercaseExplainerStart(e));
+    }
+
+    if (report && report.mode === "curated" && report.parsedNote && report.parsedNote.bullets.length) {
+      for (var b = 0; b < report.parsedNote.bullets.length && explainers.length < 3; b++) {
+        add(explainerFromCuratedBullet(report.parsedNote.bullets[b], report, hint));
+      }
+    }
+
+    if (tier === "flag_review" && hint.detail && !isGraphicUnvettedDetail(hint.detail)) {
+      if (!hintDetailIsLgbtqPolicy(hint.detail) || !lgbtqStanceAbsent(report, hint)) {
+        add(explainerFromCuratedBullet(hint.detail, report, hint));
+      }
+    }
+
+    if (report && report.dimensions) {
+      for (var i = 0; i < report.dimensions.length && explainers.length < 3; i++) {
+        var row = report.dimensions[i];
+        if (!row || row.status !== "concern") continue;
+        if (row.id === "catalog_silent") continue;
+        add(explainerFromDimension(row, report, hint));
+      }
+    }
+
+    if (report && report.aiThemes && report.aiThemes.length) {
+      for (var a = 0; a < report.aiThemes.length && explainers.length < 3; a++) {
+        add(explainerFromAiTheme(report.aiThemes[a], report, hint));
+      }
+    }
+
+    if (report && report.dimensions && explainers.length < 3) {
+      for (var c = 0; c < report.dimensions.length && explainers.length < 3; c++) {
+        var caution = report.dimensions[c];
+        if (!caution || caution.status !== "caution" || caution.id !== "ai_scan") continue;
+        add(explainerFromDimension(caution, report, hint));
+      }
+    }
+
+    if (report && report.external && report.external.wikipediaHits && explainers.length < 3) {
+      for (var w = 0; w < report.external.wikipediaHits.length && explainers.length < 3; w++) {
+        var wh = report.external.wikipediaHits[w];
+        if (!wh || !wh.snippet) continue;
+        if (lgbtqStanceAbsent(report, hint) && (wh.id === "lgbtq" || textLooksLikeLgbtqWarning(wh.label + " " + wh.snippet))) {
+          continue;
+        }
+        if (wh.id === "lgbtq" || /lgbtq|gay|lesbian|queer|same[- ]sex/i.test(wh.label + " " + wh.snippet)) {
+          var lgWiki = lgbtqExplainerFromText(wh.snippet);
+          add(lgWiki || lowercaseExplainerStart(wh.snippet));
+        }
+      }
+    }
+
+    if (report && report.external && report.external.catalogHits && explainers.length < 3) {
+      for (var ch = 0; ch < report.external.catalogHits.length && explainers.length < 3; ch++) {
+        var catHit = report.external.catalogHits[ch];
+        if (!catHit || !catHit.tags || !catHit.tags.length) continue;
+        if (lgbtqStanceAbsent(report, hint)) continue;
+        if (catHit.id === "lgbtq" || /lgbtq/i.test(catHit.label || "")) {
+          add(
+            "the Open Library record tags this edition with LGBTQ-related subjects (" +
+              catHit.tags.slice(0, 3).join(", ") +
+              ")"
+          );
+        }
+      }
+    }
+
+    if (!explainers.length && report && report.descriptionExcerpt) {
+      if (!lgbtqStanceAbsent(report, hint)) {
+        var lgDesc = lgbtqExplainerFromText(report.descriptionExcerpt);
+        if (lgDesc) add(lgDesc);
+        else if (!lgbtqBriefDeniesContent(report.descriptionExcerpt)) add(report.descriptionExcerpt);
+      }
+    }
+
+    return explainers.slice(0, 3);
+  }
+
   /**
-   * @returns {{ status: 'hand_clean'|'reject'|'clear', reasons: string[] }}
+   * @returns {{ status: 'hand_clean'|'reject'|'clear', reasons: string[], explainers: string[] }}
    */
   function autoRejectionSummary(report, hint) {
     hint = hint || {};
@@ -799,11 +1691,11 @@
     }
 
     if (reportTierIsHandClean(report, hint)) {
-      return { status: "hand_clean", reasons: [] };
+      return { status: "hand_clean", reasons: [], explainers: [] };
     }
 
     if (tier === "user_discretion") {
-      return { status: "clear", reasons: [] };
+      return { status: "clear", reasons: [], explainers: [] };
     }
 
     if (report && report.mode === "curated" && (tier === "flag_review" || tier === "teen_caution")) {
@@ -812,17 +1704,27 @@
       } else if (report.parsedNote && report.parsedNote.heading) {
         push(report.parsedNote.heading);
       }
-      if (reasons.length) return { status: "reject", reasons: reasons };
+      if (reasons.length) {
+        return {
+          status: "reject",
+          reasons: reasons,
+          explainers: finalizeAutoRejectExplainers(report, hint, reasons),
+        };
+      }
     }
 
     if (tier === "flag_review" && hint.detail && !isGraphicUnvettedDetail(hint.detail)) {
-      push(hint.detail);
+      if (!hintDetailIsLgbtqPolicy(hint.detail) || !lgbtqStanceAbsent(report, hint)) {
+        push(hint.detail);
+      }
     }
 
     if (report && report.dimensions) {
       for (var i = 0; i < report.dimensions.length; i++) {
         var row = report.dimensions[i];
         if (!row || row.status !== "concern") continue;
+        if (row.id === "lgbtq" && lgbtqStanceAbsent(report, hint)) continue;
+        if (row.id === "policy" && hintDetailIsLgbtqPolicy(row.note) && lgbtqStanceAbsent(report, hint)) continue;
         if (row.id === "catalog_silent" || row.id === "blocklist") {
           push(row.note);
           continue;
@@ -831,25 +1733,64 @@
       }
     }
 
-    if (reasons.length) return { status: "reject", reasons: reasons };
-    return { status: "clear", reasons: [] };
+    if (reasons.length) {
+      return {
+        status: "reject",
+        reasons: reasons,
+        explainers: finalizeAutoRejectExplainers(report, hint, reasons),
+      };
+    }
+    return { status: "clear", reasons: [], explainers: [] };
+  }
+
+  function autoRejectBookPhrase(report) {
+    var title = stripCjk(report && report.title) || "this book";
+    var author = stripCjk(report && report.author) || "";
+    var quoted = "'" + title + "'";
+    if (author) return author + "'s " + quoted;
+    return quoted;
+  }
+
+  function hasAutoReject(report, hint) {
+    return autoRejectionSummary(report, hint).status === "reject";
+  }
+
+  function autoRejectLeadLabel(report, hint) {
+    hint = hint || {};
+    if (hint.agentFlag || (report && report.agentFlag)) {
+      return "Halalit flagged (not hand-read):";
+    }
+    return "Automatic rejection:";
   }
 
   function renderAutoRejectionHtml(report, hint) {
     hint = hint || {};
     if (!report) return "";
-    if (reportIsHandSettled(report, hint)) return "";
+    if (reportTierIsHandClean(report, hint)) return renderUnvettedGraphicNote(report);
     var ar = autoRejectionSummary(report, hint);
     if (ar.status !== "reject") return renderUnvettedGraphicNote(report);
 
+    var explainers = finalizeAutoRejectExplainers(report, hint, ar.reasons || []);
+
     var html = '<div class="bookcheck-auto-reject">';
-    html += '<p class="bookcheck-auto-reject-title"><strong>Automatic hard rejection</strong></p><ul>';
-    html += "<li>Halalit’s firm rules—not softened; preview won’t turn this into a pass:</li>";
-    for (var r = 0; r < ar.reasons.length && r < 6; r++) {
-      html += "<li>" + escapeHtml(ar.reasons[r]) + "</li>";
+    html +=
+      '<p class="bookcheck-auto-reject-lead"><strong>' +
+      escapeHtml(autoRejectLeadLabel(report, hint)) +
+      "</strong> " +
+      escapeHtml(autoRejectBookPhrase(report)) +
+      " is not recommended by Halalit because:</p>";
+    if (explainers.length === 1) {
+      html +=
+        '<p class="bookcheck-auto-reject-detail">' + escapeHtml(explainers[0]) + ".</p>";
+    } else {
+      html += '<ul class="bookcheck-auto-reject-detail">';
+      for (var e = 0; e < explainers.length && e < 3; e++) {
+        html += "<li>" + escapeHtml(explainers[e]) + "</li>";
+      }
+      html += "</ul>";
     }
-    html += "</ul></div>";
-    return html + renderUnvettedGraphicNote(report);
+    html += "</div>";
+    return html;
   }
 
   function renderExternalEvidenceHtml(ext) {
@@ -914,36 +1855,42 @@
 
   function filterReportForPrefs(report) {
     var Prefs = global.HalalitBookcheckPrefs;
-    if (!Prefs || !report) return report;
-    var r = report;
+    if (!report) return report;
+    var hint = {
+      tier: report.hintTier || report.tier,
+      detail: report.hintDetail || "",
+      agentFlag: !!report.agentFlag,
+    };
+    var r = applyLgbtqStanceFilters(report, hint);
+    if (!Prefs) return r;
     if (r.parsedNote && r.parsedNote.bullets && r.parsedNote.bullets.length) {
-      r = Object.assign({}, report);
-      r.parsedNote = Object.assign({}, report.parsedNote);
-      r.parsedNote.bullets = report.parsedNote.bullets.filter(function (b) {
+      r = Object.assign({}, r);
+      r.parsedNote = Object.assign({}, r.parsedNote);
+      r.parsedNote.bullets = r.parsedNote.bullets.filter(function (b) {
         return !Prefs.shouldHideComfortText(b);
       });
     }
-    if (report.dimensions && report.dimensions.length) {
-      if (r === report) r = Object.assign({}, report);
-      r.dimensions = report.dimensions.filter(function (d) {
+    if (r.dimensions && r.dimensions.length) {
+      r = Object.assign({}, r);
+      r.dimensions = r.dimensions.filter(function (d) {
         return !Prefs.shouldHideScanRow(d);
       });
     }
-    if (report.external) {
-      if (r === report) r = Object.assign({}, report);
-      r.external = Object.assign({}, report.external);
-      if (report.external.catalogHits && report.external.catalogHits.length) {
-        r.external.catalogHits = report.external.catalogHits.filter(function (h) {
+    if (r.external) {
+      r = Object.assign({}, r);
+      r.external = Object.assign({}, r.external);
+      if (r.external.catalogHits && r.external.catalogHits.length) {
+        r.external.catalogHits = r.external.catalogHits.filter(function (h) {
           return !Prefs.shouldHideThemeHit(h);
         });
       }
-      if (report.external.wikipediaHits && report.external.wikipediaHits.length) {
-        r.external.wikipediaHits = report.external.wikipediaHits.filter(function (h) {
+      if (r.external.wikipediaHits && r.external.wikipediaHits.length) {
+        r.external.wikipediaHits = r.external.wikipediaHits.filter(function (h) {
           return !Prefs.shouldHideThemeHit(h);
         });
       }
-      if (report.external.wikidataHits && report.external.wikidataHits.length) {
-        r.external.wikidataHits = report.external.wikidataHits.filter(function (h) {
+      if (r.external.wikidataHits && r.external.wikidataHits.length) {
+        r.external.wikidataHits = r.external.wikidataHits.filter(function (h) {
           return !Prefs.shouldHideThemeHit(h);
         });
       }
@@ -963,15 +1910,22 @@
     opts = opts || {};
     report = filterReportForPrefs(report);
     var html = "";
-    var hint = { tier: report.hintTier || report.tier, detail: report.hintDetail || "" };
+    var hint = {
+      tier: report.hintTier || report.tier,
+      detail: report.hintDetail || "",
+      agentFlag: !!report.agentFlag,
+    };
+    var slim = shouldSlimCatalogReport(report, hint, opts);
+    var autoReject = hasAutoReject(report, hint);
 
     html += renderAutoRejectionHtml(report, hint);
+    if (autoReject) return html;
 
-    if (report.summary) {
+    if (report.summary && !slim) {
       html += '<p class="bookcheck-report-summary">' + escapeHtml(stripCjk(report.summary)) + "</p>";
     }
 
-    if (report.familyAction) {
+    if (report.familyAction && !slim && !autoReject) {
       html +=
         '<p class="bookcheck-action"><strong>What to do:</strong> ' +
         escapeHtml(stripCjk(report.familyAction)) +
@@ -984,14 +1938,41 @@
     if (report.mode !== "curated" && report.dimensions && report.dimensions.length) {
       for (var cr = 0; cr < report.dimensions.length; cr++) {
         var crow = report.dimensions[cr];
-        if (crow && (crow.status === "concern" || crow.status === "caution")) concernRows.push(crow);
+        if (!crow || (crow.status !== "concern" && crow.status !== "caution")) continue;
+        if (crow.id === "catalog_silent" || crow.status === "unknown") continue;
+        if (themeBriefDeniesIssue(crow.note) || scanNoteHidesLgbtqDenial(crow.note, report, hint)) continue;
+        if (crow.id === "ai_scan" && opts.vetSource === "ai_themes") continue;
+        concernRows.push(crow);
       }
+    }
+
+    var plotExtras =
+      (report.mode === "curated" &&
+        report.parsedNote &&
+        report.parsedNote.bullets.length) ||
+      concernRows.length ||
+      report.aiSeriesNote ||
+      (report.external &&
+        ((report.external.wikipediaHits && report.external.wikipediaHits.length) ||
+          (report.external.wikipedia && report.external.wikipedia.plot)));
+
+    if (!plotExtras) {
+      if (report.descriptionExcerpt) {
+        var descOnly = stripCjk(report.descriptionExcerpt);
+        if (descOnly.length >= 24) {
+          html +=
+            '<blockquote class="bookcheck-catalog-desc"><strong>Catalog blurb:</strong> ' +
+            escapeHtml(descOnly.length > 220 ? descOnly.slice(0, 217) + "…" : descOnly) +
+            "</blockquote>";
+        }
+      }
+      return html;
     }
 
     html += '<div class="bookcheck-halalit-note">';
     html += '<p class="bookcheck-halalit-note-title">Plot &amp; themes</p><ul>';
 
-    if (report.mode === "curated" && report.parsedNote && report.parsedNote.bullets.length) {
+    if (!autoReject && report.mode === "curated" && report.parsedNote && report.parsedNote.bullets.length) {
       for (var b = 0; b < report.parsedNote.bullets.length; b++) {
         var bullet = stripCjk(report.parsedNote.bullets[b]);
         if (!bullet) continue;
@@ -1062,37 +2043,45 @@
     return html;
   }
 
+  function shouldSlimCatalogReport(report, hint, opts) {
+    if (!opts || !opts.experienced) return false;
+    if (!report || report.mode !== "catalog") return false;
+    return !reportIsHandSettled(report, hint);
+  }
+
   function renderBookcheckReportHtml(report, opts) {
     if (!report) return "";
     opts = opts || {};
     if (opts.compact) return renderBookcheckReportHtmlCompact(report, opts);
     report = filterReportForPrefs(report);
     var html = "";
+    var hint = {
+      tier: report.hintTier || report.tier,
+      detail: report.hintDetail || "",
+      agentFlag: !!report.agentFlag,
+    };
+    var slim = shouldSlimCatalogReport(report, hint, opts);
+    var autoReject = hasAutoReject(report, hint);
 
-    if (report.bookLead) {
+    if (report.bookLead && !slim && !autoReject) {
       html += '<p class="bookcheck-book-lead">' + escapeHtml(stripCjk(report.bookLead)) + "</p>";
     }
 
-    if (report.familyAction) {
+    if (report.familyAction && !slim && !autoReject) {
       html +=
         '<p class="bookcheck-action"><strong>What to do:</strong> ' + escapeHtml(report.familyAction) + "</p>";
     }
 
-    html += renderAutoRejectionHtml(report, {
-      tier: report.hintTier || report.tier,
-      detail: report.hintDetail || "",
-    });
+    html += renderAutoRejectionHtml(report, hint);
+    if (autoReject) return html;
 
-    html += renderYouDecideLineHtml(report, {
-      tier: report.hintTier || report.tier,
-      detail: report.hintDetail || "",
-    }, opts);
+    html += renderYouDecideLineHtml(report, hint, opts);
 
-    if (report.summary) {
+    if (report.summary && !slim && !autoReject) {
       html += '<p class="bookcheck-report-summary">' + escapeHtml(report.summary) + "</p>";
     }
 
-    if (report.mode === "curated" && report.parsedNote && report.parsedNote.bullets.length) {
+    if (!autoReject && report.mode === "curated" && report.parsedNote && report.parsedNote.bullets.length) {
       html += '<div class="bookcheck-halalit-note">';
       html += '<p class="bookcheck-halalit-note-title">' + escapeHtml(report.parsedNote.heading) + "</p>";
       html += "<ul>";
@@ -1109,7 +2098,7 @@
       html += "</div>";
     }
 
-    if (report.dimensions && report.dimensions.length) {
+    if (!autoReject && report.dimensions && report.dimensions.length) {
       var scanTitle =
         report.mode === "curated" ? "Also from the catalog record" : "What we found for this book";
       html += '<div class="bookcheck-scan-wrap"><p class="bookcheck-scan-title">' + escapeHtml(scanTitle) + "</p>";
@@ -1118,6 +2107,9 @@
         var d = report.dimensions[i];
         if (report.mode === "curated" && (d.id === "hand_check" || (d.id && String(d.id).indexOf("halalit_bullet_") === 0)))
           continue;
+        if (d.id === "catalog_silent" || d.status === "unknown") continue;
+        if (d.id === "ai_scan" && opts.vetSource === "ai_themes") continue;
+        if (themeBriefDeniesIssue(d.note) || scanNoteHidesLgbtqDenial(d.note, report, hint)) continue;
         html +=
           '<li class="bookcheck-scan-row bookcheck-scan-row--' +
           escapeHtml(d.status) +
@@ -1132,7 +2124,7 @@
       html += "</ul></div>";
     }
 
-    if (report.descriptionExcerpt) {
+    if (!autoReject && report.descriptionExcerpt) {
       var desc = stripCjk(report.descriptionExcerpt);
       if (desc.length >= 24) {
         html +=
@@ -1142,14 +2134,14 @@
       }
     }
 
-    if (report.relevantSubjects && report.relevantSubjects.length) {
+    if (!autoReject && report.relevantSubjects && report.relevantSubjects.length) {
       html +=
         '<p class="bookcheck-subjects"><strong>Tags on this edition:</strong> ' +
         escapeHtml(report.relevantSubjects.join(" · ")) +
         "</p>";
     }
 
-    if (report.gaps && report.gaps.length) {
+    if (!autoReject && report.gaps && report.gaps.length && !slim) {
       html += '<div class="bookcheck-gaps"><p class="bookcheck-gaps-title"><strong>For “' + escapeHtml(report.title) + "” specifically, catalogs miss</strong></p><ul>";
       for (var g = 0; g < report.gaps.length; g++) {
         html += "<li>" + escapeHtml(report.gaps[g]) + "</li>";
@@ -1157,13 +2149,17 @@
       html += "</ul></div>";
     }
 
-    html += renderExternalEvidenceHtml(report.external);
+    if (!autoReject && !slim) {
+      html += renderExternalEvidenceHtml(report.external);
+    }
 
-    html +=
-      '<p class="bookcheck-sources muted">Sources: ' +
-      escapeHtml(report.sourcesUsed) +
-      (report.firstPublishYear ? " · first published " + report.firstPublishYear : "") +
-      ". No Goodreads scraping.</p>";
+    if (!autoReject && !slim) {
+      html +=
+        '<p class="bookcheck-sources muted">Sources: ' +
+        escapeHtml(report.sourcesUsed) +
+        (report.firstPublishYear ? " · first published " + report.firstPublishYear : "") +
+        ". No Goodreads scraping.</p>";
+    }
     return html;
   }
 
@@ -1172,9 +2168,11 @@
     youDecideLine: YOU_DECIDE_LINE,
     shouldShowYouDecideLine: shouldShowYouDecideLine,
     autoRejectionSummary: autoRejectionSummary,
+    hasAutoReject: hasAutoReject,
     renderAutoRejectionHtml: renderAutoRejectionHtml,
     renderYouDecideLineHtml: renderYouDecideLineHtml,
     renderHtml: renderBookcheckReportHtml,
     renderHtmlCompact: renderBookcheckReportHtmlCompact,
+    themeBriefDeniesIssue: themeBriefDeniesIssue,
   };
 })(typeof window !== "undefined" ? window : this);

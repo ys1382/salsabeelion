@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Owner’s Office — LoreKeeper</title>
-  <link rel="stylesheet" href="./lk-shared.css?v=1" />
+  <link rel="stylesheet" href="./lk-shared.css?v=14" />
   <script src="./lk-auth-gate.js"></script>
 </head>
 <body>
@@ -18,6 +18,68 @@
       <div class="stats" id="statsRow" aria-label="Summary counts"></div>
 
       <details class="office-section" open>
+        <summary><span class="office-section__title"><strong>Phase 0 — Ask quality playbook</strong></span></summary>
+        <div class="office-section__body" id="phase0ChecklistMount">
+          <p class="muted">Follow this over ~2 weeks. Check each box when verified. Progress saves to your account only. Repo reference: <code>LOREKEEPER-ASK-QUALITY-PLAYBOOK.md</code>.</p>
+          <p class="lk-tier-a-progress" id="phase0ChecklistProgress" aria-live="polite">0 / 12 checked</p>
+          <p class="lk-tier-a-two-week" id="phase0TwoWeekStatus" aria-live="polite">Two-week run not started.</p>
+          <button type="button" class="lk-btn secondary lk-tier-a-start" id="phase0StartTwoWeekBtn">Start 2-week tracking</button>
+
+          <h3 class="lk-tier-a-heading">Storage</h3>
+          <div class="lk-tier-a-checks" id="phase0StorageChecks"></div>
+
+          <h3 class="lk-tier-a-heading">Ask LoreKeeper habits</h3>
+          <div class="lk-tier-a-checks" id="phase0AskChecks"></div>
+
+          <details class="lk-playbook-details">
+            <summary>Question cheat sheet</summary>
+            <div id="phase0CheatSheet"></div>
+          </details>
+
+          <details class="lk-playbook-details">
+            <summary>Note structure (helps summaries find your material)</summary>
+            <div id="phase0NoteGuide"></div>
+          </details>
+
+          <button type="button" class="lk-btn secondary lk-tier-a-reset" id="phase0ResetBtn">Reset checkboxes</button>
+          <p class="lk-status" id="phase0ChecklistStatus" hidden aria-live="polite"></p>
+        </div>
+      </details>
+
+      <details class="office-section">
+        <summary><span class="office-section__title"><strong>Phase 2 — Corrections loop</strong></span></summary>
+        <div class="office-section__body">
+          <ol class="lk-playbook-steps muted">
+            <li>On home or doc Ask, click <strong>It got this wrong</strong> — one sentence on what failed.</li>
+            <li>Review the list below before a Cursor session.</li>
+            <li>Tell Cursor: <em>Fix Ask from Owner’s Office corrections</em>.</li>
+            <li>Hard refresh → re-ask the same question on home or doc Ask to confirm the fix.</li>
+          </ol>
+          <button type="button" class="lk-btn secondary" id="phase2CopyCorrectionsBtn">Copy corrections for Cursor</button>
+          <p class="lk-status" id="phase2CopyStatus" hidden aria-live="polite"></p>
+        </div>
+      </details>
+
+      <details class="office-section">
+        <summary><span class="office-section__title"><strong>Phase 1 — Ask regression export</strong></span></summary>
+        <div class="office-section__body">
+          <p class="muted">Download correction stubs for automated tests (#33). Stubs have no corpus — add synthetic entries in the repo before enabling each case.</p>
+          <p class="muted" id="phase1RegressionMeta">Active test cases in repo: — · Your corrections: —</p>
+          <button type="button" class="lk-btn secondary" id="phase1ExportBtn">Download regression stubs</button>
+          <p class="lk-status" id="phase1ExportStatus" hidden aria-live="polite"></p>
+        </div>
+      </details>
+
+      <details class="office-section">
+        <summary><span class="office-section__title"><strong>Storage meta</strong></span></summary>
+        <div class="office-section__body" id="storageMetaMount">
+          <p class="muted">Counts and ages only — never note or document text.</p>
+          <dl class="lk-storage-meta" id="storageMetaList"></dl>
+          <p class="muted" id="storageMetaReminder"></p>
+        </div>
+      </details>
+
+      <details class="office-section" open>
         <summary><span class="office-section__title"><strong>Writer accounts</strong></span></summary>
         <div class="office-section__body">
           <p class="muted">Emails and join dates only. Passwords and note text are never shown here.</p>
@@ -28,11 +90,32 @@
         </div>
       </details>
 
+      <details class="office-section" open>
+        <summary><span class="office-section__title"><strong>Ask recall corrections</strong></span></summary>
+        <div class="office-section__body">
+          <p class="muted">Your notes when Ask got something wrong — for you only, on this site.</p>
+          <div id="askRecallCorrectionsList"></div>
+        </div>
+      </details>
+
       <details class="office-section">
         <summary><span class="office-section__title"><strong>Private feedback</strong></span></summary>
         <div class="office-section__body">
           <p class="muted">One-way tips from signed-in writers — not a public wall.</p>
           <div id="readerMessagesList"></div>
+        </div>
+      </details>
+
+      <details class="office-section">
+        <summary><span class="office-section__title"><strong>Public launch (#25)</strong></span></summary>
+        <div class="office-section__body">
+          <p class="muted">Nginx owner gate removal is manual — see <code>lorekeeper/PUBLIC-LAUNCH.md</code> in the repo. Turn <strong>New sign-ups</strong> on when you are ready.</p>
+          <ul class="lk-launch-checklist muted">
+            <li>Phase 0 Tier A checked</li>
+            <li>Ask feels trustworthy on your usual questions</li>
+            <li>Backups + account delete tested</li>
+            <li>Then edit nginx and reload</li>
+          </ul>
         </div>
       </details>
 
@@ -51,10 +134,61 @@
     </div>
   </div>
   <script src="./lk-api-config.js?v=3"></script>
-  <script src="./lk-account-storage.js?v=3"></script>
-  <script src="./lk-auth.js?v=3"></script>
+  <script src="./lk-account-storage.js?v=14"></script>
+  <script src="./lk-auth.js?v=4"></script>
+  <script src="./lk-tier-a-checklist.js?v=12"></script>
   <script>
     (function () {
+      function fmtDateTime(ts) {
+        if (!ts) return "—";
+        try {
+          return new Date(ts * 1000).toLocaleString(undefined, {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+            hour: "numeric",
+            minute: "2-digit",
+          });
+        } catch (e) {
+          return "—";
+        }
+      }
+
+      function fmtBytes(n) {
+        if (n == null || isNaN(n)) return "—";
+        if (n < 1024) return n + " B";
+        if (n < 1024 * 1024) return (n / 1024).toFixed(1) + " KB";
+        return (n / (1024 * 1024)).toFixed(1) + " MB";
+      }
+
+      function renderStorageMeta(meta) {
+        var dl = document.getElementById("storageMetaList");
+        var reminder = document.getElementById("storageMetaReminder");
+        if (!dl) return;
+        dl.innerHTML = "";
+        if (!meta) {
+          dl.innerHTML = "<p class='muted'>No storage meta yet.</p>";
+          return;
+        }
+        var rows = [
+          ["Store file", meta.storeExists ? "present" : "missing"],
+          ["Last modified", fmtDateTime(meta.storeModifiedAt)],
+          ["Store size", fmtBytes(meta.storeSizeBytes)],
+          ["Last VPS backup", fmtDateTime(meta.lastBackupAt)],
+          ["Backup count", meta.backupCount != null ? String(meta.backupCount) : "—"],
+          ["Backup folder", meta.backupDir || "—"],
+        ];
+        rows.forEach(function (pair) {
+          var dt = document.createElement("dt");
+          dt.textContent = pair[0];
+          var dd = document.createElement("dd");
+          dd.textContent = pair[1];
+          dl.appendChild(dt);
+          dl.appendChild(dd);
+        });
+        if (reminder) reminder.textContent = meta.exportReminder || "";
+      }
+
       function fmtDate(ts) {
         if (!ts) return "—";
         try {
@@ -74,11 +208,66 @@
         [
           ["Writer accounts", stats.writerAccounts || 0],
           ["Private messages", stats.readerMessages || 0],
+          ["Ask corrections", stats.askRecallCorrections || 0],
         ].forEach(function (pair) {
           var div = document.createElement("div");
           div.className = "stat";
           div.innerHTML = "<strong>" + pair[1] + "</strong><span>" + pair[0] + "</span>";
           row.appendChild(div);
+        });
+      }
+
+      function escapeHtml(s) {
+        return String(s || "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
+
+      function scopeLabel(meta) {
+        if (!meta || !meta.scope) return "";
+        var s = meta.scope;
+        if (s.mode === "document") return " · this document";
+        if (s.workTitle) return " · work: " + s.workTitle;
+        return "";
+      }
+
+      var askCorrectionsCache = [];
+
+      function renderAskRecallCorrections(list) {
+        askCorrectionsCache = list || [];
+        var root = document.getElementById("askRecallCorrectionsList");
+        root.innerHTML = "";
+        if (!list || !list.length) {
+          root.textContent = "No corrections saved yet.";
+          return;
+        }
+        list.slice().reverse().forEach(function (row) {
+          var meta = row.meta && typeof row.meta === "object" ? row.meta : {};
+          var div = document.createElement("article");
+          div.className = "lk-ask-correction-card";
+          var page = meta.page === "doc" ? "document editor" : "home";
+          div.innerHTML =
+            '<p class="lk-ask-correction-card__meta">' +
+            escapeHtml(fmtDate(row.createdAt)) +
+            " · " +
+            escapeHtml(page) +
+            escapeHtml(scopeLabel(meta)) +
+            "</p>" +
+            '<p class="lk-ask-correction-card__label">Question</p>' +
+            '<blockquote class="lk-ask-correction-card__quote">' +
+            escapeHtml(meta.question || "—") +
+            "</blockquote>" +
+            '<p class="lk-ask-correction-card__label">LoreKeeper said</p>' +
+            '<blockquote class="lk-ask-correction-card__quote lk-ask-correction-card__quote--answer">' +
+            escapeHtml(meta.answer || "—") +
+            "</blockquote>" +
+            '<p class="lk-ask-correction-card__label">Your note</p>' +
+            '<blockquote class="lk-ask-correction-card__quote lk-ask-correction-card__quote--note">' +
+            escapeHtml(row.message || "—") +
+            "</blockquote>";
+          root.appendChild(div);
         });
       }
 
@@ -105,8 +294,19 @@
       function loadOffice() {
         LoreKeeperAuth.loadOwnerOffice().then(function (res) {
           if (!res || !res.ok) return;
-          renderStats(res.stats || {});
-          renderReaderMessages(res.readerMessages || []);
+          var allFeedback = res.readerMessages || [];
+          var askCorrections = allFeedback.filter(function (row) {
+            return row.source === "ask_recall_wrong";
+          });
+          var writerTips = allFeedback.filter(function (row) {
+            return row.source !== "ask_recall_wrong";
+          });
+          var stats = res.stats || {};
+          stats.askRecallCorrections = askCorrections.length;
+          renderStats(stats);
+          renderStorageMeta(res.storageMeta);
+          renderAskRecallCorrections(askCorrections);
+          renderReaderMessages(writerTips);
           var acc = document.getElementById("accountsList");
           acc.innerHTML = "";
           (res.accounts || []).forEach(function (row) {
@@ -134,6 +334,73 @@
         });
       });
 
+      function loadPhase1Meta() {
+        LoreKeeperAuth.loadOwnerAskRegressionExport().then(function (res) {
+          var el = document.getElementById("phase1RegressionMeta");
+          if (!el || !res || !res.ok) return;
+          el.textContent =
+            "Active test cases in repo: " +
+            (res.activeCaseCount || 0) +
+            " · Your corrections: " +
+            (res.correctionCount || 0);
+        });
+      }
+
+      document.getElementById("phase2CopyCorrectionsBtn").addEventListener("click", function () {
+        var st = document.getElementById("phase2CopyStatus");
+        if (!askCorrectionsCache.length) {
+          st.textContent = "No corrections yet — use It got this wrong on a bad answer first.";
+          st.className = "lk-status";
+          st.hidden = false;
+          return;
+        }
+        var lines = ["Fix Ask from Owner's Office corrections", ""];
+        askCorrectionsCache.slice(0, 12).forEach(function (row, i) {
+          var meta = row.meta && typeof row.meta === "object" ? row.meta : {};
+          lines.push((i + 1) + ". Question: " + (meta.question || "—"));
+          lines.push("   LoreKeeper said: " + String(meta.answer || "—").slice(0, 400));
+          lines.push("   Owner note: " + (row.message || "—"));
+          lines.push("");
+        });
+        var text = lines.join("\n");
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(function () {
+            st.textContent = "Copied — paste into Cursor.";
+            st.className = "lk-status ok";
+            st.hidden = false;
+          });
+        } else {
+          st.textContent = text.slice(0, 500) + "…";
+          st.className = "lk-status";
+          st.hidden = false;
+        }
+      });
+
+      document.getElementById("phase1ExportBtn").addEventListener("click", function () {
+        var st = document.getElementById("phase1ExportStatus");
+        LoreKeeperAuth.loadOwnerAskRegressionExport().then(function (res) {
+          if (!res || !res.ok) {
+            st.textContent = "Could not export.";
+            st.className = "lk-status";
+            st.hidden = false;
+            return;
+          }
+          var payload = {
+            description: res.hint || "",
+            cases: res.stubs || [],
+          };
+          var blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+          var a = document.createElement("a");
+          a.href = URL.createObjectURL(blob);
+          a.download = "ask-regression-stubs.json";
+          a.click();
+          URL.revokeObjectURL(a.href);
+          st.textContent = "Downloaded — merge stubs into ask_regression_cases.json with synthetic entries.";
+          st.className = "lk-status ok";
+          st.hidden = false;
+        });
+      });
+
       LoreKeeperAccountStorage.ready.then(function () {
         if (!LoreKeeperAccountStorage.isSignedIn() || !LoreKeeperAccountStorage.isOwner()) {
           document.getElementById("denied").hidden = false;
@@ -144,6 +411,10 @@
         }
         document.getElementById("office").hidden = false;
         loadOffice();
+        loadPhase1Meta();
+        if (LoreKeeperTierA && LoreKeeperTierA.initPhase0Office) {
+          LoreKeeperTierA.initPhase0Office();
+        }
       });
     })();
   </script>

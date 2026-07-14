@@ -1,19 +1,219 @@
 // ─────────────────────────────────────────────────────────────────────────────
 //  Web Audio engine  (chiptune music + SFX, no external files)
 // ─────────────────────────────────────────────────────────────────────────────
-const Audio = (() => {
+const moAudioActivity = { canvasVisible: true };
+
+function moPageCanPlayAudio() {
+  if (document.hidden || document.visibilityState === 'hidden') return false;
+  if (typeof document.hasFocus === 'function' && !document.hasFocus()) return false;
+  if (!moAudioActivity.canvasVisible) return false;
+  return true;
+}
+
+const MoWebAudio = (() => {
   let ctx = null;
   let masterGain = null;
+  let sfxGain = null;
   let musicTimeout = null;
   let musicPlaying = false;
   let stepTime = 0;
+  let htmlPrimed = false;
+  let htmlDoorOpen = null;
+  let htmlDoorClose = null;
+
+  function samplesToWavDataUri(samples, sampleRate) {
+    const pcm = new Int16Array(samples.length);
+    for (let i = 0; i < samples.length; i++) {
+      const s = Math.max(-1, Math.min(1, samples[i]));
+      pcm[i] = s * 32767;
+    }
+    const bytes = new Uint8Array(44 + pcm.length * 2);
+    const view = new DataView(bytes.buffer);
+    const writeStr = (off, s) => { for (let j = 0; j < s.length; j++) bytes[off + j] = s.charCodeAt(j); };
+    writeStr(0, 'RIFF');
+    view.setUint32(4, 36 + pcm.length * 2, true);
+    writeStr(8, 'WAVE');
+    writeStr(12, 'fmt ');
+    view.setUint32(16, 16, true);
+    view.setUint16(20, 1, true);
+    view.setUint16(22, 1, true);
+    view.setUint32(24, sampleRate, true);
+    view.setUint32(28, sampleRate * 2, true);
+    view.setUint16(32, 2, true);
+    view.setUint16(34, 16, true);
+    writeStr(36, 'data');
+    view.setUint32(40, pcm.length * 2, true);
+    for (let i = 0; i < pcm.length; i++) view.setInt16(44 + i * 2, pcm[i], true);
+    let bin = '';
+    for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+    return 'data:audio/wav;base64,' + btoa(bin);
+  }
+
+  /** Wooden café door — smooth rising hinge creak, tiny latch click. No noise (reads as gravel). */
+  function makeDoorOpenSamples(sampleRate) {
+    const duration = 0.4;
+    const n = Math.floor(sampleRate * duration);
+    const out = new Float32Array(n);
+    let phase = 0;
+    for (let i = 0; i < n; i++) {
+      const t = i / sampleRate;
+      const attack = Math.min(1, t / 0.035);
+      const release = Math.max(0, 1 - Math.max(0, t - 0.3) / 0.1);
+      const env = attack * release;
+      const trem = 0.84 + 0.16 * Math.sin(t * 8.5);
+      const freq = 155 + Math.pow(t / duration, 1.35) * 320;
+      phase += (2 * Math.PI * freq) / sampleRate;
+      const body = Math.sin(phase);
+      const wood = Math.sin(phase * 2.02) * 0.18 + Math.sin(phase * 3.1) * 0.06;
+      out[i] = (body + wood) * env * trem * 0.5;
+    }
+    const click0 = Math.floor(n * 0.86);
+    const clickN = Math.floor(sampleRate * 0.02);
+    for (let j = 0; j < clickN && click0 + j < n; j++) {
+      const ct = j / sampleRate;
+      out[click0 + j] += Math.sin(2 * Math.PI * 480 * ct) * Math.exp(-ct * 80) * 0.1;
+    }
+    return out;
+  }
+
+  /** Café door shut — soft wooden bump into the frame. */
+  function makeDoorCloseSamples(sampleRate) {
+    const n = Math.floor(sampleRate * 0.13);
+    const out = new Float32Array(n);
+    for (let i = 0; i < n; i++) {
+      const t = i / sampleRate;
+      const env = Math.exp(-t * 30);
+      const thud = Math.sin(2 * Math.PI * 64 * t) * 0.8;
+      const frame = Math.sin(2 * Math.PI * 108 * t) * 0.14 * Math.exp(-t * 45);
+      out[i] = (thud + frame) * env;
+    }
+    return out;
+  }
+
+  function doorOpenWavUri() {
+    return samplesToWavDataUri(makeDoorOpenSamples(22050), 22050);
+  }
+
+  function doorCloseWavUri() {
+    return samplesToWavDataUri(makeDoorCloseSamples(22050), 22050);
+  }
+
+  function doorSamplesToBuffer(open) {
+    const sr = ctx.sampleRate;
+    const samples = open ? makeDoorOpenSamples(sr) : makeDoorCloseSamples(sr);
+    const buf = ctx.createBuffer(1, samples.length, sr);
+    buf.getChannelData(0).set(samples);
+    return buf;
+  }
+
+  function playDoorWeb(open) {
+    const src = ctx.createBufferSource();
+    src.buffer = doorSamplesToBuffer(open);
+    const g = ctx.createGain();
+    g.gain.value = 0.88;
+    src.connect(g);
+    connectSfx(g);
+    src.start(ctx.currentTime);
+  }
 
   function init() {
-    if (ctx) return;
-    ctx = new (window.AudioContext || window.webkitAudioContext)();
+    if (ctx && ctx.state !== 'closed') return;
+    ctx = null;
+    masterGain = null;
+    sfxGain = null;
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return;
+    ctx = new Ctx();
     masterGain = ctx.createGain();
-    masterGain.gain.value = 0.18;
+    masterGain.gain.value = 0.28;
+    sfxGain = ctx.createGain();
+    sfxGain.gain.value = 0.95;
+    sfxGain.connect(masterGain);
     masterGain.connect(ctx.destination);
+  }
+
+  function primeSilentBuffer() {
+    if (!ctx) return;
+    try {
+      const buffer = ctx.createBuffer(1, 1, 22050);
+      const source = ctx.createBufferSource();
+      source.buffer = buffer;
+      source.connect(ctx.destination);
+      source.start(0);
+    } catch (e) { /* ignore */ }
+  }
+
+  function primeHtmlDoorAudio() {
+    if (htmlPrimed) return;
+    try {
+      htmlDoorOpen = new window.Audio(doorOpenWavUri());
+      htmlDoorClose = new window.Audio(doorCloseWavUri());
+      htmlDoorOpen.preload = 'auto';
+      htmlDoorClose.preload = 'auto';
+      const silent = new window.Audio(samplesToWavDataUri(new Float32Array(8), 22050));
+      silent.volume = 0.01;
+      const p = silent.play();
+      if (p && typeof p.then === 'function') p.then(() => {}).catch(() => {});
+      htmlPrimed = true;
+    } catch (e) { /* ignore */ }
+  }
+
+  function playHtmlDoor(open) {
+    const clip = open ? htmlDoorOpen : htmlDoorClose;
+    if (!clip) return false;
+    try {
+      clip.currentTime = 0;
+      clip.volume = 0.88;
+      const p = clip.play();
+      if (p && typeof p.catch === 'function') p.catch(() => {});
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function isReady() {
+    return !!(ctx && ctx.state === 'running');
+  }
+
+  /** Must run inside a real click/key handler. */
+  function unlock(onReady) {
+    init();
+    primeHtmlDoorAudio();
+    if (!ctx) {
+      if (typeof onReady === 'function') onReady();
+      return;
+    }
+    primeSilentBuffer();
+    const done = () => {
+      if (!musicPlaying && moPageCanPlayAudio()) startMusic();
+      if (typeof onReady === 'function') onReady();
+    };
+    if (ctx.state === 'suspended') {
+      const resumed = ctx.resume();
+      if (resumed && typeof resumed.then === 'function') resumed.then(done).catch(done);
+      else done();
+    } else {
+      done();
+    }
+  }
+
+  function connectSfx(node) {
+    node.connect(sfxGain || masterGain);
+  }
+
+  function noiseBurst(startTime, duration, vol) {
+    const buf = ctx.createBuffer(1, Math.ceil(ctx.sampleRate * duration), ctx.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / d.length);
+    const src = ctx.createBufferSource();
+    const g = ctx.createGain();
+    src.buffer = buf;
+    g.gain.setValueAtTime(vol, startTime);
+    g.gain.linearRampToValueAtTime(0.0001, startTime + duration);
+    src.connect(g);
+    connectSfx(g);
+    src.start(startTime);
   }
 
   function tone(freq, type, startTime, duration, vol = 1, env = true) {
@@ -22,64 +222,99 @@ const Audio = (() => {
     osc.type = type;
     osc.frequency.setValueAtTime(freq, startTime);
     if (env) {
-      g.gain.setValueAtTime(0, startTime);
+      g.gain.setValueAtTime(0.0001, startTime);
       g.gain.linearRampToValueAtTime(vol, startTime + 0.01);
-      g.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+      g.gain.linearRampToValueAtTime(0.0001, startTime + duration);
     } else {
       g.gain.setValueAtTime(vol, startTime);
       g.gain.linearRampToValueAtTime(0, startTime + duration);
     }
     osc.connect(g);
-    g.connect(masterGain);
+    connectSfx(g);
     osc.start(startTime);
     osc.stop(startTime + duration + 0.05);
   }
 
-  // Simple chiptune — pentatonic melody in C: C D E G A
   const SCALE = [261.63, 293.66, 329.63, 392.00, 440.00,
                  523.25, 587.33, 659.25, 783.99, 880.00];
   const MELODY = [4,2,0,2,4,4,4, 2,2,2, 4,7,7, 4,2,0,2,4,4,4,4,2,2,4,2,0];
   const BASS   = [0,0,4,0,0,4,4, 0,0,4, 0,4,4, 0,0,4,0,0,4,4,0,0,4,0,0];
-  const DUR    = 0.18; // seconds per note
+  const DUR    = 0.18;
 
   function playMusicBeat(step) {
-    if (!musicPlaying) return;
-    const t = ctx.currentTime + 0.05;
-    const mi = step % MELODY.length;
-    tone(SCALE[MELODY[mi]],          'square',   t, DUR * 0.8, 0.6);
-    tone(SCALE[MELODY[mi]] * 1.005,  'square',   t, DUR * 0.8, 0.3); // slight detune
-    tone(SCALE[BASS[mi]] / 2,        'triangle', t, DUR * 0.9, 0.5);
-    // hi-hat on even beats
-    if (step % 2 === 0) {
-      const buf = ctx.createBuffer(1, ctx.sampleRate * 0.04, ctx.sampleRate);
-      const d   = buf.getChannelData(0);
-      for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * 0.15;
-      const src = ctx.createBufferSource();
-      const g2  = ctx.createGain();
-      src.buffer = buf;
-      g2.gain.setValueAtTime(0.4, t);
-      g2.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
-      src.connect(g2);
-      g2.connect(masterGain);
-      src.start(t);
+    if (!musicPlaying || !ctx) return;
+    if (!moPageCanPlayAudio()) {
+      suspend(false);
+      return;
     }
+    try {
+      const t = ctx.currentTime + 0.05;
+      const mi = step % MELODY.length;
+      tone(SCALE[MELODY[mi]],          'square',   t, DUR * 0.8, 0.55);
+      tone(SCALE[MELODY[mi]] * 1.005,  'square',   t, DUR * 0.8, 0.28);
+      tone(SCALE[BASS[mi]] / 2,        'triangle', t, DUR * 0.9, 0.45);
+      if (step % 2 === 0) {
+        const buf = ctx.createBuffer(1, ctx.sampleRate * 0.04, ctx.sampleRate);
+        const d   = buf.getChannelData(0);
+        for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * 0.15;
+        const src = ctx.createBufferSource();
+        const g2  = ctx.createGain();
+        src.buffer = buf;
+        g2.gain.setValueAtTime(0.35, t);
+        g2.gain.linearRampToValueAtTime(0.0001, t + 0.04);
+        src.connect(g2);
+        g2.connect(masterGain);
+        src.start(t);
+      }
+    } catch (e) { /* keep music loop alive */ }
     musicTimeout = setTimeout(() => playMusicBeat(step + 1), DUR * 1000);
   }
 
   function startMusic() {
     if (musicPlaying) return;
+    if (!moPageCanPlayAudio()) return;
     musicPlaying = true;
     playMusicBeat(0);
   }
 
   function stopMusic() {
     musicPlaying = false;
-    if (musicTimeout) clearTimeout(musicTimeout);
+    if (musicTimeout) {
+      clearTimeout(musicTimeout);
+      musicTimeout = null;
+    }
+  }
+
+  function suspend(hard) {
+    stopMusic();
+    try {
+      if (htmlDoorOpen) {
+        htmlDoorOpen.pause();
+        htmlDoorOpen.currentTime = 0;
+      }
+      if (htmlDoorClose) {
+        htmlDoorClose.pause();
+        htmlDoorClose.currentTime = 0;
+      }
+      if (!ctx) return;
+      if (hard) {
+        if (ctx.state !== 'closed') ctx.close();
+        ctx = null;
+        masterGain = null;
+        sfxGain = null;
+        return;
+      }
+      if (ctx.state === 'running') {
+        const p = ctx.suspend();
+        if (p && typeof p.catch === 'function') p.catch(() => {});
+      }
+    } catch (e) { /* ignore */ }
   }
 
   function sfxStep() {
+    if (!isReady()) return;
     const now = ctx.currentTime;
-    if (now - stepTime < 0.22) return; // throttle
+    if (now - stepTime < 0.22) return;
     stepTime = now;
     const buf = ctx.createBuffer(1, ctx.sampleRate * 0.06, ctx.sampleRate);
     const d   = buf.getChannelData(0);
@@ -87,14 +322,15 @@ const Audio = (() => {
     const src = ctx.createBufferSource();
     const g   = ctx.createGain();
     src.buffer = buf;
-    g.gain.setValueAtTime(0.6, now);
-    g.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+    g.gain.setValueAtTime(0.65, now);
+    g.gain.linearRampToValueAtTime(0.0001, now + 0.06);
     src.connect(g);
-    g.connect(masterGain);
+    connectSfx(g);
     src.start(now);
   }
 
   function sfxInteract() {
+    if (!isReady()) return;
     const t = ctx.currentTime;
     tone(523.25, 'square', t,        0.08, 0.7);
     tone(659.25, 'square', t + 0.08, 0.08, 0.7);
@@ -102,13 +338,91 @@ const Audio = (() => {
   }
 
   function sfxClose() {
+    if (!isReady()) return;
     const t = ctx.currentTime;
     tone(392.00, 'triangle', t,       0.07, 0.5);
     tone(329.63, 'triangle', t + 0.07, 0.07, 0.5);
   }
 
-  return { init, startMusic, stopMusic, sfxStep, sfxInteract, sfxClose };
+  /** Door — wood creak / latch thud (primed HTML clip, Web Audio fallback). */
+  function sfxDoorOpen() {
+    if (playHtmlDoor(true)) return;
+    if (!isReady()) return;
+    playDoorWeb(true);
+  }
+
+  function sfxDoorClose() {
+    if (playHtmlDoor(false)) return;
+    if (!isReady()) return;
+    playDoorWeb(false);
+  }
+
+  return {
+    unlock, isReady, startMusic, stopMusic, suspend,
+    sfxStep, sfxInteract, sfxClose, sfxDoorOpen, sfxDoorClose,
+  };
 })();
+
+function moSyncSceneAudioStarted() {
+  const game = window.__moGame;
+  if (!game || !game.scene) return;
+  const scene = game.scene.getScene('GameScene');
+  if (scene) scene.audioStarted = true;
+}
+
+function moUnlockAudioFromUserGesture(onReady) {
+  MoWebAudio.unlock(() => {
+    moSyncSceneAudioStarted();
+    if (typeof onReady === 'function') onReady();
+  });
+}
+
+window.MoAudio = {
+  unlock: moUnlockAudioFromUserGesture,
+  isReady: () => MoWebAudio.isReady(),
+  suspend: (hard) => MoWebAudio.suspend(!!hard),
+};
+
+function moBindAudioLifecycle() {
+  const suspendSoft = () => {
+    if (!moPageCanPlayAudio()) MoWebAudio.suspend(false);
+  };
+  const suspendHard = () => MoWebAudio.suspend(true);
+
+  window.addEventListener('pagehide', suspendHard);
+  window.addEventListener('beforeunload', suspendHard);
+  document.addEventListener('freeze', suspendHard, { capture: true });
+  document.addEventListener('visibilitychange', suspendSoft);
+  window.addEventListener('blur', suspendSoft);
+
+  const gameEl = document.getElementById('game');
+  if (gameEl && typeof IntersectionObserver === 'function') {
+    const obs = new IntersectionObserver((entries) => {
+      const entry = entries[0];
+      moAudioActivity.canvasVisible = !!(entry && entry.isIntersecting && entry.intersectionRatio > 0);
+      suspendSoft();
+    }, { threshold: [0, 0.01] });
+    obs.observe(gameEl);
+  }
+
+  // IDE embedded browsers (e.g. Cursor Glass) may skip normal tab-close events.
+  window.setInterval(suspendSoft, 1000);
+}
+moBindAudioLifecycle();
+
+function moBindAudioUnlock(el) {
+  if (!el || el.__moAudioBound) return;
+  el.__moAudioBound = true;
+  el.addEventListener('click', () => moUnlockAudioFromUserGesture());
+  el.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') moUnlockAudioFromUserGesture();
+  });
+}
+
+moBindAudioUnlock(document.getElementById('mo-visit-setup-continue'));
+moBindAudioUnlock(document.getElementById('mo-restart-btn'));
+document.getElementById('mo-language-picker')?.querySelectorAll('button').forEach(moBindAudioUnlock);
+document.getElementById('game')?.addEventListener('pointerdown', () => moUnlockAudioFromUserGesture(), { passive: true });
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  Pixel art constants
@@ -119,6 +433,16 @@ const ROWS   = 16;
 const W      = TILE * COLS;
 const H      = TILE * ROWS;
 const SCALE  = 2;   // pixel-art upscale
+/** Community board canvas extends left + up from anchor tile; feet at bottom-right. See OUTSIDE_LAYOUT.board. */
+const COMMUNITY_BOARD_CANVAS_W = 56;
+const COMMUNITY_BOARD_CANVAS_H = 56;
+const COMMUNITY_BOARD_LIFT = COMMUNITY_BOARD_CANVAS_H - TILE;
+const COMMUNITY_BOARD_SHIFT = COMMUNITY_BOARD_CANVAS_W - TILE;
+/** Meadow poppy patch — wide canvas anchored on one grass tile, blooms spread left/up. */
+const POPPY_PATCH_CANVAS_W = 128;
+const POPPY_PATCH_CANVAS_H = 96;
+const POPPY_PATCH_LIFT = POPPY_PATCH_CANVAS_H - TILE;
+const POPPY_PATCH_SHIFT = POPPY_PATCH_CANVAS_W - TILE;
 const DIALOGUE_MARGIN = 40;
 const DIALOGUE_PAD_X = 40;
 const DIALOGUE_TEXT_PAD_Y = 18;
@@ -149,18 +473,124 @@ function rect(ctx, x, y, w, h, color) {
   ctx.fillRect(x, y, w, h);
 }
 
-// Draw a single grass tile  (32×32)
-function drawGrass(ctx, ox, oy, variant) {
-  const base = variant === 1 ? '#4a7c3f' : '#3d6b35';
-  rect(ctx, ox, oy, 32, 32, base);
-  // small detail tufts
-  const details = variant === 1
-    ? [[4,5],[12,20],[24,8],[28,18],[8,26]]
-    : [[6,10],[18,4],[10,22],[26,14],[20,28]];
-  details.forEach(([dx, dy]) => {
-    px(ctx, ox+dx, oy+dy, '#5a9c4f');
-    px(ctx, ox+dx+1, oy+dy, '#5a9c4f');
+// Decorative park lawn — light greens, breeze frames (not crop tiles).
+const GRASS_VARIANT_COUNT = 6;
+const GRASS_BREEZE_FRAMES = 12;
+const GRASS_BREEZE_MS = 170;
+
+const GRASS_PALETTE = {
+  bases: ['#68c868', '#64c264', '#6ccc6c', '#60be60', '#66c866', '#62c462'],
+  dither: '#58b858',
+  shadow: '#4a9a4a',
+  bladeLo: '#449c44',
+  blade: '#6ecc6a',
+  bladeMid: '#7ed87a',
+  bladeHi: '#8ed88e',
+};
+
+/** 4×4 grid tufts — 12 of 16 cells per variant; clustered blades, not column carpet. */
+function buildGrassTufts(variant) {
+  const blades = [];
+  const roots = [];
+  const TUFT_SHAPES = [
+    [{ dx: 0, h: 5 }, { dx: 1, h: 6, lean: 1 }, { dx: -1, h: 4, lean: -1 }],
+    [{ dx: 0, h: 6 }, { dx: 1, h: 5, lean: 1 }, { dx: -1, h: 5 }, { dx: 1, h: 4 }],
+    [{ dx: 0, h: 5, w: 2 }, { dx: 1, h: 5 }, { dx: -1, h: 4, lean: -1 }],
+    [{ dx: 0, h: 4 }, { dx: 1, h: 5, lean: 1 }, { dx: -1, h: 4 }],
+    [{ dx: 0, h: 6 }, { dx: 2, h: 4, lean: 1 }, { dx: -1, h: 5, lean: -1 }],
+  ];
+
+  for (let cell = 0; cell < 16; cell++) {
+    if (((cell * 13 + variant * 17) % 16) >= 12) continue;
+    const col = cell % 4;
+    const row = (cell / 4) | 0;
+    const bx = col * 8 + 3 + ((cell + variant) % 3);
+    const by = row * 8 + 6 + ((cell + variant * 2) % 2);
+    const shape = TUFT_SHAPES[(cell + variant) % TUFT_SHAPES.length];
+    roots.push({ x: bx, y: by });
+    shape.forEach((b) => {
+      const h = Math.min(b.h, by + 1);
+      if (h < 2) return;
+      const blade = { x: bx + b.dx, y: by, h, lean: b.lean || 0 };
+      if (b.w) blade.w = 2;
+      blades.push(blade);
+    });
+  }
+
+  [
+    { bx: 1, by: 25, blades: [{ dx: 0, h: 5, lean: 1 }, { dx: 1, h: 4, lean: 1 }, { dx: 0, h: 4 }] },
+    { bx: 30, by: 27, blades: [{ dx: 0, h: 5, lean: -1 }, { dx: -1, h: 4, lean: -1 }, { dx: 0, h: 5 }] },
+  ].forEach((tuft) => {
+    roots.push({ x: tuft.bx, y: tuft.by });
+    tuft.blades.forEach((b) => {
+      const h = Math.min(b.h, tuft.by + 1);
+      if (h < 2) return;
+      blades.push({ x: tuft.bx + b.dx, y: tuft.by, h, lean: b.lean || 0 });
+    });
   });
+
+  blades.sort((a, b) => a.y - b.y);
+  return { blades, roots };
+}
+
+const GRASS_BLADE_SETS = [];
+for (let v = 0; v < GRASS_VARIANT_COUNT; v++) {
+  GRASS_BLADE_SETS.push(buildGrassTufts(v));
+}
+
+function drawGrassBase(ctx, ox, oy, variant) {
+  const base = GRASS_PALETTE.bases[variant];
+  const dither = GRASS_PALETTE.dither;
+  for (let y = 0; y < 32; y++) {
+    for (let x = 0; x < 32; x++) {
+      px(ctx, ox + x, oy + y, (x + y + variant) % 2 ? dither : base);
+    }
+  }
+}
+
+function grassTexKey(variant, frame) {
+  return 't_grass_' + variant + '_' + frame;
+}
+
+function grassBladePhase(blade) {
+  return ((blade.x * 3 + blade.y * 5 + blade.h * 7) % GRASS_BREEZE_FRAMES) / GRASS_BREEZE_FRAMES;
+}
+
+function grassBreezeSway(breezeFrame, blade) {
+  const t = ((breezeFrame / GRASS_BREEZE_FRAMES) + grassBladePhase(blade)) * Math.PI * 2;
+  return Math.sin(t);
+}
+
+/** Cumulative lean — root fixed, tip arcs with breeze. */
+function drawGrassBlade(ctx, ox, oy, blade, breezeFrame) {
+  const { x, y, h, w, lean } = blade;
+  const sway = grassBreezeSway(breezeFrame, blade);
+  const baseW = w || 1;
+  let curX = x + lean;
+  for (let s = 0; s < h; s++) {
+    if (s > 0) {
+      const ratio = s / (h - 1);
+      curX += sway * ratio * ratio * 0.42;
+    }
+    const drawX = Math.round(curX);
+    const col = s === h - 1 ? GRASS_PALETTE.bladeHi
+      : s === 0 ? GRASS_PALETTE.bladeLo
+      : s >= h - 2 ? GRASS_PALETTE.bladeMid
+      : GRASS_PALETTE.blade;
+    const span = baseW > 1 && s < h - 1 ? baseW : 1;
+    for (let dx = 0; dx < span; dx++) {
+      px(ctx, ox + drawX + dx, oy + y - s, col);
+    }
+  }
+}
+
+function drawGrass(ctx, ox, oy, variant, breezeFrame) {
+  const v = variant % GRASS_VARIANT_COUNT;
+  const f = breezeFrame % GRASS_BREEZE_FRAMES;
+  const { blades, roots } = GRASS_BLADE_SETS[v];
+  drawGrassBase(ctx, ox, oy, v);
+  roots.forEach(({ x, y }) => px(ctx, ox + x, oy + y, GRASS_PALETTE.shadow));
+  blades.forEach((blade) => drawGrassBlade(ctx, ox, oy, blade, f));
 }
 
 // Draw a path tile  (32×32, horizontal)
@@ -182,12 +612,11 @@ function drawStreetPath(ctx, ox, oy, topGrassGap = 0) {
   rect(ctx, ox, oy + y0, 32, 2, '#6a6860');
 }
 
-/** Single flat flagstone overlay — sits on grass or porch; narrow, path-toned. */
+/** Single flat flagstone overlay — sits on grass before sidewalk; lower in tile. */
 function drawStepStoneOverlay(ctx, ox, oy, variant) {
   const sizes = [
-    { w: 14, h: 11, y: 16, jx: 0 },
-    { w: 12, h: 9, y: 18, jx: -1 },
-    { w: 13, h: 10, y: 15, jx: 1 },
+    { w: 14, h: 11, y: 18, jx: 0 },
+    { w: 12, h: 9, y: 20, jx: -1 },
   ];
   const sz = sizes[variant % 3];
   const s = {
@@ -249,39 +678,197 @@ function drawSign(ctx, ox, oy) {
   rect(ctx, ox + 8, oy + 15, 12, 2, '#7a5a20');
 }
 
-/** County-park style neighborhood bulletin kiosk (32×32). */
+/** County-park bulletin kiosk — fills 56×56 canvas left+up; feet at canvas bottom-right. */
 function drawCommunityBoard(ctx, ox, oy) {
-  rect(ctx, ox + 5, oy + 17, 3, 12, '#5a4030');
-  rect(ctx, ox + 24, oy + 17, 3, 12, '#5a4030');
-  rect(ctx, ox + 5, oy + 27, 22, 2, '#6b5038');
-  rect(ctx, ox + 4, oy + 8, 24, 14, '#8a7050');
-  rect(ctx, ox + 5, oy + 9, 22, 12, '#a08058');
-  rect(ctx, ox + 3, oy + 7, 26, 2, '#4a3828');
-  rect(ctx, ox + 3, oy + 21, 26, 2, '#4a3828');
-  rect(ctx, ox + 3, oy + 7, 2, 16, '#4a3828');
-  rect(ctx, ox + 27, oy + 7, 2, 16, '#4a3828');
+  const H = COMMUNITY_BOARD_CANVAS_H;
+  const wood = '#5a4030';
+  const woodHi = '#6b5038';
+  const frame = '#4a3828';
+  const cork = '#a08058';
+  const corkSh = '#8a7050';
+  const roof = '#3a5038';
+  const roofHi = '#4a6048';
+  const foot = oy + H;
+  const cabL = ox + 8;
+  const cabW = 32;
+
+  rect(ctx, cabL + 4, foot - 14, 3, 10, wood);
+  rect(ctx, cabL + cabW - 9, foot - 14, 3, 10, wood);
+  rect(ctx, ox + 6, foot - 4, 36, 4, woodHi);
+  rect(ctx, cabL, foot - 32, cabW, 18, corkSh);
+  rect(ctx, cabL + 1, foot - 31, cabW - 2, 16, cork);
+  rect(ctx, cabL, foot - 32, cabW, 1, frame);
+  rect(ctx, cabL, foot - 15, cabW, 1, frame);
+  rect(ctx, cabL, foot - 32, 1, 18, frame);
+  rect(ctx, cabL + cabW - 1, foot - 32, 1, 18, frame);
   for (let i = 0; i < 5; i++) {
-    rect(ctx, ox + 9 + i, oy + 2 + i, 14 - 2 * i, 2, '#3a5038');
+    const rw = 12 + 2 * i;
+    rect(ctx, cabL + Math.floor((cabW - rw) / 2), foot - 42 + i, rw, 2, roof);
   }
-  rect(ctx, ox + 7, oy + 6, 18, 2, '#4a6048');
-  rect(ctx, ox + 7, oy + 11, 8, 5, '#e8dcc8');
-  rect(ctx, ox + 17, oy + 10, 7, 6, '#d4c8a8');
-  px(ctx, ox + 10, oy + 10, '#8a3030');
-  px(ctx, ox + 20, oy + 9, '#8a3030');
+  rect(ctx, cabL, foot - 33, cabW, 1, roofHi);
+  rect(ctx, cabL + 3, foot - 28, 13, 9, '#e8dcc8');
+  rect(ctx, cabL + 18, foot - 27, 11, 10, '#d4c8a8');
+  px(ctx, cabL + 5, foot - 28, '#8a3030');
+  px(ctx, cabL + 20, foot - 27, '#8a3030');
 }
 
-// Draw a flower  (32×32)
-function drawFlower(ctx, ox, oy, color) {
+/** Feathery California-poppy basal leaf — blue-green. */
+function drawPoppyFoliage(ctx, x, y) {
+  const leaf = '#6a9878';
+  const leafHi = '#88b898';
+  px(ctx, x, y, leaf);
+  px(ctx, x + 1, y, leafHi);
+  px(ctx, x + 2, y, leaf);
+  px(ctx, x, y + 1, leafHi);
+  px(ctx, x + 1, y + 1, leaf);
+}
+
+/** One open papery poppy bloom — four wide silk petals, not a cup. */
+function drawPoppyBloom(ctx, cx, cy, small) {
+  const petal = '#f07028';
+  const petalHi = '#ffc860';
+  const petalMid = '#ff8838';
+  const petalLo = '#d85818';
+  const heart = '#b0c040';
+  if (small) {
+    px(ctx, cx, cy - 2, petalHi);
+    px(ctx, cx - 1, cy - 1, petalMid);
+    px(ctx, cx, cy - 1, petalHi);
+    px(ctx, cx + 1, cy - 1, petalMid);
+    px(ctx, cx - 2, cy, petalLo);
+    px(ctx, cx - 1, cy, petal);
+    px(ctx, cx, cy, heart);
+    px(ctx, cx + 1, cy, petal);
+    px(ctx, cx + 2, cy, petalLo);
+    px(ctx, cx - 1, cy + 1, petalLo);
+    px(ctx, cx, cy + 1, petalMid);
+    px(ctx, cx + 1, cy + 1, petalLo);
+    px(ctx, cx, cy + 2, petalLo);
+    return;
+  }
+  px(ctx, cx - 1, cy - 4, petalHi);
+  px(ctx, cx, cy - 5, petalHi);
+  px(ctx, cx + 1, cy - 4, petalHi);
+  px(ctx, cx, cy - 4, petalMid);
+  px(ctx, cx - 3, cy - 3, petalLo);
+  px(ctx, cx - 2, cy - 3, petal);
+  px(ctx, cx - 1, cy - 3, petalMid);
+  px(ctx, cx + 1, cy - 3, petalMid);
+  px(ctx, cx + 2, cy - 3, petal);
+  px(ctx, cx + 3, cy - 3, petalLo);
+  px(ctx, cx - 4, cy - 2, petalLo);
+  px(ctx, cx - 3, cy - 2, petal);
+  px(ctx, cx - 2, cy - 2, petalMid);
+  px(ctx, cx - 1, cy - 2, petal);
+  px(ctx, cx, cy - 2, heart);
+  px(ctx, cx + 1, cy - 2, petal);
+  px(ctx, cx + 2, cy - 2, petalMid);
+  px(ctx, cx + 3, cy - 2, petal);
+  px(ctx, cx + 4, cy - 2, petalLo);
+  px(ctx, cx - 3, cy - 1, petal);
+  px(ctx, cx - 2, cy - 1, petalMid);
+  px(ctx, cx - 1, cy - 1, petalHi);
+  px(ctx, cx, cy - 1, petalMid);
+  px(ctx, cx + 1, cy - 1, petalHi);
+  px(ctx, cx + 2, cy - 1, petalMid);
+  px(ctx, cx + 3, cy - 1, petal);
+  px(ctx, cx - 2, cy, petalLo);
+  px(ctx, cx - 1, cy, petalMid);
+  px(ctx, cx, cy, petalLo);
+  px(ctx, cx + 1, cy, petalMid);
+  px(ctx, cx + 2, cy, petalLo);
+  px(ctx, cx - 1, cy + 1, petalLo);
+  px(ctx, cx, cy + 1, petalMid);
+  px(ctx, cx + 1, cy + 1, petalLo);
+  px(ctx, cx, cy + 2, petalLo);
+}
+
+/** One golden poppy plant — shared basal leaves, branching stems, several open blooms. */
+function drawGoldenPoppyPlant(ctx, bx, by, tall) {
+  const stem = '#358848';
+  drawPoppyFoliage(ctx, bx - 3, by - 1);
+  drawPoppyFoliage(ctx, bx + 1, by);
+  drawPoppyFoliage(ctx, bx - 1, by + 1);
+  drawPoppyFoliage(ctx, bx + 3, by);
+  const stemTop = by - (tall ? 20 : 16);
+  for (let y = by; y >= stemTop; y--) px(ctx, bx, y, stem);
+  drawPoppyBloom(ctx, bx, stemTop - 2, false);
+  const branchA = stemTop + 6;
+  px(ctx, bx - 1, branchA, stem);
+  px(ctx, bx - 2, branchA - 1, stem);
+  px(ctx, bx - 3, branchA - 2, stem);
+  drawPoppyBloom(ctx, bx - 4, branchA - 4, true);
+  px(ctx, bx + 1, branchA + 2, stem);
+  px(ctx, bx + 2, branchA + 1, stem);
+  px(ctx, bx + 3, branchA, stem);
+  drawPoppyBloom(ctx, bx + 4, branchA - 2, true);
+  if (tall) {
+    px(ctx, bx + 1, stemTop + 3, stem);
+    px(ctx, bx + 2, stemTop + 2, stem);
+    drawPoppyBloom(ctx, bx + 3, stemTop, true);
+  }
+}
+
+/** Meadow pansy — cup-shaped golden petals, dark center (lone flower south of café). */
+function drawMeadowPansy(ctx, ox, oy) {
   rect(ctx, ox, oy, 32, 32, 'rgba(0,0,0,0)');
-  // stem
-  px(ctx, ox+16, oy+22, '#2d7a2d');
-  px(ctx, ox+16, oy+23, '#2d7a2d');
-  px(ctx, ox+16, oy+24, '#2d7a2d');
-  // petals
-  [[15,18],[17,18],[14,19],[18,19],[15,21],[17,21]].forEach(([dx,dy]) => px(ctx, ox+dx, oy+dy, color));
-  // center
-  px(ctx, ox+16, oy+19, '#ffe066');
-  px(ctx, ox+16, oy+20, '#ffe066');
+  const stem = '#2d7a2d';
+  const leaf = '#3a9a48';
+  const petal = '#e8a820';
+  const petalHi = '#ffd858';
+  const petalSh = '#c07810';
+  const center = '#2a2418';
+
+  px(ctx, ox + 16, oy + 22, stem);
+  px(ctx, ox + 16, oy + 23, stem);
+  px(ctx, ox + 17, oy + 24, stem);
+  px(ctx, ox + 17, oy + 25, stem);
+  px(ctx, ox + 14, oy + 23, leaf);
+  px(ctx, ox + 15, oy + 24, leaf);
+  px(ctx, ox + 13, oy + 24, leaf);
+
+  px(ctx, ox + 15, oy + 15, petalHi);
+  px(ctx, ox + 16, oy + 14, petalHi);
+  px(ctx, ox + 17, oy + 15, petalHi);
+  px(ctx, ox + 15, oy + 16, petal);
+  px(ctx, ox + 16, oy + 15, petal);
+  px(ctx, ox + 17, oy + 16, petal);
+
+  px(ctx, ox + 13, oy + 17, petal);
+  px(ctx, ox + 14, oy + 16, petalHi);
+  px(ctx, ox + 13, oy + 18, petalSh);
+  px(ctx, ox + 14, oy + 17, petal);
+  px(ctx, ox + 14, oy + 18, petal);
+
+  px(ctx, ox + 18, oy + 17, petal);
+  px(ctx, ox + 19, oy + 16, petalHi);
+  px(ctx, ox + 19, oy + 18, petalSh);
+  px(ctx, ox + 18, oy + 18, petal);
+  px(ctx, ox + 17, oy + 17, petal);
+
+  px(ctx, ox + 15, oy + 19, petal);
+  px(ctx, ox + 16, oy + 20, petalSh);
+  px(ctx, ox + 17, oy + 19, petal);
+  px(ctx, ox + 16, oy + 19, petal);
+
+  px(ctx, ox + 15, oy + 17, center);
+  px(ctx, ox + 16, oy + 16, center);
+  px(ctx, ox + 17, oy + 17, center);
+  px(ctx, ox + 16, oy + 17, center);
+  px(ctx, ox + 16, oy + 18, center);
+}
+
+/** Lone meadow flower south of the café — pansy. */
+function drawGoldenPoppy(ctx, ox, oy) {
+  drawMeadowPansy(ctx, ox, oy);
+}
+
+/** Three golden poppy plants in a triangle — apex toward the meadow's upper-right corner. */
+function drawMeadowPoppyCluster(ctx, ox, oy) {
+  rect(ctx, ox, oy, POPPY_PATCH_CANVAS_W, POPPY_PATCH_CANVAS_H, 'rgba(0,0,0,0)');
+  drawGoldenPoppyPlant(ctx, ox + 108, oy + 18, true);
+  drawGoldenPoppyPlant(ctx, ox + 48, oy + 86, false);
+  drawGoldenPoppyPlant(ctx, ox + 102, oy + 86, true);
 }
 
 function drawBuildingWall(ctx, ox, oy) {
@@ -317,12 +904,9 @@ function drawSidewalk(ctx, ox, oy) {
   rect(ctx, ox, oy + 28, 32, 4, '#6a6058');
 }
 
-/** Neutral tile under the outside storefront — no grass bleed. */
+/** Flat stone under storefront — no inset blocks (those read as café-wall ghosts through the roof). */
 function drawBuildingFoundation(ctx, ox, oy) {
-  rect(ctx, ox, oy, 32, 32, '#6a6058');
-  rect(ctx, ox + 2, oy + 2, 28, 28, '#5a5850');
-  rect(ctx, ox, oy + 28, 32, 4, '#4a4840');
-  rect(ctx, ox, oy, 32, 2, '#7a7870');
+  rect(ctx, ox, oy, 32, 32, '#5a5850');
 }
 
 function drawRoofTile(ctx, ox, oy) {
@@ -356,46 +940,243 @@ function drawFreestandingBrewSign(ctx, ox, oy) {
   drawSign(ctx, ox, oy);
 }
 
-// One cohesive storefront (12×7 tiles) — no grass gaps, reads as a real building
+/** Pitched terracotta roof — pantile courses, soft gable, flat ridge (no crown triangles). */
+function drawStreetBuildingRoof(ctx, bw, wallTop) {
+  const rowH = 5;
+  const rows = 8;
+  const tileW = 10;
+  const baseY = wallTop - 2;
+  const topY = baseY - rows * rowH;
+  const terra = ['#8a4838', '#7a4030', '#9a5840', '#6a3828'];
+  const terraHi = '#aa6848';
+  const terraBase = '#7a4030';
+
+  function rowSpan(i) {
+    const t = i / (rows - 1);
+    const curve = t * t;
+    const inset = Math.round(curve * bw * 0.36);
+    const overhang = Math.round((1 - t) * 5);
+    return { left: inset - overhang, right: bw - inset + overhang };
+  }
+
+  function drawPantileRow(left, right, y, rowIndex) {
+    const offset = (rowIndex % 2) * Math.floor(tileW / 2);
+    for (let tx = left - offset; tx < right - 2; tx += tileW) {
+      const tw = Math.min(tileW - 1, right - tx);
+      if (tw < 3) continue;
+      const ci = (Math.floor((tx - left) / tileW) + rowIndex) % terra.length;
+      rect(ctx, tx, y + 1, tw, rowH - 1, terra[ci]);
+      const archW = Math.max(2, tw - 3);
+      rect(ctx, tx + 1, y, archW, 1, terraHi);
+    }
+  }
+
+  const peak = rowSpan(rows - 1);
+  const ridgeY = Math.max(0, topY - 1);
+  const ridgeL = peak.left + 4;
+  const ridgeR = peak.right - 4;
+  const eave = rowSpan(0);
+
+  ctx.fillStyle = terraBase;
+  ctx.beginPath();
+  ctx.moveTo(eave.left, baseY + 1);
+  ctx.lineTo(eave.right, baseY + 1);
+  for (let i = 0; i < rows; i++) {
+    ctx.lineTo(rowSpan(i).right, baseY - (i + 1) * rowH);
+  }
+  ctx.lineTo(ridgeR, ridgeY);
+  ctx.lineTo(ridgeL, ridgeY);
+  for (let i = rows - 1; i >= 0; i--) {
+    ctx.lineTo(rowSpan(i).left, baseY - (i + 1) * rowH);
+  }
+  ctx.closePath();
+  ctx.fill();
+
+  for (let i = 0; i < rows; i++) {
+    const { left, right } = rowSpan(i);
+    drawPantileRow(left, right, baseY - (i + 1) * rowH, i);
+  }
+
+  for (let rx = ridgeL; rx < ridgeR - 4; rx += 8) {
+    rect(ctx, rx, ridgeY, 6, 3, '#9a5848');
+    rect(ctx, rx + 1, ridgeY, 4, 1, '#b87858');
+  }
+}
+
+/** Stem from soil up to the sill only — never a long line through the glass. */
+function drawFacadeWindowStem(ctx, cx, soilY, sillBottom) {
+  const stem = '#2d7a2d';
+  for (let y = soilY; y >= sillBottom; y--) px(ctx, cx, y, stem);
+}
+
+/** Window-box daisy — blooms sit on the sill, tips touch lower glass. */
+function drawFacadeWindowDaisy(ctx, cx, soilY, sillBottom, bloomTopY) {
+  const petal = '#ece8dc';
+  const center = '#d4b018';
+  drawFacadeWindowStem(ctx, cx, soilY, sillBottom);
+  px(ctx, cx - 1, bloomTopY + 2, petal);
+  px(ctx, cx, bloomTopY + 2, center);
+  px(ctx, cx + 1, bloomTopY + 2, petal);
+  px(ctx, cx - 1, bloomTopY + 1, petal);
+  px(ctx, cx, bloomTopY + 1, petal);
+  px(ctx, cx + 1, bloomTopY + 1, petal);
+  px(ctx, cx, bloomTopY, petal);
+}
+
+/** Window-box tulip — compact cup on the sill. */
+function drawFacadeWindowTulip(ctx, cx, soilY, sillBottom, bloomTopY, petal) {
+  drawFacadeWindowStem(ctx, cx, soilY, sillBottom);
+  rect(ctx, cx - 1, bloomTopY + 1, 3, 3, petal);
+  px(ctx, cx, bloomTopY, petal);
+}
+
+/** Window-box red poppy — compact cup on the sill. */
+function drawFacadeWindowPoppy(ctx, cx, soilY, sillBottom, bloomTopY) {
+  const petal = '#c83030';
+  const petalLo = '#a82020';
+  const center = '#2a1818';
+  drawFacadeWindowStem(ctx, cx, soilY, sillBottom);
+  px(ctx, cx, bloomTopY + 3, petal);
+  px(ctx, cx - 1, bloomTopY + 2, petal);
+  px(ctx, cx + 1, bloomTopY + 2, petal);
+  px(ctx, cx, bloomTopY + 2, center);
+  px(ctx, cx - 1, bloomTopY + 1, petalLo);
+  px(ctx, cx, bloomTopY + 1, petal);
+  px(ctx, cx + 1, bloomTopY + 1, petalLo);
+  px(ctx, cx, bloomTopY, petal);
+}
+
+/** Back-row bloom — shorter, tucked just under front row. */
+function drawFacadeBloomDot(ctx, cx, cy, type, color, soilY, sillBottom) {
+  const petal = color || '#c84858';
+  if (soilY != null) drawFacadeWindowStem(ctx, cx, soilY, sillBottom);
+  if (type === 'daisy') {
+    px(ctx, cx, cy, '#d4b018');
+    px(ctx, cx - 1, cy, '#ece8dc');
+    px(ctx, cx + 1, cy, '#ece8dc');
+    px(ctx, cx, cy - 1, '#ece8dc');
+  } else if (type === 'tulip') {
+    rect(ctx, cx - 1, cy, 3, 2, petal);
+    px(ctx, cx, cy - 1, petal);
+  } else {
+    px(ctx, cx, cy, '#2a1818');
+    px(ctx, cx - 1, cy - 1, '#c83030');
+    px(ctx, cx, cy - 1, '#c83030');
+    px(ctx, cx + 1, cy - 1, '#c83030');
+  }
+}
+
+/** Flowers + planter — natural sill height, blooms kiss lower glass. */
+function drawFacadeWindowFlowers(ctx, wx, winY, winW, winH, flowers) {
+  const bx = wx + 7;
+  const bw = winW - 14;
+  const sillBottom = winY + winH;
+  const frontBloomTop = sillBottom - 8;
+  const backBloomTop = sillBottom - 11;
+  const boxH = 7;
+  const boxY = sillBottom;
+  const wood = '#5a4030';
+  const woodHi = '#6a5040';
+  const woodLo = '#4a3028';
+  const soil = '#3a2818';
+  const leaf = '#3a9a48';
+  const leafLo = '#2d6a2d';
+
+  const soilY = boxY + boxH - 3;
+  for (let fx = bx + 3; fx < bx + bw - 3; fx += 3) {
+    px(ctx, fx, soilY, leafLo);
+    if (soilY - 1 >= boxY) px(ctx, fx + 1, soilY - 1, leaf);
+  }
+
+  flowers.forEach(({ type, x, color, row }) => {
+    const cx = bx + x;
+    if (row === 1) {
+      drawFacadeBloomDot(ctx, cx, backBloomTop, type, color, soilY, sillBottom);
+      return;
+    }
+    if (type === 'daisy') drawFacadeWindowDaisy(ctx, cx, soilY, sillBottom, frontBloomTop);
+    else if (type === 'tulip') drawFacadeWindowTulip(ctx, cx, soilY, sillBottom, frontBloomTop, color || '#c84858');
+    else if (type === 'poppy') drawFacadeWindowPoppy(ctx, cx, soilY, sillBottom, frontBloomTop);
+  });
+
+  rect(ctx, bx, boxY, bw, boxH, woodLo);
+  rect(ctx, bx + 1, boxY + 1, bw - 2, boxH - 2, wood);
+  rect(ctx, bx + 2, boxY + 1, bw - 4, boxH - 3, soil);
+  rect(ctx, bx + 1, boxY + boxH - 1, bw - 2, 1, woodHi);
+}
+
+// One cohesive storefront (12×7 tiles)
 function drawStreetBuildingFacade(ctx, bw, bh) {
   const brick = '#7a5848', brickD = '#6a4838', trim = '#5a3828';
   const gap = 2;
   const foundationH = 8;
-  const doorH = 40;
   const awningH = 8;
   const winW = 72;
   const winH = 58;
   const winInset = 44;
+  const wallTop = 42;
 
   const door = MoDoors.facadeDoorMetrics(bw, bh);
-  const awningY = door.dy - gap - awningH;
+  const doorY = door.dy;
+  const awningY = doorY - gap - awningH;
   const winY = awningY - gap - winH;
 
-  // roof + overhang shadow
-  rect(ctx, 0, 0, bw, 38, '#3a2830');
-  for (let i = 0; i < 7; i++) {
-    rect(ctx, 0, 6 + i * 4, bw, 3, i % 2 === 0 ? '#4a3848' : '#3a2830');
-  }
-  rect(ctx, 0, 34, bw, 6, '#2a1820');
-  rect(ctx, 4, 38, bw - 8, 4, 'rgba(0,0,0,0.25)');
+  drawStreetBuildingRoof(ctx, bw, wallTop);
 
-  // main wall
-  rect(ctx, 0, 42, bw, bh - 42, brick);
-  for (let y = 48; y < bh - foundationH; y += 10) rect(ctx, 4, y, bw - 8, 1, brickD);
+  rect(ctx, 0, wallTop, bw, bh - wallTop, brick);
+  for (let y = wallTop + 6; y < bh - foundationH; y += 10) rect(ctx, 4, y, bw - 8, 1, brickD);
   for (let x = 20; x < bw - 16; x += 28) {
-    for (let y = 44; y < bh - foundationH - 4; y += 10) rect(ctx, x, y, 1, 8, brickD);
+    for (let y = wallTop + 2; y < bh - foundationH - 4; y += 10) rect(ctx, x, y, 1, 8, brickD);
   }
 
-  // two side windows — taller/wider, clear of door and awning
+  const winBoxFlowers = [
+    [
+      { row: 1, type: 'daisy', x: 4 },
+      { row: 1, type: 'poppy', x: 13 },
+      { row: 1, type: 'tulip', x: 22, color: '#8868a8' },
+      { row: 1, type: 'daisy', x: 31 },
+      { row: 1, type: 'poppy', x: 40 },
+      { row: 1, type: 'tulip', x: 49, color: '#e8b020' },
+      { row: 0, type: 'tulip', x: 8, color: '#d84868' },
+      { row: 0, type: 'daisy', x: 17 },
+      { row: 0, type: 'poppy', x: 26 },
+      { row: 0, type: 'daisy', x: 35 },
+      { row: 0, type: 'poppy', x: 44 },
+      { row: 0, type: 'tulip', x: 53, color: '#d84868' },
+    ],
+    [
+      { row: 1, type: 'poppy', x: 4 },
+      { row: 1, type: 'tulip', x: 13, color: '#e8b020' },
+      { row: 1, type: 'daisy', x: 22 },
+      { row: 1, type: 'poppy', x: 31 },
+      { row: 1, type: 'daisy', x: 40 },
+      { row: 1, type: 'tulip', x: 49, color: '#8868a8' },
+      { row: 0, type: 'poppy', x: 8 },
+      { row: 0, type: 'tulip', x: 17, color: '#d84868' },
+      { row: 0, type: 'daisy', x: 26 },
+      { row: 0, type: 'poppy', x: 35 },
+      { row: 0, type: 'tulip', x: 44, color: '#e8b020' },
+      { row: 0, type: 'daisy', x: 53 },
+    ],
+  ];
+
   const winSlots = [winInset, bw - winInset - winW];
-  winSlots.forEach((wx) => {
+  winSlots.forEach((wx, idx) => {
     rect(ctx, wx, winY, winW, winH, trim);
     rect(ctx, wx + 6, winY + 6, winW - 12, winH - 12, '#3a4858');
     rect(ctx, wx + 10, winY + 10, 18, 14, '#6a8898');
     rect(ctx, wx + winW - 28, winY + winH - 24, 18, 14, '#5a7888');
+    drawFacadeWindowFlowers(ctx, wx, winY, winW, winH, winBoxFlowers[idx]);
   });
 
-  // awning — stripes only over the door bay
+  const sign = MoDoors.facadeSignMetrics(bw, bh);
+  rect(ctx, sign.sx, sign.sy, sign.sw, sign.sh, '#2a1810');
+  rect(ctx, sign.sx + 4, sign.sy + 4, sign.sw - 8, sign.sh - 8, '#3a2820');
+  rect(ctx, sign.sx + 8, sign.sy + 10, sign.sw - 16, 4, '#d4af6a');
+  rect(ctx, sign.sx + 8, sign.sy + 18, sign.sw - 24, 3, '#c49a5a');
+  rect(ctx, sign.sx + 8, sign.sy + 26, sign.sw - 32, 3, '#a08040');
+  rect(ctx, sign.sx + 8, sign.sy + 34, Math.max(20, sign.sw - 44), 3, '#806030');
+
   const stripeW = 22;
   const stripeGap = 26;
   const stripeCount = 6;
@@ -406,15 +1187,13 @@ function drawStreetBuildingFacade(ctx, bw, bh) {
   }
   rect(ctx, awningStart - 4, awningY + awningH, awningSpan + 8, 3, trim);
 
-  // door (center-bottom — narrow portrait rectangle, real-world proportions)
-  rect(ctx, door.dx, door.dy, door.dw, door.dh, '#3a2820');
-  rect(ctx, door.dx + 2, door.dy + 2, door.dw - 4, door.dh - 4, '#1a1008');
-  rect(ctx, door.dx + 4, door.dy + 5, door.dw - 8, door.dh - 10, '#3a3028');
-  rect(ctx, door.dx + 7, door.dy + 10, 5, 5, '#d4a860');
-  rect(ctx, door.dx + door.dw - 6, door.dy + door.dh - 14, 2, 3, '#d4af6a');
-  rect(ctx, door.dx, door.dy + door.dh - 2, door.dw, 3, '#4a3828');
+  rect(ctx, door.dx, doorY, door.dw, door.dh, '#3a2820');
+  rect(ctx, door.dx + 2, doorY + 2, door.dw - 4, door.dh - 4, '#1a1008');
+  rect(ctx, door.dx + 4, doorY + 5, door.dw - 8, door.dh - 10, '#3a3028');
+  rect(ctx, door.dx + 7, doorY + 10, 5, 5, '#d4a860');
+  rect(ctx, door.dx + door.dw - 6, doorY + door.dh - 14, 2, 3, '#d4af6a');
+  rect(ctx, door.dx, doorY + door.dh - 2, door.dw, 3, '#4a3828');
 
-  // foundation sill
   rect(ctx, 0, bh - foundationH, bw, foundationH, trim);
 }
 
@@ -679,7 +1458,7 @@ function drawDrinkCup(ctx, ox, oy, fullness, forTable) {
 //  Rows: down, left, right, up
 // ─────────────────────────────────────────────────────────────────────────────
 const CHAR_W = 16, CHAR_H = 24, CHAR_FRAMES = 4;
-const PLAYER_LOOK_ART_REV = 's';
+const PLAYER_LOOK_ART_REV = 'y';
 const NPC_W = 28, NPC_H = CHAR_H; // wider canvas so wings read at 2× scale
 
 function tri(ctx, x1, y1, x2, y2, x3, y3, color) {
@@ -722,53 +1501,223 @@ function drawCharFace(ctx, ox, oy, dir, skin) {
 /** Per-direction face regions — hijab cheek cols never overlap faceSkin. */
 const HIJAB_FACE_LAYOUT = {
   0: {
-    faceSkin: { x: 5, y: 5, w: 7, h: 7 },
-    eyes: [{ x: 6, y: 7 }, { x: 9, y: 7 }],
+    faceSkin: { x: 5, y: 3, w: 7, h: 7 },
+    eyes: [{ x: 6, y: 5 }, { x: 9, y: 5 }],
     hijabCheeks: [
-      { col: 4, crownX: 3, crownW: 2 },
-      { col: 12, crownX: 12, crownW: 1 },
+      { col: 4, crownX: 3, crownW: 2, jawY: 7 },
+      { col: 12, crownX: 11, crownW: 2, jawY: 7 },
     ],
   },
   1: {
-    faceSkin: { x: 5, y: 4, w: 3, h: 7 },
-    eyes: [{ x: 5, y: 7 }],
-    hijabCheeks: [{ col: 4, crownX: 4, crownW: 1 }],
+    faceSkin: { x: 5, y: 2, w: 3, h: 7 },
+    eyes: [{ x: 5, y: 5 }],
+    hijabCheeks: [{ col: 4, crownX: 3, crownW: 1, jawY: 7 }],
   },
   2: {
-    faceSkin: { x: 9, y: 4, w: 3, h: 7 },
-    eyes: [{ x: 9, y: 7 }],
-    hijabCheeks: [{ col: 8, crownX: 8, crownW: 1 }],
+    faceSkin: { x: 9, y: 2, w: 3, h: 7 },
+    eyes: [{ x: 9, y: 5 }],
+    hijabCheeks: [{ col: 8, crownX: 8, crownW: 1, jawY: 7 }],
   },
 };
 
-const HIJAB_COLORS = { skin: '#f0c080', hijab: '#5a6878', hijabDark: '#4a5668', eye: '#1a0a00' };
+const HIJAB_COLORS = { skin: '#f0c080', hijab: '#6a7888', hijabDark: '#5a6878', eye: '#1a0a00' };
+
+const JILBAB_COLORS = {
+  jilbab: '#4a5668',
+  jilbabLight: '#7a8898',
+  jilbabDark: '#3a4450',
+  shoe: '#2a3040',
+  shoeDark: '#1a2030',
+};
+
+/** Octagon face opening — cut corners so skin reads rounded, not a square block. */
+function drawHijabFaceSkinOctagon(ctx, ox, oy, dir, skin) {
+  if (dir === 0) {
+    rect(ctx, ox + 6, oy + 3, 5, 1, skin);
+    rect(ctx, ox + 5, oy + 4, 7, 1, skin);
+    rect(ctx, ox + 5, oy + 5, 7, 4, skin);
+    rect(ctx, ox + 6, oy + 9, 5, 1, skin);
+  } else if (dir === 1) {
+    px(ctx, ox + 6, oy + 2, skin);
+    rect(ctx, ox + 5, oy + 3, 3, 6, skin);
+    px(ctx, ox + 6, oy + 9, skin);
+  } else if (dir === 2) {
+    px(ctx, ox + 9, oy + 2, skin);
+    rect(ctx, ox + 8, oy + 3, 3, 6, skin);
+    px(ctx, ox + 9, oy + 9, skin);
+  }
+}
+
+/** Solid A-line robe undercoat — stops at hem; shoes sit below on their own row. */
+function paintJilbabUndercoat(ctx, ox, oy, dir, hemY, C) {
+  if (dir === 0) {
+    for (let y = 10; y <= hemY; y++) {
+      let left = 1;
+      let width = 14;
+      if (y === 10) {
+        left = 1;
+        width = 14;
+      } else if (y === 11) {
+        left = 2;
+        width = 12;
+      }
+      rect(ctx, ox + left, oy + y, width, 1, C.jilbab);
+    }
+  } else {
+    const h = hemY - 10 + 1;
+    if (h > 0) {
+      rect(ctx, ox + 1, oy + 10, 14, h, C.jilbab);
+    }
+  }
+}
+
+/** Close outer sprite edge so map does not bleed through at cols 0 and 15. */
+function paintJilbabEdgeOutline(ctx, ox, oy, hemY, C) {
+  for (let y = 10; y <= hemY && y < CHAR_H - 1; y++) {
+    px(ctx, ox + 0, oy + y, C.jilbabDark);
+    px(ctx, ox + 15, oy + y, C.jilbabDark);
+  }
+}
+
+/** Fill robe from mid-skirt down to hem so ankles never read as erased gaps. */
+function fillJilbabSkirtToHem(ctx, ox, oy, dir, hemY, C) {
+  const top = 16;
+  const h = hemY - top;
+  if (h <= 0) return;
+
+  if (dir === 0) {
+    rect(ctx, ox + 1, oy + top, 14, h, C.jilbab);
+    rect(ctx, ox + 1, oy + 11, 2, 4, C.jilbabLight);
+    rect(ctx, ox + 13, oy + 11, 2, 4, C.jilbabLight);
+    px(ctx, ox + 8, oy + 12, C.jilbabDark);
+  } else if (dir === 1) {
+    rect(ctx, ox + 1, oy + top, 13, h, C.jilbab);
+    rect(ctx, ox + 2, oy + 11, 2, 4, C.jilbabLight);
+    px(ctx, ox + 4, oy + 12, C.jilbabDark);
+  } else if (dir === 2) {
+    rect(ctx, ox + 2, oy + top, 13, h, C.jilbab);
+    rect(ctx, ox + 12, oy + 11, 2, 4, C.jilbabLight);
+    px(ctx, ox + 11, oy + 12, C.jilbabDark);
+  } else if (dir === 3) {
+    rect(ctx, ox + 1, oy + top, 14, h, C.jilbab);
+    rect(ctx, ox + 1, oy + 11, 2, 4, C.jilbabLight);
+    rect(ctx, ox + 13, oy + 11, 2, 4, C.jilbabLight);
+  }
+}
+
+/** Hem line ends the robe; distinct shoes sit on the row below (not embedded in cloth). */
+function drawJilbabHemAndFeet(ctx, ox, oy, dir, hemY, footX, legL, C) {
+  const shoeY = hemY + 1;
+  const shoeH = 3;
+
+  if (dir === 0) {
+    rect(ctx, ox + 1, oy + hemY, 14, 1, C.jilbab);
+    px(ctx, ox + 1, oy + hemY, C.jilbabDark);
+    px(ctx, ox + 14, oy + hemY, C.jilbabDark);
+    px(ctx, ox + 7, oy + hemY, C.jilbabDark);
+    px(ctx, ox + 8, oy + hemY, C.jilbabDark);
+    const leftShoeX = 3 + legL;
+    const rightShoeX = 9 - legL;
+    rect(ctx, ox + leftShoeX, oy + shoeY, 4, shoeH, C.shoe);
+    rect(ctx, ox + rightShoeX, oy + shoeY, 4, shoeH, C.shoe);
+    rect(ctx, ox + leftShoeX, oy + shoeY + shoeH - 1, 4, 1, C.shoeDark);
+    rect(ctx, ox + rightShoeX, oy + shoeY + shoeH - 1, 4, 1, C.shoeDark);
+  } else if (dir === 1 || dir === 2) {
+    rect(ctx, ox + 1, oy + hemY, 14, 1, C.jilbab);
+    px(ctx, ox + 1, oy + hemY, C.jilbabDark);
+    px(ctx, ox + 14, oy + hemY, C.jilbabDark);
+    rect(ctx, ox + footX, oy + shoeY, 4, shoeH, C.shoe);
+    rect(ctx, ox + footX, oy + shoeY + shoeH - 1, 4, 1, C.shoeDark);
+  } else if (dir === 3) {
+    rect(ctx, ox + 1, oy + hemY, 14, 1, C.jilbab);
+    px(ctx, ox + 0, oy + hemY, C.jilbabDark);
+    px(ctx, ox + 15, oy + hemY, C.jilbabDark);
+    rect(ctx, ox + 3, oy + shoeY, 4, shoeH, C.shoe);
+    rect(ctx, ox + 9, oy + shoeY, 4, shoeH, C.shoe);
+    rect(ctx, ox + 3, oy + shoeY + shoeH - 1, 4, 1, C.shoeDark);
+    rect(ctx, ox + 9, oy + shoeY + shoeH - 1, 4, 1, C.shoeDark);
+  }
+}
 
 /** Small pixel smile for hijab face (all facings). */
 function drawHijabSmile(ctx, ox, oy, dir) {
   const lip = '#c07050';
   if (dir === 0) {
-    px(ctx, ox + 7, oy + 10, lip);
-    px(ctx, ox + 9, oy + 10, lip);
-    rect(ctx, ox + 7, oy + 11, 3, 1, lip);
+    px(ctx, ox + 7, oy + 8, lip);
+    px(ctx, ox + 9, oy + 8, lip);
+    rect(ctx, ox + 7, oy + 9, 3, 1, lip);
   } else if (dir === 1) {
-    px(ctx, ox + 5, oy + 10, lip);
-    px(ctx, ox + 6, oy + 11, lip);
-    px(ctx, ox + 7, oy + 11, lip);
+    px(ctx, ox + 5, oy + 8, lip);
+    px(ctx, ox + 6, oy + 9, lip);
+    px(ctx, ox + 7, oy + 9, lip);
   } else if (dir === 2) {
-    px(ctx, ox + 10, oy + 10, lip);
-    px(ctx, ox + 8, oy + 11, lip);
-    px(ctx, ox + 9, oy + 11, lip);
+    px(ctx, ox + 10, oy + 8, lip);
+    px(ctx, ox + 8, oy + 9, lip);
+    px(ctx, ox + 9, oy + 9, lip);
+  }
+}
+
+/** Hijab base wrap per facing — arc crown, cheek drapes, neck bridge into jilbab. */
+function drawHijabBase(ctx, ox, oy, dir, hijab, hijabDark) {
+  if (dir === 0) {
+    px(ctx, ox + 2, oy + 1, hijab);
+    px(ctx, ox + 3, oy + 1, hijab);
+    rect(ctx, ox + 4, oy + 1, 8, 1, hijab);
+    px(ctx, ox + 12, oy + 1, hijab);
+    px(ctx, ox + 13, oy + 1, hijab);
+    rect(ctx, ox + 2, oy + 2, 12, 1, hijab);
+    rect(ctx, ox + 2, oy + 3, 2, 4, hijab);
+    rect(ctx, ox + 12, oy + 3, 2, 4, hijab);
+    px(ctx, ox + 4, oy + 3, hijabDark);
+    px(ctx, ox + 5, oy + 3, hijabDark);
+    px(ctx, ox + 11, oy + 3, hijabDark);
+  } else if (dir === 1) {
+    px(ctx, ox + 2, oy + 1, hijab);
+    px(ctx, ox + 3, oy + 1, hijab);
+    rect(ctx, ox + 4, oy + 1, 7, 1, hijab);
+    rect(ctx, ox + 11, oy + 1, 3, 1, hijab);
+    rect(ctx, ox + 3, oy + 2, 8, 1, hijab);
+    px(ctx, ox + 2, oy + 2, hijab);
+    rect(ctx, ox + 2, oy + 3, 2, 4, hijab);
+    rect(ctx, ox + 11, oy + 2, 4, 6, hijab);
+    px(ctx, ox + 4, oy + 3, hijabDark);
+    rect(ctx, ox + 4, oy + 8, 1, 2, hijab);
+  } else if (dir === 2) {
+    px(ctx, ox + 12, oy + 1, hijab);
+    rect(ctx, ox + 5, oy + 1, 7, 1, hijab);
+    rect(ctx, ox + 2, oy + 1, 3, 1, hijab);
+    px(ctx, ox + 13, oy + 1, hijab);
+    rect(ctx, ox + 5, oy + 2, 8, 1, hijab);
+    px(ctx, ox + 13, oy + 2, hijab);
+    rect(ctx, ox + 12, oy + 3, 2, 4, hijab);
+    rect(ctx, ox + 1, oy + 2, 4, 6, hijab);
+    px(ctx, ox + 11, oy + 3, hijabDark);
+    rect(ctx, ox + 11, oy + 8, 1, 2, hijab);
+  } else if (dir === 3) {
+    rect(ctx, ox + 2, oy + 2, 12, 9, hijab);
+    rect(ctx, ox + 5, oy + 4, 6, 1, hijabDark);
+    px(ctx, ox + 6, oy + 8, hijabDark);
+    px(ctx, ox + 9, oy + 8, hijab);
   }
 }
 
 /** Hijab cheek accent on columns strictly outside faceSkin. */
 function drawHijabCheekAccents(ctx, ox, oy, cheeks, hijab, hijabDark, dir) {
-  const crownY = dir === 0 ? 4 : 5;
+  const crownY = dir === 0 ? 2 : 3;
   for (let i = 0; i < cheeks.length; i++) {
     const c = cheeks[i];
-    rect(ctx, ox + c.crownX, oy + crownY, c.crownW, 2, hijab);
-    px(ctx, ox + c.col, oy + 6, hijabDark);
-    rect(ctx, ox + c.col, oy + 7, 1, 2, hijab);
+    rect(ctx, ox + c.crownX, oy + crownY, c.crownW, 1, hijab);
+    px(ctx, ox + c.col, oy + 4, hijabDark);
+    rect(ctx, ox + c.col, oy + 5, 1, 2, hijab);
+    if (c.jawY != null) {
+      px(ctx, ox + c.col, oy + c.jawY, hijab);
+    }
+    if (dir === 0 && c.col === 4) {
+      px(ctx, ox + 4, oy + 8, hijab);
+    }
+    if (dir === 0 && c.col === 12) {
+      px(ctx, ox + 12, oy + 8, hijab);
+    }
   }
 }
 
@@ -777,49 +1726,47 @@ function drawHijabFaceFromLayout(ctx, ox, oy, dir, skin, hijab) {
   skin = skin || HIJAB_COLORS.skin;
 
   if (dir === 3) {
-    rect(ctx, ox + 2, oy + 2, 12, 9, hijab);
-    rect(ctx, ox + 3, oy + 3, 10, 7, hijabDark);
-    rect(ctx, ox + 4, oy + 5, 8, 2, hijab);
+    drawHijabBase(ctx, ox, oy, 3, hijab, hijabDark);
+    bridgeHijabToJilbab(ctx, ox, oy, 3, hijab);
     return;
   }
 
   const layout = HIJAB_FACE_LAYOUT[dir];
   if (!layout) return;
 
-  if (dir === 0) {
-    rect(ctx, ox + 3, oy + 1, 10, 3, hijab);
-    rect(ctx, ox + 2, oy + 3, 2, 3, hijab);
-    rect(ctx, ox + 12, oy + 3, 2, 3, hijab);
-    rect(ctx, ox + 5, oy + 4, 7, 1, hijab);
-    rect(ctx, ox + 4, oy + 4, 1, 1, hijabDark);
-    rect(ctx, ox + 12, oy + 4, 1, 1, hijabDark);
-    rect(ctx, ox + 1, oy + 9, 2, 2, hijab);
-    rect(ctx, ox + 13, oy + 9, 2, 2, hijab);
-    rect(ctx, ox + 3, oy + 12, 10, 1, hijabDark);
-  } else if (dir === 1) {
-    rect(ctx, ox + 8, oy + 1, 7, 10, hijab);
-    rect(ctx, ox + 2, oy + 1, 12, 3, hijab);
-    rect(ctx, ox + 2, oy + 3, 2, 3, hijab);
-    rect(ctx, ox + 4, oy + 4, 3, 1, hijabDark);
-    rect(ctx, ox + 1, oy + 9, 2, 2, hijab);
-    rect(ctx, ox + 1, oy + 10, 3, 2, hijabDark);
-  } else if (dir === 2) {
-    rect(ctx, ox + 1, oy + 1, 7, 10, hijab);
-    rect(ctx, ox + 2, oy + 1, 12, 3, hijab);
-    rect(ctx, ox + 12, oy + 3, 2, 3, hijab);
-    rect(ctx, ox + 9, oy + 4, 3, 1, hijabDark);
-    rect(ctx, ox + 13, oy + 9, 2, 2, hijab);
-    rect(ctx, ox + 12, oy + 10, 3, 2, hijabDark);
-  }
+  drawHijabBase(ctx, ox, oy, dir, hijab, hijabDark);
 
-  const fs = layout.faceSkin;
-  rect(ctx, ox + fs.x, oy + fs.y, fs.w, fs.h, skin);
+  drawHijabFaceSkinOctagon(ctx, ox, oy, dir, skin);
   for (let i = 0; i < layout.eyes.length; i++) {
     const e = layout.eyes[i];
     rect(ctx, ox + e.x, oy + e.y, 2, 2, HIJAB_COLORS.eye);
   }
   drawHijabSmile(ctx, ox, oy, dir);
   drawHijabCheekAccents(ctx, ox, oy, layout.hijabCheeks, hijab, hijabDark, dir);
+  bridgeHijabToJilbab(ctx, ox, oy, dir, hijab);
+}
+
+/** Chin, neck, and profile gap fill — hijab meets jilbab with no see-through pixels. */
+function bridgeHijabToJilbab(ctx, ox, oy, dir, hijab) {
+  if (dir === 0) {
+    rect(ctx, ox + 4, oy + 9, 2, 1, hijab);
+    px(ctx, ox + 11, oy + 9, hijab);
+    rect(ctx, ox + 2, oy + 7, 2, 3, hijab);
+    rect(ctx, ox + 12, oy + 7, 2, 3, hijab);
+  } else if (dir === 1) {
+    rect(ctx, ox + 8, oy + 3, 3, 7, hijab);
+    px(ctx, ox + 5, oy + 9, hijab);
+    rect(ctx, ox + 2, oy + 7, 2, 3, hijab);
+    rect(ctx, ox + 11, oy + 8, 3, 2, hijab);
+  } else if (dir === 2) {
+    rect(ctx, ox + 5, oy + 3, 3, 7, hijab);
+    rect(ctx, ox + 11, oy + 4, 1, 4, hijab);
+    px(ctx, ox + 10, oy + 9, hijab);
+    rect(ctx, ox + 12, oy + 7, 2, 3, hijab);
+    rect(ctx, ox + 2, oy + 8, 3, 2, hijab);
+  } else if (dir === 3) {
+    rect(ctx, ox + 1, oy + 10, 14, 1, hijab);
+  }
 }
 
 /** Hijab + jilbab — per-direction head (no bare back, no ear skin, open face). */
@@ -827,6 +1774,81 @@ function drawHijabFace(ctx, ox, oy, dir, skin, hijab) {
   drawHijabFaceFromLayout(ctx, ox, oy, dir, skin, hijab);
 }
 // END HIJAB_FACE_DRAW
+
+// BEGIN JILBAB_BODY_DRAW
+/** A-line jilbab — robe hem above; shoes visible below on the ground. */
+function drawJilbabBody(ctx, ox, oy, dir, frame, palette) {
+  const C = palette ? Object.assign({}, JILBAB_COLORS, palette) : JILBAB_COLORS;
+  const walkOffset = (frame === 1 || frame === 3) ? 0 : 1;
+  const legL = frame < 2 ? 1 : -1;
+  const hemY = 19 + walkOffset;
+  let footX;
+
+  if (dir === 0) {
+    footX = legL > 0 ? 6 : 8;
+  } else if (dir === 1) {
+    footX = 5 + legL;
+  } else if (dir === 2) {
+    footX = 8 - legL;
+  } else {
+    footX = 7;
+  }
+
+  paintJilbabUndercoat(ctx, ox, oy, dir, hemY, C);
+  paintJilbabEdgeOutline(ctx, ox, oy, hemY, C);
+
+  if (dir === 0) {
+    rect(ctx, ox + 3, oy + 10, 10, 2, C.jilbab);
+    rect(ctx, ox + 2, oy + 12, 11, 4, C.jilbab);
+    fillJilbabSkirtToHem(ctx, ox, oy, 0, hemY, C);
+    drawJilbabHemAndFeet(ctx, ox, oy, 0, hemY, footX, legL, C);
+  } else if (dir === 1) {
+    rect(ctx, ox + 8, oy + 10, 7, 9, C.jilbab);
+    rect(ctx, ox + 4, oy + 10, 5, 9, C.jilbab);
+    fillJilbabSkirtToHem(ctx, ox, oy, 1, hemY, C);
+    drawJilbabHemAndFeet(ctx, ox, oy, 1, hemY, footX, legL, C);
+  } else if (dir === 2) {
+    rect(ctx, ox + 1, oy + 10, 7, 9, C.jilbab);
+    rect(ctx, ox + 7, oy + 10, 5, 9, C.jilbab);
+    fillJilbabSkirtToHem(ctx, ox, oy, 2, hemY, C);
+    drawJilbabHemAndFeet(ctx, ox, oy, 2, hemY, footX, legL, C);
+  } else if (dir === 3) {
+    rect(ctx, ox + 1, oy + 10, 14, 9, C.jilbab);
+    rect(ctx, ox + 0, oy + 17, 15, 2, C.jilbab);
+    fillJilbabSkirtToHem(ctx, ox, oy, 3, hemY, C);
+    drawJilbabHemAndFeet(ctx, ox, oy, 3, hemY, footX, legL, C);
+  }
+}
+
+/** Front-facing portrait helper — elder portrait shares protagonist silhouette. */
+function drawWomanJilbabFrontPortrait(ctx, ox, oy, options) {
+  options = options || {};
+  const skin = options.skin || HIJAB_COLORS.skin;
+  const hijab = options.hijab || HIJAB_COLORS.hijab;
+  const lip = options.lip || '#c07050';
+  const frame = options.frame || 0;
+  const palette = options.jilbabPalette || null;
+
+  drawJilbabBody(ctx, ox, oy, 0, frame, palette);
+  drawHijabBase(ctx, ox, oy, 0, hijab, options.hijabDark || HIJAB_COLORS.hijabDark);
+  drawHijabFaceSkinOctagon(ctx, ox, oy, 0, skin);
+  const layout = HIJAB_FACE_LAYOUT[0];
+  for (let i = 0; i < layout.eyes.length; i++) {
+    const e = layout.eyes[i];
+    rect(ctx, ox + e.x, oy + e.y, 2, 2, HIJAB_COLORS.eye);
+  }
+  px(ctx, ox + 7, oy + 8, lip);
+  px(ctx, ox + 9, oy + 8, lip);
+  rect(ctx, ox + 7, oy + 9, 3, 1, lip);
+  drawHijabCheekAccents(ctx, ox, oy, layout.hijabCheeks, hijab, options.hijabDark || HIJAB_COLORS.hijabDark, 0);
+  bridgeHijabToJilbab(ctx, ox, oy, 0, hijab);
+  rect(ctx, ox + 4, oy + 23, 8, 1, 'rgba(0,0,0,0.3)');
+}
+
+window.MoWomanJilbabDraw = {
+  drawFrontPortrait: drawWomanJilbabFrontPortrait,
+};
+// END JILBAB_BODY_DRAW
 
 function drawCharFrame(ctx, fx, fy, dir, frame, look) {
   const ox = fx * CHAR_W, oy = fy * CHAR_H;
@@ -869,24 +1891,8 @@ function drawCharFrame(ctx, fx, fy, dir, frame, look) {
   }
 
   if (look === 'woman_jilbab') {
-    const hijab = '#5a6878', jilbab = '#4a5668', jilbabLight = '#6a7888', shoeD = '#2a3040';
-    if (dir !== 3) {
-      rect(ctx, ox + 3 + legL, oy + 18 + walkOffset, 4, 4, jilbab);
-      rect(ctx, ox + 9 - legL, oy + 18 + walkOffset, 4, 4, jilbab);
-      rect(ctx, ox + 3 + legL, oy + 21 + walkOffset, 4, 3, shoeD);
-      rect(ctx, ox + 9 - legL, oy + 21 + walkOffset, 4, 3, shoeD);
-    } else {
-      rect(ctx, ox + 2, oy + 10, 12, 14, jilbab);
-      drawHijabFace(ctx, ox, oy, dir, skin, hijab);
-      rect(ctx, ox + 4, oy + 23, 8, 1, 'rgba(0,0,0,0.3)');
-      return;
-    }
-    rect(ctx, ox + 2, oy + 10, 12, 9, jilbab);
-    rect(ctx, ox + 1, oy + 17, 14, 4, jilbab);
-    if (dir !== 3) {
-      rect(ctx, ox + 1, oy + 11, 2, 5, jilbabLight);
-      rect(ctx, ox + 13, oy + 11, 2, 5, jilbabLight);
-    }
+    const hijab = HIJAB_COLORS.hijab;
+    drawJilbabBody(ctx, ox, oy, dir, frame);
     drawHijabFace(ctx, ox, oy, dir, skin, hijab);
     rect(ctx, ox + 4, oy + 23, 8, 1, 'rgba(0,0,0,0.3)');
     return;
@@ -1015,25 +2021,77 @@ const TILE_IDX = {
   '#': 8, 'D': 9, 'B': 10, '=': 11, '|': 12, '-': 13, '*': 14, '>': 15,
   'M': 16, 'K': 17, 'b': 18,
   'h': 19, 'n': 20, 'w': 21, 'R': 22, 'A': 23, 'H': 24, 'o': 25,
+  'p': 26,
 };
 
-const SOLID_TILES = new Set([3, 4, 5, 8, 12, 13, 14, 16, 17, 19, 20, 22, 23]);
+const SOLID_TILES = new Set([3, 4, 5, 8, 12, 13, 19, 20, 22, 23]);
+/** Wall menu / strike / house-rules boards — partial solid, not full tile (see cafe M/K/H branch). */
+const CAFE_WALL_SIGN_CHARS = new Set(['M', 'K', 'H']);
+
+const OUTSIDE_BUILDING = MoDoors.OUTSIDE_BUILDING;
+
+/** Single source of truth for outside street stack: door row → props → board → sidewalk. */
+const OUTSIDE_LAYOUT = {
+  propsRow: 11,
+  board: { col: 3, row: 12 },
+  sidewalkRow: 13,
+  props: { flowerCol: 2, brewSignCol: 6 },
+  stepStoneRows: [11, 12],
+  sidewalkStartCol: 2,
+  sidewalkEndCol: 17,
+};
+
+const COMMUNITY_BOARD = OUTSIDE_LAYOUT.board;
+const BOARD_SIDEWALK = { col: OUTSIDE_LAYOUT.board.col, row: OUTSIDE_LAYOUT.sidewalkRow };
+const OUTSIDE_SIDEWALK_ROW = OUTSIDE_LAYOUT.sidewalkRow;
+/** Art-fitted blockers on the 56×56 community board canvas (includes legs/base). */
+const COMMUNITY_BOARD_PROP_SOLIDS = [
+  { left: 8, top: 24, width: 32, height: 32 },
+  { left: 12, top: 42, width: 3, height: 18 },
+  { left: 31, top: 42, width: 3, height: 18 },
+  { left: 6, top: 52, width: 36, height: 8 },
+];
+/** Post feet on the sidewalk row under the kiosk (local px on that tile). */
+const COMMUNITY_BOARD_SIDEWALK_POSTS = [
+  { col: 1, row: OUTSIDE_LAYOUT.sidewalkRow, left: 40, top: 0, width: 4, height: 10 },
+  { col: 2, row: OUTSIDE_LAYOUT.sidewalkRow, left: 14, top: 0, width: 4, height: 10 },
+];
+/** Freestanding brew sign — board + post (32×32 tile px). */
+const BREW_SIGN_PROP_SOLIDS = [
+  { left: 4, top: 6, width: 24, height: 16 },
+  { left: 14, top: 20, width: 4, height: 12 },
+];
+/** Post stump on the grass tile south of the brew sign. */
+const BREW_SIGN_POST_BELOW = { colOff: 0, rowOff: 1, left: 14, top: 0, width: 4, height: 10 };
+/** Clear grass pixels between stacked outside props (board above sidewalk). */
+const PROP_GRASS_GAP = 1;
+/** Flagstones on approach rows — door column only, grass before sidewalk. */
+const CAFE_STEP_STONES = OUTSIDE_LAYOUT.stepStoneRows.map((row, i) => ({ row, variant: i % 2 }));
 
 /** @type {Array<{ map: string, col: number, row: number, title: string, text: string }>} */
 const READABLES = [
   {
     map: 'outside',
-    col: 3,
-    row: 13,
+    col: OUTSIDE_LAYOUT.board.col,
+    row: OUTSIDE_LAYOUT.board.row,
     title: 'Neighborhood board',
     text: 'Dragon\'s Brew — down the brick path, mornings.\nPlaza market beyond the train station when you\'re ready to venture out.',
   },
   {
     map: 'outside',
-    col: 6,
-    row: 12,
+    col: 8,
+    row: 5,
+    id: 'storefront_sign',
     title: 'Dragon\'s Brew — storefront sign',
     text: 'Warm drinks and breakfast. All species welcome at the counter.\nStep through the door when it\'s open.',
+  },
+  {
+    map: 'outside',
+    col: OUTSIDE_LAYOUT.props.brewSignCol,
+    row: OUTSIDE_LAYOUT.propsRow,
+    id: 'direction_sign',
+    title: 'Direction sign',
+    text: 'Dragon\'s Brew — follow the stepping stones to the door.',
   },
   {
     id: 'dragons_brew_menu',
@@ -1044,6 +2102,7 @@ const READABLES = [
     dynamic: true,
   },
   {
+    id: 'strike_board',
     map: 'cafe',
     col: 3,
     row: 1,
@@ -1051,6 +2110,7 @@ const READABLES = [
     text: 'White sugar off the menu until the lot meets co-op standards.\nBrown sugar in the thermoses until further notice.',
   },
   {
+    id: 'house_rules',
     map: 'cafe',
     col: 4,
     row: 1,
@@ -1059,20 +2119,27 @@ const READABLES = [
   },
 ];
 
-const OUTSIDE_BUILDING = MoDoors.OUTSIDE_BUILDING;
-const COMMUNITY_BOARD = { col: 3, row: 12 };
-const BOARD_SIDEWALK = { col: 3, row: 13 };
-/** Clear grass pixels between stacked outside props (board above sidewalk). */
-const PROP_GRASS_GAP = 1;
-/** Three flagstones: porch sill → grass → grass lip before sidewalk (not on sidewalk row). */
-const CAFE_STEP_STONES = [
-  { row: 10, variant: 0 },
-  { row: 11, variant: 1 },
-  { row: 12, variant: 2 },
-];
-
 function cafeStepStoneWorldX() {
-  return MoDoors.outsideDoorWorldX();
+  return MoDoors.outsideDoorWorldX() - (TILE * SCALE) / 2;
+}
+
+/** Sparkle anchors on painted façade sign — shares MoDoors.facadeSignMetrics with art. */
+function facadeSignSparklePoints() {
+  const b = OUTSIDE_BUILDING;
+  const bx = b.left * TILE;
+  const by = b.top * TILE;
+  const sign = MoDoors.facadeSignMetrics(b.width * TILE, b.height * TILE);
+  const sx = sign.sx;
+  const sy = sign.sy;
+  const sw = sign.sw;
+  const sh = sign.sh;
+  return [
+    [bx + sx + 6, by + sy + 5], [bx + sx + Math.floor(sw / 2), by + sy + 3], [bx + sx + sw - 6, by + sy + 5],
+    [bx + sx + 2, by + sy + 14], [bx + sx + sw - 2, by + sy + 14],
+    [bx + sx + 2, by + sy + 26], [bx + sx + sw - 2, by + sy + 32],
+    [bx + sx + 10, by + sy + sh - 4], [bx + sx + sw - 10, by + sy + sh - 4],
+    [bx + sx + Math.floor(sw / 2), by + sy + sh - 6],
+  ];
 }
 
 /** Sparkle anchors on the door frame (local px) — jamb, header, sill; not the panel. */
@@ -1132,26 +2199,25 @@ function readableBoardFrameLocs(col, row, bx, by, bw, bh) {
 
 /** Blue sparkle anchors on readable sign frames (READABLES only — not UI hints). */
 function readableSparkleLocalPoints(item) {
-  if (item.map === 'outside' && item.col === 6) {
-    const tx = 6 * TILE;
-    const ty = 11 * TILE;
-    return [
-      [tx + 6, ty + 7], [tx + 16, ty + 6], [tx + 26, ty + 7],
-      [tx + 5, ty + 12], [tx + 27, ty + 12],
-      [tx + 8, ty + 10], [tx + 24, ty + 10],
-      [tx + 10, ty + 20], [tx + 22, ty + 20],
-      [tx + 16, ty + 21],
-    ];
+  if (item.map === 'outside' && item.id === 'storefront_sign') {
+    return facadeSignSparklePoints();
   }
-  if (item.map === 'outside' && item.col === 3) {
-    const tx = 3 * TILE;
-    const ty = 12 * TILE;
+  if (item.map === 'outside' && item.id === 'direction_sign') {
+    return readableBoardFrameLocs(
+      OUTSIDE_LAYOUT.props.brewSignCol,
+      OUTSIDE_LAYOUT.propsRow,
+      4, 6, 24, 16
+    );
+  }
+  if (item.map === 'outside' && item.col === COMMUNITY_BOARD.col && item.row === COMMUNITY_BOARD.row) {
+    const tx = COMMUNITY_BOARD.col * TILE - COMMUNITY_BOARD_SHIFT;
+    const ty = COMMUNITY_BOARD.row * TILE - COMMUNITY_BOARD_LIFT;
     return [
-      [tx + 4, ty + 8], [tx + 16, ty + 3], [tx + 28, ty + 8],
-      [tx + 3, ty + 12], [tx + 29, ty + 12],
-      [tx + 3, ty + 20], [tx + 29, ty + 20],
-      [tx + 8, ty + 14], [tx + 22, ty + 16],
-      [tx + 6, ty + 24], [tx + 26, ty + 24],
+      [tx + 8, ty + 15], [tx + 24, ty + 8], [tx + 39, ty + 15],
+      [tx + 8, ty + 18], [tx + 39, ty + 18],
+      [tx + 8, ty + 31], [tx + 39, ty + 31],
+      [tx + 11, ty + 22], [tx + 28, ty + 23],
+      [tx + 10, ty + 38], [tx + 36, ty + 38],
     ];
   }
   if (item.map === 'cafe' && item.id === 'dragons_brew_menu') {
@@ -1167,7 +2233,9 @@ function readableSparkleLocalPoints(item) {
 }
 
 function readableSparkleStyle(item) {
-  if (item.map === 'outside' && (item.col === 6 || item.col === 3)) return 'wood';
+  if (item.map === 'outside' && item.id === 'storefront_sign') return 'storefront';
+  if (item.map === 'outside' && (item.id === 'direction_sign'
+    || (item.col === COMMUNITY_BOARD.col && item.row === COMMUNITY_BOARD.row))) return 'wood';
   return 'light';
 }
 
@@ -1246,25 +2314,25 @@ const MAPS = {
     doorPos: { col: MoDoors.getDoorAnchor().gridCol, row: MoDoors.getDoorAnchor().outsideRow },
     doorFacing: 'up',
     exitTo: 'cafe',
-    playerStart: { col: 4, row: 11 },
+    playerStart: { col: 5, feetRow: OUTSIDE_LAYOUT.sidewalkRow, facing: 'up' },
     mara: null,
     grid: [
-      '####################',
-      '#1................1#',
-      '#..1....1....1.....#',
-      '#..................#',
-      '#..................#',
-      '#..................#',
-      '#..................#',
-      '#..................#',
-      '#..................#',
-      '#..................#',
-      '#..PPPPPPPPPPPP....#',
-      '#.f...B............#',
-      '#..S...............#',
-      '#PPPPPPPPPPPPPPPPPP#',
-      '#..................#',
-      '####################',
+      '...................p',
+      '.1................1.',
+      '..1....1....1.......',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '..f...B.............',
+      '...S................',
+      '..PPPPPPPPPPPPPPPP..',
+      '....................',
+      '....................',
     ].map(r => r.split('')),
   },
   cafe: {
@@ -1283,16 +2351,15 @@ const MAPS = {
       '####################',
       '#|MKH..............|#',
       '#|------------------|#',
-      '#=................=#',
-      '#=................=#',
-      '#=.*....*....*....=#',
-      '#=.c....c....c....=#',
-      '#=....*....*......=#',
-      '#=..o....c....o..=#',
-      '#=................=#',
-      '#=........*.......=#',
-      '#.|||||||>||||||||.#',
-      '#.......|||c.......#',
+      '#...................#',
+      '#...................#',
+      '#..*....*....*......#',
+      '#..c....c....c......#',
+      '#....*....*.........#',
+      '#..o....c....o......#',
+      '#...................#',
+      '#...................#',
+      '#........>.........#',
       '#..................#',
       '#..................#',
       '#..................#',
@@ -1325,6 +2392,46 @@ function buildCafeSeats() {
 }
 
 const CAFE_SEATS = buildCafeSeats();
+
+function isCafeSeatCell(col, row) {
+  for (let i = 0; i < CAFE_SEATS.length; i++) {
+    const s = CAFE_SEATS[i];
+    if (s.col === col && s.row === row) return true;
+  }
+  return false;
+}
+
+function cafeTableFeetBlocked(feetX, feetY) {
+  const u = TILE * SCALE;
+  const col = Math.floor(feetX / u);
+  const row = Math.floor((feetY - 1) / u);
+  const grid = MAPS.cafe.grid;
+  if (row < 0 || row >= ROWS || col < 0 || col >= COLS) return false;
+  if (grid[row][col] === '*') return true;
+  if (row + 1 < ROWS && grid[row + 1][col] === '*') {
+    return feetY >= (row + 1) * u;
+  }
+  return false;
+}
+
+/** True when this café grid cell should block walking (furniture or structural wall). */
+function cafeCellBlocksWalking(ch, col, row) {
+  if (ch === '#' || ch === '|' || ch === '-') return true;
+  if (CAFE_WALL_SIGN_CHARS.has(ch)) return true;
+  if ((ch === 'c' || ch === 'o') && isCafeSeatCell(col, row)) return true;
+  return false;
+}
+
+/** Tile south of seat when facing up (table north); player stands here and presses T. */
+function seatApproachCell(seat) {
+  switch (seat.facing) {
+    case 'down': return { col: seat.col, row: seat.row - 1 };
+    case 'left': return { col: seat.col + 1, row: seat.row };
+    case 'right': return { col: seat.col - 1, row: seat.row };
+    default: return { col: seat.col, row: seat.row + 1 };
+  }
+}
+
 const CAFE_COUNTER = { row: 3, left: 3, right: 16 };
 const COUNTER_CUP = { col: 11, row: 3 };
 const COUNTER_PLATE = { col: 13, row: 3 };
@@ -1359,15 +2466,23 @@ class GameScene extends Phaser.Scene {
       fn(c.getContext('2d'));
       this.textures.addCanvas(key, c);
     };
-    add('t_grass',  32, 32, ctx => drawGrass(ctx, 0, 0, 0));
-    add('t_grass2', 32, 32, ctx => drawGrass(ctx, 0, 0, 1));
+    for (let v = 0; v < GRASS_VARIANT_COUNT; v++) {
+      for (let f = 0; f < GRASS_BREEZE_FRAMES; f++) {
+        const key = grassTexKey(v, f);
+        add(key, 32, 32, ctx => drawGrass(ctx, 0, 0, v, f));
+        this.textures.get(key).setFilter(Phaser.Textures.FilterMode.NEAREST);
+      }
+    }
+    add('t_grass',  32, 32, ctx => drawGrass(ctx, 0, 0, 0, 0));
+    add('t_grass2', 32, 32, ctx => drawGrass(ctx, 0, 0, 1, 0));
     add('t_path',   32, 32, ctx => drawPath(ctx, 0, 0));
     add('t_water',  32, 32, ctx => drawWater(ctx, 0, 0, 0));
     add('t_water2', 32, 32, ctx => drawWater(ctx, 0, 0, 1));
     add('t_tree',   32, 64, ctx => drawTree(ctx, 0, 0));
     add('t_fence',  32, 32, ctx => drawFence(ctx, 0, 0));
-    add('t_sign',   32, 32, ctx => drawCommunityBoard(ctx, 0, 0));
-    add('t_flower', 32, 32, ctx => drawFlower(ctx, 0, 0, '#ff6688'));
+    add('t_sign',   COMMUNITY_BOARD_CANVAS_W, COMMUNITY_BOARD_CANVAS_H, ctx => drawCommunityBoard(ctx, 0, 0));
+    add('t_flower', 32, 32, ctx => drawGoldenPoppy(ctx, 0, 0));
+    add('t_poppy_patch', POPPY_PATCH_CANVAS_W, POPPY_PATCH_CANVAS_H, ctx => drawMeadowPoppyCluster(ctx, 0, 0));
     add('t_wall',   32, 32, ctx => drawBuildingWall(ctx, 0, 0));
     add('t_door',   32, 32, ctx => drawDoorEnter(ctx, 0, 0));
     add('t_brew',   32, 32, ctx => drawFreestandingBrewSign(ctx, 0, 0));
@@ -1389,7 +2504,7 @@ class GameScene extends Phaser.Scene {
     add('t_book',   32, 32, ctx => drawBookOnFloor(ctx, 0, 0));
     add('t_street', 32, 32, ctx => drawStreetPath(ctx, 0, 0));
     add('t_street_pad', 32, 32, ctx => drawStreetPath(ctx, 0, 0, PROP_GRASS_GAP));
-    for (let v = 0; v < 3; v++) {
+    for (let v = 0; v < 2; v++) {
       add('t_step_ov_' + v, 32, 32, ctx => drawStepStoneOverlay(ctx, 0, 0, v));
     }
     add('t_bfoundation', 32, 32, ctx => drawBuildingFoundation(ctx, 0, 0));
@@ -1408,9 +2523,12 @@ class GameScene extends Phaser.Scene {
       drawPatronSeated(pc.getContext('2d'), 0, 0, p.shirt, p.hair);
       this.textures.addCanvas('patron_' + i, pc);
     });
-    const bc = makeCanvas(OUTSIDE_BUILDING.width * 32, OUTSIDE_BUILDING.height * 32);
-    drawStreetBuildingFacade(bc.getContext('2d'), bc.width, bc.height);
+    const fw = OUTSIDE_BUILDING.width * TILE;
+    const fh = OUTSIDE_BUILDING.height * TILE;
+    const bc = makeCanvas(fw, fh);
+    drawStreetBuildingFacade(bc.getContext('2d'), fw, fh);
     this.textures.addCanvas('street_building', bc);
+    this.textures.get('street_building').setFilter(Phaser.Textures.FilterMode.NEAREST);
   }
 
   _ensurePlayerTexture(look) {
@@ -1503,6 +2621,9 @@ class GameScene extends Phaser.Scene {
     this.groundLayer = this.add.container(0, 0);
     this.tallLayer   = this.add.container(0, 0);
     this.solidBodies = this.physics.add.staticGroup();
+    this.grassAnimTiles = [];
+    this.grassBreezeFrame = 0;
+    this.grassBreezeAcc = 0;
 
     const playerTex = this._ensurePlayerTexture(getProtagonistLook() || 'man_short');
     this.player = this.physics.add.sprite(0, 0, playerTex);
@@ -1595,15 +2716,17 @@ class GameScene extends Phaser.Scene {
     this.fKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.F);
 
     this.audioStarted = false;
-    this.input.keyboard.on('keydown', () => {
-      if (!this.audioStarted) {
-        Audio.init();
-        Audio.startMusic();
-        this.audioStarted = true;
-      }
-    });
+    const bootFromPhaser = () => {
+      if (window.MoAudio) window.MoAudio.unlock();
+    };
+    this.input.keyboard.on('keydown', bootFromPhaser);
+    this.input.on('pointerdown', bootFromPhaser);
 
     this.physics.add.collider(this.player, this.solidBodies);
+
+    this._lastSafeX = this.player.x;
+    this._lastSafeY = this.player.y;
+    this.events.on('postupdate', this._rejectCafeTableFeet, this);
 
     this.cameras.main.setBounds(0, 0, W * SCALE, H * SCALE);
     this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
@@ -1624,7 +2747,8 @@ class GameScene extends Phaser.Scene {
 
   _isOutsideBuildingCell(rx, ry) {
     const b = OUTSIDE_BUILDING;
-    return rx >= b.left && rx < b.left + b.width && ry >= b.top && ry < b.top + b.height;
+    return rx >= b.left && rx < b.left + b.width
+      && ry >= b.top && ry < b.top + b.height;
   }
 
   _playerFeetWorld() {
@@ -1659,12 +2783,50 @@ class GameScene extends Phaser.Scene {
     }
   }
 
-  _outsideGroundKey(rx, ry) {
+  _grassVariantAt(rx, ry, tid) {
+    const seed = rx * 17 + ry * 31 + (tid === 1 ? 53 : 0);
+    return ((seed % GRASS_VARIANT_COUNT) + GRASS_VARIANT_COUNT) % GRASS_VARIANT_COUNT;
+  }
+
+  _placeGrassTile(wx, wy, rx, ry, tid) {
+    const variant = this._grassVariantAt(rx, ry, tid);
+    const phase = (rx + ry * 3) % GRASS_BREEZE_FRAMES;
+    const frame = (this.grassBreezeFrame + phase) % GRASS_BREEZE_FRAMES;
+    const img = this.add.image(wx, wy, grassTexKey(variant, frame))
+      .setOrigin(0, 0)
+      .setScale(SCALE);
+    this.groundLayer.add(img);
+    this.grassAnimTiles.push({ img, variant, phase });
+    return img;
+  }
+
+  _placeOutsideGround(wx, wy, rx, ry, tid) {
     const ch = MAPS.outside.grid[ry][rx];
-    if (this._isOutsideBuildingCell(rx, ry)) return 't_bfoundation';
-    if (ch === 'P' && ry >= 10) return 't_street';
-    if (ch === 'P' && ry === OUTSIDE_BUILDING.doorRow) return 't_street';
-    return 't_grass';
+    if (this._isOutsideBuildingCell(rx, ry)) {
+      const img = this.add.image(wx, wy, 't_bfoundation').setOrigin(0, 0).setScale(SCALE);
+      this.groundLayer.add(img);
+      return;
+    }
+    if (ch === 'P') {
+      const img = this.add.image(wx, wy, 't_street').setOrigin(0, 0).setScale(SCALE);
+      this.groundLayer.add(img);
+      return;
+    }
+    this._placeGrassTile(wx, wy, rx, ry, tid);
+  }
+
+  _tickGrassBreeze(delta) {
+    if (!this.grassAnimTiles.length) return;
+    this.grassBreezeAcc += delta;
+    while (this.grassBreezeAcc >= GRASS_BREEZE_MS) {
+      this.grassBreezeAcc -= GRASS_BREEZE_MS;
+      this.grassBreezeFrame = (this.grassBreezeFrame + 1) % GRASS_BREEZE_FRAMES;
+      const globalFrame = this.grassBreezeFrame;
+      this.grassAnimTiles.forEach(({ img, variant, phase }) => {
+        const frame = (globalFrame + phase) % GRASS_BREEZE_FRAMES;
+        img.setTexture(grassTexKey(variant, frame));
+      });
+    }
   }
 
   _playerGridCell() {
@@ -1674,6 +2836,75 @@ class GameScene extends Phaser.Scene {
       col: Math.floor(this.player.x / u),
       row: Math.min(ROWS - 1, Math.max(0, Math.floor((feetY - 1) / u))),
     };
+  }
+
+  /** Block feet from entering a table cell or crossing its north edge from the tile above. */
+  _rejectCafeTableFeet() {
+    if (this.currentMap !== 'cafe' || this.playerSeated || this.dialogueActive || this.orderInputActive) return;
+    const feetY = this.player.y + this.player.displayHeight * (1 - this.player.originY);
+    if (!cafeTableFeetBlocked(this.player.x, feetY)) {
+      this._lastSafeX = this.player.x;
+      this._lastSafeY = this.player.y;
+      return;
+    }
+    if (this._lastSafeX != null) {
+      this.player.setPosition(this._lastSafeX, this._lastSafeY);
+      this.player.body.setVelocity(0, 0);
+      this.player.body.updateFromGameObject();
+    }
+  }
+
+  /** Whole map cell is solid (chairs/stools, wall tiles). */
+  _addGridCellSolid(col, row) {
+    const u = TILE * SCALE;
+    const wx = col * u;
+    const wy = row * u;
+    const body = this.add.rectangle(wx + u / 2, wy + u / 2, u, u);
+    this.physics.add.existing(body, true);
+    this.solidBodies.add(body);
+  }
+
+  /** Blocker aligned to prop art (local px from origin, usually tile or canvas top-left). */
+  _addPropSolid(originX, originY, left, top, width, height) {
+    const s = SCALE;
+    const body = this.add.rectangle(
+      originX + (left + width / 2) * s,
+      originY + (top + height / 2) * s,
+      width * s,
+      height * s
+    );
+    this.physics.add.existing(body, true);
+    this.solidBodies.add(body);
+  }
+
+  _placePropSolidList(originX, originY, rects) {
+    rects.forEach((r) => {
+      this._addPropSolid(originX, originY, r.left, r.top, r.width, r.height);
+    });
+  }
+
+  _placeCommunityBoardSolids(anchorWx, anchorWy) {
+    const imgX = anchorWx - COMMUNITY_BOARD_SHIFT * SCALE;
+    const imgY = anchorWy - COMMUNITY_BOARD_LIFT * SCALE;
+    this._placePropSolidList(imgX, imgY, COMMUNITY_BOARD_PROP_SOLIDS);
+    const u = TILE * SCALE;
+    COMMUNITY_BOARD_SIDEWALK_POSTS.forEach((p) => {
+      this._addPropSolid(p.col * u, p.row * u, p.left, p.top, p.width, p.height);
+    });
+  }
+
+  _placeBrewSignSolids(anchorCol, anchorRow, anchorWx, anchorWy) {
+    this._placePropSolidList(anchorWx, anchorWy, BREW_SIGN_PROP_SOLIDS);
+    const below = BREW_SIGN_POST_BELOW;
+    const u = TILE * SCALE;
+    this._addPropSolid(
+      (anchorCol + below.colOff) * u,
+      (anchorRow + below.rowOff) * u,
+      below.left,
+      below.top,
+      below.width,
+      below.height
+    );
   }
 
   /** Which tile the player is standing on (sprite center). */
@@ -1804,6 +3035,8 @@ class GameScene extends Phaser.Scene {
       }
     }
     this.player.setPosition(x, y);
+    this._lastSafeX = x;
+    this._lastSafeY = y;
     if (spawn.facing) {
       this.facing = spawn.facing;
       this.player.play(`idle-${this.facing}`, true);
@@ -1964,6 +3197,7 @@ class GameScene extends Phaser.Scene {
     this.groundLayer.removeAll(true);
     this.tallLayer.removeAll(true);
     this.solidBodies.clear(true, true);
+    this.grassAnimTiles = [];
     this._destroyDoorSparkles();
     if (this.streetBuildingImg) {
       this.streetBuildingImg.destroy();
@@ -1996,42 +3230,54 @@ class GameScene extends Phaser.Scene {
 
         if (mapKey === 'outside' && ch === 'w' && rx >= b.left - 1 && rx <= b.left + b.width) {
           if (!this._isOutsideBuildingCell(rx, ry)) {
-            const g = this.add.image(wx, wy, 't_grass').setOrigin(0, 0).setScale(SCALE);
-            this.groundLayer.add(g);
+            this._placeGrassTile(wx, wy, rx, ry, 0);
           }
           return;
         }
 
         if (mapKey === 'outside' && this._isOutsideBuildingCell(rx, ry)) {
-          const img = this.add.image(wx, wy, this._outsideGroundKey(rx, ry)).setOrigin(0, 0).setScale(SCALE);
-          this.groundLayer.add(img);
+          if (ry === b.top) return;
+          this._placeOutsideGround(wx, wy, rx, ry, 0);
           return;
         }
 
         const tid = TILE_IDX[ch] ?? 0;
 
         if (tid === 4) {
-          const g = this.add.image(wx, wy, 't_grass').setOrigin(0, 0).setScale(SCALE);
-          this.groundLayer.add(g);
+          this._placeGrassTile(wx, wy, rx, ry, 0);
           const t = this.add.image(wx, wy - 32 * SCALE, 't_tree').setOrigin(0, 0).setScale(SCALE).setDepth(5);
           this.tallLayer.add(t);
           const body = this.add.rectangle(wx + 16 * SCALE, wy + 20 * SCALE, 14 * SCALE, 24 * SCALE);
           this.physics.add.existing(body, true);
           this.solidBodies.add(body);
-        } else if (tid === 6 || tid === 7 || tid === 10) {
-          let gKey = 't_grass';
-          if (mapKey === 'outside') gKey = this._outsideGroundKey(rx, ry);
-          const g = this.add.image(wx, wy, gKey).setOrigin(0, 0).setScale(SCALE);
-          this.groundLayer.add(g);
-          const overlayKey = tid === 6 ? 't_sign' : tid === 7 ? 't_flower' : 't_brew';
-          const s = this.add.image(wx, wy, overlayKey).setOrigin(0, 0).setScale(SCALE).setDepth(5);
+        } else if (tid === 6 || tid === 7 || tid === 10 || tid === 26) {
+          if (mapKey === 'outside') {
+            this._placeOutsideGround(wx, wy, rx, ry, 0);
+          } else {
+            this._placeGrassTile(wx, wy, rx, ry, 0);
+          }
+          const overlayKey = tid === 6 ? 't_sign' : tid === 7 ? 't_flower' : tid === 26 ? 't_poppy_patch' : 't_brew';
+          const propLift = tid === 6 ? COMMUNITY_BOARD_LIFT * SCALE
+            : tid === 26 ? POPPY_PATCH_LIFT * SCALE : 0;
+          const propShift = tid === 6 ? COMMUNITY_BOARD_SHIFT * SCALE
+            : tid === 26 ? POPPY_PATCH_SHIFT * SCALE : 0;
+          const s = this.add.image(wx - propShift, wy - propLift, overlayKey).setOrigin(0, 0).setScale(SCALE).setDepth(5);
           this.tallLayer.add(s);
+          if (tid === 6 && mapKey === 'outside') {
+            this._placeCommunityBoardSolids(wx, wy);
+          } else if (tid === 10 && mapKey === 'outside') {
+            this._placeBrewSignSolids(rx, ry, wx, wy);
+          }
+        } else if (mapKey === 'cafe' && ch === '*') {
+          const img = this.add.image(wx, wy, 't_ctable').setOrigin(0, 0).setScale(SCALE);
+          this.groundLayer.add(img);
+        } else if (mapKey === 'cafe' && CAFE_WALL_SIGN_CHARS.has(ch)) {
+          const signKey = ch === 'M' ? 't_menu' : ch === 'K' ? 't_strike' : 't_hrules';
+          const img = this.add.image(wx, wy, signKey).setOrigin(0, 0).setScale(SCALE);
+          this.groundLayer.add(img);
         } else if (tid === 13 && mapKey === 'cafe') {
           const floor = this.add.image(wx, wy, 't_cfloor').setOrigin(0, 0).setScale(SCALE);
           this.groundLayer.add(floor);
-          const body = this.add.rectangle(wx + 16 * SCALE, wy + 16 * SCALE, 32 * SCALE, 32 * SCALE);
-          this.physics.add.existing(body, true);
-          this.solidBodies.add(body);
         } else if (mapKey === 'cafe' && (ch === 'c' || ch === 'o')) {
           const floor = this.add.image(wx, wy, 't_cfloor').setOrigin(0, 0).setScale(SCALE);
           this.groundLayer.add(floor);
@@ -2050,9 +3296,6 @@ class GameScene extends Phaser.Scene {
           if (!this.textures.exists(key)) this.textures.addCanvas(key, c);
           const img = this.add.image(wx, wy, key).setOrigin(0, 0).setScale(SCALE);
           this.groundLayer.add(img);
-          const body = this.add.rectangle(wx + 16 * SCALE, wy + 16 * SCALE, 32 * SCALE, 32 * SCALE);
-          this.physics.add.existing(body, true);
-          this.solidBodies.add(body);
         } else if (mapKey === 'cafe' && ch === '=') {
           const c = makeCanvas(32, 32);
           drawCafeTrimTile(c.getContext('2d'), 0, 0, grid, rx, ry);
@@ -2061,22 +3304,23 @@ class GameScene extends Phaser.Scene {
           const img = this.add.image(wx, wy, key).setOrigin(0, 0).setScale(SCALE);
           this.groundLayer.add(img);
         } else {
-          const useStreet = mapKey === 'outside' && ch === 'P' && ry >= 10;
-          const boardWalk = mapKey === 'outside' && rx === BOARD_SIDEWALK.col && ry === BOARD_SIDEWALK.row;
-          if (boardWalk) {
-            const gKey = this._outsideGroundKey(rx, ry);
-            const g = this.add.image(wx, wy, gKey).setOrigin(0, 0).setScale(SCALE);
-            this.groundLayer.add(g);
+          const onSidewalk = mapKey === 'outside' && ch === 'P';
+          const boardWalk = onSidewalk && rx === BOARD_SIDEWALK.col && ry === OUTSIDE_SIDEWALK_ROW;
+          const streetEnd = onSidewalk && (rx === 2 || rx === COLS - 3);
+          if (boardWalk || streetEnd) {
+            this._placeOutsideGround(wx, wy, rx, ry, 0);
             const img = this.add.image(wx, wy, 't_street_pad').setOrigin(0, 0).setScale(SCALE);
             this.groundLayer.add(img);
+          } else if (mapKey === 'outside' && (tid === 0 || tid === 1) && !onSidewalk) {
+            this._placeGrassTile(wx, wy, rx, ry, tid);
           } else {
-            let key = useStreet ? 't_street' : (TILE_KEY[tid] ?? 't_grass');
+            let key = onSidewalk ? 't_street' : (TILE_KEY[tid] ?? 't_grass');
             if (mapKey === 'cafe' && (tid === 0 || tid === 1)) key = 't_cfloor';
             const img = this.add.image(wx, wy, key).setOrigin(0, 0).setScale(SCALE);
             this.groundLayer.add(img);
           }
 
-          if (SOLID_TILES.has(tid)) {
+          if (SOLID_TILES.has(tid) && !(mapKey === 'cafe' && CAFE_WALL_SIGN_CHARS.has(ch))) {
             const body = this.add.rectangle(wx + 16 * SCALE, wy + 16 * SCALE, 32 * SCALE, 32 * SCALE);
             this.physics.add.existing(body, true);
             this.solidBodies.add(body);
@@ -2084,6 +3328,16 @@ class GameScene extends Phaser.Scene {
         }
       });
     });
+
+    if (mapKey === 'cafe') {
+      grid.forEach((row, ry) => {
+        row.forEach((ch, rx) => {
+          if (cafeCellBlocksWalking(ch, rx, ry)) {
+            this._addGridCellSolid(rx, ry);
+          }
+        });
+      });
+    }
 
     if (mapKey === 'outside') {
       const b = OUTSIDE_BUILDING;
@@ -2267,7 +3521,7 @@ class GameScene extends Phaser.Scene {
     this._hideCup();
     this._hidePlate();
     this._showDialogue('You finish at the table. Mara smiles from the counter — "Step outside when you\'re ready — that\'s when the week turns."');
-    if (this.audioStarted) Audio.sfxInteract();
+    if (this.audioStarted) MoWebAudio.sfxInteract();
   }
 
   _eatFood() {
@@ -2276,7 +3530,7 @@ class GameScene extends Phaser.Scene {
     if (this.plateFullness <= 0) return;
     this.plateFullness -= 1;
     this._applyPlateBitesVisual();
-    if (this.audioStarted) Audio.sfxInteract();
+    if (this.audioStarted) MoWebAudio.sfxInteract();
     this._tryCompleteDine();
   }
 
@@ -2330,7 +3584,7 @@ class GameScene extends Phaser.Scene {
     if (this.cupFullness <= 0) return;
     this.cupFullness -= 1;
     this._applyCupFullnessVisual();
-    if (this.audioStarted) Audio.sfxInteract();
+    if (this.audioStarted) MoWebAudio.sfxInteract();
     this._tryCompleteDine();
   }
 
@@ -2396,6 +3650,17 @@ class GameScene extends Phaser.Scene {
     }
   }
 
+  _ensureAudio(onReady) {
+    if (window.MoAudio && typeof window.MoAudio.unlock === 'function') {
+      window.MoAudio.unlock(onReady);
+    } else {
+      MoWebAudio.unlock(() => {
+        this.audioStarted = true;
+        if (typeof onReady === 'function') onReady();
+      });
+    }
+  }
+
   _checkDoorTransition() {
     if (this.transitionCooldown > 0) return;
     if (this._isDinePhase()) return;
@@ -2411,8 +3676,11 @@ class GameScene extends Phaser.Scene {
 
     const spawn = MoDoors.spawnForTransition(conf.exitTo);
     if (!spawn) return;
+    const enteringCafe = this.currentMap === 'outside' && conf.exitTo === 'cafe';
+    const leavingCafe = this.currentMap === 'cafe' && conf.exitTo === 'outside';
+    if (enteringCafe) MoWebAudio.sfxDoorOpen();
+    else if (leavingCafe) MoWebAudio.sfxDoorClose();
     this._loadMap(conf.exitTo, spawn);
-    if (this.audioStarted) Audio.sfxInteract();
   }
 
   _closeDialogue() {
@@ -2421,7 +3689,7 @@ class GameScene extends Phaser.Scene {
       this.dialogueBox.setVisible(false);
       this.dialogueActive = false;
       this.dialogueKind = null;
-      if (this.audioStarted) Audio.sfxClose();
+      if (this.audioStarted) MoWebAudio.sfxClose();
       return;
     }
     if (kind === 'visit_beat') {
@@ -2430,7 +3698,7 @@ class GameScene extends Phaser.Scene {
       this.dialogueBox.setVisible(false);
       this.dialogueActive = false;
       this.dialogueKind = null;
-      if (this.audioStarted) Audio.sfxClose();
+      if (this.audioStarted) MoWebAudio.sfxClose();
       if (menuApi && typeof menuApi.advanceVisitPhase === 'function') {
         const nextText = menuApi.advanceVisitPhase();
         const newPhase = menuApi.getVisitPhase ? menuApi.getVisitPhase() : '';
@@ -2452,7 +3720,7 @@ class GameScene extends Phaser.Scene {
     this.dialogueBox.setVisible(false);
     this.dialogueActive = false;
     this.dialogueKind = null;
-    if (this.audioStarted) Audio.sfxClose();
+    if (this.audioStarted) MoWebAudio.sfxClose();
     if (kind === 'mara_order') this._openMaraOrderInput('order');
     if (kind === 'mara_quiz') this._openMaraOrderInput('quiz');
   }
@@ -2489,7 +3757,7 @@ class GameScene extends Phaser.Scene {
     this.maraVisitWrap.classList.add('is-open');
     this.maraVisitWrap.setAttribute('aria-hidden', 'false');
     this._syncVisitPanelPosition();
-    if (this.audioStarted) Audio.sfxInteract();
+    if (this.audioStarted) MoWebAudio.sfxInteract();
   }
 
   _closeVisitPanel() {
@@ -2497,7 +3765,7 @@ class GameScene extends Phaser.Scene {
     this.visitPanelActive = false;
     this.maraVisitWrap.classList.remove('is-open');
     this.maraVisitWrap.setAttribute('aria-hidden', 'true');
-    if (this.audioStarted) Audio.sfxClose();
+    if (this.audioStarted) MoWebAudio.sfxClose();
   }
 
   _advanceVisitPanel() {
@@ -2510,7 +3778,7 @@ class GameScene extends Phaser.Scene {
     if (nextText) {
       this.maraVisitText.textContent = nextText;
       this._syncVisitPanelPosition();
-      if (this.audioStarted) Audio.sfxInteract();
+      if (this.audioStarted) MoWebAudio.sfxInteract();
       return;
     }
     this._closeVisitPanel();
@@ -2579,7 +3847,7 @@ class GameScene extends Phaser.Scene {
     this.maraOrderWrap.classList.remove('is-open');
     this.maraOrderWrap.setAttribute('aria-hidden', 'true');
     this.maraOrderInput.blur();
-    if (playCloseSfx !== false && this.audioStarted) Audio.sfxClose();
+    if (playCloseSfx !== false && this.audioStarted) MoWebAudio.sfxClose();
   }
 
   _submitMaraOrder() {
@@ -2711,17 +3979,31 @@ class GameScene extends Phaser.Scene {
       body = DragonsBrewMenu.formatMenuText();
       DragonsBrewMenu.markMenuViewed();
     }
+    if (item.id === 'house_rules' && window.MoElderReport) {
+      window.MoElderReport.markWallRead('house_rules');
+    }
+    if (item.id === 'strike_board' && window.MoElderReport) {
+      window.MoElderReport.markWallRead('strike');
+    }
     this._showDialogue(item.title + '\n\n' + body);
-    if (this.audioStarted) Audio.sfxInteract();
+    if (this.audioStarted) MoWebAudio.sfxInteract();
   }
 
-  /** Feet tile must be `c` on the café map — no snap from adjacent floor. */
+  /** Adjacent to a seat, facing it — chairs are solid; press T from the approach tile. */
   _chairUnderPlayer() {
     if (this.currentMap !== 'cafe') return null;
     const cell = this._playerGridCell();
-    if (cell.col < 0 || cell.col >= COLS || cell.row < 0 || cell.row >= ROWS) return null;
-    if (MAPS.cafe.grid[cell.row][cell.col] !== 'c' && MAPS.cafe.grid[cell.row][cell.col] !== 'o') return null;
-    return CAFE_SEATS.find((s) => s.col === cell.col && s.row === cell.row) || null;
+    const u = TILE * SCALE;
+    for (let i = 0; i < CAFE_SEATS.length; i++) {
+      const seat = CAFE_SEATS[i];
+      const approach = seatApproachCell(seat);
+      if (cell.col !== approach.col || cell.row !== approach.row) continue;
+      const sx = seat.col * u + u / 2;
+      const sy = seat.row * u + u / 2;
+      if (!this._facingToward(sx, sy)) continue;
+      return seat;
+    }
+    return null;
   }
 
   _seatedPlayerPos(seat) {
@@ -2736,33 +4018,43 @@ class GameScene extends Phaser.Scene {
     const now = this.time.now;
     if (this.dialogueActive || now - this.sitHintAt < 2200) return;
     this.sitHintAt = now;
-    this._showDialogue('Stand on the chair.');
+    this._showDialogue('Walk up to a chair and press T to sit.');
   }
 
   _sitAt(seat) {
     this.playerSeated = true;
     this.seatAnchor = seat;
-    this.facing = 'up';
+    this.facing = seat.facing || 'up';
     const pos = this._seatedPlayerPos(seat);
     this.player.setPosition(pos.x, pos.y);
     this.player.body.setVelocity(0, 0);
     this.player.body.moves = false;
     this.player.body.updateFromGameObject();
     this.player.setDepth(11);
-    this.player.play('idle-up', true);
+    this.player.play(`idle-${this.facing}`, true);
     this._syncCupPosition();
     this._syncPlatePosition();
   }
 
   _standUp() {
+    const seat = this.seatAnchor;
     this.playerSeated = false;
     this.seatAnchor = null;
     this.player.body.moves = true;
     this.player.body.setVelocity(0, 0);
+    if (seat) {
+      const approach = seatApproachCell(seat);
+      const u = TILE * SCALE;
+      const feetY = approach.row * u + u * 0.5;
+      const footDrop = this.player.displayHeight * (1 - this.player.originY);
+      this.facing = seat.facing || 'up';
+      this.player.setPosition(approach.col * u + u / 2, feetY - footDrop);
+      this.player.body.updateFromGameObject();
+    }
     this._syncCupPosition();
     this._syncPlatePosition();
     this._applyPlayerDepth();
-    if (this.audioStarted) Audio.sfxInteract();
+    if (this.audioStarted) MoWebAudio.sfxInteract();
   }
 
   _canTalkToMara() {
@@ -2781,10 +4073,24 @@ class GameScene extends Phaser.Scene {
       this._hideCup();
       this._hidePlate();
       this._showDialogue(this.maraFirstDialogue, 'mara_intro');
-    } else if (window.MoGameDays && window.MoGameDays.isDay8OrLater && window.MoGameDays.isDay8OrLater()) {
+    } else if (window.MoElderReport && window.MoElderReport.isReportPending && window.MoElderReport.isReportPending()) {
       this._showDialogue(
-        'Mara smiles. "Week two already — your elder will check in soon. For now, the room is yours."'
+        'Mara sets down a cup. "Your elder is ready for that check-in — step outside when you can take the call."'
       );
+    } else if (window.MoElderReport && window.MoElderReport.isAwaitingLanguageGoal && window.MoElderReport.isAwaitingLanguageGoal()) {
+      this._showDialogue(
+        'Mara nods toward the menu board. "A few more words from the wall in your pocket — then your elder will want to hear about the week."'
+      );
+    } else if (window.MoElderReport && window.MoElderReport.isDone && window.MoElderReport.isDone()) {
+      if (window.MoElderReport.needsRevisit && window.MoElderReport.needsRevisit()) {
+        this._showDialogue(
+          'Mara smiles. "Your elder loved what you shared — she asked you to notice one more thing next time you\'re here."'
+        );
+      } else {
+        this._showDialogue(
+          'Mara wipes the counter. "Your elder sounded pleased. The room is yours whenever you\'re ready."'
+        );
+      }
     } else if (window.MoGameDays && window.MoGameDays.hasAwaitingDayAdvance && window.MoGameDays.hasAwaitingDayAdvance()) {
       this._showDialogue(
         'Mara wipes the counter. "Whenever you\'re ready — step outside. The weekday turns when you leave the café."'
@@ -2824,13 +4130,15 @@ class GameScene extends Phaser.Scene {
     } else {
       this._showDialogue(this.maraFirstDialogue, 'mara_intro');
     }
-    if (this.audioStarted) Audio.sfxInteract();
+    if (this.audioStarted) MoWebAudio.sfxInteract();
   }
 
   update(time, delta) {
     const { cursors, wasd, player } = this;
     const speed = 100 * SCALE;
     let vx = 0, vy = 0;
+
+    this._tickGrassBreeze(delta);
 
     if (this.transitionCooldown > 0) {
       this.transitionCooldown = Math.max(0, this.transitionCooldown - delta);
@@ -2843,6 +4151,18 @@ class GameScene extends Phaser.Scene {
     }
 
     if (window.MoVisitSetup && window.MoVisitSetup.needsSetup && window.MoVisitSetup.needsSetup()) {
+      player.setVelocity(0, 0);
+      player.play(`idle-${this.facing}`, true);
+      return;
+    }
+
+    if (window.MoPrologue && window.MoPrologue.isActive && window.MoPrologue.isActive()) {
+      player.setVelocity(0, 0);
+      player.play(`idle-${this.facing}`, true);
+      return;
+    }
+
+    if (window.MoElderReport && window.MoElderReport.isActive && window.MoElderReport.isActive()) {
       player.setVelocity(0, 0);
       player.play(`idle-${this.facing}`, true);
       return;
@@ -2910,7 +4230,7 @@ class GameScene extends Phaser.Scene {
       const seat = this._chairUnderPlayer();
       if (seat) {
         this._sitAt(seat);
-        if (this.audioStarted) Audio.sfxInteract();
+        if (this.audioStarted) MoWebAudio.sfxInteract();
         return;
       }
       if (this.currentMap === 'cafe') {
@@ -2927,7 +4247,8 @@ class GameScene extends Phaser.Scene {
 
     if (vx !== 0 || vy !== 0) {
       player.play(`walk-${this.facing}`, true);
-      if (this.audioStarted) Audio.sfxStep();
+      const mapConf = MAPS[this.currentMap];
+      if (!this._canUseDoor(mapConf)) MoWebAudio.sfxStep();
     } else {
       player.play(`idle-${this.facing}`, true);
     }

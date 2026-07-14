@@ -18,6 +18,9 @@
   var LGBTQ_TEXT_RE =
     /\blgbtq?\b|lesbian|gay\b|homosexual|queer\b|transgender|non[- ]?binary|they\/them|two[- ]moms?|two[- ]mothers?|two[- ]dads?|two[- ]fathers?|same[- ]sex marriage|gender[- ]fluid|bisexual|nonbinary/i;
 
+  var LGBTQ_ABSENT_RE =
+    /\bno (?:explicit )?(?:mention of )?lgbtq|no lgbtq|without (?:explicit )?lgbtq|(?:do|does) not (?:contain|include|feature|indicate|show|depict)|not indicate any lgbtq|no (?:gay|lesbian|queer|transgender|non[- ]binary)\b/i;
+
   var GRAPHIC_FORMAT_RE =
     /\bcomic books?\b|\bgraphic novels?\b|\bgraphic books?\b|\bmanga\b|\bcomics\b|\bgraphic fiction\b|\bsketchbooks?\b|\bart books?\b/i;
 
@@ -51,6 +54,17 @@
   /** Hardest never-recommend (Book Quest + family shelf): illegitimacy-centered plot, LGBTQ-centered plot, adult romance, harsh swearing/slurs, hardcore group demonization, pro-colonial narrative. */
   var EXCLUSION_CRUDE_PROFANITY_DETAIL =
     "Excluded: harsh swearing or crude language (slurs, sexual swear words, and rear-end or bodily-function curses)—outside Halalit’s family shelf.";
+
+  var NONFICTION_RELIABILITY_DISCRETION_DETAIL =
+    "Nonfiction—Halalit has not hand-checked factual reliability or content cleanliness. Preview and decide as a family; Halalit won’t recommend until the owner vets it.";
+
+  var NONFICTION_SIGNAL_LABEL = "Nonfiction (catalog)—factual reliability not hand-checked";
+
+  var ADULT_REALISTIC_FICTION_DISCRETION_DETAIL =
+    "Adult-range realistic fiction—Halalit has not hand-checked content cleanliness for your family. Preview and decide; Halalit won’t recommend until the owner vets it.";
+
+  var ADULT_REALISTIC_SIGNAL_LABEL =
+    "Adult-range realistic fiction (catalog)—content cleanliness not hand-checked";
 
   /** Hard-ban patterns — catalog/plot/title scan; not an exhaustive list of every rude word. */
   var CRUDE_PROFANITY_PATTERNS = [
@@ -574,6 +588,7 @@
   function maybeApplyDeityComfort(result, title, author, textBlob) {
     if (!result || result.tier === "flag_review") return result;
     if (result.tier === "verified_clean") {
+      if (result.ownerAiThemeAbsent && result.ownerAiThemeAbsent.deity_mythology) return result;
       var noteOnClean = deityComfortNote(title, author, textBlob, { forVerifiedClean: true });
       if (!noteOnClean) return result;
       return Object.assign({}, result, { deityComfort: noteOnClean });
@@ -801,6 +816,71 @@
     return blob.trim();
   }
 
+  function titleLooksNonfiction(title) {
+    var tl = normTitle(title);
+    if (!tl) return false;
+    if (/\b(biograph|autobiograph|memoir|cookbook|field guide|atlas|encyclopedia|true story)\b/i.test(tl)) return true;
+    if (/\bhistory of\b/i.test(tl) && !/\bfiction\b/i.test(tl)) return true;
+    return false;
+  }
+
+  /** Open Library subjects, descriptions, or title heuristics — not a guarantee. */
+  function catalogBlobLooksNonfiction(blob, title) {
+    var b = String(blob || "").toLowerCase();
+    var tl = normTitle(title);
+    if (/\bnonfiction\b|\bnon-fiction\b/.test(b)) return true;
+    if (/\bbiograph|\bautobiograph|\bmemoir/.test(b)) return true;
+    if (/\bcookery\b|\bcookbook\b/.test(b)) return true;
+    if (/\bhistory\b/.test(b) && !/\bfiction\b|\bnovel\b|\bromance\b/.test(b)) return true;
+    if (/\btrue stor(?:y|ies)\b|\btrue account/.test(b)) return true;
+    if (
+      /\bjuvenile literature\b|\bjuvenile works\b|\bchildren'?s nonfiction\b/.test(b) &&
+      /\b(biograph|history|science|nature|social stud|mathematic|inventions?)\b/.test(b)
+    ) {
+      return true;
+    }
+    return titleLooksNonfiction(tl);
+  }
+
+  /** Literary / contemporary / domestic fiction for teen+ readers—not genre fantasy, SF, mystery, or nonfiction. */
+  function catalogBlobLooksAdultRealisticFiction(blob, title) {
+    if (catalogBlobLooksNonfiction(blob, title)) return false;
+    var b = String(blob || "").toLowerCase();
+    if (!b) return false;
+    if (
+      /juvenile fiction|juvenile works|children'?s fiction|children'?s stories|picture books|young readers|chapter books/.test(
+        b
+      ) &&
+      !/\bteen\b|\byoung adult\b|\bya\b/.test(b)
+    ) {
+      return false;
+    }
+    if (/\bfantasy fiction\b|\bscience fiction\b|\bimaginary places\b|\bdystop/.test(b) && !/\bliterary\b|\bdomestic\b/.test(b)) {
+      return false;
+    }
+    if (/\bmystery fiction\b|\bthriller fiction\b|\bhorror fiction\b/.test(b) && !/\bliterary\b|\bdomestic\b|\brealistic\b/.test(b)) {
+      return false;
+    }
+    if (
+      /\badult fiction\b|\bliterary fiction\b|\bdomestic fiction\b|\brealistic fiction\b|\bfamily saga\b|\bpsychological fiction\b|\bdomestic life\b|\bcontemporary fiction\b/.test(
+        b
+      )
+    ) {
+      return true;
+    }
+    if (
+      /\bteen fiction\b|\byoung adult fiction\b|\bya fiction\b|\bcoming of age\b/.test(b) &&
+      !/\bfantasy\b|\bscience fiction\b|\bmagic\b|\bmystery fiction\b/.test(b)
+    ) {
+      return true;
+    }
+    return false;
+  }
+
+  function bookQuestVariantIsRealisticFiction(genre) {
+    return genre === "realistic_fiction" || genre === "realistic";
+  }
+
   function isTeenBlob(blob) {
     return (
       /\bteen fiction\b|\bteenage\b|\byoung adult\b|\bya fiction\b|\bya\b/.test(blob) ||
@@ -825,7 +905,94 @@
   }
 
   function blobMentionsLgbtq(blob) {
-    return LGBTQ_SUBJECT_WARN_RE.test(blob) || LGBTQ_TEXT_RE.test(blob);
+    var b = String(blob || "");
+    if (LGBTQ_SUBJECT_WARN_RE.test(b)) return true;
+    if (!LGBTQ_TEXT_RE.test(b)) return false;
+    if (LGBTQ_ABSENT_RE.test(b)) return false;
+    return true;
+  }
+
+  function hintDetailIsLgbtqPolicy(detail) {
+    return /lgbtq identity|lgbtq themes|mention lgbtq|flags lgbtq representation/i.test(String(detail || ""));
+  }
+
+  function subjectListAffirmsLgbtq(subjects) {
+    var blob = (subjects || []).join(" ");
+    return LGBTQ_SUBJECT_WARN_RE.test(blob);
+  }
+
+  function subjectsFromOlDoc(doc) {
+    var raw = [];
+    if (doc && doc.subject_facet && doc.subject_facet.length) raw = doc.subject_facet.slice(0, 40);
+    else if (doc && doc.subject && doc.subject.length) raw = doc.subject.slice(0, 40);
+    return raw
+      .map(function (s) {
+        return String(s || "").trim();
+      })
+      .filter(Boolean);
+  }
+
+  function signalMentionsLgbtq(signal) {
+    return /lgbtq themes in catalog|lgbtq themes flagged by ai|ai scan:\s*lgbtq/i.test(String(signal || ""));
+  }
+
+  function filterLgbtqSignals(signals) {
+    var out = [];
+    for (var i = 0; i < (signals || []).length; i++) {
+      if (!signalMentionsLgbtq(signals[i])) out.push(signals[i]);
+    }
+    return out;
+  }
+
+  /**
+   * Keep catalog tier/detail aligned with AI LGBTQ scan — no warn + deny at once.
+   */
+  function reconcileHintLgbtqWithAiScan(hint, aiResult, doc, supplementCombined) {
+    if (!hint || !aiResult || !aiResult.ok) return hint;
+    var AI = global.HalalitBookcheckAi;
+    var denied =
+      AI && typeof AI.aiLgbtqThemeDenied === "function" ? AI.aiLgbtqThemeDenied(aiResult) : false;
+    var present =
+      AI && typeof AI.aiLgbtqThemePresent === "function" ? AI.aiLgbtqThemePresent(aiResult) : false;
+    var tagsAffirm = subjectListAffirmsLgbtq(subjectsFromOlDoc(doc));
+    var out = Object.assign({}, hint);
+    out.signals = filterLgbtqSignals(out.signals || []);
+
+    if (denied && !present && !tagsAffirm) {
+      if (out.tier === "flag_review" && hintDetailIsLgbtqPolicy(out.detail)) {
+        var fallback = inferCatalogFamilyHint(
+          doc || { title: "" },
+          supplementCombined
+            ? { supplementText: supplementCombined, skipDescriptionLgbtq: true }
+            : { skipDescriptionLgbtq: true }
+        );
+        out.tier = fallback.tier;
+        out.detail = fallback.detail;
+        out.signals = filterLgbtqSignals(fallback.signals || out.signals);
+      }
+      return out;
+    }
+
+    if (
+      (present || tagsAffirm) &&
+      out.tier !== "verified_clean" &&
+      out.tier !== "user_discretion" &&
+      out.tier !== "fanservice_caution"
+    ) {
+      out.tier = "flag_review";
+      if (tagsAffirm) {
+        out.detail = LGBTQ_SUBJECT_WARN_RE.test(subjectsFromOlDoc(doc).join(" "))
+          ? "Tags mention LGBTQ identity or related themes—outside Halalit’s family shelf."
+          : "Description or notes mention LGBTQ themes—outside Halalit’s family shelf.";
+      } else {
+        out.detail = "AI theme scan flags LGBTQ representation—outside Halalit’s family shelf.";
+      }
+      var lgbtqSignal = tagsAffirm
+        ? "LGBTQ themes in catalog or description"
+        : "LGBTQ themes flagged by AI theme scan";
+      if (out.signals.indexOf(lgbtqSignal) === -1) out.signals = out.signals.concat([lgbtqSignal]);
+    }
+    return out;
   }
 
   /**
@@ -839,7 +1006,7 @@
     var b = String(blob || "");
     var tl = normTitle(title);
     if (!b && !tl) return signals;
-    if (blobMentionsLgbtq(b)) signals.push("LGBTQ themes in catalog or description");
+    if (blob && blobMentionsLgbtq(b)) signals.push("LGBTQ themes in catalog or description");
     if (textMentionsCrudeProfanity(b) || textMentionsCrudeProfanity(tl)) {
       signals.push("Harsh swearing or slurs in catalog or description");
     }
@@ -851,6 +1018,8 @@
     if (/juvenile fiction|juvenile works|children'?s fiction|children'?s stories|picture books|young readers/.test(b)) {
       signals.push("Tagged as children's or juvenile fiction");
     }
+    if (catalogBlobLooksNonfiction(b, title)) signals.push(NONFICTION_SIGNAL_LABEL);
+    if (catalogBlobLooksAdultRealisticFiction(b, title)) signals.push(ADULT_REALISTIC_SIGNAL_LABEL);
     if (textSuggestsDeityMythology(b)) signals.push("Deity, spirits, or mythology");
     var out = [];
     for (var i = 0; i < signals.length; i++) {
@@ -865,13 +1034,31 @@
    * @param {string[]} signals
    * @param {string} title
    */
-  function familyActionLine(tier, signals, title) {
+  function familyActionLine(tier, signals, title, opts) {
+    opts = opts || {};
     var sig = signals || [];
+    var experienced = opts.experienced;
+    if (experienced == null) {
+      var Prefs = global.HalalitBookcheckPrefs;
+      if (Prefs && typeof Prefs.isExperiencedBookcheckUser === "function") {
+        experienced = Prefs.isExperiencedBookcheckUser();
+      }
+    }
     var graphic = blobLooksGraphic(sig.join(" "), title) || sig.indexOf("Comics, manga, or graphic novel") !== -1;
     if (tier === "flag_review") {
       return "Outside Halalit's family shelf—pick another title unless you plan to read this yourself first and judge.";
     }
     if (tier === "user_discretion") {
+      if (sig.indexOf(NONFICTION_SIGNAL_LABEL) !== -1) {
+        return experienced
+          ? "Nonfiction — not hand reliability-checked yet."
+          : "Nonfiction without a hand reliability check—Halalit won’t recommend until the owner vets; preview and decide.";
+      }
+      if (sig.indexOf(ADULT_REALISTIC_SIGNAL_LABEL) !== -1) {
+        return experienced
+          ? "Adult realistic fiction — not hand content-checked yet."
+          : "Adult-range realistic fiction without a hand content check—Halalit won’t recommend until the owner vets; preview and decide.";
+      }
       return "Hand-checked parent discretion—not LGBTQ, adult-romance, or hardest fanservice auto-reject. Read the note and decide.";
     }
     if (tier === "verified_clean") {
@@ -887,18 +1074,28 @@
       return "Hand-checked comic with lighter fanservice caution than the heavy auto-reject list—Halalit won’t auto-recommend; preview human characters and outfits.";
     }
     if (tier === "preview_caution" || (graphic && tier !== "verified_clean")) {
-      return "Preview the art and tone yourself before kids read—especially panels in comics, manga, sketchbooks, and art books.";
+      return experienced
+        ? "Preview panels and tone before kids read."
+        : "Preview the art and tone yourself before kids read—especially panels in comics, manga, sketchbooks, and art books.";
     }
     if (sig.length) {
-      return "Catalog hints a concern but Halalit hasn't hand-checked this book—preview or skip unless you already know it.";
+      return experienced
+        ? "Catalog hint — preview or skip."
+        : "Catalog hints a concern but Halalit hasn't hand-checked this book—preview or skip unless you already know it.";
     }
     if (tier === "likely_youth" || tier === "not_verified") {
-      return "Looks like children's fiction but Halalit hasn't verified it—skim the first chapter or stick to authors you trust.";
+      return experienced
+        ? "Not hand-vetted — preview if unsure."
+        : "Looks like children's fiction but Halalit hasn't verified it—skim the first chapter or stick to authors you trust.";
     }
     if (tier === "unclear") {
-      return "We couldn't match this book well—fix the spelling, add the author, or preview before sharing with kids.";
+      return experienced
+        ? "No strong catalog match — add author or preview."
+        : "We couldn't match this book well—fix the spelling, add the author, or preview before sharing with kids.";
     }
-    return "Not hand-verified—preview before you hand it to kids if you're unsure.";
+    return experienced
+      ? "Not hand-vetted — preview if unsure."
+      : "Not hand-verified—preview before you hand it to kids if you're unsure.";
   }
 
   function attachPracticalMeta(result, blob, title) {
@@ -998,13 +1195,17 @@
     }
 
     if (blob && blobMentionsLgbtq(blob)) {
-      return done({
-        tier: "flag_review",
-        detail:
-          LGBTQ_SUBJECT_WARN_RE.test(blob)
-            ? "Tags mention LGBTQ identity or related themes—outside Halalit’s family shelf."
-            : "Description or notes mention LGBTQ themes—outside Halalit’s family shelf.",
-      });
+      var skipDescLgbtq = opts && opts.skipDescriptionLgbtq;
+      var tagsOnlyLgbtq = LGBTQ_SUBJECT_WARN_RE.test(blob);
+      if (!(skipDescLgbtq && !tagsOnlyLgbtq)) {
+        return done({
+          tier: "flag_review",
+          detail:
+            tagsOnlyLgbtq
+              ? "Tags mention LGBTQ identity or related themes—outside Halalit’s family shelf."
+              : "Description or notes mention LGBTQ themes—outside Halalit’s family shelf.",
+        });
+      }
     }
 
     if (blob && FANSERVICE_TEXT_RE.test(blob) && blobLooksGraphic(blob, ttl)) {
@@ -1014,6 +1215,27 @@
           GRAPHIC_UNVETTED_DETAIL +
           " Catalog also mentions suggestive or fanservice content—only add after a hand-check.",
       });
+    }
+
+    if (!isHandVerifiedClean(ttl, auth)) {
+      if (blob && catalogBlobLooksNonfiction(blob, ttl)) {
+        return done({
+          tier: "user_discretion",
+          detail: NONFICTION_RELIABILITY_DISCRETION_DETAIL,
+        });
+      }
+      if (titleLooksNonfiction(ttl)) {
+        return done({
+          tier: "user_discretion",
+          detail: NONFICTION_RELIABILITY_DISCRETION_DETAIL,
+        });
+      }
+      if (blob && catalogBlobLooksAdultRealisticFiction(blob, ttl)) {
+        return done({
+          tier: "user_discretion",
+          detail: ADULT_REALISTIC_FICTION_DISCRETION_DETAIL,
+        });
+      }
     }
 
     if (!blob) {
@@ -1275,6 +1497,8 @@
       if (bookQuestBlocksKeeperOfTheLostCities(title, author)) return false;
       if (!bookQuestMatchesReaderAge(title, author, opts.variantId, opts.readerAgeBand)) return false;
       if (verified && verified.excludesBookQuest) return false;
+      if (opts.variantGenre === "nonfiction" && !verified) return false;
+      if (bookQuestVariantIsRealisticFiction(opts.variantGenre) && !verified) return false;
     }
     if (verified || catalogHintTier === "verified_clean") return true;
     if (
@@ -1288,6 +1512,7 @@
     if (catalogHintTier === "deity_comfort" && !allowDeity) return false;
     if (!allowDeity && deityComfortAdvisory(title, author)) return false;
     if (titleLooksGraphic(title) && !isHandVerifiedClean(title, author)) return false;
+    if (!verified && titleLooksNonfiction(title)) return false;
     return true;
   }
 
@@ -1348,6 +1573,10 @@
     collectPracticalSignals: collectPracticalSignals,
     familyActionLine: familyActionLine,
     lgbtqSubjectTagsFromList: lgbtqSubjectTagsFromList,
+    hintDetailIsLgbtqPolicy: hintDetailIsLgbtqPolicy,
+    subjectListAffirmsLgbtq: subjectListAffirmsLgbtq,
+    reconcileHintLgbtqWithAiScan: reconcileHintLgbtqWithAiScan,
+    filterLgbtqSignals: filterLgbtqSignals,
     catalogThemeHits: function (subjects) {
       var ST = global.HalalitShelfThemes;
       return ST && ST.matchCatalogSubjects ? ST.matchCatalogSubjects(subjects) : [];
@@ -1387,5 +1616,11 @@
     noRecommendKnownFanservice: noRecommendKnownFanservice,
     graphicFanserviceCautionHint: graphicFanserviceCautionHint,
     isGraphicFanserviceCaution: isGraphicFanserviceCaution,
+    titleLooksNonfiction: titleLooksNonfiction,
+    catalogBlobLooksNonfiction: catalogBlobLooksNonfiction,
+    nonfictionReliabilityDiscretionDetail: NONFICTION_RELIABILITY_DISCRETION_DETAIL,
+    catalogBlobLooksAdultRealisticFiction: catalogBlobLooksAdultRealisticFiction,
+    bookQuestVariantIsRealisticFiction: bookQuestVariantIsRealisticFiction,
+    adultRealisticFictionDiscretionDetail: ADULT_REALISTIC_FICTION_DISCRETION_DETAIL,
   };
 })(typeof window !== "undefined" ? window : this);

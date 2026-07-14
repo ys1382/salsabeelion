@@ -71,6 +71,13 @@ done
 if [[ "$needs_static_py" == true ]]; then
   rsync -avz "$ROOT/top/_shared/serve_static_https.py" "$ROOT/top/_shared/kids-watchdog.sh" "$HOST:~/$REMOTE_BASE/"
 fi
+if site_enabled halalit || site_enabled crocheter || site_enabled lorekeeper || site_enabled all; then
+  ssh_cmd "$HOST" "mkdir -p ~/$REMOTE_BASE/_shared"
+  rsync -avz \
+    "$ROOT/top/_shared/oddtrove_password_reset.py" \
+    "$ROOT/top/_shared/oddtrove_transactional_mail.py" \
+    "$HOST:~/$REMOTE_BASE/_shared/"
+fi
 if site_enabled hub || site_enabled all; then
   rsync -avz "$ROOT/top/_shared/hub_owner_api.py" "$HOST:~/$REMOTE_BASE/"
 fi
@@ -114,6 +121,12 @@ if site_enabled lorekeeper || site_enabled all; then
 fi
 if site_enabled crocheter; then
   rsync -avz "$ROOT/crocheter/www/" "$HOST:~/$REMOTE_BASE/crocheter/"
+  ssh_cmd "$HOST" "mkdir -p ~/$REMOTE_BASE/crocheter-data"
+  shopt -s nullglob
+  cr_py=( "$ROOT/crocheter"/crocheter_*.py )
+  if [[ ${#cr_py[@]} -gt 0 ]]; then
+    rsync -avz "${cr_py[@]}" "$HOST:~/$REMOTE_BASE/"
+  fi
 fi
 if site_enabled halalit; then
   if [[ -d "$ROOT/halalit/www" ]]; then
@@ -121,9 +134,14 @@ if site_enabled halalit; then
   else
     echo "Note: halalit/www not in this checkout — leaving existing halalit files on server."
   fi
-  if [[ -f "$ROOT/halalit/server/start-api.sh" ]]; then
+  if [[ -d "$ROOT/halalit/server" ]]; then
     ssh_cmd "$HOST" "mkdir -p ~/$REMOTE_BASE/halalit-server"
-    rsync -avz "$ROOT/halalit/server/start-api.sh" "$HOST:~/$REMOTE_BASE/halalit-server/"
+    rsync -avz \
+      --exclude '.env' \
+      --exclude 'halalit_accounts.sqlite' \
+      --exclude 'lookup-log.jsonl' \
+      --exclude '__pycache__' \
+      "$ROOT/halalit/server/" "$HOST:~/$REMOTE_BASE/halalit-server/"
   fi
 fi
 if site_enabled rpg; then
@@ -133,7 +151,7 @@ if site_enabled rpg; then
 fi
 
 ANTHROPIC_KEY_LOCAL="$ROOT/anthropic.key"
-if site_enabled maestros || site_enabled lorekeeper || site_enabled all; then
+if site_enabled maestros || site_enabled lorekeeper || site_enabled crocheter || site_enabled all; then
   if [[ -z "${ANTHROPIC_API_KEY:-}" && -f "$ANTHROPIC_KEY_LOCAL" ]]; then
     export ANTHROPIC_API_KEY="$(tr -d '\n\r' < "$ANTHROPIC_KEY_LOCAL")"
   fi
@@ -159,11 +177,14 @@ ssh_cmd "$HOST" \
   MAESTROS_PORT="$MAESTROS_PORT" \
   ENVDYST_PORT="$ENVDYST_PORT" \
   CROCHETER_PORT="$CROCHETER_PORT" \
+  CROCHETER_API_PORT="${CROCHETER_API_PORT:-8076}" \
   HALALIT_PORT="${HALALIT_PORT}" \
   RPG_PORT="$RPG_PORT" \
   LOREKEEPER_PORT="$LOREKEEPER_PORT" \
   LOREKEEPER_API_PORT="$LOREKEEPER_API_PORT" \
   HUB_OWNER_API_PORT="$HUB_OWNER_API_PORT" \
+  CROCHETER_API_PORT="${CROCHETER_API_PORT:-8076}" \
+  ODDTROVE_CROCHETER_OWNER_EMAIL="${ODDTROVE_CROCHETER_OWNER_EMAIL:-nightofhonour@gmail.com}" \
   BIND="$BIND" \
   RPG_BIND="$RPG_BIND" \
   'bash -s' << 'REMOTE'
@@ -295,6 +316,10 @@ start_halalit_api() {
   nohup bash -c '
     echo $$ > "'"$wd_pidfile"'"
     while true; do
+      ANTHROPIC_API_KEY="'"${ANTHROPIC_API_KEY:-}"'" \
+      KIDS_SITES_ANTHROPIC_KEY_PATH="'"$ANTHROPIC_KEY_FILE"'" \
+      HALALIT_ANTHROPIC_MODEL="'"${HALALIT_ANTHROPIC_MODEL:-claude-sonnet-4-6}"'" \
+      BRAVE_SEARCH_API_KEY="'"${BRAVE_SEARCH_API_KEY:-}"'" \
       "'"$BASE"'/halalit-server/start-api.sh" >>/tmp/kids-site-ai-8075.log 2>&1
       echo "Halalit Bookcheck API exited — restarting in 2s" >>/tmp/kids-site-ai-8075.log
       sleep 2
@@ -302,6 +327,49 @@ start_halalit_api() {
     rm -f "'"$wd_pidfile"'"
   ' </dev/null >/dev/null 2>&1 &
   echo "Started Halalit Bookcheck API on port ${HALALIT_BOOKCHECK_API_PORT:-8075} ($BIND)"
+  if [[ -n "${ANTHROPIC_API_KEY:-}" ]] || [[ -f "$ANTHROPIC_KEY_FILE" ]]; then
+    echo "Halalit Bookcheck: Claude + Gemini dual theme scan (Anthropic key loaded)"
+  else
+    echo "Note: Halalit Bookcheck Claude disabled — Gemini only until anthropic.key is on server"
+  fi
+  echo "Halalit Bookcheck review search: DuckDuckGo lite (no key). Optional BRAVE_SEARCH_API_KEY in halalit-server/.env."
+}
+
+start_crocheter_api() {
+  if [[ ! -f "$BASE/crocheter_api.py" ]]; then
+    return 0
+  fi
+  local port="${CROCHETER_API_PORT:-8076}"
+  local wd_name="crocheter-api"
+  local wd_pidfile
+  wd_pidfile="$(kids_watchdog_pidfile "$wd_name")"
+  kids_stop_watchdog "$wd_name" "crocheter-api.log 2>&1"
+  pkill -f "crocheter_api.py" 2>/dev/null || true
+  sleep 0.15
+  mkdir -p "$BASE/crocheter-data"
+  nohup bash -c '
+    echo $$ > "'"$wd_pidfile"'"
+    while true; do
+      CROCHETER_DATA_PATH="'"$BASE"'/crocheter-data/crocheter-store.json" \
+      CROCHETER_SECRET_PATH="'"$BASE"'/crocheter-data/crocheter.secret" \
+      CROCHETER_API_PORT="'"$port"'" \
+      CROCHETER_API_BIND="'"$BIND"'" \
+      KIDS_SITES_BASE="'"$BASE"'" \
+      PYTHONPATH="'"$BASE"'/_shared" \
+      ANTHROPIC_API_KEY="'"${ANTHROPIC_API_KEY:-}"'" \
+      ODDTROVE_CROCHETER_OWNER_EMAIL="'"${ODDTROVE_CROCHETER_OWNER_EMAIL:-nightofhonour@gmail.com}"'" \
+        python3 "'"$BASE"'/crocheter_api.py" >>/tmp/crocheter-api.log 2>&1
+      echo "Crocheter API exited — restarting in 2s" >>/tmp/crocheter-api.log
+      sleep 2
+    done
+    rm -f "'"$wd_pidfile"'"
+  ' </dev/null >/dev/null 2>&1 &
+  echo "Started Crocheter API on port $port ($BIND)"
+  if [[ -n "${ANTHROPIC_API_KEY:-}" ]] || [[ -f "$ANTHROPIC_KEY_FILE" ]]; then
+    echo "Crocheter Ask: Anthropic key loaded"
+  else
+    echo "Note: Crocheter Ask disabled — set ANTHROPIC_API_KEY or $ANTHROPIC_KEY_FILE on server"
+  fi
 }
 
 if site_enabled hub; then
@@ -315,6 +383,7 @@ if site_enabled envdyst; then
 fi
 if site_enabled crocheter; then
   restart_static_port "$CROCHETER_PORT" "$BASE/crocheter" "crocheter"
+  start_crocheter_api || true
 fi
 if site_enabled halalit; then
   restart_static_port "$HALALIT_PORT" "$BASE/halalit" "halalit"
@@ -344,6 +413,7 @@ for port in "$HUB_PORT" "$MAESTROS_PORT" "$ENVDYST_PORT" "$CROCHETER_PORT" "$HAL
 done
 curl -s -o /dev/null -w "LoreKeeper API port ${LOREKEEPER_API_PORT}: %{http_code}\n" "http://127.0.0.1:${LOREKEEPER_API_PORT}/api/auth/me" || true
 curl -s -o /dev/null -w "Halalit Bookcheck API port ${HALALIT_BOOKCHECK_API_PORT:-8075}: %{http_code}\n" "http://127.0.0.1:${HALALIT_BOOKCHECK_API_PORT:-8075}/api/health" || true
+curl -s -o /dev/null -w "Crocheter API port ${CROCHETER_API_PORT:-8076}: %{http_code}\n" "http://127.0.0.1:${CROCHETER_API_PORT:-8076}/api/health" || true
 REMOTE
 
 echo ""

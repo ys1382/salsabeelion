@@ -1,0 +1,41 @@
+---
+description: LoreKeeper — what Cursor agents may read or test by default (draft privacy)
+globs:
+  - lorekeeper/**
+---
+
+# LoreKeeper debugging privacy
+
+LoreKeeper notes and documents are **private creative writing**. Treat them like unpublished drafts.
+
+## Default (no override)
+
+Agents **may**:
+
+- Read **roadmap**, **tests**, **fixtures**, and **synthetic** regression corpora under `lorekeeper/tests/fixtures/`
+- Read and edit **recall/backend code** and **UI shell** without opening live store files
+- Run **unit tests** (`python -m pytest lorekeeper/tests/`) — fixtures only
+- Deploy owner-only LoreKeeper per `owner-only-auto-deploy`
+
+Agents **must not** without the owner typing **`override`** or **`debug with my notes`** in the same message:
+
+- Read `lorekeeper-data/lorekeeper-store.json`, SSH copies of the store, or backup pulls with real canon
+- Paste **note bodies, document prose, or Ask answers from the live site** into chat
+- Browser-test Ask against **real** owner drafts unless the owner is watching and asked for a live pass
+
+## When the owner says override
+
+- Minimize exposure: use **one** named work or **one** spot question they gave
+- Prefer **Owner's Office → Phase 0 spot-check** questions over dumping whole exports
+- Do **not** commit real canon to git — regression cases stay synthetic
+
+## Third-party recall (RAG)
+
+- Optional server RAG (Anthropic) is **librarian-only** — chunks from that account only; no training
+- Agents do not enable RAG or new providers without owner approval in that conversation
+- Default debugging uses `LOREKEEPER_RAG=0` and fixture corpora
+
+## Owner's Office corrections
+
+- Read **correction metadata** (question text, route, material state) from stubs export
+- Do **not** pull other writers' accounts or note bodies from the store

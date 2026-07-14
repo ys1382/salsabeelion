@@ -29,16 +29,26 @@
   }
 
   function classifyBook(title, author) {
-    var Policy = global.HalalitFamilyShelfPolicy;
+    var VS = global.HalalitBookcheckVetSource;
     var tier = "unclear";
     var detail = "";
-    if (Policy && typeof Policy.inferCatalogFamilyHint === "function") {
-      var hint = Policy.inferCatalogFamilyHint({
-        title: title,
-        author_name: author ? [author] : [],
-      });
-      tier = hint && hint.tier ? hint.tier : "unclear";
-      detail = hint && hint.detail ? hint.detail : "";
+    if (VS && typeof VS.resolveHandVetHint === "function") {
+      var hand = VS.resolveHandVetHint(title, author);
+      if (hand && hand.tier) {
+        tier = hand.tier;
+        detail = hand.detail || "";
+      }
+    }
+    if (tier === "unclear") {
+      var Policy = global.HalalitFamilyShelfPolicy;
+      if (Policy && typeof Policy.inferCatalogFamilyHint === "function") {
+        var hint = Policy.inferCatalogFamilyHint({
+          title: title,
+          author_name: author ? [author] : [],
+        });
+        tier = hint && hint.tier ? hint.tier : "unclear";
+        detail = hint && hint.detail ? hint.detail : "";
+      }
     }
     return {
       tier: tier,

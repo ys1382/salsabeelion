@@ -1,0 +1,33 @@
+{
+  "manifest_version": 3,
+  "name": "CleanScreen Click Warning (owner beta)",
+  "version": "0.1.0",
+  "description": "Warn before opening content CleanScreen would not recommend. Odd Trove owner beta — sign in to oddtrove.art owner hub first.",
+  "permissions": ["storage"],
+  "host_permissions": [
+    "https://www.youtube.com/*",
+    "https://youtube.com/*",
+    "https://m.youtube.com/*",
+    "https://oddtrove.art/*",
+    "http://127.0.0.1:8082/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.youtube.com/*",
+        "https://youtube.com/*",
+        "https://m.youtube.com/*"
+      ],
+      "js": ["content-youtube.js"],
+      "css": ["warning.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_title": "CleanScreen Click Warning",
+    "default_popup": "popup.html"
+  }
+}

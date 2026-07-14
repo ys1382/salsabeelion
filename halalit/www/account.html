@@ -116,6 +116,31 @@
       font-size: 0.88rem;
       margin: 0.75rem 0 0;
     }
+    a.google-btn {
+      display: block;
+      text-align: center;
+      text-decoration: none;
+      width: 100%;
+      padding: 0.7rem 1rem;
+      border-radius: 10px;
+      border: 1px solid var(--rule);
+      background: rgba(227, 184, 106, 0.28);
+      color: var(--ink);
+      font-weight: 600;
+      font-family: system-ui, "Segoe UI", sans-serif;
+      box-sizing: border-box;
+    }
+    a.google-btn:hover { background: rgba(227, 184, 106, 0.4); }
+    .legacy-signin {
+      margin: 1.25rem 0 0;
+      font-family: system-ui, "Segoe UI", sans-serif;
+      font-size: 0.9rem;
+      color: var(--dim);
+    }
+    .legacy-signin summary {
+      cursor: pointer;
+      color: var(--accent);
+    }
     .tabs {
       display: flex;
       gap: 0.5rem;
@@ -177,43 +202,31 @@
 
     <div id="authView">
       <p class="privacy-note">
-        Halalit recommends a <strong>throwaway or junk email</strong> and a password you don’t use anywhere else.
-        We can’t tell if an address is disposable—but we’d rather you <strong>not</strong> share personal info you don’t need to.
+        New Halalit accounts use <strong>Google</strong>. A spare or junk Google account is a nice fit for Odd Trove
+        if you’d rather keep this separate from your main inbox — up to you.
       </p>
-      <div class="tabs" role="tablist">
-        <button type="button" role="tab" id="tabSignIn" aria-selected="true" aria-controls="formSignIn">Sign in</button>
-        <button type="button" role="tab" id="tabSignUp" aria-selected="false" aria-controls="formSignUp">Create account</button>
-      </div>
-      <div class="panel" id="formSignIn" role="tabpanel">
-        <form id="signInForm">
-          <label for="signInEmail">Email</label>
-          <input type="email" id="signInEmail" autocomplete="username" required />
-          <label for="signInPassword">Password</label>
-          <div class="password-field">
-            <input type="password" id="signInPassword" autocomplete="current-password" required minlength="8" />
-            <button type="button" class="password-toggle" id="toggleSignInPassword" aria-label="Show password" aria-pressed="false">
-              <svg class="icon-hide" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/><line x1="4" y1="4" x2="20" y2="20"/></svg>
-              <svg class="icon-show" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
-            </button>
-          </div>
-          <button type="submit">Sign in</button>
-        </form>
-      </div>
-      <div class="panel" id="formSignUp" role="tabpanel" hidden>
-        <form id="signUpForm">
-          <label for="signUpEmail">Email (junk / throwaway OK)</label>
-          <input type="email" id="signUpEmail" autocomplete="username" required />
-          <label for="signUpPassword">Password (8+ characters)</label>
-          <div class="password-field">
-            <input type="password" id="signUpPassword" autocomplete="new-password" required minlength="8" />
-            <button type="button" class="password-toggle" id="toggleSignUpPassword" aria-label="Show password" aria-pressed="false">
-              <svg class="icon-hide" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/><line x1="4" y1="4" x2="20" y2="20"/></svg>
-              <svg class="icon-show" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
-            </button>
-          </div>
-          <button type="submit">Create account</button>
-        </form>
-      </div>
+      <p style="margin:0 0 1rem">
+        <a class="google-btn" id="googleContinueBtn" href="#">Continue with Google</a>
+      </p>
+      <details class="legacy-signin">
+        <summary>Already have an email &amp; password account?</summary>
+        <div class="panel" style="margin-top:0.85rem">
+          <form id="signInForm">
+            <label for="signInEmail">Email</label>
+            <input type="email" id="signInEmail" autocomplete="username" required />
+            <label for="signInPassword">Password</label>
+            <div class="password-field">
+              <input type="password" id="signInPassword" autocomplete="current-password" required minlength="8" />
+              <button type="button" class="password-toggle" id="toggleSignInPassword" aria-label="Show password" aria-pressed="false">
+                <svg class="icon-hide" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/><line x1="4" y1="4" x2="20" y2="20"/></svg>
+                <svg class="icon-show" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+            <button type="submit">Sign in</button>
+          </form>
+          <p style="margin:0.85rem 0 0;font-size:0.9rem"><a href="./reset-password.html">Forgot password?</a></p>
+        </div>
+      </details>
       <p class="error" id="authError" hidden></p>
     </div>
   </div>

@@ -170,9 +170,33 @@
 @font-face {
   font-family: "Grenze Gotisch";
   font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("/lorekeeper/fonts/woff2/grenze-gotisch-500.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Grenze Gotisch";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("/lorekeeper/fonts/woff2/grenze-gotisch-600.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Grenze Gotisch";
+  font-style: normal;
   font-weight: 700;
   font-display: swap;
   src: url("/lorekeeper/fonts/woff2/grenze-gotisch-700.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Grenze Gotisch";
+  font-style: normal;
+  font-weight: 900;
+  font-display: swap;
+  src: url("/lorekeeper/fonts/woff2/grenze-gotisch-900.woff2") format("woff2");
 }
 
 @font-face {
@@ -650,9 +674,33 @@
 @font-face {
   font-family: "Spectral";
   font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("/lorekeeper/fonts/woff2/spectral-500.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Spectral";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("/lorekeeper/fonts/woff2/spectral-600.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Spectral";
+  font-style: normal;
   font-weight: 700;
   font-display: swap;
   src: url("/lorekeeper/fonts/woff2/spectral-700.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Spectral";
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url("/lorekeeper/fonts/woff2/spectral-800.woff2") format("woff2");
 }
 
 @font-face {
@@ -1469,5 +1517,53 @@
   font-weight: 700;
   font-display: swap;
   src: url("/lorekeeper/fonts/woff2/ibm-plex-mono-700.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Elsie Swash Caps";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/lorekeeper/fonts/woff2/elsie-swash-caps-400.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Kaushan Script";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/lorekeeper/fonts/woff2/kaushan-script-400.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Cinzel";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/lorekeeper/fonts/woff2/cinzel-400.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Cinzel";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/lorekeeper/fonts/woff2/cinzel-700.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Uncial Antiqua";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/lorekeeper/fonts/woff2/uncial-antiqua-400.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Special Elite";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/lorekeeper/fonts/woff2/special-elite-400.woff2") format("woff2");
 }
 

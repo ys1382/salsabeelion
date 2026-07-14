@@ -1,0 +1,34 @@
+{
+  "songs": [
+    {
+      "title": "Monster",
+      "artist": "Imagine Dragons",
+      "rec_ok": true,
+      "note": "Vague inner-demon metaphor — fine for werewolf or fantasy daydreams; not explicit despair."
+    },
+    {
+      "title": "Let It Go",
+      "artist": "Idina Menzel",
+      "rec_ok": true,
+      "note": "Disney anthem — self-liberation metaphor; no romance or sacred-language issues in owner scope."
+    },
+    {
+      "title": "This Day Aria",
+      "artist": "My Little Pony",
+      "rec_ok": true,
+      "note": "MLP: A Canterlot Wedding — villain Chrysalis fakes vows to feed on love; lyrics deny loving the groom. Cartoon plot deception, not real romance."
+    },
+    {
+      "title": "This Day Aria",
+      "artist": "Daniel Ingram",
+      "rec_ok": true,
+      "note": "Same MLP episode song — fake-wedding villain aria; explicitly anti-romance on the impostor side."
+    },
+    {
+      "title": "Falling Inside the Black",
+      "artist": "Skillet",
+      "rec_ok": false,
+      "note": "Dark despair — falling into the black; not for family rec lists."
+    }
+  ]
+}

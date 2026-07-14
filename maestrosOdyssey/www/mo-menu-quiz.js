@@ -279,6 +279,15 @@
     } catch (e) { /* private mode */ }
   }
 
+  function weekLanguageGoalMet() {
+    var ordered = getOrderedKeys();
+    var memorized = getMemorizedKeys();
+    if (ordered.length >= 4) return true;
+    if (ordered.length >= 3 && memorized.length >= 1) return true;
+    if (memorized.length >= 2) return true;
+    return false;
+  }
+
   window.MoMenuQuiz = {
     getCheapestVisiblePrice: getCheapestVisiblePrice,
     isTooBrokeToOrder: isTooBrokeToOrder,
@@ -287,6 +296,9 @@
     promptFor: promptFor,
     evaluateAnswer: evaluateAnswer,
     recordOrder: recordOrder,
+    getOrderedKeys: getOrderedKeys,
+    getMemorizedKeys: getMemorizedKeys,
+    weekLanguageGoalMet: weekLanguageGoalMet,
     resetProgress: resetProgress,
     REWARD_PESOS: REWARD_PESOS,
     MAX_EARN_PER_DAY: MAX_EARN_PER_DAY

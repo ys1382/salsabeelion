@@ -1,0 +1,26 @@
+---
+description: Recall or store owner "hard to fix with Cursor" notes in ODDTROVE-CAPABILITIES.md
+alwaysApply: true
+---
+
+# Hard to fix — recall and store
+
+Owner notes live in **`ODDTROVE-CAPABILITIES.md`** → section **“Hard to fix right now (owner notes for Cursor)”**.
+
+## When the owner asks what’s hard to fix
+
+Phrases like **“what’s hard to fix?”**, **“what can’t cursor fix?”**, **“pull up hard to fix notes”**:
+
+1. Read that section in `ODDTROVE-CAPABILITIES.md`.
+2. Reply in plain English — short list, no code unless they ask.
+3. Do **not** start a build in that turn unless they pivot to a new task.
+
+## When the owner asks to store a note
+
+Phrases like **“remember this as hard to fix”**, **“log that cursor can’t fix X”**, **“add to hard to fix”**:
+
+1. Append a dated bullet under that section (what failed or is blocked; why in a second line if helpful).
+2. Skip if the same point is already there unless they want it updated.
+3. Confirm in chat that it was saved.
+
+This section is **owner-maintained pain log**, not product roadmap — use site roadmaps for “not built yet” features.

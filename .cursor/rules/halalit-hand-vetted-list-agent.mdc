@@ -7,6 +7,14 @@ alwaysApply: false
 
 **When** the owner is in **hand-vetted list** mode (they type titles to log, not yes/no/idk plot-vet batches):
 
+## Owner praise = hand-vetted (any Halalit chat)
+
+If the owner says a book **was fun**, **was a good book**, or similar plain praise **without a “but”** that flags content (fiction or nonfiction), treat that as **owner hand-vetted clean** in the same turn:
+
+- Add to `VERIFIED_CLEAN` in `halalit-curated-shelf-warnings.js` (and Book Quest / age bands when appropriate).
+- **“Although …”** about age band, format, or audience (e.g. not a toddler board book) is **not** a content “but.”
+- **“But …”** about cleanliness, reliability, misrepresentation, fanservice, etc. → **not** auto–hand-vetted; use discretion, flag, or parked tier instead.
+
 ## Mode
 
 - **Input-driven:** owner supplies title(s). Do **not** offer ~30-book plot-vet batches unless they ask.

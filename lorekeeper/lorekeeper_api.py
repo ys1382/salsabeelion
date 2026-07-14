@@ -8,18 +8,42 @@ import hmac
 import json
 import os
 import re
+import signal
 import sys
 import threading
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, urlparse
 
 from lorekeeper_recall import recall_from_user_data
+from lorekeeper_ask_regression import correction_to_regression_stub, load_regression_cases
+from lorekeeper_word_help import answer_word_help
+
+_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+for _shared_candidate in (
+    os.path.join(os.path.dirname(_SCRIPT_DIR), "_shared"),
+    os.path.join(os.path.dirname(os.path.dirname(_SCRIPT_DIR)), "top", "_shared"),
+    os.path.expanduser("~/kids-sites/_shared"),
+):
+    if os.path.isdir(_shared_candidate) and _shared_candidate not in sys.path:
+        sys.path.insert(0, _shared_candidate)
+        break
+
+from oddtrove_password_reset import (  # noqa: E402
+    RESET_RATE_WINDOW_SEC,
+    client_ip_from_headers,
+    hash_token,
+    ip_rate_allowed,
+    new_reset_token,
+    record_ip_attempt,
+    token_expires_at,
+    within_rate_limit,
+)
+from oddtrove_transactional_mail import send_password_reset  # noqa: E402
 
 PORT = int(os.environ.get("LOREKEEPER_API_PORT", "8080"))
 BIND = os.environ.get("LOREKEEPER_API_BIND", "127.0.0.1")
-_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_PATH = os.environ.get(
     "LOREKEEPER_DATA_PATH",
     os.path.join(_SCRIPT_DIR, "lorekeeper-data", "lorekeeper-store.json"),
@@ -36,6 +60,94 @@ COOKIE_MAX_AGE = 60 * 60 * 24 * 30
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
 _store_lock = threading.Lock()
+_store_cache: dict[str, Any] | None = None
+_store_mtime: float = 0.0
+
+DOCUMENTS_KEY = "lorekeeper_documents_v1"
+NOTIFY_PREFS_KEY = "lorekeeper_notify_prefs_v1"
+DOCUMENT_BACKUPS_KEY = "lorekeeper_document_backups_v1"
+DOC_META_FIELDS = (
+    "id",
+    "title",
+    "workTag",
+    "updatedAt",
+    "createdAt",
+    "bodyFormat",
+    "pageDefaults",
+)
+
+
+def _default_notify_prefs() -> dict[str, bool]:
+    return {"exportReminder": False, "productUpdates": False}
+
+
+def _read_notify_prefs(user: dict[str, Any]) -> dict[str, bool]:
+    raw = (user.get("data") or {}).get(NOTIFY_PREFS_KEY)
+    if not raw:
+        return _default_notify_prefs()
+    try:
+        parsed = json.loads(str(raw))
+    except (TypeError, json.JSONDecodeError):
+        return _default_notify_prefs()
+    if not isinstance(parsed, dict):
+        return _default_notify_prefs()
+    base = _default_notify_prefs()
+    for key in base:
+        if key in parsed:
+            base[key] = bool(parsed[key])
+    return base
+
+
+def _documents_list_meta(raw: Any) -> str:
+    """Home/list load: titles and ids only — no draft HTML or page bodies."""
+    if raw is None:
+        return "[]"
+    try:
+        docs = json.loads(raw) if isinstance(raw, str) else raw
+    except (json.JSONDecodeError, TypeError):
+        return "[]"
+    if not isinstance(docs, list):
+        return "[]"
+    meta: list[dict[str, Any]] = []
+    for doc in docs:
+        if not isinstance(doc, dict):
+            continue
+        row = {field: doc.get(field) for field in DOC_META_FIELDS if field in doc}
+        if doc.get("id"):
+            row["id"] = doc.get("id")
+        if doc.get("title"):
+            row["title"] = doc.get("title")
+        meta.append(row)
+    return json.dumps(meta)
+
+
+def _user_data_for_profile(data: dict[str, Any], profile: str) -> dict[str, Any]:
+    profile = (profile or "full").strip().lower()
+    if profile in ("full", "all"):
+        return dict(data or {})
+    if profile in ("home", "lite"):
+        out: dict[str, Any] = {}
+        for key, value in (data or {}).items():
+            if key == DOCUMENTS_KEY:
+                out[key] = _documents_list_meta(value)
+            elif key == DOCUMENT_BACKUPS_KEY:
+                continue
+            else:
+                out[key] = value
+        return out
+    if profile == "heavy":
+        backups = (data or {}).get(DOCUMENT_BACKUPS_KEY)
+        if backups is None:
+            return {}
+        return {DOCUMENT_BACKUPS_KEY: backups}
+    if profile == "content":
+        out: dict[str, Any] = {}
+        if DOCUMENTS_KEY in (data or {}):
+            out[DOCUMENTS_KEY] = data[DOCUMENTS_KEY]
+        if DOCUMENT_BACKUPS_KEY in (data or {}):
+            out[DOCUMENT_BACKUPS_KEY] = data[DOCUMENT_BACKUPS_KEY]
+        return out
+    return dict(data or {})
 
 
 def _secret() -> bytes:
@@ -51,19 +163,33 @@ def _secret() -> bytes:
 
 
 def _load_store() -> dict[str, Any]:
+    global _store_cache, _store_mtime
     if not os.path.isfile(DATA_PATH):
-        return {"users": {}, "feedback": [], "settings": {"signupsEnabled": False}}
+        empty = {"users": {}, "feedback": [], "settings": {"signupsEnabled": False}}
+        _store_cache = empty
+        _store_mtime = 0.0
+        return empty
+    try:
+        mtime = os.path.getmtime(DATA_PATH)
+    except OSError:
+        mtime = 0.0
+    if _store_cache is not None and mtime == _store_mtime:
+        return _store_cache
     with open(DATA_PATH, encoding="utf-8") as f:
         data = json.load(f)
     if not isinstance(data, dict):
-        return {"users": {}, "feedback": [], "settings": {"signupsEnabled": False}}
+        data = {"users": {}, "feedback": [], "settings": {"signupsEnabled": False}}
     data.setdefault("users", {})
     data.setdefault("feedback", [])
+    data.setdefault("password_resets", {})
     data.setdefault("settings", {"signupsEnabled": False})
+    _store_cache = data
+    _store_mtime = mtime
     return data
 
 
 def _save_store(data: dict[str, Any]) -> None:
+    global _store_cache, _store_mtime
     os.makedirs(os.path.dirname(DATA_PATH) or ".", exist_ok=True)
     tmp = DATA_PATH + ".tmp"
     with open(tmp, "w", encoding="utf-8") as f:
@@ -71,6 +197,49 @@ def _save_store(data: dict[str, Any]) -> None:
         f.write("\n")
     os.replace(tmp, DATA_PATH)
     os.chmod(DATA_PATH, 0o600)
+    _store_cache = data
+    try:
+        _store_mtime = os.path.getmtime(DATA_PATH)
+    except OSError:
+        _store_mtime = time.time()
+
+
+def _backup_meta_path() -> str:
+    return os.path.join(os.path.dirname(DATA_PATH) or ".", "backup-meta.json")
+
+
+def _storage_meta_for_owner() -> dict[str, Any]:
+    """Counts and ages only — never note or document bodies (#32)."""
+    meta: dict[str, Any] = {
+        "storeExists": os.path.isfile(DATA_PATH),
+        "storeModifiedAt": None,
+        "storeSizeBytes": None,
+        "lastBackupAt": None,
+        "backupCount": None,
+        "backupDir": os.path.expanduser("~/lorekeeper-backups"),
+        "exportReminder": "Export JSON from home occasionally — backups are separate safety.",
+    }
+    if meta["storeExists"]:
+        try:
+            meta["storeModifiedAt"] = int(os.path.getmtime(DATA_PATH))
+            meta["storeSizeBytes"] = int(os.path.getsize(DATA_PATH))
+        except OSError:
+            pass
+    backup_meta = _backup_meta_path()
+    if os.path.isfile(backup_meta):
+        try:
+            with open(backup_meta, encoding="utf-8") as f:
+                parsed = json.load(f)
+            if isinstance(parsed, dict):
+                if parsed.get("lastBackupAt"):
+                    meta["lastBackupAt"] = int(parsed["lastBackupAt"])
+                if parsed.get("backupCount") is not None:
+                    meta["backupCount"] = int(parsed["backupCount"])
+                if parsed.get("backupDir"):
+                    meta["backupDir"] = str(parsed["backupDir"])
+        except (OSError, json.JSONDecodeError, TypeError, ValueError):
+            pass
+    return meta
 
 
 def _hash_password(password: str, salt: bytes | None = None) -> tuple[str, str]:
@@ -96,8 +265,12 @@ def _normalize_email(email: str) -> str | None:
     return e
 
 
-def _sign_token(email: str, exp: int) -> str:
-    payload = f"{email}|{exp}"
+def _normalize_password(password: str) -> str:
+    return password.strip()
+
+
+def _sign_token(email: str, exp: int, auth_rev: int = 0) -> str:
+    payload = f"{email}|{exp}|{auth_rev}"
     sig = hmac.new(_secret(), payload.encode(), hashlib.sha256).hexdigest()
     raw = f"{payload}|{sig}".encode()
     return base64.urlsafe_b64encode(raw).decode()
@@ -106,17 +279,70 @@ def _sign_token(email: str, exp: int) -> str:
 def _verify_token(token: str) -> str | None:
     try:
         raw = base64.urlsafe_b64decode(token.encode()).decode()
-        email, exp_s, sig = raw.rsplit("|", 2)
-        exp = int(exp_s)
+        parts = raw.split("|")
+        if len(parts) < 3:
+            return None
+        sig = parts[-1]
+        email = parts[0]
+        exp = int(parts[1])
         if exp < int(time.time()):
             return None
-        payload = f"{email}|{exp}"
+        if len(parts) == 3:
+            payload = f"{email}|{exp}"
+            expect = hmac.new(_secret(), payload.encode(), hashlib.sha256).hexdigest()
+            if not hmac.compare_digest(expect, sig):
+                return None
+            with _store_lock:
+                user = (_load_store().get("users") or {}).get(email)
+            if not user or int(user.get("auth_rev", 0)) > 0:
+                return None
+            return email
+        auth_rev = int(parts[2])
+        payload = f"{email}|{exp}|{auth_rev}"
         expect = hmac.new(_secret(), payload.encode(), hashlib.sha256).hexdigest()
         if not hmac.compare_digest(expect, sig):
+            return None
+        with _store_lock:
+            user = (_load_store().get("users") or {}).get(email)
+        if not user or int(user.get("auth_rev", 0)) != auth_rev:
             return None
         return email
     except (ValueError, UnicodeDecodeError):
         return None
+
+
+def _public_site_base() -> str:
+    return os.environ.get("LOREKEEPER_PUBLIC_BASE_URL", "https://oddtrove.art/lorekeeper").rstrip("/")
+
+
+def _client_ip(handler: BaseHTTPRequestHandler) -> str:
+    addr = handler.client_address[0] if handler.client_address else None
+    return client_ip_from_headers(handler.headers.get("X-Forwarded-For"), addr)
+
+
+def _prune_password_resets(store: dict[str, Any], now: float) -> None:
+    resets = store.get("password_resets") or {}
+    if not isinstance(resets, dict):
+        store["password_resets"] = {}
+        return
+    expired = [
+        key
+        for key, row in resets.items()
+        if not isinstance(row, dict) or float(row.get("expires_at") or 0) < now
+    ]
+    for key in expired:
+        resets.pop(key, None)
+
+
+def _password_reset_timestamps(store: dict[str, Any], email: str, now: float) -> list[float]:
+    resets = store.get("password_resets") or {}
+    out: list[float] = []
+    for row in resets.values():
+        if isinstance(row, dict) and row.get("email") == email:
+            created = float(row.get("created_at") or 0)
+            if created >= now - RESET_RATE_WINDOW_SEC:
+                out.append(created)
+    return out
 
 
 def _parse_cookies(header: str | None) -> dict[str, str]:
@@ -179,7 +405,11 @@ class Handler(BaseHTTPRequestHandler):
         if clear_cookie:
             self.send_header("Set-Cookie", f"{COOKIE_NAME}=; {_cookie_attrs(self)}; Max-Age=0")
         self.end_headers()
-        self.wfile.write(body)
+        try:
+            self.wfile.write(body)
+        except (BrokenPipeError, ConnectionResetError):
+            # Client or nginx closed early (timeout, navigation) — answer was built; do not crash.
+            return
 
     def _session_email(self) -> str | None:
         cookies = _parse_cookies(self.headers.get("Cookie"))
@@ -234,11 +464,43 @@ class Handler(BaseHTTPRequestHandler):
             if not email:
                 self._json(401, {"ok": False, "error": "not_signed_in"})
                 return
+            qs = parse_qs(urlparse(self.path).query)
+            profile = (qs.get("profile") or ["full"])[0]
             with _store_lock:
                 store = _load_store()
                 user = store["users"][email]
-                data = dict(user.get("data") or {})
-            self._json(200, {"ok": True, "data": data})
+                raw = dict(user.get("data") or {})
+            data = _user_data_for_profile(raw, profile)
+            self._json(
+                200,
+                {
+                    "ok": True,
+                    "data": data,
+                    "profile": profile if profile else "full",
+                },
+            )
+            return
+
+        if path == "/user/notify-prefs":
+            if not email:
+                self._json(401, {"ok": False, "error": "not_signed_in"})
+                return
+            with _store_lock:
+                store = _load_store()
+                user = store.get("users", {}).get(email)
+                if not user:
+                    self._json(401, {"ok": False, "error": "not_signed_in"})
+                    return
+                prefs = _read_notify_prefs(user)
+            self._json(
+                200,
+                {
+                    "ok": True,
+                    "prefs": prefs,
+                    "mailConfigured": False,
+                    "hint": "Opt-in only. LoreKeeper does not send email yet — preferences save for future export reminders.",
+                },
+            )
             return
 
         if path == "/owner/office":
@@ -273,6 +535,33 @@ class Handler(BaseHTTPRequestHandler):
                     "settings": {
                         "signupsEnabled": bool(settings.get("signupsEnabled")),
                     },
+                    "storageMeta": _storage_meta_for_owner(),
+                },
+            )
+            return
+
+        if path == "/owner/ask-regression-export":
+            if not email or not _is_owner_email(email):
+                self._json(403, {"ok": False, "error": "forbidden"})
+                return
+            with _store_lock:
+                store = _load_store()
+                feedback = store.get("feedback") or []
+            corrections = [
+                row
+                for row in feedback
+                if isinstance(row, dict) and row.get("source") == "ask_recall_wrong"
+            ]
+            stubs = [correction_to_regression_stub(row) for row in corrections]
+            active = load_regression_cases()
+            self._json(
+                200,
+                {
+                    "ok": True,
+                    "correctionCount": len(stubs),
+                    "activeCaseCount": len(active),
+                    "stubs": stubs,
+                    "hint": "Add stubs to lorekeeper/tests/fixtures/ask_regression_cases.json with synthetic entries — never real canon in git.",
                 },
             )
             return
@@ -286,7 +575,7 @@ class Handler(BaseHTTPRequestHandler):
 
         if path == "/auth/signup":
             raw_email = str(body.get("email") or "")
-            password = str(body.get("password") or "")
+            password = _normalize_password(str(body.get("password") or ""))
             norm = _normalize_email(raw_email)
             if not norm:
                 self._json(400, {"ok": False, "error": "invalid_email"})
@@ -314,16 +603,87 @@ class Handler(BaseHTTPRequestHandler):
                     "salt": salt,
                     "created_at": int(time.time()),
                     "is_owner": is_owner,
+                    "auth_rev": 0,
                     "data": {},
                 }
                 _save_store(store)
             exp = int(time.time()) + COOKIE_MAX_AGE
-            self._json(200, {"ok": True, "email": norm, "isOwner": is_owner}, set_cookie=_sign_token(norm, exp))
+            self._json(200, {"ok": True, "email": norm, "isOwner": is_owner}, set_cookie=_sign_token(norm, exp, 0))
+            return
+
+        if path == "/auth/forgot-password":
+            norm = _normalize_email(str(body.get("email") or ""))
+            if not norm:
+                self._json(400, {"ok": False, "error": "invalid_email"})
+                return
+            ip = _client_ip(self)
+            if not ip_rate_allowed(ip):
+                self._json(429, {"ok": False, "error": "rate_limited"})
+                return
+            record_ip_attempt(ip)
+            now = time.time()
+            with _store_lock:
+                store = _load_store()
+                _prune_password_resets(store, now)
+                users = store.get("users") or {}
+                if norm in users:
+                    if not within_rate_limit(_password_reset_timestamps(store, norm, now), now):
+                        self._json(429, {"ok": False, "error": "rate_limited"})
+                        return
+                    raw_token, token_hash = new_reset_token()
+                    store.setdefault("password_resets", {})[token_hash] = {
+                        "email": norm,
+                        "expires_at": token_expires_at(now),
+                        "created_at": now,
+                        "used": False,
+                    }
+                    _save_store(store)
+                    reset_url = f"{_public_site_base()}/reset-password.html?token={raw_token}"
+                    send_password_reset(to_email=norm, reset_url=reset_url, site_name="LoreKeeper")
+            self._json(200, {"ok": True, "message": "reset_email_sent"})
+            return
+
+        if path == "/auth/reset-password":
+            token = str(body.get("token") or "")
+            password = _normalize_password(str(body.get("password") or ""))
+            if len(password) < 8:
+                self._json(400, {"ok": False, "error": "password_too_short"})
+                return
+            token_hash = hash_token(token)
+            now = time.time()
+            with _store_lock:
+                store = _load_store()
+                _prune_password_resets(store, now)
+                row = (store.get("password_resets") or {}).get(token_hash)
+                if not isinstance(row, dict) or row.get("used"):
+                    self._json(400, {"ok": False, "error": "reset_token_invalid"})
+                    return
+                if float(row.get("expires_at") or 0) < now:
+                    self._json(400, {"ok": False, "error": "reset_token_expired"})
+                    return
+                norm = str(row.get("email") or "")
+                user = (store.get("users") or {}).get(norm)
+                if not user:
+                    self._json(400, {"ok": False, "error": "reset_token_invalid"})
+                    return
+                pwd_hash, salt = _hash_password(password)
+                user["password_hash"] = pwd_hash
+                user["salt"] = salt
+                user["auth_rev"] = int(user.get("auth_rev", 0)) + 1
+                row["used"] = True
+                _save_store(store)
+                auth_rev = int(user["auth_rev"])
+            exp = int(time.time()) + COOKIE_MAX_AGE
+            self._json(
+                200,
+                {"ok": True, "email": norm, "isOwner": _is_owner_email(norm)},
+                set_cookie=_sign_token(norm, exp, auth_rev),
+            )
             return
 
         if path == "/auth/login":
             norm = _normalize_email(str(body.get("email") or ""))
-            password = str(body.get("password") or "")
+            password = _normalize_password(str(body.get("password") or ""))
             if not norm or not password:
                 self._json(400, {"ok": False, "error": "invalid_credentials"})
                 return
@@ -334,10 +694,11 @@ class Handler(BaseHTTPRequestHandler):
                 self._json(401, {"ok": False, "error": "invalid_credentials"})
                 return
             exp = int(time.time()) + COOKIE_MAX_AGE
+            auth_rev = int((user or {}).get("auth_rev", 0))
             self._json(
                 200,
                 {"ok": True, "email": norm, "isOwner": _is_owner_email(norm)},
-                set_cookie=_sign_token(norm, exp),
+                set_cookie=_sign_token(norm, exp, auth_rev),
             )
             return
 
@@ -402,14 +763,53 @@ class Handler(BaseHTTPRequestHandler):
                 user_data = dict(user.get("data") or {})
             client_docs = body.get("documents")
             client_entries = body.get("entries")
-            result = recall_from_user_data(
-                question,
-                user_data,
-                client_documents=client_docs,
-                client_entries=client_entries,
-            )
+            recall_mode = str(body.get("mode") or "full").strip().lower()
+            if recall_mode not in ("full", "brief"):
+                recall_mode = "full"
+            scope = body.get("scope") if isinstance(body.get("scope"), dict) else None
+            spot_check = bool(body.get("spotCheck"))
+            try:
+                result = recall_from_user_data(
+                    question,
+                    user_data,
+                    client_documents=client_docs,
+                    client_entries=client_entries,
+                    mode=recall_mode,
+                    scope=scope,
+                    spot_check=spot_check,
+                )
+            except Exception as exc:
+                import sys
+
+                print(f"LoreKeeper recall/ask failed: {exc}", file=sys.stderr)
+                self._json(500, {"ok": False, "error": "recall_failed"})
+                return
             if not result.get("ok"):
                 self._json(400, result)
+                return
+            self._json(200, result)
+            return
+
+        if path == "/word-help/ask":
+            if not email:
+                self._json(401, {"ok": False, "error": "not_signed_in"})
+                return
+            query = str(body.get("query") or "").strip()
+            if not query:
+                self._json(400, {"ok": False, "error": "empty_query"})
+                return
+            try:
+                result = answer_word_help(query)
+            except Exception as exc:
+                import sys
+
+                print(f"LoreKeeper word-help/ask failed: {exc}", file=sys.stderr)
+                self._json(500, {"ok": False, "error": "word_help_failed"})
+                return
+            if not result.get("ok"):
+                code = str(result.get("error") or "word_help_failed")
+                status = 503 if code == "word_help_unavailable" else 400
+                self._json(status, result)
                 return
             self._json(200, result)
             return
@@ -441,10 +841,71 @@ class Handler(BaseHTTPRequestHandler):
             self._json(200, {"ok": True})
             return
 
+        if path == "/user/notify-prefs":
+            if not email:
+                self._json(401, {"ok": False, "error": "not_signed_in"})
+                return
+            prefs_in = body.get("prefs")
+            if not isinstance(prefs_in, dict):
+                self._json(400, {"ok": False, "error": "invalid_prefs"})
+                return
+            allowed = _default_notify_prefs()
+            out = _default_notify_prefs()
+            for key in allowed:
+                if key in prefs_in:
+                    out[key] = bool(prefs_in[key])
+            with _store_lock:
+                store = _load_store()
+                user = store["users"][email]
+                data = user.setdefault("data", {})
+                data[NOTIFY_PREFS_KEY] = json.dumps(out)
+                _save_store(store)
+            self._json(200, {"ok": True, "prefs": out})
+            return
+
+        if path == "/auth/delete-account":
+            if not email:
+                self._json(401, {"ok": False, "error": "not_signed_in"})
+                return
+            if _is_owner_email(email):
+                self._json(403, {"ok": False, "error": "owner_account_protected"})
+                return
+            password = _normalize_password(str(body.get("password") or ""))
+            confirm = str(body.get("confirmPhrase") or "").strip().upper()
+            export_ok = bool(body.get("exportAcknowledged"))
+            if not password:
+                self._json(400, {"ok": False, "error": "password_required"})
+                return
+            if confirm != "DELETE":
+                self._json(400, {"ok": False, "error": "confirm_phrase"})
+                return
+            if not export_ok:
+                self._json(400, {"ok": False, "error": "export_ack_required"})
+                return
+            with _store_lock:
+                store = _load_store()
+                user = store.get("users", {}).get(email)
+                if not user or not _verify_password(password, user["password_hash"], user["salt"]):
+                    self._json(401, {"ok": False, "error": "invalid_credentials"})
+                    return
+                export_payload = {
+                    "email": email,
+                    "exportedAt": int(time.time()),
+                    "data": dict(user.get("data") or {}),
+                }
+                del store["users"][email]
+                _save_store(store)
+            self._json(200, {"ok": True, "export": export_payload}, clear_cookie=True)
+            return
+
         self._json(404, {"ok": False, "error": "not_found"})
 
 
 def main() -> None:
+    try:
+        signal.signal(signal.SIGPIPE, signal.SIG_IGN)
+    except (AttributeError, ValueError):
+        pass
     _secret()
     os.makedirs(os.path.dirname(DATA_PATH) or ".", exist_ok=True)
     server = ThreadingHTTPServer((BIND, PORT), Handler)

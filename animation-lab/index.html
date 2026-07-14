@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Animation lab (local only)</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #3d2e28;
+      font-family: system-ui, sans-serif;
+      color: #eae6f0;
+    }
+    #game {
+      position: fixed;
+      inset: 0;
+    }
+    #game canvas { display: block; }
+    .lab-panel {
+      position: fixed;
+      top: 0.6rem;
+      right: 0.6rem;
+      z-index: 20;
+      width: min(17rem, 42vw);
+      padding: 0.85rem 1rem;
+      background: rgba(18, 16, 24, 0.92);
+      border: 1px solid rgba(212, 175, 106, 0.45);
+      border-radius: 6px;
+      font-size: 0.82rem;
+      line-height: 1.45;
+    }
+    .lab-panel h1 {
+      margin: 0 0 0.5rem;
+      font-size: 0.95rem;
+      color: #d4af6a;
+      font-family: Georgia, serif;
+      font-weight: normal;
+    }
+    .lab-panel p { margin: 0 0 0.45rem; }
+    .lab-panel label {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 0.55rem;
+    }
+    .lab-panel input[type="range"] { flex: 1; }
+    .lab-panel code {
+      font-size: 0.78rem;
+      color: #c8b8e8;
+    }
+    .lab-stat {
+      margin-top: 0.35rem;
+      color: #b8b0c8;
+    }
+  </style>
+</head>
+<body>
+  <div id="game"></div>
+  <aside class="lab-panel" aria-label="Animation lab controls">
+    <h1>Animation lab</h1>
+    <p>Practice sandbox — local only, not deployed. Same 4-direction walk/idle pattern used on several Odd Trove games.</p>
+    <p>Edit <code>pixel-walk-sprite.js</code> or <code>lab-main.js</code>, then hard-refresh.</p>
+    <p><strong>Move:</strong> arrow keys or WASD</p>
+    <p><strong>Run server:</strong> from this folder, <code>python3 -m http.server 8765</code> then open <code>/index.html</code>.</p>
+    <label>
+      Walk frame rate
+      <input type="range" id="frame-rate" min="6" max="24" step="1" value="16" />
+      <span id="frame-rate-val">8</span>
+    </label>
+    <p class="lab-stat" id="anim-stat">idle · down</p>
+  </aside>
+  <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
+  <script src="pixel-walk-sprite.js"></script>
+  <script src="lab-main.js"></script>
+</body>
+</html>

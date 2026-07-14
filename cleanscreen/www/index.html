@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>CleanScreen Search — owner beta</title>
+  <link rel="stylesheet" href="cleanscreen.css" />
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1 class="brand">CleanScreen Search</h1>
+      <p class="tagline">Text-first filtered web search · from the Halalit team</p>
+      <p class="disclaimer" role="note">
+        <strong>Owner beta — not public.</strong>
+        Kid mode (default, roughly ages up to 13): hand-vetted destinations plus filtered open-web text.
+        Only public, school-standard, or owner-vetted sites are on the kid list — not whole stores or random locals.
+        Parent mode (14+ / adult when gated): adds news, forums, shopping, gaming publishers, Wikipedia, AI, and more —
+        still no streaming, fanfic, fanservice hubs, or bypass tools.
+        Fewer results is intentional. Search filtering only for now; kidsproof parent unlock is on the roadmap.
+      </p>
+      <p class="policy-note" role="note">
+        Parents and kids can always send private notes (site suggestions, too strict, bad results).
+        Notes do not auto-change lists — owner reviews them. Parent surveys for borderline sites are planned, not live yet.
+      </p>
+    </header>
+
+    <section class="mode-panel" aria-label="Search mode">
+      <label class="mode-toggle">
+        <input type="checkbox" id="parentModeToggle" />
+        <span class="mode-label">
+          <strong>Parent mode</strong>
+          <span class="mode-hint">I am the adult searching — include parent-only categories (news, forums, shopping, gaming, Wikipedia, AI, and more)</span>
+        </span>
+      </label>
+    </section>
+
+    <section class="search-panel" aria-label="Search">
+      <form id="searchForm" class="search-row">
+        <input
+          id="searchInput"
+          type="search"
+          name="q"
+          autocomplete="off"
+          enterkeyhint="search"
+          placeholder="Search the web…"
+          maxlength="300"
+          required
+        />
+        <button id="searchBtn" type="submit">Search</button>
+      </form>
+      <p id="searchStatus" class="status" aria-live="polite"></p>
+    </section>
+
+    <div id="resultsMeta" class="meta" hidden></div>
+    <ul id="resultsList" class="results" aria-label="Filtered results"></ul>
+    <div id="emptyState" class="empty" hidden></div>
+
+    <div class="feedback-bar">
+      <button type="button" class="feedback-link" id="feedbackToggle" aria-expanded="false">
+        Something wrong? Send a private note
+      </button>
+      <div id="feedbackPanel" class="feedback-panel" hidden>
+        <h3>Private feedback</h3>
+        <p>Not posted publicly. No sign-in needed. Rate limits apply.</p>
+        <div class="chips" role="group" aria-label="Feedback type">
+          <button type="button" class="chip" data-kind="bad_result" aria-pressed="false">Bad result slipped through</button>
+          <button type="button" class="chip" data-kind="suggest_site" aria-pressed="false">Suggest a kid-safe site</button>
+          <button type="button" class="chip" data-kind="parent_survey" aria-pressed="false">Parent: OK for kids?</button>
+          <button type="button" class="chip" data-kind="too_strict" aria-pressed="false">Filter too strict</button>
+          <button type="button" class="chip" data-kind="general" aria-pressed="true">Other</button>
+        </div>
+        <textarea id="feedbackText" maxlength="2000" placeholder="What happened? Include a site name if you want it vetted."></textarea>
+        <div class="feedback-actions">
+          <button type="button" class="primary" id="feedbackSend">Send</button>
+          <button type="button" id="feedbackCancel">Cancel</button>
+        </div>
+        <p id="feedbackStatus" class="feedback-status" aria-live="polite"></p>
+      </div>
+    </div>
+
+    <footer>
+      <p>Made by the team behind <a href="/halalit/">Halalit</a>. Owner-only preview on Odd Trove.</p>
+    </footer>
+  </div>
+  <script src="cleanscreen.js"></script>
+</body>
+</html>

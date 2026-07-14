@@ -6,6 +6,8 @@
   <title>HalaLit — family-friendly reads</title>
   <link rel="stylesheet" href="./halalit-mothers-day-theme.css" />
   <link rel="stylesheet" href="./halalit-fathers-day-theme.css" />
+  <link rel="stylesheet" href="./halalit-cover-thumb.css?v=20260622b" />
+  <link rel="stylesheet" href="./halalit-occasion-week-home.css?v=20260626a" />
   <style>
     :root {
       --bg: #1a1410;
@@ -1702,6 +1704,25 @@
       line-height: 1.45;
       color: var(--ink);
     }
+    .bookcheck-auto-reject-lead {
+      margin: 0 0 0.35rem;
+      font-size: 0.92rem;
+      line-height: 1.45;
+    }
+    .bookcheck-auto-reject-detail {
+      margin: 0 0 0.5rem;
+      padding-left: 0;
+      font-size: 0.9rem;
+      line-height: 1.45;
+      color: var(--ink);
+    }
+    ul.bookcheck-auto-reject-detail {
+      margin: 0 0 0.5rem;
+      padding-left: 1.15rem;
+    }
+    ul.bookcheck-auto-reject-detail li {
+      margin: 0.2rem 0;
+    }
     .bookcheck-scan-wrap {
       margin: 0.5rem 0 0.75rem;
       padding: 0.65rem 0.75rem;
@@ -2203,6 +2224,7 @@
   </nav>
 
   <main id="panel-home" class="tab-panel" role="tabpanel" aria-labelledby="tab-btn-home">
+    <section class="panel halalit-occasion-week-home" id="halalitFathersWeekHome" hidden aria-label="Father's Week hand-picked reads"></section>
     <section class="panel">
       <h2>What it is</h2>
       <p><strong>HalaLit</strong> is here to help families stay within your morals when you read. Halalit hand-checks titles and flags what you might not notice until you’re deep in the story: fanservice or immodesty in comic panels, sustained family negativity (like a mother treated as the villain), romance or substance beats kids aren’t ready for, and other themes on the family shelf.</p>
@@ -2540,29 +2562,34 @@
   <script src="./halalit-owner-vets-runtime.js?v=20260611f"></script>
   <script src="./halalit-owner-vet-flags.js?v=20260611a"></script>
   <script src="./halalit-owner-vet-ui.js?v=20260611g"></script>
-  <script src="./halalit-curated-shelf-warnings.js?v=20260605v"></script>
+  <script src="./halalit-curated-shelf-warnings.js?v=20260702a"></script>
   <script src="./halalit-ai-vet-staging.js?v=20260611a"></script>
   <script src="./halalit-shelf-themes.js?v=20260531c"></script>
   <script src="./halalit-theme-index-data.js?v=20260529b"></script>
   <script src="./halalit-theme-index.js?v=20260529b"></script>
   <script src="./halalit-series-expectation.js?v=20260531a"></script>
   <script src="./halalit-bookquest-age-ratings.js?v=20260605t"></script>
-  <script src="./halalit-catalog-pins.js?v=20260605a"></script>
-  <script src="./halalit-family-shelf-policy.js?v=20260611a"></script>
-  <script src="./halalit-bookcheck-report.js?v=20260611a"></script>
+  <script src="./halalit-catalog-pins.js?v=20260626e"></script>
+  <script src="./halalit-family-shelf-policy.js?v=20260711a"></script>
+  <script src="./halalit-bookcheck-report.js?v=20260712a"></script>
   <script src="./halalit-wikipedia-shelf-hint.js?v=20260529a"></script>
   <script src="./halalit-wikidata-shelf-hint.js?v=20260529b"></script>
   <script src="./halalit-bookcheck-config.js?v=20260604a"></script>
-  <script src="./halalit-bookcheck-vet-source.js?v=20260611b"></script>
-  <script src="./halalit-bookcheck-ai.js?v=20260604a"></script>
+  <script src="./halalit-bookcheck-vet-source.js?v=20260711a"></script>
+  <script src="./halalit-bookcheck-ai.js?v=20260712a"></script>
   <script src="./halalit-lookup-quality.js?v=20260610c"></script>
-  <script src="./halalit-scroll-scanner.js?v=20260611e"></script>
-  <script src="./halalit-bookcheck.js?v=20260611d"></script>
-  <script src="./halalit-bookcheck-shelf-queue.js?v=20260530b"></script>
+  <script src="./halalit-scroll-scanner.js?v=20260701a"></script>
+  <script src="./halalit-cover-thumb.js?v=20260623b"></script>
+  <script src="./halalit-occasion-week-home.js?v=20260626e"></script>
+  <script src="./halalit-bookcheck.js?v=20260712a"></script>
+  <script src="./halalit-bookcheck-shelf-queue.js?v=20260627a"></script>
   <script>
     Promise.all([
       HalalitAccountStorage.ready,
       window.HalalitSiteFlags ? HalalitSiteFlags.ready : Promise.resolve(),
+      window.HalalitOwnerVetsRuntime && window.HalalitOwnerVetsRuntime.ready
+        ? window.HalalitOwnerVetsRuntime.ready
+        : Promise.resolve(),
     ]).then(function () {
     (function () {
       function applySiteFlags() {
@@ -4109,6 +4136,15 @@
           window.history.replaceState({}, "", u);
         } catch (e1) {}
       }
+
+      window.HalalitTabs = {
+        goTo: function (panelId) {
+          selectTab(tabIndexForPanel(panelId));
+        },
+        goToBookcheck: function () {
+          selectTab(tabIndexForPanel("panel-bookcheck"));
+        },
+      };
 
       for (var t = 0; t < tabMeta.length; t++) {
         (function (idx) {

@@ -1,0 +1,158 @@
+{
+  "news": [
+    "apnews.com",
+    "bbc.co.uk",
+    "bbc.com",
+    "cnn.com",
+    "foxnews.com",
+    "latimes.com",
+    "npr.org",
+    "nytimes.com",
+    "reuters.com",
+    "time.com",
+    "timeforkids.com",
+    "usatoday.com",
+    "washingtonpost.com"
+  ],
+  "shopping": [
+    "amazon.com",
+    "amzn.to",
+    "smile.amazon.com",
+    "target.com",
+    "walmart.com"
+  ],
+  "forums": [
+    "old.reddit.com",
+    "quora.com",
+    "reddit.com"
+  ],
+  "social": [
+    "facebook.com",
+    "fb.com",
+    "snapchat.com",
+    "x.com"
+  ],
+  "messaging": [
+    "discord.com",
+    "discord.gg",
+    "t.me",
+    "telegram.org"
+  ],
+  "anime_manga": [
+    "crunchyroll.com",
+    "mangadex.org",
+    "myanimelist.net",
+    "viz.com"
+  ],
+  "fandom_wikis": [
+    "fandom.com"
+  ],
+  "reference": [
+    "britannica.com",
+    "wikipedia.org",
+    "wikimedia.org"
+  ],
+  "homework_help": [
+    "brainly.com",
+    "chegg.com",
+    "coursehero.com",
+    "slader.com"
+  ],
+  "ai": [
+    "character.ai",
+    "chat.openai.com",
+    "claude.ai",
+    "gemini.google.com",
+    "openai.com",
+    "perplexity.ai"
+  ],
+  "art_boards": [
+    "deviantart.com",
+    "pinterest.com"
+  ],
+  "blogs": [
+    "medium.com",
+    "substack.com"
+  ],
+  "archive": [
+    "archive.org",
+    "openlibrary.org"
+  ],
+  "app_stores": [
+    "apps.apple.com",
+    "play.google.com"
+  ],
+  "health_general": [
+    "healthline.com",
+    "kidshealth.org",
+    "mayoclinic.org",
+    "webmd.com"
+  ],
+  "entertainment_info": [
+    "commonsensemedia.org",
+    "imdb.com",
+    "rottentomatoes.com"
+  ],
+  "music": [
+    "soundcloud.com",
+    "spotify.com"
+  ],
+  "sports": [
+    "espn.com"
+  ],
+  "recipes": [
+    "allrecipes.com"
+  ],
+  "web_game_portals": [
+    "coolmathgames.com",
+    "crazygames.com",
+    "poki.com"
+  ],
+  "gaming_publishers": [
+    "activision.com",
+    "bandainamcoent.com",
+    "bethesda.net",
+    "capcom.com",
+    "ea.com",
+    "epicgames.com",
+    "fortnite.com",
+    "hoyoverse.com",
+    "innersloth.com",
+    "king.com",
+    "mihoyo.com",
+    "nianticlabs.com",
+    "nintendo.com",
+    "play.nintendo.com",
+    "playstation.com",
+    "pokemon.com",
+    "riotgames.com",
+    "roblox.com",
+    "sega.com",
+    "sony.com",
+    "steampowered.com",
+    "store.steampowered.com",
+    "supercell.com",
+    "xbox.com"
+  ],
+  "superhero_franchise": [
+    "dc.com",
+    "marvel.com"
+  ],
+  "education_survey": [
+    "abcmouse.com",
+    "code.org",
+    "gutenberg.org",
+    "kids.nationalgeographic.com",
+    "nasa.gov",
+    "prodigygame.com"
+  ],
+  "game_guides": [
+    "gamefaqs.com",
+    "ign.com"
+  ],
+  "shopping_survey": [
+    "ebay.com",
+    "etsy.com"
+  ],
+  "notes": "Parent mode only — hidden in kid/default search. Snippet hard blocks still apply. Streaming and fanservice hubs stay in block_domains.json for both modes. Promote entries to vetted_domains.json only after owner or survey approval."
+}

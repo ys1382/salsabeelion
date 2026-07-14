@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>HalaLyrics — owner beta</title>
+  <link rel="stylesheet" href="halalyrics.css?v=20260709speed" />
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <p class="eyebrow">Odd Trove · owner only</p>
+      <h1 class="brand">HalaLyrics</h1>
+      <p class="tagline">Family-friendly song companion — separate from HalaLit</p>
+      <p class="disclaimer" role="note">
+        <strong>Owner beta — not public.</strong>
+        <strong>Songcheck</strong> looks up lyrics from LRCLIB and runs a Google theme scan for romance,
+        religious tone, sacred language, and dark despair. When a song looks OK or leaning OK, you can expand
+        <strong>Lyrics</strong> below the summary (More / Less). Flagged songs stay flags-only.
+        <strong>Hand-vetted notes always win.</strong>
+      </p>
+    </header>
+
+    <nav class="tabs" role="tablist" aria-label="HalaLyrics sections">
+      <button type="button" class="tab active" role="tab" id="tab-songcheck" aria-selected="true" aria-controls="panel-songcheck">Songcheck</button>
+      <button type="button" class="tab" role="tab" id="tab-shelf" aria-selected="false" aria-controls="panel-shelf">My shelf</button>
+    </nav>
+
+    <section id="panel-songcheck" class="panel" role="tabpanel" aria-labelledby="tab-songcheck">
+      <form id="songcheckForm" class="lookup-form">
+        <label for="songTitle">Song title</label>
+        <input id="songTitle" name="title" type="text" required maxlength="200" placeholder="Let It Go" autocomplete="off" />
+        <label for="songArtist">Artist</label>
+        <input id="songArtist" name="artist" type="text" maxlength="200" placeholder="Idina Menzel" autocomplete="off" />
+        <button type="submit" id="songcheckBtn">Run Songcheck</button>
+      </form>
+      <p id="songcheckStatus" class="status" aria-live="polite"></p>
+      <div id="songcheckResult" class="result" hidden></div>
+    </section>
+
+    <section id="panel-shelf" class="panel" role="tabpanel" aria-labelledby="tab-shelf" hidden>
+      <p class="muted">Songs you save here stay on this browser only for now.</p>
+      <form id="shelfAddForm" class="lookup-form shelf-add">
+        <label for="shelfTitle">Title</label>
+        <input id="shelfTitle" type="text" maxlength="200" required />
+        <label for="shelfArtist">Artist</label>
+        <input id="shelfArtist" type="text" maxlength="200" />
+        <label for="shelfTag">Tag</label>
+        <select id="shelfTag">
+          <option value="want">Want to hear</option>
+          <option value="heard">Already heard</option>
+          <option value="favorite">Favorite</option>
+        </select>
+        <button type="submit">Add to shelf</button>
+      </form>
+      <ul id="shelfList" class="shelf-list" aria-label="Personal song shelf"></ul>
+    </section>
+
+    <footer class="foot">
+      <a href="/">← Odd Trove hub</a>
+    </footer>
+  </div>
+  <script src="halalyrics-policy.js?v=20260708g"></script>
+  <script src="halalyrics-shelf.js?v=20260708b"></script>
+  <script src="halalyrics.js?v=20260709speed"></script>
+</body>
+</html>

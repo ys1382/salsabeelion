@@ -3,6 +3,8 @@
 .env
 .env.*
 *.local.md
+anthropic.key
+**/anthropic.key
 .venv/
 venv/
 __pycache__/

@@ -18,6 +18,26 @@ class Handler(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=DIRECTORY, **kwargs)
 
+    def end_headers(self):
+        path = self.path.split("?", 1)[0].lower()
+        if path.endswith(
+            (
+                ".js",
+                ".css",
+                ".woff2",
+                ".woff",
+                ".png",
+                ".jpg",
+                ".jpeg",
+                ".gif",
+                ".webp",
+                ".svg",
+                ".ico",
+            )
+        ):
+            self.send_header("Cache-Control", "public, max-age=604800")
+        super().end_headers()
+
 
 if __name__ == "__main__":
     server = http.server.HTTPServer((BIND or "", PORT), Handler)

@@ -31,6 +31,436 @@
     wikidataNote: "bookcheckWikidataNote",
   };
 
+  var bookcheckChaseStylesInjected = false;
+
+  var BOOKCHECK_CHASE_FACTS = [
+    "Halalit tip: Tap any cover on your shelf to see why it's there.",
+    "Did you know: A group of cats is called a clowder.",
+    "Reading tip: It's okay to abandon a book that isn't clicking.",
+    "Did you know: The Tale of Genji is often called the world's first novel.",
+    "Halalit tip: Book Quest remembers what you've already read on this device.",
+    "Did you know: Libraries existed in ancient Mesopotamia.",
+    "Reading tip: Re-read favorites — comfort reads count.",
+    "The cat approves of bookmark use. (This one is self-aware.)",
+    "Did you know: Some books are written without using the letter E.",
+    "Halalit can't hand-check every book — Bookcheck helps you decide faster.",
+    "Reading tip: Ask your kid what they noticed — not just what happened.",
+    "Did you know: Audiobooks count as reading if that's how you enjoy stories.",
+    "Halalit tip: Add the author when titles are super common.",
+    "Did you know: The word novel came from Italian novella — a new little story.",
+    "This loading cat has read zero pages. It is purely vibing.",
+    "Reading tip: Comics and graphic novels are real reading.",
+    "Did you know: Public libraries lend more items per year than most bookstores sell.",
+    "Halalit tip: Export your shelf from My TBR if you want a backup file.",
+  ];
+
+  var BOOKCHECK_CHASE_CAT_LINES = [
+    "the cat is fetching your answer",
+    "still sniffing the shelves",
+    "paws crossed this one is easy",
+    "breaking the fourth wall: please hold",
+    "cat tax: you wait, we hunt themes",
+    "the cat believes in you",
+    "somewhere, a librarian nods approvingly",
+    "not a real skeleton — just a cat with a job",
+    "the text is evasive. the cat is quicker.",
+    "end-credits energy, but for book themes",
+  ];
+
+  var BOOKCHECK_CHASE_CATALOG_STATUS = [
+    "Reading the catalog…",
+    "Searching Open Library…",
+    "Sniffing out the right edition…",
+  ];
+
+  var BOOKCHECK_CHASE_THEME_STATUS = [
+    "Checking themes…",
+    "Scanning for shelf flags…",
+    "Asking the theme scanner…",
+    "Reading Wikipedia & Wikidata…",
+  ];
+
+  function isBookcheckChaseSpotlightLine(line) {
+    if (!line) return false;
+    return (
+      /did you know/i.test(line) ||
+      /purely vibing|clowder|without using the letter e|world'?s first novel|novella —/i.test(line) ||
+      /self-aware|fourth wall|cat tax|not a real skeleton|end-credits|zero pages|approves of bookmark/i.test(line)
+    );
+  }
+
+  function injectBookcheckChaseStyles() {
+    if (bookcheckChaseStylesInjected || typeof document === "undefined") return;
+    bookcheckChaseStylesInjected = true;
+    var style = document.createElement("style");
+    style.id = "halalit-bookcheck-chase-styles";
+    style.textContent =
+      ".bookcheck-chase-loader{margin:0.55rem 0 0.75rem;padding:0.65rem 0.7rem 0.7rem;border-radius:12px;background:linear-gradient(180deg,rgba(255,248,235,0.72),rgba(245,232,210,0.5));border:1px dashed rgba(180,150,110,0.42);}" +
+      ".bookcheck-chase-scene{position:relative;height:3.6rem;overflow:hidden;border-radius:8px;background:linear-gradient(180deg,rgba(255,255,255,0.15),rgba(139,115,88,0.08));border-bottom:3px solid rgba(139,115,88,0.22);}" +
+      ".bookcheck-chase-scene::after{content:'';position:absolute;left:0;right:0;bottom:0;height:3px;background:repeating-linear-gradient(90deg,rgba(139,115,88,0.35) 0 8px,transparent 8px 14px);}" +
+      ".bookcheck-chase-banner{position:absolute;left:6%;bottom:6px;z-index:2;padding:0.22rem 0.62rem;background:#f7ebd4;border:2px solid #8b7358;box-shadow:2px 2px 0 rgba(60,45,30,0.12);white-space:nowrap;transform-origin:50% 100%;}" +
+      ".bookcheck-chase-scene--cat-near .bookcheck-chase-banner{animation:bookcheckBannerNervous 0.32s ease-in-out infinite;}" +
+      ".bookcheck-chase-scene--cat-near .bookcheck-chase-banner::after{opacity:1;}" +
+      ".bookcheck-chase-banner::after{content:'!';position:absolute;top:-0.55rem;right:-0.15rem;font-size:0.75rem;font-weight:800;color:#b85c38;opacity:0;transition:opacity 0.12s;}" +
+      ".bookcheck-chase-text{font-size:0.8rem;color:#5c4a38;font-style:italic;line-height:1.2;}" +
+      ".bookcheck-chase-cat{position:absolute;bottom:4px;left:76%;z-index:1;width:36px;height:30px;transform-origin:50% 100%;transition:none;}" +
+      ".bookcheck-chase-cat[data-hop=\"0\"]{left:76%;transform:translateY(0) scale(1,1);}" +
+      ".bookcheck-chase-cat[data-hop=\"1\"]{left:58%;transform:translateY(-14px) scale(1.07,0.88);}" +
+      ".bookcheck-chase-cat[data-hop=\"2\"]{left:52%;transform:translateY(0) scale(1.14,0.82);}" +
+      ".bookcheck-chase-cat[data-hop=\"3\"]{left:38%;transform:translateY(-16px) scale(1.07,0.88);}" +
+      ".bookcheck-chase-cat[data-hop=\"4\"]{left:30%;transform:translateY(0) scale(1.14,0.82);}" +
+      ".bookcheck-chase-cat[data-hop=\"5\"]{left:22%;transform:translateY(-10px) scale(1.05,0.92);}" +
+      ".bookcheck-chase-cat::before{content:'';position:absolute;left:50%;bottom:0;width:12px;height:7px;margin-left:-6px;border-radius:50%;background:rgba(139,115,88,0.4);opacity:0;transform:scale(0.35);}" +
+      ".bookcheck-chase-cat[data-hop=\"2\"]::before,.bookcheck-chase-cat[data-hop=\"4\"]::before,.bookcheck-chase-cat[data-hop=\"5\"]::before{opacity:0.85;transform:scale(1.35);}" +
+      ".bookcheck-chase-aside{margin:0.42rem 0 0;font-size:0.76rem;line-height:1.35;color:#7a6348;font-style:italic;min-height:1.2em;}" +
+      ".bookcheck-chase-aside--silly{font-size:0.95rem;font-weight:650;line-height:1.35;color:#5c3d28;letter-spacing:0.01em;}" +
+      ".bookcheck-chase-fact{margin:0.28rem 0 0;font-size:0.76rem;line-height:1.35;color:#8a7358;opacity:0.94;min-height:2.2em;}" +
+      ".bookcheck-chase-fact--spotlight{font-size:1rem;font-weight:650;line-height:1.4;color:#4a3525;opacity:1;padding:0.38rem 0.55rem;margin-top:0.4rem;border-radius:8px;background:rgba(255,235,200,0.62);border-left:3px solid rgba(200,140,70,0.72);box-shadow:0 1px 0 rgba(255,255,255,0.45) inset;}" +
+      ".bookcheck-pixel-cat-wrap{transform-origin:50% 100%;}" +
+      ".bookcheck-pixel-cat{position:relative;width:34px;height:24px;transform-origin:50% 100%;animation:bookcheckCatHopBob 0.26s steps(2) infinite;}" +
+      ".bookcheck-pixel-cat span{position:absolute;image-rendering:pixelated;}" +
+      ".bookcheck-pixel-cat__ear{width:0;height:0;border-left:3px solid transparent;border-right:3px solid transparent;border-bottom:6px solid #d8893c;}" +
+      ".bookcheck-pixel-cat__ear--l{left:20px;bottom:15px;}" +
+      ".bookcheck-pixel-cat__ear--r{left:26px;bottom:16px;}" +
+      ".bookcheck-pixel-cat__head{left:20px;bottom:6px;width:12px;height:11px;background:#e8a04a;border:1px solid #6b4423;border-radius:4px 6px 3px 2px;}" +
+      ".bookcheck-pixel-cat__head::before{content:'';position:absolute;left:6px;top:4px;width:2px;height:2px;background:#2b2118;}" +
+      ".bookcheck-pixel-cat__head::after{content:'';position:absolute;left:10px;top:6px;width:2px;height:2px;background:#c9742f;}" +
+      ".bookcheck-pixel-cat__torso{left:4px;bottom:3px;width:23px;height:11px;background:#d8893c;border:1px solid #6b4423;border-radius:7px 8px 4px 4px;}" +
+      ".bookcheck-pixel-cat__tail{left:0;bottom:9px;width:8px;height:4px;background:#c9742f;border:1px solid #6b4423;border-radius:3px;transform-origin:100% 50%;animation:bookcheckCatTailHop 0.5s ease-in-out infinite alternate;}" +
+      ".bookcheck-pixel-cat__leg{width:3px;height:5px;bottom:0;border-radius:0 0 1px 1px;}" +
+      ".bookcheck-pixel-cat__leg--fnear{left:22px;background:#6b4423;animation:bookcheckCatTrotA 0.26s steps(2) infinite;}" +
+      ".bookcheck-pixel-cat__leg--ffar{left:19px;height:4px;background:#a5673a;animation:bookcheckCatTrotB 0.26s steps(2) infinite;}" +
+      ".bookcheck-pixel-cat__leg--bnear{left:7px;background:#6b4423;animation:bookcheckCatTrotB 0.26s steps(2) infinite;}" +
+      ".bookcheck-pixel-cat__leg--bfar{left:10px;height:4px;background:#a5673a;animation:bookcheckCatTrotA 0.26s steps(2) infinite;}" +
+      ".bookcheck-chase-cat--idle{animation-play-state:paused;}" +
+      ".bookcheck-chase-cat--idle::before{animation-play-state:paused;opacity:0;}" +
+      ".bookcheck-chase-cat--idle .bookcheck-pixel-cat{animation:bookcheckCatIdleBob 0.9s ease-in-out infinite;}" +
+      ".bookcheck-chase-cat--idle .bookcheck-pixel-cat__tail{animation:bookcheckCatTailIdle 1.1s ease-in-out infinite alternate;}" +
+      ".bookcheck-chase-cat--idle .bookcheck-pixel-cat__head{animation:bookcheckCatBlink 2.2s steps(1,end) infinite;}" +
+      ".bookcheck-chase-cat--idle .bookcheck-pixel-cat__leg{animation:none;}" +
+      ".catalog-lookup-row--chase-active .bookcheck-chase-sr-status{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}" +
+      ".bookcheck-verdict--wait{border-color:rgba(180,150,110,0.45);}" +
+      ".bookcheck-vet-banner--ai-wait{margin-bottom:0.45rem;}" +
+      ".bookcheck-retry-scan-btn{margin-top:0.55rem;}" +
+      "@keyframes bookcheckBannerNervous{0%,100%{transform:rotate(0deg) translateX(0);}25%{transform:rotate(-2deg) translateX(-2px);}75%{transform:rotate(2deg) translateX(2px);}}" +
+      "@keyframes bookcheckCatHopBob{0%{transform:translateY(0);}100%{transform:translateY(-2px);}}" +
+      "@keyframes bookcheckCatTailHop{0%{transform:rotate(-16deg);}100%{transform:rotate(24deg);}}" +
+      "@keyframes bookcheckCatTrotA{0%{transform:translateX(-1px);}100%{transform:translateX(2px);}}" +
+      "@keyframes bookcheckCatTrotB{0%{transform:translateX(2px);}100%{transform:translateX(-1px);}}" +
+      "@keyframes bookcheckCatIdleBob{0%,100%{transform:translateY(0);}50%{transform:translateY(-2px);}}" +
+      "@keyframes bookcheckCatTailIdle{0%{transform:rotate(-12deg);}100%{transform:rotate(16deg);}}" +
+      "@keyframes bookcheckCatBlink{0%,92%,100%{transform:scaleY(1);}94%{transform:scaleY(0.12);}}" +
+      ".bookcheck-chase-loader--pounce .bookcheck-chase-cat{animation:none;}" +
+      ".bookcheck-chase-loader--pounce .bookcheck-chase-banner{animation:none;}" +
+      ".bookcheck-chase-loader--pounce .bookcheck-pixel-cat-wrap{animation:bookcheckCatPounce 0.48s ease-out forwards;}" +
+      ".bookcheck-chase-loader--pounce{animation:bookcheckChaseFadeOut 0.52s ease-out forwards;}" +
+      "@keyframes bookcheckCatPounce{0%{transform:scale(-1,1) translateX(0) translateY(0);}42%{transform:scale(-1.1,1.1) translateX(-1.4rem) translateY(-0.6rem);}100%{transform:scale(-1,1) translateX(-1.85rem) translateY(0);}}" +
+      "@keyframes bookcheckChaseFadeOut{0%,62%{opacity:1;}100%{opacity:0;}}" +
+      ".bookcheck-chase-loader--reduced .bookcheck-chase-cat{left:30%;transform:none;}" +
+      ".bookcheck-chase-loader--reduced .bookcheck-chase-banner{animation:none;}" +
+      ".bookcheck-chase-loader--reduced .bookcheck-pixel-cat-wrap{animation:none;transform:scaleX(-1);}" +
+      ".bookcheck-chase-loader--reduced .bookcheck-pixel-cat,.bookcheck-chase-loader--reduced .bookcheck-pixel-cat__leg,.bookcheck-chase-loader--reduced .bookcheck-pixel-cat__tail{animation:none;}" +
+      "@media (prefers-reduced-motion:reduce){.bookcheck-chase-cat::before,.bookcheck-chase-scene--cat-near .bookcheck-chase-banner,.bookcheck-pixel-cat,.bookcheck-pixel-cat__leg,.bookcheck-pixel-cat__tail{animation:none !important;}.bookcheck-chase-cat{left:30%;transform:none !important;}.bookcheck-pixel-cat-wrap{transform:scaleX(-1);}.bookcheck-chase-loader--pounce .bookcheck-pixel-cat-wrap{animation:none !important;}.bookcheck-chase-loader--pounce{animation:bookcheckChaseFadeOut 0.25s ease-out forwards;}}";
+    document.head.appendChild(style);
+  }
+
+  function buildBookcheckPixelCatEl() {
+    var cat = document.createElement("div");
+    cat.className = "bookcheck-pixel-cat";
+    cat.setAttribute("aria-hidden", "true");
+
+    function part(cls) {
+      var el = document.createElement("span");
+      el.className = cls;
+      return el;
+    }
+
+    var tail = part("bookcheck-pixel-cat__tail");
+    var legFfar = part("bookcheck-pixel-cat__leg bookcheck-pixel-cat__leg--ffar");
+    var legBfar = part("bookcheck-pixel-cat__leg bookcheck-pixel-cat__leg--bfar");
+    var torso = part("bookcheck-pixel-cat__torso");
+    var legFnear = part("bookcheck-pixel-cat__leg bookcheck-pixel-cat__leg--fnear");
+    var legBnear = part("bookcheck-pixel-cat__leg bookcheck-pixel-cat__leg--bnear");
+    var head = part("bookcheck-pixel-cat__head");
+    var earL = part("bookcheck-pixel-cat__ear bookcheck-pixel-cat__ear--l");
+    var earR = part("bookcheck-pixel-cat__ear bookcheck-pixel-cat__ear--r");
+
+    cat.appendChild(tail);
+    cat.appendChild(legFfar);
+    cat.appendChild(legBfar);
+    cat.appendChild(torso);
+    cat.appendChild(legFnear);
+    cat.appendChild(legBnear);
+    cat.appendChild(earL);
+    cat.appendChild(earR);
+    cat.appendChild(head);
+    return cat;
+  }
+
+  function createBookcheckChaseLoader(statusEl, lookupRowEl) {
+    if (!statusEl || !statusEl.parentNode) return null;
+    injectBookcheckChaseStyles();
+    statusEl.classList.add("bookcheck-chase-sr-status");
+
+    var root = document.createElement("div");
+    root.className = "bookcheck-chase-loader";
+    root.hidden = true;
+    root.setAttribute("aria-hidden", "true");
+
+    var scene = document.createElement("div");
+    scene.className = "bookcheck-chase-scene";
+
+    var banner = document.createElement("div");
+    banner.className = "bookcheck-chase-banner";
+
+    var text = document.createElement("span");
+    text.className = "bookcheck-chase-text";
+
+    banner.appendChild(text);
+
+    var catEl = document.createElement("div");
+    catEl.className = "bookcheck-chase-cat";
+
+    var catWrap = document.createElement("div");
+    catWrap.className = "bookcheck-pixel-cat-wrap";
+    catWrap.appendChild(buildBookcheckPixelCatEl());
+    catEl.appendChild(catWrap);
+
+    scene.appendChild(banner);
+    scene.appendChild(catEl);
+
+    var aside = document.createElement("p");
+    aside.className = "bookcheck-chase-aside";
+
+    var fact = document.createElement("p");
+    fact.className = "bookcheck-chase-fact";
+
+    root.appendChild(scene);
+    root.appendChild(aside);
+    root.appendChild(fact);
+
+    var anchor = lookupRowEl && lookupRowEl.parentNode ? lookupRowEl : statusEl.parentNode;
+    if (anchor.nextSibling) anchor.parentNode.insertBefore(root, anchor.nextSibling);
+    else anchor.parentNode.appendChild(root);
+
+    var factIdx = 0;
+    var captionIdx = 0;
+    var asideIdx = 0;
+    var factTimer = null;
+    var captionTimer = null;
+    var asideTimer = null;
+    var pounceTimer = null;
+    var idleBeatTimer = null;
+    var idleClearTimer = null;
+    var hopTimer = null;
+    var hopStep = 0;
+    var hopDir = 1;
+    var visibleAt = 0;
+    var visible = false;
+    var CHASE_MIN_MS = 2000;
+    var currentPhase = "catalog";
+    var reducedMotion = false;
+
+    try {
+      reducedMotion =
+        global.matchMedia && global.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    } catch (eReduced) {
+      reducedMotion = false;
+    }
+
+    function statusPoolForPhase(phase) {
+      return phase === "themes" ? BOOKCHECK_CHASE_THEME_STATUS : BOOKCHECK_CHASE_CATALOG_STATUS;
+    }
+
+    function nextCaption() {
+      var pool = statusPoolForPhase(currentPhase);
+      return pool[captionIdx % pool.length];
+    }
+
+    function rotateFact() {
+      var line = BOOKCHECK_CHASE_FACTS[factIdx % BOOKCHECK_CHASE_FACTS.length];
+      fact.textContent = line;
+      fact.classList.toggle("bookcheck-chase-fact--spotlight", isBookcheckChaseSpotlightLine(line));
+      factIdx += 1;
+    }
+
+    function rotateAside() {
+      aside.textContent = BOOKCHECK_CHASE_CAT_LINES[asideIdx % BOOKCHECK_CHASE_CAT_LINES.length];
+      aside.classList.add("bookcheck-chase-aside--silly");
+      asideIdx += 1;
+    }
+
+    function rotateCaption() {
+      text.textContent = nextCaption();
+      captionIdx += 1;
+    }
+
+    function clearTimers() {
+      if (factTimer) {
+        clearInterval(factTimer);
+        factTimer = null;
+      }
+      if (captionTimer) {
+        clearInterval(captionTimer);
+        captionTimer = null;
+      }
+      if (asideTimer) {
+        clearInterval(asideTimer);
+        asideTimer = null;
+      }
+      if (pounceTimer) {
+        clearTimeout(pounceTimer);
+        pounceTimer = null;
+      }
+      if (idleBeatTimer) {
+        clearInterval(idleBeatTimer);
+        idleBeatTimer = null;
+      }
+      if (idleClearTimer) {
+        clearTimeout(idleClearTimer);
+        idleClearTimer = null;
+      }
+      if (hopTimer) {
+        clearInterval(hopTimer);
+        hopTimer = null;
+      }
+      scene.classList.remove("bookcheck-chase-scene--cat-near");
+      catEl.classList.remove("bookcheck-chase-cat--idle");
+    }
+
+    function syncHopFace() {
+      catWrap.style.transform = hopDir < 0 ? "scaleX(-1)" : "scaleX(1)";
+    }
+
+    function syncHopVisual() {
+      catEl.setAttribute("data-hop", String(hopStep));
+      if (hopStep >= 4) scene.classList.add("bookcheck-chase-scene--cat-near");
+      else scene.classList.remove("bookcheck-chase-scene--cat-near");
+      syncHopFace();
+    }
+
+    function startHopLoop() {
+      if (hopTimer) {
+        clearInterval(hopTimer);
+        hopTimer = null;
+      }
+      if (reducedMotion) {
+        hopStep = 3;
+        syncHopVisual();
+        return;
+      }
+      hopStep = 0;
+      hopDir = 1;
+      syncHopVisual();
+      hopTimer = setInterval(function () {
+        if (!visible || reducedMotion || catEl.classList.contains("bookcheck-chase-cat--idle")) return;
+        hopStep += hopDir;
+        if (hopStep >= 5) {
+          hopDir = -1;
+          hopStep = 4;
+        } else if (hopStep <= 0) {
+          hopDir = 1;
+          hopStep = 1;
+        }
+        syncHopVisual();
+      }, 340);
+    }
+
+    function startIdleBeats() {
+      if (reducedMotion) return;
+      idleBeatTimer = setInterval(function () {
+        if (!visible || reducedMotion) return;
+        catEl.classList.add("bookcheck-chase-cat--idle");
+        if (idleClearTimer) clearTimeout(idleClearTimer);
+        idleClearTimer = setTimeout(function () {
+          catEl.classList.remove("bookcheck-chase-cat--idle");
+          idleClearTimer = null;
+        }, 450);
+      }, 5200);
+    }
+
+    function setRowActive(active) {
+      if (!lookupRowEl) return;
+      if (active) lookupRowEl.classList.add("catalog-lookup-row--chase-active");
+      else lookupRowEl.classList.remove("catalog-lookup-row--chase-active");
+    }
+
+    return {
+      isVisible: function () {
+        return visible;
+      },
+      start: function (phase) {
+        currentPhase = phase || "catalog";
+        clearTimers();
+        root.hidden = false;
+        root.classList.remove("bookcheck-chase-loader--pounce");
+        root.classList.toggle("bookcheck-chase-loader--reduced", reducedMotion);
+        visible = true;
+        visibleAt = Date.now();
+        setRowActive(true);
+        captionIdx = 0;
+        asideIdx = 0;
+        rotateCaption();
+        rotateAside();
+        rotateFact();
+        factTimer = setInterval(rotateFact, 2500);
+        captionTimer = setInterval(rotateCaption, 2800);
+        asideTimer = setInterval(rotateAside, 3200);
+        startIdleBeats();
+        startHopLoop();
+      },
+      setPhase: function (phase) {
+        if (!visible) return;
+        currentPhase = phase || currentPhase;
+        rotateCaption();
+      },
+      hide: function () {
+        clearTimers();
+        root.hidden = true;
+        root.classList.remove("bookcheck-chase-loader--pounce");
+        visible = false;
+        setRowActive(false);
+      },
+      pounceAndHide: function (cb) {
+        if (!visible) {
+          if (cb) cb();
+          return;
+        }
+        var wait = Math.max(0, CHASE_MIN_MS - (Date.now() - visibleAt));
+        if (pounceTimer) {
+          clearTimeout(pounceTimer);
+          pounceTimer = null;
+        }
+        pounceTimer = setTimeout(function () {
+          pounceTimer = null;
+          clearTimers();
+          if (!visible) {
+            if (cb) cb();
+            return;
+          }
+          if (reducedMotion) {
+            root.hidden = true;
+            visible = false;
+            setRowActive(false);
+            if (cb) cb();
+            return;
+          }
+          hopStep = 5;
+          syncHopVisual();
+          root.classList.add("bookcheck-chase-loader--pounce");
+          pounceTimer = setTimeout(function () {
+            root.hidden = true;
+            root.classList.remove("bookcheck-chase-loader--pounce");
+            visible = false;
+            setRowActive(false);
+            pounceTimer = null;
+            if (cb) cb();
+          }, 520);
+        }, wait);
+      },
+    };
+  }
+
   function bookcheckEl(panel, ids, key) {
     var id = (ids && ids[key]) || DEFAULT_BOOKCHECK_IDS[key];
     return id ? panel.querySelector("#" + id) : null;
@@ -125,6 +555,33 @@
     return (inter / qt.length) * 72;
   }
 
+  function queryMentionsVolume(queryTitle) {
+    return /\b(book|vol|volume)\s*#?\s*\d+\b/i.test(String(queryTitle || ""));
+  }
+
+  /** Catalog row adds "… 4" when the reader only typed the series name — e.g. Inkheart → Inkheart 4. */
+  function isSpuriousVolumeMatch(queryTitle, docOrTitle) {
+    if (queryMentionsVolume(queryTitle)) return false;
+    var ttl =
+      docOrTitle && docOrTitle.title != null
+        ? normalizeOlTitle(docOrTitle)
+        : String(docOrTitle || "").trim();
+    if (!ttl) return false;
+    var qn = normKey(queryTitle);
+    var cn = normKey(ttl);
+    var m = cn.match(/^(.+?)\s+(\d+)$/);
+    if (!m) return false;
+    var base = m[1].trim();
+    if (!base || !qn) return false;
+    return base === qn || cn.indexOf(qn + " ") === 0;
+  }
+
+  function shouldSyncCatalogTitle(enteredTitle, catalogTitle) {
+    if (!enteredTitle || !catalogTitle) return false;
+    if (isSpuriousVolumeMatch(enteredTitle, { title: catalogTitle })) return false;
+    return titleScore(enteredTitle, catalogTitle) >= 88;
+  }
+
   /** Prefer rows with subject tags (family-shelf heuristics need them). */
   function subjectRichness(doc) {
     var n = 0;
@@ -142,6 +599,7 @@
     var subN = subjectRichness(doc);
     var blended = ts * titleWeight + as * authorWeight + subN * 1.25 + (1 - rankIndex / 14) * 2;
     if (subN === 0) blended -= 48;
+    if (isSpuriousVolumeMatch(queryTitle, doc)) blended -= 120;
     return { doc: doc, score: blended, titleScore: ts, authorScore: as };
   }
 
@@ -178,15 +636,22 @@
   /** Ignore catalog rows that only share loose word overlap (e.g. wonderlight → Wonder-Light). */
   var MIN_CONFIDENT_TITLE_SCORE = 72;
 
-  function filterConfidentCatalogMatches(refined, queryAuthor) {
+  function filterConfidentCatalogMatches(refined, queryAuthor, queryTitle) {
     if (!refined || !refined.length) return [];
     var out = [];
     for (var i = 0; i < refined.length; i++) {
       var row = refined[i];
+      if (queryTitle && isSpuriousVolumeMatch(queryTitle, row.doc)) continue;
       if (row.titleScore >= MIN_CONFIDENT_TITLE_SCORE) out.push(row);
       else if (queryAuthor && row.authorScore >= 92 && row.titleScore >= 50) out.push(row);
     }
     return out;
+  }
+
+  function refineCatalogMatches(docs, queryTitle, queryAuthor) {
+    return refineCatalogDocs(docs, queryTitle, queryAuthor).filter(function (row) {
+      return !isSpuriousVolumeMatch(queryTitle, row.doc);
+    });
   }
 
   function shouldAutoPick(refined, queryAuthor) {
@@ -229,7 +694,7 @@
   function buildOpenLibraryQueryUrl(title, author) {
     var params = new URLSearchParams();
     params.set("limit", "12");
-    params.set("fields", "key,title,author_name,subject,subject_facet,first_publish_year");
+    params.set("fields", "key,title,author_name,subject,subject_facet,first_publish_year,cover_i,isbn");
     var t = String(title || "").trim();
     var a = String(author || "").trim();
     if (t) params.set("title", t);
@@ -253,7 +718,7 @@
   function buildOpenLibraryFallbackQUrl(title, author) {
     var params = new URLSearchParams();
     params.set("limit", "18");
-    params.set("fields", "key,title,author_name,subject,subject_facet,first_publish_year");
+    params.set("fields", "key,title,author_name,subject,subject_facet,first_publish_year,cover_i,isbn");
     var t = String(title || "").trim();
     var loose = normalizeLooseTitle(t);
     var a = String(author || "").trim();
@@ -272,8 +737,20 @@
     return { tier: "unclear", detail: "Catalog check unavailable—use the guidelines and your own reading." };
   }
 
+  function handVetHintFor(title, author, altTitle, altAuthor) {
+    var VS = global.HalalitBookcheckVetSource;
+    if (!VS || typeof VS.resolveHandVetHint !== "function") return null;
+    var hand = VS.resolveHandVetHint(title, author);
+    if (hand) return hand;
+    if (altTitle || altAuthor) {
+      return VS.resolveHandVetHint(altTitle || title, altAuthor || "");
+    }
+    return null;
+  }
+
   /** Hand-vetted or owner curated WARNINGS — skip extra catalog/AI pass. */
   function isSettledHandHint(hint, title, author) {
+    if (handVetHintFor(title, author)) return true;
     if (!hint) return false;
     if (hint.tier === "verified_clean" || hint.tier === "fanservice_caution") return true;
     var VS = global.HalalitBookcheckVetSource;
@@ -328,6 +805,9 @@
       aiScanOk: !!meta.aiScanOk,
       fanserviceNotChecked: !!meta.fanserviceNotChecked,
       aiSeriesNote: meta.aiSeriesNote || "",
+      aiThemes: meta.aiThemes || [],
+      aiLgbtqDenied: !!meta.aiLgbtqDenied,
+      aiLgbtqPresent: !!meta.aiLgbtqPresent,
     });
   }
 
@@ -350,6 +830,7 @@
 
   function appendYouDecideParagraph(body, tier, opts) {
     opts = opts || {};
+    if (opts.experienced) return body;
     var R = global.HalalitBookcheckReport;
     if (!R || typeof R.shouldShowYouDecideLine !== "function") return body;
     if (
@@ -461,6 +942,11 @@
   }
 
   function shouldHideScanRow(row) {
+    if (row && row.id === "catalog_silent") return true;
+    var Report = global.HalalitBookcheckReport;
+    if (Report && typeof Report.themeBriefDeniesIssue === "function" && Report.themeBriefDeniesIssue(row && row.note)) {
+      return true;
+    }
     var Policy = global.HalalitFamilyShelfPolicy;
     if (!row || !row.label || !Policy) return false;
     if (/cultural misrepresentation|cultural-representation note/i.test(String(row.label))) {
@@ -485,12 +971,50 @@
     );
   }
 
+  var BOOKCHECK_LOOKUP_COUNT_KEY = "halalit_bookcheck_completed_lookups";
+  var BOOKCHECK_EXPERIENCED_THRESHOLD = 3;
+
+  function getBookcheckCompletedLookups() {
+    try {
+      if (!global.localStorage) return 0;
+      var n = parseInt(global.localStorage.getItem(BOOKCHECK_LOOKUP_COUNT_KEY), 10);
+      return isNaN(n) || n < 0 ? 0 : n;
+    } catch (e) {
+      return 0;
+    }
+  }
+
+  function recordBookcheckEnrichComplete() {
+    try {
+      if (!global.localStorage) return;
+      global.localStorage.setItem(
+        BOOKCHECK_LOOKUP_COUNT_KEY,
+        String(getBookcheckCompletedLookups() + 1)
+      );
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
+  function isExperiencedBookcheckUser() {
+    return getBookcheckCompletedLookups() >= BOOKCHECK_EXPERIENCED_THRESHOLD;
+  }
+
+  function syncBookcheckAiNotice(panel) {
+    var notice =
+      (panel && panel.querySelector("#bookcheck-ai-notice")) ||
+      (typeof document !== "undefined" && document.getElementById("bookcheck-ai-notice"));
+    if (notice) notice.hidden = isExperiencedBookcheckUser();
+  }
+
   global.HalalitBookcheckPrefs = {
     shouldHideComfortText: shouldHideComfortText,
     shouldHideScanRow: shouldHideScanRow,
     shouldHideThemeHit: shouldHideThemeHit,
     filterComfortNoteText: filterComfortNoteText,
     culturalNoteVisible: culturalNoteVisible,
+    isExperiencedBookcheckUser: isExperiencedBookcheckUser,
+    recordBookcheckEnrichComplete: recordBookcheckEnrichComplete,
   };
 
   function displayHintTier(tier) {
@@ -800,9 +1324,11 @@
       };
     }
     if (blocked || hintTier === "flag_review" || !eligible) {
+      var vetSource = opts && opts.vetSource;
       return {
         kind: "no",
-        headline: "Automatic hard rejection",
+        headline:
+          vetSource === "agent_flagged" ? "Halalit agent flag — not hand-read" : "Automatic hard rejection",
         body:
           shortVerdictBody("flag_review", hintDetail, inlineDetail) ||
           hintDetail ||
@@ -912,11 +1438,14 @@
     if (!panel || panel.getAttribute("data-bookcheck-wired") === "1") return;
     panel.setAttribute("data-bookcheck-wired", "1");
     clearLegacyBookcheckSkipKeys();
+    syncBookcheckAiNotice(panel);
     var ids = Object.assign({}, DEFAULT_BOOKCHECK_IDS, opts.ids || {});
     var titleIn = bookcheckEl(panel, ids, "title");
     var authorIn = bookcheckEl(panel, ids, "author");
     var lookupBtn = bookcheckEl(panel, ids, "lookup");
     var statusEl = bookcheckEl(panel, ids, "status");
+    var lookupRowEl = statusEl ? statusEl.closest(".catalog-lookup-row") : null;
+    var chaseLoader = createBookcheckChaseLoader(statusEl, lookupRowEl);
     var matchBox = bookcheckEl(panel, ids, "matchBox");
     var matchLead = bookcheckEl(panel, ids, "matchLead");
     var matchList = bookcheckEl(panel, ids, "matchList");
@@ -928,6 +1457,7 @@
     var catalogMeta = {
       hintTier: null,
       hintDetail: null,
+      agentFlag: false,
       familyPortrayal: null,
       culturalRepresentation: null,
       faithInStory: null,
@@ -942,17 +1472,66 @@
       wikidata: null,
       matchedTitle: "",
       matchedAuthor: "",
+      coverUrl: "",
       lastDoc: null,
       vetSource: null,
       aiStaging: null,
       aiScanOk: false,
       aiSeriesNote: "",
+      aiThemes: [],
+      aiLgbtqDenied: false,
+      aiLgbtqPresent: false,
+      aiScanMeta: null,
       fanserviceNotChecked: false,
       lookupLogTitle: "",
       lookupLogAuthor: "",
       lookupRecorded: false,
       ownerTesting: !!opts.ownerTesting,
+      lookupGen: 0,
+      enrichPending: false,
+      earlyAiPromise: null,
+      lookupAiStartedAt: 0,
+      aiScanTimedOut: false,
     };
+
+    var lookupGenCounter = 0;
+    var EXTERNAL_HINT_TIMEOUT_MS = 2500;
+    var AI_THEME_SCAN_TIMEOUT_MS = 14000;
+    var AI_THEME_SCAN_MIN_WAIT_MS = 5000;
+
+    function promiseWithTimeout(promise, ms, fallback) {
+      return new Promise(function (resolve) {
+        var settled = false;
+        var timer = setTimeout(function () {
+          if (settled) return;
+          settled = true;
+          resolve(fallback);
+        }, ms);
+        Promise.resolve(promise)
+          .then(function (val) {
+            if (settled) return;
+            settled = true;
+            clearTimeout(timer);
+            resolve(val);
+          })
+          .catch(function () {
+            if (settled) return;
+            settled = true;
+            clearTimeout(timer);
+            resolve(fallback);
+          });
+      });
+    }
+
+    function isCurrentLookup(gen) {
+      return gen === catalogMeta.lookupGen;
+    }
+
+    function releaseLookupBtn() {
+      if (lookupBtn) lookupBtn.disabled = false;
+    }
+
+    var Policy = global.HalalitFamilyShelfPolicy;
 
     function lookupLogTitleAuthor(title, author, meta) {
       meta = meta || catalogMeta;
@@ -1009,6 +1588,7 @@
       catalogMeta = {
         hintTier: null,
         hintDetail: null,
+        agentFlag: false,
         familyPortrayal: null,
         deityComfort: null,
         hintSignals: [],
@@ -1019,16 +1599,24 @@
         wikidata: null,
         matchedTitle: "",
         matchedAuthor: "",
+        coverUrl: "",
         lastDoc: null,
         vetSource: null,
         aiStaging: null,
         aiScanOk: false,
         aiSeriesNote: "",
+        aiThemes: [],
+        aiLgbtqDenied: false,
+        aiLgbtqPresent: false,
         fanserviceNotChecked: false,
         lookupLogTitle: "",
         lookupLogAuthor: "",
         lookupRecorded: false,
         ownerTesting: keepOwnerTesting,
+        enrichPending: false,
+        earlyAiPromise: null,
+        lookupAiStartedAt: 0,
+        aiScanTimedOut: false,
       };
       if (matchBox) {
         matchBox.classList.remove("is-visible");
@@ -1045,6 +1633,7 @@
         seriesNoteEl.innerHTML = "";
       }
       if (statusEl) statusEl.textContent = "";
+      if (chaseLoader) chaseLoader.hide();
       if (wikiNoteEl) {
         wikiNoteEl.hidden = true;
         wikiNoteEl.innerHTML = "";
@@ -1157,99 +1746,288 @@
       });
     }
 
-    function runAiThenFinish(doc, ttl, auth, hint, supplementPack, hadWikipedia, wikipedia, wikidata) {
-      var enteredTitle = titleIn ? String(titleIn.value || "").trim() : ttl;
-      var enteredAuthor = authorIn ? String(authorIn.value || "").trim() : auth;
-      var VS = global.HalalitBookcheckVetSource;
+    function mergeAiIntoHint(hint, aiResult, doc, supplementPack, enteredTitle, enteredAuthor) {
+      var nextHint = hint;
       var AI = global.HalalitBookcheckAi;
-      var isGraphic =
-        VS && typeof VS.titleLooksGraphic === "function" && VS.titleLooksGraphic(ttl, auth, doc);
-
-      if (!AI || typeof AI.fetchThemeScan !== "function") {
-        catalogMeta.aiScanOk = false;
-        finishApplyDoc(doc, ttl, auth, hint, supplementPack, hadWikipedia, wikipedia, wikidata);
-        return;
+      if (aiResult && aiResult.ok && AI && hint && hint.ownerAiThemeAbsent) {
+        if (typeof AI.filterAiResultForOwnerAbsent === "function") {
+          aiResult = AI.filterAiResultForOwnerAbsent(aiResult, hint.ownerAiThemeAbsent);
+        }
       }
+      if (!aiResult || !aiResult.ok || !AI) return nextHint;
+      catalogMeta.aiScanOk = true;
+      catalogMeta.aiSeriesNote = aiResult.seriesNote || "";
+      catalogMeta.aiThemes =
+        typeof AI.presentThemeBriefs === "function" ? AI.presentThemeBriefs(aiResult) : [];
+      catalogMeta.aiLgbtqDenied =
+        typeof AI.aiLgbtqThemeDenied === "function" ? AI.aiLgbtqThemeDenied(aiResult) : false;
+      catalogMeta.aiLgbtqPresent =
+        typeof AI.aiLgbtqThemePresent === "function" ? AI.aiLgbtqThemePresent(aiResult) : false;
+      catalogMeta.aiScanMeta = {
+        reviewSnippetCount: aiResult.reviewSnippetCount || 0,
+        reviewSearchUsed: !!aiResult.reviewSearchUsed,
+        geminiOk: !!aiResult.geminiOk,
+        claudeOk: !!aiResult.claudeOk,
+        reviewSearchError: aiResult.reviewSearchError || "",
+      };
+      var aiText = AI.buildAiSupplementText(aiResult);
+      if (aiText && doc) {
+        var blobIn = ((supplementPack && supplementPack.combined) || "") + " " + aiText;
+        nextHint = strongerHint(inferHint(doc, blobIn), hint);
+      } else if (aiText) {
+        nextHint = strongerHint(
+          inferHint(
+            {
+              title: enteredTitle,
+              author_name: enteredAuthor
+                ? enteredAuthor.split(/\s*,\s*/).map(function (s) {
+                    return s.trim();
+                  }).filter(Boolean)
+                : [],
+            },
+            aiText
+          ),
+          hint
+        );
+      }
+      nextHint.signals = AI.appendAiSignals(nextHint.signals, aiResult);
+      if (hint && hint.ownerAiThemeAbsent && typeof AI.filterAiSignalsForOwnerAbsent === "function") {
+        nextHint.signals = AI.filterAiSignalsForOwnerAbsent(nextHint.signals, hint.ownerAiThemeAbsent);
+      }
+      var Pol = global.HalalitFamilyShelfPolicy;
+      if (Pol && typeof Pol.reconcileHintLgbtqWithAiScan === "function") {
+        nextHint = Pol.reconcileHintLgbtqWithAiScan(
+          nextHint,
+          aiResult,
+          doc,
+          supplementPack && supplementPack.combined ? supplementPack.combined : ""
+        );
+      }
+      nextHint.familyAction =
+        Pol && typeof Pol.familyActionLine === "function"
+          ? Pol.familyActionLine(nextHint.tier, nextHint.signals || [], enteredTitle)
+          : nextHint.familyAction;
+      return nextHint;
+    }
 
-      if (statusEl) statusEl.textContent = "Scanning themes with AI (not fanservice on comics)…";
+    function aiThemeScanConfigured() {
+      var Config = global.HalalitBookcheckConfig;
+      var AI = global.HalalitBookcheckAi;
+      var url = Config && typeof Config.aiThemeScanUrl === "function" ? Config.aiThemeScanUrl() : "";
+      return !!(AI && typeof AI.fetchThemeScan === "function" && url);
+    }
 
-      AI.fetchThemeScan(enteredTitle, enteredAuthor, isGraphic, {
+    function aiScanFailedNeedsRetry(aiResult, preHint, enteredTitle, enteredAuthor) {
+      if (!aiThemeScanConfigured()) return false;
+      if (handVetHintFor(enteredTitle, enteredAuthor)) return false;
+      if (isSettledHandHint(preHint, enteredTitle, enteredAuthor)) return false;
+      if (aiResult && aiResult.ok) return false;
+      if (aiResult && aiResult.error === "ai_unconfigured") return false;
+      return true;
+    }
+
+    function showAiScanTimeoutVerdict(title, author, aiResult) {
+      if (!verdictBox) return;
+      var experienced = isExperiencedBookcheckUser();
+      var err = aiResult && aiResult.error;
+      var headline = experienced
+        ? "Theme scan timed out — try again."
+        : "Theme scan didn't finish in time.";
+      var body = experienced
+        ? "Halalit didn't get AI theme results yet. Tap Check again — catalog-only isn't shown as a finished answer here."
+        : "The theme scanner is still warming up or the connection was slow. Tap <strong>Check this title</strong> again in a moment. Halalit won't show a catalog-only \"we don't know\" answer when a theme scan was expected.";
+      verdictBox.className = "bookcheck-verdict bookcheck-verdict--wait";
+      verdictBox.hidden = false;
+      verdictBox.innerHTML =
+        '<p class="bookcheck-vet-banner bookcheck-vet-banner--ai-wait muted"><strong>' +
+        escapeHtml(headline) +
+        "</strong></p>" +
+        '<p class="bookcheck-verdict__body">' +
+        body +
+        '</p><button type="button" class="import-btn bookcheck-retry-scan-btn">Check again</button>';
+      var retryBtn = verdictBox.querySelector(".bookcheck-retry-scan-btn");
+      if (retryBtn) {
+        retryBtn.onclick = function () {
+          runLookup();
+        };
+      }
+      if (statusEl) {
+        statusEl.textContent =
+          err === "network_error"
+            ? "Theme scan couldn't reach the server — try again."
+            : "Theme scan timed out — try again.";
+      }
+      if (catalogMeta.fromScanner) scrollScannerResultIntoView();
+    }
+
+    function finishAiScanTimeout(doc, ttl, auth, enteredTitle, enteredAuthor, wiki, wd, aiResult) {
+      catalogMeta.enrichPending = false;
+      catalogMeta.lastDoc = doc || null;
+      catalogMeta.matchedTitle = ttl || "";
+      catalogMeta.matchedAuthor = auth || "";
+      catalogMeta.aiScanOk = false;
+      catalogMeta.aiScanTimedOut = true;
+      catalogMeta.hintTier = null;
+      catalogMeta.hintDetail = null;
+      catalogMeta.familyReport = null;
+      catalogMeta.vetSource = null;
+      if (wiki && wiki.text) showWikiNote(wiki);
+      if (wd && wd.scanText) showWikidataNote(wd);
+      function revealTimeout() {
+        showAiScanTimeoutVerdict(enteredTitle, enteredAuthor, aiResult);
+        recordLookupForOwner(enteredTitle, enteredAuthor);
+        finishEnrichStatus(aiResult);
+        releaseLookupBtn();
+      }
+      if (chaseLoader && chaseLoader.isVisible()) {
+        chaseLoader.pounceAndHide(revealTimeout);
+      } else {
+        revealTimeout();
+      }
+    }
+
+    function finishEnrichStatus(aiResult) {
+      if (!statusEl) return;
+      if (aiResult && aiResult.error === "ai_unconfigured") {
+        statusEl.textContent = "Catalog done—AI theme scan is not set up on the server yet.";
+      } else if (catalogMeta.fromScanner && !(aiResult && aiResult.ok)) {
+        statusEl.textContent =
+          "Bookcheck finished, but Google theme scan did not run — the server may be offline or busy. Try again in a moment.";
+      } else if (catalogMeta.aiScanOk) {
+        statusEl.textContent = "Lookup complete.";
+      } else {
+        statusEl.textContent = "Lookup complete.";
+      }
+    }
+
+    function startEarlyAiScan(title, author) {
+      var AI = global.HalalitBookcheckAi;
+      if (!AI || typeof AI.fetchThemeScan !== "function" || !aiThemeScanConfigured()) return;
+      var VS = global.HalalitBookcheckVetSource;
+      var isGraphic =
+        VS && typeof VS.titleLooksGraphic === "function" && VS.titleLooksGraphic(title, author, null);
+      catalogMeta.lookupAiStartedAt = Date.now();
+      catalogMeta.earlyAiPromise = AI.fetchThemeScan(title, author, isGraphic, {
         fromScanner: !!catalogMeta.fromScanner,
-      }).then(function (aiResult) {
-        var nextHint = hint;
-        if (aiResult && aiResult.ok) {
-          catalogMeta.aiScanOk = true;
-          catalogMeta.aiSeriesNote = aiResult.seriesNote || "";
-          var aiText = AI.buildAiSupplementText(aiResult);
-          if (aiText && doc) {
-            var blobIn = ((supplementPack && supplementPack.combined) || "") + " " + aiText;
-            nextHint = strongerHint(inferHint(doc, blobIn), hint);
-          } else if (aiText) {
-            nextHint = strongerHint(
-              inferHint({
+      });
+    }
+
+    function mergeEnrichedHint(doc, ttl, auth, preHint, olPack, wiki, wd, aiResult, enteredTitle, enteredAuthor) {
+      var combined = (olPack && olPack.combined) || "";
+      var hadWiki = !!(wiki && wiki.text);
+      if (hadWiki) combined += (combined ? " " : "") + wiki.text;
+      if (wd && wd.scanText) combined += (combined ? " " : "") + wd.scanText;
+      var hint = preHint;
+      if (combined.trim()) {
+        hint = doc
+          ? inferHint(doc, combined)
+          : inferHint(
+              {
                 title: enteredTitle,
                 author_name: enteredAuthor
                   ? enteredAuthor.split(/\s*,\s*/).map(function (s) {
                       return s.trim();
                     }).filter(Boolean)
                   : [],
-              }),
-              hint
+              },
+              combined
             );
-          }
-          nextHint.signals = AI.appendAiSignals(nextHint.signals, aiResult);
-          var Pol = global.HalalitFamilyShelfPolicy;
-          nextHint.familyAction =
-            Pol && typeof Pol.familyActionLine === "function"
-              ? Pol.familyActionLine(nextHint.tier, nextHint.signals || [], enteredTitle)
-              : nextHint.familyAction;
-        } else if (statusEl && aiResult && aiResult.error === "ai_unconfigured") {
-          if (statusEl.textContent.indexOf("AI") === -1) {
-            statusEl.textContent = "Catalog done—AI theme scan is not set up on the server yet.";
-          }
-        }
-        finishApplyDoc(doc, ttl, auth, nextHint, supplementPack, hadWikipedia, wikipedia, wikidata);
-        if (lookupBtn) lookupBtn.disabled = false;
-        if (statusEl) {
-          statusEl.textContent = catalogMeta.aiScanOk
-            ? "Catalog + AI theme scan complete."
-            : statusEl.textContent || "Lookup complete.";
-        }
-      });
+      }
+      hint = strongerHint(hint, preHint);
+      hint = pinHandVetHint(hint, enteredTitle, enteredAuthor, ttl, auth);
+      catalogMeta.aiScanOk = !!(aiResult && aiResult.ok);
+      if (!catalogMeta.aiScanOk) catalogMeta.aiSeriesNote = "";
+      if (olPack) olPack.combined = combined;
+      hint = mergeAiIntoHint(hint, aiResult, doc, olPack, enteredTitle, enteredAuthor);
+      return pinHandVetHint(hint, enteredTitle, enteredAuthor, ttl, auth);
     }
 
-    var Policy = global.HalalitFamilyShelfPolicy;
-
     function enrichHintsAndFinish(doc, ttl, auth, preHint) {
+      var gen = catalogMeta.lookupGen;
+      catalogMeta.enrichPending = true;
       var Wiki = global.HalalitWikipediaShelfHint;
       var WD = global.HalalitWikidataShelfHint;
+      var AI = global.HalalitBookcheckAi;
       var qTitle = ttl || (titleIn && titleIn.value) || "";
       var qAuth = auth || (authorIn && authorIn.value) || "";
-      var olP = fetchCatalogSupplement(doc);
+      var enteredTitle = titleIn ? String(titleIn.value || "").trim() : qTitle;
+      var enteredAuthor = authorIn ? String(authorIn.value || "").trim() : qAuth;
+
+      if (statusEl) statusEl.textContent = "Checking themes…";
+      if (chaseLoader && !chaseLoader.isVisible()) chaseLoader.start("themes");
+      else if (chaseLoader) chaseLoader.setPhase("themes");
+
+      var olP = promiseWithTimeout(
+        fetchCatalogSupplement(doc),
+        EXTERNAL_HINT_TIMEOUT_MS,
+        { combined: "", description: "" }
+      );
       var wikiP =
-        Wiki && typeof Wiki.fetchShelfHint === "function" ? Wiki.fetchShelfHint(qTitle, qAuth) : Promise.resolve(null);
+        Wiki && typeof Wiki.fetchShelfHint === "function"
+          ? promiseWithTimeout(Wiki.fetchShelfHint(qTitle, qAuth, { fast: true }), EXTERNAL_HINT_TIMEOUT_MS, null)
+          : Promise.resolve(null);
       var wdP =
-        WD && typeof WD.fetchShelfHint === "function" ? WD.fetchShelfHint(qTitle, qAuth) : Promise.resolve(null);
-      Promise.all([olP, wikiP, wdP]).then(function (parts) {
+        WD && typeof WD.fetchShelfHint === "function"
+          ? promiseWithTimeout(WD.fetchShelfHint(qTitle, qAuth, { fast: true }), EXTERNAL_HINT_TIMEOUT_MS, null)
+          : Promise.resolve(null);
+      var aiStarted = catalogMeta.lookupAiStartedAt || Date.now();
+      var aiBudget = Math.max(
+        AI_THEME_SCAN_MIN_WAIT_MS,
+        AI_THEME_SCAN_TIMEOUT_MS - (Date.now() - aiStarted)
+      );
+      var aiP =
+        catalogMeta.earlyAiPromise ||
+        (AI && typeof AI.fetchThemeScan === "function" && aiThemeScanConfigured()
+          ? promiseWithTimeout(
+              AI.fetchThemeScan(
+                enteredTitle,
+                enteredAuthor,
+                global.HalalitBookcheckVetSource &&
+                  typeof global.HalalitBookcheckVetSource.titleLooksGraphic === "function" &&
+                  global.HalalitBookcheckVetSource.titleLooksGraphic(ttl || qTitle, auth || qAuth, doc),
+                { fromScanner: !!catalogMeta.fromScanner }
+              ),
+              aiBudget,
+              { ok: false, error: "timeout" }
+            )
+          : Promise.resolve(null));
+      catalogMeta.earlyAiPromise = null;
+
+      Promise.all([olP, wikiP, wdP, aiP]).then(function (parts) {
+        if (!isCurrentLookup(gen)) return;
         var olPack = parts[0] || { combined: "", description: "" };
         var wiki = parts[1];
         var wd = parts[2];
-        var combined = olPack.combined || "";
+        var aiResult = parts[3];
         var hadWiki = !!(wiki && wiki.text);
-        if (hadWiki) {
-          combined += (combined ? " " : "") + wiki.text;
-          showWikiNote(wiki);
-        }
-        if (wd && wd.scanText) {
-          combined += (combined ? " " : "") + wd.scanText;
-          showWikidataNote(wd);
-        }
+        if (hadWiki) showWikiNote(wiki);
+        if (wd && wd.scanText) showWikidataNote(wd);
         catalogMeta.wikipedia = wiki;
         catalogMeta.wikidata = wd;
-        var hint = combined.trim() ? inferHint(doc, combined) : preHint;
-        hint = strongerHint(hint, preHint);
-        olPack.combined = combined;
-        runAiThenFinish(doc, ttl, auth, hint, olPack, hadWiki, wiki, wd);
+        if (aiScanFailedNeedsRetry(aiResult, preHint, enteredTitle, enteredAuthor)) {
+          finishAiScanTimeout(doc, ttl, auth, enteredTitle, enteredAuthor, wiki, wd, aiResult);
+          recordBookcheckEnrichComplete();
+          syncBookcheckAiNotice(panel);
+          return;
+        }
+        var hint = mergeEnrichedHint(
+          doc,
+          ttl,
+          auth,
+          preHint,
+          olPack,
+          wiki,
+          wd,
+          aiResult,
+          enteredTitle,
+          enteredAuthor
+        );
+        catalogMeta.enrichPending = false;
+        finishApplyDoc(doc, ttl, auth, hint, olPack, hadWiki, wiki, wd);
+        finishEnrichStatus(aiResult);
+        recordBookcheckEnrichComplete();
+        syncBookcheckAiNotice(panel);
+        releaseLookupBtn();
       });
     }
 
@@ -1301,6 +2079,7 @@
         var ar = global.HalalitBookcheckReport.autoRejectionSummary(meta.familyReport, {
           tier: meta.hintTier,
           detail: meta.hintDetail,
+          agentFlag: !!meta.agentFlag,
         });
         if (ar && ar.status === "reject") return;
       }
@@ -1338,25 +2117,45 @@
         if (!data || !data.pending) return;
         if (data.kind === "popular") {
           insertPendingNote(
-            "<strong>Hand vet in progress:</strong> The owner will soon examine this text and be able to confirm whether Halalit would recommend it."
+            isExperiencedBookcheckUser()
+              ? "<strong>Hand vet in progress.</strong>"
+              : "<strong>Hand vet in progress:</strong> The owner will soon examine this text and be able to confirm whether Halalit would recommend it."
           );
         } else {
           insertPendingNote(
-            "The owner of the site has been informed and your search has been added to the list of books to hand-check."
+            isExperiencedBookcheckUser()
+              ? "Added to the owner’s hand-check list."
+              : "The owner of the site has been informed and your search has been added to the list of books to hand-check."
           );
         }
       }).catch(function () {});
     }
 
+    function aiScanQualityLineHtml(meta, experienced) {
+      if (!experienced || !meta || !meta.aiScanOk || !meta.aiScanMeta) return "";
+      var sm = meta.aiScanMeta;
+      var parts = ["Scan: " + (sm.reviewSnippetCount || 0) + " review snippets"];
+      parts.push("Gemini " + (sm.geminiOk ? "✓" : "✗"));
+      parts.push("Claude " + (sm.claudeOk ? "✓" : "✗"));
+      if (!sm.reviewSearchUsed && sm.reviewSearchError) {
+        parts.push("web search unavailable");
+      }
+      return '<p class="bookcheck-scan-quality muted">' + escapeHtml(parts.join(" · ")) + "</p>";
+    }
+
     function showVerdict(title, author) {
       if (!verdictBox) return;
+      if (catalogMeta.enrichPending) return;
+      var experienced = isExperiencedBookcheckUser();
       var displayTier = displayHintTier(catalogMeta.hintTier);
-      var blanket = pickContextBlanket(
-        catalogMeta.lastDoc,
-        catalogMeta.matchedTitle || title,
-        catalogMeta.matchedAuthor || author,
-        displayTier
-      );
+      var blanket = experienced
+        ? ""
+        : pickContextBlanket(
+            catalogMeta.lastDoc,
+            catalogMeta.matchedTitle || title,
+            catalogMeta.matchedAuthor || author,
+            displayTier
+          );
       var detailInLead =
         matchBox &&
         matchBox.classList.contains("is-visible") &&
@@ -1378,26 +2177,36 @@
           signals: catalogMeta.hintSignals,
           familyAction: catalogMeta.hintFamilyAction,
           vetSource: catalogMeta.vetSource,
+          experienced: experienced,
         }
       );
       var vetBanner = "";
       var VS = global.HalalitBookcheckVetSource;
-      if (VS && typeof VS.bannerHtml === "function") {
-        applyVetSourceMeta(title, author, catalogMeta.lastDoc);
-        vetBanner = VS.bannerHtml(catalogMeta.vetSource, {
-          fanserviceNotChecked: catalogMeta.fanserviceNotChecked,
-          aiSeriesNote: catalogMeta.aiSeriesNote,
-        });
-      }
-      var headline = v.headline;
-      if (catalogMeta.compactReport && catalogMeta.familyReport && global.HalalitBookcheckReport) {
-        var ar =
+      var autoReject = false;
+      var ar = null;
+      if (catalogMeta.familyReport && global.HalalitBookcheckReport) {
+        ar =
           typeof global.HalalitBookcheckReport.autoRejectionSummary === "function"
             ? global.HalalitBookcheckReport.autoRejectionSummary(catalogMeta.familyReport, {
                 tier: catalogMeta.hintTier,
                 detail: catalogMeta.hintDetail,
+                agentFlag: !!catalogMeta.agentFlag,
               })
             : null;
+        autoReject = !!(ar && ar.status === "reject");
+      }
+      if (!autoReject && VS && typeof VS.bannerHtml === "function") {
+        applyVetSourceMeta(title, author, catalogMeta.lastDoc);
+        vetBanner = VS.bannerHtml(catalogMeta.vetSource, {
+          fanserviceNotChecked: catalogMeta.fanserviceNotChecked,
+          aiSeriesNote: catalogMeta.aiSeriesNote,
+          experienced: experienced,
+        });
+      }
+      var headline = v.headline;
+      if (autoReject) {
+        headline = "";
+      } else if (catalogMeta.compactReport && catalogMeta.familyReport && global.HalalitBookcheckReport) {
         if (catalogMeta.vetSource === "hand_vetted" || catalogMeta.hintTier === "verified_clean") {
           headline = "Hand-checked — vetted";
         } else if (catalogMeta.hintTier === "user_discretion") {
@@ -1408,8 +2217,8 @@
           catalogMeta.hintTier === "deity_comfort"
         ) {
           headline = "Hand-checked — see note";
-        } else if (ar && ar.status === "reject") {
-          headline = "Automatic hard rejection";
+        } else if (catalogMeta.vetSource === "agent_flagged") {
+          headline = "Halalit agent flag — not hand-read";
         } else if (catalogMeta.vetSource === "ai_staging_likely_reject") {
           headline = "AI likely rejection — not manually checked";
         } else if (catalogMeta.vetSource === "ai_staging_manual_review") {
@@ -1422,6 +2231,8 @@
           headline = "Preview panels first";
         } else if (catalogMeta.vetSource === "ai_themes") {
           headline = "AI scan — no hard-rule flags";
+        } else if (catalogMeta.vetSource === "catalog_only") {
+          headline = "AI scan unavailable — catalog only";
         } else {
           headline = "Not hand-read — hard rules look clear";
         }
@@ -1430,6 +2241,8 @@
           headline = "Hand-checked — vetted";
         } else if (catalogMeta.hintTier === "user_discretion") {
           headline = "Hand-checked — your discretion";
+        } else if (catalogMeta.vetSource === "agent_flagged") {
+          headline = "Halalit agent flag — not hand-read";
         } else if (catalogMeta.vetSource === "ai_staging_likely_reject") {
           headline = "AI likely rejection — not manually checked";
         } else if (catalogMeta.vetSource === "ai_staging_manual_review") {
@@ -1443,6 +2256,8 @@
             v.kind === "no"
               ? "AI flagged concerns — not hand-read"
               : "Not hand-read — no AI red flags";
+        } else if (catalogMeta.vetSource === "catalog_only") {
+          headline = "AI scan unavailable — catalog only";
         } else if (catalogMeta.hintTier === "fanservice_caution" || catalogMeta.hintTier === "preview_caution") {
           headline = "Hand-checked — preview first";
         } else {
@@ -1456,25 +2271,50 @@
       }
       verdictBox.className = "bookcheck-verdict bookcheck-verdict--" + v.kind;
       verdictBox.hidden = false;
+      var coverBlock = "";
+      var CoverThumb = global.HalalitCoverThumb;
+      var shelfOptsForCover = Policy ? bookcheckShelfOpts(Policy) : null;
+      var allowCoverThumb =
+        CoverThumb &&
+        typeof CoverThumb.shouldShowCoverThumb === "function" &&
+        CoverThumb.shouldShowCoverThumb(title, author, catalogMeta.hintTier, shelfOptsForCover);
+      if (allowCoverThumb) {
+        var coverUrl = catalogMeta.coverUrl;
+        if (!coverUrl && catalogMeta.lastDoc && typeof CoverThumb.coverUrlFromDoc === "function") {
+          coverUrl = CoverThumb.coverUrlFromDoc(catalogMeta.lastDoc) || "";
+        }
+        if (coverUrl && typeof CoverThumb.thumbHtml === "function") {
+          coverBlock = CoverThumb.thumbHtml(coverUrl, catalogMeta.matchedTitle || title || "Book cover");
+        }
+      }
       verdictBox.innerHTML =
         vetBanner +
-        "<p class=\"bookcheck-verdict__headline\">" +
-        escapeHtml(headline) +
-        "</p>" +
+        coverBlock +
+        (headline
+          ? '<p class="bookcheck-verdict__headline">' + escapeHtml(headline) + "</p>"
+          : "") +
+        aiScanQualityLineHtml(catalogMeta, experienced) +
         (catalogMeta.familyReport && global.HalalitBookcheckReport
           ? global.HalalitBookcheckReport.renderHtml(catalogMeta.familyReport, {
-              compact: catalogMeta.compactReport,
+              compact: catalogMeta.compactReport || autoReject,
               vetSource: catalogMeta.vetSource,
+              experienced: experienced,
             })
-          : verdictActionHtml(v, { hideFamilyAction: catalogMeta.compactReport })) +
+          : verdictActionHtml(v, { hideFamilyAction: catalogMeta.compactReport || autoReject })) +
         (v.body &&
-        !(catalogMeta.familyReport && catalogMeta.familyReport.mode === "curated")
+        !autoReject &&
+        !(catalogMeta.familyReport && catalogMeta.familyReport.mode === "curated") &&
+        !(
+          experienced &&
+          catalogMeta.familyReport &&
+          catalogMeta.familyReport.mode === "catalog"
+        )
           ? '<div class="bookcheck-verdict__body">' + formatNoteHtml(v.body) + "</div>"
           : "") +
-        (v.contextBlanket
+        (v.contextBlanket && !autoReject
           ? "<p class=\"bookcheck-verdict__blanket muted\">" + escapeHtml(v.contextBlanket) + "</p>"
           : "") +
-        (v.matchLine && !catalogMeta.compactReport
+        (v.matchLine && !catalogMeta.compactReport && !autoReject
           ? "<p class=\"bookcheck-verdict__match muted\">" + v.matchLine + "</p>"
           : "");
       if (catalogMeta.compactReport) {
@@ -1617,6 +2457,7 @@
       catalogMeta.lastDoc = doc || null;
       catalogMeta.hintTier = hint.tier;
       catalogMeta.hintDetail = hint.detail;
+      catalogMeta.agentFlag = !!hint.agentFlag;
       catalogMeta.familyPortrayal = hint.familyPortrayal || null;
       catalogMeta.culturalRepresentation = hint.culturalRepresentation || null;
       catalogMeta.proColonialCaution = hint.proColonialCaution || null;
@@ -1645,10 +2486,22 @@
           aiScanOk: catalogMeta.aiScanOk,
           fanserviceNotChecked: catalogMeta.fanserviceNotChecked,
           aiSeriesNote: catalogMeta.aiSeriesNote,
+          aiThemes: catalogMeta.aiThemes || [],
+          aiLgbtqDenied: !!catalogMeta.aiLgbtqDenied,
+          aiLgbtqPresent: !!catalogMeta.aiLgbtqPresent,
         }
       );
       catalogMeta.matchedTitle = ttl;
       catalogMeta.matchedAuthor = auth;
+      var CoverMeta = global.HalalitCoverThumb;
+      var PolicyCover = global.HalalitFamilyShelfPolicy;
+      var shelfOptsCover = PolicyCover ? bookcheckShelfOpts(PolicyCover) : null;
+      var mayShowCover =
+        CoverMeta &&
+        typeof CoverMeta.shouldShowCoverThumb === "function" &&
+        CoverMeta.shouldShowCoverThumb(enteredTitle, enteredAuthor, catalogMeta.hintTier, shelfOptsCover);
+      catalogMeta.coverUrl =
+        mayShowCover && typeof CoverMeta.coverUrlFromDoc === "function" ? CoverMeta.coverUrlFromDoc(doc) || "" : "";
       if (matchBox && matchLead) {
         if (!catalogMeta.compactReport) {
           matchLead.innerHTML = catalogHintLeadHtml(hint);
@@ -1658,8 +2511,15 @@
         }
         if (matchList) matchList.innerHTML = "";
       }
-      showVerdict(enteredTitle, enteredAuthor);
-      recordLookupForOwner(enteredTitle, enteredAuthor);
+      function revealVerdict() {
+        showVerdict(enteredTitle, enteredAuthor);
+        recordLookupForOwner(enteredTitle, enteredAuthor);
+      }
+      if (chaseLoader && chaseLoader.isVisible()) {
+        chaseLoader.pounceAndHide(revealVerdict);
+      } else {
+        revealVerdict();
+      }
     }
 
     function applyDoc(doc) {
@@ -1668,19 +2528,17 @@
       var enteredTitle = titleIn ? String(titleIn.value || "").trim() : "";
       var enteredAuthor = authorIn ? String(authorIn.value || "").trim() : "";
       var VSdoc = global.HalalitBookcheckVetSource;
-      var handOnEntered =
-        VSdoc && typeof VSdoc.resolveHandVetHint === "function"
-          ? VSdoc.resolveHandVetHint(enteredTitle, enteredAuthor)
-          : null;
+      var handOnEntered = handVetHintFor(enteredTitle, enteredAuthor, ttl, auth);
       if (handOnEntered) {
         finishApplyDoc(doc, ttl, auth, handOnEntered, { combined: "", description: "" }, false, null, null);
+        releaseLookupBtn();
         return;
       }
       var aiPreHint = null;
       if (VSdoc && typeof VSdoc.resolveAiStagingHint === "function") {
         aiPreHint = VSdoc.resolveAiStagingHint(enteredTitle, enteredAuthor);
       }
-      if (titleIn && ttl && titleScore(enteredTitle, ttl) >= 88) titleIn.value = ttl;
+      if (titleIn && ttl && shouldSyncCatalogTitle(enteredTitle, ttl)) titleIn.value = ttl;
       var canonDoc =
         VSdoc && typeof VSdoc.canonicalBarcodeBook === "function"
           ? VSdoc.canonicalBarcodeBook(enteredTitle, enteredAuthor)
@@ -1710,9 +2568,33 @@
       }
       if (isSettledHandHint(preHint, enteredTitle, enteredAuthor)) {
         finishApplyDoc(doc, ttl, auth, preHint, { combined: "", description: "" }, false, null, null);
+        releaseLookupBtn();
         return;
       }
       enrichHintsAndFinish(doc, ttl, auth, preHint);
+    }
+
+    function pinHandVetHint(hint, title, author, altTitle, altAuthor) {
+      var hand = handVetHintFor(title, author, altTitle, altAuthor);
+      if (!hand) return hint;
+      var merged = Object.assign({}, hand);
+      if (hint) {
+        if ((!merged.signals || !merged.signals.length) && hint.signals && hint.signals.length) {
+          merged.signals = hint.signals;
+        }
+        var AI = global.HalalitBookcheckAi;
+        if (
+          merged.ownerAiThemeAbsent &&
+          AI &&
+          typeof AI.filterAiSignalsForOwnerAbsent === "function" &&
+          merged.signals &&
+          merged.signals.length
+        ) {
+          merged.signals = AI.filterAiSignalsForOwnerAbsent(merged.signals, merged.ownerAiThemeAbsent);
+        }
+        merged = mergeHandAdvisories(merged, title, author);
+      }
+      return merged;
     }
 
     function mergeHandAdvisories(hint, title, author) {
@@ -1769,36 +2651,54 @@
       );
       catalogMeta.aiScanOk = false;
       applyVetSourceMeta(ownTitle, ownAuthor, null);
-      showVerdict(ownTitle, ownAuthor);
-      recordLookupForOwner(ownTitle, ownAuthor);
-      if (statusEl) {
-        statusEl.textContent =
-          handHint.tier === "verified_clean"
-            ? "Matched Halalit’s hand-verified list."
-            : handHint.tier === "preview_caution"
-              ? "Children’s comic or manga—preview recommended."
-              : handHint.tier === "fanservice_caution"
-                ? "Hand-checked comic—lighter fanservice caution."
-                : handHint.tier === "deity_comfort"
-                  ? "Catalog or notes mention deity or mythology (comfort note)."
-                  : "Matched Halalit’s hand-checked rules.";
+      function revealHandVet() {
+        showVerdict(ownTitle, ownAuthor);
+        recordLookupForOwner(ownTitle, ownAuthor);
+        if (statusEl) {
+          statusEl.textContent =
+            handHint.tier === "verified_clean"
+              ? "Matched Halalit’s hand-verified list."
+              : handHint.tier === "preview_caution"
+                ? "Children’s comic or manga—preview recommended."
+                : handHint.tier === "fanservice_caution"
+                  ? "Hand-checked comic—lighter fanservice caution."
+                  : handHint.tier === "deity_comfort"
+                    ? "Catalog or notes mention deity or mythology (comfort note)."
+                    : "Matched Halalit’s hand-checked rules.";
+        }
+        releaseLookupBtn();
+      }
+      if (chaseLoader && chaseLoader.isVisible()) {
+        chaseLoader.pounceAndHide(revealHandVet);
+      } else {
+        revealHandVet();
       }
     }
 
-    function runLookup() {
+    function runLookupCore() {
       var ownTitle = titleIn ? String(titleIn.value || "").trim() : "";
       var ownAuthor = authorIn ? String(authorIn.value || "").trim() : "";
       if (!ownTitle) {
         if (statusEl) statusEl.textContent = "Type a title first.";
         return;
       }
+      lookupGenCounter += 1;
+      var lookupGen = lookupGenCounter;
       var keepFromScanner = catalogMeta.fromScanner;
       var keepCompact = catalogMeta.compactReport;
       resetUi();
+      catalogMeta.lookupGen = lookupGen;
       catalogMeta.fromScanner = keepFromScanner;
       catalogMeta.compactReport = keepCompact;
       catalogMeta.lookupLogTitle = ownTitle;
       catalogMeta.lookupLogAuthor = ownAuthor;
+      catalogMeta.earlyAiPromise = null;
+      catalogMeta.lookupAiStartedAt = 0;
+      catalogMeta.aiScanTimedOut = false;
+      if (lookupBtn) lookupBtn.disabled = true;
+      if (statusEl) statusEl.textContent = "Searching catalog…";
+      if (chaseLoader) chaseLoader.start("catalog");
+      startEarlyAiScan(ownTitle, ownAuthor);
       var Policy = global.HalalitFamilyShelfPolicy;
       if (Policy && typeof Policy.hardExclusionDetailForTitle === "function") {
         var earlyDetail = Policy.hardExclusionDetailForTitle(ownTitle, ownAuthor);
@@ -1822,15 +2722,21 @@
           );
           catalogMeta.aiScanOk = false;
           applyVetSourceMeta(ownTitle, ownAuthor, null);
-          showVerdict(ownTitle, ownAuthor);
-          recordLookupForOwner(ownTitle, ownAuthor);
-          if (statusEl) statusEl.textContent = "Matched Halalit’s never-recommend rules (hardest tier).";
+          function revealHardExclusion() {
+            showVerdict(ownTitle, ownAuthor);
+            recordLookupForOwner(ownTitle, ownAuthor);
+            if (statusEl) statusEl.textContent = "Matched Halalit’s never-recommend rules (hardest tier).";
+            releaseLookupBtn();
+          }
+          if (chaseLoader && chaseLoader.isVisible()) {
+            chaseLoader.pounceAndHide(revealHardExclusion);
+          } else {
+            revealHardExclusion();
+          }
           return;
         }
       }
-      var VS = global.HalalitBookcheckVetSource;
-      var handHint =
-        VS && typeof VS.resolveHandVetHint === "function" ? VS.resolveHandVetHint(ownTitle, ownAuthor) : null;
+      var handHint = handVetHintFor(ownTitle, ownAuthor);
       if (handHint) {
         applyHandVetHint(handHint, ownTitle, ownAuthor);
         return;
@@ -1845,14 +2751,14 @@
       }
       var url = buildOpenLibraryQueryUrl(ownTitle, ownAuthor);
       if (!url) return;
-      if (lookupBtn) lookupBtn.disabled = true;
-      if (statusEl) statusEl.textContent = "Searching Open Library, Wikipedia, and Wikidata…";
+      if (chaseLoader && !chaseLoader.isVisible()) chaseLoader.start("catalog");
       function finishLookupDocs(raw, fromFallback) {
         var pinPack = applyCatalogPinToRaw(raw, ownTitle, ownAuthor);
         raw = pinPack.docs;
         var refined = filterConfidentCatalogMatches(
-          refineCatalogDocs(raw || [], ownTitle, ownAuthor),
-          ownAuthor
+          refineCatalogMatches(raw || [], ownTitle, ownAuthor),
+          ownAuthor,
+          ownTitle
         );
         if (!refined.length) {
           var noHitHint = inferHint({
@@ -1879,40 +2785,18 @@
               noHitHint
             );
           }
-          catalogMeta.hintTier = noHitHint.tier === "unclear" ? "unclear" : noHitHint.tier;
-          catalogMeta.hintDetail =
-            noHitHint.tier === "unclear"
-              ? "No catalog match—judging from what you typed only."
-              : noHitHint.detail;
-          catalogMeta.hintSignals = noHitHint.signals || [];
-          catalogMeta.hintFamilyAction = noHitHint.familyAction || "";
-          if (statusEl) statusEl.textContent = "No catalog match—try AI theme scan…";
-          runAiThenFinish(
-            null,
-            ownTitle,
-            ownAuthor,
-            noHitHint,
-            { combined: "", description: "" },
-            false,
-            null,
-            null
-          );
+          enrichHintsAndFinish(null, ownTitle, ownAuthor, noHitHint);
           return;
         }
           if (shouldAutoPick(refined, ownAuthor)) {
             applyDoc(refined[0].doc);
-            if (statusEl) {
-              statusEl.textContent = pinPack.pinMessage
-                ? pinPack.pinMessage
-                : fromFallback
-                  ? "Matched from a broader catalog search."
-                  : refined.length === 1 || raw.length === refined.length
-                    ? "Matched the catalog record."
-                    : "Several editions looked alike—Halalit picked the closest match automatically.";
-            }
+            if (statusEl) statusEl.textContent = "Checking themes…";
+            if (chaseLoader) chaseLoader.setPhase("themes");
             return;
           }
+          if (chaseLoader) chaseLoader.hide();
           if (statusEl) statusEl.textContent = "A few different books share that name—pick the one you mean:";
+          releaseLookupBtn();
           if (matchBox && matchLead && matchList) {
             matchLead.textContent = "These look like different books, not just duplicate editions:";
             matchBox.classList.add("is-visible");
@@ -1924,8 +2808,9 @@
                 b.type = "button";
                 b.textContent = matchButtonLabel(doc);
                 b.addEventListener("click", function () {
+                  if (chaseLoader) chaseLoader.start("themes");
                   applyDoc(doc);
-                  if (statusEl) statusEl.textContent = "Match selected.";
+                  if (statusEl) statusEl.textContent = "Checking themes…";
                 });
                 li.appendChild(b);
                 matchList.appendChild(li);
@@ -1941,19 +2826,18 @@
         })
         .then(function (data) {
           var raw = (data && data.docs) || [];
-          var refined = refineCatalogDocs(raw, ownTitle, ownAuthor);
+          var refined = refineCatalogMatches(raw, ownTitle, ownAuthor);
           if (refined.length) {
-            if (lookupBtn) lookupBtn.disabled = false;
             finishLookupDocs(raw, false);
             return;
           }
           var fallbackUrl = buildOpenLibraryFallbackQUrl(ownTitle, ownAuthor);
           if (!fallbackUrl) {
-            if (lookupBtn) lookupBtn.disabled = false;
             finishLookupDocs(raw, false);
             return;
           }
           if (statusEl) statusEl.textContent = "Trying a broader catalog search…";
+          if (chaseLoader) chaseLoader.setPhase("catalog");
           global
             .fetch(fallbackUrl)
             .then(function (r2) {
@@ -1961,16 +2845,15 @@
               return r2.json();
             })
             .then(function (data2) {
-              if (lookupBtn) lookupBtn.disabled = false;
               finishLookupDocs((data2 && data2.docs) || [], true);
             })
             .catch(function () {
-              if (lookupBtn) lookupBtn.disabled = false;
               finishLookupDocs(raw, false);
             });
         })
         .catch(function () {
-          if (lookupBtn) lookupBtn.disabled = false;
+          if (chaseLoader) chaseLoader.hide();
+          releaseLookupBtn();
           catalogMeta.hintTier = "unclear";
           catalogMeta.hintDetail = "Couldn’t reach Open Library—try again when you’re online.";
           if (statusEl) statusEl.textContent = "Lookup failed.";
@@ -1978,7 +2861,12 @@
         });
     }
 
+    function runLookup() {
+      runLookupCore();
+    }
+
     function refreshBookcheckDisplay() {
+      if (catalogMeta.enrichPending) return;
       if (!catalogMeta.hintTier) return;
       var title = titleIn ? titleIn.value.trim() : "";
       var author = authorIn ? authorIn.value.trim() : "";
@@ -2066,6 +2954,19 @@
     }
 
     if (lookupBtn) lookupBtn.addEventListener("click", runLookup);
+    var OwnerVetsRuntime = global.HalalitOwnerVetsRuntime;
+    if (OwnerVetsRuntime && OwnerVetsRuntime.ready) {
+      OwnerVetsRuntime.ready.then(function () {
+        if (catalogMeta.enrichPending) return;
+        if (!catalogMeta.hintTier) return;
+        var title = titleIn ? titleIn.value.trim() : "";
+        var author = authorIn ? authorIn.value.trim() : "";
+        if (!title) return;
+        var hand = handVetHintFor(title, author, catalogMeta.matchedTitle, catalogMeta.matchedAuthor);
+        if (hand) applyHandVetHint(hand, title, author);
+        else refreshBookcheckDisplay();
+      });
+    }
     if (titleIn) {
       titleIn.addEventListener("input", resetUi);
       titleIn.addEventListener("keydown", function (ev) {

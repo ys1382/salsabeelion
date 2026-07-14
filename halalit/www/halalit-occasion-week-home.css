@@ -1,0 +1,140 @@
+.halalit-occasion-week-home {
+  margin-bottom: 0.25rem;
+}
+
+.halalit-occasion-week-home__heading {
+  margin: 0 0 0.45rem;
+  font-size: 1.2rem;
+  color: var(--accent);
+}
+
+.halalit-occasion-week-home__lead {
+  margin: 0 0 1rem;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: var(--dim);
+  max-width: 52ch;
+}
+
+.halalit-occasion-week-home__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 15.5rem), 1fr));
+  gap: 0.85rem 1rem;
+}
+
+.halalit-occasion-week-home__card {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  padding: 0.75rem 0.85rem;
+  border-radius: 12px;
+  border: 1px solid var(--rule);
+  background: rgba(0, 0, 0, 0.12);
+}
+
+body.halalit-fathers-day .halalit-occasion-week-home__card {
+  background: rgba(255, 255, 255, 0.42);
+  border-color: rgba(74, 101, 120, 0.22);
+}
+
+.halalit-occasion-week-home__cover {
+  flex: 0 0 5.5rem;
+  width: 5.5rem;
+  min-height: 7.5rem;
+  border-radius: 5px;
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.halalit-occasion-week-home__cover--skipped {
+  display: none;
+}
+
+.halalit-occasion-week-home__cover--loaded {
+  background: transparent;
+}
+
+.halalit-occasion-week-home__cover-img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 8.25rem;
+  object-fit: cover;
+  border-radius: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+body.halalit-fathers-day .halalit-occasion-week-home__cover-img {
+  border-color: rgba(74, 101, 120, 0.18);
+  box-shadow: 0 4px 12px rgba(52, 70, 86, 0.12);
+}
+
+/* Open Library sometimes stores jacket scans sideways — per-pick coverRotate in JS */
+.halalit-occasion-week-home__cover--rotate-slot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
+}
+
+.halalit-occasion-week-home__cover-img--rotate-90 {
+  transform: rotate(90deg);
+  transform-origin: center center;
+  width: auto;
+  height: 5.5rem;
+  max-width: 8.25rem;
+  max-height: none;
+  object-fit: contain;
+}
+
+.halalit-occasion-week-home__cover-img--rotate-neg-90 {
+  transform: rotate(-90deg);
+  transform-origin: center center;
+  width: auto;
+  height: 5.5rem;
+  max-width: 8.25rem;
+  max-height: none;
+  object-fit: contain;
+}
+
+.halalit-occasion-week-home__text {
+  flex: 1 1 8rem;
+  min-width: 0;
+}
+
+.halalit-occasion-week-home__book-title {
+  margin: 0 0 0.15rem;
+  font-size: 0.98rem;
+  line-height: 1.35;
+  font-weight: 600;
+}
+
+.halalit-occasion-week-home__book-author {
+  margin: 0 0 0.4rem;
+  font-size: 0.82rem;
+}
+
+.halalit-occasion-week-home__book-line {
+  margin: 0 0 0.45rem;
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+.halalit-occasion-week-home__book-action {
+  margin: 0;
+  font-size: 0.84rem;
+}
+
+.halalit-occasion-week-home__book-action a {
+  color: var(--accent);
+}
+
+@media (max-width: 420px) {
+  .halalit-occasion-week-home__card {
+    flex-direction: column;
+  }
+  .halalit-occasion-week-home__cover {
+    width: 5rem;
+    min-height: 0;
+  }
+}

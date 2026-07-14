@@ -27,6 +27,10 @@
       invalid_credentials: "Email or password didn’t match.",
       bad_response: "Couldn’t reach the site right now. Try again in a moment.",
       signups_disabled: "New accounts are paused right now. You can still sign in if you already have one.",
+      reset_email_sent: "If that email has an account, we sent a reset link. Check your inbox (and junk folder).",
+      reset_token_invalid: "That reset link is invalid or already used. Request a new one.",
+      reset_token_expired: "That reset link expired. Request a new one.",
+      rate_limited: "Too many tries. Wait a bit, then try again.",
     };
     return map[code] || "Something went wrong. Try again.";
   }
@@ -42,6 +46,20 @@
     return fetchJson(apiBase() + "/auth/login", {
       method: "POST",
       body: { email: email, password: password },
+    });
+  }
+
+  function requestPasswordReset(email) {
+    return fetchJson(apiBase() + "/auth/forgot-password", {
+      method: "POST",
+      body: { email: email },
+    });
+  }
+
+  function completePasswordReset(token, password) {
+    return fetchJson(apiBase() + "/auth/reset-password", {
+      method: "POST",
+      body: { token: token, password: password },
     });
   }
 
@@ -61,6 +79,8 @@
   global.CrocheterAuth = {
     signUp: signUp,
     signIn: signIn,
+    requestPasswordReset: requestPasswordReset,
+    completePasswordReset: completePasswordReset,
     afterAuthSuccess: afterAuthSuccess,
     friendlyError: friendlyError,
     loadOwnerOffice: function () {

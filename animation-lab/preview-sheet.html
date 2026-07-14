@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Sprite sheet preview</title>
+  <style>
+    body { margin: 1rem; background: #222; color: #eee; font: 14px system-ui; }
+    canvas { image-rendering: pixelated; border: 1px solid #666; }
+    .row { margin-bottom: 1.5rem; }
+    h2 { margin: 0 0 0.5rem; font-size: 1rem; color: #d4af6a; }
+  </style>
+</head>
+<body>
+  <p>Up/down frames at 8× scale — refresh after editing pixel-walk-sprite.js</p>
+  <div id="out"></div>
+  <script src="pixel-walk-sprite.js"></script>
+  <script>
+    const SCALE = 8;
+    const dirs = ['down', 'up', 'left', 'right'];
+    const out = document.getElementById('out');
+    dirs.forEach((name, dir) => {
+      const row = document.createElement('div');
+      row.className = 'row';
+      row.innerHTML = '<h2>' + name + '</h2>';
+      const wrap = document.createElement('div');
+      const c = document.createElement('canvas');
+      c.width = PixelWalkSprite.CHAR_W * PixelWalkSprite.CHAR_FRAMES * SCALE;
+      c.height = PixelWalkSprite.CHAR_H * SCALE;
+      const ctx = c.getContext('2d');
+      const sheet = document.createElement('canvas');
+      sheet.width = PixelWalkSprite.CHAR_W * PixelWalkSprite.CHAR_FRAMES;
+      sheet.height = PixelWalkSprite.CHAR_H;
+      const sctx = sheet.getContext('2d');
+      for (let frame = 0; frame < PixelWalkSprite.CHAR_FRAMES; frame++) {
+        PixelWalkSprite.drawCharFrame(sctx, frame, 0, dir, frame);
+      }
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(sheet, 0, 0, c.width, c.height);
+      wrap.appendChild(c);
+      row.appendChild(wrap);
+      out.appendChild(row);
+    });
+  </script>
+</body>
+</html>

@@ -363,18 +363,156 @@
     .mara-order-input[dir="rtl"] {
       text-align: right;
     }
+    .mo-learning-card-hud.is-prologue-hidden,
+    .mo-day-hud.is-prologue-hidden {
+      opacity: 0.35;
+    }
+    .mo-prologue-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 58;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1.25rem;
+      background: rgba(12, 10, 18, 0.88);
+      pointer-events: auto;
+      cursor: pointer;
+    }
+    .mo-prologue-overlay.is-open {
+      display: flex;
+    }
+    .mo-prologue-card {
+      width: min(28rem, 94vw);
+      max-height: min(88vh, 36rem);
+      padding: 1.5rem 1.35rem 1.2rem;
+      background: rgba(18, 16, 24, 0.96);
+      border: 1px solid rgba(212, 175, 106, 0.55);
+      border-radius: 8px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+      text-align: center;
+      pointer-events: auto;
+    }
+    .mo-prologue-portrait-wrap {
+      display: none;
+      justify-content: center;
+      margin: 0 0 1rem;
+    }
+    .mo-prologue-overlay.is-elder .mo-prologue-portrait-wrap {
+      display: flex;
+    }
+    #mo-prologue-portrait {
+      display: block;
+      width: 64px;
+      height: 96px;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+      border: 2px solid rgba(212, 175, 106, 0.45);
+      border-radius: 4px;
+      background: rgba(90, 64, 56, 0.4);
+    }
+    .mo-prologue-speaker {
+      display: none;
+      margin: 0 0 0.5rem;
+      font-family: "Georgia", "Palatino", serif;
+      font-size: 0.95rem;
+      color: var(--gold);
+    }
+    .mo-prologue-overlay.is-elder .mo-prologue-speaker {
+      display: block;
+    }
+    .mo-prologue-text {
+      margin: 0 0 0.85rem;
+      font-family: "Georgia", "Palatino", serif;
+      font-size: clamp(1rem, 2.2vw, 1.12rem);
+      line-height: 1.55;
+      color: var(--text);
+      white-space: pre-wrap;
+      text-align: left;
+    }
+    .mo-prologue-text em {
+      font-style: italic;
+    }
+    .mo-prologue-hint {
+      margin: 0;
+      font-family: system-ui, sans-serif;
+      font-size: 0.88rem;
+      color: var(--dim);
+    }
+    .mo-prologue-overlay.is-report .mo-prologue-card {
+      text-align: left;
+    }
+    .mo-elder-report-input-wrap {
+      margin-top: 1rem;
+    }
+    .mo-elder-report-input-wrap[hidden] {
+      display: none !important;
+    }
+    .mo-elder-report-input {
+      box-sizing: border-box;
+      width: 100%;
+      min-height: 6.5rem;
+      padding: 0.65rem 0.75rem;
+      font-family: system-ui, sans-serif;
+      font-size: 0.95rem;
+      line-height: 1.45;
+      color: #fffbe8;
+      background: rgba(8, 8, 14, 0.92);
+      border: 1px solid rgba(212, 175, 106, 0.45);
+      border-radius: 6px;
+      resize: vertical;
+    }
+    .mo-elder-report-input:focus {
+      outline: 2px solid rgba(212, 175, 106, 0.55);
+      border-color: rgba(212, 175, 106, 0.65);
+    }
+    .mo-elder-report-submit {
+      margin-top: 0.65rem;
+      padding: 0.45rem 0.9rem;
+      font-family: system-ui, sans-serif;
+      font-size: 0.92rem;
+      color: #1a1410;
+      background: #d4af6a;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .mo-elder-report-submit:hover {
+      background: #e0bc78;
+    }
   </style>
 </head>
 <body>
   <div class="game-shell">
-    <button type="button" id="mo-restart-btn" class="mo-restart-btn" title="Reset Mara intro and learning card for this tab">Restart</button>
+    <button type="button" id="mo-restart-btn" class="mo-restart-btn" title="Reset prologue, language, look, Mara intro, café week, and learning card">Restart</button>
     <div id="mo-day-hud" class="mo-day-hud" aria-live="polite">Monday · café day 1</div>
     <div id="mo-learning-card-hud" class="mo-learning-card-hud" aria-live="polite">Learning card: 200 pesos</div>
     <div id="game"></div>
+    <div id="mo-prologue-overlay" class="mo-prologue-overlay" aria-hidden="true" role="dialog" aria-labelledby="mo-prologue-text" aria-modal="true">
+      <div class="mo-prologue-card">
+        <div class="mo-prologue-portrait-wrap" aria-hidden="true">
+          <canvas id="mo-prologue-portrait" width="64" height="96" aria-hidden="true"></canvas>
+        </div>
+        <p id="mo-prologue-speaker" class="mo-prologue-speaker">Community elder</p>
+        <p id="mo-prologue-text" class="mo-prologue-text"></p>
+        <div id="mo-elder-report-input-wrap" class="mo-elder-report-input-wrap" hidden aria-hidden="true">
+          <textarea
+            id="mo-elder-report-input"
+            class="mo-elder-report-input"
+            rows="4"
+            maxlength="1200"
+            placeholder="What did you notice — food, Mara, the room, the people…"
+            aria-label="Tell the elder about Dragon's Brew"
+          ></textarea>
+          <button type="button" id="mo-elder-report-submit" class="mo-elder-report-submit">Tell the elder</button>
+        </div>
+        <p id="mo-prologue-hint" class="mo-prologue-hint">Space, E, or R — continue</p>
+      </div>
+    </div>
     <div id="mo-language-picker" class="mo-language-picker" aria-hidden="true" role="dialog" aria-labelledby="mo-language-title" aria-modal="true">
       <div class="mo-language-card">
-        <h2 id="mo-language-title">Before you visit</h2>
-        <p>Pick café language and how you appear this visit. Culture words from peoples stay in their own tongue elsewhere.</p>
+        <h2 id="mo-language-title">Before you head out</h2>
+        <p>Pick café language and how you appear. Culture words from peoples stay in their own tongue elsewhere.</p>
         <section class="mo-setup-section" aria-labelledby="mo-setup-lang-title">
           <h3 id="mo-setup-lang-title">Café language</h3>
           <p class="mo-setup-hint">Menu words will be in the language you choose.</p>
@@ -406,7 +544,7 @@
             <li><strong>Enter café</strong> — walk to the door and step through</li>
             <li><strong>R</strong> — read the drink menu, strike board, and house rules (wall behind the counter)</li>
             <li><strong>E</strong> — talk to Mara (inside the café; read the menu first to practice ordering)</li>
-            <li><strong>T</strong> — stand on a chair or stool to sit; press T again to stand</li>
+            <li><strong>T</strong> — walk up to a chair or stool and press T to sit; press T again to stand</li>
             <li><strong>D / F</strong> — while seated, sip your drink (D) or eat (F) after you pick up your order</li>
           </ul>
         </div>
@@ -444,16 +582,19 @@
     </div>
   </div>
   <script src="vendor/phaser/3.60.0/dist/phaser.min.js"></script>
-  <script src="mo-protagonist-look.js?v=20260625e"></script>
-  <script src="mo-cafe-language.js?v=20260625e"></script>
-  <script src="mo-visit-setup.js?v=20260625e"></script>
-  <script src="mo-learning-card.js?v=20260626b"></script>
-  <script src="mo-game-days.js?v=20260626b"></script>
-  <script src="mo-game-restart.js?v=20260625d"></script>
-  <script src="mo-dragons-brew-menu.js?v=20260625c"></script>
-  <script src="mo-menu-quiz.js?v=20260626b"></script>
-  <script src="mo-doors.js?v=20260627a"></script>
-  <script src="mo-farm-rpg.js?v=20260627a"></script>
+  <script src="mo-protagonist-look.js?v=20260627p"></script>
+  <script src="mo-cafe-language.js?v=20260627p"></script>
+  <script src="mo-elder-portrait.js?v=20260627t"></script>
+  <script src="mo-visit-setup.js?v=20260627p"></script>
+  <script src="mo-prologue.js?v=20260628a"></script>
+  <script src="mo-elder-report.js?v=20260628a"></script>
+  <script src="mo-learning-card.js?v=20260627p"></script>
+  <script src="mo-game-days.js?v=20260628a"></script>
+  <script src="mo-game-restart.js?v=20260628a"></script>
+  <script src="mo-dragons-brew-menu.js?v=20260628a"></script>
+  <script src="mo-menu-quiz.js?v=20260628a"></script>
+  <script src="mo-doors.js?v=20260628e"></script>
+  <script src="mo-farm-rpg.js?v=20260628f"></script>
   <script>
     (function () {
       var wrap = document.getElementById('controls-hints');

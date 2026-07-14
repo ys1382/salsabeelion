@@ -34,10 +34,15 @@
    * @typedef {object} CatalogPin
    * @property {string} id
    * @property {string} queryExactNorm — normalized query must equal this (core title only)
-   * @property {string} docTitleExactNorm — catalog row title must equal this
+   * @property {string} [docTitleExactNorm] — catalog row title must equal this
    * @property {string} authorNeedle — substring required in author line (normalized)
+   * @property {boolean} [requireAuthorNeedle] — pin only when query author matches authorNeedle
    * @property {RegExp} [authorExcludeRe]
+   * @property {RegExp} [rejectDocTitleRe] — never pick these catalog rows for this pin
+   * @property {string[]} [altDocTitleNorms] — other normalized titles (e.g. foreign edition names)
    * @property {string[]} [preferWorkKeys] — Open Library /works/… keys, best first
+   * @property {number} [preferCoverI] — Open Library cover id when a newer reprint is not in the search batch
+   * @property {string[]} [preferIsbns] — ISBNs for a recent reprint; tried before cover_i when set
    */
 
   /** @type {CatalogPin[]} */
@@ -64,30 +69,115 @@
       authorExcludeRe: /miyazaki|oniki|animejyu|studio ghibli|je park|sumino/i,
       preferWorkKeys: ["/works/OL26649W", "/works/OL20760219W", "/works/OL39182246W"],
     },
+    {
+      id: "inkheart",
+      queryExactNorm: "inkheart",
+      docTitleExactNorm: "inkheart",
+      authorNeedle: "funke",
+      requireAuthorNeedle: true,
+      authorExcludeRe: /sander|mason|herman|adaptation|film/i,
+      rejectDocTitleRe: /\bankheart\s+4\b/i,
+      altDocTitleNorms: ["tintenherz"],
+      preferWorkKeys: ["/works/OL941669W"],
+    },
+    {
+      id: "ramona-quimby",
+      queryExactNorm: "ramona quimby",
+      docTitleExactNorm: "ramona quimby age 8",
+      authorNeedle: "cleary",
+      authorExcludeRe: /adaptation|picture book|coloring/i,
+      rejectDocTitleRe:
+        /\bcomplete\b|\bcollection\b|\bnovels\s*\(|\bseries\b|\bdiary\b|\bart\s+of\b|\bmeet\b|\bnovel[\s-]?ties\b|\bstudy\s+guide\b|\bbook\s+guide\b|\bbeverly\s+cleary's\b/i,
+      preferWorkKeys: ["/works/OL43423017W", "/works/OL151947W"],
+      preferIsbns: ["9780062453273", "0062453270"],
+      preferCoverI: 10789433,
+    },
+    {
+      id: "ramona-and-her-father",
+      queryExactNorm: "ramona and her father",
+      docTitleExactNorm: "ramona and her father",
+      authorNeedle: "cleary",
+      authorExcludeRe: /adaptation|picture book|coloring/i,
+      rejectDocTitleRe: /\bcomplete\b|\bcollection\b|\bnovels\s*\(|\bseries\b|\bbeezus\b/i,
+      preferWorkKeys: ["/works/OL151989W"],
+      preferCoverI: 10582568,
+    },
   ];
 
   function queryWantsNonMainEdition(queryTitle) {
     return VARIANT_IN_QUERY_RE.test(String(queryTitle || ""));
   }
 
-  function findPinForQuery(queryTitle) {
+  function findPinForQuery(queryTitle, queryAuthor) {
     if (queryWantsNonMainEdition(queryTitle)) return null;
     var qn = normKey(queryTitle);
     if (!qn) return null;
+    var qa = normKey(queryAuthor);
     for (var i = 0; i < PINS.length; i++) {
-      if (PINS[i].queryExactNorm === qn) return PINS[i];
+      if (PINS[i].queryExactNorm !== qn) continue;
+      var pin = PINS[i];
+      if (pin.requireAuthorNeedle) {
+        if (!qa || qa.indexOf(normKey(pin.authorNeedle)) === -1) return null;
+      }
+      return pin;
     }
     return null;
   }
 
-  function docMatchesPin(doc, pin) {
-    var ttl = normKey(normalizeOlTitle(doc));
-    if (ttl !== pin.docTitleExactNorm) return false;
+  function authorMatchesPin(doc, pin) {
+    if (!pin.authorNeedle) return true;
     var auth = normKey(authorLine(doc));
     if (!auth || auth.indexOf(normKey(pin.authorNeedle)) === -1) return false;
     if (pin.authorExcludeRe && pin.authorExcludeRe.test(auth)) return false;
-    if (NON_MAIN_DOC_TITLE_RE.test(normKey(normalizeOlTitle(doc)))) return false;
     return true;
+  }
+
+  function docRejectedByPin(doc, pin) {
+    var rawTitle = normalizeOlTitle(doc);
+    if (pin.rejectDocTitleRe && pin.rejectDocTitleRe.test(rawTitle)) return true;
+    if (NON_MAIN_DOC_TITLE_RE.test(normKey(rawTitle))) return true;
+    return false;
+  }
+
+  function docMatchesPin(doc, pin) {
+    if (docRejectedByPin(doc, pin)) return false;
+    var key = String(doc.key || "");
+    if (pin.preferWorkKeys && pin.preferWorkKeys.indexOf(key) !== -1) {
+      return authorMatchesPin(doc, pin);
+    }
+    var ttl = normKey(normalizeOlTitle(doc));
+    var titleOk = pin.docTitleExactNorm ? ttl === pin.docTitleExactNorm : false;
+    if (!titleOk && pin.altDocTitleNorms) {
+      for (var a = 0; a < pin.altDocTitleNorms.length; a++) {
+        if (ttl === pin.altDocTitleNorms[a]) {
+          titleOk = true;
+          break;
+        }
+      }
+    }
+    if (!titleOk) return false;
+    return authorMatchesPin(doc, pin);
+  }
+
+  function collectPinMatches(list, pin) {
+    var matches = [];
+    var seen = {};
+    function tryAdd(doc) {
+      var k = String(doc.key || "");
+      if (k && seen[k]) return;
+      if (!docMatchesPin(doc, pin)) return;
+      if (k) seen[k] = true;
+      matches.push(doc);
+    }
+    if (pin.preferWorkKeys) {
+      for (var p = 0; p < pin.preferWorkKeys.length; p++) {
+        for (var i = 0; i < list.length; i++) {
+          if (String(list[i].key || "") === pin.preferWorkKeys[p]) tryAdd(list[i]);
+        }
+      }
+    }
+    for (var j = 0; j < list.length; j++) tryAdd(list[j]);
+    return matches;
   }
 
   function pickPreferredDoc(matches, pin) {
@@ -119,17 +209,29 @@
    * @param {string} [_queryAuthor] — reserved; pin uses query title shape only unless extended later
    * @returns {{ docs: object[], pinned: boolean, pinId: string|null, message: string|null }}
    */
-  function filterCatalogDocs(docs, queryTitle, _queryAuthor) {
+  function filterCatalogDocs(docs, queryTitle, queryAuthor) {
     var list = docs && docs.length ? docs.slice() : [];
-    var pin = findPinForQuery(queryTitle);
+    var pin = findPinForQuery(queryTitle, queryAuthor);
     if (!pin) return { docs: list, pinned: false, pinId: null, message: null };
-    var matches = [];
-    for (var i = 0; i < list.length; i++) {
-      if (docMatchesPin(list[i], pin)) matches.push(list[i]);
-    }
+    var matches = collectPinMatches(list, pin);
     if (!matches.length) return { docs: list, pinned: false, pinId: pin.id, message: null };
     var chosen = pickPreferredDoc(matches, pin);
     if (!chosen) return { docs: list, pinned: false, pinId: pin.id, message: null };
+    if (pin.preferCoverI != null && pin.preferCoverI === pin.preferCoverI) {
+      chosen = Object.assign({}, chosen, { cover_i: pin.preferCoverI });
+    } else if (pin.preferIsbns && pin.preferIsbns.length) {
+      chosen = Object.assign({}, chosen, { cover_i: undefined });
+    }
+    if (pin.preferIsbns && pin.preferIsbns.length) {
+      var merged = pin.preferIsbns.slice();
+      var seenIsbn = {};
+      for (var si = 0; si < merged.length; si++) seenIsbn[merged[si]] = true;
+      var oldIsbn = chosen.isbn || [];
+      for (var oi = 0; oi < oldIsbn.length; oi++) {
+        if (!seenIsbn[oldIsbn[oi]]) merged.push(oldIsbn[oi]);
+      }
+      chosen = Object.assign({}, chosen, { isbn: merged });
+    }
     return {
       docs: [chosen],
       pinned: true,

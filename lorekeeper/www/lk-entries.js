@@ -51,12 +51,85 @@
     return "Note";
   }
 
+  function parseTags(text) {
+    return String(text || "")
+      .split(",")
+      .map(function (t) {
+        return t.trim();
+      })
+      .filter(Boolean);
+  }
+
+  function spellFixTitleBody(title, body) {
+    return {
+      title: String(title || "").trim(),
+      body: String(body || "").trim(),
+      fixedCount: 0,
+    };
+  }
+
+  function buildEntry(opts) {
+    opts = opts || {};
+    var now = Date.now();
+    var spell = spellFixTitleBody(opts.title, opts.body);
+    var entry = {
+      id: opts.id || uid(),
+      kind: opts.kind || "note",
+      title: spell.title,
+      body: spell.body,
+      tags: parseTags(opts.tagsText),
+      createdAt: opts.createdAt || now,
+      updatedAt: now,
+    };
+    if (opts.linkedDocId) entry.linkedDocId = opts.linkedDocId;
+    if (opts.linkedDocTitle) entry.linkedDocTitle = opts.linkedDocTitle;
+    return { entry: entry, fixedCount: spell.fixedCount, title: spell.title, body: spell.body };
+  }
+
+  function prepareSave(opts) {
+    var built = buildEntry(opts);
+    if (!built.entry.title && !built.entry.body) {
+      return { ok: false, error: "Add a title or some text first." };
+    }
+    return {
+      ok: true,
+      entry: built.entry,
+      fixedCount: built.fixedCount,
+      title: built.title,
+      body: built.body,
+    };
+  }
+
+  function upsertInList(list, entry) {
+    var found = false;
+    list = (list || []).map(function (e) {
+      if (e.id !== entry.id) return e;
+      found = true;
+      return {
+        id: entry.id,
+        kind: entry.kind,
+        title: entry.title,
+        body: entry.body,
+        tags: entry.tags,
+        createdAt: e.createdAt || entry.createdAt,
+        updatedAt: entry.updatedAt,
+        linkedDocId: entry.linkedDocId || e.linkedDocId,
+        linkedDocTitle: entry.linkedDocTitle || e.linkedDocTitle,
+      };
+    });
+    if (!found) list.push(entry);
+    return list;
+  }
+
   global.LoreKeeperEntries = {
     KINDS: KINDS,
     uid: uid,
     load: loadEntries,
     save: saveEntries,
     kindLabel: kindLabel,
+    parseTags: parseTags,
+    prepareSave: prepareSave,
+    upsertInList: upsertInList,
     exportJson: function () {
       return JSON.stringify({ version: 1, exportedAt: new Date().toISOString(), entries: loadEntries() }, null, 2);
     },

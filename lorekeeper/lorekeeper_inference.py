@@ -44,9 +44,9 @@ _FAMILY_WORDS = (
     "brother|sister|mother|father|wife|husband|son|daughter|cousin|parent|child"
 )
 
-_PROTAGONIST_REF = re.compile(r"\bthe protagonist\b", re.I)
-_POV_ROLE_REF = re.compile(
-    r"\b(point of view|pov|narrator|viewpoint character)\b", re.I
+from lorekeeper_cast_roles import (
+    extract_explicit_cast_role_from_entries,
+    infer_viewpoint_role_only,
 )
 
 _VOCATIVE_PATTERNS: tuple[tuple[str, str, re.Pattern[str]], ...] = (
@@ -172,6 +172,8 @@ def _name_has_character_signal(name: str, text: str) -> bool:
             rf"(?:named|called)\s+{re.escape(name)}\b|"
             rf"\b{re.escape(name)}\s+and\s+(?:his|her|their)\s+twin\b|"
             rf"\btwins?\s+{re.escape(name)}\s+and\b|"
+            rf"\b{re.escape(name)}\s+and\s+[A-Z][a-z]{{2,}}\b|"
+            rf"\b[A-Z][a-z]{{2,}}\s+and\s+{re.escape(name)}\b|"
             rf"\band\s+{re.escape(name)}\b",
             text,
             re.I,
@@ -225,21 +227,63 @@ def _is_story_center(label: str, text: str) -> bool:
     return label_hits >= second_hits * 1.4
 
 
+_POV_NARRATIVE = re.compile(
+    r"\b("
+    r"walked|walks|turned|turns|looked|looks|watched|watches|felt|feels|thought|thinks|"
+    r"saw|sees|heard|hears|entered|enters|whispered|whispers|said|says|stood|stands|"
+    r"ran|runs|reached|reaches|opened|opens|closed|closes|nodded|nodded"
+    r")\b",
+    re.I,
+)
+
+
+def _is_draft_entry(entry: dict[str, Any]) -> bool:
+    kind = str(entry.get("kind") or "")
+    eid = str(entry.get("id") or "")
+    return kind == "document" or "#p" in eid
+
+
+def _draft_pov_leans(label: str, entries: list[dict[str, Any]]) -> bool:
+    """True when draft prose keeps returning to this character's actions/perceptions (#16)."""
+    draft_chunks = [
+        str(e.get("body") or "")
+        for e in entries
+        if isinstance(e, dict) and _is_draft_entry(e) and str(e.get("body") or "").strip()
+    ]
+    if not draft_chunks:
+        return False
+    text = "\n\n".join(draft_chunks)
+    if not _name_in_text(label, text):
+        return False
+    sentences = _split_sentences(text)
+    if not sentences:
+        return False
+    centered = 0
+    for sentence in sentences:
+        if not _name_in_text(label, sentence):
+            continue
+        if re.search(rf"^{re.escape(label)}\b", sentence, re.I):
+            centered += 1
+            continue
+        if re.search(rf"\b{re.escape(label)}'s\b", sentence, re.I):
+            centered += 1
+            continue
+        if _POV_NARRATIVE.search(sentence):
+            centered += 1
+    if centered >= 2:
+        return True
+    return False
+
+
 def _infer_role_line(label: str, entries: list[dict[str, Any]]) -> str | None:
     text = _merged_bodies(entries)
+    explicit = extract_explicit_cast_role_from_entries(label, entries)
+    if explicit:
+        return explicit
     if not text or not _name_in_text(label, text):
         return None
-    if re.search(rf"\b{re.escape(label)}\s+(?:was|is)\s+the protagonist\b", text, re.I):
-        return f"{label} reads as the protagonist — the story keeps centering on them."
-    has_protagonist_word = bool(_PROTAGONIST_REF.search(text))
-    centered = _is_story_center(label, text)
-    if has_protagonist_word and centered:
-        return f"{label} reads as the protagonist — the story keeps centering on them."
-    if centered and _POV_ROLE_REF.search(text):
-        return f"{label} appears to be the viewpoint character."
-    if centered:
-        return f"{label} appears to be the main character the draft stays close to."
-    return None
+    centered = _is_story_center(label, text) or _draft_pov_leans(label, entries)
+    return infer_viewpoint_role_only(label, text=text, is_story_center=centered)
 
 
 def _other_character_speaks(label: str, prior: str, sentence: str) -> bool:
@@ -289,7 +333,48 @@ def _label_owns_family_beat(label: str, prior: str, sentence: str) -> bool:
     return False
 
 
-def _extract_addressee_name(sentence: str, label: str, rel_word: str = "") -> str | None:
+def _speaker_in_sentence(sentence: str, label: str) -> bool:
+    if not _name_in_text(label, sentence):
+        return False
+    return bool(
+        re.search(
+            rf"\b{re.escape(label)}\s+[^.?!]{{0,40}}(?:said|says|asked|asks|whispered|muttered|called|replied|replies)\b",
+            sentence,
+            re.I,
+        )
+        or re.search(
+            rf"(?:said|says|asked|asks|whispered|muttered|called|replied|replies)\s+[^.?!]{{0,20}}\b{re.escape(label)}\b",
+            sentence,
+            re.I,
+        )
+    )
+
+
+def _addressee_from_nearby(
+    prior: str, sentence: str, label: str, rel_word: str
+) -> str | None:
+    """When vocative + label speaks, the addressee is often in the prior sentence."""
+    label_low = label.lower()
+    if not rel_word or not _speaker_in_sentence(sentence, label):
+        return None
+    if not re.search(rf"\b{re.escape(rel_word)}\b", sentence, re.I):
+        return None
+    for blob in (prior, sentence):
+        if not blob:
+            continue
+        for name in _candidate_names(blob):
+            if name.lower() != label_low:
+                return name
+    return None
+
+
+def _extract_addressee_name(
+    sentence: str,
+    label: str,
+    rel_word: str = "",
+    *,
+    prior: str = "",
+) -> str | None:
     label_low = label.lower()
     rel = rel_word or _FAMILY_WORDS
 
@@ -323,6 +408,8 @@ def _extract_addressee_name(sentence: str, label: str, rel_word: str = "") -> st
     )
     if accepted := accept(m.group(1) if m else None):
         return accepted
+    if rel_word:
+        return _addressee_from_nearby(prior, sentence, label, rel_word)
     return None
 
 
@@ -382,7 +469,7 @@ def _vocative_ties(
             prior = sentences[i - 1] if i else ""
             if not _label_owns_family_beat(label, prior, sentence):
                 continue
-            other = _extract_addressee_name(sentence, label, rel_word)
+            other = _extract_addressee_name(sentence, label, rel_word, prior=prior)
             if other:
                 by_other[other] += 1
             else:
@@ -430,6 +517,55 @@ def _brother_names_from_ties(ties: list[str]) -> list[str]:
 
 def brother_names_from_brief(ties: list[str]) -> list[str]:
     return _brother_names_from_ties(ties)
+
+
+def named_characters_in_scene_text(
+    text: str,
+    *,
+    allowlist: set[str] | None = None,
+    work_title_tokens: set[str] | None = None,
+) -> list[str]:
+    """Proper names the draft treats as people in a scene beat (resume / tail summaries)."""
+    if not (text or "").strip():
+        return []
+    allow_lower = {a.lower() for a in (allowlist or set())}
+    work_tokens = work_title_tokens or set()
+    kept: list[str] = []
+    seen: set[str] = set()
+    for name in _candidate_names(text):
+        key = name.lower()
+        if key in seen or not _name_in_text(name, text):
+            continue
+        if any(part in work_tokens for part in key.split()) and key not in allow_lower:
+            continue
+        if _is_concept_like_name(name) and key not in allow_lower:
+            continue
+        on_list = key in allow_lower
+        if on_list or _name_has_character_signal(name, text):
+            seen.add(key)
+            kept.append(_display_person_name(name))
+    return kept
+
+
+_CONCEPT_LIKE_NAMES = frozenset(
+    """
+    gate trial court herald gallery marble dawn smoke mirrors everyone servants weeks
+    situation predator prey chapter prologue epilogue ritual ceremony treaty alliance
+    faction magic throne crown mask shadow shadows intrigue scheme politics theme motif
+    prologue epilogue narrator everyone somebody someone something somewhere
+    """.split()
+)
+
+
+def _is_concept_like_name(name: str) -> bool:
+    parts = re.findall(r"[a-z0-9']+", (name or "").lower())
+    if not parts:
+        return True
+    if len(parts) > 2:
+        return True
+    if any(part in _CONCEPT_LIKE_NAMES for part in parts):
+        return True
+    return False
 
 
 _NAMED_BROTHER = re.compile(
@@ -605,6 +741,14 @@ def collect_brother_names(label: str, entries: list[dict[str, Any]]) -> list[str
             re.I,
         ):
             reg(m.group(1), True)
+        for rel_word, _, pattern in _VOCATIVE_PATTERNS:
+            if rel_word != "brother" or not pattern.search(sentence):
+                continue
+            if not _label_owns_family_beat(label, prior, sentence):
+                continue
+            other = _extract_addressee_name(sentence, label, rel_word, prior=prior)
+            if other:
+                reg(other, True)
 
     for m in _BROTHERS_AND.finditer(text):
         if _name_in_text(label, text) or family_chain_in_body(text):
@@ -776,6 +920,217 @@ def _is_brother_tie(tie: str) -> bool:
     return low.startswith("brother to") or "another brother mentioned" in low
 
 
+_SPECIES_ENTRY = re.compile(r"\b(species|world rules|worldbuilding)\b", re.I)
+_SPECIES_HEADING = re.compile(
+    r"^([A-Za-z][a-z]+(?:\s+[a-z]+)?)(?:s)?:\s*(.+?)\.?\s*$",
+    re.I,
+)
+_MEMBER_OF = re.compile(
+    r"\b(character\s+[a-z0-9]+|[A-Z][a-z]{2,}(?:\s+[A-Z][a-z]{2,})?)\s+is\s+"
+    r"(?:one|an?|the)\s+([a-z][a-z\-]+)\b",
+    re.I,
+)
+_SPECIES_IS_MULTI = re.compile(
+    r"\b(character\s+[a-z0-9]+|[A-Z][a-z]{2,}(?:\s+[A-Z][a-z]{2,})?)\s+is\s+"
+    r"(?:an?|the)\s+([A-Za-z][a-z]+(?:\s+[A-Za-z][a-z]+)+)\b"
+)
+
+
+def _species_label(name: str) -> str:
+    n = name.strip().lower()
+    if n.endswith("ists"):
+        return n[:-1]
+    if n.endswith("es") and len(n) > 4:
+        return n[:-2]
+    if n.endswith("s") and not n.endswith("ss"):
+        return n[:-1]
+    return n
+
+
+def _species_entries(entries: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    for entry in entries:
+        if not isinstance(entry, dict):
+            continue
+        kind = str(entry.get("kind") or "").lower()
+        title = str(entry.get("title") or "")
+        body = str(entry.get("body") or "")
+        if kind in ("species", "world", "worldbuilding"):
+            out.append(entry)
+            continue
+        if _SPECIES_ENTRY.search(title) or _SPECIES_ENTRY.search(body[:200]):
+            out.append(entry)
+    return out
+
+
+def _infer_species_traits(label: str, entries: list[dict[str, Any]]) -> list[str]:
+    """Cross-link species/world notes only when the writer tied this character in (#16)."""
+    traits: list[str] = []
+    seen: set[str] = set()
+    label_low = label.lower()
+    merged = _merged_bodies(entries)
+
+    def add(line: str) -> None:
+        key = line.lower()[:100]
+        if key in seen:
+            return
+        seen.add(key)
+        traits.append(line)
+
+    for entry in entries:
+        if not isinstance(entry, dict):
+            continue
+        body = str(entry.get("body") or "")
+        if not _name_in_text(label, body):
+            continue
+        for m in _MEMBER_OF.finditer(body):
+            who = m.group(1)
+            species = m.group(2)
+            if who.lower() != label_low:
+                continue
+            add(f"An {species}.")
+        for m in _SPECIES_IS_MULTI.finditer(body):
+            who = m.group(1)
+            species = m.group(2)
+            if who.lower() != label_low:
+                continue
+            add(f"{label} is a {species}.")
+
+    for entry in _species_entries(entries):
+        body = str(entry.get("body") or "").strip()
+        if not body:
+            continue
+        if not _name_in_text(label, body) and not re.search(
+            rf"\b{re.escape(label)}\s+is\s+one\b", merged, re.I
+        ):
+            continue
+        linked_in_body = bool(
+            re.search(rf"\b{re.escape(label)}\s+is\s+one\b", body, re.I)
+            or re.search(
+                rf"\b{re.escape(label)}\s+is\s+(?:an?|the)\s+[a-z][a-z\-]+\b",
+                body,
+                re.I,
+            )
+        )
+        for line in _split_sentences(body):
+            heading = _SPECIES_HEADING.match(line.strip())
+            if not heading:
+                continue
+            species_name = heading.group(1).strip()
+            desc = heading.group(2).strip().rstrip(".")
+            linked = linked_in_body or bool(
+                re.search(
+                    rf"\b{re.escape(label)}\s+is\s+(?:an?|the)\s+{re.escape(species_name)}\b",
+                    merged,
+                    re.I,
+                )
+            )
+            if not linked:
+                continue
+            add(f"An {_species_label(species_name)} ({desc}).")
+
+    return traits[:4]
+
+
+def _spouse_and_role_sets(
+    label: str, entries: list[dict[str, Any]]
+) -> tuple[set[str], set[str]]:
+    from lorekeeper_cast_roles import extract_explicit_cast_role
+    from lorekeeper_loose_ends import entry_is_planned
+    from lorekeeper_relations import extract_relationships, _fact_matches_character
+
+    spouses: set[str] = set()
+    roles: set[str] = set()
+    for entry in entries:
+        if not isinstance(entry, dict):
+            continue
+        if entry_is_planned(entry):
+            continue
+        body = str(entry.get("body") or "")
+        title = str(entry.get("title") or "")
+        if not body.strip():
+            continue
+        blob = f"{title}\n{body}"
+        for fact in extract_relationships(body, title):
+            if not _fact_matches_character(fact, label):
+                continue
+            if fact.get("kind") != "spouse":
+                continue
+            a = str(fact.get("a") or "")
+            b = str(fact.get("b") or "")
+            if a.lower() == label.lower():
+                spouses.add(b.lower())
+            elif b.lower() == label.lower():
+                spouses.add(a.lower())
+        role_line = extract_explicit_cast_role(label, blob)
+        if role_line:
+            m = re.search(
+                r"\b(protagonist|antagonist|villain|hero|deuteragonist|main character)\b",
+                role_line,
+                re.I,
+            )
+            if m:
+                roles.add(m.group(1).lower())
+    return spouses, roles
+
+
+def _detect_contradictions(label: str, entries: list[dict[str, Any]]) -> list[str]:
+    """Surface disagreements in the writer's notes — never pick a winner (#16)."""
+    spouses, roles = _spouse_and_role_sets(label, entries)
+
+    out: list[str] = []
+    if len(spouses) > 1:
+        partners = ", ".join(sorted(spouses, key=str.lower))
+        out.append(
+            f"Your notes disagree on who {label} is married to ({partners})."
+        )
+    if "protagonist" in roles and ("antagonist" in roles or "villain" in roles):
+        role_list = ", ".join(sorted(roles))
+        out.append(f"Your notes give {label} conflicting cast roles ({role_list}).")
+    return out[:3]
+
+
+def draft_vs_notes_conflict(label: str, entries: list[dict[str, Any]]) -> bool:
+    """True when saved draft and notes disagree on key facts (not planned gaps)."""
+    from lorekeeper_loose_ends import entry_is_planned
+
+    draft = [
+        e
+        for e in entries
+        if isinstance(e, dict) and _is_draft_entry(e) and not entry_is_planned(e)
+    ]
+    notes = [
+        e
+        for e in entries
+        if isinstance(e, dict) and not _is_draft_entry(e) and not entry_is_planned(e)
+    ]
+    if not draft or not notes:
+        return False
+
+    d_spouses, d_roles = _spouse_and_role_sets(label, draft)
+    n_spouses, n_roles = _spouse_and_role_sets(label, notes)
+    if d_spouses and n_spouses and d_spouses != n_spouses:
+        return True
+    if d_roles and n_roles:
+        if ("protagonist" in d_roles or "hero" in d_roles or "main character" in d_roles) and (
+            "antagonist" in n_roles or "villain" in n_roles
+        ):
+            return True
+        if ("protagonist" in n_roles or "hero" in n_roles or "main character" in n_roles) and (
+            "antagonist" in d_roles or "villain" in d_roles
+        ):
+            return True
+        if not d_roles.issubset(n_roles) and not n_roles.issubset(d_roles):
+            return True
+
+    combined = _detect_contradictions(label, draft + notes)
+    if not combined:
+        return False
+    draft_only = _detect_contradictions(label, draft)
+    notes_only = _detect_contradictions(label, notes)
+    return bool(combined) and not draft_only and not notes_only
+
+
 def build_character_brief(
     label: str, entries: list[dict[str, Any]]
 ) -> dict[str, Any]:
@@ -821,7 +1176,12 @@ def build_character_brief(
         elif family_chain_in_body(merged):
             add("Another brother mentioned in your notes (not named).")
 
-    return {"role": role, "ties": ties[:10]}
+    return {
+        "role": role,
+        "ties": ties[:10],
+        "traits": _infer_species_traits(label, entries),
+        "contradictions": _detect_contradictions(label, entries),
+    }
 
 
 def build_context_inferences(
@@ -834,3 +1194,73 @@ def build_context_inferences(
         out.append(str(brief["role"]))
     out.extend(brief.get("ties") or [])
     return out
+
+
+def _tie_reference_line(label: str, tie: str) -> str:
+    tie = (tie or "").strip()
+    if not tie:
+        return ""
+    m = re.match(
+        r"^(Brother|Sister|Mother|Father|Son|Daughter|Child)\s+to\s+(.+?)\.?\s*$",
+        tie,
+        re.I,
+    )
+    if m:
+        rel, other = m.group(1).lower(), m.group(2).split("(")[0].strip().rstrip(".")
+        if rel == "brother":
+            return f"{label} is brother to {other}."
+        if rel == "sister":
+            return f"{label} is sister to {other}."
+        return f"{label} is {rel} to {other}."
+    if re.match(r"^Married to\s+", tie, re.I):
+        other = re.sub(r"^Married to\s+", "", tie, flags=re.I).strip().rstrip(".")
+        return f"{label} is married to {other}."
+    if tie.lower().startswith(label.lower()):
+        return tie if tie.endswith(".") else tie + "."
+    return tie if tie.endswith(".") else tie + "."
+
+
+def inference_reference_lines_for(
+    label: str, entries: list[dict[str, Any]]
+) -> list[str]:
+    """Pre-parsed logic-puzzle lines for cast cards — ties, POV lean, species; no contradictions (#16)."""
+    brief = build_character_brief(label, entries)
+    lines: list[str] = []
+    seen: set[str] = set()
+
+    def add(line: str) -> None:
+        line = (line or "").strip()
+        if not line:
+            return
+        if not line.endswith("."):
+            line += "."
+        key = line.lower()[:100]
+        if key in seen:
+            return
+        seen.add(key)
+        lines.append(line)
+
+    role = str(brief.get("role") or "").strip()
+    if role:
+        add(role)
+
+    for trait in brief.get("traits") or []:
+        t = str(trait).strip()
+        if not t:
+            continue
+        if re.match(r"^An\s+", t, re.I):
+            add(f"{label} is {t[3:].lstrip()}")
+        else:
+            add(t)
+
+    for tie in brief.get("ties") or []:
+        add(_tie_reference_line(label, str(tie)))
+
+    return lines[:10]
+
+
+def audit_contradiction_lines_for(
+    label: str, entries: list[dict[str, Any]]
+) -> list[str]:
+    """Disagreements in the writer's notes — audit questions only; never smooth (#16)."""
+    return list(_detect_contradictions(label, entries))

@@ -1,5 +1,6 @@
 /**
  * LoreKeeper — require sign-in before any page except account.html.
+ * Auth check runs once in lk-account-storage.js; this script only redirects if needed.
  */
 (function (global) {
   if (/account\.html$/i.test(global.location.pathname || "")) return;
@@ -11,36 +12,21 @@
 
   global.document.documentElement.classList.add("auth-checking");
 
-  var controller = typeof AbortController !== "undefined" ? new AbortController() : null;
-  var timeout = setTimeout(function () {
-    if (controller) controller.abort();
-  }, 12000);
+  function finish(signedIn) {
+    global.document.documentElement.classList.remove("auth-checking");
+    if (signedIn) return;
+    global.location.replace(base + "/account.html?return=" + encodeURIComponent(returnTo) + "&signup=1");
+  }
 
-  global
-    .fetch(base + "/api/auth/me", {
-      credentials: "include",
-      signal: controller ? controller.signal : undefined,
-    })
-    .then(function (res) {
-      return res.json();
-    })
-    .then(function (data) {
-      clearTimeout(timeout);
-      if (data && data.ok && data.signedIn) {
-        global.document.documentElement.classList.remove("auth-checking");
-        return;
-      }
-      var url = base + "/account.html?return=" + encodeURIComponent(returnTo);
-      if (!data || !data.signedIn) url += "&signup=1";
-      global.location.replace(url);
-    })
-    .catch(function () {
-      clearTimeout(timeout);
-      global.document.documentElement.classList.remove("auth-checking");
-      global.location.replace(
-        base +
-          "/account.html?api_down=1&return=" +
-          encodeURIComponent(returnTo)
-      );
+  if (global.LoreKeeperAccountStorage && global.LoreKeeperAccountStorage.ready) {
+    global.LoreKeeperAccountStorage.ready.then(function () {
+      finish(global.LoreKeeperAccountStorage.isSignedIn());
     });
+    return;
+  }
+
+  global.addEventListener("lorekeeper-account-ready", function (ev) {
+    var signedIn = ev && ev.detail ? !!ev.detail.signedIn : false;
+    finish(signedIn);
+  });
 })(typeof window !== "undefined" ? window : this);

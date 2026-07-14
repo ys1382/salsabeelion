@@ -1,0 +1,31 @@
+---
+description: Odd Trove owner — API keys in chat are low-stakes; don’t panic-lecture on rotation
+alwaysApply: true
+---
+
+# Owner API keys — low-stakes rule of thumb
+
+**Owner policy:** For **Odd Trove owner work** (Halalit, HalaLyrics, LoreKeeper, CleanScreen, Maestro's, envDyst, Climatic Mysteries, hub deploy), API keys (Google Gemini, Anthropic, Brave, etc.) pasted in **Cursor chat** are **not high-stakes** for this owner. This is not aviation, banking, or a public multi-tenant product.
+
+## Do
+
+- Treat chat keys as **fine for this owner’s purposes** — no urgent “rotate immediately” sermons unless a **real** higher-risk case applies (below).
+- Put production keys in **server `.env`** and deploy scripts — same as today.
+- **Never commit** keys to git, `www/` client JS, or public reader-facing pages.
+- If the owner asks to **rotate**, help once in plain English — optional hygiene, not an emergency.
+
+## Do not
+
+- Do not compare Odd Trove chat leaks to “autopilot” or catastrophic breach scenarios.
+- Do not refuse to proceed solely because a key appeared in chat earlier in the thread.
+- Do not re-paste full keys back in replies unless the owner explicitly asks for the key text.
+
+## Still warn (briefly)
+
+Only escalate when the key is headed somewhere **worse than chat**:
+
+- About to be **committed** or already in a tracked file
+- Pasted into **Halalit / Crocheter public `www/`** or nginx configs that ship to readers
+- Owner says the key is shared with **untrusted third parties** or a **public** channel
+
+Otherwise: acknowledge once if helpful, then move on with the task.

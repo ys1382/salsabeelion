@@ -33,6 +33,22 @@
     };
   }
 
+  /** Painted storefront sign board — façade-local px; must match drawStreetBuildingFacade. */
+  function facadeSignMetrics(bw, bh) {
+    var gap = 2;
+    var awningH = 8;
+    var winH = 58;
+    var door = facadeDoorMetrics(bw, bh);
+    var awningY = door.dy - gap - awningH;
+    var winY = awningY - gap - winH;
+    var sw = 80;
+    var sh = 50;
+    var sx = Math.floor(door.cx - sw / 2);
+    var sy = winY - gap - sh;
+    if (sy < 44) sy = 44;
+    return { sx: sx, sy: sy, sw: sw, sh: sh };
+  }
+
   function deriveDoorCol(building) {
     var bw = building.width * TILE;
     var bh = building.height * TILE;
@@ -292,6 +308,7 @@
     CAFE_DOOR_ROW: CAFE_INSIDE_ROW,
     CAFE_EXIT_DOOR_ROW: CAFE_EXIT_ROW,
     facadeDoorMetrics: facadeDoorMetrics,
+    facadeSignMetrics: facadeSignMetrics,
     deriveDoorCol: deriveDoorCol,
     facadeDoorWorldRect: facadeDoorWorldRect,
     facadeDoorWorldRectScaled: facadeDoorWorldRectScaled,

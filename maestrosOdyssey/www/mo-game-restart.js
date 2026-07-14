@@ -20,6 +20,7 @@
   ];
 
   var LOCAL_STORAGE_KEYS = [
+    "mo_prologue_done",
     "mo_learning_card_balance",
     "mo_dragons_brew_menu_v3",
     "mo_dragons_brew_menu_v4",
@@ -31,7 +32,12 @@
     "mo_cafe_memorized_item_keys",
     "mo_cafe_item_familiarity",
     "mo_cafe_quiz_earned_day",
-    "mo_cafe_quiz_earned_amount"
+    "mo_cafe_quiz_earned_amount",
+    "mo_elder_report_done",
+    "mo_elder_report_pass",
+    "mo_elder_needs_revisit",
+    "mo_read_house_rules",
+    "mo_read_strike_board"
   ];
 
   function markHardReloadIntent() {
@@ -110,11 +116,17 @@
       if (window.MoProtagonistLook && typeof window.MoProtagonistLook.clearLook === "function") {
         window.MoProtagonistLook.clearLook();
       }
+      if (window.MoPrologue && typeof window.MoPrologue.clearDone === "function") {
+        window.MoPrologue.clearDone();
+      }
       if (window.MoCafeLanguage && typeof window.MoCafeLanguage.clearLane === "function") {
         window.MoCafeLanguage.clearLane();
       }
       if (window.MoMenuQuiz && typeof window.MoMenuQuiz.resetProgress === "function") {
         window.MoMenuQuiz.resetProgress();
+      }
+      if (window.MoElderReport && typeof window.MoElderReport.reset === "function") {
+        window.MoElderReport.reset();
       }
     } catch (e) { /* private mode */ }
   }
@@ -132,8 +144,8 @@
     if (window.MoMenuQuiz && typeof window.MoMenuQuiz.resetProgress === "function") {
       window.MoMenuQuiz.resetProgress();
     }
-    if (window.MoLearningCard && typeof window.MoLearningCard.setBalance === "function") {
-      window.MoLearningCard.setBalance(window.MoLearningCard.STUB_START_MXN);
+    if (window.MoLearningCard && typeof window.MoLearningCard.refreshHud === "function") {
+      window.MoLearningCard.refreshHud();
     }
     if (window.MoControlsPanel && typeof window.MoControlsPanel.resetDismiss === "function") {
       window.MoControlsPanel.resetDismiss();
@@ -165,7 +177,9 @@
       clearPlayStorage();
       refreshHudAfterReset();
       hideDomOverlays();
-      if (window.MoVisitSetup && typeof window.MoVisitSetup.showPicker === "function") {
+      if (window.MoPrologue && typeof window.MoPrologue.start === "function") {
+        window.MoPrologue.start();
+      } else if (window.MoVisitSetup && typeof window.MoVisitSetup.showPicker === "function") {
         window.MoVisitSetup.showPicker();
       } else if (window.MoCafeLanguage && typeof window.MoCafeLanguage.showPicker === "function") {
         window.MoCafeLanguage.showPicker();
@@ -182,7 +196,7 @@
     var btn = document.getElementById("mo-restart-btn");
     if (!btn) return;
     btn.addEventListener("click", function () {
-      if (!window.confirm("Restart this visit? Language, your look, Mara intro, café week, and learning-card balance reset.")) return;
+      if (!window.confirm("Restart this visit? Prologue, language, your look, Mara intro, café week, and learning-card balance reset.")) return;
       restartPlaySession();
     });
   }

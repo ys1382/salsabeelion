@@ -7,6 +7,10 @@
     var list = document.getElementById("docList");
     var status = document.getElementById("libraryStatus");
     var docs = LoreKeeperDocuments.loadSorted();
+    if (!docs.length && list.children.length) {
+      status.textContent = "Syncing documents…";
+      return;
+    }
     list.innerHTML = "";
     if (!docs.length) {
       status.textContent = "No documents yet.";
@@ -32,6 +36,33 @@
       li.appendChild(btn);
       list.appendChild(li);
     });
+  }
+
+  function syncContinueButton() {
+    var btn = document.getElementById("continueBtn");
+    if (!btn) return;
+    var last = LoreKeeperDocuments.getLastDocId();
+    if (!last) {
+      btn.hidden = true;
+      return;
+    }
+    var doc = LoreKeeperDocuments.find(last);
+    if (!doc) {
+      if (!btn.hidden && btn.getAttribute("data-last-id") === last) {
+        return;
+      }
+      btn.hidden = true;
+      return;
+    }
+    btn.hidden = false;
+    btn.setAttribute("data-last-id", last);
+    btn.textContent = doc.title ? "Continue: " + doc.title : "Continue writing";
+    if (!btn.__lkBound) {
+      btn.__lkBound = true;
+      btn.addEventListener("click", function () {
+        openDoc(last);
+      });
+    }
   }
 
   function initDocs() {
@@ -60,15 +91,12 @@
       a.click();
       URL.revokeObjectURL(a.href);
     });
-    var last = LoreKeeperDocuments.getLastDocId();
-    if (last && LoreKeeperDocuments.find(last)) {
-      var btn = document.getElementById("continueBtn");
-      btn.hidden = false;
-      btn.addEventListener("click", function () {
-        openDoc(last);
-      });
-    }
+    syncContinueButton();
     renderDocs();
+    global.addEventListener("lorekeeper-data-hydrated", function () {
+      renderDocs();
+      syncContinueButton();
+    });
   }
 
   function initNotes() {
@@ -76,12 +104,56 @@
     var filterKind = document.getElementById("filterKind");
     var searchBox = document.getElementById("searchBox");
     var noteList = document.getElementById("noteList");
+    var noteListPager = document.getElementById("noteListPager");
+    var noteListPagerStatus = document.getElementById("noteListPagerStatus");
+    var noteListPrev = document.getElementById("noteListPrev");
+    var noteListNext = document.getElementById("noteListNext");
     var editorPanel = document.getElementById("noteEditorPanel");
     var listStatus = document.getElementById("noteListStatus");
     var editorStatus = document.getElementById("noteEditorStatus");
+    var noteSyncBanner = document.getElementById("noteSyncBanner");
+    var noteSyncRetryBtn = document.getElementById("noteSyncRetryBtn");
+    var retryNoteSyncBtn = document.getElementById("retryNoteSyncBtn");
     var notesMorePanel = document.getElementById("notesMorePanel");
+    var notesMoreToggle = document.getElementById("notesMoreToggle");
+    var notesMoreBody = document.getElementById("notesMoreBody");
     var notesMoreLabel = document.getElementById("notesMoreLabel");
+    var noteFullscreenBtn = document.getElementById("noteFullscreenBtn");
     var NOTES_MORE_KEY = "lk-notes-more-open";
+    var saveCloseTimer = null;
+    var SAVE_STATUS_MS = 10000;
+
+    var NOTES_VIEWPORT = 4;
+    var noteListOffset = 0;
+
+    function isNotesMoreOpen() {
+      return !!(notesMorePanel && notesMorePanel.classList.contains("is-open"));
+    }
+
+    function syncNoteListPager(totalFiltered) {
+      if (!noteListPager || !noteListPagerStatus || !noteListPrev || !noteListNext) return;
+      if (totalFiltered <= NOTES_VIEWPORT) {
+        noteListPager.hidden = true;
+        return;
+      }
+      noteListPager.hidden = false;
+      var start = noteListOffset + 1;
+      var end = Math.min(noteListOffset + NOTES_VIEWPORT, totalFiltered);
+      noteListPagerStatus.textContent = "Showing " + start + "–" + end + " of " + totalFiltered;
+      noteListPrev.disabled = noteListOffset <= 0;
+      noteListNext.disabled = noteListOffset + NOTES_VIEWPORT >= totalFiltered;
+    }
+
+    function setNotesMoreOpen(open) {
+      if (!notesMorePanel || !notesMoreBody || !notesMoreToggle) return;
+      var on = !!open;
+      notesMorePanel.classList.toggle("is-open", on);
+      notesMoreToggle.setAttribute("aria-expanded", on ? "true" : "false");
+      try {
+        localStorage.setItem(NOTES_MORE_KEY, on ? "1" : "0");
+      } catch (e) {}
+      if (on) renderNotes();
+    }
 
     function syncNotesMoreLabel(count) {
       if (!notesMoreLabel) return;
@@ -89,14 +161,31 @@
       else notesMoreLabel.textContent = "Your notes (" + count + ")";
     }
 
-    if (notesMorePanel) {
+    if (notesMorePanel && notesMoreToggle) {
+      var notesMoreStoredOpen = false;
       try {
-        if (localStorage.getItem(NOTES_MORE_KEY) === "1") notesMorePanel.open = true;
+        notesMoreStoredOpen = localStorage.getItem(NOTES_MORE_KEY) === "1";
       } catch (e) {}
-      notesMorePanel.addEventListener("toggle", function () {
-        try {
-          localStorage.setItem(NOTES_MORE_KEY, notesMorePanel.open ? "1" : "0");
-        } catch (e) {}
+      setNotesMoreOpen(notesMoreStoredOpen);
+      notesMoreToggle.addEventListener("click", function () {
+        setNotesMoreOpen(!isNotesMoreOpen());
+      });
+    }
+
+    if (noteListPrev) {
+      noteListPrev.addEventListener("click", function () {
+        noteListOffset = Math.max(0, noteListOffset - NOTES_VIEWPORT);
+        renderNotes();
+      });
+    }
+    if (noteListNext) {
+      noteListNext.addEventListener("click", function () {
+        var count = filteredNotes().length;
+        noteListOffset = Math.min(
+          Math.max(0, count - NOTES_VIEWPORT),
+          noteListOffset + NOTES_VIEWPORT
+        );
+        renderNotes();
       });
     }
 
@@ -111,9 +200,37 @@
       document.getElementById("noteKind").appendChild(o2);
     });
 
+    var noteTagsEl = document.getElementById("noteTags");
+    if (noteTagsEl) {
+      noteTagsEl.addEventListener("input", function () {
+        if (global.LoreKeeperMobileAccessory && global.LoreKeeperMobileAccessory.refreshChips) {
+          global.LoreKeeperMobileAccessory.refreshChips();
+        }
+        if (global.LoreKeeperWritingComplete && global.LoreKeeperWritingComplete.refresh) {
+          global.LoreKeeperWritingComplete.refresh();
+        }
+      });
+    }
+
     function setEditorStatus(msg, ok) {
       editorStatus.textContent = msg || "";
-      editorStatus.className = "lk-status" + (ok ? " ok" : "");
+      editorStatus.className = "lk-status" + (ok ? " ok" : ok === false ? " err" : "");
+      if (retryNoteSyncBtn) retryNoteSyncBtn.hidden = true;
+    }
+
+    function updateNoteSyncBanner() {
+      var show = LoreKeeperAccountStorage.hasPending();
+      if (noteSyncBanner) noteSyncBanner.hidden = !show;
+    }
+
+    function retryNoteSync() {
+      LoreKeeperAccountStorage.retrySync().then(function (sent) {
+        refreshSaveSyncStatus();
+        if (!sent && !editorPanel.hidden) {
+          setEditorStatus("Still not synced — check your connection and try again.", false);
+          if (retryNoteSyncBtn) retryNoteSyncBtn.hidden = false;
+        }
+      });
     }
 
     function filteredNotes() {
@@ -131,18 +248,25 @@
       var items = filteredNotes();
       var total = LoreKeeperEntries.load().length;
       syncNotesMoreLabel(total);
+      items.sort(function (a, b) {
+        return (b.updatedAt || 0) - (a.updatedAt || 0);
+      });
+      if (noteListOffset >= items.length) noteListOffset = 0;
+      if (noteListOffset < 0) noteListOffset = 0;
       noteList.innerHTML = "";
       if (!items.length) {
         listStatus.textContent = total
           ? "No notes match this filter."
           : "No notes yet — add a scattered scrap when you need one.";
+        syncNoteListPager(0);
         return;
       }
+      var pageItems =
+        items.length > NOTES_VIEWPORT
+          ? items.slice(noteListOffset, noteListOffset + NOTES_VIEWPORT)
+          : items;
       listStatus.textContent = items.length + " note" + (items.length === 1 ? "" : "s");
-      items.sort(function (a, b) {
-        return (b.updatedAt || 0) - (a.updatedAt || 0);
-      });
-      items.forEach(function (e) {
+      pageItems.forEach(function (e) {
         var li = document.createElement("li");
         var btn = document.createElement("button");
         btn.type = "button";
@@ -162,9 +286,43 @@
         li.appendChild(btn);
         noteList.appendChild(li);
       });
+      syncNoteListPager(items.length);
     }
 
-    function openNoteEditor(id) {
+    function syncNoteFullscreenButton() {
+      if (!noteFullscreenBtn) return;
+      var on = document.body.classList.contains("lk-note-fullscreen");
+      noteFullscreenBtn.textContent = on ? "Exit full screen" : "Full screen";
+      noteFullscreenBtn.setAttribute("aria-pressed", on ? "true" : "false");
+      noteFullscreenBtn.title = on ? "Exit full screen (Esc)" : "Full screen";
+    }
+
+    function setNoteFullscreen(on) {
+      if (
+        global.LoreKeeperMobileComfort &&
+        global.LoreKeeperMobileComfort.isMobile &&
+        global.LoreKeeperMobileComfort.isMobile()
+      ) {
+        if (on && global.LoreKeeperMobileComfort.beginEditing) {
+          global.LoreKeeperMobileComfort.beginEditing();
+        }
+        return;
+      }
+      document.body.classList.toggle("lk-note-fullscreen", !!on);
+      syncNoteFullscreenButton();
+      if (on) {
+        var focusEl = document.getElementById("noteBody");
+        if (focusEl) focusEl.focus();
+      }
+    }
+
+    function exitNoteFullscreen() {
+      if (!document.body.classList.contains("lk-note-fullscreen")) return;
+      setNoteFullscreen(false);
+    }
+
+    function openNoteEditor(id, opts) {
+      opts = opts || {};
       var entry = null;
       if (id) {
         LoreKeeperEntries.load().some(function (e) {
@@ -178,95 +336,128 @@
       document.getElementById("noteKind").value = entry ? entry.kind || "note" : "note";
       document.getElementById("noteTitle").value = entry ? entry.title || "" : "";
       document.getElementById("noteBody").value = entry ? entry.body || "" : "";
-      document.getElementById("noteTags").value = entry && entry.tags ? entry.tags.join(", ") : "";
-      document.getElementById("noteEditorHeading").textContent = entry ? "Edit note" : "New note";
+      var tagsVal = entry && entry.tags ? entry.tags.join(", ") : "";
+      if (!tagsVal && opts.workTag) tagsVal = opts.workTag;
+      if (!tagsVal && global.LoreKeeperMobileJot && global.LoreKeeperMobileJot.lastWorkTag) {
+        tagsVal = global.LoreKeeperMobileJot.lastWorkTag();
+      }
+      document.getElementById("noteTags").value = tagsVal;
+      document.getElementById("noteEditorHeading").textContent = opts.quickJot
+        ? "Quick jot"
+        : entry
+          ? "Edit note"
+          : "New note";
+      exitNoteFullscreen();
       editorPanel.hidden = false;
       setEditorStatus("");
-      document.getElementById("noteTitle").focus();
+      syncNoteFullscreenButton();
+      var bodyEl = document.getElementById("noteBody");
+      var details = document.getElementById("noteDetailsPanel");
+      if (details) details.open = !opts.quickJot && !!entry;
+      if (global.LoreKeeperMobileComfort && global.LoreKeeperMobileComfort.isMobile()) {
+        if (opts.quickJot && global.LoreKeeperMobileComfort.beginJotCapture) {
+          global.LoreKeeperMobileComfort.beginJotCapture(bodyEl);
+        } else if (global.LoreKeeperMobileComfort.enterNoteReadMode) {
+          document.body.classList.remove("lk-note-jot");
+          global.LoreKeeperMobileComfort.enterNoteReadMode(bodyEl);
+        }
+      } else {
+        document.getElementById("noteTitle").focus();
+      }
+      if (global.LoreKeeperSpell && LoreKeeperSpell.ensureLoaded) {
+        LoreKeeperSpell.ensureLoaded().then(function () {
+          LoreKeeperSpell.bindTextarea(bodyEl, document.getElementById("noteSpellFlags"));
+          if (bodyEl) {
+            bodyEl.__lkWriteContext = function () {
+              return {
+                workTag: document.getElementById("noteTags").value.trim(),
+                doc: null,
+              };
+            };
+          }
+        });
+      }
     }
 
     function closeNoteEditor() {
+      exitNoteFullscreen();
+      if (global.LoreKeeperMobileComfort && global.LoreKeeperMobileComfort.exitNoteReadMode) {
+        global.LoreKeeperMobileComfort.exitNoteReadMode();
+      }
+      if (saveCloseTimer) {
+        clearTimeout(saveCloseTimer);
+        saveCloseTimer = null;
+      }
       editorPanel.hidden = true;
       editingId = null;
     }
 
-    function saveNote() {
-      var title = document.getElementById("noteTitle").value;
-      var body = document.getElementById("noteBody").value;
-      var fixedCount = 0;
-      if (global.LoreKeeperSpell && global.LoreKeeperSpell.autocorrectText) {
-        var bodyFix = LoreKeeperSpell.autocorrectText(body);
-        var titleFix = LoreKeeperSpell.autocorrectText(title);
-        if (bodyFix.text !== body) {
-          body = bodyFix.text;
-          document.getElementById("noteBody").value = body;
-          fixedCount += bodyFix.fixed.length;
-        }
-        if (titleFix.text !== title) {
-          title = titleFix.text;
-          document.getElementById("noteTitle").value = title;
-          fixedCount += titleFix.fixed.length;
-        }
-      }
-      title = title.trim();
-      body = body.trim();
-      if (!title && !body) {
-        setEditorStatus("Add a title or some text first.");
+    function scheduleCloseAfterSave() {
+      if (saveCloseTimer) clearTimeout(saveCloseTimer);
+      saveCloseTimer = setTimeout(function () {
+        saveCloseTimer = null;
+        closeNoteEditor();
+      }, SAVE_STATUS_MS);
+    }
+
+    function refreshSaveSyncStatus() {
+      updateNoteSyncBanner();
+      if (LoreKeeperAccountStorage.hasPending()) {
+        setEditorStatus("Saved on this device — not synced to account yet.", false);
+        if (retryNoteSyncBtn) retryNoteSyncBtn.hidden = false;
         return;
       }
-      var now = Date.now();
-      var list = LoreKeeperEntries.load();
-      var found = false;
-      list = list.map(function (e) {
-        if (e.id !== editingId) return e;
-        found = true;
-        return {
-          id: e.id,
-          kind: document.getElementById("noteKind").value,
-          title: title,
-          body: body,
-          tags: document
-            .getElementById("noteTags")
-            .value.split(",")
-            .map(function (t) {
-              return t.trim();
-            })
-            .filter(Boolean),
-          createdAt: e.createdAt || now,
-          updatedAt: now,
-        };
+      setEditorStatus("Synced to your account.", true);
+    }
+
+    function saveNote() {
+      var prep = LoreKeeperEntries.prepareSave({
+        id: editingId,
+        kind: document.getElementById("noteKind").value,
+        title: document.getElementById("noteTitle").value,
+        body: document.getElementById("noteBody").value,
+        tagsText: document.getElementById("noteTags").value,
+        createdAt: editingId
+          ? (function () {
+              var existing = null;
+              LoreKeeperEntries.load().some(function (e) {
+                if (e.id === editingId) {
+                  existing = e;
+                  return true;
+                }
+              });
+              return existing && existing.createdAt;
+            })()
+          : undefined,
       });
-      if (!found) {
-        list.push({
-          id: editingId,
-          kind: document.getElementById("noteKind").value,
-          title: title,
-          body: body,
-          tags: document
-            .getElementById("noteTags")
-            .value.split(",")
-            .map(function (t) {
-              return t.trim();
-            })
-            .filter(Boolean),
-          createdAt: now,
-          updatedAt: now,
-        });
+      if (!prep.ok) {
+        setEditorStatus(prep.error);
+        return;
       }
+      if (prep.fixedCount) {
+        document.getElementById("noteTitle").value = prep.title;
+        document.getElementById("noteBody").value = prep.body;
+      }
+      var list = LoreKeeperEntries.upsertInList(LoreKeeperEntries.load(), prep.entry);
       LoreKeeperEntries.save(list);
+      var msg = "Saved.";
+      if (prep.fixedCount) {
+        msg =
+          "Saved — fixed " +
+          prep.fixedCount +
+          " spelling mistake" +
+          (prep.fixedCount === 1 ? "" : "s") +
+          " (not on My words).";
+      }
+      setEditorStatus(msg, true);
+      if (global.LoreKeeperMobileJot && global.LoreKeeperMobileJot.rememberWorkTag) {
+        global.LoreKeeperMobileJot.rememberWorkTag(document.getElementById("noteTags").value);
+      }
+      renderNotes();
+      updateNoteSyncBanner();
+      scheduleCloseAfterSave();
       LoreKeeperAccountStorage.flush().then(function () {
-        var msg = "Saved.";
-        if (fixedCount) {
-          msg =
-            "Saved — fixed " +
-            fixedCount +
-            " spelling mistake" +
-            (fixedCount === 1 ? "" : "s") +
-            " (not on My words).";
-        }
-        setEditorStatus(msg, true);
-        renderNotes();
-        setTimeout(closeNoteEditor, 400);
+        refreshSaveSyncStatus();
       });
       return;
     }
@@ -274,20 +465,59 @@
     document.getElementById("newNoteBtn").addEventListener("click", function () {
       openNoteEditor(null);
     });
+    var quickJotBtn = document.getElementById("quickJotBtn");
+    if (quickJotBtn) {
+      quickJotBtn.addEventListener("click", function () {
+        if (global.LoreKeeperMobileJot && global.LoreKeeperMobileJot.openHomeQuickJot) {
+          global.LoreKeeperMobileJot.openHomeQuickJot();
+        } else {
+          openNoteEditor(null, { quickJot: true });
+        }
+      });
+    }
+    global.addEventListener("lorekeeper-open-note", function (e) {
+      var d = (e && e.detail) || {};
+      openNoteEditor(null, { quickJot: !!d.quickJot, workTag: d.workTag || "" });
+    });
+    if (noteFullscreenBtn) {
+      noteFullscreenBtn.addEventListener("click", function () {
+        setNoteFullscreen(!document.body.classList.contains("lk-note-fullscreen"));
+      });
+    }
+    document.addEventListener("keydown", function (e) {
+      if (e.key !== "Escape") return;
+      if (editorPanel.hidden || !document.body.classList.contains("lk-note-fullscreen")) return;
+      e.preventDefault();
+      exitNoteFullscreen();
+    });
     document.getElementById("cancelNoteBtn").addEventListener("click", closeNoteEditor);
     document.getElementById("saveNoteBtn").addEventListener("click", saveNote);
+    if (retryNoteSyncBtn) retryNoteSyncBtn.addEventListener("click", retryNoteSync);
+    if (noteSyncRetryBtn) noteSyncRetryBtn.addEventListener("click", retryNoteSync);
+    global.addEventListener("lorekeeper-sync-failed", updateNoteSyncBanner);
+    global.addEventListener("lorekeeper-sync-ok", updateNoteSyncBanner);
+    updateNoteSyncBanner();
     document.getElementById("deleteNoteBtn").addEventListener("click", function () {
       if (!editingId || !confirm("Delete this note?")) return;
       var list = LoreKeeperEntries.load().filter(function (e) {
         return e.id !== editingId;
       });
       LoreKeeperEntries.save(list);
-      LoreKeeperAccountStorage.flush();
       closeNoteEditor();
       renderNotes();
+      updateNoteSyncBanner();
+      LoreKeeperAccountStorage.flush().then(function () {
+        updateNoteSyncBanner();
+      });
     });
-    filterKind.addEventListener("change", renderNotes);
-    searchBox.addEventListener("input", renderNotes);
+    filterKind.addEventListener("change", function () {
+      noteListOffset = 0;
+      renderNotes();
+    });
+    searchBox.addEventListener("input", function () {
+      noteListOffset = 0;
+      renderNotes();
+    });
     document.getElementById("exportNotesBtn").addEventListener("click", function () {
       var blob = new Blob([LoreKeeperEntries.exportJson()], { type: "application/json" });
       var a = document.createElement("a");
@@ -297,11 +527,10 @@
       URL.revokeObjectURL(a.href);
     });
     renderNotes();
-    LoreKeeperSpell.ready.then(function () {
-      LoreKeeperSpell.bindTextarea(
-        document.getElementById("noteBody"),
-        document.getElementById("noteSpellFlags")
-      );
+    global.addEventListener("lorekeeper-data-hydrated", renderNotes);
+    global.addEventListener("lorekeeper-keyboard-save", function () {
+      if (!editorPanel || editorPanel.hidden) return;
+      saveNote();
     });
   }
 
@@ -311,6 +540,7 @@
     var askStatus = document.getElementById("askStatus");
     var askAnswer = document.getElementById("askAnswer");
     var askSources = document.getElementById("askSources");
+    if (!askBtn || !askQuestion) return;
 
     askBtn.addEventListener("click", function () {
       var q = askQuestion.value.trim();
@@ -320,19 +550,40 @@
         return;
       }
       askStatus.textContent = "Searching documents and notes…";
+      askStatus.className = "lk-status";
       askStatus.hidden = false;
       askAnswer.hidden = true;
       askSources.hidden = true;
       askBtn.disabled = true;
-      LoreKeeperRecall.ask(q)
+      var slowTimer = setTimeout(function () {
+        if (askBtn.disabled) {
+          askStatus.textContent = "Still searching your notes — complex questions can take a minute…";
+        }
+      }, 12000);
+      LoreKeeperRecall.ask(q, { includeDocuments: false })
         .then(function (res) {
           if (!res || !res.ok) {
             askStatus.textContent = LoreKeeperRecall.friendlyError(res && res.error);
+            askStatus.className = "lk-status err";
             return;
           }
-          askStatus.textContent = "From your saved writing.";
+          askStatus.textContent = res.syncWarning || "From your saved writing.";
           askStatus.className = "lk-status ok";
-          askAnswer.textContent = res.answer || "";
+          if (res.materialState === "summarizable") {
+            askStatus.textContent = "Summary from your notes and drafts.";
+          } else if (res.materialState === "fragments_only") {
+            askStatus.textContent =
+              "Partial — not enough saved yet for a full summary.";
+          } else if (res.materialState === "nothing_saved") {
+            askStatus.textContent = "Nothing saved on that yet.";
+          }
+          if (global.LoreKeeperRecall.formatAskAnswerHtml) {
+            askAnswer.innerHTML = global.LoreKeeperRecall.formatAskAnswerHtml(
+              res.answer || ""
+            );
+          } else {
+            askAnswer.textContent = res.answer || "";
+          }
           askAnswer.hidden = !res.answer;
           askSources.innerHTML = "";
           if (res.sources && res.sources.length) {
@@ -346,17 +597,64 @@
             });
             askSources.hidden = false;
           }
+          if (global.LoreKeeperAskFeedback && global.LoreKeeperAskFeedback.recordLastAsk) {
+            global.LoreKeeperAskFeedback.recordLastAsk({
+              question: q,
+              answer: res.answer || "",
+              materialState: res.materialState || "",
+            });
+          }
         })
         .catch(function () {
           askStatus.textContent = LoreKeeperRecall.friendlyError("network_error");
         })
         .finally(function () {
+          clearTimeout(slowTimer);
           askBtn.disabled = false;
         });
     });
+
+    askQuestion.addEventListener("keydown", function (e) {
+      if (e.isComposing) return;
+      if (e.key === "Enter") {
+        e.preventDefault();
+        askBtn.click();
+        return;
+      }
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        var start = askQuestion.selectionStart;
+        var end = askQuestion.selectionEnd;
+        var val = askQuestion.value;
+        askQuestion.value = val.slice(0, start) + "\n" + val.slice(end);
+        askQuestion.selectionStart = askQuestion.selectionEnd = start + 1;
+      }
+    });
+
+    if (global.LoreKeeperAskFeedback && global.LoreKeeperAskFeedback.initAskFeedback) {
+      global.LoreKeeperAskFeedback.initAskFeedback({
+        page: "home",
+        wrongBtnId: "askWrongBtn",
+        correctionWrapId: "askCorrectionWrap",
+        correctionId: "askCorrection",
+        saveFeedbackBtnId: "askSaveFeedbackBtn",
+        feedbackStatusId: "askFeedbackStatus",
+      });
+    }
+    var askField =
+      askQuestion && askQuestion.closest ? askQuestion.closest(".lk-field") : null;
+    if (global.LoreKeeperTierA && askField) {
+      global.LoreKeeperTierA.initOwnerAskHints(askField);
+    }
   }
 
-  Promise.all([LoreKeeperDocuments.ready, LoreKeeperAccountStorage.ready]).then(function () {
+  Promise.all([
+    LoreKeeperDocuments.ready,
+    LoreKeeperAccountStorage.ready,
+    LoreKeeperAccountStorage.waitForData
+      ? LoreKeeperAccountStorage.waitForData({ content: true })
+      : LoreKeeperDocuments.ready,
+  ]).then(function () {
     if (!LoreKeeperAccountStorage.isSignedIn()) {
       LoreKeeperAccountStorage.ensureSignedIn();
       return;
@@ -364,5 +662,19 @@
     initDocs();
     initNotes();
     initAsk();
+    if (global.LoreKeeperMobileComfort && global.LoreKeeperMobileComfort.initHomeNotes) {
+      global.LoreKeeperMobileComfort.initHomeNotes();
+    }
+    if (global.LoreKeeperHomeTabs && typeof global.LoreKeeperHomeTabs.init === "function") {
+      global.LoreKeeperHomeTabs.init();
+    }
+    if (global.LoreKeeperSiteFeedback) {
+      global.LoreKeeperSiteFeedback.init({
+        sendBtnId: "homeFeedbackSend",
+        textId: "homeFeedbackText",
+        statusId: "homeFeedbackStatus",
+        source: "site",
+      });
+    }
   });
 })(typeof window !== "undefined" ? window : this);

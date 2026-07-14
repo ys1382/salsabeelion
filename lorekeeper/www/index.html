@@ -4,12 +4,11 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>LoreKeeper</title>
-  <link rel="stylesheet" href="./lk-shared.css?v=9" />
-  <script src="./lk-auth-gate.js"></script>
+  <link rel="stylesheet" href="./lk-shared.css?v=89" />
 </head>
-<body>
+<body class="lk-page-home">
   <div class="lk-wrap">
-    <p class="header-nav"><a href="https://oddtrove.art/">← Odd Trove</a> · <a href="./spinner.html">Idea spinner</a></p>
+    <p class="header-nav"><a href="https://oddtrove.art/">← Odd Trove</a></p>
     <h1>LoreKeeper</h1>
     <p class="lk-lead"><strong>Documents</strong> are for full project writing — one flowing doc with formatting, like picking up where you left off on a computer. <strong>Notes</strong> are scattered scraps — relationships, intrigue, fonts, visual beats, anything jumbled. Same work title on both so Ask can search the whole project.</p>
     <p class="lk-auth-bar" id="lkAuthBar"></p>
@@ -48,16 +47,27 @@
       <h2 class="lk-panel-title">Notes</h2>
       <p class="muted lk-section-lead">Scattered bits — not full docs. One scrap per note, typed and tagged.</p>
       <div class="lk-toolbar lk-notes-primary-toolbar">
-        <button type="button" class="lk-btn" id="newNoteBtn">New note</button>
+        <button type="button" class="lk-btn lk-quick-jot-btn" id="quickJotBtn">Quick jot</button>
+        <button type="button" class="lk-btn secondary" id="newNoteBtn">New note</button>
         <button type="button" class="lk-btn secondary" id="exportNotesBtn">Export notes</button>
       </div>
       <p class="muted lk-spell-hint">Local spelling in notes &amp; documents — <a href="./account.html">My spelling words</a> on your account page.</p>
-      <details class="lk-notes-more" id="notesMorePanel">
-        <summary class="lk-notes-more-summary">
+      <p class="lk-status err" id="noteSyncBanner" hidden>
+        Saved on this device — not synced to account yet.
+        <button type="button" class="lk-btn secondary lk-sync-retry" id="noteSyncRetryBtn">Retry sync</button>
+      </p>
+      <div class="lk-notes-more" id="notesMorePanel">
+        <button
+          type="button"
+          class="lk-notes-more-summary"
+          id="notesMoreToggle"
+          aria-expanded="false"
+          aria-controls="notesMoreBody"
+        >
           <span class="lk-notes-more-label" id="notesMoreLabel">Your notes</span>
           <span class="lk-notes-more-toggle" aria-hidden="true"></span>
-        </summary>
-        <div class="lk-notes-more-body">
+        </button>
+        <div class="lk-notes-more-body" id="notesMoreBody">
           <div class="lk-toolbar">
             <select id="filterKind" aria-label="Filter by type">
               <option value="">All types</option>
@@ -65,71 +75,165 @@
             <input type="search" id="searchBox" placeholder="Search notes…" autocomplete="off" />
           </div>
           <ul class="lk-entry-list" id="noteList" aria-live="polite"></ul>
+          <div class="lk-note-pager" id="noteListPager" hidden>
+            <button type="button" class="lk-btn secondary" id="noteListPrev">↑ Newer</button>
+            <span class="lk-note-pager-status" id="noteListPagerStatus"></span>
+            <button type="button" class="lk-btn secondary" id="noteListNext">↓ Older</button>
+          </div>
           <p class="lk-status" id="noteListStatus"></p>
         </div>
-      </details>
+      </div>
     </div>
 
     <div class="lk-panel" id="noteEditorPanel" hidden>
       <h2 class="lk-panel-title" id="noteEditorHeading">Edit note</h2>
-      <div class="lk-field">
-        <label for="noteKind">Type</label>
-        <select id="noteKind"></select>
-      </div>
-      <div class="lk-field">
-        <label for="noteTitle">Title</label>
-        <input type="text" id="noteTitle" autocomplete="off" placeholder="Character beat, font idea, intrigue thread…" />
-      </div>
-      <div class="lk-field">
+      <div class="lk-field lk-jot-body-field">
         <label for="noteBody">Your note</label>
         <div class="lk-spell-field">
           <textarea id="noteBody" placeholder="Messy is fine — your words only." spellcheck="false" autocorrect="off" autocapitalize="off"></textarea>
         </div>
         <p class="lk-spell-flags" id="noteSpellFlags" hidden></p>
-        <p class="muted lk-spell-privacy">Spelling checks run locally — not sent to outside AI. Obvious typos fix when you <strong>Save</strong> (not while typing). Words on <a href="./account.html">My spelling words</a> are never flagged or changed.</p>
+        <p class="muted lk-spell-privacy">Spelling checks run locally — not sent to outside AI. Hold a flagged word below to find it in your note; tap to keep it on <a href="./account.html">My spelling words</a>.</p>
       </div>
-      <div class="lk-field">
-        <label for="noteTags">Work title <span class="muted">(tag — same name as the project)</span></label>
-        <input type="text" id="noteTags" autocomplete="off" placeholder="Smoke and Mirrors" />
-      </div>
+      <details class="lk-note-details" id="noteDetailsPanel">
+        <summary>Title &amp; tags <span class="muted">(optional)</span></summary>
+        <div class="lk-field">
+          <label for="noteKind">Type</label>
+          <select id="noteKind"></select>
+        </div>
+        <div class="lk-field">
+          <label for="noteTitle">Title</label>
+          <input type="text" id="noteTitle" autocomplete="off" placeholder="Character beat, font idea, intrigue thread…" />
+        </div>
+        <div class="lk-field">
+          <label for="noteTags">Work title <span class="muted">(tag — same name as the project)</span></label>
+          <input type="text" id="noteTags" autocomplete="off" placeholder="Smoke and Mirrors" />
+        </div>
+      </details>
       <div class="lk-toolbar">
         <button type="button" class="lk-btn" id="saveNoteBtn">Save</button>
         <button type="button" class="lk-btn secondary" id="cancelNoteBtn">Cancel</button>
+        <button type="button" class="lk-btn secondary lk-note-fullscreen-btn" id="noteFullscreenBtn" aria-pressed="false" title="Full screen">Full screen</button>
         <button type="button" class="lk-btn secondary" id="deleteNoteBtn">Delete</button>
       </div>
       <p class="lk-status" id="noteEditorStatus"></p>
+      <button type="button" class="lk-btn secondary lk-sync-retry" id="retryNoteSyncBtn" hidden>Retry sync</button>
     </div>
 
-    <div class="lk-panel lk-ask-panel" id="ask">
-      <h2 class="lk-panel-title">Ask LoreKeeper</h2>
-      <p class="muted lk-ask-lead">
-        Searches <strong>documents and notes</strong> together. Name the work in your question. Local only — nothing sent to outside AI.
-      </p>
-      <p class="lk-privacy lk-ask-privacy">
-        <strong>Your words stay yours.</strong> Ask runs on the server from what you saved — no third-party AI reads your drafts.
-        If you use a coding assistant (e.g. Cursor) to fix LoreKeeper, that work is on the <em>app code</em> in the repo — not your story files on the server.
-        Don’t paste draft text into those chats if you want it to stay only here.
-      </p>
-      <div class="lk-field">
-        <label for="askQuestion">Your question</label>
-        <textarea id="askQuestion" rows="3" placeholder="e.g. In Smoke and Mirrors, summarize Character B"></textarea>
+    <div class="lk-panel lk-tools-panel" id="writer-tools">
+      <nav class="lk-tools-tabs" role="tablist" aria-label="Writer tools">
+        <button type="button" class="lk-tools-tab" role="tab" id="tab-btn-ask" aria-controls="panel-ask" aria-selected="true">Ask LoreKeeper</button>
+        <button type="button" class="lk-tools-tab" role="tab" id="tab-btn-spinner" aria-controls="panel-spinner" aria-selected="false" tabindex="-1">Idea spinner</button>
+        <button type="button" class="lk-tools-tab" role="tab" id="tab-btn-word-help" aria-controls="panel-word-help" aria-selected="false" tabindex="-1">Word help</button>
+        <button type="button" class="lk-tools-tab" role="tab" id="tab-btn-feedback" aria-controls="panel-feedback" aria-selected="false" tabindex="-1">Feedback</button>
+      </nav>
+
+      <div id="panel-ask" class="lk-tools-panel-body" role="tabpanel" aria-labelledby="tab-btn-ask">
+        <p class="muted lk-ask-lead">
+          Searches <strong>documents and notes</strong> you saved on LoreKeeper. Name the work in your question.
+        </p>
+        <p class="lk-privacy lk-ask-privacy">
+          <strong>Your drafts stay on LoreKeeper.</strong> Ask runs on the server from your saved writing — it does not use Word help’s language model and does not read what you type in other tabs.
+        </p>
+        <div class="lk-field">
+          <label for="askQuestion">Your question</label>
+          <textarea id="askQuestion" rows="3" placeholder="e.g. In Smoke and Mirrors, who is Character B?"></textarea>
+        </div>
+        <div class="lk-toolbar lk-ask-toolbar">
+          <button type="button" class="lk-btn" id="askBtn">Ask</button>
+          <button type="button" class="lk-btn secondary lk-ask-wrong-btn" id="askWrongBtn" hidden>It got this wrong</button>
+        </div>
+        <p class="lk-status" id="askStatus" hidden></p>
+        <div class="lk-ask-correction" id="askCorrectionWrap" hidden>
+          <div class="lk-field">
+            <label for="askCorrection">What it got wrong</label>
+            <textarea id="askCorrection" rows="3" placeholder="e.g. Wrong character — mixed up A and B"></textarea>
+          </div>
+          <button type="button" class="lk-btn secondary" id="askSaveFeedbackBtn">Save feedback</button>
+          <p class="lk-status" id="askFeedbackStatus" hidden aria-live="polite"></p>
+        </div>
+        <div class="lk-ask-answer" id="askAnswer" hidden></div>
+        <ul class="lk-ask-sources" id="askSources" hidden aria-label="Sources"></ul>
       </div>
-      <div class="lk-toolbar">
-        <button type="button" class="lk-btn" id="askBtn">Ask</button>
+
+      <div id="panel-spinner" class="lk-tools-panel-body" role="tabpanel" aria-labelledby="tab-btn-spinner" hidden>
+        <p class="muted lk-section-lead">Stuck on where to go next? Spin for a <strong>nudge</strong> from <strong>your</strong> word banks — not a story written for you.</p>
+        <section class="lk-spin-stage" aria-label="Spin">
+          <div class="lk-toolbar">
+            <label class="lk-spin-template-pick">
+              Prompt style
+              <select id="templateSelect" aria-label="Prompt style">
+                <option value="nudge">What if…?</option>
+                <option value="question">Where could it go?</option>
+                <option value="next_beat">Possible next beat</option>
+                <option value="constraint">Try this constraint</option>
+              </select>
+            </label>
+            <button type="button" class="lk-btn lk-spin-btn" id="spinBtn">Spin</button>
+            <button type="button" class="lk-btn secondary" id="copyPromptBtn">Copy prompt</button>
+          </div>
+          <p class="lk-status" id="spinnerStatus" aria-live="polite"></p>
+          <div class="lk-spin-columns" id="spinnerColumns"></div>
+          <h3 class="lk-panel-subtitle lk-spin-result-label">Your nudge</h3>
+          <div class="lk-spin-result is-empty" id="spinnerResult" aria-live="polite"></div>
+        </section>
+        <section class="lk-spin-banks-section" aria-label="Word banks">
+          <h3 class="lk-panel-subtitle">Your word banks</h3>
+          <p class="muted lk-section-lead">One word or phrase per line. Empty columns are skipped when you spin. Verbs work best in <strong>Action</strong>; things and props in <strong>Object</strong>; phrases like <em>secret identity</em> in <strong>Twist</strong>.</p>
+          <div id="spinnerBanks"></div>
+        </section>
       </div>
-      <p class="lk-status" id="askStatus" hidden></p>
-      <div class="lk-ask-answer" id="askAnswer" hidden></div>
-      <ul class="lk-ask-sources" id="askSources" hidden aria-label="Sources"></ul>
+
+      <div id="panel-word-help" class="lk-tools-panel-body" role="tabpanel" aria-labelledby="tab-btn-word-help" hidden>
+        <p class="muted lk-ask-lead">
+          Synonyms, antonyms, rhymes, tone, formality — ask in plain English for the word or phrase you’re working on.
+        </p>
+        <p class="lk-privacy lk-word-help-privacy">
+          <strong>Only what you type here</strong> is sent to Anthropic for language suggestions. Your drafts and notes are <em>not</em> included. Suggestions are not saved to your account unless you copy them yourself.
+        </p>
+        <div class="lk-field">
+          <label for="wordHelpQuery">Word or phrase</label>
+          <textarea id="wordHelpQuery" rows="3" placeholder="e.g. synonyms for “furtive” · antonyms for “bright” · words that rhyme with “ember” · more formal way to say “got mad”"></textarea>
+        </div>
+        <div class="lk-toolbar">
+          <button type="button" class="lk-btn" id="wordHelpBtn">Get suggestions</button>
+        </div>
+        <p class="lk-status" id="wordHelpStatus" hidden></p>
+        <div class="lk-word-help-answer" id="wordHelpAnswer" hidden></div>
+      </div>
+
+      <div id="panel-feedback" class="lk-tools-panel-body" role="tabpanel" aria-labelledby="tab-btn-feedback" hidden>
+        <p class="muted lk-feedback-panel-lead">
+          Private note to the owner — not posted on the site. Sign in to send. Use this for bugs, ideas, or wishes (like more document backups).
+        </p>
+        <textarea id="homeFeedbackText" class="lk-feedback-text" maxlength="2000" placeholder="What would make LoreKeeper better for your writing?"></textarea>
+        <button type="button" class="lk-btn secondary" id="homeFeedbackSend">Send feedback</button>
+        <p class="lk-feedback-status" id="homeFeedbackStatus" hidden aria-live="polite"></p>
+      </div>
     </div>
   </div>
-  <script src="./vendor/spell/typo.js"></script>
-  <script src="./lk-spell-words.js?v=3"></script>
-  <script src="./lk-spell.js?v=5"></script>
+  <script src="./lk-spell.js?v=10"></script>
   <script src="./lk-api-config.js?v=5"></script>
-  <script src="./lk-account-storage.js?v=6"></script>
-  <script src="./lk-documents.js?v=10"></script>
-  <script src="./lk-entries.js?v=3"></script>
-  <script src="./lk-recall.js?v=3"></script>
-  <script src="./lk-home.js?v=6"></script>
+  <script src="./lk-account-storage.js?v=14"></script>
+  <script src="./lk-auth-gate.js?v=3"></script>
+  <script src="./lk-documents.js?v=52"></script>
+  <script src="./lk-entries.js?v=4"></script>
+  <script src="./lk-recall.js?v=8"></script>
+  <script src="./lk-auth.js?v=3"></script>
+  <script src="./lk-site-feedback.js?v=1"></script>
+  <script src="./lk-ask-feedback.js?v=1"></script>
+  <script src="./lk-tier-a-checklist.js?v=5"></script>
+  <script src="./lk-spinner-store.js?v=1"></script>
+  <script src="./lk-spinner.js?v=8"></script>
+  <script src="./lk-word-help.js?v=2"></script>
+  <script src="./lk-home-tabs.js?v=1"></script>
+  <script src="./lk-mobile-comfort.js?v=5"></script>
+  <script src="./lk-writing-glossary.js?v=1"></script>
+  <script src="./lk-mobile-accessory.js?v=3"></script>
+  <script src="./lk-writing-complete.js?v=2"></script>
+  <script src="./lk-mobile-jot.js?v=1"></script>
+  <script src="./lk-bt-keyboard.js?v=1"></script>
+  <script src="./lk-mobile-handoff.js?v=1"></script>
+  <script src="./lk-home.js?v=50"></script>
 </body>
 </html>

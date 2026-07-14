@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Crochet Help — Ask</title>
+  <style>
+    :root {
+      --cream: #faf6f0;
+      --paper: #fffefb;
+      --ink: #3d3832;
+      --soft: #8a8278;
+      --accent: #6b8f71;
+      --line: #e5dfd4;
+      --warn: #9a6a2b;
+      --error: #9d3d3d;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--cream);
+      color: var(--ink);
+      font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+      line-height: 1.5;
+    }
+    header {
+      border-bottom: 1px solid var(--line);
+      background: var(--paper);
+      padding: 1.25rem clamp(1rem, 3vw, 2rem);
+    }
+    .nav {
+      font-family: system-ui, sans-serif;
+      font-size: 0.95rem;
+      margin-bottom: 0.4rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem 0.85rem;
+    }
+    .nav a { color: var(--accent); font-weight: 600; text-decoration: none; }
+    .nav a:hover { text-decoration: underline; }
+    .nav a[aria-current="page"] { color: var(--ink); text-decoration: underline; }
+    h1 { margin: 0.15rem 0 0.25rem; font-size: clamp(1.35rem, 3vw, 1.85rem); }
+    p.lead { margin: 0; color: var(--soft); max-width: 70ch; }
+    main {
+      max-width: 850px;
+      margin: 0 auto;
+      padding: 1.2rem clamp(1rem, 3vw, 2rem) 2.2rem;
+    }
+    .ask-panel {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 1rem;
+      display: grid;
+      gap: 0.85rem;
+    }
+    label {
+      display: block;
+      font-family: system-ui, sans-serif;
+      font-size: 0.9rem;
+      color: var(--soft);
+      margin-bottom: 0.35rem;
+    }
+    textarea {
+      width: 100%;
+      min-height: 110px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 0.65rem 0.7rem;
+      font: inherit;
+      color: var(--ink);
+      background: #fff;
+      resize: vertical;
+    }
+    button {
+      width: fit-content;
+      border: 1px solid var(--accent);
+      background: var(--accent);
+      color: #fff;
+      border-radius: 10px;
+      padding: 0.55rem 0.9rem;
+      cursor: pointer;
+      font: 600 0.9rem system-ui, sans-serif;
+    }
+    button:disabled { opacity: 0.55; cursor: not-allowed; }
+    .status {
+      font-family: system-ui, sans-serif;
+      font-size: 0.9rem;
+      color: var(--soft);
+    }
+    .status.ok { color: var(--accent); }
+    .status.warn { color: var(--warn); }
+    .status.error { color: var(--error); }
+    .answer-box {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 0.95rem 1rem;
+      white-space: pre-wrap;
+      font-size: 0.98rem;
+    }
+    .answer-box[hidden] { display: none; }
+    .examples {
+      margin-top: 0.75rem;
+      font-family: system-ui, sans-serif;
+      font-size: 0.84rem;
+      color: var(--soft);
+    }
+    .examples ul { margin: 0.35rem 0 0; padding-left: 1.1rem; }
+    .paused-note {
+      background: #fff8ef;
+      border: 1px solid #e8dcc8;
+      border-radius: 10px;
+      padding: 0.75rem 0.9rem;
+      font-family: system-ui, sans-serif;
+      font-size: 0.9rem;
+      color: var(--soft);
+    }
+  </style>
+  <script src="./crocheter-auth-gate.js"></script>
+</head>
+<body>
+  <header>
+    <nav class="nav" aria-label="Site sections">
+      <a href="./index.html#patterns">← Patterns</a>
+      <a href="./stitch-calculator.html">Stitch calculator</a>
+      <a href="./ask.html" aria-current="page">Crochet Help</a>
+    </nav>
+    <h1>Crochet Help</h1>
+    <p class="lead">Ask about stitches, techniques, fibers, and yarn — not creators or brand rankings. For row counts and pattern position, use the <a href="./stitch-calculator.html">stitch calculator</a>.</p>
+  </header>
+  <main>
+    <div id="paused" class="paused-note" hidden>Crochet Help is paused right now. Check back later.</div>
+    <form id="ask-form" class="ask-panel">
+      <div>
+        <label for="ask-question">Your question</label>
+        <textarea id="ask-question" placeholder="What fiber is in this yarn cake? How do I read a chart symbol for double crochet?" required></textarea>
+      </div>
+      <button type="submit" id="ask-btn">Ask</button>
+      <p id="ask-status" class="status" aria-live="polite"></p>
+    </form>
+    <section id="ask-answer" class="answer-box" hidden aria-live="polite"></section>
+    <div class="examples">
+      <strong>Good questions:</strong>
+      <ul>
+        <li>What is half double crochet in UK terms?</li>
+        <li>What material is Bernat Blanket yarn?</li>
+        <li>How do I keep edges from curling on a flat piece?</li>
+      </ul>
+    </div>
+  </main>
+  <script src="./crocheter-api-config.js"></script>
+  <script src="./crocheter-ask.js"></script>
+</body>
+</html>

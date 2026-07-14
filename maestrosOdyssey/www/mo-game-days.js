@@ -6,7 +6,8 @@
   "use strict";
 
   var DAY_INDEX_KEY = "mo_cafe_day_index";
-  var SESSION_VISIT_DONE = "mo_cafe_session_visit_done";
+  var VISIT_DONE_PREFIX = "mo_cafe_visit_done_day_";
+  var SESSION_AWAITING_EXIT = "mo_cafe_visit_finished_awaiting";
   var WEEKDAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
   function sessionOn(key) {
@@ -56,16 +57,66 @@
     return wd + " · café day " + dayIndex;
   }
 
+  function hasCompletedVisitForDay(dayIndex) {
+    return sessionOn(VISIT_DONE_PREFIX + (dayIndex != null ? dayIndex : getDayIndex()));
+  }
+
+  function hasAwaitingDayAdvance() {
+    return sessionOn(SESSION_AWAITING_EXIT);
+  }
+
+  function setVisitFinishedAwaitingExit() {
+    setSessionOn(SESSION_AWAITING_EXIT, true);
+  }
+
+  function clearAwaitingDayAdvance() {
+    setSessionOn(SESSION_AWAITING_EXIT, false);
+  }
+
   function hasCompletedVisitToday() {
-    return sessionOn(SESSION_VISIT_DONE);
+    return hasCompletedVisitForDay(getDayIndex()) || hasAwaitingDayAdvance();
+  }
+
+  function migrateLegacyVisitFlag() {
+    try {
+      if (sessionStorage.getItem("mo_cafe_session_visit_done") === "1") {
+        sessionStorage.removeItem("mo_cafe_session_visit_done");
+      }
+    } catch (e) { /* private mode */ }
+  }
+
+  function clearCompletedVisitFlags() {
+    try {
+      var toRemove = [];
+      for (var i = 0; i < sessionStorage.length; i++) {
+        var k = sessionStorage.key(i);
+        if (k && k.indexOf(VISIT_DONE_PREFIX) === 0) toRemove.push(k);
+      }
+      toRemove.forEach(function (key) { sessionStorage.removeItem(key); });
+      sessionStorage.removeItem("mo_cafe_session_visit_done");
+      sessionStorage.removeItem(SESSION_AWAITING_EXIT);
+    } catch (e) { /* private mode */ }
+  }
+
+  function advanceDayOnExit() {
+    if (!hasAwaitingDayAdvance()) return false;
+    clearAwaitingDayAdvance();
+    onVisitCompleted();
+    return true;
   }
 
   function onVisitCompleted() {
-    setSessionOn(SESSION_VISIT_DONE, true);
+    var day = getDayIndex();
+    var flagKey = VISIT_DONE_PREFIX + day;
+    if (sessionOn(flagKey)) return;
+    setSessionOn(flagKey, true);
     try {
-      localStorage.setItem(DAY_INDEX_KEY, String(getDayIndex() + 1));
+      localStorage.setItem(DAY_INDEX_KEY, String(day + 1));
     } catch (e) { /* private mode */ }
     refreshHud();
+    if (window.MoElderReport && typeof window.MoElderReport.tryOfferReport === "function") {
+      window.setTimeout(function () { window.MoElderReport.tryOfferReport(); }, 900);
+    }
   }
 
   function isDay8OrLater() {
@@ -73,7 +124,8 @@
   }
 
   function reset() {
-    setSessionOn(SESSION_VISIT_DONE, false);
+    clearCompletedVisitFlags();
+    clearAwaitingDayAdvance();
     try {
       localStorage.removeItem(DAY_INDEX_KEY);
     } catch (e) { /* private mode */ }
@@ -86,6 +138,7 @@
   }
 
   function initHud() {
+    migrateLegacyVisitFlag();
     refreshHud();
   }
 
@@ -95,8 +148,13 @@
     getWeekNumber: getWeekNumber,
     formatHudLabel: formatHudLabel,
     hasCompletedVisitToday: hasCompletedVisitToday,
+    hasCompletedVisitForDay: hasCompletedVisitForDay,
+    hasAwaitingDayAdvance: hasAwaitingDayAdvance,
+    setVisitFinishedAwaitingExit: setVisitFinishedAwaitingExit,
+    advanceDayOnExit: advanceDayOnExit,
     onVisitCompleted: onVisitCompleted,
     isDay8OrLater: isDay8OrLater,
+    clearCompletedVisitFlags: clearCompletedVisitFlags,
     reset: reset,
     refreshHud: refreshHud,
     initHud: initHud

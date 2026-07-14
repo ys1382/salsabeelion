@@ -11,6 +11,7 @@
   var FRAME_INSET_X = 0.08;
   var FRAME_INSET_Y = 0.1;
   var TESSERACT_SRC = "https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js";
+  var ISBN_LOOKUP_TIMEOUT_MS = 9000;
 
   var SCANNER_LEGACY_IDS = {
     video: "scrollScannerVideo",
@@ -604,29 +605,50 @@
     return digits.length >= 10 ? digits : "";
   }
 
+  function fetchJsonWithTimeout(url, ms) {
+    if (!global.fetch || !url) return Promise.resolve(null);
+    return new Promise(function (resolve) {
+      var settled = false;
+      var timer = global.setTimeout(function () {
+        if (settled) return;
+        settled = true;
+        resolve(null);
+      }, ms || ISBN_LOOKUP_TIMEOUT_MS);
+      global
+        .fetch(url)
+        .then(function (r) {
+          return r.json();
+        })
+        .then(function (data) {
+          if (settled) return;
+          settled = true;
+          global.clearTimeout(timer);
+          resolve(data);
+        })
+        .catch(function () {
+          if (settled) return;
+          settled = true;
+          global.clearTimeout(timer);
+          resolve(null);
+        });
+    });
+  }
+
   function lookupIsbn(isbn) {
-    if (!global.fetch || !isbn) return Promise.resolve(null);
+    if (!isbn) return Promise.resolve(null);
     var url =
       "https://openlibrary.org/search.json?limit=1&fields=title,author_name&isbn=" +
       encodeURIComponent(isbn);
-    return global
-      .fetch(url)
-      .then(function (r) {
-        return r.json();
-      })
-      .then(function (data) {
-        var doc = data && data.docs && data.docs[0];
-        if (!doc) return null;
-        var match = { title: catalogDocTitle(doc), author: catalogDocAuthor(doc) };
-        var VS = global.HalalitBookcheckVetSource;
-        if (VS && typeof VS.canonicalBarcodeBook === "function") {
-          match = VS.canonicalBarcodeBook(match.title, match.author);
-        }
-        return match;
-      })
-      .catch(function () {
-        return null;
-      });
+    return fetchJsonWithTimeout(url, ISBN_LOOKUP_TIMEOUT_MS).then(function (data) {
+      var doc = data && data.docs && data.docs[0];
+      if (!doc) return null;
+      var match = { title: catalogDocTitle(doc), author: catalogDocAuthor(doc) };
+      var VS = global.HalalitBookcheckVetSource;
+      if (VS && typeof VS.canonicalBarcodeBook === "function") {
+        match = VS.canonicalBarcodeBook(match.title, match.author);
+      }
+      return match && match.title ? match : null;
+    });
   }
 
   function canvasToJpegPayload(canvas) {
@@ -725,6 +747,7 @@
     var lastVisionAt = 0;
     var lastOcrAt = 0;
     var barcodeBusy = false;
+    var barcodeLookupGen = 0;
     var barcodeDetectorPromise = null;
     var barcodePolyfillActive = false;
     var torchOn = false;
@@ -983,6 +1006,7 @@
       lastVisionAt = 0;
       lastOcrAt = 0;
       barcodeBusy = false;
+      barcodeLookupGen += 1;
       if (resultEl) resultEl.hidden = true;
       if (resultEl) resultEl.innerHTML = "";
       if (altList) altList.innerHTML = "";
@@ -1119,16 +1143,33 @@
       if (startBtn) startBtn.hidden = false;
     }
 
-    function resumeScanning() {
+    function scanningOverlayForMode() {
+      if (scanMode === "barcode") {
+        return {
+          hint: "Barcode mode",
+          title: "ISBN strip in the band",
+          author: "",
+        };
+      }
+      return {
+        hint: "Reading cover",
+        title: "Title in the upper half",
+        author: "Author in the lower half",
+      };
+    }
+
+    function resumeScanning(msg) {
       paused = false;
       barcodeBusy = false;
       ocrBusy = false;
       visionBusy = false;
       if (stream) {
         startScanLoop();
+        if (msg) setStatus(msg);
+        setLiveOverlay(scanningOverlayForMode());
       } else if (startBtn) {
         startBtn.hidden = false;
-        setStatus("Tap Start camera to scan again.");
+        setStatus(msg || "Tap Start camera to scan again.");
       }
     }
 
@@ -1374,22 +1415,31 @@
       var candidates = captureBarcodeCandidates();
       if (!candidates.length) return;
       barcodeBusy = true;
-      var barcodeWatchdog = global.setTimeout(function () {
-        barcodeBusy = false;
-      }, 12000);
+      var lookupGen = barcodeLookupGen;
       function finishBarcode() {
-        global.clearTimeout(barcodeWatchdog);
         barcodeBusy = false;
+      }
+      function barcodeLookupFailed(reason) {
+        if (lookupGen !== barcodeLookupGen || paused) return;
+        finishBarcode();
+        resumeScanning(
+          reason ||
+            "Could not look up that barcode — try again, use Front cover mode, or type the title."
+        );
       }
       getBarcodeDetector()
         .then(function (detector) {
+          if (lookupGen !== barcodeLookupGen) {
+            finishBarcode();
+            return;
+          }
           if (!detector) {
             finishBarcode();
             noteBarcodeUnavailable();
             return;
           }
           detectBarcodeOnCandidates(detector, candidates, 0, function (codes) {
-            if (!codes || !codes.length || paused) {
+            if (lookupGen !== barcodeLookupGen || !codes || !codes.length || paused) {
               finishBarcode();
               return;
             }
@@ -1402,28 +1452,25 @@
                 author: "",
               });
               setStatus("Barcode found. Looking up the book…");
-              lookupIsbn(isbn)
-                .then(function (match) {
-                  finishBarcode();
-                  if (!match || !match.title || paused) {
-                    resumeScanning();
-                    return;
-                  }
-                  handleBookIdentified(
-                    {
-                      title: match.title,
-                      author: match.author || "",
-                      source: "barcode",
-                      confidence: "high",
-                    },
-                    { autoRun: !ownerTesting }
+              lookupIsbn(isbn).then(function (match) {
+                if (lookupGen !== barcodeLookupGen) return;
+                if (!match || !match.title || paused) {
+                  barcodeLookupFailed(
+                    "No book found for that barcode — try Front cover mode or type the title."
                   );
-                })
-                .catch(function () {
-                  finishBarcode();
-                  resumeScanning();
-                  setStatus("Could not look up that barcode. Try again or use Front cover mode.");
-                });
+                  return;
+                }
+                finishBarcode();
+                handleBookIdentified(
+                  {
+                    title: match.title,
+                    author: match.author || "",
+                    source: "barcode",
+                    confidence: "high",
+                  },
+                  { autoRun: !ownerTesting }
+                );
+              });
               return;
             }
             finishBarcode();
@@ -1842,6 +1889,7 @@
     }
 
     function resetScan() {
+      barcodeLookupGen += 1;
       clearResult();
       paused = false;
       barcodeBusy = false;
@@ -1903,15 +1951,32 @@
         setStatus("Test Bookcheck ran below — not logged as a reader lookup.");
         return;
       }
-      var tabs = global.document.querySelectorAll(".site-tab");
-      for (var i = 0; i < tabs.length; i++) {
-        if (tabs[i].id === "tab-btn-bookcheck") {
-          tabs[i].click();
-          break;
+      var F = global.HalalitSiteFlags;
+      if (F && typeof F.isEnabled === "function" && !F.isEnabled("bookcheckEnabled")) {
+        setStatus("Bookcheck is paused right now — try again later or type the title on the Bookcheck tab.");
+        return;
+      }
+      var bcBtn = global.document && global.document.getElementById("tab-btn-bookcheck");
+      if (bcBtn && bcBtn.hidden) {
+        setStatus("Bookcheck isn't available on this device — open Halalit on your phone to run a lookup.");
+        return;
+      }
+      function launchBookcheckLookup() {
+        if (global.HalalitBookcheck && typeof global.HalalitBookcheck.prefillAndLookup === "function") {
+          global.HalalitBookcheck.prefillAndLookup(title, author, { fromScanner: true });
         }
       }
-      if (global.HalalitBookcheck && typeof global.HalalitBookcheck.prefillAndLookup === "function") {
-        global.HalalitBookcheck.prefillAndLookup(title, author, { fromScanner: true });
+      if (global.HalalitTabs && typeof global.HalalitTabs.goToBookcheck === "function") {
+        global.HalalitTabs.goToBookcheck();
+      } else if (bcBtn) {
+        bcBtn.click();
+      }
+      if (typeof global.requestAnimationFrame === "function") {
+        global.requestAnimationFrame(function () {
+          global.requestAnimationFrame(launchBookcheckLookup);
+        });
+      } else {
+        global.setTimeout(launchBookcheckLookup, 0);
       }
     }
 

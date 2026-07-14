@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>CleanScreen Click Warning</title>
+  <style>
+    body { font: 13px/1.4 system-ui, sans-serif; margin: 12px; width: 280px; color: #1a2332; }
+    h1 { font-size: 15px; margin: 0 0 8px; }
+    label { display: flex; gap: 8px; align-items: flex-start; margin: 10px 0; }
+    input[type="text"] { width: 100%; box-sizing: border-box; margin-top: 4px; padding: 6px; }
+    .hint { color: #5c4a32; font-size: 12px; margin: 8px 0; }
+    button { margin-top: 8px; padding: 8px 12px; border: none; border-radius: 6px; background: #2d5a4a; color: #fff; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>Click Warning (owner beta)</h1>
+  <p class="hint">Sign in to Odd Trove owner hub in this browser profile so API checks work.</p>
+  <label>
+    <input type="checkbox" id="parentMode" />
+    <span><strong>Parent mode</strong><br />Same as CleanScreen Search — news, Amazon, bookstores allowed in checks.</span>
+  </label>
+  <label>
+    API base
+    <input type="text" id="apiBase" placeholder="https://oddtrove.art/cleanscreen/api" />
+  </label>
+  <button type="button" id="save">Save</button>
+  <p id="status" class="hint" aria-live="polite"></p>
+  <script src="popup.js"></script>
+</body>
+</html>

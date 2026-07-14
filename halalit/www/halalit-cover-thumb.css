@@ -1,0 +1,26 @@
+.halalit-cover-thumb {
+  margin: 0 0 0.75rem;
+  max-width: 8.5rem;
+}
+.halalit-cover-thumb__img {
+  display: block;
+  width: 120px;
+  height: auto;
+  max-height: 180px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
+  object-fit: cover;
+  background: rgba(0, 0, 0, 0.2);
+}
+.halalit-cover-thumb__cap {
+  margin: 0.35rem 0 0;
+  font-size: 0.72rem;
+  line-height: 1.35;
+}
+.halalit-cover-thumb--quest {
+  margin: 0.65rem 0 0.85rem;
+}
+.bookcheck-verdict .halalit-cover-thumb {
+  margin-bottom: 0.65rem;
+}

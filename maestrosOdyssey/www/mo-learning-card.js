@@ -1,12 +1,16 @@
 /**
- * Prepaid learning card — stub balance until prologue elder (#10).
- * Mexican pesos (MXN) only; no real payment APIs.
+ * Prepaid learning card — balance granted at prologue elder (#10).
+ * Spanish lane → pesos (MXN). Arabic lane → dirham (درهم). Same numbers; no real payment APIs.
  */
 (function () {
   "use strict";
 
   var STORAGE_KEY = "mo_learning_card_balance";
-  var STUB_START_MXN = 200;
+  var STUB_START_MXN = 410;
+
+  function prologuePending() {
+    return window.MoPrologue && window.MoPrologue.needsPrologue && window.MoPrologue.needsPrologue();
+  }
 
   function parseBalance(raw) {
     var n = parseInt(raw, 10);
@@ -24,6 +28,9 @@
   }
 
   function getBalance() {
+    if (prologuePending()) {
+      return 0;
+    }
     try {
       var raw = localStorage.getItem(STORAGE_KEY);
       if (raw === null || raw === "") {
@@ -39,13 +46,20 @@
     }
   }
 
-  function formatPesos(amount) {
+  function formatMoney(amount) {
+    var lang = window.MoCafeLanguage;
+    if (lang && typeof lang.formatMoney === "function") {
+      return lang.formatMoney(amount);
+    }
     return amount + " pesos";
   }
 
   function formatHudLabel(amount) {
+    if (prologuePending()) {
+      return "Learning card: —";
+    }
     if (typeof amount !== "number") amount = getBalance();
-    return "Learning card: " + formatPesos(amount);
+    return "Learning card: " + formatMoney(amount);
   }
 
   function refreshHud() {
@@ -54,8 +68,18 @@
   }
 
   function initHud() {
+    if (prologuePending()) {
+      refreshHud();
+      return;
+    }
     getBalance();
     refreshHud();
+  }
+
+  function addBalance(amount) {
+    amount = Math.max(0, Math.floor(amount));
+    if (!amount) return getBalance();
+    return setBalance(getBalance() + amount);
   }
 
   function tryPay(amount) {
@@ -73,8 +97,10 @@
     STUB_START_MXN: STUB_START_MXN,
     getBalance: getBalance,
     setBalance: setBalance,
+    addBalance: addBalance,
     tryPay: tryPay,
-    formatPesos: formatPesos,
+    formatMoney: formatMoney,
+    formatPesos: formatMoney,
     formatHudLabel: formatHudLabel,
     refreshHud: refreshHud,
     initHud: initHud

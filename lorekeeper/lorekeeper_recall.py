@@ -3,18 +3,64 @@ from __future__ import annotations
 
 import json
 import re
+import hashlib
 from typing import Any
 
 from lorekeeper_character_summary import (
-    build_gathered_answer,
     character_summary_sources,
     character_targets,
     is_who_is_question,
 )
-from lorekeeper_relations import restate_relationships
+from lorekeeper_character_compose import cast_answer_is_thin, work_title_from_hints
+from lorekeeper_ask_plan import AskPlan
+from lorekeeper_ask_router import (
+    character_labels_for_plan,
+    default_ask_plan,
+    entry_hints_for_router,
+    local_ask_plan,
+    route_ask_question,
+    section_hints_from_plan,
+)
+from lorekeeper_rag import RAG_VERSION, answer_with_rag, rag_enabled
+from lorekeeper_knowledge_pov import awareness_parts, is_awareness_question, is_knowledge_pov_question
+from lorekeeper_question_routes import is_story_position_question
+from lorekeeper_section_scope import (
+    extract_section_hints,
+    filter_entries_by_section,
+    format_section_nothing_saved,
+)
+from lorekeeper_story_position import ranked_draft_tail_rows
+from lorekeeper_work_recall import answer_for_work, route_question
+
+RECALL_VERSION = RAG_VERSION
+from lorekeeper_corpus_text import normalize_corpus_text
+from lorekeeper_answer_focus import focus_ask_response
+from lorekeeper_relations import is_relationship_between_question, restate_relationships
+from lorekeeper_recall_scope import (
+    check_work_disambiguation,
+    distinct_work_tags,
+    merge_recall_user_data,
+)
+from lorekeeper_reliability import (
+    augment_ranked_for_targets,
+    augment_question_with_scope_work,
+    classify_material,
+    demote_synthesis,
+    explicit_work_hints,
+    extract_work_hints,
+    filter_entries_by_recall_scope,
+    filter_entries_by_work,
+    filter_ranked_by_threshold,
+    format_nothing_saved,
+    prefer_known_work_hints,
+    sources_from_ranked,
+)
 
 ENTRIES_KEY = "lorekeeper_entries_v1"
 DOCUMENTS_KEY = "lorekeeper_documents_v1"
+
+_entries_cache: dict[str, list[dict[str, Any]]] = {}
+_ENTRIES_CACHE_MAX = 12
 
 STOP = frozenset(
     """
@@ -23,6 +69,15 @@ STOP = frozenset(
     it its this that these those what which who how when where why hey hi hello please
     remind tell about the
     """.split()
+)
+
+# Beat / visual cues — keep thin scene notes findable even when "expression" isn't in the note.
+_SCENE_BEAT_Q = re.compile(
+    r"\b("
+    r"look on .{0,40} face|expression|facial|pov ends|point of view|"
+    r"catches? up|caught up|before .+ catches"
+    r")\b",
+    re.I,
 )
 
 KIND_LABELS = {
@@ -108,6 +163,19 @@ def _score_entry(question: str, entry: dict[str, Any]) -> int:
         bigram = question_tokens[i] + " " + question_tokens[i + 1]
         if bigram in hay_text:
             score += 6
+    # Named cast + scene-beat questions: surface sparse notes that mention the people,
+    # even when the aspect word (expression/look) was never written into the note.
+    targets = character_targets(question)
+    if targets:
+        name_hits = sum(
+            1
+            for name in targets
+            if name and re.search(rf"\b{re.escape(name)}\b", hay_text, re.I)
+        )
+        if name_hits:
+            score += 4 + min(name_hits, 3) * 2
+            if _SCENE_BEAT_Q.search(question or ""):
+                score += 6
     return score
 
 
@@ -130,7 +198,7 @@ def _strip_html(html: str) -> str:
     text = re.sub(r"\n{3,}", "\n\n", text)
     text = re.sub(r"[ \t]+", " ", text)
     text = re.sub(r"\n ", "\n", text)
-    return text.strip()
+    return normalize_corpus_text(text)
 
 
 def _paragraph_chunks(body: str, min_len: int = 40) -> list[str]:
@@ -184,41 +252,100 @@ def _entries_from_documents(raw: str | None) -> list[dict[str, Any]]:
                         }
                     )
             continue
+        page_bodies: list[str] = []
         for page in doc.get("pages") or []:
             if not isinstance(page, dict):
                 continue
             page_title = str(page.get("title") or "Page")
+            page_body = normalize_corpus_text(str(page.get("body") or ""))
+            page_bodies.append(page_body)
             entries.append(
                 {
                     "id": str(page.get("id") or ""),
                     "title": f"{doc_title} / {page_title}",
-                    "body": str(page.get("body") or ""),
+                    "body": page_body,
                     "tags": tags,
                     "kind": str(page.get("kind") or "note"),
+                    "parentDocId": doc_id,
                 }
             )
+        if page_bodies:
+            full_body = "\n\n".join(b for b in page_bodies if b).strip()
+            if full_body:
+                entries.insert(
+                    0,
+                    {
+                        "id": doc_id,
+                        "title": doc_title,
+                        "body": full_body,
+                        "tags": tags,
+                        "kind": "document",
+                    },
+                )
+                for idx, chunk in enumerate(_paragraph_chunks(full_body)):
+                    entries.append(
+                        {
+                            "id": f"{doc_id}#p{idx}",
+                            "title": doc_title,
+                            "body": chunk,
+                            "tags": tags,
+                            "kind": "document",
+                            "parentDocId": doc_id,
+                        }
+                    )
     return entries
 
 
+def _entries_cache_key(user_data: dict[str, Any]) -> str:
+    entries_raw = user_data.get(ENTRIES_KEY) or ""
+    docs_raw = user_data.get(DOCUMENTS_KEY) or ""
+    if not isinstance(entries_raw, str):
+        entries_raw = json.dumps(entries_raw, sort_keys=True)
+    if not isinstance(docs_raw, str):
+        docs_raw = json.dumps(docs_raw, sort_keys=True)
+    digest = hashlib.sha256(
+        (str(len(entries_raw)) + "\n" + str(len(docs_raw)) + "\n" + entries_raw[:4096] + docs_raw[:4096]).encode(
+            "utf-8", errors="replace"
+        )
+    ).hexdigest()[:24]
+    return digest
+
+
 def _all_entries(user_data: dict[str, Any]) -> list[dict[str, Any]]:
+    cache_key = _entries_cache_key(user_data)
+    cached = _entries_cache.get(cache_key)
+    if cached is not None:
+        return cached
+
     legacy = _parse_entries(user_data.get(ENTRIES_KEY))
     from_docs = _entries_from_documents(user_data.get(DOCUMENTS_KEY))
     if not from_docs:
-        return legacy
-    if not legacy:
-        return from_docs
-    seen = {e.get("id") for e in from_docs if e.get("id")}
-    merged = from_docs[:]
-    for entry in legacy:
-        if entry.get("id") not in seen:
-            merged.append(entry)
-    return merged
+        result = legacy
+    elif not legacy:
+        result = from_docs
+    else:
+        seen = {e.get("id") for e in from_docs if e.get("id")}
+        merged = from_docs[:]
+        for entry in legacy:
+            if entry.get("id") not in seen:
+                body = normalize_corpus_text(str(entry.get("body") or ""))
+                merged.append({**entry, "body": body})
+        result = merged
+
+    if len(_entries_cache) >= _ENTRIES_CACHE_MAX:
+        _entries_cache.pop(next(iter(_entries_cache)))
+    _entries_cache[cache_key] = result
+    return result
 
 
 def _rank_entries(question: str, entries: list[dict[str, Any]]) -> list[dict[str, Any]]:
     question_tokens = _tokenize(question)
     ranked: list[dict[str, Any]] = []
-    for entry in entries:
+    # Large corpora: score a capped slice so Ask stays responsive on nginx timeouts.
+    scan = entries
+    if len(scan) > 1200:
+        scan = scan[:1200]
+    for entry in scan:
         if not isinstance(entry, dict):
             continue
         score = _score_entry(question, entry)
@@ -239,19 +366,16 @@ def _rank_entries(question: str, entries: list[dict[str, Any]]) -> list[dict[str
     return ranked
 
 
-def _local_answer(question: str, ranked: list[dict[str, Any]], entries: list[dict[str, Any]]) -> str:
+def _legacy_fallback_answer(
+    question: str,
+    ranked: list[dict[str, Any]],
+    entries: list[dict[str, Any]],
+    *,
+    work_hints: set[str] | None = None,
+    strict_work: bool = False,
+) -> str:
     ranked_ids = {row["id"] for row in ranked if row.get("id")}
-
-    character_answer, gather_ids = build_gathered_answer(question, entries)
-    if character_answer:
-        if character_targets(question) or is_who_is_question(question):
-            return character_answer
-        rel = restate_relationships(
-            question, entries, set(gather_ids) or ranked_ids
-        )
-        if rel:
-            return character_answer + "\n\n" + rel
-        return character_answer
+    hints = work_hints or set()
 
     restated = restate_relationships(question, entries, ranked_ids)
     if restated and not is_who_is_question(question):
@@ -273,19 +397,31 @@ def _local_answer(question: str, ranked: list[dict[str, Any]], entries: list[dic
 
     if character_targets(question) or is_who_is_question(question):
         label = character_targets(question)[0] if character_targets(question) else "that character"
+        if strict_work and not entries:
+            return format_nothing_saved(question, hints, target_label=label)
         return (
             f"I couldn't find anything about {label} in your saved notes for this work. "
             "Tag entries with the work name on every note for that project, then ask again — "
-            "e.g. “In Smoke and Mirrors, who is Character B?”"
+            "e.g. “In Ashford Saga, who is Character M?”"
         )
 
     if not ranked:
+        if strict_work:
+            return format_nothing_saved(question, hints)
         return (
             "I looked through your saved notes and documents and didn't find anything that clearly matches. "
             "Tag entries with the title of the work — the book, script, skit, or game name "
             "(same tag on every note for that project), then ask again and name it — "
-            "e.g. “In Smoke and Mirrors, who is…?”"
+            "e.g. “In Ashford Saga, who is…?”"
         )
+    top = ranked[0]
+    if top.get("score", 0) >= 7:
+        return (
+            f"From your entry “{top['title']}” ({top['kindLabel']}):\n\n"
+            f"{top['excerpt']}\n\n"
+            "— Pulled from your notes only. Nothing invented."
+        )
+
     if len(ranked) == 1:
         row = ranked[0]
         return (
@@ -294,11 +430,170 @@ def _local_answer(question: str, ranked: list[dict[str, Any]], entries: list[dic
             "— Pulled from your notes only. Nothing invented."
         )
 
-    lines = ["From what you've written:\n"]
-    for row in ranked[:4]:
-        lines.append(f"• {row['title']} ({row['kindLabel']}): {row['excerpt']}")
-    lines.append("\n— Pulled from your notes only. Nothing invented.")
-    return "\n".join(lines)
+    best = ranked[0]
+    hint = (
+        "Try naming the work in your question — e.g. “In Ashford Saga, …” — "
+        "or ask a narrower who / where / when question."
+    )
+    return (
+        f"Closest match from “{best['title']}” ({best['kindLabel']}):\n\n"
+        f"{best['excerpt']}\n\n"
+        f"{hint}\n\n"
+        "— Pulled from your notes only. Nothing invented."
+    )
+
+
+def _who_or_knowledge_label(question: str, local_pipeline: dict[str, Any]) -> str:
+    targets = character_targets(question)
+    if targets:
+        return targets[0]
+    if is_who_is_question(question):
+        return "that character"
+    return ""
+
+
+def _merge_ranked_for_plan(
+    question: str,
+    scoped: list[dict[str, Any]],
+    ranked: list[dict[str, Any]],
+    plan: AskPlan | None,
+) -> list[dict[str, Any]]:
+    if not plan:
+        return ranked
+    merged = list(ranked)
+    seen = {str(r.get("id") or "") for r in merged}
+    if plan.use_draft_tail:
+        for row in ranked_draft_tail_rows(scoped, question, kind_label=_kind_label):
+            rid = str(row.get("id") or "")
+            if rid and rid not in seen:
+                seen.add(rid)
+                merged.insert(0, row)
+    labels = character_labels_for_plan(plan, scoped)
+    if labels:
+        portrait = plan.intent == "character_portrait"
+        cap = 14 if portrait else 8
+        added = 0
+        for entry in scoped:
+            if added >= cap:
+                break
+            if not isinstance(entry, dict):
+                continue
+            blob = f"{entry.get('title') or ''} {entry.get('body') or ''}".lower()
+            if not any(lab.lower() in blob for lab in labels):
+                continue
+            eid = str(entry.get("id") or "")
+            if eid in seen:
+                for row in merged:
+                    if row.get("id") == eid:
+                        row["score"] = int(row.get("score") or 0) + 25
+                continue
+            merged.append(
+                {
+                    "id": eid,
+                    "title": str(entry.get("title") or "Untitled"),
+                    "kind": str(entry.get("kind") or "note"),
+                    "kindLabel": _kind_label(str(entry.get("kind") or "note")),
+                    "score": 50 if portrait else 40,
+                    "excerpt": str(entry.get("body") or "")[:400],
+                    "body": str(entry.get("body") or "")[:8000],
+                }
+            )
+            seen.add(eid)
+            added += 1
+    merged.sort(key=lambda r: r.get("score", 0), reverse=True)
+    return merged
+
+
+def local_pipeline_skips_rag(
+    question: str,
+    local_pipeline: dict[str, Any],
+    scoped: list[dict[str, Any]],
+    *,
+    spot_check: bool = False,
+    plan: AskPlan | None = None,
+) -> bool:
+    """True when local answer is good enough — do not call RAG (#3, knowledge POV)."""
+    if plan:
+        knowledge_narrow = plan.intent == "narrow_fact" and (
+            is_knowledge_pov_question(question) or is_awareness_question(question)
+        )
+        if (
+            plan.pipeline == "rag_summarize"
+            and plan.intent != "character_portrait"
+            and not knowledge_narrow
+        ):
+            return False
+        if plan.pipeline == "rag_cast_card":
+            kind = "who"
+        else:
+            kind = plan.question_kind
+    else:
+        kind = str(local_pipeline.get("questionKind") or route_question(question))
+    state = str(local_pipeline.get("materialState") or "")
+    answer = str(local_pipeline.get("answer") or "")
+
+    if spot_check and kind not in ("who", "knowledge"):
+        if plan and plan.intent in ("character_portrait", "narrow_fact"):
+            pass
+        elif kind == "topic" and extract_section_hints(question) and state == "summarizable":
+            return bool(answer.strip())
+        else:
+            return False
+
+    if kind == "resume" or is_story_position_question(question):
+        if plan and plan.pipeline == "rag_resume":
+            return False
+        if not answer.strip():
+            return False
+        if answer.count("•") >= 2 or answer.count("\n- ") >= 2:
+            return False
+        if "latest draft" in answer.lower() and len(answer) > 100:
+            return True
+        return len(answer) > 180
+
+    if plan and plan.intent == "character_portrait":
+        if not answer.strip():
+            return False
+        low = answer.lower()
+        if "nothing saved" in low or "couldn't find" in low:
+            return False
+        if answer.count("•") >= 3 and "what you've written" in low:
+            return False
+        labels = character_labels_for_plan(plan, scoped) or character_targets(question)
+        label = labels[0] if labels else ""
+        if label and cast_answer_is_thin(answer, label):
+            return False
+        return len(answer.strip()) > 100
+
+    if kind in ("planned_gaps", "flagged_fix"):
+        return bool(answer.strip())
+
+    if kind in ("who", "knowledge") or is_who_is_question(question) or is_knowledge_pov_question(
+        question
+    ):
+        label = _who_or_knowledge_label(question, local_pipeline)
+        if state == "nothing_saved" and scoped:
+            return False
+        if label and cast_answer_is_thin(answer, label):
+            return False
+        if kind == "knowledge" and not answer.strip():
+            return False
+        if kind == "knowledge" and "nothing saved yet" in answer.lower():
+            return False
+        return bool(answer.strip())
+
+    if kind == "coverage":
+        if not answer.strip():
+            return False
+        low = answer.lower()
+        if "nothing saved" in low or "couldn't find" in low:
+            return False
+        if "from what you've saved" in low or "•" in answer:
+            return len(answer.strip()) > 60
+        return False
+
+    # What/topic and other shapes — local gather is a stub; prefer RAG.
+    return False
 
 
 def recall_from_user_data(
@@ -307,6 +602,9 @@ def recall_from_user_data(
     *,
     client_documents: list[dict[str, Any]] | str | None = None,
     client_entries: list[dict[str, Any]] | str | None = None,
+    mode: str = "full",
+    scope: dict[str, Any] | None = None,
+    spot_check: bool = False,
 ) -> dict[str, Any]:
     question = (question or "").strip()
     if not question:
@@ -314,49 +612,359 @@ def recall_from_user_data(
     if len(question) > 2000:
         question = question[:2000]
 
-    data = dict(user_data or {})
-    if client_documents is not None:
-        if isinstance(client_documents, list):
-            data[DOCUMENTS_KEY] = json.dumps(client_documents)
-        elif isinstance(client_documents, str):
-            data[DOCUMENTS_KEY] = client_documents
-    if client_entries is not None:
-        if isinstance(client_entries, list):
-            data[ENTRIES_KEY] = json.dumps(client_entries)
-        elif isinstance(client_entries, str):
-            data[ENTRIES_KEY] = client_entries
+    def _finish(payload: dict[str, Any]) -> dict[str, Any]:
+        if payload.get("ok"):
+            return focus_ask_response(question, payload, spot_check=spot_check)
+        return payload
+
+    scope_mode = "work"
+    scope_work = ""
+    scope_doc_id = ""
+    if isinstance(scope, dict):
+        scope_mode = str(scope.get("mode") or "work").strip().lower()
+        scope_work = str(scope.get("workTitle") or "").strip()
+        scope_doc_id = str(scope.get("documentId") or "").strip()
+    if scope_work:
+        question = augment_question_with_scope_work(question, scope_work)
+
+    data = merge_recall_user_data(
+        user_data or {},
+        client_documents=client_documents,
+        client_entries=client_entries,
+    )
 
     entries = _all_entries(data)
-    if not entries:
-        return {
-            "ok": True,
-            "answer": "You don't have any saved entries yet. Add notes first, then ask again.",
-            "sources": [],
-            "mode": "local",
-            "entryCount": 0,
-        }
+    recall_mode = "brief" if (mode or "").strip().lower() == "brief" else "full"
 
-    ranked = _rank_entries(question, entries)
-    summary_ids = character_summary_sources(question, entries)
+    section_hints = extract_section_hints(question)
+    if section_hints:
+        section_scoped = filter_entries_by_section(entries, section_hints)
+        if section_scoped:
+            entries = section_scoped
+        else:
+            work_hints_early = extract_work_hints(question, entries)
+            return _finish({
+                "ok": True,
+                "answer": format_section_nothing_saved(work_hints_early, section_hints),
+                "sources": [],
+                "materialState": "nothing_saved",
+                "mode": recall_mode,
+                "questionKind": route_question(question),
+                "recallVersion": RECALL_VERSION,
+                "recallEngine": "local",
+                "entryCount": len(_all_entries(data)),
+            })
+
+    if scope_work or (scope_mode == "document" and scope_doc_id):
+        entries, scope_hints, scope_strict = filter_entries_by_recall_scope(
+            entries,
+            work_title=scope_work,
+            document_id=scope_doc_id,
+            scope_mode=scope_mode,
+        )
+    else:
+        scope_hints = set()
+        scope_strict = False
+
+    if not entries:
+        return _finish({
+            "ok": True,
+            "answer": format_nothing_saved(question, set()),
+            "sources": [],
+            "materialState": "nothing_saved",
+            "mode": recall_mode,
+            "questionKind": "fallback",
+            "recallVersion": RECALL_VERSION,
+            "recallEngine": "local",
+            "entryCount": 0,
+        })
+
+    known_works = distinct_work_tags(entries)
+    explicit = prefer_known_work_hints(
+        explicit_work_hints(question, known_works, entries), known_works
+    )
+    work_hints = prefer_known_work_hints(
+        extract_work_hints(question, entries), known_works
+    )
+    strict_work = bool(explicit)
+    if scope_hints:
+        work_hints = set(scope_hints)
+        strict_work = scope_strict
+        # Known explicit work titles refine scope; junk never wipes doc/work scope.
+        if explicit:
+            work_hints = explicit | set(scope_hints)
+            strict_work = True
+    elif explicit:
+        work_hints = explicit
+        strict_work = True
+    elif work_hints:
+        strict_work = False
+
+    disambiguation = check_work_disambiguation(
+        question,
+        entries,
+        scope_work=scope_work,
+        strict_work=strict_work,
+    )
+    if disambiguation:
+        return _finish({
+            "ok": True,
+            "answer": disambiguation,
+            "sources": [],
+            "materialState": "fragments_only",
+            "mode": recall_mode,
+            "questionKind": "fallback",
+            "recallVersion": RECALL_VERSION,
+            "recallEngine": "local",
+            "entryCount": len(entries),
+        })
+
+    scoped = filter_entries_by_work(entries, work_hints, strict=strict_work)
+
+    if strict_work and not scoped:
+        label = character_targets(question)
+        target = label[0] if label else None
+        return _finish({
+            "ok": True,
+            "answer": format_nothing_saved(question, work_hints, target_label=target),
+            "sources": [],
+            "materialState": "nothing_saved",
+            "mode": recall_mode,
+            "questionKind": route_question(question),
+            "recallVersion": RECALL_VERSION,
+            "recallEngine": "local",
+            "entryCount": len(entries),
+        })
+
+    ask_plan: AskPlan | None = local_ask_plan(question)
+    if ask_plan is None and rag_enabled():
+        ask_plan = route_ask_question(question, entry_hints_for_router(scoped))
+    elif ask_plan is None:
+        ask_plan = default_ask_plan(question)
+
+    plan_section = section_hints_from_plan(ask_plan)
+    if plan_section:
+        section_scoped = filter_entries_by_section(scoped, plan_section)
+        if section_scoped:
+            scoped = section_scoped
+        elif not section_hints:
+            return _finish({
+                "ok": True,
+                "answer": format_section_nothing_saved(work_hints, plan_section),
+                "sources": [],
+                "materialState": "nothing_saved",
+                "mode": recall_mode,
+                "questionKind": ask_plan.question_kind,
+                "recallVersion": RECALL_VERSION,
+                "recallEngine": "local",
+                "entryCount": len(entries),
+            })
+
+    effective_kind = ask_plan.question_kind if ask_plan else route_question(question)
+
+    def _attach_router_meta(payload: dict[str, Any]) -> dict[str, Any]:
+        if ask_plan:
+            payload["routerEngine"] = ask_plan.router_engine
+            payload["askIntent"] = ask_plan.intent
+            payload["askPipeline"] = ask_plan.pipeline
+        return payload
+
+    def _finish_local_pipeline(pipeline: dict[str, Any]) -> dict[str, Any]:
+        return _finish(_attach_router_meta({
+            "ok": True,
+            "answer": pipeline["answer"],
+            "sources": pipeline["sources"],
+            "materialState": pipeline["materialState"],
+            "mode": recall_mode,
+            "questionKind": pipeline.get("questionKind") or effective_kind,
+            "recallVersion": RECALL_VERSION,
+            "recallEngine": "local",
+            "entryCount": len(entries),
+        }))
+
+    knowledge_narrow = ask_plan and ask_plan.intent == "narrow_fact" and (
+        is_knowledge_pov_question(question) or is_awareness_question(question)
+    )
+    skip_local = (
+        ask_plan
+        and ask_plan.pipeline == "rag_summarize"
+        and ask_plan.intent != "character_portrait"
+        and not knowledge_narrow
+    )
+    local_pipeline = None
+    if not skip_local:
+        local_pipeline = answer_for_work(
+            question,
+            scoped,
+            work_hints=work_hints,
+            strict_work=strict_work,
+            mode=recall_mode,
+            tokenize=_tokenize,
+            best_excerpt=_best_excerpt,
+            kind_label=_kind_label,
+        )
+    if local_pipeline is not None:
+        if local_pipeline_skips_rag(
+            question, local_pipeline, scoped, spot_check=spot_check, plan=ask_plan
+        ):
+            return _finish_local_pipeline(local_pipeline)
+
+    if ask_plan and is_awareness_question(question):
+        if local_pipeline and str(local_pipeline.get("answer") or "").strip():
+            return _finish_local_pipeline(local_pipeline)
+        parts = awareness_parts(question)
+        subject = parts[0] if parts else "they"
+        topic = parts[1] if parts else "that topic"
+        work_title = work_title_from_hints(work_hints) if work_hints else ""
+        where = f" in {work_title}" if work_title else ""
+        return _finish(_attach_router_meta({
+            "ok": True,
+            "answer": (
+                f"From what you've saved{where}, {subject}'s awareness of {topic} "
+                f"isn't spelled out yet in a clear note — add what they know right now."
+            ),
+            "sources": [],
+            "materialState": "nothing_saved",
+            "mode": recall_mode,
+            "questionKind": "knowledge",
+            "recallVersion": RECALL_VERSION,
+            "recallEngine": "local",
+            "entryCount": len(entries),
+        }))
+
+    if rag_enabled():
+        try:
+            def _augment_with_plan(q: str, sc: list[dict[str, Any]], ranked: list[dict[str, Any]]):
+                boosted = augment_ranked_for_targets(
+                    q,
+                    sc,
+                    ranked,
+                    rank_entry=_score_entry,
+                    kind_label=_kind_label,
+                    best_excerpt=_best_excerpt,
+                    tokenize=_tokenize,
+                )
+                return _merge_ranked_for_plan(q, sc, boosted, ask_plan)
+
+            rag_result = answer_with_rag(
+                question,
+                scoped,
+                mode=recall_mode,
+                rank_entries=_rank_entries,
+                augment_ranked=_augment_with_plan,
+                question_kind=effective_kind,
+                plan=ask_plan,
+            )
+            targets = character_labels_for_plan(ask_plan, scoped) if ask_plan else character_targets(question)
+            label = targets[0] if targets else ""
+            if (
+                effective_kind == "who"
+                and label
+                and cast_answer_is_thin(rag_result.get("answer") or "", label)
+            ):
+                pipeline = answer_for_work(
+                    question,
+                    scoped,
+                    work_hints=work_hints,
+                    strict_work=strict_work,
+                    mode=recall_mode,
+                    tokenize=_tokenize,
+                    best_excerpt=_best_excerpt,
+                    kind_label=_kind_label,
+                )
+                if pipeline and not cast_answer_is_thin(
+                    pipeline.get("answer") or "", label
+                ):
+                    return _finish({
+                        "ok": True,
+                        "answer": pipeline["answer"],
+                        "sources": pipeline["sources"],
+                        "materialState": pipeline["materialState"],
+                        "mode": recall_mode,
+                        "questionKind": pipeline["questionKind"],
+                        "recallVersion": RECALL_VERSION,
+                        "recallEngine": "local",
+                        "entryCount": len(entries),
+                    })
+            return _finish(_attach_router_meta({
+                "ok": True,
+                "answer": rag_result["answer"],
+                "sources": rag_result["sources"],
+                "materialState": rag_result["materialState"],
+                "mode": recall_mode,
+                "questionKind": rag_result.get("questionKind", effective_kind),
+                "recallVersion": RECALL_VERSION,
+                "recallEngine": "rag",
+                "retrievalCount": rag_result.get("retrievalCount", 0),
+                "entryCount": len(entries),
+                "answerModel": rag_result.get("answerModel"),
+            }))
+        except Exception as exc:
+            import sys
+
+            print(f"LoreKeeper RAG failed, falling back to local: {exc}", file=sys.stderr)
+
+    pipeline = answer_for_work(
+        question,
+        scoped,
+        work_hints=work_hints,
+        strict_work=strict_work,
+        mode=recall_mode,
+        tokenize=_tokenize,
+        best_excerpt=_best_excerpt,
+        kind_label=_kind_label,
+    )
+    if pipeline is not None:
+        return _finish_local_pipeline(pipeline)
+
+    ranked = _rank_entries(question, scoped)
+    ranked = augment_ranked_for_targets(
+        question,
+        scoped,
+        ranked,
+        rank_entry=_score_entry,
+        kind_label=_kind_label,
+        best_excerpt=_best_excerpt,
+        tokenize=_tokenize,
+    )
+    summary_ids = character_summary_sources(question, scoped)
     if summary_ids:
         id_set = set(summary_ids)
-        ranked = [r for r in ranked if r["id"] in id_set] + [r for r in ranked if r["id"] not in id_set]
-    answer = _local_answer(question, ranked, entries)
+        ranked = [r for r in ranked if r["id"] in id_set] + [
+            r for r in ranked if r["id"] not in id_set
+        ]
+    ranked = filter_ranked_by_threshold(ranked, question)
 
-    sources = [
-        {
-            "id": row["id"],
-            "title": row["title"],
-            "kind": row["kind"],
-            "kindLabel": row["kindLabel"],
-            "excerpt": row["excerpt"],
-        }
-        for row in ranked[:6]
-    ]
-    return {
+    answer = _legacy_fallback_answer(
+        question, ranked, scoped, work_hints=work_hints, strict_work=strict_work
+    )
+    material_state = classify_material(
+        question,
+        scoped,
+        ranked,
+        answer,
+        strict_work=strict_work,
+        work_hints=work_hints,
+    )
+    answer = demote_synthesis(question, answer, ranked, material_state)
+    material_state = classify_material(
+        question,
+        scoped,
+        ranked,
+        answer,
+        strict_work=strict_work,
+        work_hints=work_hints,
+    )
+
+    sources = sources_from_ranked(ranked, material_state)
+    return _finish({
         "ok": True,
         "answer": answer,
         "sources": sources,
-        "mode": "local",
+        "materialState": material_state,
+        "mode": recall_mode,
+        "questionKind": "fallback",
+        "recallVersion": RECALL_VERSION,
+        "recallEngine": "local",
         "entryCount": len(entries),
-    }
+    })
