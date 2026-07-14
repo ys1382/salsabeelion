@@ -280,8 +280,11 @@ def catalog_search_url(place: dict[str, Any], title: str, author: str = "") -> s
     q = title.strip()
     if author.strip():
         q = f"{q} {author.strip()}"
-    params = urllib.parse.urlencode({"query": q, "searchType": "title"})
-    return f"https://{host}/v2/search?{params}"
+    params: dict[str, str] = {"query": q, "searchType": "title"}
+    branch_filter = _branch_filter_value(place)
+    if branch_filter:
+        params["f_BRANCH"] = branch_filter
+    return f"https://{host}/v2/search?{urllib.parse.urlencode(params)}"
 
 
 def catalog_record_url(place: dict[str, Any], metadata_id: str) -> str:
@@ -289,7 +292,22 @@ def catalog_record_url(place: dict[str, Any], metadata_id: str) -> str:
     if not mid:
         return catalog_search_url(place, "")
     host = str(place.get("catalogHost") or "")
-    return f"https://{host}/v2/record/{urllib.parse.quote(mid)}"
+    url = f"https://{host}/v2/record/{urllib.parse.quote(mid)}"
+    branch_filter = _branch_filter_value(place)
+    if branch_filter:
+        url += "?" + urllib.parse.urlencode({"f_BRANCH": branch_filter})
+    return url
+
+
+def _branch_filter_value(place: dict[str, Any]) -> str:
+    """
+    Branch-scoped places share a system catalog; append f_BRANCH so
+    “Open on library site” lands filtered to that building (e.g. Mission).
+    """
+    scope = str(place.get("availabilityScope") or "branch").strip().lower()
+    if scope != "branch":
+        return ""
+    return str(place.get("branchName") or "").strip()
 
 
 def _bib_format(bib: dict[str, Any]) -> str:
