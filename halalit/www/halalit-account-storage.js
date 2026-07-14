@@ -32,6 +32,7 @@
     "halalitContinueSeriesPrefs",
     "halalitShelfAltListView",
     "halalitContinueSeriesDiscontinued",
+    "halalitLibraryFavoritePlaces",
     "halalitReaderModel",
     "halalitPendingReview",
   ];

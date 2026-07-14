@@ -1408,6 +1408,90 @@
       opacity: 0.55;
       cursor: not-allowed;
     }
+    .library-avail__favorites {
+      margin: 0 0 0.85rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .library-avail__fav-heading {
+      font-family: system-ui, "Segoe UI", sans-serif;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--ink);
+      margin: 0 0 0.35rem;
+    }
+    .library-avail__fav-hint {
+      font-family: system-ui, "Segoe UI", sans-serif;
+      font-size: 0.84rem;
+      color: var(--dim);
+      margin: 0 0 0.55rem;
+      line-height: 1.45;
+    }
+    .library-avail__fav-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+    .library-avail__fav-label {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+      font-family: system-ui, "Segoe UI", sans-serif;
+      font-size: 0.88rem;
+      color: var(--ink);
+      cursor: pointer;
+      line-height: 1.35;
+    }
+    .library-avail__fav-check {
+      margin-top: 0.15rem;
+      flex-shrink: 0;
+    }
+    .library-avail__batch-heading {
+      font-family: system-ui, "Segoe UI", sans-serif;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--dim);
+      margin: 0 0 0.35rem;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+    .library-avail-tip {
+      position: fixed;
+      z-index: 80;
+      max-width: min(320px, calc(100vw - 24px));
+      padding: 0.55rem 0.75rem;
+      border-radius: 10px;
+      border: 1px solid rgba(227, 184, 106, 0.35);
+      background: rgba(28, 22, 18, 0.96);
+      color: var(--ink);
+      font-family: system-ui, "Segoe UI", sans-serif;
+      font-size: 0.84rem;
+      line-height: 1.4;
+      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+      pointer-events: none;
+      opacity: 0;
+      transform: translateY(4px);
+      transition: opacity 0.16s ease, transform 0.16s ease;
+    }
+    .library-avail-tip.is-visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .library-avail-tip.is-yes {
+      border-color: rgba(170, 200, 140, 0.45);
+    }
+    .library-avail-tip.is-muted {
+      border-color: rgba(255, 255, 255, 0.12);
+      color: var(--dim);
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .library-avail-tip {
+        transition: none;
+      }
+    }
     #importResult {
       font-family: system-ui, "Segoe UI", sans-serif;
       font-size: 0.85rem;
@@ -2403,18 +2487,20 @@
     <div class="library-stage" id="wishlistStage" aria-live="polite"></div>
     <div class="library-toolbar" style="padding-top:0.25rem">
       <div class="library-avail-panel" id="wishlistLibraryCheckPanel">
+        <div class="library-avail__favorites" id="wishlistLibraryFavorites"></div>
+        <p class="library-avail__batch-heading">Optional batch check</p>
         <p class="hint" style="margin-top:0">
-          Practice check: pick a library, then see which wishlist titles have a <strong>borrowable</strong> copy
-          there (checked out still counts). <strong>Central Park</strong> means that city branch;
+          Still want a full pass? Pick one library and check the first 10 wishlist titles for a
+          <strong>borrowable</strong> copy (checked out still counts). <strong>Central Park</strong> means that city branch;
           <strong>Cupertino</strong> means Santa Clara County Library (holds from other county branches count).
-          Halalit is not the library — open their site to confirm. Starts with the first 10 on your list.
+          Halalit is not the library — open their site to confirm.
         </p>
         <div class="library-avail__controls">
           <label class="library-avail__place-label" for="wishlistLibraryPlaceSelect">Choose library</label>
           <select
             class="library-avail__place"
             id="wishlistLibraryPlaceSelect"
-            aria-label="Choose library"
+            aria-label="Choose library for batch check"
           >
             <option value="">Choose library</option>
             <option value="santa-clara-central-park">Santa Clara Central Park Library</option>
@@ -2669,15 +2755,14 @@
   </footer>
   <script src="./halalit-handheld-device.js?v=20260610i"></script>
   <script src="./halalit-bookcheck-config.js?v=20260610a"></script>
-  <script src="./halalit-account-storage.js?v=20260610g"></script>
+  <script src="./halalit-account-storage.js?v=20260714a"></script>
   <script src="./halalit-owner-feedback.js?v=20260610d"></script>
   <script src="./halalit-site-flags.js?v=20260610b"></script>
   <script src="./halalit-pacific-occasion-banner.js?v=20260601b"></script>
   <script src="./halalit-personal-library.js?v=20260610g"></script>
   <script src="./halalit-series-expand.js?v=20260528b"></script>
   <script src="./halalit-want-to-read.js?v=20260527a"></script>
-  <script src="./halalit-library-avail.js?v=20260714f"></script>
-  <script src="./halalit-book-spine.js?v=20260528a"></script>
+  <script src="./halalit-library-avail.js?v=20260714f"></script>  <script src="./halalit-book-spine.js?v=20260528a"></script>
   <script src="./halalit-open-library-enrich.js?v=20260610h"></script>
   <script src="./halalit-shelf-series-group.js?v=20260527a"></script>
   <script src="./halalit-reader-series.js?v=20260528b"></script>
@@ -3200,6 +3285,13 @@
               n === 0 ? "No titles yet." : String(n) + (n === 1 ? " title" : " titles") + " in list view.";
           }
         }
+        if (
+          isWish &&
+          window.HalalitLibraryAvail &&
+          typeof window.HalalitLibraryAvail.refreshWishlistTips === "function"
+        ) {
+          window.HalalitLibraryAvail.refreshWishlistTips();
+        }
         return true;
       }
 
@@ -3491,6 +3583,12 @@
         opts = opts || {};
         if (renderBookListView("wish")) return;
         renderShelfWall("wish", opts);
+        if (
+          window.HalalitLibraryAvail &&
+          typeof window.HalalitLibraryAvail.refreshWishlistTips === "function"
+        ) {
+          window.HalalitLibraryAvail.refreshWishlistTips();
+        }
       }
 
       function normalizeSeriesName(s) {

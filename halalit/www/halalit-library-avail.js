@@ -1,11 +1,15 @@
 /**
- * Halalit — Wishlist library availability (practice).
- * Choose a library from the dropdown, then check borrowable copies at that branch
- * (checked out OK). Places: Central Park + Mission (city) + Cupertino (Santa Clara County).
+ * Halalit — Wishlist library availability.
+ * Favorites: save places, hover/focus a wishlist title for a soft tip across them.
+ * Batch fallback: choose one library, check the first N wishlist titles.
+ * Places: Central Park + Mission (city) + Cupertino (Santa Clara County).
  */
 (function (global) {
   var BATCH_CAP = 10;
   var DELAY_MS = 400;
+  var HOVER_DEBOUNCE_MS = 280;
+  var CLIENT_CACHE_TTL_MS = 15 * 60 * 1000;
+  var FAVORITES_KEY = "halalitLibraryFavoritePlaces";
 
   /** Keep in sync with server PLACES in library_catalog_check.py */
   var PLACES = [
@@ -26,6 +30,12 @@
     },
   ];
 
+  var clientCache = Object.create(null);
+  var tipGen = 0;
+  var tipTimer = null;
+  var tipEl = null;
+  var tipHideTimer = null;
+
   function apiUrl() {
     var Cfg = global.HalalitBookcheckConfig;
     if (!Cfg || typeof Cfg.apiBase !== "function") return "";
@@ -35,6 +45,10 @@
       return base.replace(/\/$/, "") + "/library/check";
     }
     return base.replace(/\/$/, "") + "/api/library/check";
+  }
+
+  function storage() {
+    return global.HalalitAccountStorage || null;
   }
 
   function wishList() {
@@ -66,6 +80,51 @@
     return findPlace(sel.value);
   }
 
+  function normalizeFavoriteIds(raw) {
+    var out = [];
+    var seen = Object.create(null);
+    if (!Array.isArray(raw)) return out;
+    for (var i = 0; i < raw.length; i++) {
+      var id = String(raw[i] || "").trim();
+      if (!id || seen[id] || !findPlace(id)) continue;
+      seen[id] = true;
+      out.push(id);
+    }
+    return out;
+  }
+
+  function loadFavorites() {
+    var Store = storage();
+    if (!Store || typeof Store.getItem !== "function") return [];
+    try {
+      var raw = Store.getItem(FAVORITES_KEY);
+      if (!raw) return [];
+      return normalizeFavoriteIds(JSON.parse(raw));
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function saveFavorites(ids) {
+    var Store = storage();
+    var cleaned = normalizeFavoriteIds(ids);
+    if (!Store || typeof Store.setItem !== "function") return cleaned;
+    try {
+      Store.setItem(FAVORITES_KEY, JSON.stringify(cleaned));
+    } catch (e) {}
+    return cleaned;
+  }
+
+  function favoritePlaces() {
+    var ids = loadFavorites();
+    var out = [];
+    for (var i = 0; i < ids.length; i++) {
+      var p = findPlace(ids[i]);
+      if (p) out.push(p);
+    }
+    return out;
+  }
+
   function statusLabel(status, reason, shortLabel) {
     var short = shortLabel || "this library";
     if (status === "yes") return "Borrowable at " + short;
@@ -82,7 +141,38 @@
     return "library-avail-row--uncertain";
   }
 
+  function entryCacheKey(entry, placeId) {
+    var Lib = global.HalalitPersonalLibrary;
+    var title = entry && entry.title ? entry.title : "";
+    var author = entry && entry.author ? entry.author : "";
+    var nk =
+      Lib && typeof Lib.normalizeKey === "function"
+        ? Lib.normalizeKey(title, author)
+        : String(title).toLowerCase() + "|" + String(author).toLowerCase();
+    var isbn = entry && entry.isbn ? String(entry.isbn) : "";
+    return String(placeId || "") + "|" + nk + "|" + isbn;
+  }
+
+  function cacheGet(entry, placeId) {
+    var key = entryCacheKey(entry, placeId);
+    var hit = clientCache[key];
+    if (!hit) return null;
+    if (Date.now() - hit.at > CLIENT_CACHE_TTL_MS) {
+      delete clientCache[key];
+      return null;
+    }
+    return hit.res;
+  }
+
+  function cacheSet(entry, placeId, res) {
+    clientCache[entryCacheKey(entry, placeId)] = { at: Date.now(), res: res };
+  }
+
   function checkOne(entry, placeId) {
+    var cached = cacheGet(entry, placeId);
+    if (cached) {
+      return Promise.resolve(cached);
+    }
     var url = apiUrl();
     if (!url) {
       return Promise.resolve({
@@ -118,6 +208,7 @@
             };
           }
           body._httpOk = res.ok;
+          cacheSet(entry, placeId, body);
           return body;
         });
       })
@@ -139,14 +230,307 @@
     });
   }
 
+  /**
+   * Check one wishlist entry across favorite places (sequential, cache-friendly).
+   * @returns {Promise<{places: Array, yes: Array, no: Array, uncertain: Array}>}
+   */
+  function checkAcrossFavorites(entry, opts) {
+    opts = opts || {};
+    var places = opts.places || favoritePlaces();
+    var delay = opts.delayMs != null ? opts.delayMs : DELAY_MS;
+    var onProgress = typeof opts.onProgress === "function" ? opts.onProgress : null;
+    var rows = [];
+    var chain = Promise.resolve();
+
+    if (!entry || !places.length) {
+      return Promise.resolve({ places: places, yes: [], no: [], uncertain: [], rows: [] });
+    }
+
+    places.forEach(function (place, idx) {
+      chain = chain.then(function () {
+        if (onProgress) onProgress(idx, places.length, place);
+        return checkOne(entry, place.placeId).then(function (res) {
+          var row = {
+            place: place,
+            status: res.status || "uncertain",
+            reason: res.reason || "",
+            matchTitle: res.matchTitle || null,
+            catalogUrl: res.catalogUrl || "",
+            libraryStatus: res.libraryStatus || null,
+          };
+          rows.push(row);
+          if (idx < places.length - 1) return sleep(delay);
+        });
+      });
+    });
+
+    return chain.then(function () {
+      var yes = [];
+      var no = [];
+      var uncertain = [];
+      for (var i = 0; i < rows.length; i++) {
+        if (rows[i].status === "yes") yes.push(rows[i]);
+        else if (rows[i].status === "no") no.push(rows[i]);
+        else uncertain.push(rows[i]);
+      }
+      return { places: places, yes: yes, no: no, uncertain: uncertain, rows: rows };
+    });
+  }
+
+  function formatYesTip(yesRows) {
+    if (!yesRows.length) return "";
+    var labels = yesRows.map(function (r) {
+      return r.place.shortLabel || r.place.placeLabel;
+    });
+    if (labels.length === 1) {
+      return "Currently available at " + labels[0] + " (one of your favorites).";
+    }
+    if (labels.length === 2) {
+      return "Currently available at " + labels[0] + " and " + labels[1] + ".";
+    }
+    var last = labels[labels.length - 1];
+    var head = labels.slice(0, -1).join(", ");
+    return "Currently available at " + head + ", and " + last + ".";
+  }
+
+  function tipMessageFromResult(result) {
+    if (!result || !result.places || !result.places.length) {
+      return "Add favorite libraries below — then hover a wishlist book to see if it’s there.";
+    }
+    if (result.yes && result.yes.length) {
+      return formatYesTip(result.yes);
+    }
+    if (result.uncertain && result.uncertain.length && !(result.no && result.no.length)) {
+      return "Couldn’t confirm availability at your favorite libraries right now.";
+    }
+    if (result.uncertain && result.uncertain.length) {
+      return "Not clearly available at your favorites (some checks couldn’t confirm).";
+    }
+    return "Not showing as borrowable at your favorite libraries right now.";
+  }
+
+  function ensureTipEl() {
+    if (tipEl && tipEl.parentNode) return tipEl;
+    tipEl = document.getElementById("wishlistAvailTip");
+    if (!tipEl) {
+      tipEl = document.createElement("div");
+      tipEl.id = "wishlistAvailTip";
+      tipEl.className = "library-avail-tip";
+      tipEl.setAttribute("role", "status");
+      tipEl.setAttribute("aria-live", "polite");
+      tipEl.hidden = true;
+      document.body.appendChild(tipEl);
+    }
+    return tipEl;
+  }
+
+  function hideTipSoon() {
+    if (tipHideTimer) clearTimeout(tipHideTimer);
+    tipHideTimer = setTimeout(function () {
+      tipHideTimer = null;
+      var el = ensureTipEl();
+      el.hidden = true;
+      el.classList.remove("is-visible", "is-yes", "is-muted");
+    }, 180);
+  }
+
+  function showTip(anchorEl, text, kind) {
+    if (tipHideTimer) {
+      clearTimeout(tipHideTimer);
+      tipHideTimer = null;
+    }
+    var el = ensureTipEl();
+    el.textContent = text || "";
+    el.classList.toggle("is-yes", kind === "yes");
+    el.classList.toggle("is-muted", kind === "muted" || kind === "checking");
+    el.hidden = false;
+    el.classList.add("is-visible");
+
+    if (!anchorEl || !anchorEl.getBoundingClientRect) return;
+    var rect = anchorEl.getBoundingClientRect();
+    var tipW = Math.min(320, Math.max(180, el.offsetWidth || 240));
+    var left = rect.left + rect.width / 2 - tipW / 2;
+    left = Math.max(12, Math.min(left, window.innerWidth - tipW - 12));
+    var top = rect.top - 12;
+    el.style.width = tipW + "px";
+    el.style.left = left + "px";
+    // Place above when there’s room; otherwise below.
+    requestAnimationFrame(function () {
+      var h = el.offsetHeight || 40;
+      var above = rect.top - h - 10;
+      if (above >= 8) {
+        el.style.top = above + "px";
+        el.classList.remove("library-avail-tip--below");
+      } else {
+        el.style.top = rect.bottom + 10 + "px";
+        el.classList.add("library-avail-tip--below");
+      }
+    });
+  }
+
+  function entryFromIndex(idx) {
+    var list = wishList();
+    if (idx < 0 || idx >= list.length) return null;
+    return list[idx];
+  }
+
+  function runHoverCheck(anchorEl, entry) {
+    tipGen += 1;
+    var myGen = tipGen;
+    var places = favoritePlaces();
+    if (!places.length) {
+      showTip(
+        anchorEl,
+        "Add favorite libraries below — then hover a wishlist book to see if it’s there.",
+        "muted"
+      );
+      return;
+    }
+    if (!entry) return;
+
+    showTip(anchorEl, "Checking your favorite libraries…", "checking");
+
+    checkAcrossFavorites(entry, {
+      places: places,
+      delayMs: DELAY_MS,
+      onProgress: function (idx, total) {
+        if (myGen !== tipGen) return;
+        showTip(
+          anchorEl,
+          "Checking your favorite libraries… (" + (idx + 1) + "/" + total + ")",
+          "checking"
+        );
+      },
+    }).then(function (result) {
+      if (myGen !== tipGen) return;
+      var kind = result.yes && result.yes.length ? "yes" : "muted";
+      showTip(anchorEl, tipMessageFromResult(result), kind);
+    });
+  }
+
+  function scheduleHoverCheck(anchorEl, entry) {
+    if (tipTimer) clearTimeout(tipTimer);
+    tipTimer = setTimeout(function () {
+      tipTimer = null;
+      runHoverCheck(anchorEl, entry);
+    }, HOVER_DEBOUNCE_MS);
+  }
+
+  function cancelHoverSchedule() {
+    if (tipTimer) {
+      clearTimeout(tipTimer);
+      tipTimer = null;
+    }
+    tipGen += 1;
+    hideTipSoon();
+  }
+
+  function bindWishlistTipRoot(root) {
+    if (!root || root.getAttribute("data-halalit-avail-tip") === "1") return;
+    root.setAttribute("data-halalit-avail-tip", "1");
+
+    root.addEventListener("pointerover", function (ev) {
+      var el = ev.target && ev.target.closest ? ev.target.closest("[data-halalit-index]") : null;
+      if (!el || !root.contains(el)) return;
+      if (ev.relatedTarget && el.contains(ev.relatedTarget)) return;
+      var idx = parseInt(el.getAttribute("data-halalit-index"), 10);
+      if (isNaN(idx)) return;
+      scheduleHoverCheck(el, entryFromIndex(idx));
+    });
+
+    root.addEventListener("pointerout", function (ev) {
+      var el = ev.target && ev.target.closest ? ev.target.closest("[data-halalit-index]") : null;
+      if (!el || !root.contains(el)) return;
+      if (ev.relatedTarget && el.contains(ev.relatedTarget)) return;
+      cancelHoverSchedule();
+    });
+
+    root.addEventListener("focusin", function (ev) {
+      var el = ev.target && ev.target.closest ? ev.target.closest("[data-halalit-index]") : null;
+      if (!el || !root.contains(el)) return;
+      var idx = parseInt(el.getAttribute("data-halalit-index"), 10);
+      if (isNaN(idx)) return;
+      scheduleHoverCheck(el, entryFromIndex(idx));
+    });
+
+    root.addEventListener("focusout", function (ev) {
+      var el = ev.target && ev.target.closest ? ev.target.closest("[data-halalit-index]") : null;
+      if (!el || !root.contains(el)) return;
+      if (ev.relatedTarget && el.contains(ev.relatedTarget)) return;
+      cancelHoverSchedule();
+    });
+  }
+
+  function refreshWishlistTips() {
+    var stage = document.getElementById("wishlistStage");
+    var list = document.getElementById("wishlistListItems");
+    bindWishlistTipRoot(stage);
+    bindWishlistTipRoot(list);
+
+    function markFocusable(root) {
+      if (!root) return;
+      var nodes = root.querySelectorAll("[data-halalit-index]");
+      for (var i = 0; i < nodes.length; i++) {
+        if (!nodes[i].hasAttribute("tabindex")) nodes[i].setAttribute("tabindex", "0");
+      }
+    }
+    markFocusable(stage);
+    markFocusable(list);
+  }
+
+  function renderFavoritesUi() {
+    var host = document.getElementById("wishlistLibraryFavorites");
+    if (!host) return;
+    var fav = loadFavorites();
+    var favSet = Object.create(null);
+    for (var f = 0; f < fav.length; f++) favSet[fav[f]] = true;
+
+    var bits = [];
+    bits.push('<p class="library-avail__fav-heading">Your favorite libraries</p>');
+    bits.push(
+      '<p class="library-avail__fav-hint">Save the places you actually use. Hover (or focus) a wishlist book to see if one of them has it — no need to pick a library each time.</p>'
+    );
+    bits.push('<ul class="library-avail__fav-list" role="list">');
+    for (var i = 0; i < PLACES.length; i++) {
+      var p = PLACES[i];
+      var id = "wishlistFav_" + p.placeId;
+      bits.push(
+        '<li class="library-avail__fav-item">' +
+          '<label class="library-avail__fav-label" for="' +
+          escapeHtml(id) +
+          '">' +
+          '<input type="checkbox" class="library-avail__fav-check" id="' +
+          escapeHtml(id) +
+          '" data-place-id="' +
+          escapeHtml(p.placeId) +
+          '"' +
+          (favSet[p.placeId] ? " checked" : "") +
+          " /> " +
+          '<span class="library-avail__fav-name">' +
+          escapeHtml(p.placeLabel) +
+          "</span></label></li>"
+      );
+    }
+    bits.push("</ul>");
+    host.innerHTML = bits.join("");
+
+    host.querySelectorAll(".library-avail__fav-check").forEach(function (cb) {
+      cb.addEventListener("change", function () {
+        var next = [];
+        host.querySelectorAll(".library-avail__fav-check").forEach(function (box) {
+          if (box.checked) next.push(box.getAttribute("data-place-id"));
+        });
+        saveFavorites(next);
+      });
+    });
+  }
+
   function renderResults(host, rows, meta) {
     if (!host) return;
     var short = (meta && meta.shortLabel) || "this library";
     var bits = [];
     bits.push(
-      '<p class="library-avail__summary">' +
-        escapeHtml(meta.summary || "") +
-        "</p>"
+      '<p class="library-avail__summary">' + escapeHtml(meta.summary || "") + "</p>"
     );
     if (!rows.length) {
       host.innerHTML = bits.join("");
@@ -346,13 +730,27 @@
         runCheck({ button: btn });
       });
     }
+    if (global.document && global.document.documentElement.getAttribute("data-halalit-avail-account") !== "1") {
+      global.document.documentElement.setAttribute("data-halalit-avail-account", "1");
+      global.document.addEventListener("halalit-account-ready", function () {
+        renderFavoritesUi();
+      });
+    }
+    renderFavoritesUi();
+    refreshWishlistTips();
     syncCheckButton();
   }
 
   global.HalalitLibraryAvail = {
     places: PLACES,
+    favoritesKey: FAVORITES_KEY,
+    loadFavorites: loadFavorites,
+    saveFavorites: saveFavorites,
+    favoritePlaces: favoritePlaces,
     checkOne: checkOne,
+    checkAcrossFavorites: checkAcrossFavorites,
     runCheck: runCheck,
+    refreshWishlistTips: refreshWishlistTips,
     bind: bind,
     apiUrl: apiUrl,
   };
