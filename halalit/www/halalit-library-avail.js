@@ -8,6 +8,8 @@
   var DELAY_MS = 400;
   var CLIENT_CACHE_TTL_MS = 15 * 60 * 1000;
   var FAVORITES_KEY = "halalitLibraryFavoritePlaces";
+  /** Survives reload if account hydrate is late; not cleared by account migration. */
+  var FAVORITES_DEVICE_BACKUP_KEY = "halalitLibraryFavoritePlaces_device_backup";
 
   /** Keep in sync with server PLACES in library_catalog_check.py */
   var PLACES = [
@@ -86,11 +88,32 @@
     return out;
   }
 
+  function readFavoritesDeviceBackup() {
+    try {
+      if (global.localStorage) return global.localStorage.getItem(FAVORITES_DEVICE_BACKUP_KEY);
+    } catch (e) {}
+    return null;
+  }
+
+  function writeFavoritesDeviceBackup(json) {
+    try {
+      if (global.localStorage) global.localStorage.setItem(FAVORITES_DEVICE_BACKUP_KEY, json);
+    } catch (e) {}
+  }
+
   function loadFavorites() {
     var Store = storage();
-    if (!Store || typeof Store.getItem !== "function") return [];
     try {
-      var raw = Store.getItem(FAVORITES_KEY);
+      var raw = Store && typeof Store.getItem === "function" ? Store.getItem(FAVORITES_KEY) : null;
+      if (!raw) {
+        raw = readFavoritesDeviceBackup();
+        if (raw && Store && typeof Store.setItem === "function") {
+          Store.setItem(FAVORITES_KEY, raw);
+          if (typeof Store.flush === "function") Store.flush();
+        }
+      } else {
+        writeFavoritesDeviceBackup(raw);
+      }
       if (!raw) return [];
       return normalizeFavoriteIds(JSON.parse(raw));
     } catch (e) {
@@ -101,9 +124,12 @@
   function saveFavorites(ids) {
     var Store = storage();
     var cleaned = normalizeFavoriteIds(ids);
+    var json = JSON.stringify(cleaned);
+    writeFavoritesDeviceBackup(json);
     if (!Store || typeof Store.setItem !== "function") return cleaned;
     try {
-      Store.setItem(FAVORITES_KEY, JSON.stringify(cleaned));
+      Store.setItem(FAVORITES_KEY, json);
+      if (typeof Store.flush === "function") Store.flush();
     } catch (e) {}
     return cleaned;
   }
@@ -586,6 +612,11 @@
       });
   }
 
+  function refreshFavoritesFromAccount() {
+    renderFavoritesUi();
+    syncCheckButton();
+  }
+
   function bind() {
     var btn = document.getElementById("wishlistLibraryCheckBtn");
     if (btn && btn.getAttribute("data-halalit-bound") !== "1") {
@@ -596,10 +627,11 @@
     }
     if (global.document && global.document.documentElement.getAttribute("data-halalit-avail-account") !== "1") {
       global.document.documentElement.setAttribute("data-halalit-avail-account", "1");
-      global.document.addEventListener("halalit-account-ready", function () {
-        renderFavoritesUi();
-        syncCheckButton();
-      });
+      global.document.addEventListener("halalit-account-ready", refreshFavoritesFromAccount);
+      var Store = storage();
+      if (Store && Store.ready && typeof Store.ready.then === "function") {
+        Store.ready.then(refreshFavoritesFromAccount);
+      }
     }
     renderFavoritesUi();
     renderLegend();
