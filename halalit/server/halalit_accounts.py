@@ -116,6 +116,7 @@ KNOWN_DATA_KEYS = frozenset(
         "halalitContinueSeriesPrefs",
         "halalitShelfAltListView",
         "halalitContinueSeriesDiscontinued",
+        "halalitLibraryFavoritePlaces",
         "halalitReaderModel",
         "halalitPendingReview",
     }
