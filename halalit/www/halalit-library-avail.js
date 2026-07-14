@@ -1,11 +1,25 @@
 /**
  * Halalit — Wishlist library availability (practice).
- * Santa Clara Central Park Library only: borrowable copy at that branch (checked out OK).
+ * Choose a library from the dropdown, then check borrowable copies at that branch
+ * (checked out OK). Places: Central Park (city) + Cupertino (Santa Clara County).
  */
 (function (global) {
   var BATCH_CAP = 10;
   var DELAY_MS = 400;
-  var PLACE_LABEL = "Santa Clara Central Park Library";
+
+  /** Keep in sync with server PLACES in library_catalog_check.py */
+  var PLACES = [
+    {
+      placeId: "santa-clara-central-park",
+      placeLabel: "Santa Clara Central Park Library",
+      shortLabel: "Central Park",
+    },
+    {
+      placeId: "sccld-cupertino",
+      placeLabel: "Cupertino Library (Santa Clara County)",
+      shortLabel: "Cupertino",
+    },
+  ];
 
   function apiUrl() {
     var Cfg = global.HalalitBookcheckConfig;
@@ -33,11 +47,26 @@
       .replace(/"/g, "&quot;");
   }
 
-  function statusLabel(status, reason) {
-    if (status === "yes") return "Borrowable at Central Park";
+  function findPlace(placeId) {
+    var id = String(placeId || "");
+    for (var i = 0; i < PLACES.length; i++) {
+      if (PLACES[i].placeId === id) return PLACES[i];
+    }
+    return null;
+  }
+
+  function selectedPlace() {
+    var sel = document.getElementById("wishlistLibraryPlaceSelect");
+    if (!sel) return null;
+    return findPlace(sel.value);
+  }
+
+  function statusLabel(status, reason, shortLabel) {
+    var short = shortLabel || "this library";
+    if (status === "yes") return "Borrowable at " + short;
     if (status === "no") {
       if (reason === "not_in_catalog") return "Not in this library’s catalog";
-      return "Not at Central Park";
+      return "Not at " + short;
     }
     return "Couldn’t confirm";
   }
@@ -48,7 +77,7 @@
     return "library-avail-row--uncertain";
   }
 
-  function checkOne(entry) {
+  function checkOne(entry, placeId) {
     var url = apiUrl();
     if (!url) {
       return Promise.resolve({
@@ -69,6 +98,7 @@
         author: entry.author || "",
         isbn: entry.isbn || "",
         seriesName: entry.seriesName || "",
+        placeId: placeId || "",
       }),
     })
       .then(function (res) {
@@ -106,6 +136,7 @@
 
   function renderResults(host, rows, meta) {
     if (!host) return;
+    var short = (meta && meta.shortLabel) || "this library";
     var bits = [];
     bits.push(
       '<p class="library-avail__summary">' +
@@ -130,17 +161,21 @@
       var detail = "";
       if (r.status === "yes" && r.libraryStatus) {
         detail =
-          ' <span class="muted">(' + escapeHtml(String(r.libraryStatus)) + " — still borrowable)</span>";
+          ' <span class="muted">(' +
+          escapeHtml(String(r.libraryStatus)) +
+          " — still borrowable)</span>";
       } else if (r.matchTitle && r.matchTitle !== title) {
         detail =
-          ' <span class="muted">(matched “' + escapeHtml(r.matchTitle) + '”)</span>';
+          ' <span class="muted">(matched “' +
+          escapeHtml(r.matchTitle) +
+          '”)</span>';
       }
       bits.push(
         '<li class="library-avail-row ' +
           statusClass(r.status) +
           '">' +
           '<span class="library-avail-row__status">' +
-          escapeHtml(statusLabel(r.status, r.reason)) +
+          escapeHtml(statusLabel(r.status, r.reason, short)) +
           "</span>" +
           '<span class="library-avail-row__title">' +
           escapeHtml(label) +
@@ -154,11 +189,24 @@
     host.innerHTML = bits.join("");
   }
 
+  function syncCheckButton() {
+    var btn = document.getElementById("wishlistLibraryCheckBtn");
+    var place = selectedPlace();
+    if (!btn) return;
+    if (btn.getAttribute("aria-busy") === "true") return;
+    btn.disabled = !place;
+    btn.textContent = place ? "Check library" : "Choose a library first";
+  }
+
   function setBusy(btn, busy) {
     if (!btn) return;
-    btn.disabled = !!busy;
     btn.setAttribute("aria-busy", busy ? "true" : "false");
-    btn.textContent = busy ? "Checking…" : "Check Central Park Library";
+    if (busy) {
+      btn.disabled = true;
+      btn.textContent = "Checking…";
+      return;
+    }
+    syncCheckButton();
   }
 
   function runCheck(opts) {
@@ -166,6 +214,15 @@
     var btn = opts.button || document.getElementById("wishlistLibraryCheckBtn");
     var host = opts.resultsEl || document.getElementById("wishlistLibraryCheckResults");
     var statusEl = opts.statusEl || document.getElementById("wishlistLibraryCheckStatus");
+    var place = opts.place || selectedPlace();
+    if (!place) {
+      if (statusEl) {
+        statusEl.textContent = "Choose a library from the list first.";
+      }
+      syncCheckButton();
+      return Promise.resolve({ rows: [], skipped: 0 });
+    }
+
     var list = wishList();
     if (!list.length) {
       if (statusEl) {
@@ -185,7 +242,7 @@
         " wishlist title" +
         (capped.length === 1 ? "" : "s") +
         " at " +
-        PLACE_LABEL +
+        place.placeLabel +
         "…";
     }
     if (host) host.innerHTML = "";
@@ -198,7 +255,7 @@
           statusEl.textContent =
             "Checking " + (idx + 1) + " of " + capped.length + "…";
         }
-        return checkOne(entry).then(function (res) {
+        return checkOne(entry, place.placeId).then(function (res) {
           rows.push({
             title: entry.title || res.title || "",
             author: entry.author || res.author || "",
@@ -224,7 +281,7 @@
           else uncertain++;
         }
         var summary =
-          PLACE_LABEL +
+          place.placeLabel +
           ": " +
           yes +
           " borrowable, " +
@@ -241,8 +298,11 @@
             " (run again later for the rest).";
         }
         if (statusEl) statusEl.textContent = summary;
-        renderResults(host, rows, { summary: summary });
-        return { rows: rows, skipped: skipped };
+        renderResults(host, rows, {
+          summary: summary,
+          shortLabel: place.shortLabel,
+        });
+        return { rows: rows, skipped: skipped, place: place };
       })
       .finally(function () {
         setBusy(btn, false);
@@ -251,15 +311,22 @@
 
   function bind() {
     var btn = document.getElementById("wishlistLibraryCheckBtn");
-    if (!btn || btn.getAttribute("data-halalit-bound") === "1") return;
-    btn.setAttribute("data-halalit-bound", "1");
-    btn.addEventListener("click", function () {
-      runCheck({ button: btn });
-    });
+    var sel = document.getElementById("wishlistLibraryPlaceSelect");
+    if (sel && sel.getAttribute("data-halalit-bound") !== "1") {
+      sel.setAttribute("data-halalit-bound", "1");
+      sel.addEventListener("change", syncCheckButton);
+    }
+    if (btn && btn.getAttribute("data-halalit-bound") !== "1") {
+      btn.setAttribute("data-halalit-bound", "1");
+      btn.addEventListener("click", function () {
+        runCheck({ button: btn });
+      });
+    }
+    syncCheckButton();
   }
 
   global.HalalitLibraryAvail = {
-    placeLabel: PLACE_LABEL,
+    places: PLACES,
     checkOne: checkOne,
     runCheck: runCheck,
     bind: bind,

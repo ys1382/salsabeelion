@@ -1371,6 +1371,43 @@
       margin-left: 0.25rem;
       font-size: 0.82rem;
     }
+    .library-avail__controls {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.55rem 0.75rem;
+      margin-top: 0.55rem;
+    }
+    .library-avail__place-label {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+    select.library-avail__place {
+      font-family: system-ui, "Segoe UI", sans-serif;
+      font-size: 0.9rem;
+      padding: 0.5rem 0.7rem;
+      border-radius: 10px;
+      border: 1px solid rgba(227, 184, 106, 0.28);
+      background: rgba(0, 0, 0, 0.28);
+      color: var(--ink);
+      min-width: min(100%, 18rem);
+      max-width: 100%;
+    }
+    select.library-avail__place:focus-visible {
+      outline: 2px solid rgba(227, 184, 106, 0.55);
+      outline-offset: 2px;
+    }
+    .library-avail__controls .import-btn:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
     #importResult {
       font-family: system-ui, "Segoe UI", sans-serif;
       font-size: 0.85rem;
@@ -2367,12 +2404,24 @@
     <div class="library-toolbar" style="padding-top:0.25rem">
       <div class="library-avail-panel" id="wishlistLibraryCheckPanel">
         <p class="hint" style="margin-top:0">
-          Practice check: see which wishlist titles have a <strong>borrowable</strong> copy at
-          <strong>Santa Clara Central Park Library</strong> (checked out still counts). Halalit is not the library —
-          open their site to confirm. Starts with the first 10 on your list.
+          Practice check: pick a library, then see which wishlist titles have a <strong>borrowable</strong> copy
+          there (checked out still counts). Halalit is not the library — open their site to confirm.
+          Starts with the first 10 on your list.
         </p>
-        <div class="already-actions" style="margin-top:0.55rem">
-          <button type="button" class="import-btn" id="wishlistLibraryCheckBtn">Check Central Park Library</button>
+        <div class="library-avail__controls">
+          <label class="library-avail__place-label" for="wishlistLibraryPlaceSelect">Choose library</label>
+          <select
+            class="library-avail__place"
+            id="wishlistLibraryPlaceSelect"
+            aria-label="Choose library"
+          >
+            <option value="">Choose library</option>
+            <option value="santa-clara-central-park">Santa Clara Central Park Library</option>
+            <option value="sccld-cupertino">Cupertino Library (Santa Clara County)</option>
+          </select>
+          <button type="button" class="import-btn" id="wishlistLibraryCheckBtn" disabled>
+            Choose a library first
+          </button>
         </div>
         <p class="library-avail__status" id="wishlistLibraryCheckStatus" aria-live="polite"></p>
         <div id="wishlistLibraryCheckResults"></div>
@@ -2625,7 +2674,7 @@
   <script src="./halalit-personal-library.js?v=20260610g"></script>
   <script src="./halalit-series-expand.js?v=20260528b"></script>
   <script src="./halalit-want-to-read.js?v=20260527a"></script>
-  <script src="./halalit-library-avail.js?v=20260714b"></script>
+  <script src="./halalit-library-avail.js?v=20260714c"></script>
   <script src="./halalit-book-spine.js?v=20260528a"></script>
   <script src="./halalit-open-library-enrich.js?v=20260610h"></script>
   <script src="./halalit-shelf-series-group.js?v=20260527a"></script>

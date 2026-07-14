@@ -7,8 +7,8 @@ Reads HALALIT_GEMINI_API_KEY / GEMINI_API_KEY and ANTHROPIC_API_KEY (or anthropi
 
 POST /api/theme-scan       JSON: { "title": "...", "author": "...", "isGraphicFormat": bool }
 POST /api/cover-identify   JSON: { "imageBase64": "...", "mimeType": "image/jpeg" }
-POST /api/library/check    JSON: { "title": "...", "author": "...", "isbn?": "..." }
-                               → Santa Clara Central Park borrowable check (practice)
+POST /api/library/check    JSON: { "title": "...", "author": "...", "isbn?": "...", "placeId?": "..." }
+                               → library branch borrowable check (Central Park / Cupertino practice)
 GET  /health  and  /api/health
 
 Does not assess fanservice or panel art — client shows "not checked yet" for comics.
@@ -1023,11 +1023,12 @@ class Handler(BaseHTTPRequestHandler):
             author = str(body.get("author") or "").strip()[:200]
             isbn = str(body.get("isbn") or "").strip()[:32]
             series_name = str(body.get("seriesName") or body.get("series") or "").strip()[:200]
+            place_id = str(body.get("placeId") or body.get("place") or "").strip()[:80]
             if not title:
                 json_response(self, 400, {"ok": False, "error": "title_required", "status": "uncertain"})
                 return
             try:
-                result = library_check_title(title, author, isbn, series_name)
+                result = library_check_title(title, author, isbn, series_name, place_id)
             except Exception as e:
                 json_response(
                     self,
@@ -1039,8 +1040,12 @@ class Handler(BaseHTTPRequestHandler):
                         "reason": type(e).__name__,
                         "title": title,
                         "author": author,
+                        "placeId": place_id or None,
                     },
                 )
+                return
+            if result.get("error") == "unknown_place":
+                json_response(self, 400, result)
                 return
             status_code = 400 if result.get("error") == "title_required" else 200
             json_response(self, status_code, result)

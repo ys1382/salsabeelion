@@ -1,8 +1,12 @@
 """
-Santa Clara Central Park Library catalog check (practice connector).
+Wishlist library catalog check (practice connectors).
 
 Uses BiblioCommons public gateway JSON (same host the catalog UI calls).
-"Yes" = Central Park (branch code C) has a borrowable copy — checked out OK.
+"Yes" = selected branch has a borrowable copy — checked out OK.
+
+Places:
+  santa-clara-central-park — City of Santa Clara, branch C
+  sccld-cupertino — Santa Clara County Library District, Cupertino (CU)
 """
 from __future__ import annotations
 
@@ -16,15 +20,39 @@ import urllib.request
 from typing import Any
 
 USER_AGENT = "HalalitLibraryCheck/1.0 (Odd Trove; family reading companion; +https://oddtrove.art/halalit/)"
-LIBRARY_ID = "sclibrary"
-BRANCH_CODE = "C"
-BRANCH_NAME = "Central Park Library"
-PLACE_ID = "santa-clara-central-park"
-PLACE_LABEL = "Santa Clara Central Park Library"
 
 GATEWAY = "https://gateway.bibliocommons.com/v2/libraries"
-CATALOG_SEARCH = "https://sclibrary.bibliocommons.com/v2/search"
-CATALOG_RECORD = "https://sclibrary.bibliocommons.com/v2/record"
+
+# placeId → BiblioCommons library + branch filter
+PLACES: dict[str, dict[str, Any]] = {
+    "santa-clara-central-park": {
+        "placeId": "santa-clara-central-park",
+        "placeLabel": "Santa Clara Central Park Library",
+        "shortLabel": "Central Park",
+        "libraryId": "sclibrary",
+        "branchCode": "C",
+        "branchName": "Central Park Library",
+        "branchNameNeedles": ("central park",),
+        "catalogHost": "sclibrary.bibliocommons.com",
+        "reasonYes": "borrowable_at_central_park",
+        "reasonNoBranch": "not_at_central_park",
+        "reasonNoBorrow": "central_park_not_borrowable",
+    },
+    "sccld-cupertino": {
+        "placeId": "sccld-cupertino",
+        "placeLabel": "Cupertino Library (Santa Clara County)",
+        "shortLabel": "Cupertino",
+        "libraryId": "sccl",
+        "branchCode": "CU",
+        "branchName": "Cupertino Library",
+        "branchNameNeedles": ("cupertino",),
+        "catalogHost": "sccl.bibliocommons.com",
+        "reasonYes": "borrowable_at_cupertino",
+        "reasonNoBranch": "not_at_cupertino",
+        "reasonNoBorrow": "cupertino_not_borrowable",
+    },
+}
+DEFAULT_PLACE_ID = "santa-clara-central-park"
 
 CACHE_TTL_SEC = 15 * 60
 CACHE_MAX = 200
@@ -131,9 +159,36 @@ def _author_surname(author: str) -> str:
     return toks[-1] if toks else ""
 
 
-def _cache_key(title: str, author: str, isbn: str, series_name: str = "") -> str:
+def resolve_place(place_id: str | None = None) -> dict[str, Any] | None:
+    """Return place config, or None if placeId is unknown (empty → default)."""
+    raw = str(place_id or "").strip()
+    if not raw:
+        return dict(PLACES[DEFAULT_PLACE_ID])
+    hit = PLACES.get(raw)
+    return dict(hit) if hit else None
+
+
+def list_places() -> list[dict[str, str]]:
+    """Public dropdown options (order preserved)."""
+    out: list[dict[str, str]] = []
+    for pid in ("santa-clara-central-park", "sccld-cupertino"):
+        p = PLACES[pid]
+        out.append(
+            {
+                "placeId": str(p["placeId"]),
+                "placeLabel": str(p["placeLabel"]),
+                "shortLabel": str(p["shortLabel"]),
+            }
+        )
+    return out
+
+
+def _cache_key(
+    place_id: str, title: str, author: str, isbn: str, series_name: str = ""
+) -> str:
     return "|".join(
         [
+            place_id,
             _norm_text(title),
             _norm_text(series_name),
             _author_core(author),
@@ -193,19 +248,21 @@ def _fetch_json(url: str, timeout: float) -> dict[str, Any]:
     return data
 
 
-def catalog_search_url(title: str, author: str = "") -> str:
+def catalog_search_url(place: dict[str, Any], title: str, author: str = "") -> str:
+    host = str(place.get("catalogHost") or "")
     q = title.strip()
     if author.strip():
         q = f"{q} {author.strip()}"
     params = urllib.parse.urlencode({"query": q, "searchType": "title"})
-    return f"{CATALOG_SEARCH}?{params}"
+    return f"https://{host}/v2/search?{params}"
 
 
-def catalog_record_url(metadata_id: str) -> str:
+def catalog_record_url(place: dict[str, Any], metadata_id: str) -> str:
     mid = str(metadata_id or "").strip()
     if not mid:
-        return catalog_search_url("")
-    return f"{CATALOG_RECORD}/{urllib.parse.quote(mid)}"
+        return catalog_search_url(place, "")
+    host = str(place.get("catalogHost") or "")
+    return f"https://{host}/v2/record/{urllib.parse.quote(mid)}"
 
 
 def _bib_format(bib: dict[str, Any]) -> str:
@@ -428,14 +485,17 @@ def _merge_bibs(
     return out
 
 
-def _run_search(query: str, search_type: str = "title") -> list[tuple[str, dict[str, Any]]]:
+def _run_search(
+    place: dict[str, Any], query: str, search_type: str = "title"
+) -> list[tuple[str, dict[str, Any]]]:
     q = str(query or "").strip()
     if not q:
         return []
+    library_id = str(place.get("libraryId") or "")
     params = urllib.parse.urlencode(
         {"query": q, "searchType": search_type, "locale": "en-US"}
     )
-    url = f"{GATEWAY}/{LIBRARY_ID}/bibs/search?{params}"
+    url = f"{GATEWAY}/{library_id}/bibs/search?{params}"
     data = _fetch_json(url, SEARCH_TIMEOUT_SEC)
     bibs = (data.get("entities") or {}).get("bibs") or {}
     if not isinstance(bibs, dict):
@@ -444,14 +504,18 @@ def _run_search(query: str, search_type: str = "title") -> list[tuple[str, dict[
 
 
 def _search_bibs(
-    title: str, author: str, isbn: str, series_name: str = ""
+    place: dict[str, Any],
+    title: str,
+    author: str,
+    isbn: str,
+    series_name: str = "",
 ) -> list[tuple[str, dict[str, Any]]]:
     bags: list[list[tuple[str, dict[str, Any]]]] = []
 
     if isbn.strip():
         clean = re.sub(r"[^0-9Xx]", "", isbn.strip())
         if len(clean) in (10, 13):
-            bags.append(_run_search(clean, "keyword"))
+            bags.append(_run_search(place, clean, "keyword"))
 
     series_hint, volume = _split_series_volume(title, series_name)
     queries: list[tuple[str, str]] = []
@@ -472,22 +536,28 @@ def _search_bibs(
         if not q.strip() or key in seen_q:
             continue
         seen_q.add(key)
-        bags.append(_run_search(q, st))
+        bags.append(_run_search(place, q, st))
 
     return _merge_bibs(bags)
 
 
-def _item_is_central_park(item: dict[str, Any]) -> bool:
+def _item_is_place_branch(place: dict[str, Any], item: dict[str, Any]) -> bool:
     branch = item.get("branch") if isinstance(item.get("branch"), dict) else {}
     code = str(branch.get("code") or "").strip().upper()
     name = str(branch.get("name") or item.get("branchName") or "").strip().lower()
-    if code == BRANCH_CODE:
+    want = str(place.get("branchCode") or "").strip().upper()
+    if want and code == want:
         return True
-    return "central park" in name
+    needles = place.get("branchNameNeedles") or ()
+    for needle in needles:
+        n = str(needle or "").strip().lower()
+        if n and n in name:
+            return True
+    return False
 
 
-def _item_borrowable_at_cp(item: dict[str, Any]) -> bool:
-    if not _item_is_central_park(item):
+def _item_borrowable_at_place(place: dict[str, Any], item: dict[str, Any]) -> bool:
+    if not _item_is_place_branch(place, item):
         return False
     av = item.get("availability") if isinstance(item.get("availability"), dict) else {}
     if av.get("libraryUseOnly") is True:
@@ -502,55 +572,76 @@ def _item_borrowable_at_cp(item: dict[str, Any]) -> bool:
     return True
 
 
-def _probe_availability(metadata_id: str) -> tuple[bool, bool, dict[str, Any] | None]:
+def _probe_availability(
+    place: dict[str, Any], metadata_id: str
+) -> tuple[bool, bool, dict[str, Any] | None]:
     """
-    Returns (has_any_cp_item, has_borrowable_cp, sample_item).
-    has_any_cp_item: CP owns a copy (may be use-only).
-    has_borrowable_cp: CP has a borrowable/requestable copy.
+    Returns (has_any_branch_item, has_borrowable, sample_item).
+    has_any_branch_item: branch owns a copy (may be use-only).
+    has_borrowable: branch has a borrowable/requestable copy.
     """
+    library_id = str(place.get("libraryId") or "")
     params = urllib.parse.urlencode({"locale": "en-US"})
-    url = f"{GATEWAY}/{LIBRARY_ID}/bibs/{urllib.parse.quote(metadata_id)}/availability?{params}"
+    url = f"{GATEWAY}/{library_id}/bibs/{urllib.parse.quote(metadata_id)}/availability?{params}"
     data = _fetch_json(url, AVAIL_TIMEOUT_SEC)
     entities = data.get("entities") if isinstance(data.get("entities"), dict) else {}
     bib_items = entities.get("bibItems") if isinstance(entities.get("bibItems"), dict) else {}
-    has_cp = False
+    has_branch = False
     sample: dict[str, Any] | None = None
     for _iid, item in bib_items.items():
         if not isinstance(item, dict):
             continue
-        if not _item_is_central_park(item):
+        if not _item_is_place_branch(place, item):
             continue
-        has_cp = True
-        if _item_borrowable_at_cp(item):
+        has_branch = True
+        if _item_borrowable_at_place(place, item):
             return True, True, item
         if sample is None:
             sample = item
-    return has_cp, False, sample
+    return has_branch, False, sample
 
 
 def check_title(
-    title: str, author: str = "", isbn: str = "", series_name: str = ""
+    title: str,
+    author: str = "",
+    isbn: str = "",
+    series_name: str = "",
+    place_id: str | None = None,
 ) -> dict[str, Any]:
     """
-    Check one title against Santa Clara Central Park Library.
+    Check one title against a configured library place.
 
     status:
-      yes — borrowable copy at Central Park
-      no — not borrowable at Central Park (missing from system, other branch only, or use-only)
+      yes — borrowable copy at the selected branch
+      no — not borrowable there (missing from system, other branch only, or use-only)
       uncertain — catalog unreachable / could not finish check
     """
+    place = resolve_place(place_id)
+    if place is None:
+        return {
+            "ok": False,
+            "status": "uncertain",
+            "reason": "unknown_place",
+            "error": "unknown_place",
+            "placeId": str(place_id or "").strip(),
+            "title": str(title or "").strip()[:300],
+            "author": str(author or "").strip()[:200],
+            "catalogUrl": "",
+        }
+
     title = str(title or "").strip()[:300]
     author = str(author or "").strip()[:200]
     isbn = str(isbn or "").strip()[:32]
     series_name = str(series_name or "").strip()[:200]
-    search_url = catalog_search_url(title, author)
+    search_url = catalog_search_url(place, title, author)
 
     base = {
         "ok": True,
-        "placeId": PLACE_ID,
-        "placeLabel": PLACE_LABEL,
-        "branchCode": BRANCH_CODE,
-        "branchName": BRANCH_NAME,
+        "placeId": place["placeId"],
+        "placeLabel": place["placeLabel"],
+        "shortLabel": place.get("shortLabel"),
+        "branchCode": place["branchCode"],
+        "branchName": place["branchName"],
         "title": title,
         "author": author,
         "seriesName": series_name or None,
@@ -566,14 +657,14 @@ def check_title(
             "error": "title_required",
         }
 
-    key = _cache_key(title, author, isbn, series_name)
+    key = _cache_key(str(place["placeId"]), title, author, isbn, series_name)
     cached = _cache_get(key)
     if cached is not None:
         cached["cached"] = True
         return cached
 
     try:
-        bibs = _search_bibs(title, author, isbn, series_name)
+        bibs = _search_bibs(place, title, author, isbn, series_name)
     except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, ValueError, json.JSONDecodeError) as e:
         out = {
             **base,
@@ -590,7 +681,7 @@ def check_title(
     matches = _pick_strict_matches(bibs, title, author, series_name)
     if not matches:
         # Common short titles without author/series can collide — stay uncertain.
-        # Otherwise treat as not in this library system (hence not at Central Park).
+        # Otherwise treat as not in this library system (hence not at the branch).
         series_hint, volume = _split_series_volume(title, series_name)
         ambiguous = (not author) and (not series_hint) and len(_tokens(volume)) <= 3
         out = {
@@ -624,13 +715,13 @@ def check_title(
             _cache_set(key, out)
             return out
 
-    saw_cp_non_borrowable = False
+    saw_branch_non_borrowable = False
     last_match: tuple[str, dict[str, Any]] | None = None
     probed_ok = False
     for mid, bib in matches[:MAX_BIBS_TO_PROBE]:
         last_match = (mid, bib)
         try:
-            has_cp, borrowable, sample = _probe_availability(mid)
+            has_branch, borrowable, sample = _probe_availability(place, mid)
             probed_ok = True
         except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, ValueError, json.JSONDecodeError):
             continue
@@ -642,18 +733,18 @@ def check_title(
             out = {
                 **base,
                 "status": "yes",
-                "reason": "borrowable_at_central_park",
+                "reason": place.get("reasonYes") or "borrowable_at_branch",
                 "matchTitle": _bib_title(bib),
                 "matchId": mid,
                 "matchFormat": _bib_format(bib),
-                "catalogUrl": catalog_record_url(mid),
+                "catalogUrl": catalog_record_url(place, mid),
                 "libraryStatus": lib_status,
                 "checkedOutOk": True,
             }
             _cache_set(key, out)
             return out
-        if has_cp:
-            saw_cp_non_borrowable = True
+        if has_branch:
+            saw_branch_non_borrowable = True
 
     if not probed_ok:
         out = {
@@ -667,26 +758,26 @@ def check_title(
         return out
 
     mid, bib = last_match if last_match else matches[0]
-    if saw_cp_non_borrowable:
+    if saw_branch_non_borrowable:
         out = {
             **base,
             "status": "no",
-            "reason": "central_park_not_borrowable",
+            "reason": place.get("reasonNoBorrow") or "branch_not_borrowable",
             "matchTitle": _bib_title(bib),
             "matchId": mid,
             "matchFormat": _bib_format(bib),
-            "catalogUrl": catalog_record_url(mid),
+            "catalogUrl": catalog_record_url(place, mid),
             "libraryStatus": None,
         }
     else:
         out = {
             **base,
             "status": "no",
-            "reason": "not_at_central_park",
+            "reason": place.get("reasonNoBranch") or "not_at_branch",
             "matchTitle": _bib_title(bib),
             "matchId": mid,
             "matchFormat": _bib_format(bib),
-            "catalogUrl": catalog_record_url(mid),
+            "catalogUrl": catalog_record_url(place, mid),
             "libraryStatus": None,
         }
     _cache_set(key, out)
