@@ -314,9 +314,28 @@
       });
   }
 
+  function fillPlaceSelect(sel) {
+    if (!sel) return;
+    var prev = String(sel.value || "");
+    var bits = ['<option value="">Choose library</option>'];
+    for (var i = 0; i < PLACES.length; i++) {
+      var p = PLACES[i];
+      bits.push(
+        '<option value="' +
+          escapeHtml(p.placeId) +
+          '">' +
+          escapeHtml(p.placeLabel) +
+          "</option>"
+      );
+    }
+    sel.innerHTML = bits.join("");
+    if (prev && findPlace(prev)) sel.value = prev;
+  }
+
   function bind() {
     var btn = document.getElementById("wishlistLibraryCheckBtn");
     var sel = document.getElementById("wishlistLibraryPlaceSelect");
+    fillPlaceSelect(sel);
     if (sel && sel.getAttribute("data-halalit-bound") !== "1") {
       sel.setAttribute("data-halalit-bound", "1");
       sel.addEventListener("change", syncCheckButton);
