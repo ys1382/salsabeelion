@@ -32,6 +32,11 @@
       bad_response: "Couldn’t reach LoreKeeper right now. Try again in a moment.",
       signups_disabled:
         "New accounts are paused — if you already created one, use Sign in.",
+      signup_google_only:
+        "New accounts use Google. Tap Continue with Google — or sign in with email if you already have a password account.",
+      google_not_configured: "Google sign-in isn’t set up on the server yet.",
+      google_auth_failed: "Google sign-in didn’t work. Try again.",
+      google_email_conflict: "That Google account’s email is already linked to a different login.",
       owner_account_protected: "The owner account cannot be deleted here.",
       confirm_phrase: "Type DELETE in the confirmation box.",
       export_ack_required: "Check the box confirming you exported your data.",
@@ -42,6 +47,14 @@
       rate_limited: "Too many tries. Wait a bit, then try again.",
     };
     return map[code] || "Something went wrong. Try again.";
+  }
+
+  function googleStartUrl(returnUrl) {
+    var base = apiBase() + "/auth/google/start";
+    if (returnUrl) {
+      return base + "?return=" + encodeURIComponent(returnUrl);
+    }
+    return base;
   }
 
   function signUp(email, password) {
@@ -91,6 +104,7 @@
   global.LoreKeeperAuth = {
     signUp: signUp,
     signIn: signIn,
+    googleStartUrl: googleStartUrl,
     requestPasswordReset: requestPasswordReset,
     completePasswordReset: completePasswordReset,
     afterAuthSuccess: afterAuthSuccess,

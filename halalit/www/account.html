@@ -260,22 +260,14 @@
         });
       }
       wirePasswordToggle("toggleSignInPassword", "signInPassword");
-      wirePasswordToggle("toggleSignUpPassword", "signUpPassword");
 
-      document.getElementById("tabSignIn").addEventListener("click", function () {
-        document.getElementById("tabSignIn").setAttribute("aria-selected", "true");
-        document.getElementById("tabSignUp").setAttribute("aria-selected", "false");
-        document.getElementById("formSignIn").hidden = false;
-        document.getElementById("formSignUp").hidden = true;
-        showError("");
-      });
-      document.getElementById("tabSignUp").addEventListener("click", function () {
-        document.getElementById("tabSignUp").setAttribute("aria-selected", "true");
-        document.getElementById("tabSignIn").setAttribute("aria-selected", "false");
-        document.getElementById("formSignUp").hidden = false;
-        document.getElementById("formSignIn").hidden = true;
-        showError("");
-      });
+      var googleBtn = document.getElementById("googleContinueBtn");
+      if (googleBtn) {
+        googleBtn.href = HalalitAuth.googleStartUrl(returnUrl);
+      }
+      if (params.get("google_error")) {
+        showError(HalalitAuth.friendlyError(params.get("google_error")));
+      }
 
       document.getElementById("signInForm").addEventListener("submit", function (e) {
         e.preventDefault();
@@ -283,18 +275,6 @@
         HalalitAuth.signIn(
           document.getElementById("signInEmail").value.trim(),
           document.getElementById("signInPassword").value
-        ).then(function (res) {
-          if (res && res.ok) return HalalitAuth.afterAuthSuccess(returnUrl);
-          showError(HalalitAuth.friendlyError(res && res.error));
-        });
-      });
-
-      document.getElementById("signUpForm").addEventListener("submit", function (e) {
-        e.preventDefault();
-        showError("");
-        HalalitAuth.signUp(
-          document.getElementById("signUpEmail").value.trim(),
-          document.getElementById("signUpPassword").value
         ).then(function (res) {
           if (res && res.ok) return HalalitAuth.afterAuthSuccess(returnUrl);
           showError(HalalitAuth.friendlyError(res && res.error));
@@ -382,6 +362,9 @@
             document.getElementById("ownerPanel").hidden = false;
           }
           renderShelfRecovery();
+          if (params.get("google") === "1") {
+            HalalitAuth.afterAuthSuccess(returnUrl);
+          }
         }
       });
     })();

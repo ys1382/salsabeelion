@@ -94,40 +94,29 @@
 
     <div id="authView">
       <p class="lk-privacy">
-        LoreKeeper recommends a <strong>throwaway or junk email</strong> and a password you don’t use anywhere else.
-        We can’t tell if an address is disposable—but we’d rather you <strong>not</strong> share personal info you don’t need to.
+        New LoreKeeper accounts use <strong>Google</strong>. A spare or junk Google account is a nice fit for Odd Trove
+        if you’d rather keep this separate from your main inbox — up to you.
       </p>
-      <div class="lk-toolbar" role="tablist" style="margin-bottom:1rem">
-        <button type="button" class="lk-btn" role="tab" id="tabSignIn" aria-selected="true">Sign in</button>
-        <button type="button" class="lk-btn secondary" role="tab" id="tabSignUp" aria-selected="false">Create account</button>
-      </div>
-      <div class="lk-panel" id="formSignIn" role="tabpanel">
-        <form id="signInForm" novalidate>
-          <div class="lk-field">
-            <label for="signInEmail">Email</label>
-            <input type="email" id="signInEmail" autocomplete="username" required />
-          </div>
-          <div class="lk-field">
-            <label for="signInPassword">Password</label>
-            <input type="password" id="signInPassword" autocomplete="current-password" required minlength="8" />
-          </div>
-          <button type="submit" class="lk-btn">Sign in</button>
-        </form>
-        <p style="margin:0.85rem 0 0;font-size:0.9rem"><a href="./reset-password.html">Forgot password?</a></p>
-      </div>
-      <div class="lk-panel" id="formSignUp" role="tabpanel" hidden>
-        <form id="signUpForm" novalidate>
-          <div class="lk-field">
-            <label for="signUpEmail">Email (junk / throwaway OK)</label>
-            <input type="email" id="signUpEmail" autocomplete="username" required />
-          </div>
-          <div class="lk-field">
-            <label for="signUpPassword">Password (8+ characters)</label>
-            <input type="password" id="signUpPassword" autocomplete="new-password" required minlength="8" />
-          </div>
-          <button type="submit" class="lk-btn">Create account</button>
-        </form>
-      </div>
+      <p style="margin:0 0 1rem">
+        <a class="lk-btn" id="googleContinueBtn" href="#" style="display:block;text-align:center;text-decoration:none">Continue with Google</a>
+      </p>
+      <details style="margin:1.25rem 0 0;font-size:0.9rem">
+        <summary style="cursor:pointer">Already have an email &amp; password account?</summary>
+        <div class="lk-panel" style="margin-top:0.85rem">
+          <form id="signInForm" novalidate>
+            <div class="lk-field">
+              <label for="signInEmail">Email</label>
+              <input type="email" id="signInEmail" autocomplete="username" required />
+            </div>
+            <div class="lk-field">
+              <label for="signInPassword">Password</label>
+              <input type="password" id="signInPassword" autocomplete="current-password" required minlength="8" />
+            </div>
+            <button type="submit" class="lk-btn">Sign in</button>
+          </form>
+          <p style="margin:0.85rem 0 0;font-size:0.9rem"><a href="./reset-password.html">Forgot password?</a></p>
+        </div>
+      </details>
       <p class="lk-status" id="authError" role="alert"></p>
     </div>
   </div>
@@ -168,23 +157,17 @@
         });
       }
 
-      document.getElementById("tabSignIn").addEventListener("click", function () {
-        document.getElementById("formSignIn").hidden = false;
-        document.getElementById("formSignUp").hidden = true;
-        showError("");
-      });
-      document.getElementById("tabSignUp").addEventListener("click", function () {
-        document.getElementById("formSignUp").hidden = false;
-        document.getElementById("formSignIn").hidden = true;
-        showError("");
-      });
+      var googleBtn = document.getElementById("googleContinueBtn");
+      if (googleBtn) {
+        googleBtn.href = LoreKeeperAuth.googleStartUrl(returnUrl);
+      }
+      if (params.get("google_error")) {
+        showError(LoreKeeperAuth.friendlyError(params.get("google_error")));
+      }
 
       if (params.get("api_down") === "1") {
         showError("LoreKeeper could not reach the server. Wait a moment, then try Sign in again.");
-        document.getElementById("tabSignIn").click();
       }
-
-      if (params.get("signup") === "1") document.getElementById("tabSignUp").click();
 
       document.getElementById("signInForm").addEventListener("submit", function (e) {
         e.preventDefault();
@@ -206,37 +189,6 @@
           })
           .finally(function () {
             setBusy("signInForm", false);
-          });
-      });
-
-      document.getElementById("signUpForm").addEventListener("submit", function (e) {
-        e.preventDefault();
-        showError("");
-        var email = document.getElementById("signUpEmail").value.trim();
-        var pass = document.getElementById("signUpPassword").value;
-        if (!email || !pass) {
-          showError("Enter your email and password.");
-          return;
-        }
-        if (pass.length < 8) {
-          showError("Password needs at least 8 characters.");
-          return;
-        }
-        setBusy("signUpForm", true);
-        LoreKeeperAuth.signUp(email, pass)
-          .then(function (res) {
-            if (res && res.ok) return LoreKeeperAuth.afterAuthSuccess(returnUrl);
-            showError(LoreKeeperAuth.friendlyError(res && res.error));
-            if (res && (res.error === "email_taken" || res.error === "signups_disabled")) {
-              showError("You already have an account — sign in with the same email and password.");
-              document.getElementById("tabSignIn").click();
-            }
-          })
-          .catch(function () {
-            showError("Could not reach LoreKeeper. Try again in a moment.");
-          })
-          .finally(function () {
-            setBusy("signUpForm", false);
           });
       });
 
@@ -265,6 +217,9 @@
           loadNotifyPrefs();
           if (window.LoreKeeperMobileHandoff && LoreKeeperMobileHandoff.initAccountSettings) {
             LoreKeeperMobileHandoff.initAccountSettings();
+          }
+          if (params.get("google") === "1") {
+            LoreKeeperAuth.afterAuthSuccess(returnUrl);
           }
         }
       });

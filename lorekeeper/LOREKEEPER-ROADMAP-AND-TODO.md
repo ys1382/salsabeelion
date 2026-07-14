@@ -21,6 +21,7 @@
 - [x] Documents with pages — new doc, add pages, auto-save, continue where you left off
 - [x] Owner’s Office — accounts, sign-up switch, private feedback (no other writers’ note text)
 - [x] Junk / throwaway email recommended on sign-up (Halalit-style copy)
+- [x] Google login for new accounts (Jul 2026) — spare/junk Google encouraged; legacy password sign-in kept
 - [x] Idea spinner — user-filled word banks, private nudge prompts (`spinner.html`)
 - [x] Home writer tools tabs — Ask · Idea spinner · Word help (Halalit-style); `spinner.html` redirects to `#spinner`
 

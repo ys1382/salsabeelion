@@ -72,6 +72,7 @@
 - [ ] Show confidence + source + concerns + unknowns on each lookup
 - [x] **Parent control (practical)** — No separate Strict / Normal / Teen switch; **Book Quest + Bookcheck** share **reader age bands** and **Advanced recommendations settings** (same device storage). Revisit only if a named Strict/Normal/Teen mode is still wanted.
 - [x] **Reader accounts (Jun 2026)** — email + password at `/halalit/account.html`; junk email recommended in copy; shelves/prefs/feedback sync to server when signed in
+- [x] **Google login for new accounts (Jul 2026)** — Continue with Google; legacy password sign-in kept; spare/junk Google encouraged in copy
 - [ ] Accounts + private weighted reports (no public comment wall) — see [Personal accounts](#4-personal-accounts)
 
 ### Parked
@@ -154,7 +155,7 @@ Bring these into planning and design so they are not dropped across sessions.
 
 - **Halalit only** (not oddtrove-wide / not Maestro’s, envDyst, etc.).
 - **Login optional for now** — browse without signing in; saving shelves/prefs asks for sign-in. **Agents:** when owner reviews or updates this todo list, ask once if they still want optional login or **require sign-in for all of Halalit**.
-- **Sign up:** email + password (junk email encouraged in copy); owner prefers email for account recovery.
+- **Sign up:** Google login for new accounts (spare/junk Google encouraged); legacy email + password sign-in still works for older accounts.
 
 ### All apps / hub (not Halalit-only)
 
@@ -283,6 +284,7 @@ Bookcheck should know **which kind of vet** powered the result and say so plainl
 
 **Direction:** help readers find where a Wishlist title actually shows up — not Libby checkout, no library card required for v1.
 
+- [x] **Practice — Santa Clara Central Park Library (Jul 2026)** — Wishlist “Check Central Park Library” via Halalit API `POST /api/library/check` + BiblioCommons gateway. **Yes** = borrowable copy at branch code `C` (checked out OK). Citywide / Mission / Northside not yet.
 - [ ] **Wishlist → library & bookstore catalog check** — From Wishlist, check **public** catalogs for places the reader saves or types in (library name, bookstore, catalog URL). Only list places where the title/ISBN **actually matches** — skip fuzzy “did you mean…” junk when the real book isn’t there. **Libraries:** “in catalog” is enough (not live shelf status). **Bookstores:** in stock online or preorder when the site shows it. Start with a **short local list** (owner-configured or hand-wired for the reader’s area); expand later. In-person asks at a library/indie may unlock a reliable hook for that system.
 
   **Example local list shape (owner’s Seattle-area notes — not the only region):** public libraries with searchable catalogs; indie shops with honest shelf/preorder lines (e.g. Third Place Books, Queen Anne Book Co, Elliott Bay); chain stores that expose **store-specific** pickup stock (e.g. B&N locations the reader actually uses). Skip used/recycle shops without reliable online inventory; skip stores whose site/Bookshop.org page does **not** reflect shelf stock.

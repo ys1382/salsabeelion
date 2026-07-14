@@ -47,5 +47,8 @@
     ownerReviewPendingUrl: function () {
       return apiUrl("/lookup/owner-review-pending");
     },
+    libraryCheckUrl: function () {
+      return apiUrl("/library/check");
+    },
   };
 })(typeof window !== "undefined" ? window : this);

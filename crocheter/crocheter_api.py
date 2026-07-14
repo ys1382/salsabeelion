@@ -14,7 +14,7 @@ import threading
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, quote, urlparse
 
 from crocheter_ask import answer_crochet_question, ask_available
 
@@ -28,6 +28,13 @@ for _shared_candidate in (
         sys.path.insert(0, _shared_candidate)
         break
 
+from oddtrove_google_oauth import (  # noqa: E402
+    authorize_url,
+    exchange_code,
+    google_configured,
+    make_state,
+    parse_state,
+)
 from oddtrove_password_reset import (  # noqa: E402
     RESET_RATE_WINDOW_SEC,
     client_ip_from_headers,
@@ -205,6 +212,68 @@ def _public_site_base() -> str:
     return os.environ.get("CROCHETER_PUBLIC_BASE_URL", "https://oddtrove.art/crocheter").rstrip("/")
 
 
+def _api_public_base() -> str:
+    return os.environ.get(
+        "CROCHETER_API_PUBLIC_BASE_URL", "https://oddtrove.art/crocheter/api"
+    ).rstrip("/")
+
+
+def _google_redirect_uri() -> str:
+    return f"{_api_public_base()}/auth/google/callback"
+
+
+def _safe_return_path(raw: str | None) -> str:
+    path = str(raw or "").strip() or "./index.html"
+    if path.startswith("http://") or path.startswith("https://"):
+        base = _public_site_base()
+        if path.startswith(base + "/") or path == base:
+            return path
+        return "./index.html"
+    return path
+
+
+def _google_find_or_create(store: dict[str, Any], sub: str, email: str) -> tuple[int, dict[str, Any]]:
+    sub = str(sub or "").strip()
+    email_n = email.strip().lower()
+    if not sub or not EMAIL_RE.match(email_n):
+        return 400, {"ok": False, "error": "google_auth_failed"}
+    users = store.setdefault("users", {})
+    settings = store.setdefault("settings", {})
+    for u in users.values():
+        if isinstance(u, dict) and (u.get("google_sub") or "") == sub:
+            if OWNER_EMAIL and email_n == OWNER_EMAIL:
+                u["is_owner"] = True
+            return 200, {
+                "ok": True,
+                "email": u.get("email") or email_n,
+                "isOwner": _is_owner_email(u.get("email") or email_n),
+            }
+    if email_n in users:
+        user = users[email_n]
+        other = (user.get("google_sub") or "").strip()
+        if other and other != sub:
+            return 409, {"ok": False, "error": "google_email_conflict"}
+        user["google_sub"] = sub
+        if OWNER_EMAIL and email_n == OWNER_EMAIL:
+            user["is_owner"] = True
+        return 200, {"ok": True, "email": email_n, "isOwner": _is_owner_email(email_n)}
+    signups_on = bool(settings.get("signupsEnabled", True))
+    if not signups_on and len(users) > 0:
+        return 403, {"ok": False, "error": "signups_disabled"}
+    is_owner = email_n == OWNER_EMAIL if OWNER_EMAIL else len(users) == 0
+    users[email_n] = {
+        "email": email_n,
+        "password_hash": "",
+        "salt": "",
+        "google_sub": sub,
+        "created_at": int(time.time()),
+        "is_owner": is_owner,
+        "auth_rev": 0,
+        "data": {},
+    }
+    return 200, {"ok": True, "email": email_n, "isOwner": is_owner}
+
+
 def _client_ip(handler: BaseHTTPRequestHandler) -> str:
     addr = handler.client_address[0] if handler.client_address else None
     return client_ip_from_headers(handler.headers.get("X-Forwarded-For"), addr)
@@ -306,6 +375,13 @@ class Handler(BaseHTTPRequestHandler):
         except (BrokenPipeError, ConnectionResetError):
             return
 
+    def _redirect(self, location: str, set_cookie: str | None = None) -> None:
+        self.send_response(302)
+        self.send_header("Location", location)
+        if set_cookie:
+            self.send_header("Set-Cookie", f"{COOKIE_NAME}={set_cookie}; {_cookie_attrs(self)}")
+        self.end_headers()
+
     def _session_email(self) -> str | None:
         cookies = _parse_cookies(self.headers.get("Cookie"))
         token = cookies.get(COOKIE_NAME)
@@ -339,6 +415,53 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self) -> None:
         path = self._api_path()
         email = self._session_email()
+
+        if path == "/auth/google/start":
+            if not google_configured():
+                self._json(503, {"ok": False, "error": "google_not_configured"})
+                return
+            qs = parse_qs(urlparse(self.path).query)
+            return_raw = str((qs.get("return") or [""])[0]).strip()
+            state = make_state(return_raw)
+            self._redirect(authorize_url(redirect_uri=_google_redirect_uri(), state=state))
+            return
+
+        if path == "/auth/google/callback":
+            qs = parse_qs(urlparse(self.path).query)
+            err = str((qs.get("error") or [""])[0]).strip()
+            code = str((qs.get("code") or [""])[0]).strip()
+            state = str((qs.get("state") or [""])[0]).strip()
+            return_path = parse_state(state)
+            fail_url = f"{_public_site_base()}/account.html?google_error=1"
+            if err or not code or return_path is None:
+                self._redirect(fail_url)
+                return
+            profile = exchange_code(code=code, redirect_uri=_google_redirect_uri())
+            if not profile:
+                self._redirect(fail_url)
+                return
+            with _store_lock:
+                store = _load_store()
+                status, payload = _google_find_or_create(
+                    store, profile["sub"], profile["email"]
+                )
+                if status == 200 and payload.get("ok"):
+                    _save_store(store)
+                    norm = str(payload["email"])
+                    user = store["users"][norm]
+                    auth_rev = int(user.get("auth_rev", 0))
+                    exp = int(time.time()) + COOKIE_MAX_AGE
+                    ret = return_path if return_path else "./index.html"
+                    done = (
+                        f"{_public_site_base()}/account.html?google=1&return={quote(ret, safe='')}"
+                    )
+                    self._redirect(done, set_cookie=_sign_token(norm, exp, auth_rev))
+                    return
+            err_code = str(payload.get("error") or "google_auth_failed")
+            self._redirect(
+                f"{_public_site_base()}/account.html?google_error={quote(err_code)}"
+            )
+            return
 
         if path == "/health":
             self._json(200, {"ok": True, "askAvailable": ask_available()})
@@ -416,41 +539,7 @@ class Handler(BaseHTTPRequestHandler):
         email = self._session_email()
 
         if path == "/auth/signup":
-            raw_email = str(body.get("email") or "")
-            password = str(body.get("password") or "")
-            norm = _normalize_email(raw_email)
-            if not norm:
-                self._json(400, {"ok": False, "error": "invalid_email"})
-                return
-            if len(password) < 8:
-                self._json(400, {"ok": False, "error": "password_too_short"})
-                return
-            with _store_lock:
-                store = _load_store()
-                users = store.setdefault("users", {})
-                settings = store.setdefault("settings", {})
-                user_count = len(users)
-                if norm in users:
-                    self._json(409, {"ok": False, "error": "email_taken"})
-                    return
-                signups_on = bool(settings.get("signupsEnabled", True))
-                if not signups_on and user_count > 0:
-                    self._json(403, {"ok": False, "error": "signups_disabled"})
-                    return
-                pwd_hash, salt = _hash_password(password)
-                is_owner = norm == OWNER_EMAIL if OWNER_EMAIL else user_count == 0
-                users[norm] = {
-                    "email": norm,
-                    "password_hash": pwd_hash,
-                    "salt": salt,
-                    "created_at": int(time.time()),
-                    "is_owner": is_owner,
-                    "auth_rev": 0,
-                    "data": {},
-                }
-                _save_store(store)
-            exp = int(time.time()) + COOKIE_MAX_AGE
-            self._json(200, {"ok": True, "email": norm, "isOwner": is_owner}, set_cookie=_sign_token(norm, exp, 0))
+            self._json(403, {"ok": False, "error": "signup_google_only"})
             return
 
         if path == "/auth/forgot-password":
@@ -468,7 +557,8 @@ class Handler(BaseHTTPRequestHandler):
                 store = _load_store()
                 _prune_password_resets(store, now)
                 users = store.get("users") or {}
-                if norm in users:
+                user = users.get(norm)
+                if user and (user.get("password_hash") or "").strip() and (user.get("salt") or "").strip():
                     if not within_rate_limit(_password_reset_timestamps(store, norm, now), now):
                         self._json(429, {"ok": False, "error": "rate_limited"})
                         return
@@ -532,7 +622,12 @@ class Handler(BaseHTTPRequestHandler):
             with _store_lock:
                 store = _load_store()
                 user = store.get("users", {}).get(norm)
-            if not user or not _verify_password(password, user["password_hash"], user["salt"]):
+            if (
+                not user
+                or not (user.get("password_hash") or "").strip()
+                or not (user.get("salt") or "").strip()
+                or not _verify_password(password, user["password_hash"], user["salt"])
+            ):
                 self._json(401, {"ok": False, "error": "invalid_credentials"})
                 return
             exp = int(time.time()) + COOKIE_MAX_AGE

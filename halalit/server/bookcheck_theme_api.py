@@ -7,6 +7,8 @@ Reads HALALIT_GEMINI_API_KEY / GEMINI_API_KEY and ANTHROPIC_API_KEY (or anthropi
 
 POST /api/theme-scan       JSON: { "title": "...", "author": "...", "isGraphicFormat": bool }
 POST /api/cover-identify   JSON: { "imageBase64": "...", "mimeType": "image/jpeg" }
+POST /api/library/check    JSON: { "title": "...", "author": "...", "isbn?": "..." }
+                               → Santa Clara Central Park borrowable check (practice)
 GET  /health  and  /api/health
 
 Does not assess fanservice or panel art — client shows "not checked yet" for comics.
@@ -32,6 +34,7 @@ from halalit_accounts import session_user
 from halalit_lookup_log import record_bookcheck_lookup
 from halalit_lookup_quality import is_garbage_lookup
 from bookcheck_web_search import fetch_review_snippets, format_review_snippets_for_prompt
+from library_catalog_check import check_title as library_check_title
 
 try:
     ThreadingHTTPServer  # noqa: F401
@@ -929,6 +932,8 @@ class Handler(BaseHTTPRequestHandler):
                     "accounts": True,
                     "reviewSearchConfigured": True,
                     "braveConfigured": bool(os.environ.get("BRAVE_SEARCH_API_KEY", "").strip()),
+                    "libraryCheck": True,
+                    "libraryCheckPlace": "santa-clara-central-park",
                 },
             )
             return
@@ -1001,6 +1006,43 @@ class Handler(BaseHTTPRequestHandler):
             result = call_gemini_cover(image_b64, mime)
             status = 200 if result.get("ok") else (503 if result.get("error") == "ai_unconfigured" else 502)
             json_response(self, status, result)
+            return
+
+        if path == "/api/library/check":
+            if length > 8192:
+                json_response(self, 413, {"ok": False, "error": "payload_too_large"})
+                return
+            try:
+                body = json.loads(self.rfile.read(length).decode("utf-8")) if length else {}
+            except (json.JSONDecodeError, UnicodeDecodeError):
+                json_response(self, 400, {"ok": False, "error": "invalid_json"})
+                return
+            if not isinstance(body, dict):
+                body = {}
+            title = str(body.get("title") or "").strip()[:300]
+            author = str(body.get("author") or "").strip()[:200]
+            isbn = str(body.get("isbn") or "").strip()[:32]
+            if not title:
+                json_response(self, 400, {"ok": False, "error": "title_required", "status": "uncertain"})
+                return
+            try:
+                result = library_check_title(title, author, isbn)
+            except Exception as e:
+                json_response(
+                    self,
+                    502,
+                    {
+                        "ok": False,
+                        "status": "uncertain",
+                        "error": "library_check_failed",
+                        "reason": type(e).__name__,
+                        "title": title,
+                        "author": author,
+                    },
+                )
+                return
+            status_code = 400 if result.get("error") == "title_required" else 200
+            json_response(self, status_code, result)
             return
 
         json_response(self, 404, {"ok": False, "error": "not_found"})

@@ -76,6 +76,7 @@ if site_enabled halalit || site_enabled crocheter || site_enabled lorekeeper || 
   rsync -avz \
     "$ROOT/top/_shared/oddtrove_password_reset.py" \
     "$ROOT/top/_shared/oddtrove_transactional_mail.py" \
+    "$ROOT/top/_shared/oddtrove_google_oauth.py" \
     "$HOST:~/$REMOTE_BASE/_shared/"
 fi
 if site_enabled hub || site_enabled all; then
@@ -211,6 +212,13 @@ ANTHROPIC_KEY_FILE="$BASE/anthropic.key"
 if [[ -z "${ANTHROPIC_API_KEY:-}" && -f "$ANTHROPIC_KEY_FILE" ]]; then
   export ANTHROPIC_API_KEY="$(tr -d '\n\r' < "$ANTHROPIC_KEY_FILE")"
 fi
+# Google OAuth for account login (shared .env on Halalit server)
+if [[ -f "$BASE/halalit-server/.env" ]]; then
+  set -a
+  # shellcheck disable=SC1090
+  source <(grep -E '^ODDTROVE_GOOGLE_(CLIENT_ID|CLIENT_SECRET|STATE_SECRET)=' "$BASE/halalit-server/.env" || true)
+  set +a
+fi
 # shellcheck source=/dev/null
 source "$BASE/kids-watchdog.sh"
 
@@ -274,7 +282,11 @@ start_lorekeeper_api() {
       LOREKEEPER_API_PORT="'"$LOREKEEPER_API_PORT"'" \
       LOREKEEPER_API_BIND="'"$BIND"'" \
       KIDS_SITES_BASE="'"$BASE"'" \
+      PYTHONPATH="'"$BASE"'/_shared" \
       ANTHROPIC_API_KEY="'"${ANTHROPIC_API_KEY:-}"'" \
+      ODDTROVE_GOOGLE_CLIENT_ID="'"${ODDTROVE_GOOGLE_CLIENT_ID:-}"'" \
+      ODDTROVE_GOOGLE_CLIENT_SECRET="'"${ODDTROVE_GOOGLE_CLIENT_SECRET:-}"'" \
+      ODDTROVE_GOOGLE_STATE_SECRET="'"${ODDTROVE_GOOGLE_STATE_SECRET:-}"'" \
         python3 "'"$BASE"'/lorekeeper_api.py" >>/tmp/lorekeeper-api.log 2>&1
       echo "LoreKeeper API exited — restarting in 2s" >>/tmp/lorekeeper-api.log
       sleep 2
@@ -358,6 +370,9 @@ start_crocheter_api() {
       PYTHONPATH="'"$BASE"'/_shared" \
       ANTHROPIC_API_KEY="'"${ANTHROPIC_API_KEY:-}"'" \
       ODDTROVE_CROCHETER_OWNER_EMAIL="'"${ODDTROVE_CROCHETER_OWNER_EMAIL:-nightofhonour@gmail.com}"'" \
+      ODDTROVE_GOOGLE_CLIENT_ID="'"${ODDTROVE_GOOGLE_CLIENT_ID:-}"'" \
+      ODDTROVE_GOOGLE_CLIENT_SECRET="'"${ODDTROVE_GOOGLE_CLIENT_SECRET:-}"'" \
+      ODDTROVE_GOOGLE_STATE_SECRET="'"${ODDTROVE_GOOGLE_STATE_SECRET:-}"'" \
         python3 "'"$BASE"'/crocheter_api.py" >>/tmp/crocheter-api.log 2>&1
       echo "Crocheter API exited — restarting in 2s" >>/tmp/crocheter-api.log
       sleep 2

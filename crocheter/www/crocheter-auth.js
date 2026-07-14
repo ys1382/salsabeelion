@@ -27,12 +27,24 @@
       invalid_credentials: "Email or password didn’t match.",
       bad_response: "Couldn’t reach the site right now. Try again in a moment.",
       signups_disabled: "New accounts are paused right now. You can still sign in if you already have one.",
+      signup_google_only: "New accounts use Google. Tap Continue with Google — or sign in with email if you already have a password account.",
+      google_not_configured: "Google sign-in isn’t set up on the server yet.",
+      google_auth_failed: "Google sign-in didn’t work. Try again.",
+      google_email_conflict: "That Google account’s email is already linked to a different login.",
       reset_email_sent: "If that email has an account, we sent a reset link. Check your inbox (and junk folder).",
       reset_token_invalid: "That reset link is invalid or already used. Request a new one.",
       reset_token_expired: "That reset link expired. Request a new one.",
       rate_limited: "Too many tries. Wait a bit, then try again.",
     };
     return map[code] || "Something went wrong. Try again.";
+  }
+
+  function googleStartUrl(returnUrl) {
+    var base = apiBase() + "/auth/google/start";
+    if (returnUrl) {
+      return base + "?return=" + encodeURIComponent(returnUrl);
+    }
+    return base;
   }
 
   function signUp(email, password) {
@@ -79,6 +91,7 @@
   global.CrocheterAuth = {
     signUp: signUp,
     signIn: signIn,
+    googleStartUrl: googleStartUrl,
     requestPasswordReset: requestPasswordReset,
     completePasswordReset: completePasswordReset,
     afterAuthSuccess: afterAuthSuccess,

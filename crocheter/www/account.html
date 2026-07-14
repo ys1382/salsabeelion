@@ -78,6 +78,27 @@
       font-size: 0.88rem;
       margin: 0.75rem 0 0;
     }
+    a.google-btn {
+      display: block;
+      text-align: center;
+      text-decoration: none;
+      width: 100%;
+      padding: 0.7rem 1rem;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: rgba(107, 143, 113, 0.28);
+      color: var(--ink);
+      font-weight: 600;
+      font-family: system-ui, sans-serif;
+      box-sizing: border-box;
+    }
+    .legacy-signin {
+      margin: 1.25rem 0 0;
+      font-family: system-ui, sans-serif;
+      font-size: 0.9rem;
+      color: var(--soft);
+    }
+    .legacy-signin summary { cursor: pointer; color: var(--accent); }
     .auth-tabs { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
     .auth-tabs button { width: auto; flex: 1; margin: 0; }
     .auth-tabs button[aria-selected="true"] {
@@ -104,37 +125,28 @@
 
     <div id="authView">
       <p class="privacy-note">
-        A spare email is a nice fit if you’d rather keep this separate from your main inbox.
+        New Crocheter accounts use <strong>Google</strong>. A spare or junk Google account is a nice fit for Odd Trove
+        if you’d rather keep this separate from your main inbox — up to you.
       </p>
-      <div class="auth-tabs" role="tablist">
-        <button type="button" role="tab" id="tabSignIn" aria-selected="true" aria-controls="formSignIn">Sign in</button>
-        <button type="button" role="tab" id="tabSignUp" aria-selected="false" aria-controls="formSignUp">Create account</button>
-      </div>
-      <div class="account-panel" id="formSignIn" role="tabpanel">
-        <form id="signInForm">
-          <label for="signInEmail">Email</label>
-          <input type="email" id="signInEmail" autocomplete="username" required />
-          <label for="signInPassword">Password</label>
-          <div class="password-field">
-            <input type="password" id="signInPassword" autocomplete="current-password" required minlength="8" />
-            <button type="button" class="password-toggle" id="toggleSignInPassword" aria-label="Show password">👁</button>
-          </div>
-          <button type="submit">Sign in</button>
-        </form>
-        <p style="margin:0.85rem 0 0;font-size:0.9rem"><a href="./reset-password.html">Forgot password?</a></p>
-      </div>
-      <div class="account-panel" id="formSignUp" role="tabpanel" hidden>
-        <form id="signUpForm">
-          <label for="signUpEmail">Email</label>
-          <input type="email" id="signUpEmail" autocomplete="username" required />
-          <label for="signUpPassword">Password (8+ characters)</label>
-          <div class="password-field">
-            <input type="password" id="signUpPassword" autocomplete="new-password" required minlength="8" />
-            <button type="button" class="password-toggle" id="toggleSignUpPassword" aria-label="Show password">👁</button>
-          </div>
-          <button type="submit">Create account</button>
-        </form>
-      </div>
+      <p style="margin:0 0 1rem">
+        <a class="google-btn" id="googleContinueBtn" href="#">Continue with Google</a>
+      </p>
+      <details class="legacy-signin">
+        <summary>Already have an email &amp; password account?</summary>
+        <div class="account-panel" style="margin-top:0.85rem">
+          <form id="signInForm">
+            <label for="signInEmail">Email</label>
+            <input type="email" id="signInEmail" autocomplete="username" required />
+            <label for="signInPassword">Password</label>
+            <div class="password-field">
+              <input type="password" id="signInPassword" autocomplete="current-password" required minlength="8" />
+              <button type="button" class="password-toggle" id="toggleSignInPassword" aria-label="Show password">👁</button>
+            </div>
+            <button type="submit">Sign in</button>
+          </form>
+          <p style="margin:0.85rem 0 0;font-size:0.9rem"><a href="./reset-password.html">Forgot password?</a></p>
+        </div>
+      </details>
       <p class="auth-error" id="authError" hidden></p>
     </div>
   </div>
@@ -146,10 +158,6 @@
       var params = new URLSearchParams(location.search);
       var returnUrl = params.get("return") || "./index.html";
       var errEl = document.getElementById("authError");
-
-      if (params.get("signup") === "1") {
-        document.getElementById("tabSignUp").click();
-      }
 
       function showError(msg) {
         errEl.textContent = msg;
@@ -167,22 +175,14 @@
         });
       }
       wirePasswordToggle("toggleSignInPassword", "signInPassword");
-      wirePasswordToggle("toggleSignUpPassword", "signUpPassword");
 
-      document.getElementById("tabSignIn").addEventListener("click", function () {
-        document.getElementById("tabSignIn").setAttribute("aria-selected", "true");
-        document.getElementById("tabSignUp").setAttribute("aria-selected", "false");
-        document.getElementById("formSignIn").hidden = false;
-        document.getElementById("formSignUp").hidden = true;
-        showError("");
-      });
-      document.getElementById("tabSignUp").addEventListener("click", function () {
-        document.getElementById("tabSignUp").setAttribute("aria-selected", "true");
-        document.getElementById("tabSignIn").setAttribute("aria-selected", "false");
-        document.getElementById("formSignUp").hidden = false;
-        document.getElementById("formSignIn").hidden = true;
-        showError("");
-      });
+      var googleBtn = document.getElementById("googleContinueBtn");
+      if (googleBtn) {
+        googleBtn.href = CrocheterAuth.googleStartUrl(returnUrl);
+      }
+      if (params.get("google_error")) {
+        showError(CrocheterAuth.friendlyError(params.get("google_error")));
+      }
 
       document.getElementById("signInForm").addEventListener("submit", function (e) {
         e.preventDefault();
@@ -190,18 +190,6 @@
         CrocheterAuth.signIn(
           document.getElementById("signInEmail").value.trim(),
           document.getElementById("signInPassword").value
-        ).then(function (res) {
-          if (res && res.ok) return CrocheterAuth.afterAuthSuccess(returnUrl);
-          showError(CrocheterAuth.friendlyError(res && res.error));
-        });
-      });
-
-      document.getElementById("signUpForm").addEventListener("submit", function (e) {
-        e.preventDefault();
-        showError("");
-        CrocheterAuth.signUp(
-          document.getElementById("signUpEmail").value.trim(),
-          document.getElementById("signUpPassword").value
         ).then(function (res) {
           if (res && res.ok) return CrocheterAuth.afterAuthSuccess(returnUrl);
           showError(CrocheterAuth.friendlyError(res && res.error));
@@ -237,6 +225,9 @@
           document.getElementById("signedInView").hidden = false;
           document.getElementById("signedInEmail").textContent = CrocheterAccountStorage.getEmail();
           injectOwnerPanel();
+          if (params.get("google") === "1") {
+            CrocheterAuth.afterAuthSuccess(returnUrl);
+          }
         }
       });
     })();

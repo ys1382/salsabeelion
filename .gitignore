@@ -3,6 +3,8 @@
 .env
 .env.*
 *.local.md
+*.local.sqlite
+*.local.jsonl
 anthropic.key
 **/anthropic.key
 .venv/

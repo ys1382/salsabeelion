@@ -93,7 +93,9 @@ tail -30 /tmp/kids-site-8074.log
 
 ## Password reset email (Halalit, Crocheter, LoreKeeper)
 
-Account **Forgot password** sends a one-hour link to the sign-up email. Uses shared helpers in `top/_shared/oddtrove_transactional_mail.py` (rsynced to `~/kids-sites/_shared/` on deploy).
+**Legacy password accounts only.** Forgot password still exists for people who signed up with email + password before Google login. New accounts use Google (no password reset mail needed).
+
+Uses shared helpers in `top/_shared/oddtrove_transactional_mail.py` (rsynced to `~/kids-sites/_shared/` on deploy).
 
 **Recommended:** Gmail SMTP with a [Google App Password](https://myaccount.google.com/apppasswords) for `nightofhonour@gmail.com`. Add to **`~/kids-sites/halalit-server/.env`** on the VPS (same vars are read by all three APIs via their process env — copy into crocheter/lorekeeper startup if you split env files later):
 
@@ -115,6 +117,29 @@ bash top/scripts/test-oddtrove-mail.sh nightofhonour@gmail.com
 Until mail is configured, the reset UI still works but **no email is delivered** (the API always returns a neutral success message for unknown emails).
 
 **Not covered:** nginx owner login (`SmokyInk11`) — rotate with `ODDTROVE_ROTATE_AUTH=1 bash top/scripts/setup-oddtrove-owner-auth.sh`.
+
+---
+
+## Google login (new accounts — Halalit, Crocheter, LoreKeeper)
+
+New accounts use **Continue with Google**. Existing email/password accounts still sign in under “Already have an email & password account?”
+
+1. In [Google Cloud Console](https://console.cloud.google.com/) create (or reuse) a project → **APIs & Services → Credentials → Create OAuth client ID → Web application**.
+2. Authorized redirect URIs (all three):
+   - `https://oddtrove.art/halalit/api/auth/google/callback`
+   - `https://oddtrove.art/crocheter/api/auth/google/callback`
+   - `https://oddtrove.art/lorekeeper/api/auth/google/callback`
+3. OAuth consent screen: External; publish when ready for real readers (Testing mode only allows listed test users).
+4. Put on the VPS in **`~/kids-sites/halalit-server/.env`** (Halalit `start-api.sh` sources this; deploy scripts pass the same vars to Crocheter and LoreKeeper):
+
+```bash
+ODDTROVE_GOOGLE_CLIENT_ID=<client-id>.apps.googleusercontent.com
+ODDTROVE_GOOGLE_CLIENT_SECRET=<client-secret>
+```
+
+5. Redeploy: `bash top/scripts/deploy-kids-sites.sh` (or site filters) so APIs restart and pick up the env.
+
+Shared code: `top/_shared/oddtrove_google_oauth.py`.
 
 ---
 
