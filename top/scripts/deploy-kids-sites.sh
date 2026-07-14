@@ -140,6 +140,7 @@ if site_enabled halalit; then
     rsync -avz \
       --exclude '.env' \
       --exclude 'halalit_accounts.sqlite' \
+      --exclude '*.local.sqlite' \
       --exclude 'lookup-log.jsonl' \
       --exclude '__pycache__' \
       "$ROOT/halalit/server/" "$HOST:~/$REMOTE_BASE/halalit-server/"
