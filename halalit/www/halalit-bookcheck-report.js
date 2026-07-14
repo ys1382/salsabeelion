@@ -1388,18 +1388,13 @@
     if (/tags mention illegitimacy|born out of wedlock/.test(d)) {
       return "catalog tags point to an illegitimate-child storyline";
     }
-    if (/adult romance|mature[- ]rated|college romance|new adult romance|explicit mature/.test(d)) {
+    if (/adult romance|mature[- ]rated|college romance|new adult romance|explicit mature|notes mention adult or mature/.test(d)) {
       return romanceExplainerFromText(detail) || "the plot centers on a mature-rated romantic relationship—not all-ages";
     }
     if (/romantic tension|romance as the main/.test(d)) {
       var romPol = romanceExplainerFromText(detail);
       if (romPol) return romPol;
-      if (/notes mention romantic tension|even when romance isn/i.test(d)) {
-        return "it includes romantic tension or a love triangle in a teen/YA story—not Halalit's all-ages family shelf";
-      }
-    }
-    if (/teen\/ya tags plus romance|teen\/ya tags plus romance/i.test(d)) {
-      return "Open Library tags it as teen/YA with romance—not Halalit's all-ages family shelf";
+      /* Light romantic tension is not an automatic reject — no explainer here. */
     }
     if (/harsh swearing|slurs|profan/.test(d)) {
       return "catalog or plot text flags harsh swearing or slurs";

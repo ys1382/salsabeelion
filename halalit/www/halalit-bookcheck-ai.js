@@ -244,7 +244,8 @@
     if (EXCLUDE_AUDIENCE_FROM_POLICY_BLOB[row.id]) return true;
     if (themeBriefDeniesPresence(row.id, row.brief)) return true;
     if (row.id !== "lgbtq" && themeBriefEmbedsLgbtqDenial(row.brief)) return true;
-    if (row.id === "romantic_tension" && isCleanYaOnlyBrief(row.brief)) return true;
+    /* Light romantic tension never feeds catalog hard-reject; adult_romance still does. */
+    if (row.id === "romantic_tension") return true;
     return false;
   }
 

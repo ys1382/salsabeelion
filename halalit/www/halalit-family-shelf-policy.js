@@ -31,9 +31,16 @@
   var ROMANCE_SUBJECT_RE =
     /\bromance\b|romantic fiction|love stories|romantic love|dating fiction|romantic relationships/i;
 
-  /** Extra scan on descriptions or review snippets when Bookcheck fetches them. */
-  var SUPPLEMENT_THEME_RE =
-    /romantic tension|romantic subplot|love triangle|betrothed|betrothal|crush on|sexual tension|erotic romance|adult romance|fantasy horror|young adult series/i;
+  /** Light romance in notes — signal / parent opt-out only; not an automatic reject. */
+  var LIGHT_ROMANCE_THEME_RE =
+    /romantic tension|romantic subplot|love triangle|betrothed|betrothal|crush on|dating/i;
+
+  /** Adult / mature / explicit romance — automatic reject (level and type, not romance itself). */
+  var HARD_ADULT_ROMANCE_RE =
+    /erotic romance|adult romance|sexual tension|mature[- ]rated romance|college romance|new[- ]adult romance|explicit romance|open[- ]door|graphic romance/i;
+
+  /** @deprecated use LIGHT_ROMANCE_THEME_RE + HARD_ADULT_ROMANCE_RE; kept for any external callers */
+  var SUPPLEMENT_THEME_RE = LIGHT_ROMANCE_THEME_RE;
 
   /** Catalog subjects or descriptions suggesting deity, spirits, or mythology treated as real. */
   var DEITY_MYTHOLOGY_STRONG_RE =
@@ -1011,7 +1018,9 @@
       signals.push("Harsh swearing or slurs in catalog or description");
     }
     if (isTeenBlob(b)) signals.push("Teen or young-adult audience");
-    if (ROMANCE_SUBJECT_RE.test(b) || SUPPLEMENT_THEME_RE.test(b)) signals.push("Romance or relationship thread mentioned");
+    if (ROMANCE_SUBJECT_RE.test(b) || LIGHT_ROMANCE_THEME_RE.test(b) || HARD_ADULT_ROMANCE_RE.test(b)) {
+      signals.push("Romance or relationship thread mentioned");
+    }
     if (FAMILY_SHELF_SUBJECT_WARN_RE.test(b)) signals.push("Illegitimacy or similar in catalog tags");
     if (blobLooksGraphic(b, tl)) signals.push("Comics, manga, graphic novel, sketchbook, or art book");
     if (FANSERVICE_TEXT_RE.test(b)) signals.push("Suggestive or fanservice content mentioned");
@@ -1175,15 +1184,10 @@
 
     var teen = blob ? isTeenBlob(blob) : false;
 
-    if (
-      blob &&
-      SUPPLEMENT_THEME_RE.test(blob) &&
-      !/children'?s stories|picture books/.test(blob) &&
-      !isHandVerifiedClean(ttl, auth)
-    ) {
+    if (blob && HARD_ADULT_ROMANCE_RE.test(blob) && !isHandVerifiedClean(ttl, auth)) {
       return done({
         tier: "flag_review",
-        detail: "Notes mention romantic tension—Halalit flags this even when romance isn’t the main plot.",
+        detail: "Notes mention adult or mature-rated romance—outside Halalit’s family shelf.",
       });
     }
 
@@ -1255,20 +1259,8 @@
       });
     }
 
-    if (blob && ROMANCE_SUBJECT_RE.test(blob) && !isHandVerifiedClean(ttl, auth)) {
-      if (teen || /young adult|ya fiction/.test(blob)) {
-        return done({
-          tier: "flag_review",
-          detail: "Teen/YA tags plus romance—Halalit flags for the family shelf.",
-        });
-      }
-      if (!/children'?s fiction|children'?s stories|picture books|juvenile fiction/.test(blob)) {
-        return done({
-          tier: "flag_review",
-          detail: "Romance tags without a clear all-ages children’s label—preview first.",
-        });
-      }
-    }
+    /* Light/clean romance tags alone are not automatic reject — level/type (adult/mature) is.
+       Signals still note romance; teen/YA falls through to teen_caution below. */
 
     if (teen) {
       return done({

@@ -72,11 +72,19 @@ function assert(cond, msg) {
 }
 
 assert(!supplement || !/romantic subplot|love triangle/i.test(supplement), "AI supplement must not re-feed clean romance text");
-assert(hint.tier === "flag_review", "catalog/wikipedia romance still flags flag_review");
-assert(
-  /romantic tension|teen\/ya tags plus romance/i.test(String(hint.detail || "")),
-  "honest policy detail for YA romance"
-);
+assert(hint.tier !== "flag_review", "light YA romance must not auto-reject as flag_review");
+assert(hint.tier === "teen_caution", "YA audience alone → teen_caution, not romance hard-reject");
+
+const adultRomanceBlob =
+  "Adult fiction Romance erotic romance mature-rated college romance central to the plot";
+const adultDoc = {
+  title: "Made-Up Spice Novel",
+  author_name: ["Example Author"],
+  subjects: ["Romance", "Adult fiction"],
+};
+const adultHint = Policy.inferCatalogFamilyHint(adultDoc, { supplementText: adultRomanceBlob });
+assert(adultHint.tier === "flag_review", "adult/mature romance still auto-rejects");
+assert(/adult or mature-rated romance/i.test(String(adultHint.detail || "")), "adult romance detail names level/type");
 
 const absolutelyScan = {
   ok: true,
