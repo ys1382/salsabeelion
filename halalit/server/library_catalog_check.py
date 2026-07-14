@@ -34,6 +34,8 @@ PLACES: dict[str, dict[str, Any]] = {
         "branchName": "Central Park Library",
         "branchNameNeedles": ("central park",),
         "catalogHost": "sclibrary.bibliocommons.com",
+        # City branch: walk-in / that building only.
+        "availabilityScope": "branch",
         "reasonYes": "borrowable_at_central_park",
         "reasonNoBranch": "not_at_central_park",
         "reasonNoBorrow": "central_park_not_borrowable",
@@ -47,9 +49,11 @@ PLACES: dict[str, dict[str, Any]] = {
         "branchName": "Cupertino Library",
         "branchNameNeedles": ("cupertino",),
         "catalogHost": "sccl.bibliocommons.com",
-        "reasonYes": "borrowable_at_cupertino",
-        "reasonNoBranch": "not_at_cupertino",
-        "reasonNoBorrow": "cupertino_not_borrowable",
+        # County district: holds move between branches; "yes" = borrowable in SCCLD.
+        "availabilityScope": "system",
+        "reasonYes": "borrowable_via_cupertino_county",
+        "reasonNoBranch": "not_in_sccld_borrowable",
+        "reasonNoBorrow": "sccld_not_borrowable",
     },
 }
 DEFAULT_PLACE_ID = "santa-clara-central-park"
@@ -148,11 +152,18 @@ def _author_core(author: str) -> str:
 
 
 def _author_surname(author: str) -> str:
-    a = _author_core(author)
+    raw = str(author or "").strip()
+    a = _norm_text(raw)
     if not a:
         return ""
+    # "Paulsen, Gary" → prefer family name before the comma.
+    if "," in raw:
+        left = _norm_text(raw.split(",", 1)[0])
+        toks = [t for t in left.split() if t]
+        if toks:
+            return toks[-1]
+    a = _author_core(author)
     toks = a.split()
-    # Prefer last non-initial token
     for tok in reversed(toks):
         if len(tok) > 1:
             return tok
@@ -331,16 +342,19 @@ def _token_equal(a: list[str], b: list[str]) -> bool:
     return bool(a) and a == b
 
 
-def _token_soft_equal(a: list[str], b: list[str]) -> bool:
-    """Same words, or one is the other with at most one extra trailing word."""
-    if _token_equal(a, b):
+def _token_soft_equal(query: list[str], bib: list[str]) -> bool:
+    """
+    Same words, or the query is the bib title plus at most one trailing word
+    (wishlist subtitle). Do not treat a short query as matching a longer different
+    bib title (e.g. "Hatchet" must not match "Hatchet Girls").
+    """
+    if _token_equal(query, bib):
         return True
-    if not a or not b:
+    if not query or not bib:
         return False
-    shorter, longer = (a, b) if len(a) <= len(b) else (b, a)
-    if len(longer) - len(shorter) > 1:
-        return False
-    return longer[: len(shorter)] == shorter
+    if len(query) == len(bib) + 1 and query[: len(bib)] == bib:
+        return True
+    return False
 
 
 def _series_matches(series_hint: str, bib: dict[str, Any]) -> bool:
@@ -556,29 +570,39 @@ def _item_is_place_branch(place: dict[str, Any], item: dict[str, Any]) -> bool:
     return False
 
 
-def _item_borrowable_at_place(place: dict[str, Any], item: dict[str, Any]) -> bool:
-    if not _item_is_place_branch(place, item):
-        return False
+def _item_circulates(item: dict[str, Any]) -> bool:
     av = item.get("availability") if isinstance(item.get("availability"), dict) else {}
     if av.get("libraryUseOnly") is True:
         return False
-    # circulationType REQUEST / LOAN means they circulate; empty -> allow if not use-only
     circ = str(av.get("circulationType") or "").strip().upper()
     if circ in {"", "REQUEST", "LOAN", "NORMAL"}:
         return True
-    # Explicit non-circulating
     if circ in {"NONE", "NO_CIRC", "IN_LIBRARY"}:
         return False
     return True
+
+
+def _item_counts_for_place(place: dict[str, Any], item: dict[str, Any]) -> bool:
+    """Whether this holding row counts for the place's availability scope."""
+    scope = str(place.get("availabilityScope") or "branch").strip().lower()
+    if scope == "system":
+        return True
+    return _item_is_place_branch(place, item)
+
+
+def _item_borrowable_at_place(place: dict[str, Any], item: dict[str, Any]) -> bool:
+    if not _item_counts_for_place(place, item):
+        return False
+    return _item_circulates(item)
 
 
 def _probe_availability(
     place: dict[str, Any], metadata_id: str
 ) -> tuple[bool, bool, dict[str, Any] | None]:
     """
-    Returns (has_any_branch_item, has_borrowable, sample_item).
-    has_any_branch_item: branch owns a copy (may be use-only).
-    has_borrowable: branch has a borrowable/requestable copy.
+    Returns (has_any_counted_item, has_borrowable, sample_item).
+    Branch scope: only the configured branch.
+    System scope (county): any branch in that library catalog.
     """
     library_id = str(place.get("libraryId") or "")
     params = urllib.parse.urlencode({"locale": "en-US"})
@@ -586,19 +610,27 @@ def _probe_availability(
     data = _fetch_json(url, AVAIL_TIMEOUT_SEC)
     entities = data.get("entities") if isinstance(data.get("entities"), dict) else {}
     bib_items = entities.get("bibItems") if isinstance(entities.get("bibItems"), dict) else {}
-    has_branch = False
-    sample: dict[str, Any] | None = None
+    has_counted = False
+    borrowable_sample: dict[str, Any] | None = None
+    non_borrow_sample: dict[str, Any] | None = None
     for _iid, item in bib_items.items():
         if not isinstance(item, dict):
             continue
-        if not _item_is_place_branch(place, item):
+        if not _item_counts_for_place(place, item):
             continue
-        has_branch = True
+        has_counted = True
         if _item_borrowable_at_place(place, item):
-            return True, True, item
-        if sample is None:
-            sample = item
-    return has_branch, False, sample
+            # Prefer a home-branch sample when present (nicer status text).
+            if _item_is_place_branch(place, item):
+                return True, True, item
+            if borrowable_sample is None:
+                borrowable_sample = item
+            continue
+        if non_borrow_sample is None:
+            non_borrow_sample = item
+    if borrowable_sample is not None:
+        return True, True, borrowable_sample
+    return has_counted, False, non_borrow_sample
 
 
 def check_title(
