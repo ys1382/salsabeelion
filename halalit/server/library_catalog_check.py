@@ -6,6 +6,7 @@ Uses BiblioCommons public gateway JSON (same host the catalog UI calls).
 
 Places:
   santa-clara-central-park — City of Santa Clara, branch C
+  santa-clara-mission — City of Santa Clara, branch M
   sccld-cupertino — Santa Clara County Library District, Cupertino (CU)
 """
 from __future__ import annotations
@@ -39,6 +40,21 @@ PLACES: dict[str, dict[str, Any]] = {
         "reasonYes": "borrowable_at_central_park",
         "reasonNoBranch": "not_at_central_park",
         "reasonNoBorrow": "central_park_not_borrowable",
+    },
+    "santa-clara-mission": {
+        "placeId": "santa-clara-mission",
+        "placeLabel": "Santa Clara Mission Branch Library",
+        "shortLabel": "Mission",
+        "libraryId": "sclibrary",
+        "branchCode": "M",
+        "branchName": "Mission Branch",
+        "branchNameNeedles": ("mission",),
+        "catalogHost": "sclibrary.bibliocommons.com",
+        # City branch: walk-in / that building only.
+        "availabilityScope": "branch",
+        "reasonYes": "borrowable_at_mission",
+        "reasonNoBranch": "not_at_mission",
+        "reasonNoBorrow": "mission_not_borrowable",
     },
     "sccld-cupertino": {
         "placeId": "sccld-cupertino",
@@ -182,7 +198,7 @@ def resolve_place(place_id: str | None = None) -> dict[str, Any] | None:
 def list_places() -> list[dict[str, str]]:
     """Public dropdown options (order preserved)."""
     out: list[dict[str, str]] = []
-    for pid in ("santa-clara-central-park", "sccld-cupertino"):
+    for pid in ("santa-clara-central-park", "santa-clara-mission", "sccld-cupertino"):
         p = PLACES[pid]
         out.append(
             {

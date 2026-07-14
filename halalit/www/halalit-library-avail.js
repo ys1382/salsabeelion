@@ -1,7 +1,7 @@
 /**
  * Halalit — Wishlist library availability (practice).
  * Choose a library from the dropdown, then check borrowable copies at that branch
- * (checked out OK). Places: Central Park (city) + Cupertino (Santa Clara County).
+ * (checked out OK). Places: Central Park + Mission (city) + Cupertino (Santa Clara County).
  */
 (function (global) {
   var BATCH_CAP = 10;
@@ -13,6 +13,11 @@
       placeId: "santa-clara-central-park",
       placeLabel: "Santa Clara Central Park Library",
       shortLabel: "Central Park",
+    },
+    {
+      placeId: "santa-clara-mission",
+      placeLabel: "Santa Clara Mission Branch Library",
+      shortLabel: "Mission",
     },
     {
       placeId: "sccld-cupertino",
