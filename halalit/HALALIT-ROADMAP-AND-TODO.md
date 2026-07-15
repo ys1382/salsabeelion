@@ -11,6 +11,12 @@
 
 ## Active tasks
 
+### Halalit Suggests — browse trusted books (Jul 2026)
+
+- [x] **Halalit Suggests page** (`suggests.html`) — age band first, spotlight + see more, themed rooms, series lobby (next unread vs Already read), trusted-only search, seasonal room highlight (Father’s/Mother’s weeks). Hand-vetted display pool only; cards open Bookcheck. No public reviews.
+- [ ] Grow theme membership + multi-volume series order as owner hand-vets / assigns rooms
+- [ ] Later: mood / Book Quest doors (#5) and museum walk (#7) — parked on purpose
+
 ### Book Quest — review / feedback
 
 - [x] “Not for me” → More / Less menus (neater than auto-open panels)

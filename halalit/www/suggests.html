@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <title>Halalit Suggests — hand-checked reads</title>
+  <link rel="stylesheet" href="./halalit-mothers-day-theme.css" />
+  <link rel="stylesheet" href="./halalit-fathers-day-theme.css" />
+  <link rel="stylesheet" href="./halalit-cover-thumb.css?v=20260622a" />
+  <link rel="stylesheet" href="./halalit-suggests.css?v=20260715a" />
+  <style>
+    :root {
+      --bg: #1a1410;
+      --panel: #2a2018;
+      --ink: #f4ead6;
+      --dim: #b8a684;
+      --accent: #e3b86a;
+      --accent-soft: #c98a3d;
+      --rule: rgba(227, 184, 106, 0.22);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(900px 480px at 12% 0%, #3a2a1c 0%, var(--bg) 55%),
+        var(--bg);
+      color: var(--ink);
+      font-family: Georgia, Palatino, serif;
+      line-height: 1.65;
+    }
+    .wrap {
+      max-width: 52rem;
+      margin: 0 auto;
+      padding: 1.25rem clamp(1rem, 4vw, 2rem) 3rem;
+    }
+    h1.page-title {
+      font-size: 1.5rem;
+      font-weight: 500;
+      color: var(--accent);
+      margin: 0 0 0.35rem;
+    }
+    .page-tag {
+      margin: 0 0 1.25rem;
+      color: var(--dim);
+      font-size: 0.95rem;
+      max-width: 48ch;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <nav class="halalit-suggests__nav" aria-label="Halalit">
+      <a href="./index.html">← Halalit home</a>
+      ·
+      <a href="./index.html#bookcheck">Bookcheck</a>
+      ·
+      <a href="./play.html">Book Quest</a>
+    </nav>
+    <h1 class="page-title">Halalit Suggests</h1>
+    <p class="page-tag">Browse books Halalit would recommend — hand-checked only. Private feedback stays in feedback boxes; there are no public reviews here.</p>
+    <div id="halalitSuggestsRoot" class="halalit-suggests" aria-live="polite"></div>
+  </div>
+
+  <script src="./halalit-account-storage.js?v=20260714a"></script>
+  <script src="./halalit-personal-library.js?v=20260610g"></script>
+  <script src="./halalit-pacific-occasion-banner.js?v=20260601b"></script>
+  <script src="./halalit-curated-shelf-warnings.js?v=20260702a"></script>
+  <script src="./halalit-bookquest-age-ratings.js?v=20260605t"></script>
+  <script src="./halalit-family-shelf-policy.js?v=20260711a"></script>
+  <script src="./halalit-cover-thumb.js?v=20260623b"></script>
+  <script src="./halalit-suggests-data.js?v=20260715a"></script>
+  <script src="./halalit-suggests.js?v=20260715a"></script>
+  <script>
+    if (window.HalalitPacificOccasionBanner && typeof window.HalalitPacificOccasionBanner.apply === "function") {
+      window.HalalitPacificOccasionBanner.apply();
+    }
+  </script>
+</body>
+</html>
