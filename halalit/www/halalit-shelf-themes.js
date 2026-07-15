@@ -41,6 +41,14 @@
         /romantic tension|romantic subplot|love triangle|betrothed|betrothal|crush on|sexual tension|dating/i,
     },
     {
+      id: "forced_gender_magic",
+      label: "Forced or magic gender-change",
+      shelfTier: "caution",
+      subjectRe: /gender transform|body swap|sex change|forced gender/i,
+      textRe:
+        /(?:turned|transforms?|transformed|becomes?) (?:into )?(?:a )?(?:man|woman|girl|boy)|gender[- ](?:change|swap|transform)|body[- ]swap|magical(?:ly)? (?:changed|swapped) (?:sex|gender)|steal(?:s|ing)?[^.]{0,48}(?:body|magic)[^.]{0,48}(?:woman|man|girl|boy)|forced (?:into )?(?:a )?(?:female|male) (?:body|form)/i,
+    },
+    {
       id: "illegitimate_children",
       label: "Plot centered on illegitimate children",
       shelfTier: "flag_review",

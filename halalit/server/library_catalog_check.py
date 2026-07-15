@@ -192,22 +192,35 @@ def resolve_place(place_id: str | None = None) -> dict[str, Any] | None:
     if not raw:
         return dict(PLACES[DEFAULT_PLACE_ID])
     hit = PLACES.get(raw)
-    return dict(hit) if hit else None
+    if hit:
+        return dict(hit)
+    try:
+        from library_place_suggest import all_place_configs
+
+        live = all_place_configs().get(raw)
+        return dict(live) if live else None
+    except Exception:
+        return None
 
 
 def list_places() -> list[dict[str, str]]:
-    """Public dropdown options (order preserved)."""
-    out: list[dict[str, str]] = []
-    for pid in ("santa-clara-central-park", "santa-clara-mission", "sccld-cupertino"):
-        p = PLACES[pid]
-        out.append(
-            {
-                "placeId": str(p["placeId"]),
-                "placeLabel": str(p["placeLabel"]),
-                "shortLabel": str(p["shortLabel"]),
-            }
-        )
-    return out
+    """Public place options: seed libraries + reader auto-adds."""
+    try:
+        from library_place_suggest import public_place_list
+
+        return public_place_list()
+    except Exception:
+        out: list[dict[str, str]] = []
+        for pid in ("santa-clara-central-park", "santa-clara-mission", "sccld-cupertino"):
+            p = PLACES[pid]
+            out.append(
+                {
+                    "placeId": str(p["placeId"]),
+                    "placeLabel": str(p["placeLabel"]),
+                    "shortLabel": str(p["shortLabel"]),
+                }
+            )
+        return out
 
 
 def _cache_key(
@@ -276,6 +289,24 @@ def _fetch_json(url: str, timeout: float) -> dict[str, Any]:
 
 
 def catalog_search_url(place: dict[str, Any], title: str, author: str = "") -> str:
+    scope = str(place.get("availabilityScope") or "").strip().lower()
+    if scope == "open_catalog":
+        base = str(place.get("catalogUrl") or "").strip()
+        if not base:
+            host = str(place.get("catalogHost") or "").strip()
+            base = f"https://{host}/" if host else ""
+        if not base:
+            return ""
+        q = title.strip()
+        if author.strip():
+            q = f"{q} {author.strip()}"
+        # CARL Connect and many SPAs use hash search; also try query param for others.
+        if "#" in base or "carl" in base.lower() or "catalog." in base.lower():
+            root = base.split("#")[0].rstrip("/") + "/"
+            return root + "#/search?query=" + urllib.parse.quote(q)
+        joiner = "&" if "?" in base else "?"
+        return base.rstrip("/") + joiner + urllib.parse.urlencode({"q": q})
+
     host = str(place.get("catalogHost") or "")
     q = title.strip()
     if author.strip():
@@ -706,13 +737,29 @@ def check_title(
         "placeId": place["placeId"],
         "placeLabel": place["placeLabel"],
         "shortLabel": place.get("shortLabel"),
-        "branchCode": place["branchCode"],
-        "branchName": place["branchName"],
+        "branchCode": place.get("branchCode"),
+        "branchName": place.get("branchName"),
         "title": title,
         "author": author,
         "seriesName": series_name or None,
         "catalogUrl": search_url,
+        "checkMode": (
+            "open_catalog"
+            if str(place.get("availabilityScope") or "").lower() == "open_catalog"
+            else "availability"
+        ),
     }
+
+    if str(place.get("availabilityScope") or "").strip().lower() == "open_catalog":
+        return {
+            **base,
+            "status": "open_catalog",
+            "reason": "open_catalog_only",
+            "matchTitle": None,
+            "matchId": None,
+            "libraryStatus": None,
+            "message": "Halalit can’t auto-check borrowable copies here — open the catalog to look up this title.",
+        }
 
     if not title:
         return {

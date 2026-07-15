@@ -1,0 +1,16 @@
+---
+description: Halalit reader library suggestions — policy gate, auto-add vs pending
+globs: halalit/server/library_place*.py,halalit/server/library_place_policy.json,halalit/www/halalit-library-avail.js,halalit/www/owner.html
+---
+
+# Halalit — library place suggestions
+
+When working on **Wishlist library add / suggest** (not Bookcheck vet lists):
+
+1. Read **`halalit/server/library_place_policy.json`** — `ruleOfThumb` is the human brief; lists are enforced in code.
+2. **Community public libraries** can be auto-admitted (homepage or catalog URL) after deny/scam checks — not BiblioCommons-only.
+3. **BiblioCommons** → availability yes/no (system scope) after live probe.
+4. **Other community catalogs** → **open_catalog** places: favorite + Check opens their catalog; no fake borrowable initials.
+5. **Pending** only when name-only or not clearly a community library; owner notified on auto-add and pending.
+6. **Scam / deny-list** → hard reject (no pending).
+7. **No public wall** of library links — private to the suggester + owner inbox.

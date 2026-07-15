@@ -9,6 +9,13 @@
     { id: "audience", label: "Age band", subjectRe: /juvenile|children|young adult|teen|ya fiction|picture book/i, textRe: /young adult|teen fiction|teenage readers/i },
     { id: "lgbtq", label: "LGBTQ themes", subjectRe: /lgbt|lesbian|gay|homosexual|queer|transgender|same[- ]sex|gender identity/i, textRe: /\blgbtq?\b|lesbian|gay\b|homosexual|queer\b|transgender|they\/them|two[- ]moms?|same[- ]sex/i },
     { id: "romance", label: "Romance or dating", subjectRe: /romance|dating|love stories/i, textRe: /romantic|love triangle|dating|betrothal|crush on/i },
+    {
+      id: "forced_gender_magic",
+      label: "Forced or magic gender-change",
+      subjectRe: /gender transform|body swap|sex change|forced gender/i,
+      textRe:
+        /(?:turned|transforms?|transformed|becomes?) (?:into )?(?:a )?(?:man|woman|girl|boy)|gender[- ](?:change|swap|transform)|body[- ]swap|magical(?:ly)? (?:changed|swapped) (?:sex|gender)|steal(?:s|ing)?[^.]{0,48}(?:body|magic)[^.]{0,48}(?:woman|man|girl|boy)|forced (?:into )?(?:a )?(?:female|male) (?:body|form)/i,
+    },
     { id: "modesty", label: "Sexual content or fanservice", subjectRe: /erotica|sexual/i, textRe: /fanservice|fan service|ecchi|panty|sexualized|immodest|explicit/i },
     { id: "illegitimacy", label: "Illegitimate-children plot", subjectRe: /illegitim|born out of wedlock|bastardy/i, textRe: /illegitim|born out of wedlock|unwed mother/i },
     { id: "violence", label: "Violence or horror", subjectRe: /horror|murder|violence/i, textRe: /graphic violence|serial killer|torture|horror fiction|true crime/i },
@@ -309,6 +316,7 @@
       status = "concern";
     }
     if (topic.id === "format") status = "caution";
+    if (topic.id === "forced_gender_magic") status = "caution";
 
     var noteParts = [];
     if (tagHits.length)

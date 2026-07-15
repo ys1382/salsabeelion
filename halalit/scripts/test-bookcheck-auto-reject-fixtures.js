@@ -101,5 +101,43 @@ const absolutelyScan = {
 const absNorm = AI.normalizeAiThemeScan(JSON.parse(JSON.stringify(absolutelyScan)));
 assert(AI.aiLgbtqThemePresent(absNorm), "affirmative LGBTQ scan stays present");
 
+const firebornStyleScan = {
+  ok: true,
+  themes: [
+    {
+      id: "lgbtq",
+      present: true,
+      confidence: "medium",
+      brief:
+        "Antagonist male wizard becomes a woman through a disastrous attempt to steal magic; villain stays evil with no affirming identity arc.",
+    },
+    {
+      id: "forced_gender_magic",
+      present: true,
+      confidence: "high",
+      brief:
+        "Forced magic gender-change on the antagonist via stolen magic—not affirming LGBTQ; may still feel uncomfortable for LGBTQ-avoiders.",
+    },
+  ],
+};
+const fbNorm = AI.normalizeAiThemeScan(JSON.parse(JSON.stringify(firebornStyleScan)));
+assert(!AI.aiLgbtqThemePresent(fbNorm), "forced/magic gender-change alone must not hard-flag LGBTQ present");
+const fbForced = (fbNorm.themes || []).find((t) => t && t.id === "forced_gender_magic");
+assert(fbForced && fbForced.present, "forced_gender_magic caution theme stays present");
+const fbSupp = AI.buildAiSupplementText(fbNorm);
+assert(!/forced_gender_magic|Forced or magic gender-change/i.test(fbSupp || ""), "forced gender magic must not feed policy blob");
+const fbSignals = AI.appendAiSignals([], fbNorm);
+assert(
+  fbSignals.some((s) => /forced or magic gender-change|forced_gender_magic/i.test(String(s))),
+  "forced gender magic still appears as AI scan note"
+);
+
+loadGlobalScript("halalit-curated-shelf-warnings.js", g);
+const Cur = g.HalalitCuratedShelfWarnings;
+const firebornHand = Cur.userDiscretionParkedMatch("Fireborn", "Toby Forward");
+assert(firebornHand && firebornHand.tier === "user_discretion", "Fireborn is user_discretion hand note");
+assert(/forced|magic gender|gender-change|LGBTQ-avoiders/i.test(String(firebornHand.detail || "")), "Fireborn note covers soft LGBTQ-avoider caution");
+assert(!/hardest auto-reject|won't recommend this book\./i.test(String(firebornHand.detail || "").split("\n")[0]), "Fireborn is not hardest reject framing");
+
 if (failed) process.exit(1);
 console.log("All client fixture checks passed.");

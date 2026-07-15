@@ -432,6 +432,20 @@
         </div>
       </details>
 
+      <details class="office-section panel" id="ownerLibrarySuggestSection" open>
+        <summary class="office-section__summary">
+          <span class="office-section__title"><strong>Library suggestions</strong></span>
+          <span class="office-section__toggle" aria-hidden="true"></span>
+        </summary>
+        <div class="office-section__body">
+          <p class="hint">Use <strong>local</strong> Owner’s Office while testing (<code>127.0.0.1:8744</code>), signed in as owner. Auto-added libraries (including open-catalog ones like Berkeley) show under <strong>Recently auto-added</strong>. Pending is only for unclear links.</p>
+          <h3 class="muted" style="font-size:0.95rem;margin:0.75rem 0 0.35rem">Pending</h3>
+          <div id="libraryPendingList"></div>
+          <h3 class="muted" style="font-size:0.95rem;margin:1rem 0 0.35rem">Recently auto-added</h3>
+          <div id="libraryAutoAddsList"></div>
+        </div>
+      </details>
+
       <details class="office-section panel">
         <summary class="office-section__summary">
           <span class="office-section__title"><strong>Suggestions &amp; “how we did” notes</strong></span>
@@ -1025,14 +1039,128 @@
         list.forEach(function (row) {
           var div = document.createElement("div");
           div.className = "feedback-item";
-          var label = row.source === "tips_box" ? "Suggestion box" : row.source === "bookcheck" ? "Bookcheck" : "Book Quest";
+          var label =
+            row.source === "tips_box"
+              ? "Suggestion box"
+              : row.source === "bookcheck"
+                ? "Bookcheck"
+                : row.source === "library_suggest"
+                  ? "Library suggest"
+                  : "Book Quest";
           var meta = row.meta || {};
           var extra = meta.title ? " · " + meta.title : "";
           if (meta.author) extra += " · " + meta.author;
           if (meta.rating) extra += " · " + meta.rating;
+          if (meta.label) extra += " · " + meta.label;
+          if (meta.outcome) extra += " · " + meta.outcome;
           div.textContent = label + extra + " — “" + (row.message || "").slice(0, 200) + "” · " + fmtDate(row.createdAt);
           root.appendChild(div);
         });
+      }
+
+      function renderLibrarySuggest(pending, autoAdds) {
+        var pendRoot = document.getElementById("libraryPendingList");
+        var autoRoot = document.getElementById("libraryAutoAddsList");
+        if (pendRoot) {
+          pendRoot.innerHTML = "";
+          if (!pending || !pending.length) {
+            pendRoot.textContent = "No pending library suggestions.";
+          } else {
+            pending.forEach(function (row) {
+              var div = document.createElement("div");
+              div.className = "feedback-item";
+              var line =
+                (row.label || "Library") +
+                (row.catalogUrl ? " · " + row.catalogUrl : "") +
+                " · " +
+                (row.reason || "pending") +
+                " · " +
+                fmtDate(row.createdAt);
+              var span = document.createElement("span");
+              span.textContent = line + " ";
+              div.appendChild(span);
+              var btn = document.createElement("button");
+              btn.type = "button";
+              btn.className = "copy-btn";
+              btn.textContent = "Reject";
+              btn.addEventListener("click", function () {
+                var Auth = window.HalalitAuth;
+                var base =
+                  window.HalalitAccountStorage && window.HalalitAccountStorage.apiBase
+                    ? window.HalalitAccountStorage.apiBase()
+                    : "";
+                if (!base) return;
+                fetch(base + "/owner/library/pending/reject", {
+                  method: "POST",
+                  credentials: "include",
+                  headers: { "Content-Type": "application/json", Accept: "application/json" },
+                  body: JSON.stringify({ id: row.id }),
+                })
+                  .then(function (res) {
+                    return res.json();
+                  })
+                  .then(function () {
+                    loadOffice();
+                  })
+                  .catch(function () {});
+              });
+              div.appendChild(btn);
+              pendRoot.appendChild(div);
+            });
+          }
+        }
+        if (autoRoot) {
+          autoRoot.innerHTML = "";
+          if (!autoAdds || !autoAdds.length) {
+            autoRoot.textContent = "No reader auto-adds yet.";
+          } else {
+            autoAdds.forEach(function (row) {
+              var div = document.createElement("div");
+              div.className = "feedback-item";
+              var mode =
+                row.checkMode === "open_catalog" ? "open catalog" : "auto-check";
+              var line =
+                (row.placeLabel || row.placeId) +
+                " · " +
+                mode +
+                (row.catalogUrl ? " · " + row.catalogUrl : row.catalogHost ? " · " + row.catalogHost : "") +
+                (row.disabled ? " (disabled)" : "") +
+                " · " +
+                fmtDate(row.createdAt);
+              var span = document.createElement("span");
+              span.textContent = line + " ";
+              div.appendChild(span);
+              if (!row.disabled) {
+                var btn = document.createElement("button");
+                btn.type = "button";
+                btn.className = "copy-btn";
+                btn.textContent = "Disable";
+                btn.addEventListener("click", function () {
+                  var base =
+                    window.HalalitAccountStorage && window.HalalitAccountStorage.apiBase
+                      ? window.HalalitAccountStorage.apiBase()
+                      : "";
+                  if (!base) return;
+                  fetch(base + "/owner/library/places/disable", {
+                    method: "POST",
+                    credentials: "include",
+                    headers: { "Content-Type": "application/json", Accept: "application/json" },
+                    body: JSON.stringify({ placeId: row.placeId }),
+                  })
+                    .then(function (res) {
+                      return res.json();
+                    })
+                    .then(function () {
+                      loadOffice();
+                    })
+                    .catch(function () {});
+                });
+                div.appendChild(btn);
+              }
+              autoRoot.appendChild(div);
+            });
+          }
+        }
       }
 
       function applySettings(flags) {
@@ -1075,6 +1203,7 @@
           }
           renderFeedback(res.feedback || []);
           renderReaderMessages(res.readerMessages || []);
+          renderLibrarySuggest(res.libraryPending || [], res.libraryAutoAdds || []);
           var scan = document.getElementById("scannerAlerts");
           scan.innerHTML = "";
           (res.scannerAlerts || []).forEach(function (row) {

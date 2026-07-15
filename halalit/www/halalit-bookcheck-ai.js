@@ -7,6 +7,12 @@
     graphic_format: true,
   };
 
+  /** Forced/magic gender-change — soft caution only; never feeds LGBTQ hard-reject policy blob. */
+  var EXCLUDE_AUDIENCE_FROM_POLICY_BLOB = {
+    teen_ya_age: true,
+    forced_gender_magic: true,
+  };
+
   var LGBTQ_EVIDENCE_RE =
     /\b(?:lgbtq\+?|lesbian|gay\b|homosexual|queer\b|bisexual|pansexual|asexual|aromantic|transgender|non[- ]?binary|gender[- ]fluid|gender[- ]nonconforming|they\/them|two[- ]moms?|two[- ]dads?|same[- ]sex|enby|sapphic)\b/i;
 
@@ -18,6 +24,12 @@
 
   var EXPLICIT_LGBTQ_IN_STORY_RE =
     /\b(?:wouldn['’]t matter if (?:she|he|they) were attracted|attracted to (?:her|his|their) (?:female|male|same[- ]sex)|same[- ]sex (?:crush|attraction|couple|relationship|parents|marriage)|two moms?|two dads?|two mothers?|two fathers?|(?:openly )?(?:gay|lesbian|bisexual|queer|transgender|non[- ]?binary) character|don['’]t assume (?:she|he|they)['’]?s straight)\b/i;
+
+  var FORCED_GENDER_MAGIC_RE =
+    /\b(?:forced|magic(?:al)?|curse(?:d)?|spell|stolen|steal(?:s|ing)?|disastrous|body[- ]swap|gender[- ](?:change|swap|transform)|transformed into (?:a )?(?:man|woman|girl|boy)|becomes? (?:a )?(?:woman|man|girl|boy) through)\b/i;
+
+  var NON_AFFIRMING_GENDER_MAGIC_RE =
+    /\b(?:not (?:an? )?(?:lgbtq|identity|affirming)|no (?:identity|affirming) arc|villain|antagonist|irredeemabl|evil|not treated as|does not promote|forced|curse|stolen magic|body[- ]theft)\b/i;
 
   var MATURE_ADULT_ROMANCE_RE =
     /\b(?:college|university|campus|new adult|\bna fiction\b|mature[- ]rated|explicit|open[- ]door|sexual content|erotic romance|graphic romance|off[- ]campus|hockey romance)\b/i;
@@ -123,9 +135,16 @@
     for (var i = 0; i < data.themes.length; i++) {
       var row = data.themes[i];
       if (!row || row === lgbtqRow || row.id === "lgbtq") continue;
+      if (row.id === "forced_gender_magic") continue;
       parts.push(String(row.brief || ""));
     }
     return parts.join(" ");
+  }
+
+  function briefLooksLikeForcedGenderMagic(text) {
+    var t = String(text || "");
+    if (!t.trim()) return false;
+    return FORCED_GENDER_MAGIC_RE.test(t) && NON_AFFIRMING_GENDER_MAGIC_RE.test(t);
   }
 
   function aiThemeRow(themes, id) {
@@ -133,6 +152,62 @@
       if (themes[i] && themes[i].id === id) return themes[i];
     }
     return null;
+  }
+
+  function enforceForcedGenderMagicTheme(data) {
+    if (!data || !data.themes) return data;
+    var blobParts = [String(data.seriesNote || "")];
+    var forced = null;
+    var lgbtq = null;
+    for (var i = 0; i < data.themes.length; i++) {
+      var row = data.themes[i];
+      if (!row) continue;
+      if (row.id === "forced_gender_magic") forced = row;
+      if (row.id === "lgbtq") lgbtq = row;
+      if (row.id !== "forced_gender_magic") blobParts.push(String(row.brief || ""));
+    }
+    var blob = blobParts.join(" ");
+    var forcedBrief = forced ? String(forced.brief || "") : "";
+    if (forced && themeBriefDeniesPresence("forced_gender_magic", forcedBrief)) {
+      forced.present = false;
+      return data;
+    }
+    if (
+      (forced && forced.present) ||
+      briefLooksLikeForcedGenderMagic(forcedBrief) ||
+      briefLooksLikeForcedGenderMagic(blob)
+    ) {
+      if (!forced) {
+        forced = {
+          id: "forced_gender_magic",
+          present: true,
+          confidence: "medium",
+          brief:
+            "Forced or magic gender-change beat—not affirming LGBTQ advocacy; may still feel uncomfortable for LGBTQ-avoiders.",
+        };
+        data.themes.push(forced);
+      } else {
+        forced.present = true;
+        if (!forced.brief) {
+          forced.brief =
+            "Forced or magic gender-change beat—not affirming LGBTQ advocacy; may still feel uncomfortable for LGBTQ-avoiders.";
+        }
+      }
+      if (lgbtq && lgbtq.present && !lgbtqAffirmativeEvidence(otherAiLgbtqEvidenceBlob(data, lgbtq))) {
+        if (
+          briefLooksLikeForcedGenderMagic(String(lgbtq.brief || "")) ||
+          !EXPLICIT_LGBTQ_IN_STORY_RE.test(String(lgbtq.brief || ""))
+        ) {
+          lgbtq.present = false;
+          if (!lgbtq.brief || !lgbtqBriefDeniesContent(lgbtq.brief)) {
+            lgbtq.brief =
+              (lgbtq.brief ? String(lgbtq.brief).replace(/\s+$/, "") + " " : "") +
+              "Not affirming LGBTQ identity—forced/magic gender-change only.";
+          }
+        }
+      }
+    }
+    return data;
   }
 
   function enforceAdultRomanceTheme(data) {
@@ -179,6 +254,7 @@
 
   function finishAiThemeScan(data) {
     data = enforceAdultRomanceTheme(data);
+    data = enforceForcedGenderMagicTheme(data);
     return enforceAbsentBriefs(data);
   }
 
@@ -201,10 +277,20 @@
       lgbtq.present = false;
       return finishAiThemeScan(data);
     }
+    if (
+      lgbtq &&
+      lgbtq.present &&
+      briefLooksLikeForcedGenderMagic(lgbtq.brief) &&
+      !EXPLICIT_LGBTQ_IN_STORY_RE.test(String(lgbtq.brief || ""))
+    ) {
+      lgbtq.present = false;
+      return finishAiThemeScan(data);
+    }
     var blob = String(data.seriesNote || "");
     for (var i = 0; i < data.themes.length; i++) {
       var theme = data.themes[i];
       if (theme && theme.id === "lgbtq" && theme === lgbtq && !theme.present) continue;
+      if (theme && theme.id === "forced_gender_magic") continue;
       blob += " " + String((theme && theme.brief) || "");
     }
     if (!lgbtqAffirmativeEvidence(blob)) return finishAiThemeScan(data);
@@ -223,11 +309,6 @@
 
   var ADULT_ROMANCE_ABSENT_RE =
     /\b(?:not|no)\s+(?:a\s+)?(?:mature[- ]rated|explicit|adult romance)|not mature[- ]rated or explicit|not a mature[- ]rated or explicit|clean and age[- ]appropriate|typical for a ya|would be clean|age[- ]appropriate, not|age[- ]appropriate romantic subplot|not a major plot thread|ya[- ]level clean|clean romantic subplot/i;
-
-  /** Themes that must not feed catalog policy when brief only describes clean/YA audience. */
-  var EXCLUDE_AUDIENCE_FROM_POLICY_BLOB = {
-    teen_ya_age: true,
-  };
 
   function isCleanYaOnlyBrief(text) {
     var t = String(text || "");

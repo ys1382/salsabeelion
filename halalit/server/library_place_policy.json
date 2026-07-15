@@ -1,0 +1,61 @@
+{
+  "version": 2,
+  "ruleOfThumb": [
+    "Community public libraries only — not research-only special collections, not bookstores, not random websites.",
+    "Never trust a pasted link alone: deny scam/shortener hosts; require https; require community-library signals (name/host).",
+    "BiblioCommons catalogs: live-probe, then auto-admit with borrowable yes/no checks (system scope).",
+    "Other community catalogs/homepages: auto-admit as open-catalog places (favorite + open to search) — not stuck pending just for a different vendor.",
+    "Pending only when name-only or not clearly a community library — owner notified either way for auto-adds.",
+    "Scam / shortener / phishing / adult store fronts → hard reject (no pending).",
+    "Halalit is not the library — availability is a helper, not a checkout system."
+  ],
+  "autoAllowHostSuffixes": [
+    ".bibliocommons.com"
+  ],
+  "communityHostNeedles": [
+    "library",
+    "publiclibrary",
+    "lib.",
+    ".lib."
+  ],
+  "communityLabelNeedles": [
+    "library",
+    "public library"
+  ],
+  "denyHostExact": [
+    "bit.ly",
+    "t.co",
+    "tinyurl.com",
+    "goo.gl",
+    "ow.ly",
+    "buff.ly",
+    "rebrand.ly",
+    "libbyapp.com",
+    "overdrive.com",
+    "amazon.com",
+    "www.amazon.com",
+    "barnesandnoble.com",
+    "www.barnesandnoble.com",
+    "bookshop.org",
+    "www.bookshop.org"
+  ],
+  "denyHostContains": [
+    "url-shortener",
+    "shorturl",
+    "adult",
+    "xxx",
+    "porn",
+    "erotica",
+    "romance-bookstore"
+  ],
+  "denyLabelNeedles": [
+    "special collections",
+    "research library",
+    "university archives",
+    "rare books",
+    "manuscripts library",
+    "academic research"
+  ],
+  "probeTitle": "Charlotte's Web",
+  "probeAuthor": "E. B. White"
+}

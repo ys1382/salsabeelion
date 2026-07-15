@@ -228,31 +228,52 @@ SITE_FLAG_KEYS = frozenset(DEFAULT_SITE_FLAGS.keys())
 
 def _hash_password(password: str) -> str:
     salt = secrets.token_hex(16)
-    dk = hashlib.scrypt(
-        password.encode("utf-8"),
-        salt=bytes.fromhex(salt),
-        n=2**14,
-        r=8,
-        p=1,
-        dklen=32,
-    )
-    return f"scrypt${salt}${dk.hex()}"
-
-
-def _verify_password(password: str, stored: str) -> bool:
-    try:
-        algo, salt_hex, digest_hex = stored.split("$", 2)
-        if algo != "scrypt":
-            return False
+    if hasattr(hashlib, "scrypt"):
         dk = hashlib.scrypt(
             password.encode("utf-8"),
-            salt=bytes.fromhex(salt_hex),
+            salt=bytes.fromhex(salt),
             n=2**14,
             r=8,
             p=1,
             dklen=32,
         )
-        return secrets.compare_digest(dk.hex(), digest_hex)
+        return f"scrypt${salt}${dk.hex()}"
+    # macOS CLT Python 3.9 often lacks hashlib.scrypt — pbkdf2 is fine for local/dev.
+    dk = hashlib.pbkdf2_hmac(
+        "sha256",
+        password.encode("utf-8"),
+        bytes.fromhex(salt),
+        200_000,
+        dklen=32,
+    )
+    return f"pbkdf2${salt}${dk.hex()}"
+
+
+def _verify_password(password: str, stored: str) -> bool:
+    try:
+        algo, salt_hex, digest_hex = stored.split("$", 2)
+        if algo == "scrypt":
+            if not hasattr(hashlib, "scrypt"):
+                return False
+            dk = hashlib.scrypt(
+                password.encode("utf-8"),
+                salt=bytes.fromhex(salt_hex),
+                n=2**14,
+                r=8,
+                p=1,
+                dklen=32,
+            )
+            return secrets.compare_digest(dk.hex(), digest_hex)
+        if algo == "pbkdf2":
+            dk = hashlib.pbkdf2_hmac(
+                "sha256",
+                password.encode("utf-8"),
+                bytes.fromhex(salt_hex),
+                200_000,
+                dklen=32,
+            )
+            return secrets.compare_digest(dk.hex(), digest_hex)
+        return False
     except (ValueError, TypeError):
         return False
 
@@ -870,6 +891,15 @@ def _split_owner_vet_lists(
 def owner_office_payload(log_path: str, owner_user_id: int | None = None) -> dict[str, Any]:
     on_site = owner_vet_list_all(200)
     vetted, discretion, rejected = _split_owner_vet_lists(on_site)
+    library_pending: list[dict[str, Any]] = []
+    library_auto_adds: list[dict[str, Any]] = []
+    try:
+        from library_place_suggest import owner_pending_list, owner_recent_auto_adds
+
+        library_pending = owner_pending_list(60)
+        library_auto_adds = owner_recent_auto_adds(40)
+    except Exception:
+        pass
     return {
         "stats": owner_stats(log_path, exclude_account_id=owner_user_id),
         "feedback": owner_feedback_list(60),
@@ -881,6 +911,8 @@ def owner_office_payload(log_path: str, owner_user_id: int | None = None) -> dic
         "ownerVetRejected": rejected,
         "scannerAlerts": owner_scanner_alerts(40),
         "readerMessages": owner_reader_messages(60),
+        "libraryPending": library_pending,
+        "libraryAutoAdds": library_auto_adds,
         "accounts": owner_user_list(),
         "settings": _get_site_flags(),
         "onSiteVets": on_site[:80],
@@ -1243,6 +1275,33 @@ def handle_get(path: str, handler: BaseHTTPRequestHandler, json_response) -> boo
         json_response(handler, 200, {"ok": True, **owner_office_payload(log_path, user["id"])})
         return True
 
+    if path == "/api/library/places":
+        try:
+            from library_place_suggest import init_library_place_tables, public_place_list
+
+            init_library_place_tables()
+            places = public_place_list()
+        except Exception:
+            from library_catalog_check import list_places
+
+            places = list_places()
+        json_response(handler, 200, {"ok": True, "places": places})
+        return True
+
+    if path == "/api/library/my-pending":
+        user = _session_user(handler)
+        if not user:
+            json_response(handler, 401, {"ok": False, "error": "not_signed_in"})
+            return True
+        try:
+            from library_place_suggest import pending_for_user
+
+            pending = pending_for_user(user["id"])
+        except Exception:
+            pending = []
+        json_response(handler, 200, {"ok": True, "pending": pending})
+        return True
+
     return False
 
 
@@ -1260,7 +1319,7 @@ def handle_post(
         source = str(body.get("source") or "").strip()[:40]
         message = str(body.get("message") or "").strip()[:4000]
         meta = body.get("meta") if isinstance(body.get("meta"), dict) else {}
-        if source not in ("bookcheck", "tips_box", "bookquest"):
+        if source not in ("bookcheck", "tips_box", "bookquest", "library_suggest"):
             json_response(handler, 400, {"ok": False, "error": "invalid_source"})
             return True
         if source in ("bookcheck", "tips_box") and not message:
@@ -1271,6 +1330,70 @@ def handle_post(
             return True
         log_reader_message(user["id"], source, message, meta)
         json_response(handler, 200, {"ok": True})
+        return True
+
+    if path == "/api/library/suggest":
+        user = _session_user(handler)
+        catalog_url = str(body.get("catalogUrl") or body.get("url") or "").strip()[:500]
+        label = str(body.get("label") or body.get("name") or "").strip()[:200]
+        try:
+            from library_place_suggest import suggest_library
+
+            result = suggest_library(
+                user_id=user["id"] if user else None,
+                catalog_url=catalog_url,
+                label=label,
+            )
+        except Exception as e:
+            json_response(
+                handler,
+                502,
+                {
+                    "ok": False,
+                    "outcome": "rejected",
+                    "error": "suggest_failed",
+                    "reason": type(e).__name__,
+                },
+            )
+            return True
+        status = 200 if result.get("ok") else 400
+        json_response(handler, status, result)
+        return True
+
+    if path == "/api/owner/library/pending/reject":
+        user = _session_user(handler)
+        if not user or not user["is_owner"]:
+            json_response(handler, 403, {"ok": False, "error": "owner_only"})
+            return True
+        try:
+            pending_id = int(body.get("id") or body.get("pendingId") or 0)
+        except (TypeError, ValueError):
+            pending_id = 0
+        if pending_id <= 0:
+            json_response(handler, 400, {"ok": False, "error": "id_required"})
+            return True
+        try:
+            from library_place_suggest import owner_reject_pending
+
+            ok = owner_reject_pending(pending_id)
+        except Exception:
+            ok = False
+        json_response(handler, 200 if ok else 404, {"ok": ok})
+        return True
+
+    if path == "/api/owner/library/places/disable":
+        user = _session_user(handler)
+        if not user or not user["is_owner"]:
+            json_response(handler, 403, {"ok": False, "error": "owner_only"})
+            return True
+        place_id = str(body.get("placeId") or "").strip()[:80]
+        try:
+            from library_place_suggest import owner_disable_place
+
+            ok = owner_disable_place(place_id)
+        except Exception:
+            ok = False
+        json_response(handler, 200 if ok else 404, {"ok": ok})
         return True
 
     if path == "/api/lookup/record":

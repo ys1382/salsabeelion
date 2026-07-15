@@ -74,11 +74,19 @@ THEME_SPECS = [
         "lgbtq",
         "ANY LGBTQ+ identity or relationship in the story (main plot OR supporting cast): gay, lesbian, "
         "bisexual, pansexual, queer, transgender, non-binary, gender-fluid, gender-nonconforming, "
-        "same-sex parents/couples, they/them representation, or LGBTQ advocacy",
+        "same-sex parents/couples, they/them representation, or LGBTQ advocacy. "
+        "Do NOT mark present for forced/magic gender-change alone when there is no affirming LGBTQ identity arc "
+        "(use forced_gender_magic instead).",
     ),
     ("adult_romance", "Adult or mature-rated romance as a major plot thread (college/new adult, explicit relationship focus—not middle-grade crushes)"),
     ("illegitimate_children", "Plot centered on children born out of wedlock"),
     ("romantic_tension", "Light romantic tension, crushes, or clean dating (middle-grade / all-ages level—not college or mature-rated romance)"),
+    (
+        "forced_gender_magic",
+        "Forced or magic gender-change / body-theft beat that is NOT affirming LGBTQ identity advocacy "
+        "(e.g. a villain cursed or magically turned into another sex with no 'I feel free as my true gender' arc). "
+        "Mark present TRUE for that soft caution; keep lgbtq.present FALSE unless there is separate affirming LGBTQ content.",
+    ),
     ("romanticized_crime", "Romanticized crime, cruelty, or vigilante harm"),
     ("teen_ya_age", "Teen or young-adult audience (not all-ages)"),
     ("violence_intense", "Strong violence, horror, or intense scary content"),
@@ -364,9 +372,17 @@ CRITICAL — theme "lgbtq" (read carefully):
 - Mark present FALSE for: fan shipping, "could be read as queer," subtext-only Goodreads/review speculation,
   "I hope they make them gay," ambiguous close friendship with no on-page LGBTQ identity or attraction named,
   or "not openly LGBTQ" with no explicit in-story beat.
+- Mark present FALSE for forced/magic gender-change alone (villain cursed, body-theft, magical sex swap) when there is
+  no affirming LGBTQ identity arc—use forced_gender_magic instead.
 - Do NOT require the main plot to center on LGBTQ. One supporting character or one explicit line is enough.
 - If you mention confirmed on-page LGBTQ in brief or seriesNote, lgbtq.present MUST be true.
 - If only reader projection/subtext is discussed, lgbtq.present MUST be false and say so in brief.
+
+CRITICAL — theme "forced_gender_magic":
+- Mark present TRUE when a character is forced or magically changed into another sex/gender (curse, body-theft,
+  disastrous spell, villain transformation) WITHOUT an affirming LGBTQ identity/coming-out arc.
+- Mark present FALSE when the story is affirming transgender/non-binary identity—that belongs under lgbtq instead.
+- In brief, say it is not affirming LGBTQ advocacy but may still feel uncomfortable for LGBTQ-avoiders.
 
 CRITICAL — theme "deity_mythology":
 - Mark present TRUE for gods, spirits, religious afterlife, or real-world mythology treated as real.
@@ -421,7 +437,7 @@ def enforce_lgbtq_theme(themes_out: list[dict[str, Any]], series_note: str) -> l
         lgbtq_brief = str(row.get("brief") or "")
         other_parts = [series_note or ""]
         for theme_row in themes_out:
-            if theme_row.get("id") == "lgbtq":
+            if theme_row.get("id") in ("lgbtq", "forced_gender_magic"):
                 continue
             other_parts.append(str(theme_row.get("brief") or ""))
         other_blob = " ".join(other_parts)
@@ -431,6 +447,8 @@ def enforce_lgbtq_theme(themes_out: list[dict[str, Any]], series_note: str) -> l
     blob_parts = [series_note or ""]
     for theme_row in themes_out:
         if theme_row.get("id") == "lgbtq" and row is theme_row and not row.get("present"):
+            continue
+        if theme_row.get("id") == "forced_gender_magic":
             continue
         blob_parts.append(str(theme_row.get("brief") or ""))
     blob = " ".join(blob_parts)
@@ -523,6 +541,88 @@ def enforce_adult_romance_theme(themes_out: list[dict[str, Any]], series_note: s
     return themes_out
 
 
+
+FORCED_GENDER_MAGIC_RE = re.compile(
+    r"\b(?:forced|magic(?:al)?|curse(?:d)?|spell|stolen|steal(?:s|ing)?|disastrous|body[- ]swap|"
+    r"gender[- ](?:change|swap|transform)|transformed into (?:a )?(?:man|woman|girl|boy)|"
+    r"becomes? (?:a )?(?:woman|man|girl|boy) through)\b",
+    re.IGNORECASE,
+)
+NON_AFFIRMING_GENDER_MAGIC_RE = re.compile(
+    r"\b(?:not (?:an? )?(?:lgbtq|identity|affirming)|no (?:identity|affirming) arc|villain|antagonist|"
+    r"irredeemabl|evil|not treated as|does not promote|forced|curse|stolen magic|body[- ]theft)\b",
+    re.IGNORECASE,
+)
+
+
+def brief_looks_like_forced_gender_magic(text: str) -> bool:
+    t = str(text or "")
+    if not t.strip():
+        return False
+    return bool(FORCED_GENDER_MAGIC_RE.search(t) and NON_AFFIRMING_GENDER_MAGIC_RE.search(t))
+
+
+def enforce_forced_gender_magic_theme(
+    themes_out: list[dict[str, Any]], series_note: str
+) -> list[dict[str, Any]]:
+    """Soft caution for forced/magic gender-change; never hard-reject as LGBTQ."""
+    forced = None
+    lgbtq = None
+    blob_parts = [series_note or ""]
+    for row in themes_out:
+        if row.get("id") == "forced_gender_magic":
+            forced = row
+        elif row.get("id") == "lgbtq":
+            lgbtq = row
+        if row.get("id") != "forced_gender_magic":
+            blob_parts.append(str(row.get("brief") or ""))
+    blob = " ".join(blob_parts)
+    forced_brief = str((forced or {}).get("brief") or "")
+    if forced and theme_brief_denies_presence("forced_gender_magic", forced_brief):
+        forced["present"] = False
+        return themes_out
+    if (
+        (forced and forced.get("present"))
+        or brief_looks_like_forced_gender_magic(forced_brief)
+        or brief_looks_like_forced_gender_magic(blob)
+    ):
+        if not forced:
+            forced = {
+                "id": "forced_gender_magic",
+                "present": True,
+                "confidence": "medium",
+                "brief": (
+                    "Forced or magic gender-change beat—not affirming LGBTQ advocacy; "
+                    "may still feel uncomfortable for LGBTQ-avoiders."
+                ),
+            }
+            themes_out.append(forced)
+        else:
+            forced["present"] = True
+            if not str(forced.get("brief") or "").strip():
+                forced["brief"] = (
+                    "Forced or magic gender-change beat—not affirming LGBTQ advocacy; "
+                    "may still feel uncomfortable for LGBTQ-avoiders."
+                )
+        if lgbtq and lgbtq.get("present"):
+            other = [series_note or ""]
+            for row in themes_out:
+                if row.get("id") in ("lgbtq", "forced_gender_magic"):
+                    continue
+                other.append(str(row.get("brief") or ""))
+            if not lgbtq_affirmative_evidence(" ".join(other)):
+                lgbtq_brief = str(lgbtq.get("brief") or "")
+                if brief_looks_like_forced_gender_magic(lgbtq_brief) or not EXPLICIT_LGBTQ_IN_STORY_RE.search(
+                    lgbtq_brief
+                ):
+                    lgbtq["present"] = False
+                    if not LGBTQ_ABSENT_RE.search(lgbtq_brief):
+                        lgbtq["brief"] = (
+                            (lgbtq_brief.rstrip() + " ") if lgbtq_brief else ""
+                        ) + "Not affirming LGBTQ identity—forced/magic gender-change only."
+    return themes_out
+
+
 def strip_json_fences(text: str) -> str:
     text = (text or "").strip()
     if text.startswith("```"):
@@ -548,6 +648,7 @@ def themes_from_parsed(parsed: dict[str, Any]) -> tuple[list[dict[str, Any]], st
     series_note = str(parsed.get("seriesNote") or "")[:400]
     themes_out = enforce_lgbtq_theme(themes_out, series_note)
     themes_out = enforce_adult_romance_theme(themes_out, series_note)
+    themes_out = enforce_forced_gender_magic_theme(themes_out, series_note)
     themes_out = enforce_absent_briefs(themes_out)
     return themes_out, series_note
 
@@ -618,6 +719,7 @@ def merge_theme_scans(*scans: dict[str, Any]) -> tuple[list[dict[str, Any]], str
     merged = list(by_id.values())
     merged = enforce_lgbtq_theme(merged, series_note)
     merged = enforce_adult_romance_theme(merged, series_note)
+    merged = enforce_forced_gender_magic_theme(merged, series_note)
     merged = enforce_absent_briefs(merged)
     return merged, series_note
 
@@ -954,6 +1056,7 @@ class Handler(BaseHTTPRequestHandler):
             or path == "/api/owner/vets/save"
             or path == "/api/owner/vets/save-series"
             or path == "/api/owner/vets/delete"
+            or path == "/api/library/suggest"
         ):
             try:
                 body = json.loads(self.rfile.read(length).decode("utf-8")) if length else {}

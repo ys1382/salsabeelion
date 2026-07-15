@@ -1487,6 +1487,8 @@
       lookupLogAuthor: "",
       lookupRecorded: false,
       ownerTesting: !!opts.ownerTesting,
+      fromScanner: false,
+      compactReport: false,
       lookupGen: 0,
       enrichPending: false,
       earlyAiPromise: null,
@@ -1613,6 +1615,8 @@
         lookupLogAuthor: "",
         lookupRecorded: false,
         ownerTesting: keepOwnerTesting,
+        fromScanner: false,
+        compactReport: false,
         enrichPending: false,
         earlyAiPromise: null,
         lookupAiStartedAt: 0,
@@ -2146,6 +2150,7 @@
     function showVerdict(title, author) {
       if (!verdictBox) return;
       if (catalogMeta.enrichPending) return;
+      applyCompactReportFlags();
       var experienced = isExperiencedBookcheckUser();
       var displayTier = displayHintTier(catalogMeta.hintTier);
       var blanket = experienced
@@ -2453,6 +2458,51 @@
       return html;
     }
 
+    function hasSoftRomanceForCompact(meta) {
+      meta = meta || {};
+      var signals = meta.hintSignals || [];
+      for (var i = 0; i < signals.length; i++) {
+        if (/romance or relationship|romantic tension|romantic subplot|crush|dating/i.test(String(signals[i] || ""))) {
+          return true;
+        }
+      }
+      if (/romantic tension|romance tags|romantic subplot|crush on|light romance|relationship thread/i.test(String(meta.hintDetail || ""))) {
+        return true;
+      }
+      var themes = meta.aiThemes || [];
+      for (var t = 0; t < themes.length; t++) {
+        var th = themes[t];
+        if (!th || !th.present) continue;
+        if (th.id === "romantic_tension" || th.id === "adult_romance") return true;
+      }
+      var report = meta.familyReport;
+      if (report && report.dimensions) {
+        for (var d = 0; d < report.dimensions.length; d++) {
+          var row = report.dimensions[d];
+          if (!row) continue;
+          if (row.id === "romantic_tension" || row.id === "romance" || row.id === "adult_romance") {
+            if (row.status === "caution" || row.status === "concern") return true;
+          }
+          if (/romantic|romance|dating|crush/i.test(String(row.label || "") + " " + String(row.note || ""))) {
+            if (row.status === "caution" || row.status === "concern") return true;
+          }
+        }
+      }
+      if (report && report.aiThemes) {
+        for (var a = 0; a < report.aiThemes.length; a++) {
+          var at = report.aiThemes[a];
+          if (at && (at.id === "romantic_tension" || at.id === "adult_romance") && at.present !== false) return true;
+        }
+      }
+      return false;
+    }
+
+    function applyCompactReportFlags() {
+      if (hasSoftRomanceForCompact(catalogMeta)) {
+        catalogMeta.compactReport = true;
+      }
+    }
+
     function finishApplyDoc(doc, ttl, auth, hint, supplementPack, hadWikipedia, wikipedia, wikidata) {
       catalogMeta.lastDoc = doc || null;
       catalogMeta.hintTier = hint.tier;
@@ -2491,6 +2541,7 @@
           aiLgbtqPresent: !!catalogMeta.aiLgbtqPresent,
         }
       );
+      applyCompactReportFlags();
       catalogMeta.matchedTitle = ttl;
       catalogMeta.matchedAuthor = auth;
       var CoverMeta = global.HalalitCoverThumb;
@@ -2649,6 +2700,7 @@
         null,
         null
       );
+      applyCompactReportFlags();
       catalogMeta.aiScanOk = false;
       applyVetSourceMeta(ownTitle, ownAuthor, null);
       function revealHandVet() {

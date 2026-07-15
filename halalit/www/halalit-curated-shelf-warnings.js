@@ -1917,6 +1917,18 @@
         "Pet-care nonfiction; not on Book Quest; Halalit won’t auto-recommend—preview and decide for your home.",
       ], USER_DISCRETION_PARENT_WARNING_CLOSING),
     },
+    {
+      titleRe: /\bfireborn\b/i,
+      authorRe: /forward|toby/i,
+      detail: bookNote("Fireborn (Toby Forward)", [
+        "Parked on Halalit’s parent-discretion list—not a hardest auto-reject.",
+        "Not treated as affirming LGBTQ or LGBTQ advocacy.",
+        "Plot beat: the main antagonist (a male wizard) becomes a woman through a disastrous attempt to steal one of the protagonist’s magic—forced/magic gender-change, not an identity arc.",
+        "No “I feel like a woman / free from being a man” storyline; that character stays irredeemably evil.",
+        "Soft note for LGBTQ-avoiders: not explicitly LGBTQ, but a forced/magic gender-change beat may still feel uncomfortable—preview and decide for your home.",
+        "Not on Book Quest; Halalit won’t auto-recommend.",
+      ], USER_DISCRETION_PREVIEW_CLOSING),
+    },
   ];
 
   /**

@@ -1,7 +1,8 @@
 /**
  * Halalit — Wishlist library availability.
  * Save favorite places, hit Check, then see library initials on matching wishlist spines.
- * Places: Central Park (SC) + Mission (M) + Cupertino (C, Santa Clara County).
+ * Seed places: Central Park (SC) + Mission (M) + Cupertino (C). Readers can add more
+ * via catalog URL (BiblioCommons auto-admit or suggestion pending).
  */
 (function (global) {
   var BATCH_CAP = 10;
@@ -10,8 +11,9 @@
   var FAVORITES_KEY = "halalitLibraryFavoritePlaces";
   /** Survives reload if account hydrate is late; not cleared by account migration. */
   var FAVORITES_DEVICE_BACKUP_KEY = "halalitLibraryFavoritePlaces_device_backup";
+  var PENDING_DEVICE_KEY = "halalitLibraryPendingSuggestions";
 
-  /** Keep in sync with server PLACES in library_catalog_check.py */
+  /** Seed list — refreshed from GET /api/library/places when available. */
   var PLACES = [
     {
       placeId: "santa-clara-central-park",
@@ -33,6 +35,9 @@
     },
   ];
 
+  var myPending = [];
+  var placesLoaded = false;
+
   var clientCache = Object.create(null);
   /** storageIndex → [{ initials, placeLabel, catalogUrl }] */
   var lastMarksByIndex = Object.create(null);
@@ -46,6 +51,39 @@
       return base.replace(/\/$/, "") + "/library/check";
     }
     return base.replace(/\/$/, "") + "/api/library/check";
+  }
+
+  function apiRoot() {
+    var Cfg = global.HalalitBookcheckConfig;
+    if (!Cfg || typeof Cfg.apiBase !== "function") return "";
+    return String(Cfg.apiBase() || "").replace(/\/$/, "");
+  }
+
+  function placesUrl() {
+    var root = apiRoot();
+    if (!root) return "";
+    if (root.indexOf("/halalit/api") !== -1 || /\/api$/.test(root)) {
+      return root + "/library/places";
+    }
+    return root + "/api/library/places";
+  }
+
+  function suggestUrl() {
+    var root = apiRoot();
+    if (!root) return "";
+    if (root.indexOf("/halalit/api") !== -1 || /\/api$/.test(root)) {
+      return root + "/library/suggest";
+    }
+    return root + "/api/library/suggest";
+  }
+
+  function myPendingUrl() {
+    var root = apiRoot();
+    if (!root) return "";
+    if (root.indexOf("/halalit/api") !== -1 || /\/api$/.test(root)) {
+      return root + "/library/my-pending";
+    }
+    return root + "/api/library/my-pending";
   }
 
   function storage() {
@@ -73,6 +111,152 @@
       if (PLACES[i].placeId === id) return PLACES[i];
     }
     return null;
+  }
+
+  function mergePlacesFromServer(list) {
+    if (!Array.isArray(list) || !list.length) return;
+    var byId = Object.create(null);
+    for (var i = 0; i < PLACES.length; i++) {
+      byId[PLACES[i].placeId] = PLACES[i];
+    }
+    for (var j = 0; j < list.length; j++) {
+      var p = list[j];
+      if (!p || !p.placeId) continue;
+      byId[p.placeId] = {
+        placeId: String(p.placeId),
+        placeLabel: String(p.placeLabel || p.shortLabel || p.placeId),
+        shortLabel: String(p.shortLabel || p.placeLabel || p.placeId),
+        initials: String(p.initials || "?").slice(0, 4),
+        checkMode: String(p.checkMode || "availability"),
+      };
+    }
+    var next = [];
+    var order = ["santa-clara-central-park", "santa-clara-mission", "sccld-cupertino"];
+    var seen = Object.create(null);
+    for (var o = 0; o < order.length; o++) {
+      if (byId[order[o]]) {
+        next.push(byId[order[o]]);
+        seen[order[o]] = true;
+      }
+    }
+    for (var k = 0; k < list.length; k++) {
+      var id = list[k] && list[k].placeId ? String(list[k].placeId) : "";
+      if (!id || seen[id]) continue;
+      next.push(byId[id]);
+      seen[id] = true;
+    }
+    for (var key in byId) {
+      if (!seen[key]) next.push(byId[key]);
+    }
+    PLACES = next;
+    placesLoaded = true;
+    global.HalalitLibraryAvail.places = PLACES;
+  }
+
+  function loadPlacesFromApi() {
+    var url = placesUrl();
+    if (!url || !global.fetch) return Promise.resolve();
+    return fetch(url, { method: "GET", credentials: "include", headers: { Accept: "application/json" } })
+      .then(function (res) {
+        return res.json();
+      })
+      .then(function (body) {
+        if (body && body.ok && Array.isArray(body.places)) {
+          mergePlacesFromServer(body.places);
+        }
+      })
+      .catch(function () {});
+  }
+
+  function loadDevicePending() {
+    try {
+      if (!global.localStorage) return [];
+      var raw = global.localStorage.getItem(PENDING_DEVICE_KEY);
+      if (!raw) return [];
+      var list = JSON.parse(raw);
+      if (!Array.isArray(list)) return [];
+      return list.filter(function (p) {
+        return p && (p.label || p.catalogUrl);
+      });
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function saveDevicePending(list) {
+    try {
+      if (!global.localStorage) return;
+      global.localStorage.setItem(PENDING_DEVICE_KEY, JSON.stringify(list.slice(0, 40)));
+    } catch (e) {}
+  }
+
+  function rememberDevicePending(item) {
+    if (!item) return;
+    var list = loadDevicePending();
+    var key = String(item.pendingId || "") + "|" + String(item.label || "") + "|" + String(item.catalogUrl || "");
+    for (var i = 0; i < list.length; i++) {
+      var existing =
+        String(list[i].pendingId || "") +
+        "|" +
+        String(list[i].label || "") +
+        "|" +
+        String(list[i].catalogUrl || "");
+      if (existing === key) return;
+    }
+    list.unshift({
+      id: item.pendingId || item.id || null,
+      pendingId: item.pendingId || item.id || null,
+      label: item.label || "",
+      catalogUrl: item.catalogUrl || "",
+      reason: item.reason || "",
+      status: "pending",
+    });
+    saveDevicePending(list);
+  }
+
+  function mergePendingLists(serverList) {
+    var byKey = Object.create(null);
+    var out = [];
+    function add(p) {
+      if (!p) return;
+      var key = String(p.pendingId || p.id || "") + "|" + String(p.label || "") + "|" + String(p.catalogUrl || "");
+      if (byKey[key]) return;
+      byKey[key] = true;
+      out.push(p);
+    }
+    (serverList || []).forEach(add);
+    loadDevicePending().forEach(add);
+    myPending = out;
+  }
+
+  function loadMyPending() {
+    var url = myPendingUrl();
+    var device = loadDevicePending();
+    if (!url || !global.fetch || !isSignedIn()) {
+      myPending = device;
+      return Promise.resolve();
+    }
+    return fetch(url, { method: "GET", credentials: "include", headers: { Accept: "application/json" } })
+      .then(function (res) {
+        if (res.status === 401) return null;
+        return res.json();
+      })
+      .then(function (body) {
+        if (body && body.ok && Array.isArray(body.pending)) {
+          mergePendingLists(body.pending);
+        } else {
+          myPending = device;
+        }
+      })
+      .catch(function () {
+        myPending = device;
+      });
+  }
+
+  function isSignedIn() {
+    var Store = storage();
+    if (Store && typeof Store.isSignedIn === "function") return !!Store.isSignedIn();
+    return false;
   }
 
   function normalizeFavoriteIds(raw) {
@@ -191,8 +375,8 @@
     }
     return fetch(url, {
       method: "POST",
+      credentials: "include",
       headers: { "Content-Type": "application/json", Accept: "application/json" },
-      credentials: "same-origin",
       body: JSON.stringify({
         title: entry.title || "",
         author: entry.author || "",
@@ -268,12 +452,21 @@
       var yes = [];
       var no = [];
       var uncertain = [];
+      var openCatalog = [];
       for (var i = 0; i < rows.length; i++) {
         if (rows[i].status === "yes") yes.push(rows[i]);
         else if (rows[i].status === "no") no.push(rows[i]);
+        else if (rows[i].status === "open_catalog") openCatalog.push(rows[i]);
         else uncertain.push(rows[i]);
       }
-      return { places: places, yes: yes, no: no, uncertain: uncertain, rows: rows };
+      return {
+        places: places,
+        yes: yes,
+        no: no,
+        uncertain: uncertain,
+        openCatalog: openCatalog,
+        rows: rows,
+      };
     });
   }
 
@@ -369,7 +562,7 @@
     var bits = [];
     bits.push('<p class="library-avail__fav-heading">Your favorite libraries</p>');
     bits.push(
-      '<p class="library-avail__fav-hint">Check the places you use, then hit <strong>Check libraries</strong>. Matching wishlist spines get initials (not a hover tip). Halalit does not assume you need to borrow — only that a borrowable copy showed up.</p>'
+      '<p class="library-avail__fav-hint">Check the places you use, then hit <strong>Check libraries</strong>. Matching wishlist spines get initials when Halalit can auto-check borrowable copies (BiblioCommons). Other community libraries open their catalog so you can look the title up. Halalit is not the library.</p>'
     );
     bits.push('<ul class="library-avail__fav-list" role="list">');
     for (var i = 0; i < PLACES.length; i++) {
@@ -391,10 +584,46 @@
           escapeHtml(p.initials) +
           "</strong> " +
           escapeHtml(p.placeLabel) +
+          (p.checkMode === "open_catalog"
+            ? ' <span class="library-avail__open-tag">open catalog</span>'
+            : "") +
           "</span></label></li>"
       );
     }
     bits.push("</ul>");
+
+    if (myPending.length) {
+      bits.push('<p class="library-avail__pending-heading">Suggestion pending</p>');
+      bits.push(
+        '<p class="library-avail__fav-hint">Halalit can’t check these automatically yet (often a homepage instead of a bibliocommons.com catalog link). The owner has been notified.</p>'
+      );
+      bits.push('<ul class="library-avail__pending-list" role="list">');
+      for (var pi = 0; pi < myPending.length; pi++) {
+        var pend = myPending[pi];
+        bits.push(
+          '<li class="library-avail__pending-item">' +
+            escapeHtml(pend.label || pend.catalogUrl || "Library") +
+            ' <span class="library-avail__pending-badge">Suggestion pending</span></li>'
+        );
+      }
+      bits.push("</ul>");
+    }
+
+    bits.push('<div class="library-avail__add">');
+    bits.push('<p class="library-avail__add-heading">Add a library</p>');
+    bits.push(
+      '<p class="library-avail__fav-hint">Paste a community library link — catalog or homepage is fine. BiblioCommons catalogs get automatic borrowable checks; other community libraries are added so you can open their catalog from Check.</p>'
+    );
+    bits.push(
+      '<label class="library-avail__add-label" for="wishlistLibraryAddUrl">Catalog link</label>' +
+        '<input type="url" class="library-avail__add-input" id="wishlistLibraryAddUrl" placeholder="https://yoursystem.bibliocommons.com/" autocomplete="off" />' +
+        '<label class="library-avail__add-label" for="wishlistLibraryAddName">Display name (optional)</label>' +
+        '<input type="text" class="library-avail__add-input" id="wishlistLibraryAddName" placeholder="e.g. Mountain View Library" maxlength="200" autocomplete="off" />' +
+        '<button type="button" class="import-btn library-avail__add-btn" id="wishlistLibraryAddBtn">Add library</button>' +
+        '<p class="library-avail__add-status" id="wishlistLibraryAddStatus" aria-live="polite"></p>'
+    );
+    bits.push("</div>");
+
     host.innerHTML = bits.join("");
 
     host.querySelectorAll(".library-avail__fav-check").forEach(function (cb) {
@@ -404,9 +633,92 @@
           if (box.checked) next.push(box.getAttribute("data-place-id"));
         });
         saveFavorites(next);
+        renderLegend();
         syncCheckButton();
       });
     });
+    var addBtn = document.getElementById("wishlistLibraryAddBtn");
+    if (addBtn && addBtn.getAttribute("data-halalit-bound") !== "1") {
+      addBtn.setAttribute("data-halalit-bound", "1");
+      addBtn.addEventListener("click", submitLibrarySuggest);
+    }
+  }
+
+  function submitLibrarySuggest() {
+    var statusEl = document.getElementById("wishlistLibraryAddStatus");
+    var urlEl = document.getElementById("wishlistLibraryAddUrl");
+    var nameEl = document.getElementById("wishlistLibraryAddName");
+    var btn = document.getElementById("wishlistLibraryAddBtn");
+    var url = suggestUrl();
+    if (!url) {
+      if (statusEl) statusEl.textContent = "Library API isn’t available right now.";
+      return;
+    }
+    var catalogUrl = urlEl ? String(urlEl.value || "").trim() : "";
+    var label = nameEl ? String(nameEl.value || "").trim() : "";
+    if (!catalogUrl && !label) {
+      if (statusEl) statusEl.textContent = "Paste a catalog link (or at least a library name).";
+      return;
+    }
+    if (btn) btn.disabled = true;
+    if (statusEl) statusEl.textContent = "Checking…";
+    fetch(url, {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({ catalogUrl: catalogUrl, label: label }),
+    })
+      .then(function (res) {
+        return res.json().then(function (body) {
+          return { httpOk: res.ok, body: body };
+        });
+      })
+      .then(function (pack) {
+        var body = pack.body || {};
+        var msg = body.message || "";
+        if (statusEl) statusEl.textContent = msg || (body.ok ? "Done." : "Couldn’t add that library.");
+        if (body.outcome === "auto_added" || body.outcome === "already_exists") {
+          var place = body.place;
+          if (place && place.placeId) {
+            mergePlacesFromServer(
+              PLACES.concat([
+                {
+                  placeId: place.placeId,
+                  placeLabel: place.placeLabel,
+                  shortLabel: place.shortLabel,
+                  initials: place.initials,
+                },
+              ])
+            );
+            var favs = loadFavorites();
+            if (favs.indexOf(place.placeId) === -1) favs.push(place.placeId);
+            saveFavorites(favs);
+          }
+          return loadPlacesFromApi().then(loadMyPending).then(function () {
+            renderFavoritesUi();
+            renderLegend();
+            syncCheckButton();
+          });
+        }
+        if (body.outcome === "pending") {
+          rememberDevicePending({
+            pendingId: body.pendingId,
+            label: label || catalogUrl,
+            catalogUrl: catalogUrl,
+            reason: body.reason || "",
+          });
+          return loadMyPending().then(function () {
+            renderFavoritesUi();
+          });
+        }
+        renderFavoritesUi();
+      })
+      .catch(function () {
+        if (statusEl) statusEl.textContent = "Network error — try again in a moment.";
+      })
+      .then(function () {
+        if (btn) btn.disabled = false;
+      });
   }
 
   function renderLegend() {
@@ -427,7 +739,7 @@
       '<p class="library-avail__legend">' +
       "Spine initials (after Check): " +
       parts.join(" · ") +
-      ". Means a <strong>borrowable</strong> copy showed in that catalog (checked out still counts). Halalit is not the library.</p>";
+      ". Initials mean a <strong>borrowable</strong> copy showed in an auto-check catalog. Places marked <strong>open catalog</strong> won’t put initials on spines — Check gives an open link instead. Halalit is not the library.</p>";
   }
 
   function renderResults(host, rows) {
@@ -450,7 +762,9 @@
                 return m.initials;
               })
               .join(" · ")
-          : "—";
+          : r.openMarks && r.openMarks.length
+            ? "↗"
+            : "—";
       var detail = "";
       if (r.yesMarks && r.yesMarks.length) {
         detail =
@@ -463,12 +777,31 @@
               .join(", ")
           ) +
           ")</span>";
+      } else if (r.openMarks && r.openMarks.length) {
+        detail =
+          " " +
+          r.openMarks
+            .map(function (m) {
+              var href = m.catalogUrl || "#";
+              return (
+                '<a class="library-avail__link" href="' +
+                escapeHtml(href) +
+                '" target="_blank" rel="noopener noreferrer">Open ' +
+                escapeHtml(m.placeLabel || m.initials || "catalog") +
+                "</a>"
+              );
+            })
+            .join(" · ");
       } else if (r.note) {
         detail = ' <span class="muted">(' + escapeHtml(r.note) + ")</span>";
       }
       bits.push(
         '<li class="library-avail-row ' +
-          (r.yesMarks && r.yesMarks.length ? "library-avail-row--yes" : "library-avail-row--no") +
+          (r.yesMarks && r.yesMarks.length
+            ? "library-avail-row--yes"
+            : r.openMarks && r.openMarks.length
+              ? "library-avail-row--open"
+              : "library-avail-row--no") +
           '">' +
           '<span class="library-avail-row__status">' +
           escapeHtml(initials) +
@@ -559,19 +892,28 @@
                 catalogUrl: r.catalogUrl || "",
               };
             });
+            var openMarks = (result.openCatalog || []).map(function (r) {
+              return {
+                initials: r.place.initials,
+                placeLabel: r.place.placeLabel,
+                catalogUrl: r.catalogUrl || "",
+              };
+            });
             // storage index matches Want.load() order for the capped slice
             if (yesMarks.length) {
               lastMarksByIndex[String(idx)] = yesMarks;
             }
             var note = "";
             if (!yesMarks.length) {
-              if (result.uncertain && result.uncertain.length) note = "couldn’t confirm";
+              if (openMarks.length) note = "open catalog to confirm";
+              else if (result.uncertain && result.uncertain.length) note = "couldn’t confirm";
               else note = "not at favorites";
             }
             rows.push({
               title: entry.title || "",
               author: entry.author || "",
               yesMarks: yesMarks,
+              openMarks: openMarks,
               note: note,
             });
             applySpineMarks();
@@ -613,8 +955,14 @@
   }
 
   function refreshFavoritesFromAccount() {
-    renderFavoritesUi();
-    syncCheckButton();
+    loadPlacesFromApi()
+      .then(loadMyPending)
+      .then(function () {
+        renderFavoritesUi();
+        renderLegend();
+        syncCheckButton();
+        applySpineMarks();
+      });
   }
 
   function bind() {
@@ -633,10 +981,14 @@
         Store.ready.then(refreshFavoritesFromAccount);
       }
     }
-    renderFavoritesUi();
-    renderLegend();
-    syncCheckButton();
-    applySpineMarks();
+    loadPlacesFromApi()
+      .then(loadMyPending)
+      .then(function () {
+        renderFavoritesUi();
+        renderLegend();
+        syncCheckButton();
+        applySpineMarks();
+      });
   }
 
   global.HalalitLibraryAvail = {
@@ -652,6 +1004,7 @@
     clearSpineMarks: clearSpineMarks,
     bind: bind,
     apiUrl: apiUrl,
+    refreshPlaces: refreshFavoritesFromAccount,
   };
 
   if (global.document && global.document.readyState === "loading") {
