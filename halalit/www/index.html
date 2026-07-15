@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="./halalit-fathers-day-theme.css" />
   <link rel="stylesheet" href="./halalit-cover-thumb.css?v=20260622b" />
   <link rel="stylesheet" href="./halalit-occasion-week-home.css?v=20260626a" />
-  <link rel="stylesheet" href="./halalit-suggests.css?v=20260715b" />
+  <link rel="stylesheet" href="./halalit-suggests.css?v=20260715c" />
   <style>
     :root {
       --bg: #1a1410;
@@ -2472,7 +2472,7 @@
     <div class="play-cta" role="navigation" aria-label="Get started">
       <a class="play-primary" href="./index.html#bookcheck">Use Bookcheck</a>
       <a class="play-primary" href="play.html?v=8">Try Book Quest</a>
-      <a class="play-primary" href="./index.html#suggests">Halalit Suggests</a>
+      <a class="play-primary" href="./index.html#suggests">Book Wander</a>
       <span class="play-secondary">Look up a title before you read—or play the quest for one hand-vetted suggestion.</span>
     </div>
     <p class="auth-bar" id="halalitAuthBar"><a href="./account.html">Sign in</a></p>
@@ -2482,7 +2482,7 @@
     <button type="button" class="site-tab" role="tab" id="tab-btn-home" aria-controls="panel-home" aria-selected="true">Home</button>
     <button type="button" class="site-tab" role="tab" id="tab-btn-library" aria-controls="panel-library" aria-selected="false">Personal Library</button>
     <button type="button" class="site-tab" role="tab" id="tab-btn-read" aria-controls="panel-already-read" aria-selected="false">Already read</button>
-    <button type="button" class="site-tab" role="tab" id="tab-btn-suggests" aria-controls="panel-suggests" aria-selected="false">Halalit Suggests</button>
+    <button type="button" class="site-tab" role="tab" id="tab-btn-suggests" aria-controls="panel-suggests" aria-selected="false">Book Wander</button>
     <button type="button" class="site-tab" role="tab" id="tab-btn-wishlist" aria-controls="panel-wishlist-library" aria-selected="false">The Wishlist Library</button>
     <button type="button" class="site-tab" role="tab" id="tab-btn-continue-series" aria-controls="panel-continue-series" aria-selected="false">Continue Series</button>
     <button type="button" class="site-tab" role="tab" id="tab-btn-bookcheck" aria-controls="panel-bookcheck" aria-selected="false">Bookcheck</button>
@@ -2496,12 +2496,12 @@
       <p><strong>HalaLit</strong> is here to help families stay within your morals when you read. Halalit hand-checks titles and flags what you might not notice until you’re deep in the story: fanservice or immodesty in comic panels, sustained family negativity (like a mother treated as the villain), romance or substance beats kids aren’t ready for, and other themes on the family shelf.</p>
       <p><strong>Bookcheck</strong> is how you figure out whether something is clean: search any title and see hand-vetted notes, theme scans, and when to pause and decide for yourself—before you buy, borrow, or hand it to a child.</p>
       <p><strong>Book Quest</strong> is how HalaLit recommends clean books: a short illustrated adventure whose choices nudge one hand-vetted pick at the end, drawn from the same family-shelf rules as Bookcheck.</p>
-      <p><strong>Halalit Suggests</strong> is a browse shelf of books Halalit would recommend—hand-checked only, filtered by age, with themed rooms and series that advance past titles you’ve already marked read. No public reviews.</p>
+      <p><strong>Book Wander</strong> is a browse shelf of books Halalit would recommend—hand-checked only, filtered by age, with themed rooms and series that advance past titles you’ve already marked read. No public reviews.</p>
       <p>Your <strong>Personal Library</strong>, wishlist, and series tools stay private on this device or your account.</p>
       <div class="pill-row">
         <span class="pill">Bookcheck: is it clean?</span>
         <span class="pill">Book Quest: find a clean read</span>
-        <span class="pill">Suggests: browse trusted picks</span>
+        <span class="pill">Book Wander: browse trusted picks</span>
         <span class="pill">Same hand-vetted shelf</span>
       </div>
     </section>
@@ -2865,8 +2865,8 @@
   <script src="./halalit-scroll-scanner.js?v=20260701a"></script>
   <script src="./halalit-cover-thumb.js?v=20260623b"></script>
   <script src="./halalit-occasion-week-home.js?v=20260626e"></script>
-  <script src="./halalit-suggests-data.js?v=20260715b"></script>
-  <script src="./halalit-suggests.js?v=20260715b"></script>
+  <script src="./halalit-suggests-data.js?v=20260715c"></script>
+  <script src="./halalit-suggests.js?v=20260715c"></script>
   <script src="./halalit-bookcheck.js?v=20260715a"></script>
   <script src="./halalit-bookcheck-shelf-queue.js?v=20260627a"></script>
   <script>
@@ -2886,8 +2886,8 @@
           if (cta) {
             cta.innerHTML =
               '<a class="play-primary" href="./index.html#bookcheck">Use Bookcheck</a>' +
-              '<a class="play-primary" href="./index.html#suggests">Halalit Suggests</a>' +
-              '<span class="play-secondary">Book Quest is paused by the owner right now—look up titles with Bookcheck, or browse Halalit Suggests.</span>';
+              '<a class="play-primary" href="./index.html#suggests">Book Wander</a>' +
+              '<span class="play-secondary">Book Quest is paused by the owner right now—look up titles with Bookcheck, or browse Book Wander.</span>';
           }
         }
         if (!F.isEnabled("bookcheckEnabled")) {

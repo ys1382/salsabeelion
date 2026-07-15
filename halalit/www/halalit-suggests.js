@@ -1,5 +1,5 @@
 /**
- * Halalit Suggests — browse hand-vetted recommendations.
+ * Book Wander (Halalit Suggests) — browse hand-vetted recommendations.
  * Age gate, spotlight, themed rooms, series lobby (next unread), trusted search.
  */
 (function (global) {
@@ -368,7 +368,7 @@
       return (
         '<section class="halalit-suggests__panel">' +
         "<h2>Who is reading?</h2>" +
-        '<p class="halalit-suggests__lead">Halalit Suggests only shows hand-checked books that fit the same age band as Book Quest and Bookcheck. Pick one to browse.</p>' +
+        '<p class="halalit-suggests__lead">Book Wander only shows hand-checked books that fit the same age band as Book Quest and Bookcheck. Pick one to browse.</p>' +
         '<div class="halalit-suggests__age-row" role="group" aria-label="Reader age band">' +
         '<button type="button" class="halalit-suggests__age-btn" data-band="young_child">Young Child</button>' +
         '<button type="button" class="halalit-suggests__age-btn" data-band="older_child_young_teen">Older Child / Young Teen</button>' +
@@ -432,7 +432,7 @@
       return (
         '<section class="halalit-suggests__panel">' +
         '<div class="halalit-suggests__toolbar">' +
-        "<h2>Halalit Suggests</h2>" +
+        "<h2>Book Wander</h2>" +
         '<button type="button" class="halalit-suggests__text-btn" data-change-age">Age: ' +
         escapeHtml(bandLabel(state.readerBand)) +
         " · change</button>" +
@@ -490,7 +490,7 @@
           : "";
       return (
         '<section class="halalit-suggests__panel">' +
-        '<button type="button" class="halalit-suggests__text-btn" data-back-home>← Back to Suggests</button>' +
+        '<button type="button" class="halalit-suggests__text-btn" data-back-home>← Back to Book Wander</button>' +
         "<h2>More trusted titles</h2>" +
         '<p class="halalit-suggests__lead">Still only Halalit hand-checked books for ' +
         escapeHtml(bandLabel(state.readerBand)) +
@@ -517,7 +517,7 @@
         .join("");
       return (
         '<section class="halalit-suggests__panel">' +
-        '<button type="button" class="halalit-suggests__text-btn" data-back-home>← Back to Suggests</button>' +
+        '<button type="button" class="halalit-suggests__text-btn" data-back-home>← Back to Book Wander</button>' +
         "<h2>" +
         escapeHtml(theme.name) +
         "</h2>" +
