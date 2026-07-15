@@ -955,9 +955,11 @@
     {
       titleRe: /\bthe magic finger\b|\bmagic finger\b/i,
       authorRe: /dahl|roald/i,
+      negativeFamilyPortrayal: true,
       detail: bookNote("The Magic Finger (Roald Dahl)", [
         "Hand-verified plot-clean overall.",
-        "Anti-hunting / cruelty-to-animals turnabout—the magic makes hunters feel what their targets feel.",
+        "Family portrayed negatively—the hunting family is cast as cruel antagonists (turnabout via magic).",
+        "Book Quest includes when otherwise clean—exclude negative family portrayal in Advanced recommendations settings on the play page if needed.",
       ]),
     },
     {
@@ -1175,6 +1177,24 @@
       detail: bookNote("James and the Giant Peach (Roald Dahl)", [
         "Hand-verified clean in owner scope.",
         "Severe family-bashing toward the protagonist's family—cruel/neglectful, not physical abuse.",
+        "Book Quest includes when otherwise clean—exclude negative family portrayal in Advanced recommendations settings on the play page if needed.",
+      ]),
+    },
+    {
+      titleRe: /\bcharlie and the chocolate factory\b|\bcharlie and the great glass elevator\b/i,
+      authorRe: /dahl|roald/i,
+      detail: bookNote("Charlie and the Chocolate Factory (Roald Dahl)", [
+        "Hand-verified clean for Halalit’s family shelf—no crass wording that would keep it off recommend.",
+        "Includes the Great Glass Elevator sequel under the same hand-check line.",
+      ]),
+    },
+    {
+      titleRe: /\bgeorge'?s marvelous medicine\b|\bgeorge'?s marvellous medicine\b|\bmarvelous medicine\b/i,
+      authorRe: /dahl|roald/i,
+      negativeFamilyPortrayal: true,
+      detail: bookNote("George’s Marvelous Medicine (Roald Dahl)", [
+        "Hand-verified plot-clean overall for Halalit’s shelf rules.",
+        "Severe grandmother-bashing—family portrayed very negatively (poisoning framed without remorse).",
         "Book Quest includes when otherwise clean—exclude negative family portrayal in Advanced recommendations settings on the play page if needed.",
       ]),
     },
@@ -1929,6 +1949,24 @@
         "Not on Book Quest; Halalit won’t auto-recommend.",
       ], USER_DISCRETION_PREVIEW_CLOSING),
     },
+    {
+      titleRe: /\bfantastic mr\.?\s*fox\b|\bfantastic mister fox\b/i,
+      authorRe: /dahl|roald/i,
+      detail: bookNote("Fantastic Mr Fox (Roald Dahl)", [
+        "Parked on Halalit’s parent-discretion list—not a hardest auto-reject.",
+        "Serious positivity toward alcohol—nuance note for parents.",
+        "Not on Book Quest; Halalit won’t auto-recommend—preview and decide for your home.",
+      ], USER_DISCRETION_PREVIEW_CLOSING),
+    },
+    {
+      titleRe: /\bdanny, the champion of the world\b|\bdanny the champion of the world\b|\bchampion of the world\b/i,
+      authorRe: /dahl|roald/i,
+      detail: bookNote("Danny, the Champion of the World (Roald Dahl)", [
+        "Parked on Halalit’s parent-discretion list—not a hardest auto-reject.",
+        "Thievery is glorified to a certain extent when it isn’t required for survival—parent discretion.",
+        "Not on Book Quest; Halalit won’t auto-recommend—preview and decide for your home.",
+      ], USER_DISCRETION_PREVIEW_CLOSING),
+    },
   ];
 
   /**
@@ -2314,22 +2352,6 @@
       ]),
     },
     {
-      titleRe: /\bmatilda\b/i,
-      authorRe: /dahl|roald/i,
-      tier: "flag_review",
-      detail: bookNote("Matilda", [
-        "Severe family-bashing toward parents—sustained neglect/hostility, not physical abuse.",
-      ]),
-    },
-    {
-      titleRe: /\bjames and the giant peach\b|\bthe giant peach\b/i,
-      authorRe: /dahl|roald/i,
-      tier: "flag_review",
-      detail: bookNote("James and the Giant Peach", [
-        "Severe family-bashing toward the protagonist’s family—cruel/neglectful, not physical abuse.",
-      ]),
-    },
-    {
       titleRe: /\blibrary of unruly treasures\b/i,
       tier: "flag_review",
       detail: bookNote("The Library of Unruly Treasures", [
@@ -2354,12 +2376,6 @@
       detail: bookNote("Coraline", [
         "Serious immodesty scene—two female characters undressing (book and film).",
       ]),
-    },
-    {
-      titleRe: /\bcharlie and the chocolate factory\b|\bcharlie and the great glass elevator\b/i,
-      authorRe: /dahl|roald/i,
-      tier: "flag_review",
-      detail: "Halalit does not recommend this book due to strong white-savior themes.",
     },
     {
       titleRe: /\bdiary of a wimpy kid\b|\bwimpy kid\b/i,
@@ -2515,31 +2531,6 @@
       tier: "flag_review",
       detail: bookNote("Captain Underpants (Dav Pilkey)", [
         "Crude humor—off Halalit’s family shelf.",
-      ]),
-    },
-    {
-      titleRe: /\bfantastic mr\.?\s*fox\b|\bfantastic mister fox\b/i,
-      authorRe: /dahl|roald/i,
-      tier: "flag_review",
-      detail: bookNote("Fantastic Mr Fox (Roald Dahl)", [
-        "Serious positivity toward alcohol—Halalit won’t recommend this book.",
-      ]),
-    },
-    {
-      titleRe: /\bdanny, the champion of the world\b|\bdanny the champion of the world\b|\bchampion of the world\b/i,
-      authorRe: /dahl|roald/i,
-      tier: "flag_review",
-      detail: bookNote("Danny, the Champion of the World (Roald Dahl)", [
-        "Theft treated positively when it isn’t required for survival—Halalit won’t recommend this book.",
-      ]),
-    },
-    {
-      titleRe: /\bgeorge'?s marvelous medicine\b|\bgeorge'?s marvellous medicine\b|\bmarvelous medicine\b/i,
-      authorRe: /dahl|roald/i,
-      tier: "flag_review",
-      detail: bookNote("George’s Marvelous Medicine (Roald Dahl)", [
-        "Severe grandmother-bashing—reads like they poison her and don’t feel bad about it.",
-        "Halalit won’t recommend this book.",
       ]),
     },
     {

@@ -332,7 +332,7 @@
     { band: BAND.YOUNG_CHILD, titleRe: /fancy nancy/i },
     { band: BAND.YOUNG_CHILD, titleRe: /magic school bus/i },
     { band: BAND.YOUNG_CHILD, titleRe: /dr\.?\s*seuss|bartholomew|oobleck|fox in socks|green eggs and ham|hop on pop|horton hears|if i ran the|one fish two fish|yertle the turtle|sneetches/i },
-    { band: BAND.YOUNG_CHILD, titleRe: /roald dahl|the bfg|matilda|james and the giant peach|the twits|the witches|enormous crocodile|giraffe and the pelly|magic finger/i },
+    { band: BAND.YOUNG_CHILD, titleRe: /roald dahl|the bfg|matilda|james and the giant peach|the twits|the witches|enormous crocodile|giraffe and the pelly|magic finger|charlie and the chocolate|george'?s marvelous medicine|george'?s marvellous medicine/i },
     {
       band: BAND.YOUNG_CHILD,
       titleRe: /\bpocket peaches\s*:\s*at the fair\b|\bpocket peaches\b(?!\s*:)/i,
