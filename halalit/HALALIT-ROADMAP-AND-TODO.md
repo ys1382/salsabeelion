@@ -266,7 +266,7 @@ Bookcheck should know **which kind of vet** powered the result and say so plainl
 - [x] **Vet-source flag on lookup (live Jun 2026)** — Bookcheck banners: hand-checked, AI-checked for themes, catalog-only, fanservice not checked on comics.
 - [x] **Vet-source — AI staging list (Jun 2026)** — `halalit-ai-vet-staging.js` from `HALALIT-AI-VET-STAGING.md`.
 - [ ] **Vet-source — secondhand** — `vet_in_progress` when secondhand list ships on site.
-- [x] **Owner lookup notifications (Jun 2026)** — Reader Bookcheck lookups log to **Owner’s Office** (`owner.html`): popular + recent tables, vet/discretion/reject from rows. Private to owner—not a public wall.
+- [x] **Owner Office — Bookchecks vs My TBR + dismiss (Jul 2026)** — Auto-reject–style scan signals go under Bookchecks (with short summary), thin/indie under My TBR; dismiss → trash / dismiss forever on notification lists (not site settings). Existing lookups backfill on Office open.
 
   **Where pings could show (pick when building; default suggestion: owner-only page + optional email):**
 

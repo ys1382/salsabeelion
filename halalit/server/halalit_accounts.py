@@ -7,6 +7,7 @@ from __future__ import annotations
 from urllib.parse import parse_qs, quote, urlparse
 
 from halalit_lookup_log import (
+    lookup_group_key,
     owner_lookup_aggregated,
     owner_lookup_for_account,
     owner_lookup_recent,
@@ -201,6 +202,17 @@ def init_db() -> None:
                 used_at REAL
             );
             CREATE INDEX IF NOT EXISTS idx_password_reset_user ON password_reset_tokens(user_id);
+            CREATE TABLE IF NOT EXISTS owner_notification_dismissals (
+                notif_key TEXT PRIMARY KEY,
+                state TEXT NOT NULL,
+                kind TEXT NOT NULL DEFAULT '',
+                title TEXT NOT NULL DEFAULT '',
+                author TEXT NOT NULL DEFAULT '',
+                preview TEXT NOT NULL DEFAULT '',
+                snapshot_json TEXT NOT NULL DEFAULT '{}',
+                created_at REAL NOT NULL,
+                updated_at REAL NOT NULL
+            );
             """
         )
         cols = {str(r[1]) for r in conn.execute("PRAGMA table_info(users)").fetchall()}
@@ -213,6 +225,12 @@ def init_db() -> None:
             WHERE google_sub IS NOT NULL AND google_sub != ''
             """
         )
+        try:
+            from owner_lookup_signals import ensure_signals_table
+
+            ensure_signals_table(conn)
+        except Exception as e:
+            sys.stderr.write("owner_lookup_signals init skipped: %s\n" % (e,))
         conn.commit()
 
 
@@ -888,6 +906,122 @@ def _split_owner_vet_lists(
     return vetted, discretion, rejected
 
 
+def _dismiss_states() -> dict[str, dict[str, Any]]:
+    with _connect() as conn:
+        rows = conn.execute(
+            """
+            SELECT notif_key, state, kind, title, author, preview, snapshot_json, created_at, updated_at
+            FROM owner_notification_dismissals
+            """
+        ).fetchall()
+    out: dict[str, dict[str, Any]] = {}
+    for r in rows:
+        try:
+            snap = json.loads(r["snapshot_json"] or "{}")
+        except json.JSONDecodeError:
+            snap = {}
+        out[str(r["notif_key"])] = {
+            "key": r["notif_key"],
+            "state": r["state"],
+            "kind": r["kind"] or "",
+            "title": r["title"] or "",
+            "author": r["author"] or "",
+            "preview": r["preview"] or "",
+            "snapshot": snap if isinstance(snap, dict) else {},
+            "createdAt": r["created_at"],
+            "updatedAt": r["updated_at"],
+        }
+    return out
+
+
+def owner_dismiss_notification(
+    notif_key: str,
+    *,
+    forever: bool = False,
+    kind: str = "",
+    title: str = "",
+    author: str = "",
+    preview: str = "",
+    snapshot: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    key = str(notif_key or "").strip()[:240]
+    if not key:
+        return {"ok": False, "error": "key_required"}
+    state = "forever" if forever else "trash"
+    now = time.time()
+    snap = snapshot if isinstance(snapshot, dict) else {}
+    with _connect() as conn:
+        conn.execute(
+            """
+            INSERT INTO owner_notification_dismissals
+                (notif_key, state, kind, title, author, preview, snapshot_json, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(notif_key) DO UPDATE SET
+                state = excluded.state,
+                kind = CASE WHEN excluded.kind != '' THEN excluded.kind ELSE owner_notification_dismissals.kind END,
+                title = CASE WHEN excluded.title != '' THEN excluded.title ELSE owner_notification_dismissals.title END,
+                author = CASE WHEN excluded.author != '' THEN excluded.author ELSE owner_notification_dismissals.author END,
+                preview = CASE WHEN excluded.preview != '' THEN excluded.preview ELSE owner_notification_dismissals.preview END,
+                snapshot_json = CASE
+                    WHEN excluded.snapshot_json != '{}' THEN excluded.snapshot_json
+                    ELSE owner_notification_dismissals.snapshot_json
+                END,
+                updated_at = excluded.updated_at
+            """,
+            (
+                key,
+                state,
+                str(kind or "")[:60],
+                str(title or "")[:300],
+                str(author or "")[:200],
+                str(preview or "")[:400],
+                json.dumps(snap, ensure_ascii=False)[:8000],
+                now,
+                now,
+            ),
+        )
+        conn.commit()
+    return {"ok": True, "key": key, "state": state}
+
+
+def owner_restore_notification(notif_key: str) -> dict[str, Any]:
+    key = str(notif_key or "").strip()[:240]
+    if not key:
+        return {"ok": False, "error": "key_required"}
+    with _connect() as conn:
+        row = conn.execute(
+            "SELECT state FROM owner_notification_dismissals WHERE notif_key = ?",
+            (key,),
+        ).fetchone()
+        if not row:
+            return {"ok": False, "error": "not_found"}
+        if str(row["state"]) == "forever":
+            return {"ok": False, "error": "dismissed_forever"}
+        conn.execute("DELETE FROM owner_notification_dismissals WHERE notif_key = ?", (key,))
+        conn.commit()
+    return {"ok": True, "key": key}
+
+
+def _filter_dismissed(
+    items: list[dict[str, Any]],
+    dismiss: dict[str, dict[str, Any]],
+    key_fn,
+) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    for item in items:
+        key = key_fn(item)
+        if not key:
+            out.append(item)
+            continue
+        state = (dismiss.get(key) or {}).get("state")
+        if state in ("trash", "forever"):
+            continue
+        item = dict(item)
+        item["notifKey"] = key
+        out.append(item)
+    return out
+
+
 def owner_office_payload(log_path: str, owner_user_id: int | None = None) -> dict[str, Any]:
     on_site = owner_vet_list_all(200)
     vetted, discretion, rejected = _split_owner_vet_lists(on_site)
@@ -900,19 +1034,81 @@ def owner_office_payload(log_path: str, owner_user_id: int | None = None) -> dic
         library_auto_adds = owner_recent_auto_adds(40)
     except Exception as e:
         sys.stderr.write("owner_office library lists failed: %s\n" % (e,))
+
+    popular_raw = owner_lookup_aggregated(log_path, 50, exclude_account_id=owner_user_id)
+    recent_raw = owner_lookup_recent(log_path, 30, exclude_account_id=owner_user_id)
+    try:
+        from owner_lookup_signals import attach_signals_to_lookups, list_missing_signal_titles
+
+        popular = attach_signals_to_lookups(popular_raw)
+        recent = attach_signals_to_lookups(recent_raw)
+        missing_signals = list_missing_signal_titles(popular + recent, limit=12)
+    except Exception as e:
+        sys.stderr.write("owner_lookup_signals attach failed: %s\n" % (e,))
+        popular = popular_raw
+        recent = recent_raw
+        missing_signals = []
+
+    dismiss = _dismiss_states()
+    feedback = _filter_dismissed(
+        owner_feedback_list(60),
+        dismiss,
+        lambda r: "feedback:%s" % r.get("id"),
+    )
+    reader_messages = _filter_dismissed(
+        owner_reader_messages(60),
+        dismiss,
+        lambda r: "message:%s" % r.get("id"),
+    )
+    scanner = _filter_dismissed(
+        owner_scanner_alerts(40),
+        dismiss,
+        lambda r: "scanner:%s" % r.get("id"),
+    )
+    library_pending = _filter_dismissed(
+        library_pending,
+        dismiss,
+        lambda r: "library_pending:%s" % r.get("id"),
+    )
+    library_auto_adds = _filter_dismissed(
+        library_auto_adds,
+        dismiss,
+        lambda r: "library_auto:%s" % (r.get("id") or r.get("placeId") or ""),
+    )
+    popular = _filter_dismissed(
+        popular,
+        dismiss,
+        lambda r: "lookup:%s" % (r.get("groupKey") or lookup_group_key(r.get("title") or "", r.get("author") or "")),
+    )
+    recent = _filter_dismissed(
+        recent,
+        dismiss,
+        lambda r: "lookup:%s" % (r.get("groupKey") or lookup_group_key(r.get("title") or "", r.get("author") or "")),
+    )
+
+    bookchecks = [r for r in popular if r.get("bucket") == "bookcheck"]
+    my_tbr = [r for r in popular if r.get("bucket") != "bookcheck"]
+
+    trash = [d for d in dismiss.values() if d.get("state") == "trash"]
+    trash.sort(key=lambda d: float(d.get("updatedAt") or 0), reverse=True)
+
     return {
         "stats": owner_stats(log_path, exclude_account_id=owner_user_id),
-        "feedback": owner_feedback_list(60),
-        "recentLookups": owner_lookup_recent(log_path, 30, exclude_account_id=owner_user_id),
-        "popularLookups": owner_lookup_aggregated(log_path, 50, exclude_account_id=owner_user_id),
+        "feedback": feedback,
+        "recentLookups": recent,
+        "popularLookups": popular,
+        "bookcheckLookups": bookchecks,
+        "myTbrLookups": my_tbr,
+        "missingSignalCount": len(missing_signals),
         "ownerScans": owner_lookup_for_account(log_path, owner_user_id, 60),
         "ownerVetVetted": vetted,
         "ownerVetDiscretion": discretion,
         "ownerVetRejected": rejected,
-        "scannerAlerts": owner_scanner_alerts(40),
-        "readerMessages": owner_reader_messages(60),
+        "scannerAlerts": scanner,
+        "readerMessages": reader_messages,
         "libraryPending": library_pending,
         "libraryAutoAdds": library_auto_adds,
+        "dismissedNotifications": trash[:80],
         "accounts": owner_user_list(),
         "settings": _get_site_flags(),
         "onSiteVets": on_site[:80],
@@ -1419,7 +1615,164 @@ def handle_post(
             entered_author=entered_author,
             account_id=user["id"] if user else None,
         )
-        json_response(handler, 200, {"ok": True, "recorded": True})
+        signal_payload = None
+        if body.get("summary") or body.get("autoReject") or body.get("themes") or body.get("bucket"):
+            try:
+                from owner_lookup_signals import upsert_lookup_signal
+
+                themes = body.get("themes") if isinstance(body.get("themes"), list) else []
+                signal_payload = upsert_lookup_signal(
+                    title,
+                    author,
+                    summary=str(body.get("summary") or "")[:400],
+                    bucket=str(body.get("bucket") or ""),
+                    themes=themes,
+                    auto_reject=bool(body.get("autoReject")),
+                )
+            except Exception as e:
+                sys.stderr.write("lookup signal upsert failed: %s\n" % (e,))
+        json_response(
+            handler,
+            200,
+            {"ok": True, "recorded": True, "signal": signal_payload},
+        )
+        return True
+
+    if path == "/api/lookup/signal":
+        user = _session_user(handler)
+        title = str(body.get("title") or "").strip()[:300]
+        author = str(body.get("author") or "").strip()[:200]
+        if not title or is_garbage_lookup(title, author):
+            json_response(handler, 200, {"ok": True, "saved": False})
+            return True
+        if body.get("ownerTesting") and user and user.get("is_owner"):
+            json_response(handler, 200, {"ok": True, "saved": False, "skipped": "owner_testing"})
+            return True
+        try:
+            from owner_lookup_signals import upsert_lookup_signal
+
+            themes = body.get("themes") if isinstance(body.get("themes"), list) else []
+            explainers = body.get("explainers") if isinstance(body.get("explainers"), list) else []
+            summary = str(body.get("summary") or "").strip()
+            if not summary and explainers:
+                from owner_lookup_signals import build_owner_summary
+
+                summary = build_owner_summary(
+                    themes,
+                    auto_reject=bool(body.get("autoReject")),
+                    explainers=[str(x) for x in explainers],
+                )
+            payload = upsert_lookup_signal(
+                title,
+                author,
+                summary=summary,
+                bucket=str(body.get("bucket") or ""),
+                themes=themes,
+                auto_reject=bool(body.get("autoReject")),
+            )
+        except Exception as e:
+            sys.stderr.write("lookup signal failed: %s\n" % (e,))
+            payload = {"ok": False, "error": "signal_failed"}
+        json_response(handler, 200, {"ok": True, "saved": bool(payload.get("ok")), "signal": payload})
+        return True
+
+    if path == "/api/owner/notifications/dismiss":
+        user = _session_user(handler)
+        if not user or not user["is_owner"]:
+            json_response(handler, 403, {"ok": False, "error": "owner_only"})
+            return True
+        snap = body.get("snapshot") if isinstance(body.get("snapshot"), dict) else {}
+        result = owner_dismiss_notification(
+            str(body.get("key") or ""),
+            forever=bool(body.get("forever")),
+            kind=str(body.get("kind") or ""),
+            title=str(body.get("title") or ""),
+            author=str(body.get("author") or ""),
+            preview=str(body.get("preview") or ""),
+            snapshot=snap,
+        )
+        json_response(handler, 200 if result.get("ok") else 400, result)
+        return True
+
+    if path == "/api/owner/notifications/restore":
+        user = _session_user(handler)
+        if not user or not user["is_owner"]:
+            json_response(handler, 403, {"ok": False, "error": "owner_only"})
+            return True
+        result = owner_restore_notification(str(body.get("key") or ""))
+        json_response(handler, 200 if result.get("ok") else 400, result)
+        return True
+
+    if path == "/api/owner/lookups/backfill-signals":
+        user = _session_user(handler)
+        if not user or not user["is_owner"]:
+            json_response(handler, 403, {"ok": False, "error": "owner_only"})
+            return True
+        log_path = os.environ.get("HALALIT_LOOKUP_LOG", "")
+        limit = int(body.get("limit") or 4)
+        if limit < 1:
+            limit = 1
+        if limit > 8:
+            limit = 8
+        popular = owner_lookup_aggregated(log_path, 50, exclude_account_id=user["id"])
+        recent = owner_lookup_recent(log_path, 30, exclude_account_id=user["id"])
+        try:
+            from owner_lookup_signals import list_missing_signal_titles, signal_from_theme_scan_result
+            from bookcheck_theme_api import call_theme_scan
+
+            missing = list_missing_signal_titles(popular + recent, limit=limit)
+        except Exception as e:
+            sys.stderr.write("backfill import failed: %s\n" % (e,))
+            json_response(handler, 500, {"ok": False, "error": "backfill_unavailable", "message": str(e)})
+            return True
+        filled = []
+        errors = []
+        for item in missing:
+            try:
+                result = call_theme_scan(item["title"], item.get("author") or "", False)
+                if result.get("ok"):
+                    sig = signal_from_theme_scan_result(item["title"], item.get("author") or "", result)
+                    filled.append(
+                        {
+                            "title": item["title"],
+                            "author": item.get("author") or "",
+                            "bucket": sig.get("bucket"),
+                            "summary": sig.get("summary"),
+                        }
+                    )
+                else:
+                    # Still mark as tbr so we don't retry forever on AI failure.
+                    from owner_lookup_signals import upsert_lookup_signal
+
+                    upsert_lookup_signal(
+                        item["title"],
+                        item.get("author") or "",
+                        summary="Scan unavailable — kept on My TBR until a fresh Bookcheck runs.",
+                        bucket="tbr",
+                        auto_reject=False,
+                    )
+                    errors.append({"title": item["title"], "error": result.get("error") or "scan_failed"})
+            except Exception as e:
+                errors.append({"title": item.get("title"), "error": str(e)})
+        remaining = []
+        try:
+            remaining = list_missing_signal_titles(
+                owner_lookup_aggregated(log_path, 50, exclude_account_id=user["id"])
+                + owner_lookup_recent(log_path, 30, exclude_account_id=user["id"]),
+                limit=20,
+            )
+        except Exception:
+            remaining = []
+        json_response(
+            handler,
+            200,
+            {
+                "ok": True,
+                "filled": filled,
+                "errors": errors,
+                "remaining": len(remaining),
+            },
+        )
         return True
 
     if path == "/api/scanner/malfunction-report":

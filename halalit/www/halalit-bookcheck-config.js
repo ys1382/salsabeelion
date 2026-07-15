@@ -44,6 +44,9 @@
     lookupRecordUrl: function () {
       return apiUrl("/lookup/record");
     },
+    lookupSignalUrl: function () {
+      return apiUrl("/lookup/signal");
+    },
     ownerReviewPendingUrl: function () {
       return apiUrl("/lookup/owner-review-pending");
     },

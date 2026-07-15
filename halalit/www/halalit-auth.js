@@ -108,6 +108,24 @@
     loadOwnerOffice: function () {
       return fetchJson(apiBase() + "/owner/office", { method: "GET" });
     },
+    dismissOwnerNotification: function (payload) {
+      return fetchJson(apiBase() + "/owner/notifications/dismiss", {
+        method: "POST",
+        body: payload || {},
+      });
+    },
+    restoreOwnerNotification: function (key) {
+      return fetchJson(apiBase() + "/owner/notifications/restore", {
+        method: "POST",
+        body: { key: key },
+      });
+    },
+    backfillOwnerLookupSignals: function (limit) {
+      return fetchJson(apiBase() + "/owner/lookups/backfill-signals", {
+        method: "POST",
+        body: { limit: limit || 4 },
+      });
+    },
     saveOwnerSettings: function (flags) {
       return fetchJson(apiBase() + "/owner/settings", {
         method: "POST",

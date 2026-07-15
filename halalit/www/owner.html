@@ -333,19 +333,47 @@
         </div>
       </details>
 
+      <details class="office-section panel" id="ownerBookchecksSection" open>
+        <summary class="office-section__summary">
+          <span class="office-section__title"><strong>Bookchecks</strong> <span class="muted" id="bookchecksCountLabel"></span></span>
+          <span class="office-section__toggle" aria-hidden="true"></span>
+        </summary>
+        <div class="office-section__body">
+          <p class="hint">Reader lookups where Halalit already has a clear <strong>auto-reject–style</strong> signal (LGBTQ, adult romance, glorified toxic behavior, and similar). Shows what scanners said. Private — not your personal TBR.</p>
+          <p class="hint muted" id="signalBackfillStatus" hidden></p>
+          <table>
+            <thead>
+              <tr><th>Title</th><th>Author</th><th>What Halalit said</th><th>Lookups</th><th></th></tr>
+            </thead>
+            <tbody id="bookchecksFromLookups"></tbody>
+          </table>
+        </div>
+      </details>
+
       <details class="office-section panel" id="ownerMyTbrSection" open>
         <summary class="office-section__summary">
           <span class="office-section__title"><strong>My TBR List</strong> <span class="muted" id="myTbrCountLabel"></span></span>
           <span class="office-section__toggle" aria-hidden="true"></span>
         </summary>
         <div class="office-section__body">
-          <p class="hint">Built from the <strong>most-checked Bookcheck lookups</strong> by signed-in readers. Only titles that are <strong>not</strong> hand-vetted clean, hand-rejected, or reader-discretion yet. Private to you — <strong>not</strong> on the public Halalit site.</p>
+          <p class="hint">Popular reader lookups that still look like <strong>hand-read</strong> candidates — thin reviews, indie, or no clear auto-reject signal yet. Private to you — <strong>not</strong> on the public Halalit site.</p>
           <table>
             <thead>
-              <tr><th>Title</th><th>Author</th><th>Lookups</th><th>Readers</th><th>Last</th><th></th></tr>
+              <tr><th>Title</th><th>Author</th><th>Note</th><th>Lookups</th><th>Readers</th><th>Last</th><th></th></tr>
             </thead>
             <tbody id="myTbrFromLookups"></tbody>
           </table>
+        </div>
+      </details>
+
+      <details class="office-section panel" id="ownerDismissedSection">
+        <summary class="office-section__summary">
+          <span class="office-section__title"><strong>Dismissed notifications</strong> <span class="muted" id="dismissedCountLabel"></span></span>
+          <span class="office-section__toggle" aria-hidden="true"></span>
+        </summary>
+        <div class="office-section__body">
+          <p class="hint">Like email trash — restore anything you dismissed by mistake. <strong>Dismiss forever</strong> removes that one item from here too.</p>
+          <div id="dismissedNotificationsList"></div>
         </div>
       </details>
 
@@ -425,7 +453,7 @@
           <p class="hint">When the camera grabbed the wrong words off a cover (or someone tried Bookcheck on a bad read). These are <strong>not</strong> listed in the lookup tables above.</p>
           <table>
             <thead>
-              <tr><th>What the scanner saw</th><th>When</th></tr>
+              <tr><th>What the scanner saw</th><th>When</th><th></th></tr>
             </thead>
             <tbody id="scannerAlerts"></tbody>
           </table>
@@ -562,7 +590,7 @@
       </details>
     </div>
   </div>
-  <script src="./halalit-bookcheck-config.js"></script>
+  <script src="./halalit-bookcheck-config.js?v=20260715a"></script>
   <script src="./halalit-account-storage.js?v=20260610g"></script>
   <script src="./halalit-owner-vets-runtime.js?v=20260611f"></script>
   <script src="./halalit-personal-library.js?v=20260610g"></script>
@@ -585,8 +613,8 @@
   <script src="./halalit-lookup-quality.js?v=20260610c"></script>
   <script src="./halalit-scroll-scanner.js?v=20260701a"></script>
   <script src="./halalit-owner-cover-preview.js?v=20260611f"></script>
-  <script src="./halalit-bookcheck.js?v=20260711e"></script>
-  <script src="./halalit-auth.js"></script>
+  <script src="./halalit-bookcheck.js?v=20260715a"></script>
+  <script src="./halalit-auth.js?v=20260715a"></script>
   <script>
     (function () {
       function fmtDate(ts) {
@@ -658,6 +686,8 @@
 
       var cursorVetRoster = null;
       var lastPopularLookups = [];
+      var signalBackfillBusy = false;
+      var signalBackfillRounds = 0;
 
       function vetNormKey(title, author) {
         return String(title || "")
@@ -728,8 +758,117 @@
         return true;
       }
 
-      function buildMyTbrRows(popularLookups) {
-        var rows = (popularLookups || []).filter(function (row) {
+      function notifKeyForLookup(row) {
+        if (row && row.notifKey) return row.notifKey;
+        if (row && row.groupKey) return "lookup:" + row.groupKey;
+        return "lookup:" + vetNormKey(row && row.title, row && row.author);
+      }
+
+      function dismissNotification(payload) {
+        return HalalitAuth.dismissOwnerNotification(payload).then(function (res) {
+          if (res && res.ok) loadOffice();
+          return res;
+        });
+      }
+
+      function addDismissButtons(host, opts) {
+        if (!host || !opts || !opts.key) return;
+        var dismissBtn = document.createElement("button");
+        dismissBtn.type = "button";
+        dismissBtn.className = "copy-btn";
+        dismissBtn.textContent = "Dismiss";
+        dismissBtn.addEventListener("click", function () {
+          dismissNotification({
+            key: opts.key,
+            forever: false,
+            kind: opts.kind || "",
+            title: opts.title || "",
+            author: opts.author || "",
+            preview: opts.preview || "",
+            snapshot: opts.snapshot || {},
+          });
+        });
+        host.appendChild(dismissBtn);
+        var foreverBtn = document.createElement("button");
+        foreverBtn.type = "button";
+        foreverBtn.className = "copy-btn";
+        foreverBtn.textContent = "Dismiss forever";
+        foreverBtn.style.marginLeft = "0.35rem";
+        foreverBtn.addEventListener("click", function () {
+          if (!window.confirm("Dismiss forever? This specific notification won’t come back in trash.")) return;
+          dismissNotification({
+            key: opts.key,
+            forever: true,
+            kind: opts.kind || "",
+            title: opts.title || "",
+            author: opts.author || "",
+            preview: opts.preview || "",
+            snapshot: opts.snapshot || {},
+          });
+        });
+        host.appendChild(foreverBtn);
+      }
+
+      function addLookupActionButtons(tdBtn, row) {
+        var title = row.title;
+        var author = row.author;
+        if (showVetButton(title, author)) {
+          var vetBtn = document.createElement("button");
+          vetBtn.type = "button";
+          vetBtn.className = "copy-btn";
+          vetBtn.textContent = "Vet";
+          vetBtn.addEventListener("click", function () {
+            vetLookupTitle(title, author);
+          });
+          tdBtn.appendChild(vetBtn);
+        }
+        if (showDiscretionButton(title, author)) {
+          var discretionBtn = document.createElement("button");
+          discretionBtn.type = "button";
+          discretionBtn.className = "copy-btn";
+          discretionBtn.textContent = "Discretion";
+          discretionBtn.addEventListener("click", function () {
+            discretionLookupTitle(title, author);
+          });
+          tdBtn.appendChild(discretionBtn);
+        }
+        if (showRejectButton(title, author)) {
+          var rejectBtn = document.createElement("button");
+          rejectBtn.type = "button";
+          rejectBtn.className = "copy-btn";
+          rejectBtn.textContent = "Reject";
+          rejectBtn.addEventListener("click", function () {
+            rejectLookupTitle(title, author);
+          });
+          tdBtn.appendChild(rejectBtn);
+        }
+        var copyBtn = document.createElement("button");
+        copyBtn.type = "button";
+        copyBtn.className = "copy-btn";
+        copyBtn.textContent = "Copy";
+        if (tdBtn.children.length) copyBtn.style.marginLeft = "0.35rem";
+        copyBtn.addEventListener("click", function () {
+          copyLine(title, author);
+        });
+        tdBtn.appendChild(copyBtn);
+        addDismissButtons(tdBtn, {
+          key: notifKeyForLookup(row),
+          kind: row.bucket === "bookcheck" ? "lookup_bookcheck" : "lookup_tbr",
+          title: title || "",
+          author: author || "",
+          preview: row.summary || "",
+          snapshot: {
+            title: title,
+            author: author,
+            summary: row.summary || "",
+            bucket: row.bucket || "",
+          },
+        });
+      }
+
+      function buildMyTbrRows(lookups) {
+        var rows = (lookups || []).filter(function (row) {
+          if (row.bucket === "bookcheck") return false;
           return needsHandVetForTbr(row.title, row.author);
         });
         rows.sort(function (a, b) {
@@ -742,12 +881,66 @@
         return rows;
       }
 
+      function buildBookcheckRows(lookups) {
+        var rows = (lookups || []).filter(function (row) {
+          if (row.bucket !== "bookcheck") return false;
+          return needsHandVetForTbr(row.title, row.author);
+        });
+        rows.sort(function (a, b) {
+          var lc = (b.lookupCount || 0) - (a.lookupCount || 0);
+          if (lc) return lc;
+          return (b.lastAt || 0) - (a.lastAt || 0);
+        });
+        return rows;
+      }
+
+      function renderBookchecksFromLookups(lookups) {
+        var tbody = document.getElementById("bookchecksFromLookups");
+        var countLabel = document.getElementById("bookchecksCountLabel");
+        if (!tbody) return;
+        tbody.innerHTML = "";
+        var rows = buildBookcheckRows(lookups || lastPopularLookups);
+        if (countLabel) {
+          countLabel.textContent = rows.length ? "(" + rows.length + ")" : "";
+        }
+        if (!rows.length) {
+          var tr0 = document.createElement("tr");
+          var td0 = document.createElement("td");
+          td0.colSpan = 5;
+          td0.textContent =
+            "No auto-reject–style Bookcheck signals in popular lookups yet (or they’ve been dismissed).";
+          tr0.appendChild(td0);
+          tbody.appendChild(tr0);
+          return;
+        }
+        rows.forEach(function (row) {
+          var tr = document.createElement("tr");
+          var tdT = document.createElement("td");
+          tdT.textContent = row.title || "—";
+          var tdA = document.createElement("td");
+          tdA.textContent = row.author || "—";
+          var tdS = document.createElement("td");
+          tdS.textContent = row.summary || "HalaLit flagged auto-reject themes.";
+          var tdL = document.createElement("td");
+          tdL.textContent = row.lookupCount != null ? String(row.lookupCount) : "—";
+          tr.appendChild(tdT);
+          tr.appendChild(tdA);
+          tr.appendChild(tdS);
+          tr.appendChild(tdL);
+          var tdBtn = document.createElement("td");
+          addLookupActionButtons(tdBtn, row);
+          tr.appendChild(tdBtn);
+          tbody.appendChild(tr);
+        });
+      }
+
       function renderMyTbrFromLookups(popularLookups) {
         lastPopularLookups = popularLookups || [];
         var tbody = document.getElementById("myTbrFromLookups");
         var countLabel = document.getElementById("myTbrCountLabel");
         if (!tbody) return;
         tbody.innerHTML = "";
+        renderBookchecksFromLookups(lastPopularLookups);
         var rows = buildMyTbrRows(lastPopularLookups);
         if (countLabel) {
           countLabel.textContent = rows.length ? "(" + rows.length + " to hand-read)" : "";
@@ -755,10 +948,10 @@
         if (!rows.length) {
           var tr0 = document.createElement("tr");
           var td0 = document.createElement("td");
-          td0.colSpan = 6;
+          td0.colSpan = 7;
           td0.textContent =
             lastPopularLookups.length
-              ? "Every popular lookup is already hand-vetted or hand-rejected in code or on-site."
+              ? "No hand-read TBR candidates right now — clear auto-reject signals sit under Bookchecks, and settled titles are filtered out."
               : "No reader Bookcheck lookups logged yet — this list fills as people search.";
           tr0.appendChild(td0);
           tbody.appendChild(tr0);
@@ -770,6 +963,12 @@
           tdT.textContent = row.title || "—";
           var tdA = document.createElement("td");
           tdA.textContent = row.author || "—";
+          var tdS = document.createElement("td");
+          tdS.textContent =
+            row.summary ||
+            (row.hasSignal === false
+              ? "Summary pending…"
+              : "Little clear auto-reject signal yet.");
           var tdL = document.createElement("td");
           tdL.textContent = row.lookupCount != null ? String(row.lookupCount) : "—";
           var tdR = document.createElement("td");
@@ -778,51 +977,111 @@
           tdD.textContent = fmtDate(row.lastAt);
           tr.appendChild(tdT);
           tr.appendChild(tdA);
+          tr.appendChild(tdS);
           tr.appendChild(tdL);
           tr.appendChild(tdR);
           tr.appendChild(tdD);
           var tdBtn = document.createElement("td");
-          if (showVetButton(row.title, row.author)) {
-            var vetBtn = document.createElement("button");
-            vetBtn.type = "button";
-            vetBtn.className = "copy-btn";
-            vetBtn.textContent = "Vet";
-            vetBtn.addEventListener("click", function () {
-              vetLookupTitle(row.title, row.author);
-            });
-            tdBtn.appendChild(vetBtn);
-          }
-          if (showDiscretionButton(row.title, row.author)) {
-            var discretionBtn = document.createElement("button");
-            discretionBtn.type = "button";
-            discretionBtn.className = "copy-btn";
-            discretionBtn.textContent = "Discretion";
-            discretionBtn.addEventListener("click", function () {
-              discretionLookupTitle(row.title, row.author);
-            });
-            tdBtn.appendChild(discretionBtn);
-          }
-          if (showRejectButton(row.title, row.author)) {
-            var rejectBtn = document.createElement("button");
-            rejectBtn.type = "button";
-            rejectBtn.className = "copy-btn";
-            rejectBtn.textContent = "Reject";
-            rejectBtn.addEventListener("click", function () {
-              rejectLookupTitle(row.title, row.author);
-            });
-            tdBtn.appendChild(rejectBtn);
-          }
-          var copyBtn = document.createElement("button");
-          copyBtn.type = "button";
-          copyBtn.className = "copy-btn";
-          copyBtn.textContent = "Copy";
-          if (tdBtn.children.length) copyBtn.style.marginLeft = "0.35rem";
-          copyBtn.addEventListener("click", function () {
-            copyLine(row.title, row.author);
-          });
-          tdBtn.appendChild(copyBtn);
+          addLookupActionButtons(tdBtn, row);
           tr.appendChild(tdBtn);
           tbody.appendChild(tr);
+        });
+      }
+
+      function renderDismissed(list) {
+        var root = document.getElementById("dismissedNotificationsList");
+        var countLabel = document.getElementById("dismissedCountLabel");
+        if (!root) return;
+        root.innerHTML = "";
+        if (countLabel) countLabel.textContent = list && list.length ? "(" + list.length + ")" : "";
+        if (!list || !list.length) {
+          root.textContent = "Trash is empty.";
+          return;
+        }
+        list.forEach(function (row) {
+          var div = document.createElement("div");
+          div.className = "feedback-item";
+          var line =
+            (row.kind ? row.kind + " · " : "") +
+            (row.title || row.key || "Notification") +
+            (row.author ? " · " + row.author : "") +
+            (row.preview ? " — " + row.preview.slice(0, 160) : "") +
+            " · " +
+            fmtDate(row.updatedAt || row.createdAt);
+          var span = document.createElement("span");
+          span.textContent = line + " ";
+          div.appendChild(span);
+          var restoreBtn = document.createElement("button");
+          restoreBtn.type = "button";
+          restoreBtn.className = "copy-btn";
+          restoreBtn.textContent = "Restore";
+          restoreBtn.addEventListener("click", function () {
+            HalalitAuth.restoreOwnerNotification(row.key).then(function (res) {
+              if (res && res.ok) loadOffice();
+            });
+          });
+          div.appendChild(restoreBtn);
+          var foreverBtn = document.createElement("button");
+          foreverBtn.type = "button";
+          foreverBtn.className = "copy-btn";
+          foreverBtn.style.marginLeft = "0.35rem";
+          foreverBtn.textContent = "Dismiss forever";
+          foreverBtn.addEventListener("click", function () {
+            if (!window.confirm("Dismiss forever?")) return;
+            dismissNotification({
+              key: row.key,
+              forever: true,
+              kind: row.kind || "",
+              title: row.title || "",
+              author: row.author || "",
+              preview: row.preview || "",
+              snapshot: row.snapshot || {},
+            });
+          });
+          div.appendChild(foreverBtn);
+          root.appendChild(div);
+        });
+      }
+
+      function maybeBackfillSignals(missingCount) {
+        var status = document.getElementById("signalBackfillStatus");
+        if (!missingCount || missingCount < 1) {
+          if (status && !signalBackfillBusy) status.hidden = true;
+          return;
+        }
+        if (signalBackfillBusy || signalBackfillRounds >= 30) {
+          if (status && signalBackfillRounds >= 30) {
+            status.hidden = false;
+            status.textContent = "Stopped auto-sort after many passes — refresh Office later for the rest.";
+          }
+          return;
+        }
+        signalBackfillBusy = true;
+        signalBackfillRounds += 1;
+        if (status) {
+          status.hidden = false;
+          status.textContent = "Sorting existing lookups into Bookchecks vs My TBR… (" + missingCount + " left)";
+        }
+        HalalitAuth.backfillOwnerLookupSignals(4).then(function (res) {
+          signalBackfillBusy = false;
+          if (!res || !res.ok) {
+            if (status) status.textContent = "Could not finish sorting older lookups — open Office again later.";
+            return;
+          }
+          if (res.remaining > 0) {
+            loadOffice();
+            return;
+          }
+          if (status) {
+            status.textContent = "Existing lookups sorted.";
+            setTimeout(function () {
+              status.hidden = true;
+            }, 2500);
+          }
+          loadOffice();
+        }).catch(function () {
+          signalBackfillBusy = false;
+          if (status) status.textContent = "Could not finish sorting older lookups — open Office again later.";
         });
       }
 
@@ -891,7 +1150,7 @@
         return !(Ui && typeof Ui.hasOnSiteReject === "function" && Ui.hasOnSiteReject(title, author));
       }
 
-      function addLookupRow(tbody, title, author, count) {
+      function addLookupRow(tbody, title, author, count, rowMeta) {
         var tr = document.createElement("tr");
         var tdT = document.createElement("td");
         tdT.textContent = title || "—";
@@ -903,45 +1162,10 @@
         tdC.textContent = count != null && count > 1 ? String(count) : "";
         tr.appendChild(tdC);
         var tdBtn = document.createElement("td");
-        if (showVetButton(title, author)) {
-          var vetBtn = document.createElement("button");
-          vetBtn.type = "button";
-          vetBtn.className = "copy-btn";
-          vetBtn.textContent = "Vet";
-          vetBtn.addEventListener("click", function () {
-            vetLookupTitle(title, author);
-          });
-          tdBtn.appendChild(vetBtn);
-        }
-        if (showDiscretionButton(title, author)) {
-          var discretionBtn = document.createElement("button");
-          discretionBtn.type = "button";
-          discretionBtn.className = "copy-btn";
-          discretionBtn.textContent = "Discretion";
-          discretionBtn.addEventListener("click", function () {
-            discretionLookupTitle(title, author);
-          });
-          tdBtn.appendChild(discretionBtn);
-        }
-        if (showRejectButton(title, author)) {
-          var rejectBtn = document.createElement("button");
-          rejectBtn.type = "button";
-          rejectBtn.className = "copy-btn";
-          rejectBtn.textContent = "Reject";
-          rejectBtn.addEventListener("click", function () {
-            rejectLookupTitle(title, author);
-          });
-          tdBtn.appendChild(rejectBtn);
-        }
-        var copyBtn = document.createElement("button");
-        copyBtn.type = "button";
-        copyBtn.className = "copy-btn";
-        copyBtn.textContent = "Copy";
-        if (tdBtn.children.length) copyBtn.style.marginLeft = "0.35rem";
-        copyBtn.addEventListener("click", function () {
-          copyLine(title, author);
-        });
-        tdBtn.appendChild(copyBtn);
+        var row = rowMeta || { title: title, author: author };
+        if (!row.title) row.title = title;
+        if (!row.author) row.author = author;
+        addLookupActionButtons(tdBtn, row);
         tr.appendChild(tdBtn);
         tbody.appendChild(tr);
       }
@@ -1016,15 +1240,37 @@
             var flags = (item.ruleFlags || []).join(", ");
             var note = item.noteSnippet || "";
             var rating = item.rating ? " · " + item.rating : "";
-            div.textContent =
+            var text =
               title +
               rating +
               (flags ? " — flags: " + flags : "") +
               (note ? " — “" + note + "”" : "") +
               " · " +
               fmtDate(batch.createdAt);
+            var span = document.createElement("span");
+            span.textContent = text + " ";
+            div.appendChild(span);
+            addDismissButtons(div, {
+              key: batch.notifKey || ("feedback:" + batch.id),
+              kind: "feedback",
+              title: title,
+              preview: text.slice(0, 200),
+              snapshot: { id: batch.id, title: title },
+            });
             root.appendChild(div);
           });
+          if (!items.length) {
+            var emptyBatch = document.createElement("div");
+            emptyBatch.className = "feedback-item";
+            emptyBatch.textContent = "Feedback batch · " + fmtDate(batch.createdAt);
+            addDismissButtons(emptyBatch, {
+              key: batch.notifKey || ("feedback:" + batch.id),
+              kind: "feedback",
+              preview: "Feedback batch",
+              snapshot: { id: batch.id },
+            });
+            root.appendChild(emptyBatch);
+          }
         });
       }
 
@@ -1053,7 +1299,18 @@
           if (meta.rating) extra += " · " + meta.rating;
           if (meta.label) extra += " · " + meta.label;
           if (meta.outcome) extra += " · " + meta.outcome;
-          div.textContent = label + extra + " — “" + (row.message || "").slice(0, 200) + "” · " + fmtDate(row.createdAt);
+          var text = label + extra + " — “" + (row.message || "").slice(0, 200) + "” · " + fmtDate(row.createdAt);
+          var span = document.createElement("span");
+          span.textContent = text + " ";
+          div.appendChild(span);
+          addDismissButtons(div, {
+            key: row.notifKey || ("message:" + row.id),
+            kind: "message",
+            title: meta.title || label,
+            author: meta.author || "",
+            preview: (row.message || "").slice(0, 200),
+            snapshot: { id: row.id, source: row.source },
+          });
           root.appendChild(div);
         });
       }
@@ -1108,6 +1365,13 @@
                   .catch(function () {});
               });
               div.appendChild(btn);
+              addDismissButtons(div, {
+                key: row.notifKey || ("library_pending:" + row.id),
+                kind: "library_pending",
+                title: row.label || "Library",
+                preview: line.slice(0, 200),
+                snapshot: { id: row.id },
+              });
               pendRoot.appendChild(div);
             });
           }
@@ -1160,6 +1424,13 @@
                 });
                 div.appendChild(btn);
               }
+              addDismissButtons(div, {
+                key: row.notifKey || ("library_auto:" + (row.id || row.placeId || "")),
+                kind: "library_auto",
+                title: row.placeLabel || row.placeId || "Library",
+                preview: line.slice(0, 200),
+                snapshot: { id: row.id, placeId: row.placeId },
+              });
               autoRoot.appendChild(div);
             });
           }
@@ -1177,11 +1448,13 @@
         HalalitAuth.loadOwnerOffice().then(function (res) {
           if (!res || !res.ok) return;
           renderStats(res.stats || {});
-          renderMyTbrFromLookups(res.popularLookups || []);
+          renderMyTbrFromLookups(res.popularLookups || res.myTbrLookups || []);
+          renderDismissed(res.dismissedNotifications || []);
+          maybeBackfillSignals(res.missingSignalCount || 0);
           var pop = document.getElementById("popularLookups");
           pop.innerHTML = "";
           (res.popularLookups || []).forEach(function (row) {
-            addLookupRow(pop, row.title, row.author, lookupReaderCount(row));
+            addLookupRow(pop, row.title, row.author, lookupReaderCount(row), row);
           });
           if (!pop.children.length) {
             var tr = document.createElement("tr");
@@ -1194,7 +1467,7 @@
           var rec = document.getElementById("recentLookups");
           rec.innerHTML = "";
           (res.recentLookups || []).forEach(function (row) {
-            addLookupRow(rec, row.title, row.author, lookupReaderCount(row));
+            addLookupRow(rec, row.title, row.author, lookupReaderCount(row), row);
           });
           if (!rec.children.length) {
             var trR = document.createElement("tr");
@@ -1220,12 +1493,22 @@
             tdD.textContent = fmtDate(row.createdAt);
             tr.appendChild(tdT);
             tr.appendChild(tdD);
+            var tdBtn = document.createElement("td");
+            addDismissButtons(tdBtn, {
+              key: row.notifKey || ("scanner:" + row.id),
+              kind: "scanner",
+              title: row.title || "",
+              author: row.author || "",
+              preview: label,
+              snapshot: { id: row.id, phase: row.phase },
+            });
+            tr.appendChild(tdBtn);
             scan.appendChild(tr);
           });
           if (!scan.children.length) {
             var tr0 = document.createElement("tr");
             var td0 = document.createElement("td");
-            td0.colSpan = 2;
+            td0.colSpan = 3;
             td0.textContent = "No mixed-up scanner reads reported yet.";
             tr0.appendChild(td0);
             scan.appendChild(tr0);

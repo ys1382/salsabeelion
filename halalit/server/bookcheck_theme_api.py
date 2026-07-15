@@ -1053,6 +1053,10 @@ class Handler(BaseHTTPRequestHandler):
             or path == "/api/scanner/malfunction-report"
             or path == "/api/feedback/submit"
             or path == "/api/lookup/record"
+            or path == "/api/lookup/signal"
+            or path == "/api/owner/notifications/dismiss"
+            or path == "/api/owner/notifications/restore"
+            or path == "/api/owner/lookups/backfill-signals"
             or path == "/api/owner/vets/save"
             or path == "/api/owner/vets/save-series"
             or path == "/api/owner/vets/delete"
@@ -1090,6 +1094,13 @@ class Handler(BaseHTTPRequestHandler):
                 return
 
             result = call_theme_scan(title, author, is_graphic)
+            if result.get("ok") and not bool(body.get("ownerTesting")):
+                try:
+                    from owner_lookup_signals import signal_from_theme_scan_result
+
+                    signal_from_theme_scan_result(title, author, result)
+                except Exception as e:
+                    sys.stderr.write("theme-scan signal upsert failed: %s\n" % (e,))
             status = 200 if result.get("ok") else (503 if result.get("error") == "ai_unconfigured" else 502)
             json_response(self, status, result)
             return

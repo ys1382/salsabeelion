@@ -1555,34 +1555,105 @@
       return { title: logTitle, author: logAuthor || "" };
     }
 
-    function recordLookupForOwner(title, author) {
+    function recordLookupForOwner(title, author, signalOpts) {
       if (catalogMeta.ownerTesting) {
         return Promise.resolve();
       }
-      if (catalogMeta.lookupRecorded) {
-        return Promise.resolve();
-      }
+      signalOpts = signalOpts || {};
       var Config = global.HalalitBookcheckConfig;
       var url = Config && typeof Config.lookupRecordUrl === "function" ? Config.lookupRecordUrl() : "";
       if (!url || !global.fetch) return Promise.resolve();
       var log = lookupLogTitleAuthor(title, author);
       if (!log.title) return Promise.resolve();
+      var already = !!catalogMeta.lookupRecorded;
       catalogMeta.lookupRecorded = true;
+      var body = {
+        title: log.title,
+        author: log.author,
+        enteredTitle: catalogMeta.lookupLogTitle || log.title,
+        enteredAuthor: catalogMeta.lookupLogAuthor || "",
+        ownerTesting: !!catalogMeta.ownerTesting,
+      };
+      if (signalOpts.summary || signalOpts.autoReject || signalOpts.themes || signalOpts.bucket || signalOpts.explainers) {
+        if (signalOpts.summary) body.summary = signalOpts.summary;
+        if (signalOpts.bucket) body.bucket = signalOpts.bucket;
+        if (signalOpts.themes) body.themes = signalOpts.themes;
+        if (signalOpts.explainers) body.explainers = signalOpts.explainers;
+        body.autoReject = !!signalOpts.autoReject;
+      }
+      var postUrl = url;
+      var signalOnly = already && (signalOpts.summary || signalOpts.autoReject || signalOpts.themes);
+      if (signalOnly && Config && typeof Config.lookupSignalUrl === "function") {
+        postUrl = Config.lookupSignalUrl();
+      } else if (signalOnly) {
+        postUrl = url.replace(/\/lookup\/record\/?$/, "/lookup/signal");
+      } else if (already) {
+        return Promise.resolve();
+      }
       return global
-        .fetch(url, {
+        .fetch(postUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
-          body: JSON.stringify({
-            title: log.title,
-            author: log.author,
-            enteredTitle: catalogMeta.lookupLogTitle || log.title,
-            enteredAuthor: catalogMeta.lookupLogAuthor || "",
-            ownerTesting: !!catalogMeta.ownerTesting,
-          }),
+          body: JSON.stringify(body),
         })
         .catch(function () {})
         .then(function () {});
+    }
+
+    function ownerSignalFromCatalogMeta(title, author) {
+      var autoReject = false;
+      var explainers = [];
+      var Report = global.HalalitBookcheckReport;
+      if (catalogMeta.familyReport && Report && typeof Report.autoRejectionSummary === "function") {
+        var ar = Report.autoRejectionSummary(catalogMeta.familyReport, {
+          tier: catalogMeta.hintTier,
+          detail: catalogMeta.hintDetail,
+          agentFlag: !!catalogMeta.agentFlag,
+        });
+        if (ar && ar.status === "reject") {
+          autoReject = true;
+          explainers = ar.explainers || ar.reasons || [];
+        }
+      }
+      var themes = (catalogMeta.aiThemes || []).map(function (t) {
+        return {
+          id: t && t.id,
+          present: !!(t && t.present),
+          brief: t && t.brief ? String(t.brief) : "",
+        };
+      });
+      var summary = "";
+      if (autoReject && explainers.length) {
+        summary = "HalaLit flagged: " + explainers.slice(0, 3).join("; ") + ".";
+      } else if (themes.length) {
+        var hard = {
+          lgbtq: "LGBTQ themes in reviews/scans",
+          adult_romance: "adult romance",
+          illegitimate_children: "plot centered on illegitimate children",
+          romanticized_crime: "glorified toxic or criminal behavior",
+          group_demonization: "group demonization",
+          pro_colonial_narrative: "pro-colonial narrative",
+          crude_profanity: "harsh/crude profanity",
+        };
+        var labels = [];
+        for (var i = 0; i < themes.length; i++) {
+          var row = themes[i];
+          if (!row || !row.present || !hard[row.id]) continue;
+          labels.push(hard[row.id]);
+        }
+        if (labels.length) {
+          summary = "HalaLit scanners found: " + labels.join("; ") + ".";
+          autoReject = true;
+        }
+      }
+      return {
+        summary: summary,
+        autoReject: autoReject,
+        themes: themes,
+        explainers: explainers,
+        bucket: autoReject ? "bookcheck" : "tbr",
+      };
     }
 
     function resetUi() {
@@ -2106,7 +2177,7 @@
         }
       }
 
-      recordLookupForOwner(title, author).then(function () {
+      recordLookupForOwner(title, author, ownerSignalFromCatalogMeta(title, author)).then(function () {
         var log = lookupLogTitleAuthor(title, author, meta);
         var url =
           Config.ownerReviewPendingUrl() +
@@ -2564,7 +2635,7 @@
       }
       function revealVerdict() {
         showVerdict(enteredTitle, enteredAuthor);
-        recordLookupForOwner(enteredTitle, enteredAuthor);
+        recordLookupForOwner(enteredTitle, enteredAuthor, ownerSignalFromCatalogMeta(enteredTitle, enteredAuthor));
       }
       if (chaseLoader && chaseLoader.isVisible()) {
         chaseLoader.pounceAndHide(revealVerdict);
