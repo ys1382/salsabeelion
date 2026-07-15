@@ -438,10 +438,10 @@
           <span class="office-section__toggle" aria-hidden="true"></span>
         </summary>
         <div class="office-section__body">
-          <p class="hint">Use <strong>local</strong> Owner’s Office while testing (<code>127.0.0.1:8744</code>), signed in as owner. Auto-added libraries (including open-catalog ones like Berkeley) show under <strong>Recently auto-added</strong>. Pending is only for unclear links.</p>
-          <h3 class="muted" style="font-size:0.95rem;margin:0.75rem 0 0.35rem">Pending</h3>
+          <p class="hint">Community libraries readers add show here. <strong>Recently auto-added</strong> includes BiblioCommons (auto-check) and other community catalogs (open catalog). Pending is only for unclear links. Private — not a public wall.</p>
+          <h3 class="muted" style="font-size:0.95rem;margin:0.75rem 0 0.35rem">Pending <span id="libraryPendingCount"></span></h3>
           <div id="libraryPendingList"></div>
-          <h3 class="muted" style="font-size:0.95rem;margin:1rem 0 0.35rem">Recently auto-added</h3>
+          <h3 class="muted" style="font-size:0.95rem;margin:1rem 0 0.35rem">Recently auto-added <span id="libraryAutoAddsCount"></span></h3>
           <div id="libraryAutoAddsList"></div>
         </div>
       </details>
@@ -1061,6 +1061,10 @@
       function renderLibrarySuggest(pending, autoAdds) {
         var pendRoot = document.getElementById("libraryPendingList");
         var autoRoot = document.getElementById("libraryAutoAddsList");
+        var pendCount = document.getElementById("libraryPendingCount");
+        var autoCount = document.getElementById("libraryAutoAddsCount");
+        if (pendCount) pendCount.textContent = pending && pending.length ? "(" + pending.length + ")" : "(0)";
+        if (autoCount) autoCount.textContent = autoAdds && autoAdds.length ? "(" + autoAdds.length + ")" : "(0)";
         if (pendRoot) {
           pendRoot.innerHTML = "";
           if (!pending || !pending.length) {
@@ -1084,7 +1088,6 @@
               btn.className = "copy-btn";
               btn.textContent = "Reject";
               btn.addEventListener("click", function () {
-                var Auth = window.HalalitAuth;
                 var base =
                   window.HalalitAccountStorage && window.HalalitAccountStorage.apiBase
                     ? window.HalalitAccountStorage.apiBase()

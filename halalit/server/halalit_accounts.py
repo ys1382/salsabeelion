@@ -898,8 +898,8 @@ def owner_office_payload(log_path: str, owner_user_id: int | None = None) -> dic
 
         library_pending = owner_pending_list(60)
         library_auto_adds = owner_recent_auto_adds(40)
-    except Exception:
-        pass
+    except Exception as e:
+        sys.stderr.write("owner_office library lists failed: %s\n" % (e,))
     return {
         "stats": owner_stats(log_path, exclude_account_id=owner_user_id),
         "feedback": owner_feedback_list(60),
