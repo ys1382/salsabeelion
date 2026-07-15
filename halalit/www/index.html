@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="./halalit-fathers-day-theme.css" />
   <link rel="stylesheet" href="./halalit-cover-thumb.css?v=20260622b" />
   <link rel="stylesheet" href="./halalit-occasion-week-home.css?v=20260626a" />
+  <link rel="stylesheet" href="./halalit-suggests.css?v=20260715b" />
   <style>
     :root {
       --bg: #1a1410;
@@ -2471,7 +2472,7 @@
     <div class="play-cta" role="navigation" aria-label="Get started">
       <a class="play-primary" href="./index.html#bookcheck">Use Bookcheck</a>
       <a class="play-primary" href="play.html?v=8">Try Book Quest</a>
-      <a class="play-primary" href="./suggests.html">Halalit Suggests</a>
+      <a class="play-primary" href="./index.html#suggests">Halalit Suggests</a>
       <span class="play-secondary">Look up a title before you read—or play the quest for one hand-vetted suggestion.</span>
     </div>
     <p class="auth-bar" id="halalitAuthBar"><a href="./account.html">Sign in</a></p>
@@ -2481,6 +2482,7 @@
     <button type="button" class="site-tab" role="tab" id="tab-btn-home" aria-controls="panel-home" aria-selected="true">Home</button>
     <button type="button" class="site-tab" role="tab" id="tab-btn-library" aria-controls="panel-library" aria-selected="false">Personal Library</button>
     <button type="button" class="site-tab" role="tab" id="tab-btn-read" aria-controls="panel-already-read" aria-selected="false">Already read</button>
+    <button type="button" class="site-tab" role="tab" id="tab-btn-suggests" aria-controls="panel-suggests" aria-selected="false">Halalit Suggests</button>
     <button type="button" class="site-tab" role="tab" id="tab-btn-wishlist" aria-controls="panel-wishlist-library" aria-selected="false">The Wishlist Library</button>
     <button type="button" class="site-tab" role="tab" id="tab-btn-continue-series" aria-controls="panel-continue-series" aria-selected="false">Continue Series</button>
     <button type="button" class="site-tab" role="tab" id="tab-btn-bookcheck" aria-controls="panel-bookcheck" aria-selected="false">Bookcheck</button>
@@ -2548,6 +2550,10 @@
         <p id="importResult"></p>
       </div>
     </div>
+  </section>
+
+  <section id="panel-suggests" class="tab-panel" role="tabpanel" aria-labelledby="tab-btn-suggests" hidden>
+    <div id="halalitSuggestsRoot" class="halalit-suggests" aria-live="polite"></div>
   </section>
 
   <section id="panel-wishlist-library" class="tab-panel tab-panel-library" role="tabpanel" aria-labelledby="tab-btn-wishlist" hidden>
@@ -2859,8 +2865,8 @@
   <script src="./halalit-scroll-scanner.js?v=20260701a"></script>
   <script src="./halalit-cover-thumb.js?v=20260623b"></script>
   <script src="./halalit-occasion-week-home.js?v=20260626e"></script>
-  <script src="./halalit-suggests-data.js?v=20260715a"></script>
-  <script src="./halalit-suggests.js?v=20260715a"></script>
+  <script src="./halalit-suggests-data.js?v=20260715b"></script>
+  <script src="./halalit-suggests.js?v=20260715b"></script>
   <script src="./halalit-bookcheck.js?v=20260715a"></script>
   <script src="./halalit-bookcheck-shelf-queue.js?v=20260627a"></script>
   <script>
@@ -2880,7 +2886,7 @@
           if (cta) {
             cta.innerHTML =
               '<a class="play-primary" href="./index.html#bookcheck">Use Bookcheck</a>' +
-              '<a class="play-primary" href="./suggests.html">Halalit Suggests</a>' +
+              '<a class="play-primary" href="./index.html#suggests">Halalit Suggests</a>' +
               '<span class="play-secondary">Book Quest is paused by the owner right now—look up titles with Bookcheck, or browse Halalit Suggests.</span>';
           }
         }
@@ -2907,6 +2913,7 @@
         { btn: "tab-btn-home", panel: "panel-home", hash: "" },
         { btn: "tab-btn-library", panel: "panel-library", hash: "#library" },
         { btn: "tab-btn-read", panel: "panel-already-read", hash: "#already-read" },
+        { btn: "tab-btn-suggests", panel: "panel-suggests", hash: "#suggests" },
         { btn: "tab-btn-wishlist", panel: "panel-wishlist-library", hash: "#wishlist-library" },
         { btn: "tab-btn-continue-series", panel: "panel-continue-series", hash: "#continue-series" },
         { btn: "tab-btn-bookcheck", panel: "panel-bookcheck", hash: "#bookcheck" },
@@ -4412,6 +4419,16 @@
         if (cur && cur.panel === "panel-library") renderLibrary();
         if (cur && cur.panel === "panel-wishlist-library") renderWishlistLibrary();
         if (cur && cur.panel === "panel-continue-series") renderContinueSeries();
+        if (cur && cur.panel === "panel-suggests") {
+          var suggestsRoot = document.getElementById("halalitSuggestsRoot");
+          if (
+            suggestsRoot &&
+            window.HalalitSuggests &&
+            typeof window.HalalitSuggests.mount === "function"
+          ) {
+            window.HalalitSuggests.mount(suggestsRoot);
+          }
+        }
         if (
           cur &&
           cur.panel === "panel-bookcheck" &&
@@ -4709,6 +4726,7 @@
         var h = (window.location.hash || "").toLowerCase();
         if (h === "#library") selectTab(tabIndexForPanel("panel-library"));
         else if (h === "#already-read" || h === "#read") selectTab(tabIndexForPanel("panel-already-read"));
+        else if (h === "#suggests" || h === "#halalit-suggests") selectTab(tabIndexForPanel("panel-suggests"));
         else if (h === "#wishlist-library" || h === "#wishlist" || h === "#want-to-read" || h === "#want")
           selectTab(tabIndexForPanel("panel-wishlist-library"));
         else if (h === "#continue-series" || h === "#continue") selectTab(tabIndexForPanel("panel-continue-series"));

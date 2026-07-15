@@ -119,7 +119,25 @@
         JSON.stringify({ title: title || "", author: author || "" })
       );
     } catch (e) {}
+    if (global.HalalitTabs && typeof global.HalalitTabs.goToBookcheck === "function") {
+      return "./index.html#bookcheck";
+    }
     return "./index.html#bookcheck";
+  }
+
+  function openBookcheck(title, author) {
+    try {
+      global.sessionStorage.setItem(
+        PREFILL_KEY,
+        JSON.stringify({ title: title || "", author: author || "" })
+      );
+    } catch (e) {}
+    if (global.HalalitTabs && typeof global.HalalitTabs.goToBookcheck === "function") {
+      global.HalalitTabs.goToBookcheck();
+      if (typeof consumeBookcheckPrefill === "function") consumeBookcheckPrefill();
+      return false;
+    }
+    return true;
   }
 
   /** Called from index.html after Bookcheck init */
@@ -208,6 +226,10 @@
       (meta ? '<p class="halalit-suggests__meta muted">' + escapeHtml(meta) + "</p>" : "") +
       '<p class="halalit-suggests__action"><a href="' +
       escapeHtml(bookcheckHref(title, author)) +
+      '" data-suggests-bookcheck="1" data-title="' +
+      escapeHtml(title) +
+      '" data-author="' +
+      escapeHtml(author) +
       '">Look up in Bookcheck</a></p>' +
       "</div></article>"
     );
@@ -609,12 +631,22 @@
           }, 220);
         });
       }
+      var bcLinks = root.querySelectorAll("a[data-suggests-bookcheck]");
+      for (var b = 0; b < bcLinks.length; b++) {
+        bcLinks[b].addEventListener("click", function (ev) {
+          var a = ev.currentTarget;
+          var stay = openBookcheck(a.getAttribute("data-title"), a.getAttribute("data-author"));
+          if (!stay) ev.preventDefault();
+        });
+      }
     }
 
     paint();
   }
 
   function bootPage() {
+    var path = (global.location && global.location.pathname) || "";
+    if (!/suggests\.html$/i.test(path)) return;
     var root = global.document && global.document.getElementById("halalitSuggestsRoot");
     if (root) mount(root);
   }
