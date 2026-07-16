@@ -1045,12 +1045,14 @@
 
       function maybeBackfillSignals(missingCount) {
         var status = document.getElementById("signalBackfillStatus");
+        var maxRounds = 80;
+        var batchSize = 8;
         if (!missingCount || missingCount < 1) {
           if (status && !signalBackfillBusy) status.hidden = true;
           return;
         }
-        if (signalBackfillBusy || signalBackfillRounds >= 30) {
-          if (status && signalBackfillRounds >= 30) {
+        if (signalBackfillBusy || signalBackfillRounds >= maxRounds) {
+          if (status && signalBackfillRounds >= maxRounds) {
             status.hidden = false;
             status.textContent = "Stopped auto-sort after many passes — refresh Office later for the rest.";
           }
@@ -1060,9 +1062,12 @@
         signalBackfillRounds += 1;
         if (status) {
           status.hidden = false;
-          status.textContent = "Sorting existing lookups into Bookchecks vs My TBR… (" + missingCount + " left)";
+          status.textContent =
+            "Sorting lookups into Bookchecks vs My TBR (faster parallel scans)… (" +
+            missingCount +
+            " left)";
         }
-        HalalitAuth.backfillOwnerLookupSignals(4).then(function (res) {
+        HalalitAuth.backfillOwnerLookupSignals(batchSize).then(function (res) {
           signalBackfillBusy = false;
           if (!res || !res.ok) {
             if (status) status.textContent = "Could not finish sorting older lookups — open Office again later.";

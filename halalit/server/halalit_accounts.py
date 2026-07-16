@@ -25,6 +25,7 @@ import secrets
 import sqlite3
 import sys
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from http.server import BaseHTTPRequestHandler
 from typing import Any
 
@@ -1709,15 +1710,19 @@ def handle_post(
             json_response(handler, 403, {"ok": False, "error": "owner_only"})
             return True
         log_path = os.environ.get("HALALIT_LOOKUP_LOG", "")
-        limit = int(body.get("limit") or 4)
+        limit = int(body.get("limit") or 6)
         if limit < 1:
             limit = 1
-        if limit > 8:
-            limit = 8
+        if limit > 12:
+            limit = 12
         popular = owner_lookup_aggregated(log_path, 50, exclude_account_id=user["id"])
         recent = owner_lookup_recent(log_path, 30, exclude_account_id=user["id"])
         try:
-            from owner_lookup_signals import list_missing_signal_titles, signal_from_theme_scan_result
+            from owner_lookup_signals import (
+                list_missing_signal_titles,
+                signal_from_theme_scan_result,
+                upsert_lookup_signal,
+            )
             from bookcheck_theme_api import call_theme_scan
 
             missing = list_missing_signal_titles(popular + recent, limit=limit)
@@ -1725,35 +1730,58 @@ def handle_post(
             sys.stderr.write("backfill import failed: %s\n" % (e,))
             json_response(handler, 500, {"ok": False, "error": "backfill_unavailable", "message": str(e)})
             return True
-        filled = []
-        errors = []
-        for item in missing:
+
+        def _scan_missing_item(item: dict[str, Any]) -> tuple[str, dict[str, Any], Any]:
+            """Run full dual theme scan only; DB writes stay on the main thread."""
             try:
                 result = call_theme_scan(item["title"], item.get("author") or "", False)
                 if result.get("ok"):
-                    sig = signal_from_theme_scan_result(item["title"], item.get("author") or "", result)
+                    return ("ok", item, result)
+                return ("fail", item, result)
+            except Exception as e:
+                return ("err", item, e)
+
+        # Same accuracy as Bookcheck; parallelize books so Office clears pending faster.
+        workers = min(6, max(1, len(missing)))
+        scan_outcomes: list[tuple[str, dict[str, Any], Any]] = []
+        if missing:
+            with ThreadPoolExecutor(max_workers=workers) as pool:
+                futures = [pool.submit(_scan_missing_item, item) for item in missing]
+                for fut in as_completed(futures):
+                    try:
+                        scan_outcomes.append(fut.result())
+                    except Exception as e:
+                        scan_outcomes.append(("err", {"title": "?"}, e))
+
+        filled = []
+        errors = []
+        for kind, item, payload in scan_outcomes:
+            title = str(item.get("title") or "")
+            author = str(item.get("author") or "")
+            try:
+                if kind == "ok":
+                    sig = signal_from_theme_scan_result(title, author, payload)
                     filled.append(
                         {
-                            "title": item["title"],
-                            "author": item.get("author") or "",
+                            "title": title,
+                            "author": author,
                             "bucket": sig.get("bucket"),
                             "summary": sig.get("summary"),
                         }
                     )
                 else:
-                    # Still mark as tbr so we don't retry forever on AI failure.
-                    from owner_lookup_signals import upsert_lookup_signal
-
+                    # Mark tbr so we don't retry forever on AI failure / exceptions.
                     upsert_lookup_signal(
-                        item["title"],
-                        item.get("author") or "",
+                        title,
+                        author,
                         summary="Scan unavailable — kept on My TBR until a fresh Bookcheck runs.",
                         bucket="tbr",
                         auto_reject=False,
                     )
-                    errors.append({"title": item["title"], "error": result.get("error") or "scan_failed"})
+                    err = payload.get("error") if isinstance(payload, dict) else str(payload)
+                    errors.append({"title": title, "error": err or "scan_failed"})
             except Exception as e:
-                errors.append({"title": item.get("title"), "error": str(e)})
+                errors.append({"title": title or item.get("title"), "error": str(e)})
         remaining = []
         try:
             remaining = list_missing_signal_titles(

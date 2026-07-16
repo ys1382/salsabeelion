@@ -123,7 +123,7 @@
     backfillOwnerLookupSignals: function (limit) {
       return fetchJson(apiBase() + "/owner/lookups/backfill-signals", {
         method: "POST",
-        body: { limit: limit || 4 },
+        body: { limit: limit || 8 },
       });
     },
     saveOwnerSettings: function (flags) {
