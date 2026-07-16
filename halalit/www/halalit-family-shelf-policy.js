@@ -57,6 +57,8 @@
 
   var EXCLUSION_PRO_COLONIAL_DETAIL =
     "Won’t recommend: pro-colonial narrative—imperial or colonial framing treated as natural or good.";
+  /* Hardest ban only when CuratedShelfWarnings.proColonialNoRecommend is non-empty.
+   * Burnett titles are parent discretion + pro-colonial caution (Jul 2026)—not this hard ban. */
 
   /** Hardest never-recommend (Book Quest + family shelf): illegitimacy-centered plot, LGBTQ-centered plot, adult romance, harsh swearing/slurs, hardcore group demonization, pro-colonial narrative. */
   var EXCLUSION_CRUDE_PROFANITY_DETAIL =

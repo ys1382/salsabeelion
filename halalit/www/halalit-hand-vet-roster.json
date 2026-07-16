@@ -1193,7 +1193,7 @@
       "author": "Lemony Snicket",
       "source": "cursor_roster",
       "tier": "parked",
-      "notes": "**flag_review** — never Book Quest; adult/inappropriate refs + discretion if you read"
+      "notes": "Firm no for now; adult/inappropriate refs; never Book Quest"
     },
     {
       "title": "All Four Stars",
@@ -1214,7 +1214,7 @@
       "author": "",
       "source": "cursor_roster",
       "tier": "flag_review",
-      "notes": "Owner **no** — mostly clean but opens with the king executing his wife for adultery; `flag_review`; no Book Quest"
+      "notes": "Firm no — frame story adultery/execution opening"
     },
     {
       "title": "Babymouse",
@@ -1234,8 +1234,8 @@
       "title": "Cupcake Diaries",
       "author": "Coco Simon",
       "source": "cursor_roster",
-      "tier": "flag_review",
-      "notes": "**Clean** but too much **romance focus** for younger readers—not dirty; off `VERIFIED_CLEAN`; `flag_review` (no Book Quest / auto-recommend)."
+      "tier": "user_discretion",
+      "notes": "Parent discretion — clean but heavy romance/boy-obsessed focus"
     },
     {
       "title": "Dead City",
@@ -1312,7 +1312,7 @@
       "author": "Megan Wagner Lloyd",
       "source": "cursor_roster",
       "tier": "flag_review",
-      "notes": "Owner **no** — off `VERIFIED_CLEAN`; `flag_review` in Bookcheck."
+      "notes": "Owner reject — nursing-mother modesty is one panel (easy to miss); sibling stress"
     },
     {
       "title": "Summer Vamp",
@@ -1353,8 +1353,8 @@
       "title": "The Library of Unruly Treasures",
       "author": "",
       "source": "cursor_roster",
-      "tier": "flag_review",
-      "notes": "Owner **no** — off `VERIFIED_CLEAN`; was duplicate `flag_review`."
+      "tier": "user_discretion",
+      "notes": "Parent discretion — family negativity / parent-neglect flags"
     },
     {
       "title": "The Marvelous Land of Oz",

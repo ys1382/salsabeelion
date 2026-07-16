@@ -1967,6 +1967,24 @@
         "Not on Book Quest; Halalit won’t auto-recommend—preview and decide for your home.",
       ], USER_DISCRETION_PREVIEW_CLOSING),
     },
+    {
+      titleRe: /\ba little princess\b|\blittle princess\b/i,
+      authorRe: /burnett/i,
+      detail: bookNote("A Little Princess (Frances Hodgson Burnett)", [
+        "Parked on Halalit’s parent-discretion list—not a hardest auto-reject.",
+        "Pro-colonial narrative—imperial or colonial framing treated as natural or good.",
+        "Not on Book Quest; Halalit won’t auto-recommend—preview and decide for your home.",
+      ], USER_DISCRETION_PREVIEW_CLOSING),
+    },
+    {
+      titleRe: /\bthe secret garden\b|\bsecret garden\b/i,
+      authorRe: /burnett/i,
+      detail: bookNote("The Secret Garden (Frances Hodgson Burnett)", [
+        "Parked on Halalit’s parent-discretion list—not a hardest auto-reject.",
+        "Pro-colonial narrative—imperial or colonial framing treated as natural or good.",
+        "Not on Book Quest; Halalit won’t auto-recommend—preview and decide for your home.",
+      ], USER_DISCRETION_PREVIEW_CLOSING),
+    },
   ];
 
   /**
@@ -2040,45 +2058,28 @@
   );
 
   var ENOLA_HOLMES_NOVEL_DETAIL = bookNote(
-    "Enola Holmes — Springer novels (not graphic editions)",
+    "Enola Holmes — Springer novels books 1–6 (not graphic editions)",
     [
-      "Plot mostly clean mystery; Halalit still does not recommend the series.",
+      "Parent discretion for books 1–6—not a hardest auto-reject.",
+      "Plot mostly clean mystery in owner scope.",
       "Romani called “Gypsy/Gypsies”; book six title/wording flagged.",
       "Strong family-bashing and period sexism; painful escape beat (not fistfight gore).",
       "Adult references off the main plots (Cryptic Crinoline prologue; mistaken illegitimacy rumor; book six procuress).",
       "Preview for younger tweens.",
+      "Not on Book Quest; Halalit won’t auto-recommend—preview and decide for your home.",
     ],
-    "Outside Halalit recommendations and Book Quest."
+    USER_DISCRETION_PREVIEW_CLOSING
   );
 
   /**
    * Owner-rejected pro-colonial titles — hardest never-recommend; lookup via Bookcheck title search.
    * @type {Array<{titleRe: RegExp, authorRe?: RegExp, displayTitle: string, displayAuthor: string, detail: string}>}
    */
-  var PRO_COLONIAL_NO_RECOMMEND = [
-    {
-      titleRe: /\ba little princess\b|\blittle princess\b/i,
-      authorRe: /burnett/i,
-      displayTitle: "A Little Princess",
-      displayAuthor: "Frances Hodgson Burnett",
-      detail: bookNote("A Little Princess (Frances Hodgson Burnett)", [
-        "Pro-colonial narrative—imperial or colonial framing treated as natural or good.",
-        "Halalit will not recommend this title or suggest it in Book Quest.",
-        "You can still look it up here to confirm before your kids read.",
-      ]),
-    },
-    {
-      titleRe: /\bthe secret garden\b|\bsecret garden\b/i,
-      authorRe: /burnett/i,
-      displayTitle: "The Secret Garden",
-      displayAuthor: "Frances Hodgson Burnett",
-      detail: bookNote("The Secret Garden (Frances Hodgson Burnett)", [
-        "Pro-colonial narrative—imperial or colonial framing treated as natural or good.",
-        "Halalit will not recommend this title or suggest it in Book Quest.",
-        "You can still look it up here to confirm before your kids read.",
-      ]),
-    },
-  ];
+  /**
+   * Hardest never-recommend pro-colonial list — empty while Burnett titles sit on parent discretion
+   * (see USER_DISCRETION_PARKED + PRO_COLONIAL_CAUTION_NOTES). Keep array for API callers.
+   */
+  var PRO_COLONIAL_NO_RECOMMEND = [];
 
   var WARNINGS = [
     {
@@ -2135,26 +2136,29 @@
     },
     {
       titleRe: ENOLA_HOLMES_GRAPHIC_TITLE_RE,
-      tier: "flag_review",
+      tier: "user_discretion",
       detail: bookNote(
         "Enola Holmes — graphic novel editions",
         [
+          "Parent discretion—not a hardest auto-reject.",
           "Crossdressing treated as an active, supported solution—not the Springer prose novels.",
-          "See the prose Enola entry for notes on the original novels.",
+          "Graphic adaptations lean toward LGBTQ/crossdressing sympathy in certain books without explicit LGBTQ promotion on the page.",
+          "See the prose Enola entry for notes on novels 1–6.",
+          "Not on Book Quest; Halalit won’t auto-recommend—preview and decide for your home.",
         ],
-        "Outside Halalit’s family-shelf rules and Book Quest."
+        USER_DISCRETION_PREVIEW_CLOSING
       ),
     },
     {
       titleRe: ENOLA_HOLMES_NOVEL_TITLE_RE,
       authorRe: /springer|nancy\s*springer/i,
-      tier: "flag_review",
+      tier: "user_discretion",
       detail: ENOLA_HOLMES_NOVEL_DETAIL,
     },
     {
       titleRe: /\benola holmes\b/i,
       authorRe: /springer|nancy\s*springer/i,
-      tier: "flag_review",
+      tier: "user_discretion",
       detail: ENOLA_HOLMES_NOVEL_DETAIL,
     },
     {
@@ -2205,9 +2209,11 @@
       authorRe: /jobling/i,
       tier: "flag_review",
       detail: bookNote("Wereworld", [
+        "Firm no—Halalit won’t recommend the series.",
+        "Adult romance at different points in the line.",
+        "Nudity at different points in owner scope.",
         "Teen/YA fantasy—ongoing romantic tension, crushes, and betrothal even when war is the plot.",
         "Fantasy violence; catalogs often omit relationship themes.",
-        "Halalit won't recommend the series.",
       ]),
     },
     {
@@ -2246,6 +2252,7 @@
       titleRe: /\bfive nights at freddy\b|\bfazbear\b|\bfreddy fazbear\b/i,
       tier: "flag_review",
       detail: bookNote("Five Nights at Freddy’s books", [
+        "Firm no for now—Halalit won’t recommend.",
         "Brief adult-content mentions in owner scope—enough to keep it off Halalit’s recommend list.",
         "Preview if kids pick it up from the game tie-in.",
       ]),
@@ -2271,12 +2278,13 @@
     {
       titleRe: /\bdrama\b/i,
       authorRe: /telgemeier|raina/i,
-      tier: "flag_review",
+      tier: "user_discretion",
       detail: bookNote("Drama (Raina Telgemeier)", [
+        "Parent discretion—not a hardest auto-reject.",
         "Romance is the main plot driver—crushes and a love triangle; nothing explicit in owner scope.",
-        "Halalit won’t recommend this book for the family shelf.",
         GRAPHIC_PHYSICAL_IMMODESTY_NOTE,
-      ]),
+        "Not on Book Quest; Halalit won’t auto-recommend—preview and decide for your home.",
+      ], USER_DISCRETION_PREVIEW_CLOSING),
     },
     {
       titleRe: /\bguts\b/i,
@@ -2291,12 +2299,14 @@
     {
       titleRe:
         /\bpercy jackson\b|olympians|the lightning thief|sea of monsters|titan'?s curse|battle of the labyrinth|last olympian/i,
-      authorRe: /riordan/i,
-      tier: "flag_review",
+      authorRe: /riordan|rick/i,
+      tier: "user_discretion",
       detail: bookNote("Percy Jackson & the Olympians", [
+        "Parent discretion—not a hardest auto-reject.",
         "Centers on demigod children of gods and mortals—children born outside marriage.",
-        "Halalit excludes stories centered on illegitimate children, even with kids’ catalog tags.",
-      ]),
+        "Halalit flags stories centered on illegitimate children even with kids’ catalog tags—preview and decide for your home.",
+        "Not on Book Quest; Halalit won’t auto-recommend.",
+      ], USER_DISCRETION_PREVIEW_CLOSING),
     },
     {
       titleRe:
@@ -2320,24 +2330,26 @@
     },
     {
       titleRe: /\bpizza face\b/i,
-      authorRe: /ogle/i,
+      authorRe: /ogle|rex\s*ogle/i,
       tier: "flag_review",
       detail: bookNote("Pizza Face (Rex Ogle)", [
+        "Firm no—Halalit won’t recommend this title or the Rex Ogle line when the same flags apply.",
         "Sexism and early dating tone normalized (some behavior criticized).",
         "Smoking/weed-like behavior not clearly called out.",
         "Strong family-bashing toward the mother and around the bully's father.",
         "Bullying and heavy body-image anxiety around zits.",
-        "Halalit won't recommend the series.",
       ]),
     },
     {
-      titleRe: /\bfour eyes\b/i,
-      authorRe: /ogle/i,
+      titleRe: /\bfour eyes\b|\bfree lunch\b|\bfree soccer\b|\bfree verse\b/i,
+      authorRe: /ogle|rex\s*ogle/i,
       tier: "flag_review",
-      detail: bookNote("Four Eyes (Rex Ogle)", [
-        "Likely similar concerns to Pizza Face—flag pending fuller review.",
-        "Relationship tone, possible substance normalization, family-bashing.",
-        "Halalit won't recommend until fully owner-vetted.",
+      detail: bookNote("Rex Ogle (Four Eyes / Free Lunch line and related)", [
+        "Same owner reject lane as Pizza Face—Halalit won’t recommend.",
+        "Sexism and early dating tone normalized (some behavior criticized).",
+        "Smoking/weed-like behavior not clearly called out.",
+        "Strong family-bashing; bullying and body-image anxiety threads in the line.",
+        "Look up Pizza Face for the full hand note; this entry catches other Rex Ogle searches in the same lane.",
       ]),
     },
     {
@@ -2353,55 +2365,65 @@
     },
     {
       titleRe: /\blibrary of unruly treasures\b/i,
-      tier: "flag_review",
+      tier: "user_discretion",
       detail: bookNote("The Library of Unruly Treasures", [
-        "Owner does not treat as verified clean—removed from VERIFIED_CLEAN.",
-        "Sustained parent-neglect tone—not the uncle figure.",
+        "Parent discretion—not a hardest auto-reject.",
+        "Family negativity flags: sustained parent-neglect tone—not the uncle figure.",
         "Ending: parents comfortable giving up custody; relief at being cared for elsewhere.",
-      ]),
+        "Not on Book Quest; Halalit won’t auto-recommend—preview and decide for your home.",
+      ], USER_DISCRETION_PREVIEW_CLOSING),
     },
     {
       titleRe: /\bsquished\b/i,
       authorRe: /lloyd|wagner/i,
       tier: "flag_review",
       detail: bookNote("Squished (Megan Wagner Lloyd)", [
-        "Owner does not treat as verified clean—removed from VERIFIED_CLEAN.",
-        "Sibling stress and moving; brief modesty note around a nursing-mother scene—preview.",
+        "Owner reject—not verified clean; Halalit won’t recommend.",
+        "Sibling stress and moving.",
+        "Nursing-mother modesty beat is only one panel—easy to miss if you don’t read the whole book; still flagged.",
       ]),
     },
     {
       titleRe: /\bcoraline\b/i,
       authorRe: /gaiman/i,
-      tier: "flag_review",
+      tier: "user_discretion",
       detail: bookNote("Coraline", [
+        "Parent discretion leaning reject—not a hardest auto-reject.",
         "Serious immodesty scene—two female characters undressing (book and film).",
-      ]),
+        "Not on Book Quest; Halalit won’t auto-recommend—read the flag and decide for your home.",
+      ], "Parent discretion leaning reject—preview the immodesty beat; Halalit won’t Book Quest."),
     },
     {
       titleRe: /\bdiary of a wimpy kid\b|\bwimpy kid\b/i,
       authorRe: /kinney|jeff/i,
-      tier: "flag_review",
+      tier: "user_discretion",
       detail: bookNote("Diary of a Wimpy Kid (Jeff Kinney)", [
-        "Series gets grosser and weirder over time—off Halalit’s family shelf.",
-      ]),
+        "Parent discretion—not fully hand-checked cover to cover; not a hardest auto-reject.",
+        "Series gets grosser and weirder over time—flag for parents.",
+        "Not on Book Quest; Halalit won’t auto-recommend—preview and decide for your home.",
+      ], USER_DISCRETION_PREVIEW_CLOSING),
     },
     {
       titleRe:
         /\bhow to train your dragon\b|\bhow to be a pirate\b|\bhow to speak dragonese\b|\bhow to cheat a dragon\b|\bhow to twist a dragon\b|\ba hero'?s guide to deadly dragons\b|\bhow to ride a dragon\b|\bhow to break a dragon\b|\bhow to steal a dragon\b|\bhow to seize a dragon\b|\bhow to fight a dragon\b/i,
       authorRe: /cowell|cressida/i,
-      tier: "flag_review",
+      tier: "user_discretion",
       detail: bookNote("How to Train Your Dragon (Cressida Cowell)", [
+        "Parent discretion—not a hardest auto-reject.",
         "Major side character tied to illegitimate-child premise.",
         "Brief alcohol mentions.",
         "Serious crude humor—including a character known as Big Boobied Bertha.",
-      ]),
+        "Not on Book Quest; Halalit won’t auto-recommend—preview and decide for your home.",
+      ], USER_DISCRETION_PREVIEW_CLOSING),
     },
     {
-      titleRe: /\beragon\b|\beldest\b|\bbrisingr\b/i,
+      titleRe: /\beragon\b|\beldest\b|\bbrisingr\b|\binheritance\b|\binheritance cycle\b/i,
       authorRe: /paolini|christopher/i,
       tier: "flag_review",
       detail: bookNote("Eragon / Inheritance Cycle (Christopher Paolini)", [
+        "Firm no—Halalit won’t recommend this series or any volume.",
         "Book 1 (Eragon): male lead treats injuries on a less- or unclothed female character—preview that opening.",
+        "Whole Inheritance Cycle stays off the family shelf and Book Quest.",
       ]),
     },
     {
@@ -2451,11 +2473,13 @@
     {
       titleRe: /\bboy who harnessed the wind\b/i,
       authorRe: /kamkwamba|mealer|william|bryan/i,
-      tier: "flag_review",
+      tier: "user_discretion",
       detail: bookNote("The Boy Who Harnessed the Wind — Young Readers Edition (William Kamkwamba and Bryan Mealer)", [
-        "True-story beat where the protagonist’s sister elopes with their teacher—Halalit won’t recommend this edition.",
+        "Parent discretion—not hand-vetted cover to cover by the owner; not a hardest auto-reject.",
+        "True-story beat where the protagonist’s sister elopes with their teacher—flag for parents.",
         "Preview the full memoir or film if your family wants the invention story without that subplot.",
-      ]),
+        "Not on Book Quest; Halalit won’t auto-recommend—preview and decide for your home.",
+      ], USER_DISCRETION_PREVIEW_CLOSING),
     },
     {
       titleRe:
@@ -2486,22 +2510,22 @@
       titleRe:
         /\bland of stories\b|\bwishing spell\b|\benchantress returns\b|\bgrimm warning\b|\bworlds collide\b|\ban author'?s odyssey\b|\bbeyond the kingdoms\b/i,
       authorRe: /colfer|chris/i,
-      tier: "flag_review",
+      tier: "user_discretion",
       detail: bookNote("The Land of Stories (Chris Colfer)", [
+        "Parent discretion leaning reject—not a hardest auto-reject.",
         "Core plot reads largely clean in scope reviewed.",
         "Between-the-lines hint of illegitimate birth—not the main focus; Halalit can’t call this fully clean for shelf rules.",
         "Major side character with alcohol problems.",
         "Light dating and lighter romance.",
-        "Parents should decide.",
-      ], "Won’t Book Quest—not inappropriate."),
+        "Not on Book Quest; read the flags and decide for your home.",
+      ], "Parent discretion leaning reject—Halalit won’t Book Quest; preview the flags."),
     },
     {
-      titleRe:
-        /\barabian nights\b|\bthousand and one nights\b|\bone thousand and one nights\b|\b1001 nights\b|\bbook of the thousand nights\b/i,
+      titleRe: /\barabian nights\b|\bthousand and one nights\b|\bone thousand and one nights\b|\b1001 nights\b|\bbook of the thousand nights\b/i,
       tier: "flag_review",
       detail: bookNote("Arabian Nights / One Thousand and One Nights", [
+        "Firm no—Halalit won’t recommend this collection or suggest it in Book Quest.",
         "Mostly clean in owner scope, but the frame story opens with the king executing his wife for adultery / romantic relations outside marriage.",
-        "Halalit won't recommend this collection or suggest it in Book Quest.",
       ]),
     },
     {
@@ -2528,10 +2552,12 @@
     {
       titleRe: /\bcaptain underpants\b|\badventures of captain underpants\b/i,
       authorRe: /pilkey|dav/i,
-      tier: "flag_review",
+      tier: "user_discretion",
       detail: bookNote("Captain Underpants (Dav Pilkey)", [
-        "Crude humor—off Halalit’s family shelf.",
-      ]),
+        "Parent discretion—not fully hand-checked cover to cover; not a hardest auto-reject.",
+        "Crude humor—flag for parents.",
+        "Not on Book Quest; Halalit won’t auto-recommend—preview and decide for your home.",
+      ], USER_DISCRETION_PREVIEW_CLOSING),
     },
     {
       titleRe: /\bjulie of the wolves\b/i,
@@ -2547,20 +2573,23 @@
     {
       titleRe: /\bmadeline\b|\bmadeline'?s rescue\b|\bmadeline and the bad hat\b|\bmadeline and the gypsies\b|\bmadeline in london\b/i,
       authorRe: /bemelmans|ludwig/i,
-      tier: "flag_review",
+      tier: "user_discretion",
       detail: bookNote("Madeline (Ludwig Bemelmans)", [
+        "Parent discretion—not a hardest auto-reject.",
         "Series includes negative, derogatory “Gypsy” portrayal of Romani people.",
-        "Halalit won’t recommend the series.",
-      ]),
+        "Not on Book Quest; Halalit won’t auto-recommend—preview and decide for your home.",
+      ], USER_DISCRETION_PREVIEW_CLOSING),
     },
     {
       titleRe: /\bhorton hatches the egg\b/i,
       authorRe: /seuss|dr\.?\s*seuss|geisel/i,
-      tier: "flag_review",
+      tier: "user_discretion",
       detail: bookNote("Horton Hatches the Egg (Dr. Seuss)", [
-        "Horton sits on and hatches another bird’s egg—reads like taking someone else’s child.",
-        "Halalit won’t recommend this book.",
-      ]),
+        "Parent discretion—not a hardest auto-reject.",
+        "Plot reads clean in owner scope overall.",
+        "Flag: Horton sits on and hatches another bird’s egg—reads like taking someone else’s child.",
+        "Not on Book Quest; Halalit won’t auto-recommend—preview and decide for your home.",
+      ], USER_DISCRETION_PREVIEW_CLOSING),
     },
     {
       titleRe:
@@ -2568,7 +2597,7 @@
       authorRe: /snicket|handler|lemony/i,
       tier: "flag_review",
       detail: bookNote("A Series of Unfortunate Events (Lemony Snicket)", [
-        "Book Quest will never suggest this series.",
+        "Firm no for now—Halalit won’t recommend; Book Quest will never suggest this series.",
         "Adult-toned and inappropriate-for-young-children references appear alongside heavy death, tragedy, and scary tone.",
         "If you decide to read: keep that in mind—owner discretion, not a hand-vetted clean call on the site.",
       ]),
@@ -2578,6 +2607,7 @@
       authorRe: /beagle|peter\s*s\.?\s*beagle|peter\s*beagle/i,
       tier: "flag_review",
       detail: bookNote("The Last Unicorn (Peter S. Beagle)", [
+        "Firm no for now—Halalit won’t recommend.",
         "Book Quest will never suggest this book or the rest of the Beagle unicorn line—book 1 is enough to hold the whole series.",
         "Reader discretion: keep in mind if you look it up—owner vet of book 1 only, not a hand-verified clean call on the site.",
         "Alcohol in the story.",
@@ -2590,14 +2620,15 @@
     {
       titleRe: /\bamina'?s voice\b|\bamina'?s song\b|\bamina'?s picture\b/i,
       authorRe: /khan|hena\s*khan/i,
-      tier: "flag_review",
+      tier: "user_discretion",
       detail: bookNote("Amina's Voice / Amina's Song (Hena Khan)", [
+        "Parent discretion—not a hardest auto-reject.",
         "Plot reads largely clean in owner scope—not verified clean for Halalit recommendations or Book Quest.",
         "Book 2 (Amina's Song): older brother's smoking addiction in owner scope—preview substance beats.",
         "Negative family portrayal—parents clash with other parents over families framed as too religiously strict (hostile/unfair community friction, not only everyday arguments).",
         "Partial culture misrepresentation in owner scope on that beat.",
-        "Halalit won't suggest this line in Book Quest; look up here before you share.",
-      ], "Won't Book Quest—not inappropriate."),
+        "Not on Book Quest; Halalit won’t auto-recommend—preview and decide for your home.",
+      ], USER_DISCRETION_PREVIEW_CLOSING),
     },
     {
       titleRe: /\bsecret world of briar rose\b/i,
@@ -2648,8 +2679,8 @@
       authorRe: /kipling|rudyard/i,
       tier: "flag_review",
       detail: bookNote("The Jungle Book (Rudyard Kipling)", [
-        "Mowgli is described without clothing in the jungle—serious immodesty concern.",
-        "Halalit won’t recommend this book.",
+        "Firm no—Halalit won’t recommend this book.",
+        "Mowgli is described without clothing in the jungle—serious immodesty / nudity concern.",
       ]),
     },
     {
@@ -2702,13 +2733,14 @@
     {
       titleRe: /\bmiss peregrine\b/i,
       authorRe: /riggs|ransom/i,
-      tier: "flag_review",
+      tier: "user_discretion",
       detail: bookNote("Miss Peregrine's Peculiar Children (Ransom Riggs)", [
+        "Parent discretion—not a hardest auto-reject.",
         "Drug references in owner scope.",
         "Nudity beats—including an invisible boy who must stay unclothed, and a de-transformation scene.",
         "Romance threads though not adult in owner scope.",
-        "Halalit won’t recommend the series.",
-      ]),
+        "Not on Book Quest; Halalit won’t auto-recommend—preview and decide for your home.",
+      ], USER_DISCRETION_PREVIEW_CLOSING),
     },
     {
       titleRe: /\bmrs\. smith'?s spy school|spy school for girls\b/i,
@@ -2757,16 +2789,17 @@
       ]),
     },
     {
-      titleRe:
-        /\bpegasus\b|flame of olympus|fight for olympus|new olympians|origins of olympus|rise of the titans|end of olympus|pegasus complete olympian/i,
-      authorRe: /o'hearn|hearn|kate/i,
-      tier: "flag_review",
+      titleRe: /\bpegasus\b|\bflame of olympus\b|\bolympus at war\b|\bnew olympians\b|\borigins of olympus\b|\brise of the titans\b|\bend of olympus\b/i,
+      authorRe: /o'?hearn|kate\s*o'?hearn/i,
+      tier: "user_discretion",
       detail: bookNote("Pegasus (Kate O'Hearn)", [
+        "Parent discretion—not a hardest auto-reject.",
         "Dating romance in owner scope—nothing beyond hugging in owner scope.",
         "Greek-style deity/mythology treated as real.",
-        "Book 1: normalization of child sacrifice—Halalit won’t recommend.",
-        "Sequel line not owner-vetted here.",
-      ], "Won’t Book Quest—not inappropriate."),
+        "Book 1: normalization of child sacrifice—flag for parents.",
+        "Sequel line not owner-vetted here—preview before sharing.",
+        "Not on Book Quest; Halalit won’t auto-recommend—preview and decide for your home.",
+      ], USER_DISCRETION_PREVIEW_CLOSING),
     },
     {
       titleRe: /\bgirl who could fly|piper mccloud|boy who knew everything|girl who fell out of the sky/i,
@@ -2831,9 +2864,11 @@
       authorRe: /carter|aimee/i,
       tier: "flag_review",
       detail: bookNote("Simon Thorn (Aimee Carter)", [
+        "Halalit won’t recommend the series.",
         "Book 1 fine in owner scope.",
         "Book 3 jokes about potential half-sibling romance—rest unavailable in English.",
-        "Family-bashing beats—Halalit won’t recommend the series.",
+        "The series never finished being published in English.",
+        "Family-bashing beats.",
       ]),
     },
     {
@@ -2866,15 +2901,17 @@
       ], "Won’t Book Quest—not inappropriate."),
     },
     {
-      titleRe: /\bsweet valley twins\b/i,
-      authorRe: /andelfinger|nicole/i,
-      tier: "flag_review",
-      detail: bookNote("Sweet Valley Twins (graphic novels)", [
-        "Later volume includes an illegitimate-child storyline—Halalit won’t recommend the series.",
+      titleRe: /\bsweet valley twins\b|\bsweet valley\b.*\btwins\b|\btwins\b.*\bsweet valley\b/i,
+      authorRe: /pascal|francine|sweet\s*valley/i,
+      tier: "user_discretion",
+      detail: bookNote("Sweet Valley Twins (prose and graphic novel adaptations)", [
+        "Parent discretion—not a hardest auto-reject—for both prose and graphic adaptations.",
+        "Later volume includes an illegitimate-child storyline—flag for parents.",
         "Protagonists lie and join in cruel behavior in owner scope.",
         "Graphic novels: fanservice and panel modesty issues.",
         GRAPHIC_PHYSICAL_IMMODESTY_NOTE,
-      ]),
+        "Not on Book Quest; Halalit won’t auto-recommend—preview and decide for your home.",
+      ], USER_DISCRETION_PREVIEW_CLOSING),
     },
     {
       titleRe: /\bbliss bakery\b|\bbliss\b.*littlewood|\bdash of magic\b|\bbite-sized magic\b/i,
@@ -2903,12 +2940,12 @@
       ], "Won’t Book Quest—not inappropriate."),
     },
     {
-      titleRe: /\bhaunted high\b|\bwolf within me\b/i,
+      titleRe: /\bhaunted high\b/i,
       authorRe: /alsop|cheree/i,
       tier: "flag_review",
       detail: bookNote("The Haunted High (Cheree Alsop)", [
+        "Firm no—Halalit won’t recommend the series.",
         "Plot turns dark; bully uses very crude explicit insults in owner scope.",
-        "Halalit won’t recommend the series.",
       ]),
     },
     {
@@ -3009,12 +3046,13 @@
     {
       titleRe: /\bzee files\b/i,
       authorRe: /wells|tina/i,
-      tier: "flag_review",
+      tier: "user_discretion",
       detail: bookNote("The Zee Files (Tina Wells)", [
+        "Strong parent discretion—not a hardest auto-reject.",
         "Generally clean but protagonist keeps noticing boys more than some parents want—stays at dating level.",
         "Brief dark-mindset moment.",
-        "Halalit won't recommend the series.",
-      ]),
+        "Not on Book Quest; Halalit won’t auto-recommend—preview carefully and decide for your home.",
+      ], USER_DISCRETION_PREVIEW_CLOSING),
     },
     {
       titleRe: /\btheodore boono\b|\btheodore boone\b/i,
@@ -3222,15 +3260,15 @@
       ], "Won’t Book Quest—not inappropriate."),
     },
     {
-      titleRe: /\bdanny phantom\b.*\bgraphic\b|\bfair game\b.*danny phantom/i,
-      authorRe: /epstein|gabriela/i,
-      tier: "flag_review",
+      titleRe: /\bdanny phantom\b/i,
+      tier: "user_discretion",
       detail: bookNote("Danny Phantom (graphic novel)", [
+        "Parent discretion—not a hardest auto-reject.",
+        "Not official fanservice in owner scope, but immodesty runs throughout the graphic series—preview panels.",
         "Clean plot with some boyfriend/girlfriend beats.",
-        "Outfits not always modest—preview panels.",
         GRAPHIC_PHYSICAL_IMMODESTY_NOTE,
-        "Halalit won't recommend the series.",
-      ]),
+        "Not on Book Quest; Halalit won’t auto-recommend—preview and decide for your home.",
+      ], USER_DISCRETION_PREVIEW_CLOSING),
     },
     {
       titleRe: /\bbotticelli'?s apprentice\b/i,
@@ -3250,12 +3288,12 @@
       ], "Halalit may auto-recommend."),
     },
     {
-      titleRe: /\byakusoku no neverland\b|約束のネバーランド|promised neverland/i,
-      authorRe: /shirai|kaiu/i,
+      titleRe: /\bpromised neverland\b/i,
+      authorRe: /shirai|demizu|kaiu|posuka/i,
       tier: "flag_review",
       detail: bookNote("The Promised Neverland (manga)", [
+        "Firm no—Halalit won’t recommend the series.",
         "Fanservice, parent negativity, and very dark-mindset material in owner scope.",
-        "Halalit won’t recommend the series.",
         GRAPHIC_PHYSICAL_IMMODESTY_NOTE,
       ]),
     },
@@ -3310,8 +3348,8 @@
       authorRe: /mowat|farley/i,
       tier: "flag_review",
       detail: bookNote("Never Cry Wolf (Farley Mowat)", [
-        "Owner removed from Halalit’s shelf—off the hand-vetted recommend list.",
-        "Some adult references in owner scope.",
+        "Mostly plot clean in owner scope, but leave out of Halalit recommends.",
+        "Personal references to adult romance—outside the family shelf for that reason.",
         "Halalit won’t recommend or Book Quest this title.",
       ]),
     },
@@ -3469,10 +3507,13 @@
     {
       titleRe: /\bfrankenstein\b/i,
       authorRe: /shelley|wollstonecraft|mary/i,
-      tier: "flag_review",
+      tier: "user_discretion",
       detail: bookNote("Frankenstein (Mary Shelley)", [
-        "Dark classic—not dirty, but teen-level darkness; Halalit won’t recommend for all-ages shelf.",
-      ]),
+        "Parent discretion—not a hardest auto-reject.",
+        "Dark classic—not dirty, but teen-level darkness—flag for parents.",
+        "Also keep in mind colonial-era themes and framing in the classic text.",
+        "Not on Book Quest; Halalit won’t auto-recommend—preview and decide for your home.",
+      ], USER_DISCRETION_PREVIEW_CLOSING),
     },
     {
       titleRe: /\bgirl and the witch'?s garden\b/i,
@@ -3597,10 +3638,12 @@
     {
       titleRe: /\bprincess curse\b/i,
       authorRe: /haskell|merrie/i,
-      tier: "flag_review",
+      tier: "user_discretion",
       detail: bookNote("The Princess Curse (Merrie Haskell)", [
-        "Illegitimate-child references in owner scope—Halalit won’t recommend.",
-      ]),
+        "Parent discretion—not a hardest auto-reject.",
+        "Illegitimate-child references in owner scope—flag for parents.",
+        "Not on Book Quest; Halalit won’t auto-recommend—preview and decide for your home.",
+      ], USER_DISCRETION_PREVIEW_CLOSING),
     },
     {
       titleRe: /\bbreadcrumbs\b/i,
@@ -3619,12 +3662,14 @@
       ], "Halalit may auto-recommend."),
     },
     {
-      titleRe: /\bmother-daughter book club\b/i,
-      authorRe: /frederick|heather vogel/i,
-      tier: "flag_review",
+      titleRe: /\bmother[- ]daughter book club\b/i,
+      authorRe: /frederick|vogel/i,
+      tier: "user_discretion",
       detail: bookNote("The Mother-Daughter Book Club (Heather Vogel Frederick)", [
-        "Clean but heavier character negativity, gossip, and dating romance—Halalit won’t recommend.",
-      ], "Won’t Book Quest—not inappropriate."),
+        "Parent discretion—not a hardest auto-reject.",
+        "Clean but heavier character negativity, gossip, and dating romance—flag for parents.",
+        "Not on Book Quest; Halalit won’t auto-recommend—preview and decide for your home.",
+      ], USER_DISCRETION_PREVIEW_CLOSING),
     },
     {
       titleRe: /\bida b\b/i,
@@ -3635,21 +3680,24 @@
       ], "Halalit may auto-recommend after confirm."),
     },
     {
-      titleRe: /\bnausicaä|nausicaa\b/i,
+      titleRe: /\bnausicaa\b|\bnausicaä\b|\bvalley of the wind\b/i,
       authorRe: /miyazaki|hayao/i,
       tier: "flag_review",
       detail: bookNote("Nausicaä of the Valley of the Wind (Hayao Miyazaki)", [
-        "Fanservice and teen-level darkness in owner scope—Halalit won’t recommend.",
+        "Firm no—Halalit won’t recommend.",
+        "Fanservice and teen-level darkness in owner scope.",
         GRAPHIC_PHYSICAL_IMMODESTY_NOTE,
       ]),
     },
     {
-      titleRe: /\bdr\.?\s*jekyll and mr\.?\s*hyde\b|\bstrange case of dr/i,
-      authorRe: /stevenson|robert/i,
-      tier: "flag_review",
+      titleRe: /\bjekyll\b|\bmr\.?\s*hyde\b|\bstrange case of\b.*\bjekyll\b|\bjekyll and\b.*\bhyde\b/i,
+      authorRe: /stevenson|robert\s*louis/i,
+      tier: "user_discretion",
       detail: bookNote("Dr. Jekyll and Mr. Hyde (Robert Louis Stevenson)", [
-        "Ends quite dark—teen level; Halalit won’t recommend for all-ages shelf.",
-      ]),
+        "Parent discretion—not a hardest auto-reject.",
+        "Dark themes—ends quite dark; teen-level tone—flag for parents.",
+        "Not on Book Quest; Halalit won’t auto-recommend—preview and decide for your home.",
+      ], USER_DISCRETION_PREVIEW_CLOSING),
     },
     {
       titleRe: /\bgiving tree\b/i,
@@ -3800,13 +3848,15 @@
       ]),
     },
     {
-      titleRe: /\bcupcake diaries\b|\bcupcake cure\b|\bcupcake diaries\b|\bthin icing\b|\bbatter up\b|\bboiling point\b/i,
+      titleRe: /\bcupcake diaries\b/i,
       authorRe: /simon|coco/i,
-      tier: "flag_review",
+      tier: "user_discretion",
       detail: bookNote("Cupcake Diaries (Coco Simon)", [
+        "Parent discretion—not a hardest auto-reject.",
         "Plot reads clean in owner scope—not “dirty,” but heavy **romance / boy-obsessed** focus between books.",
-        "Too much romance emphasis for younger audiences—Halalit won’t auto-recommend or Book Quest the series.",
-      ], "Won’t Book Quest—not inappropriate."),
+        "Too much romance emphasis for younger audiences—flag for parents.",
+        "Not on Book Quest; Halalit won’t auto-recommend—preview and decide for your home.",
+      ], USER_DISCRETION_PREVIEW_CLOSING),
     },
     {
       titleRe: /\bdead city\b|\bblue moon\b|\bdark days\b/i,
@@ -3943,13 +3993,13 @@
       ], "Won’t Book Quest—not inappropriate."),
     },
     {
-      titleRe: /\bkat,?\s*incorrigible\b|\brenegade magic\b|\bmischief and magic\b/i,
+      titleRe: /\bkat,?\s*incorrigible\b|\brenegade magic\b|\bstolen magic\b/i,
       authorRe: /burgis|stephanie/i,
       tier: "flag_review",
       detail: bookNote("Kat, Incorrigible (Stephanie Burgis)", [
-        "Books 1–2 largely clean with family-bashing and odd marriage-plot beats.",
-        "Book 3: illegitimate-child beat; book 4: more romance and crude humor.",
-        "Halalit won’t recommend the series.",
+        "Reject because of a later book—Halalit won’t recommend the series.",
+        "Books 1–3 mostly parent-discretion territory: family-bashing and odd marriage-plot beats; book 3 illegitimate-child beat.",
+        "Book 4: hard reject—immodest cover and jokes in owner scope.",
       ]),
     },
     {
@@ -4007,9 +4057,9 @@
       authorRe: /spiegelman|art/i,
       tier: "flag_review",
       detail: bookNote("Maus (Art Spiegelman)", [
+        "Firm no for now—Halalit won’t recommend.",
         "Holocaust memoir—dark throughout.",
         "Nudity and adult scenes even in animal metaphor art.",
-        "Halalit won’t recommend.",
         GRAPHIC_PHYSICAL_IMMODESTY_NOTE,
       ]),
     },
@@ -4160,6 +4210,22 @@
         "Hand-verified clean on Halalit's core content rules.",
         "If reading this series, keep in mind the pro-colonial narrative—especially portrayals of Native Americans, with scattered dated portrayals of African Americans.",
         "Halalit won't suggest it in Book Quest; you can still look it up here before you share.",
+      ]),
+    },
+    {
+      titleRe: /\ba little princess\b|\blittle princess\b/i,
+      authorRe: /burnett/i,
+      detail: bookNote("A Little Princess (Frances Hodgson Burnett)", [
+        "Parent discretion—pro-colonial narrative flag still applies.",
+        "Imperial or colonial framing treated as natural or good—preview before you share.",
+      ]),
+    },
+    {
+      titleRe: /\bthe secret garden\b|\bsecret garden\b/i,
+      authorRe: /burnett/i,
+      detail: bookNote("The Secret Garden (Frances Hodgson Burnett)", [
+        "Parent discretion—pro-colonial narrative flag still applies.",
+        "Imperial or colonial framing treated as natural or good—preview before you share.",
       ]),
     },
   ];
