@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Owner’s Office — Halalit</title>
-  <link rel="stylesheet" href="./halalit-owner-testing-lab.css?v=20260611f" />
+  <link rel="stylesheet" href="./halalit-owner-testing-lab.css?v=20260716a" />
   <link rel="stylesheet" href="./halalit-cover-thumb.css?v=20260622a" />
   <style>
     :root {
@@ -261,16 +261,44 @@
 
       <details class="office-section panel" id="ownerTestingLabSection" open>
         <summary class="office-section__summary">
-          <span class="office-section__title"><strong>Testing lab</strong></span>
+          <span class="office-section__title"><strong>Owner scanner</strong></span>
           <span class="office-section__toggle" aria-hidden="true"></span>
         </summary>
         <div class="office-section__body">
           <p class="owner-testing-lab-banner" role="note">
-            <strong>Private sandbox.</strong> Try Scroll Scanner and Bookcheck here while you vet—not as a reader on the public site.
-            Test runs are <strong>not</strong> logged to reader lookup lists, My TBR, scanner malfunction alerts, or “hand vet in progress” messages. The <strong>cover preview</strong> animates from the camera box on its own — even when title/author OCR is wrong, use <strong>Did you mean?</strong> or type by hand for Bookcheck.
+            <strong>Owner only.</strong> Shelf photos and single-cover tests stay off reader lookup lists, reader My TBR, scanner malfunction alerts, and “hand vet in progress.”
+            Unnoted titles from shelf photos go to <strong>Owner scanned TBR</strong> below — never as a reader scan.
           </p>
+
+          <div class="owner-shelf-scanner" id="ownerShelfScannerPanel">
+            <h3>Shelf photo</h3>
+            <p class="hint" style="margin-top:0">Photo a real shelf (or upload). Halalit lists titles it can read, skips ones you’ve already vetted or rejected, then you confirm what to park on Owner scanned TBR.</p>
+            <div class="owner-shelf-actions">
+              <label class="import-btn owner-shelf-file-label">
+                Choose photo
+                <input type="file" accept="image/*" capture="environment" data-shelf="file" hidden />
+              </label>
+              <button type="button" class="import-btn" data-shelf="startCam">Start camera</button>
+              <button type="button" class="import-btn" data-shelf="snap" disabled>Capture</button>
+              <button type="button" class="import-btn" data-shelf="stopCam" hidden>Stop camera</button>
+              <button type="button" class="import-btn" data-shelf="read" disabled>Read shelf titles</button>
+            </div>
+            <div class="owner-shelf-cam-wrap" data-shelf="camWrap" hidden>
+              <video data-shelf="video" class="owner-shelf-video" playsinline muted aria-label="Shelf camera"></video>
+            </div>
+            <div class="owner-shelf-preview" data-shelf="preview" hidden></div>
+            <p class="scroll-scanner-status" data-shelf="status" aria-live="polite"></p>
+            <p class="hint muted" data-shelf="skipped" hidden></p>
+            <div class="owner-shelf-list" data-shelf="list" hidden></div>
+            <button type="button" class="import-btn" data-shelf="add" disabled>Add selected to Owner scanned TBR</button>
+          </div>
+
+          <div class="owner-scanner-divider" role="separator">
+            <span>Single cover / Bookcheck test</span>
+          </div>
+
           <div class="scroll-scanner-panel" id="ownerTestScannerPanel">
-            <p class="scroll-scanner-lead">Same camera flow as the public Scroll Scanner. For cover preview, fill the dashed box with the jacket — animation does not need a correct title read. For Bookcheck, use <strong>Did you mean?</strong> when OCR swaps title and author.</p>
+            <p class="scroll-scanner-lead">Same single-book camera flow as the public Scroll Scanner. For cover preview, fill the dashed box with the jacket. For Bookcheck, use <strong>Did you mean?</strong> when OCR swaps title and author.</p>
             <div class="scroll-scanner-controls">
               <div class="scroll-scanner-mode" role="group" aria-label="Scan mode">
                 <button type="button" class="import-btn scroll-scanner-mode-btn scroll-scanner-mode-btn--active" data-scanner="modeCover">Front cover</button>
@@ -362,6 +390,22 @@
               <tr><th>Title</th><th>Author</th><th>Note</th><th>Lookups</th><th>Readers</th><th>Last</th><th></th></tr>
             </thead>
             <tbody id="myTbrFromLookups"></tbody>
+          </table>
+        </div>
+      </details>
+
+      <details class="office-section panel" id="ownerScannedTbrSection" open>
+        <summary class="office-section__summary">
+          <span class="office-section__title"><strong>Owner scanned TBR</strong> <span class="muted" id="ownerScannedTbrCountLabel"></span></span>
+          <span class="office-section__toggle" aria-hidden="true"></span>
+        </summary>
+        <div class="office-section__body">
+          <p class="hint">Titles <strong>you</strong> scanned (shelf photos or owner Scroll Scanner) — separate from reader My TBR. Already vetted or rejected titles are not added here.</p>
+          <table>
+            <thead>
+              <tr><th>Title</th><th>Author</th><th>Source</th><th>Added</th><th></th></tr>
+            </thead>
+            <tbody id="ownerScannedTbrBody"></tbody>
           </table>
         </div>
       </details>
@@ -590,7 +634,7 @@
       </details>
     </div>
   </div>
-  <script src="./halalit-bookcheck-config.js?v=20260715a"></script>
+  <script src="./halalit-bookcheck-config.js?v=20260716a"></script>
   <script src="./halalit-account-storage.js?v=20260610g"></script>
   <script src="./halalit-owner-vets-runtime.js?v=20260611f"></script>
   <script src="./halalit-personal-library.js?v=20260610g"></script>
@@ -613,7 +657,8 @@
   <script src="./halalit-lookup-quality.js?v=20260610c"></script>
   <script src="./halalit-scroll-scanner.js?v=20260701a"></script>
   <script src="./halalit-owner-cover-preview.js?v=20260611f"></script>
-  <script src="./halalit-bookcheck.js?v=20260715a"></script>
+  <script src="./halalit-owner-shelf-scanner.js?v=20260716a"></script>
+  <script src="./halalit-bookcheck.js?v=20260716a"></script>
   <script src="./halalit-auth.js?v=20260715a"></script>
   <script>
     (function () {
@@ -756,6 +801,75 @@
         if (Ui && typeof Ui.isHandSettled === "function" && Ui.isHandSettled(title, author)) return false;
         if (rosterSettled(title, author)) return false;
         return true;
+      }
+
+      var lastOwnerScannedTbr = [];
+
+      function ownerScannedQueued(title, author) {
+        var key = vetNormKey(title, author);
+        for (var i = 0; i < lastOwnerScannedTbr.length; i++) {
+          var e = lastOwnerScannedTbr[i];
+          if (vetNormKey(e.title, e.author) === key) return true;
+        }
+        return false;
+      }
+
+      function renderOwnerScannedTbr(list) {
+        lastOwnerScannedTbr = list || [];
+        var tbody = document.getElementById("ownerScannedTbrBody");
+        var countLabel = document.getElementById("ownerScannedTbrCountLabel");
+        if (!tbody) return;
+        tbody.innerHTML = "";
+        if (countLabel) {
+          countLabel.textContent = lastOwnerScannedTbr.length
+            ? "(" + lastOwnerScannedTbr.length + ")"
+            : "";
+        }
+        if (!lastOwnerScannedTbr.length) {
+          var empty = document.createElement("tr");
+          var td = document.createElement("td");
+          td.colSpan = 5;
+          td.textContent = "No owner-scanned titles yet — use Shelf photo above.";
+          empty.appendChild(td);
+          tbody.appendChild(empty);
+          return;
+        }
+        lastOwnerScannedTbr.forEach(function (row) {
+          var tr = document.createElement("tr");
+          function cell(text) {
+            var c = document.createElement("td");
+            c.textContent = text || "—";
+            tr.appendChild(c);
+          }
+          cell(row.title);
+          cell(row.author);
+          cell(row.source === "scroll" ? "Scroll Scanner" : row.source === "manual" ? "Manual" : "Shelf photo");
+          cell(row.createdAt ? fmtDate(row.createdAt) : "—");
+          var actions = document.createElement("td");
+          var rm = document.createElement("button");
+          rm.type = "button";
+          rm.className = "copy-btn";
+          rm.textContent = "Remove";
+          rm.addEventListener("click", function () {
+            var Shelf = window.HalalitOwnerShelfScanner;
+            if (!Shelf || typeof Shelf.deleteScannedTbr !== "function") return;
+            Shelf.deleteScannedTbr(row.id).then(function (res) {
+              if (res && res.ok) loadOffice();
+            });
+          });
+          var vet = document.createElement("button");
+          vet.type = "button";
+          vet.className = "copy-btn";
+          vet.textContent = "Vet";
+          vet.addEventListener("click", function () {
+            openOwnerVetForm(row.title, row.author || "", "verified_clean");
+          });
+          actions.appendChild(vet);
+          actions.appendChild(document.createTextNode(" "));
+          actions.appendChild(rm);
+          tr.appendChild(actions);
+          tbody.appendChild(tr);
+        });
       }
 
       function notifKeyForLookup(row) {
@@ -1454,6 +1568,7 @@
           if (!res || !res.ok) return;
           renderStats(res.stats || {});
           renderMyTbrFromLookups(res.popularLookups || res.myTbrLookups || []);
+          renderOwnerScannedTbr(res.ownerScannedTbr || []);
           renderDismissed(res.dismissedNotifications || []);
           maybeBackfillSignals(res.missingSignalCount || 0);
           var pop = document.getElementById("popularLookups");
@@ -1630,6 +1745,16 @@
           coverHost && window.HalalitOwnerCoverPreview && typeof window.HalalitOwnerCoverPreview.init === "function"
             ? window.HalalitOwnerCoverPreview.init(coverHost)
             : null;
+        var shelfPanel = document.getElementById("ownerShelfScannerPanel");
+        if (shelfPanel && window.HalalitOwnerShelfScanner && typeof window.HalalitOwnerShelfScanner.init === "function") {
+          window.HalalitOwnerShelfScanner.init(shelfPanel, {
+            rosterSettled: rosterSettled,
+            alreadyQueued: ownerScannedQueued,
+            onAdded: function () {
+              loadOffice();
+            },
+          });
+        }
         var scanPanel = document.getElementById("ownerTestScannerPanel");
         if (scanPanel && window.HalalitScrollScannerInit) {
           window.HalalitScrollScannerInit(scanPanel, {

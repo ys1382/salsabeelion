@@ -7,6 +7,8 @@ Reads HALALIT_GEMINI_API_KEY / GEMINI_API_KEY and ANTHROPIC_API_KEY (or anthropi
 
 POST /api/theme-scan       JSON: { "title": "...", "author": "...", "isGraphicFormat": bool }
 POST /api/cover-identify   JSON: { "imageBase64": "...", "mimeType": "image/jpeg" }
+POST /api/owner/shelf-identify  JSON: { "imageBase64": "...", "mimeType": "image/jpeg" }
+                               → owner-only multi-title shelf photo read (Gemini); image discarded
 POST /api/library/check    JSON: { "title": "...", "author": "...", "isbn?": "...", "placeId?": "..." }
                                → library branch borrowable check (Central Park / Cupertino practice)
 GET  /health  and  /api/health
@@ -311,6 +313,22 @@ Rules:
 - Do not guess wildly; prefer "none" over a wrong famous book.
 - alternatives: up to 3 other plausible matches when confidence is not high.
 - isGraphicFormat true for comics, manga, graphic novels."""
+
+SHELF_PROMPT = """You read book titles from a photo of a real bookshelf (spines and/or front covers facing out).
+Return ONLY valid JSON:
+{
+  "books": [
+    {"title": "book title without marketing fluff", "author": "primary author or empty string", "confidence": "high|medium|low"}
+  ],
+  "brief": "one short sentence about the photo"
+}
+Rules:
+- List every distinct book you can reasonably read from the photo (max 40).
+- Prefer spine text when books are spine-out; use cover text when face-out.
+- Omit books you cannot read at all.
+- Do not invent famous titles that are not visible in the image.
+- author may be an empty string if only the title is readable.
+- If no books are readable, return books: []."""
 
 
 def log_lookup(
@@ -1006,6 +1024,92 @@ def call_gemini_cover(image_b64: str, mime: str) -> dict[str, Any]:
     }
 
 
+def call_gemini_shelf(image_b64: str, mime: str) -> dict[str, Any]:
+    if not KEY:
+        return {"ok": False, "error": "ai_unconfigured", "message": "Shelf scan is not configured on the server."}
+    if not image_b64 or len(image_b64) > 4_500_000:
+        return {"ok": False, "error": "image_invalid", "message": "Image missing or too large."}
+
+    mime = (mime or "image/jpeg").split(";")[0].strip() or "image/jpeg"
+    if not mime.startswith("image/"):
+        mime = "image/jpeg"
+
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{MODEL}:generateContent?key={urllib.parse.quote(KEY, safe='')}"
+    payload = {
+        "contents": [
+            {
+                "parts": [
+                    {"text": SHELF_PROMPT},
+                    {"inline_data": {"mime_type": mime, "data": image_b64}},
+                ]
+            }
+        ],
+        "generationConfig": {
+            "temperature": 0.1,
+            "responseMimeType": "application/json",
+        },
+    }
+    req = urllib.request.Request(
+        url,
+        data=json.dumps(payload).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=75, context=ssl.create_default_context()) as resp:
+            raw = json.loads(resp.read().decode("utf-8"))
+    except urllib.error.HTTPError as e:
+        try:
+            detail = e.read().decode("utf-8", errors="replace")[:400]
+        except Exception:
+            detail = str(e)
+        return {"ok": False, "error": "ai_http_error", "message": detail}
+    except Exception as e:
+        return {"ok": False, "error": "ai_request_failed", "message": str(e)}
+
+    text = ""
+    try:
+        text = raw["candidates"][0]["content"]["parts"][0]["text"]
+    except (KeyError, IndexError, TypeError):
+        return {"ok": False, "error": "ai_bad_response", "message": "No text from model."}
+
+    text = text.strip()
+    if text.startswith("```"):
+        text = re.sub(r"^```(?:json)?\s*", "", text)
+        text = re.sub(r"\s*```$", "", text)
+
+    try:
+        parsed = json.loads(text)
+    except json.JSONDecodeError:
+        return {"ok": False, "error": "ai_parse_error", "message": text[:300]}
+
+    books_out: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for item in (parsed.get("books") or [])[:40]:
+        if not isinstance(item, dict):
+            continue
+        title = str(item.get("title") or "").strip()[:300]
+        if not title:
+            continue
+        author = str(item.get("author") or "").strip()[:200]
+        conf = str(item.get("confidence") or "medium").lower()
+        if conf not in ("high", "medium", "low"):
+            conf = "medium"
+        key = re.sub(r"\s+", " ", title.lower()) + "|" + re.sub(r"\s+", " ", author.lower())
+        if key in seen:
+            continue
+        seen.add(key)
+        books_out.append({"title": title, "author": author, "confidence": conf})
+
+    return {
+        "ok": True,
+        "books": books_out,
+        "brief": str(parsed.get("brief") or "")[:280],
+        "imageDiscarded": True,
+        "model": MODEL,
+    }
+
+
 class Handler(BaseHTTPRequestHandler):
     def log_message(self, fmt: str, *args: Any) -> None:
         sys.stderr.write("%s - %s\n" % (self.address_string(), fmt % args))
@@ -1031,6 +1135,7 @@ class Handler(BaseHTTPRequestHandler):
                     "model": MODEL,
                     "claudeModel": CLAUDE_MODEL,
                     "coverIdentify": True,
+                    "shelfIdentify": True,
                     "accounts": True,
                     "reviewSearchConfigured": True,
                     "braveConfigured": bool(os.environ.get("BRAVE_SEARCH_API_KEY", "").strip()),
@@ -1044,6 +1149,26 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self) -> None:
         path = self.path.rstrip("/").split("?")[0]
         length = int(self.headers.get("Content-Length") or 0)
+
+        if path == "/api/owner/shelf-identify":
+            if length > 6_500_000:
+                json_response(self, 413, {"ok": False, "error": "payload_too_large"})
+                return
+            try:
+                body = json.loads(self.rfile.read(length).decode("utf-8")) if length else {}
+            except (json.JSONDecodeError, UnicodeDecodeError):
+                json_response(self, 400, {"ok": False, "error": "invalid_json"})
+                return
+            user = session_user(self)
+            if not user or not user.get("is_owner"):
+                json_response(self, 403, {"ok": False, "error": "owner_only"})
+                return
+            image_b64 = str(body.get("imageBase64") or "").strip()
+            mime = str(body.get("mimeType") or "image/jpeg").strip()
+            result = call_gemini_shelf(image_b64, mime)
+            status = 200 if result.get("ok") else (503 if result.get("error") == "ai_unconfigured" else 502)
+            json_response(self, status, result)
+            return
 
         if (
             path.startswith("/api/auth/")

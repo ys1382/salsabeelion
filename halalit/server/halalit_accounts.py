@@ -214,6 +214,18 @@ def init_db() -> None:
                 created_at REAL NOT NULL,
                 updated_at REAL NOT NULL
             );
+            CREATE TABLE IF NOT EXISTS owner_scanned_tbr (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                title TEXT NOT NULL,
+                author TEXT NOT NULL DEFAULT '',
+                title_norm TEXT NOT NULL,
+                author_norm TEXT NOT NULL DEFAULT '',
+                source TEXT NOT NULL DEFAULT 'shelf',
+                created_at REAL NOT NULL,
+                UNIQUE(title_norm, author_norm)
+            );
+            CREATE INDEX IF NOT EXISTS idx_owner_scanned_tbr_created
+            ON owner_scanned_tbr(created_at DESC);
             """
         )
         cols = {str(r[1]) for r in conn.execute("PRAGMA table_info(users)").fetchall()}
@@ -1113,11 +1125,96 @@ def owner_office_payload(log_path: str, owner_user_id: int | None = None) -> dic
         "accounts": owner_user_list(),
         "settings": _get_site_flags(),
         "onSiteVets": on_site[:80],
+        "ownerScannedTbr": owner_scanned_tbr_list(300),
     }
 
 
 def owner_lookup_tail(log_path: str, limit: int = 40) -> list[dict[str, Any]]:
     return owner_lookup_recent(log_path, limit)
+
+
+def owner_scanned_tbr_list(limit: int = 300) -> list[dict[str, Any]]:
+    with _connect() as conn:
+        rows = conn.execute(
+            """
+            SELECT id, title, author, source, created_at
+            FROM owner_scanned_tbr
+            ORDER BY created_at DESC
+            LIMIT ?
+            """,
+            (max(1, min(int(limit or 300), 500)),),
+        ).fetchall()
+    return [
+        {
+            "id": r["id"],
+            "title": r["title"],
+            "author": r["author"] or "",
+            "source": r["source"] or "shelf",
+            "createdAt": r["created_at"],
+        }
+        for r in rows
+    ]
+
+
+def owner_scanned_tbr_keys() -> set[str]:
+    with _connect() as conn:
+        rows = conn.execute("SELECT title_norm, author_norm FROM owner_scanned_tbr").fetchall()
+    return {("%s|%s" % (r["title_norm"], r["author_norm"])) for r in rows}
+
+
+def add_owner_scanned_tbr(
+    books: list[dict[str, Any]],
+    *,
+    source: str = "shelf",
+) -> dict[str, Any]:
+    source = str(source or "shelf").strip()[:40] or "shelf"
+    if source not in ("shelf", "scroll", "manual"):
+        source = "shelf"
+    added: list[dict[str, Any]] = []
+    skipped = 0
+    now = time.time()
+    with _connect() as conn:
+        for item in books or []:
+            if not isinstance(item, dict):
+                continue
+            title = str(item.get("title") or "").strip()[:300]
+            if not title:
+                continue
+            author = str(item.get("author") or "").strip()[:200]
+            title_norm = _vet_norm(title)
+            author_norm = _vet_norm(author)
+            try:
+                conn.execute(
+                    """
+                    INSERT INTO owner_scanned_tbr
+                      (title, author, title_norm, author_norm, source, created_at)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                    """,
+                    (title, author, title_norm, author_norm, source, now),
+                )
+                row_id = conn.execute("SELECT last_insert_rowid()").fetchone()[0]
+                added.append(
+                    {
+                        "id": row_id,
+                        "title": title,
+                        "author": author,
+                        "source": source,
+                        "createdAt": now,
+                    }
+                )
+            except sqlite3.IntegrityError:
+                skipped += 1
+        conn.commit()
+    return {"ok": True, "added": added, "addedCount": len(added), "skippedDuplicates": skipped}
+
+
+def delete_owner_scanned_tbr(entry_id: int) -> dict[str, Any]:
+    with _connect() as conn:
+        cur = conn.execute("DELETE FROM owner_scanned_tbr WHERE id = ?", (entry_id,))
+        conn.commit()
+        if cur.rowcount < 1:
+            return {"ok": False, "error": "not_found"}
+    return {"ok": True, "id": entry_id}
 
 
 def _vet_norm(s: str) -> str:
@@ -1608,6 +1705,9 @@ def handle_post(
         if body.get("ownerTesting") and user and user.get("is_owner"):
             json_response(handler, 200, {"ok": True, "recorded": False, "skipped": "owner_testing"})
             return True
+        if user and user.get("is_owner") and body.get("fromScanner"):
+            json_response(handler, 200, {"ok": True, "recorded": False, "skipped": "owner_scanner"})
+            return True
         record_bookcheck_lookup(
             log_path,
             title=title,
@@ -1916,6 +2016,39 @@ def handle_post(
             return True
         status, payload = delete_owner_vet(eid)
         json_response(handler, status, payload)
+        return True
+
+    if path == "/api/owner/scanned-tbr/add":
+        user = _session_user(handler)
+        if not user or not user["is_owner"]:
+            json_response(handler, 403, {"ok": False, "error": "owner_only"})
+            return True
+        books = body.get("books")
+        if not isinstance(books, list):
+            one = body.get("title")
+            if one:
+                books = [{"title": one, "author": body.get("author") or ""}]
+            else:
+                books = []
+        if not books:
+            json_response(handler, 400, {"ok": False, "error": "books_required"})
+            return True
+        result = add_owner_scanned_tbr(books, source=str(body.get("source") or "shelf"))
+        json_response(handler, 200, result)
+        return True
+
+    if path == "/api/owner/scanned-tbr/delete":
+        user = _session_user(handler)
+        if not user or not user["is_owner"]:
+            json_response(handler, 403, {"ok": False, "error": "owner_only"})
+            return True
+        try:
+            eid = int(body.get("id"))
+        except (TypeError, ValueError):
+            json_response(handler, 400, {"ok": False, "error": "invalid_id"})
+            return True
+        result = delete_owner_scanned_tbr(eid)
+        json_response(handler, 200 if result.get("ok") else 404, result)
         return True
 
     user = _session_user(handler)

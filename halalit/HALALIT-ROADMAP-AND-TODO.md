@@ -267,6 +267,7 @@ Bookcheck should know **which kind of vet** powered the result and say so plainl
 - [x] **Vet-source — AI staging list (Jun 2026)** — `halalit-ai-vet-staging.js` from `HALALIT-AI-VET-STAGING.md`.
 - [ ] **Vet-source — secondhand** — `vet_in_progress` when secondhand list ships on site.
 - [x] **Owner Office — Bookchecks vs My TBR + dismiss (Jul 2026)** — Auto-reject–style scan signals go under Bookchecks (with short summary), thin/indie under My TBR; dismiss → trash / dismiss forever on notification lists (not site settings). Existing lookups backfill on Office open.
+- [x] **Owner scanner — shelf photo + Owner scanned TBR (Jul 2026)** — Owner’s Office: multi-title shelf photo (Gemini), skips already vetted/rejected; separate **Owner scanned TBR** (not reader lookups). Owner Scroll Scanner also feeds that list when signed in as owner.
 
   **Where pings could show (pick when building; default suggestion: owner-only page + optional email):**
 

@@ -38,6 +38,9 @@
     aiCoverIdentifyUrl: function () {
       return apiUrl("/cover-identify");
     },
+    ownerShelfIdentifyUrl: function () {
+      return apiUrl("/owner/shelf-identify");
+    },
     aiHealthUrl: function () {
       return apiUrl("/health");
     },

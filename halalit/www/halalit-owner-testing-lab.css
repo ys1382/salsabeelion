@@ -16,6 +16,111 @@
   color: var(--accent);
 }
 
+.owner-shelf-scanner {
+  margin: 0 0 1.15rem;
+  padding-bottom: 1rem;
+}
+
+.owner-shelf-scanner h3 {
+  margin: 0 0 0.45rem;
+  font-size: 0.98rem;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.owner-shelf-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin: 0.65rem 0;
+}
+
+.owner-shelf-file-label {
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+}
+
+.owner-shelf-cam-wrap {
+  margin: 0.5rem 0;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #0a0908;
+  max-width: 28rem;
+}
+
+.owner-shelf-video {
+  display: block;
+  width: 100%;
+  max-height: min(42vh, 20rem);
+  object-fit: cover;
+}
+
+.owner-shelf-preview {
+  margin: 0.5rem 0;
+  max-width: 28rem;
+}
+
+.owner-shelf-preview img {
+  display: block;
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.owner-shelf-list {
+  margin: 0.65rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.owner-shelf-row {
+  display: grid;
+  grid-template-columns: auto 1fr 1fr auto;
+  gap: 0.4rem;
+  align-items: center;
+  font-family: system-ui, "Segoe UI", sans-serif;
+  font-size: 0.84rem;
+}
+
+.owner-shelf-row input[type="text"] {
+  width: 100%;
+  min-width: 0;
+  padding: 0.35rem 0.45rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.25);
+  color: var(--ink);
+  font: inherit;
+}
+
+.owner-shelf-conf {
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+.owner-scanner-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 1.1rem 0 0.9rem;
+  color: var(--dim);
+  font-family: system-ui, "Segoe UI", sans-serif;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.owner-scanner-divider::before,
+.owner-scanner-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: rgba(227, 184, 106, 0.18);
+}
+
 .owner-test-bookcheck {
   margin-top: 1rem;
   padding-top: 1rem;
@@ -27,6 +132,15 @@
   font-size: 0.98rem;
   color: var(--accent);
   font-weight: 600;
+}
+
+@media (max-width: 640px) {
+  .owner-shelf-row {
+    grid-template-columns: auto 1fr;
+  }
+  .owner-shelf-conf {
+    grid-column: 2;
+  }
 }
 
 .scroll-scanner-panel {

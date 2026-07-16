@@ -1557,6 +1557,7 @@
 
     function recordLookupForOwner(title, author, signalOpts) {
       if (catalogMeta.ownerTesting) {
+        if (catalogMeta.fromScanner) maybeAddOwnerScannedFromScanner(title, author);
         return Promise.resolve();
       }
       signalOpts = signalOpts || {};
@@ -1565,6 +1566,17 @@
       if (!url || !global.fetch) return Promise.resolve();
       var log = lookupLogTitleAuthor(title, author);
       if (!log.title) return Promise.resolve();
+
+      var Store = global.HalalitAccountStorage;
+      var ownerScan =
+        !!catalogMeta.fromScanner &&
+        Store &&
+        typeof Store.isOwner === "function" &&
+        Store.isOwner();
+      if (ownerScan) {
+        maybeAddOwnerScannedFromScanner(log.title, log.author);
+      }
+
       var already = !!catalogMeta.lookupRecorded;
       catalogMeta.lookupRecorded = true;
       var body = {
@@ -1573,6 +1585,7 @@
         enteredTitle: catalogMeta.lookupLogTitle || log.title,
         enteredAuthor: catalogMeta.lookupLogAuthor || "",
         ownerTesting: !!catalogMeta.ownerTesting,
+        fromScanner: !!catalogMeta.fromScanner,
       };
       if (signalOpts.summary || signalOpts.autoReject || signalOpts.themes || signalOpts.bucket || signalOpts.explainers) {
         if (signalOpts.summary) body.summary = signalOpts.summary;
@@ -1599,6 +1612,26 @@
         })
         .catch(function () {})
         .then(function () {});
+    }
+
+    function maybeAddOwnerScannedFromScanner(title, author) {
+      if (!catalogMeta.fromScanner) return;
+      if (catalogMeta.ownerScannedTbrAttempted) return;
+      title = String(title || "").trim();
+      if (!title) return;
+      author = String(author || "").trim();
+      var Store = global.HalalitAccountStorage;
+      var isOwner =
+        (Store && typeof Store.isOwner === "function" && Store.isOwner()) ||
+        !!catalogMeta.ownerTesting;
+      if (!isOwner) return;
+      var Shelf = global.HalalitOwnerShelfScanner;
+      if (!Shelf || typeof Shelf.addScannedTbr !== "function") return;
+      if (typeof Shelf.isSettledTitle === "function" && Shelf.isSettledTitle(title, author)) {
+        return;
+      }
+      catalogMeta.ownerScannedTbrAttempted = true;
+      Shelf.addScannedTbr([{ title: title, author: author }], "scroll").catch(function () {});
     }
 
     function ownerSignalFromCatalogMeta(title, author) {
