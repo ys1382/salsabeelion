@@ -884,20 +884,44 @@ def _lookup_row_usable(row: dict[str, Any]) -> bool:
     return not is_garbage_lookup(title, author)
 
 
-def owner_stats(log_path: str, *, exclude_account_id: int | None = None) -> dict[str, int]:
+def _count_undismissed_ids(
+    rows: list[Any],
+    *,
+    key_prefix: str,
+    dismiss: dict[str, dict[str, Any]] | None,
+) -> int:
+    """Count rows whose notification key is not in trash/forever."""
+    if not dismiss:
+        return len(rows)
+    n = 0
+    for r in rows:
+        key = "%s%s" % (key_prefix, r["id"])
+        state = (dismiss.get(key) or {}).get("state")
+        if state in ("trash", "forever"):
+            continue
+        n += 1
+    return n
+
+
+def owner_stats(
+    log_path: str,
+    *,
+    exclude_account_id: int | None = None,
+    dismiss: dict[str, dict[str, Any]] | None = None,
+) -> dict[str, int]:
     with _connect() as conn:
         users = conn.execute("SELECT COUNT(*) AS c FROM users").fetchone()["c"]
-        feedback = conn.execute("SELECT COUNT(*) AS c FROM owner_feedback").fetchone()["c"]
-        scanner = conn.execute("SELECT COUNT(*) AS c FROM owner_scanner_alerts").fetchone()["c"]
-        messages = conn.execute("SELECT COUNT(*) AS c FROM owner_reader_messages").fetchone()["c"]
+        feedback_rows = conn.execute("SELECT id FROM owner_feedback").fetchall()
+        scanner_rows = conn.execute("SELECT id FROM owner_scanner_alerts").fetchall()
+        message_rows = conn.execute("SELECT id FROM owner_reader_messages").fetchall()
         vets = conn.execute("SELECT COUNT(*) AS c FROM owner_vet_entries").fetchone()["c"]
     agg = owner_lookup_aggregated(log_path, limit=500, exclude_account_id=exclude_account_id)
     return {
         "readerAccounts": int(users),
-        "feedbackBatches": int(feedback),
+        "feedbackBatches": _count_undismissed_ids(feedback_rows, key_prefix="feedback:", dismiss=dismiss),
         "uniqueLookups": len(agg),
-        "scannerAlerts": int(scanner),
-        "readerMessages": int(messages),
+        "scannerAlerts": _count_undismissed_ids(scanner_rows, key_prefix="scanner:", dismiss=dismiss),
+        "readerMessages": _count_undismissed_ids(message_rows, key_prefix="message:", dismiss=dismiss),
         "onSiteVets": int(vets),
     }
 
@@ -1106,7 +1130,7 @@ def owner_office_payload(log_path: str, owner_user_id: int | None = None) -> dic
     trash.sort(key=lambda d: float(d.get("updatedAt") or 0), reverse=True)
 
     return {
-        "stats": owner_stats(log_path, exclude_account_id=owner_user_id),
+        "stats": owner_stats(log_path, exclude_account_id=owner_user_id, dismiss=dismiss),
         "feedback": feedback,
         "recentLookups": recent,
         "popularLookups": popular,
