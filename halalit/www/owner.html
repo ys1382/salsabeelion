@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Owner’s Office — Halalit</title>
-  <link rel="stylesheet" href="./halalit-owner-testing-lab.css?v=20260716a" />
+  <link rel="stylesheet" href="./halalit-owner-testing-lab.css?v=20260716e" />
   <link rel="stylesheet" href="./halalit-cover-thumb.css?v=20260622a" />
   <style>
     :root {
@@ -272,21 +272,30 @@
 
           <div class="owner-shelf-scanner" id="ownerShelfScannerPanel">
             <h3>Shelf photo</h3>
-            <p class="hint" style="margin-top:0">Photo a real shelf (or upload). Halalit lists titles it can read, skips ones you’ve already vetted or rejected, then you confirm what to park on Owner scanned TBR.</p>
+            <p class="hint owner-shelf-range" style="margin-top:0">
+              <strong>Range:</strong> one section of shelf (~3–4 ft wide), about <strong>3–5 feet</strong> away for normal paperbacks;
+              small or dark spines need closer. Not across the room — plan a few photos along a long wall.
+              Photos are <strong>not saved</strong> — discarded right after titles are read.
+            </p>
             <div class="owner-shelf-actions">
-              <label class="import-btn owner-shelf-file-label">
-                Choose photo
-                <input type="file" accept="image/*" capture="environment" data-shelf="file" hidden />
+              <label class="import-btn owner-shelf-file-label owner-shelf-file-label--primary">
+                Take shelf photo
+                <input type="file" accept="image/*,.heic,.heif" capture="environment" data-shelf="file" hidden />
               </label>
-              <button type="button" class="import-btn" data-shelf="startCam">Start camera</button>
-              <button type="button" class="import-btn" data-shelf="snap" disabled>Capture</button>
+              <button type="button" class="import-btn" data-shelf="startCam">Live camera coach</button>
+              <button type="button" class="import-btn" data-shelf="snap" disabled>Capture &amp; scan</button>
               <button type="button" class="import-btn" data-shelf="stopCam" hidden>Stop camera</button>
-              <button type="button" class="import-btn" data-shelf="read" disabled>Read shelf titles</button>
+              <button type="button" class="import-btn" data-shelf="read" disabled>Scan again</button>
             </div>
             <div class="owner-shelf-cam-wrap" data-shelf="camWrap" hidden>
               <video data-shelf="video" class="owner-shelf-video" playsinline muted aria-label="Shelf camera"></video>
+              <div class="owner-shelf-frame-guide" aria-hidden="true"></div>
+              <div class="owner-shelf-live" data-shelf="live" hidden aria-live="polite">
+                <p class="owner-shelf-live__hint" data-shelf="liveHint">Point at one shelf section</p>
+              </div>
             </div>
             <div class="owner-shelf-preview" data-shelf="preview" hidden></div>
+            <div class="owner-shelf-result" data-shelf="result" hidden role="status" aria-live="assertive"></div>
             <p class="scroll-scanner-status" data-shelf="status" aria-live="polite"></p>
             <p class="hint muted" data-shelf="skipped" hidden></p>
             <div class="owner-shelf-list" data-shelf="list" hidden></div>
@@ -657,7 +666,7 @@
   <script src="./halalit-lookup-quality.js?v=20260610c"></script>
   <script src="./halalit-scroll-scanner.js?v=20260701a"></script>
   <script src="./halalit-owner-cover-preview.js?v=20260611f"></script>
-  <script src="./halalit-owner-shelf-scanner.js?v=20260716a"></script>
+  <script src="./halalit-owner-shelf-scanner.js?v=20260716e"></script>
   <script src="./halalit-bookcheck.js?v=20260716a"></script>
   <script src="./halalit-auth.js?v=20260715a"></script>
   <script>
@@ -1754,6 +1763,16 @@
               loadOffice();
             },
           });
+        } else if (shelfPanel) {
+          var shelfStatus = shelfPanel.querySelector("[data-shelf='status']");
+          var shelfResult = shelfPanel.querySelector("[data-shelf='result']");
+          var msg = "Shelf scanner did not load — hard refresh Owner’s Office (close tab, reopen).";
+          if (shelfStatus) shelfStatus.textContent = msg;
+          if (shelfResult) {
+            shelfResult.hidden = false;
+            shelfResult.className = "owner-shelf-result owner-shelf-result--error";
+            shelfResult.textContent = msg;
+          }
         }
         var scanPanel = document.getElementById("ownerTestScannerPanel");
         if (scanPanel && window.HalalitScrollScannerInit) {
