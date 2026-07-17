@@ -9,7 +9,7 @@ alwaysApply: true
 
 **Product name:** **LoreKeeper** (capital **L** and **K**). Not “Lore Keeper,” not “lorekeeper” as a display name unless the owner says otherwise for a URL slug.
 
-**What it is:** A place for **scatter-plotted writers** to keep lore, species, politics, and miscellaneous notes they **wrote themselves** — when those notes are a jumble — instead of a mess of Google Docs. Owner-only on Odd Trove at first; public for other writers when stable.
+**What it is:** A place for **scatter-plotted writers** to keep lore, species, politics, and miscellaneous notes they **wrote themselves** — when those notes are a jumble — instead of a mess of Google Docs. Public on Odd Trove as a quiet **beta**; each writer signs in to their own account.
 
 **All content is human-written.** The author enters every note. LoreKeeper does **not** generate story, lore, prose, or canon — **not now, not later, not as an option.**
 
@@ -24,22 +24,22 @@ alwaysApply: true
 5. **No training on user writing** — LoreKeeper does not aggregate user notes to improve the product for everyone. If recall/sort uses an API, pick providers/terms with **no training** and **minimal or no retention**; say so honestly in copy.
 6. **Doesn’t spy** — no cross-user reads, no blending notes, account delete removes their data when cloud sync exists. **Owner included:** backend and Owner’s Office must never return another account’s note text.
 7. **No public posting between writers** — same spirit as `warmth-without-social`: no comments, forums, or shared walls in LoreKeeper unless the owner clearly asks in that conversation.
-8. **Phasing** — **owner-only nginx gate** while unfinished; then **public site + open sign-ups** so anyone can create their own account. Owner’s Office **sign-ups** switch can pause new accounts without blocking sign-in.
+8. **Phasing** — **public beta on Odd Trove** (nginx owner gate off; LoreKeeper account sign-in still required). Owner’s Office **sign-ups** switch can pause new accounts without blocking sign-in.
 
 ## Storage and accounts (from v0 — not later)
 
 **Sign-in required from the first build.** Notes save to the **signed-in account** on the server — not “device first, accounts later.” Halalit/Crocheter-style migration from anonymous localStorage is painful and easy to lose data; do not ship LoreKeeper that way.
 
-- **Owner-only beta:** site still behind nginx owner gate; LoreKeeper sign-ups can stay **paused** (owner account only) until public launch.
+- **Public beta:** hub lists LoreKeeper with Halalit/Crocheter; quiet “beta” mark; Google for new accounts (spare/junk Google OK). New sign-ups can be paused in Owner’s Office without blocking existing sign-in.
 - **Per-user isolation:** each account’s notes are separate keys/blobs — no cross-user reads.
 - **Export / import:** JSON download and upload still required so writers own their files.
 - **Pattern:** mirror Crocheter/Halalit — `account.html`, auth gate, account-storage module, `/api/auth/*` and `/api/user/data/*` — LoreKeeper-specific data keys only (e.g. entries blob), not shared with Halalit shelves.
 
-## Two gates + Owner’s Office (Halalit-style, LoreKeeper-tailored)
+## Account gate + Owner’s Office (Halalit-style, LoreKeeper-tailored)
 
-**Layer 1 — nginx owner gate** on `/lorekeeper/` (like Maestro’s / envDyst): only you can reach the URL while the product is unfinished.
+**Layer 1 — public URL** on `/lorekeeper/` (no nginx owner gate). Quiet beta on Odd Trove.
 
-**Layer 2 — LoreKeeper user accounts** (like Halalit / Crocheter): sign-in required; notes save to **that account** on the server; `isOwner` on your email unlocks **Owner’s Office**.
+**Layer 2 — LoreKeeper user accounts** (like Halalit / Crocheter): sign-in required; notes save to **that account** on the server; `isOwner` on your email unlocks **Owner’s Office**. New accounts use **Google** (no separate LoreKeeper password).
 
 **Do not copy Halalit’s book tools** (Bookcheck, vet lists, Scroll Scanner, My TBR). Copy the **shape**:
 
@@ -67,13 +67,13 @@ alwaysApply: true
 
 **Public launch — user sign-ups**
 
-When the nginx owner gate comes off and LoreKeeper is public, **any visitor can create their own account** (email + password), same pattern as Halalit/Crocheter. **New sign-ups** toggle in Owner’s Office pauses registration without blocking existing sign-in. During owner-only beta: nginx gate + sign-ups usually **off** except your account.
+LoreKeeper is public on Odd Trove. **Any visitor can create their own account** with **Continue with Google** (spare/junk Google encouraged). Legacy email/password sign-in remains for older accounts only. **New sign-ups** toggle in Owner’s Office pauses registration without blocking existing sign-in.
 
 **Main app vs office:** You use the **same notes UI** as other writers for your own work. Owner’s Office is **admin/meta only**, like Halalit’s office vs the public reading site.
 
 **Owner email:** `nightofhonour@gmail.com` (`ODDTROVE_LOREKEEPER_OWNER_EMAIL` on server). Roadmap/todos: `lorekeeper/LOREKEEPER-ROADMAP-AND-TODO.md`.
 
-**Account sign-up copy:** Recommend **junk / throwaway email** (Halalit-style). Future **optional** LoreKeeper notifications may go to that address only if the writer opts in — not built yet; see roadmap.
+**Account sign-up copy:** Recommend a **spare / junk Google** account. Future **optional** LoreKeeper notifications may go to that address only if the writer opts in — see roadmap.
 
 ## Build notes
 

@@ -1,6 +1,6 @@
 # LoreKeeper — public launch checklist (#25)
 
-**Manual steps only.** Do not remove the nginx owner gate until you have run Phase 0, trust Ask on your usual questions, and want real sign-ups.
+Repo side is ready (hub public card, quiet beta copy, nginx gate removed in `top/nginx/oddtrove.art.conf`). Live ship still needs deploy + nginx reload + New sign-ups ON.
 
 ## Before launch
 
@@ -10,13 +10,15 @@
 - [ ] Account delete + export tested on a throwaway account (#31)
 - [ ] Owner's Office → **New sign-ups** ON when ready
 
-## Launch steps (you run)
+## Launch steps (you run / say deploy)
 
-1. Deploy latest LoreKeeper: `bash top/scripts/deploy-lorekeeper.sh` from repo root (does not restart Halalit).
-2. Edit `top/nginx/oddtrove.art.conf` — remove `auth_basic` from the `/lorekeeper/` location (or create a public location block per your nginx layout).
-3. On server: `nginx -t && systemctl reload nginx`
-4. Verify https://oddtrove.art/lorekeeper/ loads **without** the nginx password prompt.
-5. LoreKeeper **user** sign-in still required — only the outer owner gate comes off.
+1. Deploy LoreKeeper: `bash top/scripts/deploy-lorekeeper.sh` from repo root (does not restart Halalit).
+2. Deploy hub: `bash top/scripts/deploy-kids-sites.sh --site=hub` (public LoreKeeper card).
+3. Copy `top/nginx/oddtrove.art.conf` to the VPS — `/lorekeeper/` must **not** use `auth_request /hub/api/owner-check` (or `auth_basic`). Leave `/lorekeeper/api/` alone.
+4. On server: `nginx -t && systemctl reload nginx`
+5. Verify https://oddtrove.art/lorekeeper/ loads **without** hub owner redirect.
+6. LoreKeeper **user** sign-in still required — only the outer owner gate comes off.
+7. Turn **New sign-ups** ON in Owner's Office so new Google accounts can join.
 
 ## After launch
 
@@ -26,5 +28,5 @@
 
 ## Roll back
 
-- Restore nginx owner gate on `/lorekeeper/` and reload nginx.
+- Restore `auth_request /hub/api/owner-check` (+ `error_page 401 = @owner_login_redirect`) on `/lorekeeper/` and reload nginx.
 - Turn **New sign-ups** OFF in Owner's Office if needed.

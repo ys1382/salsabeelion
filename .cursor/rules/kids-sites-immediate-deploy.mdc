@@ -5,11 +5,11 @@ alwaysApply: true
 
 # Kids sites — deploy after owner OK (public paths)
 
-When **public** kids static sites change — Halalit, Crocheter, hub — **do not deploy automatically**.
+When **public** kids static sites change — Halalit, Crocheter, LoreKeeper, hub — **do not deploy automatically**.
 
-**Owner-only** (Maestro's, envDyst, Climatic Mysteries, LoreKeeper): follow **`owner-only-auto-deploy`** — verify, then deploy without asking.
+**Owner-only** (Maestro's, envDyst, Climatic Mysteries): follow **`owner-only-auto-deploy`** — verify, then deploy without asking.
 
-When **all** paths in `deploy-kids-sites.sh` change but edits are **only** under `maestrosOdyssey/www/` or `envDyst/www/`, use the owner-only rule (`--site=maestros` or `--site=envdyst` limits restarts). **LoreKeeper-only** edits use `bash top/scripts/deploy-lorekeeper.sh` — does not restart Halalit.
+When **all** paths in `deploy-kids-sites.sh` change but edits are **only** under `maestrosOdyssey/www/` or `envDyst/www/`, use the owner-only rule (`--site=maestros` or `--site=envdyst` limits restarts). **LoreKeeper-only** edits use `bash top/scripts/deploy-lorekeeper.sh` after owner OK — does not restart Halalit.
 
 Follow **`warn-before-live-user-impact`**: give a **Deploy check** before running the script.
 

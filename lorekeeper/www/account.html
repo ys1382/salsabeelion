@@ -9,7 +9,7 @@
 <body>
   <div class="lk-wrap" style="max-width:28rem">
     <p class="header-nav"><a href="https://oddtrove.art/">← Odd Trove</a></p>
-    <h1>Your account</h1>
+    <h1>Your account <span class="muted" style="font-size:0.5em;font-weight:500;vertical-align:0.18em">beta</span></h1>
     <p class="lk-lead">Your notes save to your account — private to you, not mixed with other writers.</p>
 
     <div id="signedInView" hidden>
@@ -76,7 +76,7 @@
         <p class="muted lk-section-lead">Export your notes first — deletion is permanent. Owner account cannot be deleted here.</p>
         <button type="button" class="lk-btn secondary" id="exportBeforeDeleteBtn">Download my data (JSON)</button>
         <div class="lk-field" style="margin-top:1rem">
-          <label for="deletePassword">Password</label>
+          <label for="deletePassword">Password <span class="muted">(leave blank if you use Google)</span></label>
           <input type="password" id="deletePassword" autocomplete="current-password" />
         </div>
         <div class="lk-field">
@@ -95,7 +95,8 @@
     <div id="authView">
       <p class="lk-privacy">
         New LoreKeeper accounts use <strong>Google</strong>. A spare or junk Google account is a nice fit for Odd Trove
-        if you’d rather keep this separate from your main inbox — up to you.
+        if you’d rather keep this separate from your main inbox — up to you. It uses that Google account directly,
+        so there is no separate LoreKeeper password to make.
       </p>
       <p style="margin:0 0 1rem">
         <a class="lk-btn" id="googleContinueBtn" href="#" style="display:block;text-align:center;text-decoration:none">Continue with Google</a>

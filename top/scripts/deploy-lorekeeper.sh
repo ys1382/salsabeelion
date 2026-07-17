@@ -224,4 +224,4 @@ REMOTE
 
 echo ""
 echo "Done. LoreKeeper only — Halalit and other sites were not restarted."
-echo "LoreKeeper: https://oddtrove.art/lorekeeper/ (owner gate)"
+echo "LoreKeeper: https://oddtrove.art/lorekeeper/ (LoreKeeper account sign-in required)"

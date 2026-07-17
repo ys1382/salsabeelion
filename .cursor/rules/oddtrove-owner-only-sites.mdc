@@ -1,19 +1,20 @@
 ---
-description: oddtrove.art — Halalit and Crocheter public; other kids paths owner-only
+description: oddtrove.art — Halalit, Crocheter, and LoreKeeper public; other kids paths owner-only
 alwaysApply: true
 ---
 
 # Odd Trove — public vs owner-only
 
-## Public (no login)
+## Public (no nginx owner gate)
 
-- https://oddtrove.art/ → site hub (HalaLit + Crocheter links)
+- https://oddtrove.art/ → site hub (HalaLit + Crocheter + LoreKeeper links)
 - https://oddtrove.art/halalit/
 - https://oddtrove.art/crocheter/ → **account signup/sign-in required** (app gate; hub links to signup)
+- https://oddtrove.art/lorekeeper/ → **LoreKeeper account sign-in required** (app gate; quiet beta; Google for new accounts)
 
-## Owner-only (HTTP basic auth on nginx)
+## Owner-only (hub cookie / owner gate on nginx)
 
-- `/maestros/`, `/envdyst/`, `/climatic-mysteries/`, `/lorekeeper/`
+- `/maestros/`, `/envdyst/`, `/climatic-mysteries/`, `/cleanscreen/`, `/halalyrics/`
 - Directory hub at `/` is **not** served (404 except root redirect to Halalit)
 
 ## When the owner asks to open a private site (envDyst, Maestro's, Climatic Mysteries)

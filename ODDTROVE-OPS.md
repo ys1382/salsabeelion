@@ -40,7 +40,7 @@ Nginx config (`top/nginx/oddtrove.art.conf`) is **not** applied by deploy script
 | `/crocheter/api/` | 8076 | Crocheter auth (not started by deploy script — must already run on VPS) |
 | `/maestros/` | 8071 | Owner hub cookie |
 | `/envdyst/` | 8072 | Owner hub cookie |
-| `/lorekeeper/` | 8079 | Owner hub cookie |
+| `/lorekeeper/` | 8079 | Public (LoreKeeper account sign-in in JS) |
 | `/lorekeeper/api/` | 8080 | LoreKeeper API |
 | `/cleanscreen/` | 8081 | Owner hub cookie |
 | `/cleanscreen/api/` | 8082 | CleanScreen search API |
@@ -171,7 +171,7 @@ See also: `ODDTROVE-CAPABILITIES.md`, `.cursor/rules/owner-only-auto-deploy.mdc`
 
 9. **Hard-refresh once after deploy** if a page looks stuck (often a short 502 blip).
 10. **Open LoreKeeper home first** — `index.html` is light; `doc.html` loads the editor stack.
-11. **Hub owner sign-in once** — `oddtrove.art/?owner=1` before `/lorekeeper/` to avoid redirect loops.
+11. **LoreKeeper is public** — no hub owner sign-in needed for `/lorekeeper/`; unsigned visitors land on the LoreKeeper account page.
 
 ### Slow SSH troubleshooting
 

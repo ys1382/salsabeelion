@@ -2,7 +2,7 @@
 
 Agents: read this **before** building. If the ask conflicts with a row here, say so plainly — do not keep retrying the same dead end.
 
-Last updated: 2026-06-26
+Last updated: 2026-07-16
 
 ---
 
@@ -42,7 +42,7 @@ Last updated: 2026-06-26
 | Static HTML/CSS/JS sites | Most features must run in the browser or call public APIs. No Postgres, no always-on app server for Halalit/Maestro's/envDyst. |
 | Deploy via SSH + rsync | Needs working SSH to `root@157.230.130.12`. LoreKeeper-only: `bash top/scripts/deploy-lorekeeper.sh`. Full sync: `bash top/scripts/deploy-kids-sites.sh`. See `ODDTROVE-OPS.md`. |
 | Python static HTTPS on localhost | Backends bind **127.0.0.1** only; nginx on `oddtrove.art` proxies to them. |
-| Nginx + basic auth | Maestro's, envDyst, and Climatic Mysteries are **owner-only** unless the owner explicitly asks to go public. |
+| Nginx + basic auth / hub cookie | Maestro's, envDyst, Climatic Mysteries (and other owner betas) are **owner-only** unless the owner explicitly asks to go public. LoreKeeper is **public** (account gate). |
 | Owner session API | `top/_shared/hub_owner_api.py` — owner sign-in cookie for hub paths; not a general user database. |
 
 **Deploy cannot run** if SSH is down, keys missing, or `halalit/www` is absent from this checkout (script leaves server copy as-is).
@@ -119,22 +119,22 @@ Last updated: 2026-06-26
 
 ---
 
-### LoreKeeper (`lorekeeper/www/` → owner-only `/lorekeeper/`)
+### LoreKeeper (`lorekeeper/www/` → public `/lorekeeper/` — beta)
 
-**Is:** Private notes for scatter-plotted writers — human-written entries (species, places, factions, etc.) saved per account. No AI-generated content.
+**Is:** Private notes for scatter-plotted writers — human-written entries (species, places, factions, etc.) saved per account. No AI-generated content. Public on Odd Trove with a quiet beta mark; LoreKeeper account sign-in still required.
 
 **Can do now:**
 - Sign-in required; notes on server per account (`lorekeeper/lorekeeper_api.py`)
+- Google for new accounts (spare/junk Google OK; no separate LoreKeeper password)
 - Entry list, edit, search, export/import JSON
 - **Ask LoreKeeper** — recall and restate relationships from your own entries (local only; nothing sent to outside AI)
 - Owner’s Office — account list, sign-up switch, private feedback (never other writers’ note text)
-- Hub **Owner sites** link (visible only after hub owner sign-in)
+- Hub public link (same list as Halalit / Crocheter)
 
 **Cannot do without new work:**
-- Public access (nginx owner gate still on)
 - Owner reading another account’s entries (by design)
 
-**Deploy:** `bash top/scripts/deploy-lorekeeper.sh` for LoreKeeper-only (does **not** restart Halalit). Full fleet sync: `deploy-kids-sites.sh`. Nginx: `/lorekeeper/` and `/lorekeeper/api/` in `top/nginx/oddtrove.art.conf`.
+**Deploy:** Treat as **public** (ask before deploy). LoreKeeper-only: `bash top/scripts/deploy-lorekeeper.sh` (does **not** restart Halalit). Hub link: `deploy-kids-sites.sh --site=hub`. Nginx: `/lorekeeper/` and `/lorekeeper/api/` in `top/nginx/oddtrove.art.conf` (reload nginx separately after gate changes).
 
 ---
 
@@ -187,7 +187,7 @@ Last updated: 2026-06-26
 
 ### Hub (`top/directory/www/`)
 
-**Is:** Link hub on oddtrove.art root (Halalit + Crocheter public entry).
+**Is:** Link hub on oddtrove.art root (Halalit + Crocheter + LoreKeeper public entry).
 
 **Not served** as a full directory listing on production nginx except root redirect behavior — see `oddtrove-owner-only-sites` rule.
 

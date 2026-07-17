@@ -14,22 +14,18 @@ When the change is **only** for owner-only sites — not public reader paths —
 - **Maestro's Odyssey** — `maestrosOdyssey/` → `/maestros/`
 - **envDyst** — `envDyst/` → `/envdyst/`
 - **Climatic Mysteries** — `climaticMysteries/` → `/climatic-mysteries/`
-- **LoreKeeper** — `lorekeeper/www/`, `lorekeeper/lorekeeper_api.py` (and related recall modules) → `/lorekeeper/`
 
 ## Before deploy (required)
 
 1. **Sanity check** — quick local test or browser pass for gameplay/UI; read the diff if it's logic-only. Do **not** deploy if broken or untested.
 2. **MO map/door/spawn** — follow **`maestros-odyssey-feel-pass`** in the browser before deploy.
 3. **Data safety** — do **not** auto-deploy if the change touches storage keys, migration that could empty `bodyHtml`/notes, server data paths, or deletes owner content without explicit OK in that conversation.
-4. **Brief deploy check in chat** — one line: owner-only, won't touch reader shelves/progress or saved LoreKeeper docs; LoreKeeper-only deploy does **not** restart Halalit.
+4. **Brief deploy check in chat** — one line: owner-only, won't touch reader shelves/progress.
 
 ## Deploy commands (repo root)
 
-- **LoreKeeper only** (preferred for `lorekeeper/` edits): `bash top/scripts/deploy-lorekeeper.sh` — restarts ports 8079/8080 only; Halalit and hub stay up.
 - Maestro's, envDyst (full kids script): `bash top/scripts/deploy-kids-sites.sh` or `bash top/scripts/deploy-kids-sites.sh --site=maestros` / `--site=envdyst`
 - Climatic Mysteries only: `bash climaticMysteries/scripts/deploy.sh`
-
-**LoreKeeper-only changes** must use `deploy-lorekeeper.sh`, not `deploy-kids-sites.sh`, unless the same task also changed hub, Halalit, Crocheter, or another kids path.
 
 Run deploy **in the same turn** after the check passes.
 
@@ -37,6 +33,7 @@ Run deploy **in the same turn** after the check passes.
 
 - **Halalit** — vetting, shelves, Book Quest, progress, `halalit/www/`
 - **Crocheter** — accounts, sync, `crocheter/www/`
+- **LoreKeeper** — public beta; `lorekeeper/www/`, `lorekeeper/lorekeeper_api.py` — use `bash top/scripts/deploy-lorekeeper.sh` after owner OK (does not restart Halalit)
 - **Mixed change** — owner-only **and** public paths in one task → follow **`warn-before-live-user-impact`**; get OK for the public part
 - **High-impact public** — nginx routes, auth gates, localStorage keys readers rely on
 - **Any change that could wipe or lose owner work** — migrations, storage key renames, destructive data scripts

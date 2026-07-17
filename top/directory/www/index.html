@@ -69,6 +69,15 @@
       color: var(--accent);
       margin-bottom: 0.35rem;
     }
+    .beta-tag {
+      display: inline-block;
+      margin-left: 0.35rem;
+      color: var(--muted);
+      font-size: 0.72rem;
+      font-weight: 500;
+      letter-spacing: 0.03em;
+      vertical-align: 0.1em;
+    }
     a.site.owner strong { color: var(--ok); }
     a.site span.desc {
       display: block;
@@ -164,7 +173,7 @@
 </head>
 <body>
   <h1>Odd Trove</h1>
-  <p class="lead">Family-friendly reading and cozy crochet—pick a site to visit.</p>
+  <p class="lead">Family-friendly reading, cozy crochet, and private writing tools—pick a site to visit.</p>
   <ul id="publicSites">
     <li>
       <a class="site" href="/halalit/">
@@ -176,6 +185,12 @@
       <a class="site" href="/crocheter/account.html?signup=1">
         <strong>Cozy Crocheter’s Sanctum</strong>
         <span class="desc">Pattern library with steps, focus mode, and stitch help. Create a free account to enter.</span>
+      </a>
+    </li>
+    <li>
+      <a class="site" href="/lorekeeper/account.html">
+        <strong>LoreKeeper <span class="beta-tag">beta</span></strong>
+        <span class="desc">A private writing space for notes and documents. Continue with Google—no separate LoreKeeper password needed.</span>
       </a>
     </li>
   </ul>
@@ -199,12 +214,6 @@
         <a class="site owner" href="/envdyst/">
           <strong>My Change, Our Change</strong>
           <span class="desc">Atmospheric scroll experience—prologue vs muted world.</span>
-        </a>
-      </li>
-      <li>
-        <a class="site owner" href="/lorekeeper/">
-          <strong>LoreKeeper</strong>
-          <span class="desc">Private notes for scatter-plotted writers—your lore, species, and jumbled scraps, saved to your account.</span>
         </a>
       </li>
       <li>
