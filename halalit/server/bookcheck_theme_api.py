@@ -76,7 +76,8 @@ THEME_SPECS = [
         "lgbtq",
         "ANY LGBTQ+ identity or relationship in the story (main plot OR supporting cast): gay, lesbian, "
         "bisexual, pansexual, queer, transgender, non-binary, gender-fluid, gender-nonconforming, "
-        "same-sex parents/couples, they/them representation, or LGBTQ advocacy. "
+        "same-sex parents/couples, same-sex or same-gender romance/crush/dating (including gentle MG/YA graphic novels "
+        "that never use the word LGBTQ), they/them representation, or LGBTQ advocacy. "
         "Do NOT mark present for forced/magic gender-change alone when there is no affirming LGBTQ identity arc "
         "(use forced_gender_magic instead).",
     ),
@@ -108,7 +109,7 @@ THEME_IDS = [t[0] for t in THEME_SPECS]
 LGBTQ_EVIDENCE_RE = re.compile(
     r"\b(?:lgbtq\+?|lesbian|gay\b|homosexual|queer\b|bisexual|pansexual|asexual|aromantic|"
     r"transgender|non[- ]?binary|gender[- ]fluid|gender[- ]nonconforming|gender[- ]queer|"
-    r"two[- ]moms?|two[- ]dads?|two[- ]fathers?|two[- ]mothers?|same[- ]sex|"
+    r"two[- ]moms?|two[- ]dads?|two[- ]fathers?|two[- ]mothers?|same[- ]sex|same[- ]gender|"
     r"they/them|enby|sapphic|mlm\b|wlw\b)\b",
     re.IGNORECASE,
 )
@@ -133,8 +134,15 @@ PROJECTION_ONLY_RE = re.compile(
 
 EXPLICIT_LGBTQ_IN_STORY_RE = re.compile(
     r"\b(?:wouldn['’]t matter if (?:she|he|they) were attracted|attracted to (?:her|his|their) (?:female|male|same[- ]sex)|"
-    r"same[- ]sex (?:crush|attraction|couple|relationship|parents|marriage)|two moms?|two dads?|two mothers?|two fathers?|"
+    r"same[- ]sex (?:crush|attraction|couple|relationship|parents|marriage|romance|dating)|"
+    r"same[- ]gender (?:crush|attraction|couple|relationship|romance|dating)|"
+    r"two moms?|two dads?|two mothers?|two fathers?|"
     r"(?:openly )?(?:gay|lesbian|bisexual|queer|transgender|non[- ]?binary) character|"
+    r"(?:lesbian|gay|queer|sapphic|wlw|mlm)\s+(?:romance|relationship|couple|crush|subplot)|"
+    r"two (?:girls|boys|women|men).{0,72}(?:romance|romantic|crush|dating|couple|relationship)|"
+    r"(?:romance|romantic(?: relationship)?|crush|dating|couple).{0,48}(?:between|with) (?:two )?(?:girls|boys|women|men)|"
+    r"(?:girl|girls|women|woman|female).{0,40}(?:romance|romantic|crush|dating|couple).{0,40}(?:girl|girls|women|woman|female)|"
+    r"(?:boy|boys|men|man|male).{0,40}(?:romance|romantic|crush|dating|couple).{0,40}(?:boy|boys|men|man|male)|"
     r"don['’]t assume (?:she|he|they)['’]?s straight)\b",
     re.IGNORECASE,
 )
@@ -383,17 +391,20 @@ Base your answer on known plot summaries, professional reviews, series reputatio
 If review snippets are provided above, weigh them heavily. If unsure for most themes, use present false and confidence unknown.
 
 CRITICAL — theme "lgbtq" (read carefully):
-- Mark present TRUE only for confirmed on-page representation—not fan speculation alone.
+- Mark present TRUE for confirmed on-page representation—not fan speculation alone.
 - Counts as present: gay/lesbian/bi/pan/ace/aro/queer characters; transgender or non-binary characters;
   same-sex parents or couples; they/them used as character identity; in-story dialogue naming same-sex
-  attraction (e.g. a stepbrother saying it would not matter if the protagonist were attracted to a female friend).
+  attraction; AND on-page same-sex / same-gender romance, crush, dating, or couple (including soft all-ages
+  graphic novels where two girls or two boys are a romantic pair even if reviewers never say "LGBTQ").
+- If romantic_tension is TRUE because two same-gender characters date/crush/pair romantically, lgbtq.present
+  MUST also be TRUE—do not file that only under romantic_tension.
 - Mark present FALSE for: fan shipping, "could be read as queer," subtext-only Goodreads/review speculation,
-  "I hope they make them gay," ambiguous close friendship with no on-page LGBTQ identity or attraction named,
+  "I hope they make them gay," ambiguous close friendship with no on-page romantic/identity beat named,
   or "not openly LGBTQ" with no explicit in-story beat.
 - Mark present FALSE for forced/magic gender-change alone (villain cursed, body-theft, magical sex swap) when there is
   no affirming LGBTQ identity arc—use forced_gender_magic instead.
 - Do NOT require the main plot to center on LGBTQ. One supporting character or one explicit line is enough.
-- If you mention confirmed on-page LGBTQ in brief or seriesNote, lgbtq.present MUST be true.
+- If you mention confirmed on-page LGBTQ or same-sex romance in brief or seriesNote, lgbtq.present MUST be true.
 - If only reader projection/subtext is discussed, lgbtq.present MUST be false and say so in brief.
 
 CRITICAL — theme "forced_gender_magic":
@@ -484,8 +495,9 @@ def enforce_lgbtq_theme(themes_out: list[dict[str, Any]], series_note: str) -> l
         row = {"id": "lgbtq", "present": True, "confidence": "medium", "brief": ""}
         themes_out.append(row)
     row["present"] = True
-    if not row.get("brief"):
-        row["brief"] = "LGBTQ representation noted in scan text."
+    brief_now = str(row.get("brief") or "")
+    if not brief_now or LGBTQ_ABSENT_RE.search(brief_now) or theme_brief_denies_presence("lgbtq", brief_now):
+        row["brief"] = "Same-sex or LGBTQ representation noted in scan text."
     if row.get("confidence") in ("unknown", "low", ""):
         row["confidence"] = "medium"
     return themes_out

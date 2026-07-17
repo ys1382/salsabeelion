@@ -14,7 +14,7 @@
   };
 
   var LGBTQ_EVIDENCE_RE =
-    /\b(?:lgbtq\+?|lesbian|gay\b|homosexual|queer\b|bisexual|pansexual|asexual|aromantic|transgender|non[- ]?binary|gender[- ]fluid|gender[- ]nonconforming|they\/them|two[- ]moms?|two[- ]dads?|same[- ]sex|enby|sapphic)\b/i;
+    /\b(?:lgbtq\+?|lesbian|gay\b|homosexual|queer\b|bisexual|pansexual|asexual|aromantic|transgender|non[- ]?binary|gender[- ]fluid|gender[- ]nonconforming|they\/them|two[- ]moms?|two[- ]dads?|same[- ]sex|same[- ]gender|enby|sapphic|wlw\b|mlm\b)\b/i;
 
   var LGBTQ_ABSENT_RE =
     /\bno (?:explicit )?(?:mention of )?lgbtq|no lgbtq|without (?:explicit )?lgbtq|(?:do|does) not (?:contain|include|feature|indicate|show|depict)|not indicate any lgbtq|no (?:gay|lesbian|queer|transgender|non[- ]binary)\b|(?:no|not) confirmed on[- ]page(?:\s+(?:lgbtq|representation|lgbtq\+?\s*representation))?|reader speculation or subtext only|not confirmed on[- ]page lgbtq|(?:does|do) not feature confirmed on[- ]page|not feature confirmed on[- ]page|heterosexual romance\b[^.!?]{0,96}\b(?:does|do) not feature\b/i;
@@ -23,7 +23,7 @@
     /\b(?:could be read as|read as queer|some readers?|fans? speculate|fan theor(?:y|ies)|shipping|subtext only|not explicitly|no explicit|may be queer|hope (?:for|they)|projecting|queer coding|wlw subtext|sapphic subtext|ambiguous friendship|close friendship between girls|fangirl(?:ing)? over|not openly lgbtq|none of the characters is openly)\b/i;
 
   var EXPLICIT_LGBTQ_IN_STORY_RE =
-    /\b(?:wouldn['’]t matter if (?:she|he|they) were attracted|attracted to (?:her|his|their) (?:female|male|same[- ]sex)|same[- ]sex (?:crush|attraction|couple|relationship|parents|marriage)|two moms?|two dads?|two mothers?|two fathers?|(?:openly )?(?:gay|lesbian|bisexual|queer|transgender|non[- ]?binary) character|don['’]t assume (?:she|he|they)['’]?s straight)\b/i;
+    /\b(?:wouldn['’]t matter if (?:she|he|they) were attracted|attracted to (?:her|his|their) (?:female|male|same[- ]sex)|same[- ]sex (?:crush|attraction|couple|relationship|parents|marriage|romance|dating)|same[- ]gender (?:crush|attraction|couple|relationship|romance|dating)|two moms?|two dads?|two mothers?|two fathers?|(?:openly )?(?:gay|lesbian|bisexual|queer|transgender|non[- ]?binary) character|(?:lesbian|gay|queer|sapphic|wlw|mlm)\s+(?:romance|relationship|couple|crush|subplot)|two (?:girls|boys|women|men).{0,72}(?:romance|romantic|crush|dating|couple|relationship)|(?:romance|romantic(?: relationship)?|crush|dating|couple).{0,48}(?:between|with) (?:two )?(?:girls|boys|women|men)|don['’]t assume (?:she|he|they)['’]?s straight)\b/i;
 
   var FORCED_GENDER_MAGIC_RE =
     /\b(?:forced|magic(?:al)?|curse(?:d)?|spell|stolen|steal(?:s|ing)?|disastrous|body[- ]swap|gender[- ](?:change|swap|transform)|transformed into (?:a )?(?:man|woman|girl|boy)|becomes? (?:a )?(?:woman|man|girl|boy) through)\b/i;

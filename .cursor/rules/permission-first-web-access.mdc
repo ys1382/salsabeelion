@@ -1,0 +1,14 @@
+---
+description: Respect anti-bot barriers and help the owner obtain approved access
+alwaysApply: true
+---
+
+# Permission-first web access
+
+- Never assume the owner wants invasive scraping or wants to bypass a site's wishes.
+- Treat CAPTCHAs, bot blocks, robots.txt restrictions, access denials, login walls, and explicit anti-bot terms as a stop sign.
+- Do not evade detection, rotate identities, disguise automation, or work around those controls.
+- Prefer official APIs, licensed datasets, feeds, exports, documented integrations, and approved bot programs.
+- If automated access is denied or unclear, tell the owner plainly. Then explain how to seek approval: who to contact, what permission or API access to request, how to register the bot, and what honest bot identity, user agent, rate limits, and data-use details to offer.
+- If a site approves only identified bots, help the owner apply and configure their bot accordingly.
+- If approval cannot be obtained, recommend a permitted alternative source instead of bypassing the restriction.

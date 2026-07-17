@@ -1,4 +1,4 @@
-"""Web review snippets for Bookcheck theme scans — DuckDuckGo lite by default, Brave when keyed."""
+"""Web review snippets for Bookcheck theme scans — Brave when keyed, DuckDuckGo lite fallback."""
 from __future__ import annotations
 
 import html as html_lib
@@ -13,8 +13,12 @@ from typing import Any
 USER_AGENT = "HalalitBookcheck/1.0 (Odd Trove; family book guide)"
 
 
+def _brave_key() -> str:
+    return os.environ.get("BRAVE_SEARCH_API_KEY", "").strip()
+
+
 def _brave_search(query: str, count: int = 20) -> tuple[list[dict[str, str]], str]:
-    key = os.environ.get("BRAVE_SEARCH_API_KEY", "").strip()
+    key = _brave_key()
     if not key:
         raise RuntimeError("brave_key_missing")
     params = urllib.parse.urlencode({"q": query, "count": str(count)})
@@ -120,9 +124,18 @@ def _ddg_lite_search(query: str, count: int = 20) -> tuple[list[dict[str, str]],
 
 
 def web_search(query: str, count: int = 20) -> tuple[list[dict[str, str]], str]:
-    if os.environ.get("BRAVE_SEARCH_API_KEY", "").strip():
-        return _brave_search(query, count=count)
-    return _ddg_lite_search(query, count=count)
+    """Prefer Brave (official API). Fall back to DuckDuckGo lite if Brave fails or is unkeyed."""
+    errors: list[str] = []
+    if _brave_key():
+        try:
+            return _brave_search(query, count=count)
+        except Exception as e:
+            errors.append(f"brave:{str(e)[:120]}")
+    try:
+        return _ddg_lite_search(query, count=count)
+    except Exception as e:
+        errors.append(f"ddg:{str(e)[:120]}")
+        raise RuntimeError("; ".join(errors) or "web_search_failed") from e
 
 
 def _review_queries(title: str, author: str) -> list[str]:
@@ -133,8 +146,10 @@ def _review_queries(title: str, author: str) -> list[str]:
         byline += f" {author}"
     return [
         f"{byline} book review content parents",
-        f"{byline} book review profanity OR language OR LGBTQ OR romance OR violence",
+        f"{byline} book review LGBTQ OR queer OR sapphic OR \"same-sex\" OR lesbian OR gay",
+        f"{byline} book review profanity OR language OR romance OR violence",
         f"{byline} parents guide content warnings",
+        f"{byline} Common Sense Media OR Book Riot OR Kirkus review",
     ]
 
 
@@ -142,8 +157,8 @@ def fetch_review_snippets(
     title: str,
     author: str,
     *,
-    max_results: int = 8,
-    max_chars: int = 3500,
+    max_results: int = 10,
+    max_chars: int = 4200,
 ) -> dict[str, Any]:
     """Return review snippets from web search; never raises — scan continues on failure."""
     title = (title or "").strip()
@@ -163,6 +178,8 @@ def fetch_review_snippets(
             rows, used_provider = web_search(query, count=per_query)
             if not provider:
                 provider = used_provider
+            elif used_provider and used_provider not in str(provider):
+                provider = f"{provider}+{used_provider}"
             for row in rows:
                 url = (row.get("url") or "").strip()
                 if not url or url in seen_urls:
