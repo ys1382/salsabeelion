@@ -542,6 +542,31 @@
     var askSources = document.getElementById("askSources");
     if (!askBtn || !askQuestion) return;
 
+    var ASK_CONTINUE_KEY = "lk-ask-continue";
+
+    function loadAskContinue() {
+      try {
+        var raw = global.sessionStorage.getItem(ASK_CONTINUE_KEY);
+        if (!raw) return null;
+        var parsed = JSON.parse(raw);
+        return parsed && typeof parsed === "object" ? parsed : null;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function saveAskContinue(cont) {
+      try {
+        if (cont && typeof cont === "object") {
+          global.sessionStorage.setItem(ASK_CONTINUE_KEY, JSON.stringify(cont));
+        } else {
+          global.sessionStorage.removeItem(ASK_CONTINUE_KEY);
+        }
+      } catch (e) {
+        /* ignore */
+      }
+    }
+
     askBtn.addEventListener("click", function () {
       var q = askQuestion.value.trim();
       if (!q) {
@@ -560,16 +585,26 @@
           askStatus.textContent = "Still searching your notes — complex questions can take a minute…";
         }
       }, 12000);
-      LoreKeeperRecall.ask(q, { includeDocuments: false })
+      var askOpts = { includeDocuments: false };
+      var pending = loadAskContinue();
+      if (pending) askOpts.askContinue = pending;
+      LoreKeeperRecall.ask(q, askOpts)
         .then(function (res) {
           if (!res || !res.ok) {
             askStatus.textContent = LoreKeeperRecall.friendlyError(res && res.error);
             askStatus.className = "lk-status err";
             return;
           }
+          if (res.askContinue && typeof res.askContinue === "object") {
+            saveAskContinue(res.askContinue);
+          } else {
+            saveAskContinue(null);
+          }
           askStatus.textContent = res.syncWarning || "From your saved writing.";
           askStatus.className = "lk-status ok";
-          if (res.recallScope === "floaters") {
+          if (res.askContinue) {
+            askStatus.textContent = "Your turn — reply in Ask to narrow floaters.";
+          } else if (res.recallScope === "floaters") {
             askStatus.textContent = "From your floating / unspecified notes only.";
           } else if (res.materialState === "summarizable") {
             askStatus.textContent = "Summary from your notes and drafts.";

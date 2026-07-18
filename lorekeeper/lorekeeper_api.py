@@ -892,6 +892,11 @@ class Handler(BaseHTTPRequestHandler):
                 recall_mode = "full"
             scope = body.get("scope") if isinstance(body.get("scope"), dict) else None
             spot_check = bool(body.get("spotCheck"))
+            ask_continue = (
+                body.get("askContinue")
+                if isinstance(body.get("askContinue"), dict)
+                else None
+            )
             try:
                 result = recall_from_user_data(
                     question,
@@ -901,6 +906,7 @@ class Handler(BaseHTTPRequestHandler):
                     mode=recall_mode,
                     scope=scope,
                     spot_check=spot_check,
+                    ask_continue=ask_continue,
                 )
             except Exception as exc:
                 import sys

@@ -27,6 +27,9 @@
     if (options.scope && typeof options.scope === "object") {
       payload.scope = options.scope;
     }
+    if (options.askContinue && typeof options.askContinue === "object") {
+      payload.askContinue = options.askContinue;
+    }
     if (useServerCorpus(options)) {
       return payload;
     }

@@ -56,11 +56,10 @@ from lorekeeper_reliability import (
     sources_from_ranked,
 )
 from lorekeeper_work_membership import (
-    compose_floaters_digest,
     filter_entries_floaters_only,
-    is_floaters_inventory_question,
     is_floaters_question,
 )
+from lorekeeper_floaters_ask import answer_floaters_ask, is_floaters_followup_context
 
 ENTRIES_KEY = "lorekeeper_entries_v1"
 DOCUMENTS_KEY = "lorekeeper_documents_v1"
@@ -611,6 +610,7 @@ def recall_from_user_data(
     mode: str = "full",
     scope: dict[str, Any] | None = None,
     spot_check: bool = False,
+    ask_continue: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     question = (question or "").strip()
     if not question:
@@ -624,6 +624,9 @@ def recall_from_user_data(
         if payload.get("ok"):
             if floaters_only:
                 payload.setdefault("recallScope", "floaters")
+                # Floater digests / clarify turns are already gathered lists — don't trim.
+                if payload.get("askContinue") or payload.get("questionKind") == "list":
+                    return payload
             return focus_ask_response(question, payload, spot_check=spot_check)
         return payload
 
@@ -645,7 +648,14 @@ def recall_from_user_data(
 
     entries = _all_entries(data)
     recall_mode = "brief" if (mode or "").strip().lower() == "brief" else "full"
-    floaters_only = is_floaters_question(question)
+    continue_ctx = ask_continue if isinstance(ask_continue, dict) else None
+    if continue_ctx is None and isinstance(scope, dict):
+        raw_cont = scope.get("askContinue")
+        if isinstance(raw_cont, dict):
+            continue_ctx = raw_cont
+    floaters_only = is_floaters_question(question) or is_floaters_followup_context(
+        continue_ctx
+    )
 
     section_hints = extract_section_hints(question)
     if section_hints and not floaters_only:
@@ -668,14 +678,15 @@ def recall_from_user_data(
 
     if floaters_only:
         # Floaters Ask: never mix in work-tagged notes; ignore doc/work scope.
-        entries = filter_entries_floaters_only(entries)
-        scope_hints: set[str] = set()
-        scope_strict = False
-        if is_floaters_inventory_question(question):
-            answer, source_ids = compose_floaters_digest(entries)
+        floater_entries = filter_entries_floaters_only(entries)
+        floater_hit = answer_floaters_ask(
+            question, entries, ask_continue=continue_ctx
+        )
+        if floater_hit is not None:
+            source_ids = list(floater_hit.get("sourceIds") or [])
             ranked_rows = []
             for eid in source_ids:
-                for entry in entries:
+                for entry in floater_entries:
                     if str(entry.get("id") or "") != eid:
                         continue
                     ranked_rows.append(
@@ -691,21 +702,27 @@ def recall_from_user_data(
                         }
                     )
                     break
-            material_state: Any = (
+            material_state = floater_hit.get("materialState") or (
                 "summarizable" if source_ids else "nothing_saved"
             )
-            return _finish({
+            payload = {
                 "ok": True,
-                "answer": answer,
+                "answer": floater_hit.get("answer") or "",
                 "sources": sources_from_ranked(ranked_rows, material_state),
                 "materialState": material_state,
                 "mode": recall_mode,
-                "questionKind": "list",
+                "questionKind": floater_hit.get("questionKind") or "list",
                 "recallVersion": RECALL_VERSION,
                 "recallEngine": "local",
                 "recallScope": "floaters",
-                "entryCount": len(entries),
-            })
+                "entryCount": len(floater_entries),
+            }
+            if "askContinue" in floater_hit:
+                payload["askContinue"] = floater_hit.get("askContinue")
+            return _finish(payload)
+        entries = floater_entries
+        scope_hints: set[str] = set()
+        scope_strict = False
     elif scope_work or scope_doc_id:
         entries, scope_hints, scope_strict = filter_entries_by_recall_scope(
             entries,

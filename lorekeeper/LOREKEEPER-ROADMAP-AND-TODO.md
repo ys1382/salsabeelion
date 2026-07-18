@@ -284,6 +284,7 @@ Run **one row at a time** in Cursor. Don’t skip Phase 0 — it costs nothing a
 ### Floaters-only Ask (shipped 2026-07-17)
 
 - [x] **Ask floating / unspecified pile** — phrasing like “floating ideas,” “unspecified notes,” “jumbled ideas”; lists only unassigned notes; never mixes in work-tagged notes; character Ask inside floaters stays in that pile
+- [x] **Clarify + narrow** — large vague floater Ask asks what to gather (topic / everything / no-clash piles); follow-up gathers notes only (no “what you meant” narration); boy-vs-girl protagonist scraps shown as separate piles
 
 ### Draft vs notes — dual Ask + doc cadence (shipped 2026-07-13)
 
