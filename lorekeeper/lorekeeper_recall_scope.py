@@ -149,6 +149,7 @@ def check_work_disambiguation(
     entries: list[dict[str, Any]],
     *,
     scope_work: str = "",
+    scope_document_id: str = "",
     strict_work: bool = False,
 ) -> str | None:
     """Return a clarifying answer when work scope is ambiguous (#35, #37)."""
@@ -157,7 +158,9 @@ def check_work_disambiguation(
         strict_work
         or work_named_in_question(question, known_works=known_works, entries=entries)
         or scope_work.strip()
+        or str(scope_document_id or "").strip()
     ):
+        # Doc Ask (or named work) already pinned the context — never ask which project.
         return None
 
     targets = character_targets(question)

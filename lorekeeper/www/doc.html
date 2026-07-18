@@ -184,21 +184,21 @@
 
           <aside class="lk-doc-sidebar lk-panel lk-doc-ask" id="docAskPanel" role="tabpanel" aria-labelledby="docSidebarTabAsk" hidden>
             <p class="lk-panel-title">Ask LoreKeeper</p>
-            <p class="muted lk-side-hint">Same recall as home — scoped to this project while you write.</p>
+            <p class="muted lk-side-hint">Assumes this document — no “which project?” unless you widen the search.</p>
             <fieldset class="lk-doc-ask-scope">
               <legend class="lk-doc-ask-scope-legend">Search in</legend>
               <label class="lk-check">
-                <input type="radio" name="docAskScope" value="work" checked />
-                This work <span class="muted">(notes + documents)</span>
+                <input type="radio" name="docAskScope" value="document" checked />
+                This document only
               </label>
               <label class="lk-check">
-                <input type="radio" name="docAskScope" value="document" />
-                This document only
+                <input type="radio" name="docAskScope" value="work" />
+                This work <span class="muted">(notes + documents)</span>
               </label>
             </fieldset>
             <div class="lk-field">
               <label for="docAskQuestion">Your question</label>
-              <textarea id="docAskQuestion" rows="4" placeholder="e.g. In [work], who is Character A?"></textarea>
+              <textarea id="docAskQuestion" rows="4" placeholder="e.g. What does the protagonist do next?"></textarea>
             </div>
             <div class="lk-toolbar lk-ask-toolbar">
               <button type="button" class="lk-btn" id="docAskBtn">Ask</button>

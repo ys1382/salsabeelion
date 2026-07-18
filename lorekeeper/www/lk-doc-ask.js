@@ -14,13 +14,19 @@
     var doc = getDoc ? getDoc() : null;
     var workEl = document.getElementById("docWork");
     var modeEl = document.querySelector('input[name="docAskScope"]:checked');
+    var mode = (modeEl && modeEl.value) || "document";
     var work =
       (doc && doc.workTag) ||
       (workEl && workEl.value.trim()) ||
-      (doc && doc.title) ||
       "";
+    // Document Ask always binds to the open doc. Title is not a work tag —
+    // without a real work tag, fall back to document-only so we never search
+    // the whole account or ask “which project?”
+    if (mode === "work" && !work && doc && doc.id) {
+      mode = "document";
+    }
     return {
-      mode: (modeEl && modeEl.value) || "work",
+      mode: mode,
       workTitle: work,
       documentId: doc && doc.id,
     };

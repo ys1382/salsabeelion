@@ -706,7 +706,7 @@ def recall_from_user_data(
                 "recallScope": "floaters",
                 "entryCount": len(entries),
             })
-    elif scope_work or (scope_mode == "document" and scope_doc_id):
+    elif scope_work or scope_doc_id:
         entries, scope_hints, scope_strict = filter_entries_by_recall_scope(
             entries,
             work_title=scope_work,
@@ -745,13 +745,20 @@ def recall_from_user_data(
             extract_work_hints(question, entries), known_works
         )
         strict_work = bool(explicit)
+        # Document-scoped Ask is always strict, even with an empty work_hints set.
+        if scope_doc_id and scope_strict:
+            strict_work = True
         if scope_hints:
             work_hints = set(scope_hints)
-            strict_work = scope_strict
+            strict_work = scope_strict or bool(scope_doc_id)
             # Known explicit work titles refine scope; junk never wipes doc/work scope.
             if explicit:
                 work_hints = explicit | set(scope_hints)
                 strict_work = True
+        elif scope_doc_id and scope_strict:
+            # Already filtered to this document; keep corpus as-is.
+            work_hints = set()
+            strict_work = True
         elif explicit:
             work_hints = explicit
             strict_work = True
@@ -762,6 +769,7 @@ def recall_from_user_data(
             question,
             entries,
             scope_work=scope_work,
+            scope_document_id=scope_doc_id,
             strict_work=strict_work,
         )
         if disambiguation:

@@ -368,6 +368,24 @@ def _normalize_scope_hint(raw: str) -> str:
     return re.sub(r"\s+", " ", (raw or "").strip().lower())
 
 
+def _filter_entries_for_document(
+    entries: list[dict[str, Any]], doc_id: str
+) -> list[dict[str, Any]]:
+    """Keep the open document, its chunks, and notes linked to it."""
+    scoped: list[dict[str, Any]] = []
+    for entry in entries:
+        if not isinstance(entry, dict):
+            continue
+        eid = str(entry.get("id") or "")
+        parent = str(entry.get("parentDocId") or "")
+        linked = str(entry.get("linkedDocId") or "")
+        if eid == doc_id or eid.startswith(f"{doc_id}#") or parent == doc_id:
+            scoped.append(entry)
+        elif linked == doc_id:
+            scoped.append(entry)
+    return scoped
+
+
 def filter_entries_by_recall_scope(
     entries: list[dict[str, Any]],
     *,
@@ -375,25 +393,21 @@ def filter_entries_by_recall_scope(
     document_id: str = "",
     scope_mode: str = "work",
 ) -> tuple[list[dict[str, Any]], set[str], bool]:
-    """Doc Ask scope (#19): this work (default) or this document only."""
+    """Doc Ask scope (#19): this document (default) or this work."""
     work_hint = _normalize_scope_hint(work_title)
     work_hints: set[str] = {work_hint} if work_hint else set()
     mode = (scope_mode or "work").strip().lower()
     doc_id = str(document_id or "").strip()
 
+    # Work mode with no work tag + a document id → document filter (never
+    # fall through to the whole account).
+    if mode == "work" and not work_hints and doc_id:
+        mode = "document"
+
     if mode == "document" and doc_id:
-        scoped: list[dict[str, Any]] = []
-        for entry in entries:
-            if not isinstance(entry, dict):
-                continue
-            eid = str(entry.get("id") or "")
-            parent = str(entry.get("parentDocId") or "")
-            linked = str(entry.get("linkedDocId") or "")
-            if eid == doc_id or eid.startswith(f"{doc_id}#") or parent == doc_id:
-                scoped.append(entry)
-            elif linked == doc_id:
-                scoped.append(entry)
-        return scoped, work_hints, bool(work_hints or scoped)
+        scoped = _filter_entries_for_document(entries, doc_id)
+        # Non-empty document corpus counts as strict even without a work tag.
+        return scoped, work_hints, bool(scoped) or bool(work_hints)
 
     if work_hints:
         return (
