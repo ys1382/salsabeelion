@@ -35,6 +35,7 @@
     "halalitLibraryFavoritePlaces",
     "halalitReaderModel",
     "halalitPendingReview",
+    "halalitReadingMilestonesEarned",
   ];
 
   function apiBase() {

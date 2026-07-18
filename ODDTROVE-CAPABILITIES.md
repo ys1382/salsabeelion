@@ -125,7 +125,7 @@ Last updated: 2026-07-16
 
 **Can do now:**
 - Sign-in required; notes on server per account (`lorekeeper/lorekeeper_api.py`)
-- Google for new accounts (spare/junk Google OK; no separate LoreKeeper password)
+- New accounts: email/password for now (junk email OK); Google when OAuth keys are on the VPS
 - Entry list, edit, search, export/import JSON
 - **Ask LoreKeeper** — recall and restate relationships from your own entries (local only; nothing sent to outside AI)
 - Owner’s Office — account list, sign-up switch, private feedback (never other writers’ note text)

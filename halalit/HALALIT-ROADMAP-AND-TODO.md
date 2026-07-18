@@ -11,6 +11,12 @@
 
 ## Active tasks
 
+### Reading milestones — earned badges (Jul 2026)
+
+- [x] **Milestone badges v1** — Private Personal Library panel; thresholds 10 / 25 / 50 / 100 / 250 / 500; soft toast on new unlock; account/device storage via `halalitReadingMilestonesEarned`.
+- [ ] Themed month badges + banner (after milestone polish)
+- [ ] Rare keepsakes / year wrap (not one per book)
+
 ### Book Wander — browse trusted books (Jul 2026)
 
 - [x] **Book Wander** tab (`#suggests`; redirect from `suggests.html`) — age band first, spotlight + see more, themed rooms, series lobby (next unread vs Already read), trusted-only search, seasonal room highlight (Father’s/Mother’s weeks). Hand-vetted display pool only; cards open Bookcheck. No public reviews. (Formerly called Halalit Suggests.)
@@ -108,16 +114,27 @@ Bring these into planning and design so they are not dropped across sessions.
 
 ### 3. Gifts — intangible by default
 
-**Timing (Jun 2026):** Ship **with or after** the [Personal Library lofi reader nook](#5-personal-library--lofi-reader-nook-direction--later)—not before. Reader Points / decor shop are tied to the same **animated reader + personal space** pipeline that isn’t ready while the nook is off (`libraryReaderNookEnabled = false`). Keep direction below; don’t build gifts UI or economy until nook animation ships (or in the same release).
+**Timing (Jul 2026):** **Earned** badges / keepsakes can ship **without** the nook — see [Earned rewards first](#earned-rewards-first-owner-jul-2026--no-spend-shop-yet). **Spend** shop (Reader Points → decor) stays tied to the animated reader + personal space pipeline while the nook is off (`libraryReaderNookEnabled = false`).
 
 - Avoid **print-first** or disposable **paper** gifts (bookmarks, etc.) as the default path because of waste and low use.
 - Prefer **non-tangible gifts**: copy-to-clipboard, save-in-site, optional **screen-sized** share image, unlock extra on-site content — not “print this slip.”
 
-#### Reader Points (or similar name) + decor shop
+#### Earned rewards first (owner Jul 2026) — no spend shop yet
+
+**Ship now (no nook required):** private **earned** objects only — milestone badges, themed-month badges/banners (later), rare keepsakes (later). **Not** one prize per book. Favors people who want to read more; no public leaderboard.
+
+- [x] **Milestone badges (v1)** — Count distinct finished Personal Library titles; soft landmarks at 10 / 25 / 50 / 100 / 250 / 500; private panel on Personal Library; “oh, here’s a…” when a new threshold is crossed. `halalit-reading-milestones.js`.
+- [ ] **Themed month banner + badge** — BHM / WHM etc.; owner disclaimer; badge as memento; modest in-month points bump only when a spend economy exists.
+- [ ] **Rare keepsakes** — year wrap / big landmarks only — not one card per finish.
+- [ ] **Year reading challenge** — Goodreads-shaped self-set yearly number; near-deadline finishable suggestions later.
+
+**Spend shop / Reader Points — parked** until there is something interesting to buy without nook animation (cosmetics were judged not worth it for now). Nook decor shop stays tied to the lofi reader when that ships.
+
+#### Reader Points (or similar name) + decor shop (later / with nook)
 
 - Users earn points and **spend them on site decor** for their avatar / personal space: e.g. reading chairs, animals, outfits — **family-friendly, modest presentation**.
 - **Outfit rules:** non–form-fitting; **no** emphasis on body shape. For anything shown **below the face**, visible skin is **limited to the hand and a very small amount of wrist** (no broader “below the neck” skin show).
-- Implementation details TBD; preserve this direction when designing economy and art.
+- Implementation details TBD; preserve this direction when designing economy and art. Do not build while earned-only pass is the focus.
 
 ### 4. Personal accounts
 
@@ -140,7 +157,8 @@ Bring these into planning and design so they are not dropped across sessions.
 - [ ] **Home page — “Your reader in the library”** — Bring the setup panel back when the nook animation ships (outfit/hair/skin fields + modesty copy).
 - [ ] **Clickable book in lap** — (after nook ships) In-progress title: book in lap **clickable** (same as spine tap; target TBD).
 - [ ] **Put away book on finish** — (after nook ships) On **finished / date read**, short beat: reader **puts the book away**, then idle or next in-progress book.
-- [ ] **Gifts / Reader Points + decor shop** — Same release window as nook (or right after); see [Gifts — intangible by default](#3-gifts--intangible-by-default). Not a separate early build while nook animation is unavailable.
+- [ ] **Gifts / Reader Points + decor shop** — With or after nook; see [Gifts](#3-gifts--intangible-by-default). Earned badges/keepsakes ship **without** waiting on the nook.
+- [x] **Milestone badges (Jul 2026)** — See [Earned rewards first](#earned-rewards-first-owner-jul-2026--no-spend-shop-yet).
 
 ### Cross-cutting
 
@@ -160,7 +178,7 @@ Bring these into planning and design so they are not dropped across sessions.
 ### Reader accounts — owner choices (Jun 2026)
 
 - **Halalit only** (not oddtrove-wide / not Maestro’s, envDyst, etc.).
-- **Login optional for now** — browse without signing in; saving shelves/prefs asks for sign-in. **Agents:** when owner reviews or updates this todo list, ask once if they still want optional login or **require sign-in for all of Halalit**.
+- **Login required, with a free trial (owner Jul 2026)** — Halalit generally **requires sign-in**, but new visitors get a **free taste** first: they can run a **few Book Quests and Bookchecks without an account** so they know what they're getting into, then are prompted to sign up to keep going. Goal: turn triers into real customers. Trial limits (how many quests/checks, per device vs per browser session, how the wall is worded) TBD at build time. Everything else (saving shelves, prefs, wishlist, favorites) still needs an account.
 - **Sign up:** Google login for new accounts (spare/junk Google encouraged); legacy email + password sign-in still works for older accounts.
 
 ### All apps / hub (not Halalit-only)
@@ -268,6 +286,7 @@ Bookcheck should know **which kind of vet** powered the result and say so plainl
 - [ ] **Vet-source — secondhand** — `vet_in_progress` when secondhand list ships on site.
 - [x] **Owner Office — Bookchecks vs My TBR + dismiss (Jul 2026)** — Auto-reject–style scan signals go under Bookchecks (with short summary), thin/indie under My TBR; dismiss → trash / dismiss forever on notification lists (not site settings). Existing lookups backfill on Office open.
 - [x] **Owner scanner — shelf photo + Owner scanned TBR (Jul 2026)** — Owner’s Office: multi-title shelf photo (Gemini), skips already vetted/rejected; separate **Owner scanned TBR** (not reader lookups). Owner Scroll Scanner also feeds that list when signed in as owner.
+- [x] **Owner shelf scanner — coach-only + honest reads (Jul 2026)** — One capture path (camera coach → Capture & scan); coach rejects mostly-empty frames without nose-to-shelf; Gemini requires title+author, flags obstruction / unclear author, avoids invented lookalikes.
 
   **Where pings could show (pick when building; default suggestion: owner-only page + optional email):**
 
@@ -305,6 +324,21 @@ Bookcheck should know **which kind of vet** powered the result and say so plainl
 - [ ] **Linked library cards / accounts (later / optional)** — Deeper than public-catalog “in catalog.” Needs [Personal accounts](#4-personal-accounts) or scoped library links; **minimal sensitive data**; no public borrow profile. **Not** required for Wishlist catalog-check v1.
 - [ ] **Bookstore connectors — catalog-backed only** — Prefer retailers/indies with a real inventory or honest product page. **Exclude** recycle / used shops that don’t know stock online. Copy must match what each connector can honestly say.
 - **Open questions before build:** Per-area place list vs only reader-saved places; server-side fetch + cache (don’t hammer catalogs from the browser); store-ID flows for chains; “open on their site to confirm” always; rate limits; “Halalit is not the library/store” disclaimer.
+
+### Community, awards & reading life (owner Jul 2026)
+
+**Not built yet** — pins for later; no public comment walls (warmth-without-social). Prizes and challenges stay private to the reader (or curated one-way from Halalit), not stranger posting.
+
+- [ ] **Reading challenges — yearly self-set number** — Goodreads-shaped; reader picks N for the year (not Halalit assigning 100). Near-deadline finishable suggestions + optional reflection reread later. Themed months (BHM, WHM…) are banners/badges, not a second quota — see [Earned rewards first](#earned-rewards-first-owner-jul-2026--no-spend-shop-yet).
+- [ ] **Halalit Awards — single Book of the Halalit** — One clear award-style recommendation (not a long list)—owner-curated title that reflects Halalit values. Cadence TBD (annual / seasonal).
+- [ ] **Recently published — definite recommends** — Updates highlighting new books that match Halalit values and are **firm recommends** (hand-vetted), not “parent discretion / you decide” titles. Separate lane from soft or caution notes.
+- [ ] **Complete-series rule for firm recommends** — If a title is part of a series, Halalit only marks it a **for-sure recommend** when the **entire series is published** (and ethics/morals are otherwise clear). Incomplete / ongoing series stay out of the definite-recommend lane (or softer status) until the line is finished—or owner explicitly exceptions a standalone-safe book 1.
+- [ ] **Halalit newsletter** — One-way owner newsletter (new firm recommends, awards, challenges, tips)—not a discussion forum. Opt-in; spare/junk email OK. Scope TBD (email only vs also on-site digest).
+- [x] **On-site prizes — milestone badges (Jul 2026)** — Earned-only first slice; spend/points parked. Further prizes (themed-month badges, rare keepsakes) still todo under [Earned rewards first](#earned-rewards-first-owner-jul-2026--no-spend-shop-yet). No public leaderboard.
+- [ ] **Category reading prizes (Halalit lens, not Goodreads)** — Themed-month badges + later category prizes for **clean minority-voice** / underserved-causes reads. Modest in-month points bump only when spend exists.
+- [ ] **Year in books** — End-of-year (or school-year) private wrap for the reader’s own shelf: what they finished, challenges done, categories touched. Device/account only—no public sharing wall.
+- [ ] **Bookcheck load screen — rotating tips** — Loading UI should **not** show the same line every time; rotate Halalit tips / how-to / values notes. Also a lasting place on-site for readers to browse those tips (FAQ-adjacent or Home/Bookcheck help), not only during load.
+- [ ] **Author notes on recommended books (curated)** — Optional short comments from authors on titles Halalit would recommend. **Owner-vetted, one-way display only**—not an open author/reader comment thread. Logistics TBD (invite, quote rights, series-complete rule above).
 
 ### Owner plot-vet batch (May 2026)
 

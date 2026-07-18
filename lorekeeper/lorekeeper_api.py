@@ -687,7 +687,46 @@ class Handler(BaseHTTPRequestHandler):
         email = self._session_email()
 
         if path == "/auth/signup":
-            self._json(403, {"ok": False, "error": "signup_google_only"})
+            # Temporary: email/password signup while Google OAuth is not configured on the VPS.
+            raw_email = str(body.get("email") or "")
+            password = _normalize_password(str(body.get("password") or ""))
+            norm = _normalize_email(raw_email)
+            if not norm:
+                self._json(400, {"ok": False, "error": "invalid_email"})
+                return
+            if len(password) < 8:
+                self._json(400, {"ok": False, "error": "password_too_short"})
+                return
+            with _store_lock:
+                store = _load_store()
+                users = store.setdefault("users", {})
+                settings = store.setdefault("settings", {})
+                user_count = len(users)
+                if norm in users:
+                    self._json(409, {"ok": False, "error": "email_taken"})
+                    return
+                signups_on = bool(settings.get("signupsEnabled"))
+                if not signups_on and user_count > 0:
+                    self._json(403, {"ok": False, "error": "signups_disabled"})
+                    return
+                pwd_hash, salt = _hash_password(password)
+                is_owner = norm == OWNER_EMAIL if OWNER_EMAIL else user_count == 0
+                users[norm] = {
+                    "email": norm,
+                    "password_hash": pwd_hash,
+                    "salt": salt,
+                    "created_at": int(time.time()),
+                    "is_owner": is_owner,
+                    "auth_rev": 0,
+                    "data": {},
+                }
+                _save_store(store)
+            exp = int(time.time()) + COOKIE_MAX_AGE
+            self._json(
+                200,
+                {"ok": True, "email": norm, "isOwner": is_owner},
+                set_cookie=_sign_token(norm, exp, 0),
+            )
             return
 
         if path == "/auth/forgot-password":

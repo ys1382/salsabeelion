@@ -609,6 +609,134 @@
       color: var(--accent-soft);
       margin: 0;
     }
+    .halalit-milestones-host {
+      margin: 0.85rem 0 0;
+      max-width: 42rem;
+    }
+    .halalit-milestones {
+      margin: 0;
+      padding: 1rem 1.1rem 1.15rem;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      background: rgba(0, 0, 0, 0.18);
+    }
+    .halalit-milestones__heading {
+      margin: 0 0 0.35rem;
+      font-size: 1.15rem;
+      font-weight: 400;
+      color: var(--accent);
+    }
+    .halalit-milestones__lead {
+      margin: 0 0 0.75rem;
+      font-size: 0.92rem;
+    }
+    .halalit-milestones__progress {
+      margin: 0 0 0.45rem;
+      font-family: system-ui, "Segoe UI", sans-serif;
+      font-size: 0.88rem;
+      color: var(--ink);
+    }
+    .halalit-milestones__bar {
+      height: 0.45rem;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.08);
+      overflow: hidden;
+      margin: 0 0 0.9rem;
+    }
+    .halalit-milestones__bar-fill {
+      display: block;
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--accent-soft), var(--accent));
+      min-width: 0;
+    }
+    .halalit-milestones__list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 0.45rem;
+      grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
+    }
+    .halalit-milestones__badge {
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+      padding: 0.55rem 0.65rem;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      background: rgba(42, 32, 24, 0.65);
+      font-family: system-ui, "Segoe UI", sans-serif;
+      min-height: 4.2rem;
+    }
+    .halalit-milestones__badge.is-earned {
+      border-color: rgba(227, 184, 106, 0.35);
+      background: rgba(227, 184, 106, 0.1);
+    }
+    .halalit-milestones__badge.is-locked {
+      opacity: 0.55;
+    }
+    .halalit-milestones__badge-count {
+      font-size: 0.75rem;
+      letter-spacing: 0.04em;
+      color: var(--accent-soft);
+      text-transform: uppercase;
+    }
+    .halalit-milestones__badge.is-earned .halalit-milestones__badge-count {
+      color: var(--accent);
+    }
+    .halalit-milestones__badge-title {
+      font-size: 0.86rem;
+      color: var(--ink);
+      line-height: 1.35;
+    }
+    .halalit-milestones__badge-state {
+      font-size: 0.72rem;
+      color: var(--dim);
+    }
+    .halalit-milestone-toast {
+      position: fixed;
+      left: 50%;
+      bottom: 1.25rem;
+      transform: translateX(-50%) translateY(0.5rem);
+      z-index: 80;
+      max-width: min(22rem, calc(100vw - 1.5rem));
+      padding: 0.9rem 1.1rem;
+      border-radius: 12px;
+      border: 1px solid rgba(227, 184, 106, 0.35);
+      background: #2a2018;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease, transform 0.25s ease;
+    }
+    .halalit-milestone-toast--show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+    .halalit-milestone-toast__eyebrow {
+      margin: 0 0 0.25rem;
+      font-family: system-ui, "Segoe UI", sans-serif;
+      font-size: 0.72rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--accent-soft);
+    }
+    .halalit-milestone-toast__title {
+      margin: 0 0 0.25rem;
+      color: var(--accent);
+      font-size: 1.05rem;
+    }
+    .halalit-milestone-toast__line {
+      margin: 0;
+      color: var(--dim);
+      font-size: 0.9rem;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .halalit-milestone-toast {
+        transition: none;
+      }
+    }
     .library-stage.is-scrolling .book-spine {
       animation-play-state: paused;
     }
@@ -2530,6 +2658,7 @@
         </div>
       </div>
       <p class="library-count" id="libraryCount"></p>
+      <div id="halalitReadingMilestones" class="halalit-milestones-host" aria-live="polite"></div>
     </div>
     <div class="library-list-view" id="libraryListView" hidden>
       <ul class="library-list-view__items" id="libraryListItems" aria-label="Personal Library titles"></ul>
@@ -2835,6 +2964,7 @@
   <script src="./halalit-site-flags.js?v=20260610b"></script>
   <script src="./halalit-pacific-occasion-banner.js?v=20260601b"></script>
   <script src="./halalit-personal-library.js?v=20260610g"></script>
+  <script src="./halalit-reading-milestones.js?v=20260718a"></script>
   <script src="./halalit-series-expand.js?v=20260528b"></script>
   <script src="./halalit-want-to-read.js?v=20260527a"></script>
   <script src="./halalit-library-avail.js?v=20260714k"></script>
@@ -3655,6 +3785,12 @@
           if (Lib.compactDuplicateEntries()) {
             shelfEnrichGens.read++;
           }
+        }
+        if (
+          window.HalalitReadingMilestones &&
+          typeof window.HalalitReadingMilestones.refresh === "function"
+        ) {
+          window.HalalitReadingMilestones.refresh({ silent: !!opts.milestoneSilent });
         }
         if (renderBookListView("read")) return;
         renderShelfWall("read", opts);
