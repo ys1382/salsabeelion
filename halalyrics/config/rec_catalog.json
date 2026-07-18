@@ -1,0 +1,78 @@
+{
+  "version": 1,
+  "note": "Owner-curated recommendation pool only. Do not auto-add Songcheck fine results. Omit Dance in the Dark (Home) and darker JT Music until filter work expands.",
+  "songs": [
+    {
+      "title": "Hideaway",
+      "artist": "Wonder Park",
+      "note": "Wonder Park film song — warm, child-friendly soundtrack pick.",
+      "themes": ["wonder_park", "kids_movie", "adventure", "comfort", "friendship"]
+    },
+    {
+      "title": "Let It Go",
+      "artist": "Idina Menzel",
+      "note": "Frozen — widely known Disney kids anthem; still preview if unsure.",
+      "themes": ["disney_kids", "kids_movie", "empowerment", "adventure"]
+    },
+    {
+      "title": "You've Got a Friend in Me",
+      "artist": "Randy Newman",
+      "note": "Toy Story — friendship and sticking together.",
+      "themes": ["disney_kids", "kids_movie", "friendship", "reunion", "loyalty"]
+    },
+    {
+      "title": "When You Wish Upon a Star",
+      "artist": "Disney",
+      "note": "Classic Disney wish song — gentle and family-leaning.",
+      "themes": ["disney_kids", "kids_movie", "hope", "comfort"]
+    },
+    {
+      "title": "A Whole New World",
+      "artist": "Disney",
+      "note": "Aladdin — adventure and wonder; soft romance tone — parent preview if needed.",
+      "themes": ["disney_kids", "kids_movie", "adventure", "wonder"]
+    },
+    {
+      "title": "How Far I'll Go",
+      "artist": "Auli'i Cravalho",
+      "note": "Moana — curiosity and finding your path.",
+      "themes": ["disney_kids", "kids_movie", "adventure", "empowerment", "hope"]
+    },
+    {
+      "title": "Do You Want to Build a Snowman?",
+      "artist": "Disney",
+      "note": "Frozen — sisters reconnecting / wanting to be together again.",
+      "themes": ["disney_kids", "kids_movie", "friendship", "reunion", "family"]
+    },
+    {
+      "title": "Circle of Life",
+      "artist": "Disney",
+      "note": "The Lion King — opening anthem; majestic, family film staple.",
+      "themes": ["disney_kids", "kids_movie", "adventure", "nature"]
+    },
+    {
+      "title": "Für Elise",
+      "artist": "Beethoven",
+      "note": "Instrumental classical — no lyrics; calm practice / focus music.",
+      "themes": ["instrumental", "classical", "beethoven", "calm", "focus"]
+    },
+    {
+      "title": "Moonlight Sonata",
+      "artist": "Beethoven",
+      "note": "Instrumental classical — quiet, soundless-lyric listening.",
+      "themes": ["instrumental", "classical", "beethoven", "calm", "focus"]
+    },
+    {
+      "title": "Ode to Joy",
+      "artist": "Beethoven",
+      "note": "Beethoven / Ninth Symphony theme — uplifting instrumental (or wordless feel).",
+      "themes": ["instrumental", "classical", "beethoven", "hope", "joy"]
+    },
+    {
+      "title": "This Day Aria",
+      "artist": "My Little Pony",
+      "note": "MLP cartoon plot song — hand-vetted OK for fantasy daydreams; not real romance.",
+      "themes": ["kids_show", "cartoon", "fantasy"]
+    }
+  ]
+}

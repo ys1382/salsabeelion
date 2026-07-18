@@ -3,27 +3,26 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="robots" content="noindex, nofollow" />
-  <title>HalaLyrics — owner beta</title>
-  <link rel="stylesheet" href="halalyrics.css?v=20260709speed" />
+  <title>HalaLyrics</title>
+  <link rel="stylesheet" href="halalyrics.css?v=20260717rec" />
 </head>
 <body>
   <div class="wrap">
     <header>
-      <p class="eyebrow">Odd Trove · owner only</p>
-      <h1 class="brand">HalaLyrics</h1>
-      <p class="tagline">Family-friendly song companion — separate from HalaLit</p>
+      <p class="eyebrow">Odd Trove</p>
+      <h1 class="brand">HalaLyrics <span class="beta-tag">beta</span></h1>
+      <p class="tagline">Songcheck and curated song ideas — not a music player</p>
       <p class="disclaimer" role="note">
-        <strong>Owner beta — not public.</strong>
-        <strong>Songcheck</strong> looks up lyrics from LRCLIB and runs a Google theme scan for romance,
-        religious tone, sacred language, and dark despair. When a song looks OK or leaning OK, you can expand
-        <strong>Lyrics</strong> below the summary (More / Less). Flagged songs stay flags-only.
-        <strong>Hand-vetted notes always win.</strong>
+        <strong>Beta — work in progress.</strong> Songcheck and recommendations can miss flags or get a song wrong.
+        Always preview yourself before you listen (or let a child listen). HalaLyrics is a helper, not a guarantee.
+        Hand-vetted notes always win over the automated scan. Flagged songs stay flags-only; OK / leaning OK can expand lyrics.
+        Recommendations come only from an owner-curated list and link out — nothing streams here.
       </p>
     </header>
 
     <nav class="tabs" role="tablist" aria-label="HalaLyrics sections">
       <button type="button" class="tab active" role="tab" id="tab-songcheck" aria-selected="true" aria-controls="panel-songcheck">Songcheck</button>
+      <button type="button" class="tab" role="tab" id="tab-recommend" aria-selected="false" aria-controls="panel-recommend">Recommend</button>
       <button type="button" class="tab" role="tab" id="tab-shelf" aria-selected="false" aria-controls="panel-shelf">My shelf</button>
     </nav>
 
@@ -37,6 +36,44 @@
       </form>
       <p id="songcheckStatus" class="status" aria-live="polite"></p>
       <div id="songcheckResult" class="result" hidden></div>
+    </section>
+
+    <section id="panel-recommend" class="panel" role="tabpanel" aria-labelledby="tab-recommend" hidden>
+      <p class="muted">
+        Owner-curated child-friendly picks only. Type a theme (e.g. friends reunited) or browse the list.
+        Still check the song yourself — this list is small and growing.
+      </p>
+      <form id="recommendForm" class="lookup-form">
+        <label for="recommendTheme">Theme or mood</label>
+        <input id="recommendTheme" type="text" maxlength="200" placeholder="friends reunited" autocomplete="off" />
+        <button type="submit" id="recommendBtn">Find songs</button>
+      </form>
+      <p id="recommendStatus" class="status" aria-live="polite"></p>
+      <ul id="recommendList" class="rec-list" aria-label="Recommended songs"></ul>
+
+      <div class="prefs-box">
+        <h2 class="prefs-heading">Your preferences</h2>
+        <p class="muted">Saved on this browser only. Used to rank curated picks — never invents songs outside the list.</p>
+        <form id="prefsForm" class="lookup-form">
+          <label for="prefsLikes">Themes I like (in my own words)</label>
+          <textarea id="prefsLikes" rows="2" maxlength="800" placeholder="friendship, calm instrumentals, Disney kids"></textarea>
+          <label for="prefsDislikes">Themes I want to avoid</label>
+          <textarea id="prefsDislikes" rows="2" maxlength="800" placeholder="dark despair, scary vibes"></textarea>
+          <label class="check-row">
+            <input type="checkbox" id="prefsInstrumentals" />
+            Prefer instrumentals when possible
+          </label>
+          <label class="check-row">
+            <input type="checkbox" id="prefsDisney" checked />
+            Disney kids soundtracks are OK
+          </label>
+          <div class="prefs-actions">
+            <button type="submit">Save preferences</button>
+            <button type="button" id="prefsClear" class="btn-secondary">Clear</button>
+          </div>
+        </form>
+        <p id="prefsStatus" class="status" aria-live="polite"></p>
+      </div>
     </section>
 
     <section id="panel-shelf" class="panel" role="tabpanel" aria-labelledby="tab-shelf" hidden>
@@ -63,6 +100,7 @@
   </div>
   <script src="halalyrics-policy.js?v=20260708g"></script>
   <script src="halalyrics-shelf.js?v=20260708b"></script>
-  <script src="halalyrics.js?v=20260709speed"></script>
+  <script src="halalyrics-prefs.js?v=20260717rec"></script>
+  <script src="halalyrics.js?v=20260717rec"></script>
 </body>
 </html>

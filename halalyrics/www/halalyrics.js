@@ -1,6 +1,8 @@
 (function () {
   var Policy = window.HalaLyricsPolicy;
   var Shelf = window.HalaLyricsShelf;
+  var Prefs = window.HalaLyricsPrefs;
+  var lastCatalog = [];
 
   function apiUrl(path) {
     var base = window.location.origin + "/halalyrics/api";
@@ -14,13 +16,22 @@
   }
 
   function setTab(which) {
-    var songcheck = which === "songcheck";
-    document.getElementById("tab-songcheck").classList.toggle("active", songcheck);
-    document.getElementById("tab-songcheck").setAttribute("aria-selected", songcheck ? "true" : "false");
-    document.getElementById("tab-shelf").classList.toggle("active", !songcheck);
-    document.getElementById("tab-shelf").setAttribute("aria-selected", songcheck ? "false" : "true");
-    document.getElementById("panel-songcheck").hidden = !songcheck;
-    document.getElementById("panel-shelf").hidden = songcheck;
+    var tabs = ["songcheck", "recommend", "shelf"];
+    tabs.forEach(function (name) {
+      var on = which === name;
+      var tab = document.getElementById("tab-" + name);
+      var panel = document.getElementById("panel-" + name);
+      if (tab) {
+        tab.classList.toggle("active", on);
+        tab.setAttribute("aria-selected", on ? "true" : "false");
+      }
+      if (panel) panel.hidden = !on;
+    });
+    if (which === "shelf") renderShelf();
+    if (which === "recommend") {
+      fillPrefsForm();
+      if (!lastCatalog.length) loadRecommendations("");
+    }
   }
 
   function renderShelf() {
@@ -59,11 +70,171 @@
     });
   }
 
+  function searchLink(service, title, artist) {
+    var q = encodeURIComponent((title + " " + (artist || "")).trim());
+    if (service === "spotify") return "https://open.spotify.com/search/" + q;
+    if (service === "ytmusic") return "https://music.youtube.com/search?q=" + q;
+    return "https://www.youtube.com/results?search_query=" + q;
+  }
+
+  function scoreSong(song, prefs) {
+    var score = 0;
+    var themes = (song.themes || []).map(function (t) {
+      return String(t).toLowerCase();
+    });
+    var blob = (
+      (song.title || "") +
+      " " +
+      (song.artist || "") +
+      " " +
+      (song.note || "") +
+      " " +
+      themes.join(" ")
+    ).toLowerCase();
+    Prefs.tokens(prefs.likes).forEach(function (tok) {
+      if (themes.indexOf(tok) >= 0) score += 4;
+      else if (blob.indexOf(tok) >= 0) score += 2;
+    });
+    Prefs.tokens(prefs.dislikes).forEach(function (tok) {
+      if (themes.indexOf(tok) >= 0 || blob.indexOf(tok) >= 0) score -= 5;
+    });
+    if (prefs.preferInstrumentals && themes.indexOf("instrumental") >= 0) score += 3;
+    if (!prefs.disneyKidsOk && themes.indexOf("disney_kids") >= 0) score -= 8;
+    return score;
+  }
+
+  function rankCatalog(songs) {
+    var prefs = Prefs.load();
+    return songs
+      .slice()
+      .map(function (song) {
+        return { song: song, score: scoreSong(song, prefs) };
+      })
+      .filter(function (row) {
+        return row.score > -5;
+      })
+      .sort(function (a, b) {
+        if (b.score !== a.score) return b.score - a.score;
+        return String(a.song.title || "").localeCompare(String(b.song.title || ""));
+      })
+      .map(function (row) {
+        return row.song;
+      });
+  }
+
+  function fillPrefsForm() {
+    var prefs = Prefs.load();
+    document.getElementById("prefsLikes").value = prefs.likes || "";
+    document.getElementById("prefsDislikes").value = prefs.dislikes || "";
+    document.getElementById("prefsInstrumentals").checked = !!prefs.preferInstrumentals;
+    document.getElementById("prefsDisney").checked = prefs.disneyKidsOk !== false;
+  }
+
+  function renderRecommendations(songs) {
+    var ul = document.getElementById("recommendList");
+    ul.innerHTML = "";
+    var ranked = rankCatalog(songs || []);
+    if (!ranked.length) {
+      var empty = document.createElement("li");
+      empty.className = "muted";
+      empty.textContent = "No curated matches yet — try another theme, or clear the search to browse all.";
+      ul.appendChild(empty);
+      return;
+    }
+    ranked.forEach(function (song) {
+      var li = document.createElement("li");
+      var artist = song.artist ? " — " + song.artist : "";
+      var themes = (song.themes || []).join(", ");
+      li.innerHTML =
+        "<strong>" +
+        esc(song.title) +
+        "</strong>" +
+        esc(artist) +
+        (song.note ? '<p class="rec-meta">' + esc(song.note) + "</p>" : "") +
+        (themes ? '<p class="rec-themes">Themes: ' + esc(themes) + "</p>" : "");
+      var actions = document.createElement("div");
+      actions.className = "rec-actions";
+
+      var shelfBtn = document.createElement("button");
+      shelfBtn.type = "button";
+      shelfBtn.textContent = "Add to shelf";
+      shelfBtn.addEventListener("click", function () {
+        Shelf.add({ title: song.title, artist: song.artist || "", tag: "want" });
+        shelfBtn.textContent = "On shelf";
+      });
+
+      var checkBtn = document.createElement("button");
+      checkBtn.type = "button";
+      checkBtn.textContent = "Songcheck";
+      checkBtn.addEventListener("click", function () {
+        document.getElementById("songTitle").value = song.title || "";
+        document.getElementById("songArtist").value = song.artist || "";
+        setTab("songcheck");
+        document.getElementById("songcheckForm").requestSubmit();
+      });
+
+      var spotify = document.createElement("a");
+      spotify.href = searchLink("spotify", song.title, song.artist);
+      spotify.target = "_blank";
+      spotify.rel = "noopener noreferrer";
+      spotify.textContent = "Spotify search";
+
+      var yt = document.createElement("a");
+      yt.href = searchLink("ytmusic", song.title, song.artist);
+      yt.target = "_blank";
+      yt.rel = "noopener noreferrer";
+      yt.textContent = "YT Music search";
+
+      actions.appendChild(shelfBtn);
+      actions.appendChild(checkBtn);
+      actions.appendChild(spotify);
+      actions.appendChild(yt);
+      li.appendChild(actions);
+      ul.appendChild(li);
+    });
+  }
+
+  function loadRecommendations(theme) {
+    var status = document.getElementById("recommendStatus");
+    var btn = document.getElementById("recommendBtn");
+    var q = (theme || "").trim();
+    status.textContent = q ? "Matching curated songs…" : "Loading curated list…";
+    btn.disabled = true;
+    var url = apiUrl("/recommend/catalog") + (q ? "?theme=" + encodeURIComponent(q) : "");
+    return fetch(url)
+      .then(function (res) {
+        return res.json();
+      })
+      .then(function (data) {
+        if (!data || !data.ok) {
+          status.textContent = "Could not load recommendations.";
+          lastCatalog = [];
+          renderRecommendations([]);
+          return;
+        }
+        lastCatalog = data.songs || [];
+        status.textContent =
+          lastCatalog.length +
+          (q ? " match" + (lastCatalog.length === 1 ? "" : "es") + " for “" + q + "”" : " curated song" + (lastCatalog.length === 1 ? "" : "s")) +
+          " — still check yourself before listening.";
+        renderRecommendations(lastCatalog);
+      })
+      .catch(function () {
+        status.textContent = "Network error — try again.";
+        lastCatalog = [];
+        renderRecommendations([]);
+      })
+      .finally(function () {
+        btn.disabled = false;
+      });
+  }
+
   function badgeClass(recOk, recStatus) {
     if (recStatus === "hand_vetted") return recOk ? "ok" : "bad";
     if (recOk) return "ok";
     return "warn";
   }
+
 
   function renderScanSummary(scan, streaming) {
     if (!scan.summary && !streaming) return "";
@@ -457,9 +628,11 @@
   document.getElementById("tab-songcheck").addEventListener("click", function () {
     setTab("songcheck");
   });
+  document.getElementById("tab-recommend").addEventListener("click", function () {
+    setTab("recommend");
+  });
   document.getElementById("tab-shelf").addEventListener("click", function () {
     setTab("shelf");
-    renderShelf();
   });
 
   document.getElementById("songcheckForm").addEventListener("submit", function (ev) {
@@ -476,6 +649,30 @@
     runSongcheck(title, artist, 1).finally(function () {
       btn.disabled = false;
     });
+  });
+
+  document.getElementById("recommendForm").addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    loadRecommendations(document.getElementById("recommendTheme").value);
+  });
+
+  document.getElementById("prefsForm").addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    Prefs.save({
+      likes: document.getElementById("prefsLikes").value,
+      dislikes: document.getElementById("prefsDislikes").value,
+      preferInstrumentals: document.getElementById("prefsInstrumentals").checked,
+      disneyKidsOk: document.getElementById("prefsDisney").checked,
+    });
+    document.getElementById("prefsStatus").textContent = "Preferences saved on this browser.";
+    renderRecommendations(lastCatalog);
+  });
+
+  document.getElementById("prefsClear").addEventListener("click", function () {
+    Prefs.clear();
+    fillPrefsForm();
+    document.getElementById("prefsStatus").textContent = "Preferences cleared.";
+    renderRecommendations(lastCatalog);
   });
 
   document.getElementById("shelfAddForm").addEventListener("submit", function (ev) {

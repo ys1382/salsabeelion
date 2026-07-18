@@ -2,7 +2,7 @@
 
 **Planning doc only** — not deployed unless you say deploy.
 
-**Capabilities:** `ODDTROVE-CAPABILITIES.md` (add HalaLyrics section when doc is updated)
+**Capabilities:** `ODDTROVE-CAPABILITIES.md`
 
 ---
 
@@ -29,14 +29,16 @@
 
 ---
 
-## Shipped (owner beta)
+## Shipped
 
-- [x] Owner nginx gate + hub Owner sites link (`/halalyrics/`)
+- [x] Public on Odd Trove — hub link + no nginx owner gate (`/halalyrics/`)
 - [x] **Songcheck** — LRCLIB lyrics lookup + Gemini theme scan (5 themes)
 - [x] Hand-vetted overrides (`config/hand_vetted.json`)
 - [x] Flagged songs: flags-only; OK / leaning OK can expand lyrics
 - [x] **My shelf** — localStorage only (want / heard / favorite)
 - [x] Songcheck disk + memory cache; streaming scan API
+- [x] **Recommend** — owner-curated catalog (`config/rec_catalog.json`), theme search, device prefs ranking, link-out only
+- [x] Quiet **beta** copy on hub + HalaLyrics (work in progress; still check yourself)
 
 ---
 
@@ -47,7 +49,7 @@
 | **1** | Grow hand-vetted list + tune scan false positives/negatives | Trust layer for everything else |
 | **2** | Shelf ↔ Songcheck — saved songs show verdict | Personal companion without playback |
 | **3** | Batch vet — paste playlist / album tracklist | Build vetted corpus fast |
-| **4** | Curated OK lists — link out to Spotify / YT Music / Apple | Useful guide before any extension |
+| **4** | Grow curated OK / rec catalog — link out to Spotify / YT Music / Apple | Useful guide before any extension |
 | **5** | Instrumentals & nasheeds — rules when no lyrics (or different category) | Close gaps lyrics-only scan misses |
 | **6** | Public Songcheck lookup (rate-limited, no social wall) | “Bookcheck for songs” |
 | **7** | Accounts + shelf sync (Halalit/Crocheter pattern) | When people actually use shelves |
@@ -75,15 +77,16 @@
 ### Phase 3 — Corpus & lists
 
 - [ ] **Batch vet UI or script** — many titles at once; export results
-- [ ] **Curated OK list pages** — owner-vetted playlists with short notes; **link out only**
+- [x] **Curated OK / Recommend catalog** — owner-vetted list with themes; **link out only** (v0 shipped; grow list)
 - [ ] **Artist trust levels** — “usually fine” vs “check new releases” (optional)
 - [ ] **Stable external IDs** — map to Spotify / YouTube / ISRC where possible (metadata only)
 
 ### Phase 4 — Wider reach
 
-- [ ] **Public Songcheck** — remove or relax owner gate for lookup only; rate limits; flagged stays flags-only
+- [x] **Public Songcheck** — nginx owner gate off; hub public link
 - [ ] **Accounts + server shelf sync** — sign-in required pattern like Halalit/Crocheter
 - [ ] **Export / import shelf** — JSON download
+- [ ] **Rate limits** on Songcheck API (Gemini cost guard)
 
 ### Phase 5 — ForeWarner-shaped gate (later)
 
@@ -99,6 +102,7 @@
 - [ ] **Algorithmic radio / autoplay feed**
 - [ ] **Music video vetting** — lyrics insufficient; overlaps ForeWarner video work
 - [ ] **Shazam-style identify-then-check** — hard; not v1
+- [ ] **Edgier-but-clean recs** (e.g. some JT Music) — only after filter trust improves
 
 ---
 
@@ -106,4 +110,5 @@
 
 *(Owner pins from chat — not on live site unless you ask to build.)*
 
-- [ ] **2026-07-11** — Product is a **filter** (ForeWarner-style check-before-play), **not** a streaming/player service for now.
+- [x] **2026-07-11** — Product is a **filter** (ForeWarner-style check-before-play), **not** a streaming/player service for now.
+- [x] **2026-07-17** — Recommend tab + stated prefs; curated catalog only; beta “still check yourself” disclaimer on hub + site.

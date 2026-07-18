@@ -2,7 +2,7 @@
 
 Agents: read this **before** building. If the ask conflicts with a row here, say so plainly — do not keep retrying the same dead end.
 
-Last updated: 2026-07-16
+Last updated: 2026-07-17
 
 ---
 
@@ -138,6 +138,26 @@ Last updated: 2026-07-16
 
 ---
 
+### HalaLyrics (`halalyrics/www/` → public `/halalyrics/`)
+
+**Is:** Lyrics red-flag screener (Songcheck) plus owner-curated song recommendations. Separate from HalaLit. Shelf and prefs are device-local. Quiet **beta** on hub and site — helper, not a guarantee; listeners should still preview.
+
+**Can do now:**
+- Songcheck via LRCLIB + Gemini scan; hand-vetted overrides win
+- Flagged songs stay flags-only; OK / leaning OK can expand lyrics
+- My shelf in localStorage
+- **Recommend** — theme search over owner `config/rec_catalog.json` only; link-out search; stated prefs on device for ranking
+
+**Cannot do without new work:**
+- Rate limits on the API
+- Accounts / shelf sync
+- Streaming-app filters or in-app playback
+- Open-web or AI-invented recommendation titles (catalog only)
+
+**Deploy:** `bash top/scripts/deploy-halalyrics.sh` — restarts 8083/8084 and reloads nginx by default (also syncs hub `index.html`). Hub-only: `deploy-kids-sites.sh --site=hub`. Treat as **public** (ask before deploy).
+
+---
+
 ### CleanScreen (`cleanscreen/www/` → owner-only `/cleanscreen/`)
 
 **Is:** Halalit-audience **filtered web search** (owner beta)—text-first, strict open-web rules, hand-vetted site allowlist, anonymous rate-limited feedback.
@@ -187,7 +207,7 @@ Last updated: 2026-07-16
 
 ### Hub (`top/directory/www/`)
 
-**Is:** Link hub on oddtrove.art root (Halalit + Crocheter + LoreKeeper public entry).
+**Is:** Link hub on oddtrove.art root (Halalit + Crocheter + LoreKeeper + HalaLyrics public entry).
 
 **Not served** as a full directory listing on production nginx except root redirect behavior — see `oddtrove-owner-only-sites` rule.
 

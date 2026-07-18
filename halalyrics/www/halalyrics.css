@@ -53,6 +53,16 @@ header {
   margin: 0.2rem 0 0;
 }
 
+.beta-tag {
+  display: inline-block;
+  margin-left: 0.25rem;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  vertical-align: 0.15em;
+}
+
 .tagline {
   margin: 0.35rem 0 0;
   color: var(--muted);
@@ -340,6 +350,113 @@ header {
   padding: 0.25rem 0.5rem;
   font-size: 0.78rem;
   cursor: pointer;
+}
+
+.rec-list {
+  margin: 0.75rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rec-list li {
+  padding: 0.75rem 0;
+  border-top: 1px solid var(--line);
+}
+
+.rec-list li:first-child {
+  border-top: none;
+}
+
+.rec-meta {
+  margin: 0.25rem 0 0;
+  font-size: 0.86rem;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.rec-themes {
+  margin: 0.35rem 0 0;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.rec-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.55rem;
+}
+
+.rec-actions a,
+.rec-actions button {
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 8px;
+  padding: 0.3rem 0.55rem;
+  font-size: 0.78rem;
+  cursor: pointer;
+  color: var(--ink);
+  text-decoration: none;
+  font-family: inherit;
+}
+
+.rec-actions a:hover,
+.rec-actions button:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.prefs-box {
+  margin-top: 1.35rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--line);
+}
+
+.prefs-heading {
+  margin: 0 0 0.35rem;
+  font-size: 1.05rem;
+}
+
+.check-row {
+  display: flex !important;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0.65rem 0 0 !important;
+  font-weight: 500 !important;
+  font-size: 0.9rem !important;
+}
+
+.check-row input {
+  width: auto !important;
+}
+
+.prefs-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.85rem;
+}
+
+.prefs-actions button {
+  margin-top: 0 !important;
+}
+
+.btn-secondary {
+  background: #fff !important;
+  color: var(--ink) !important;
+  border: 1px solid var(--line) !important;
+}
+
+.lookup-form textarea {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0.55rem 0.65rem;
+  font: inherit;
+  color: var(--ink);
+  background: #fff;
+  resize: vertical;
+  min-height: 2.8rem;
 }
 
 .foot {

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""HalaLyrics — owner-only Songcheck API (LRCLIB lyrics + Gemini scan)."""
+"""HalaLyrics — Songcheck API (LRCLIB lyrics + Gemini scan)."""
 from __future__ import annotations
 
 import json
@@ -21,8 +21,11 @@ PORT = int(os.environ.get("HALALYRICS_API_PORT", "8084"))
 BIND = os.environ.get("HALALYRICS_API_BIND", "127.0.0.1")
 _SCRIPT_DIR = Path(__file__).resolve().parent
 VETTED_PATH = Path(os.environ.get("HALALYRICS_VETTED_PATH", _SCRIPT_DIR / "config" / "hand_vetted.json"))
+REC_CATALOG_PATH = Path(
+    os.environ.get("HALALYRICS_REC_CATALOG_PATH", _SCRIPT_DIR / "config" / "rec_catalog.json")
+)
 
-LRCLIB_UA = "HalaLyrics/0.1 (Odd Trove; owner-only; https://oddtrove.art/halalyrics/)"
+LRCLIB_UA = "HalaLyrics/0.1 (Odd Trove; https://oddtrove.art/halalyrics/)"
 _NETWORK_ERRORS = (urllib.error.URLError, TimeoutError, OSError)
 LRCLIB_TIMEOUT = int(os.environ.get("HALALYRICS_LRCLIB_TIMEOUT", "8"))
 SCAN_CACHE_VERSION = "20260709speed"
@@ -104,6 +107,80 @@ def _load_vetted() -> dict[str, dict[str, Any]]:
         if key:
             out[key] = row
     return out
+
+
+def _load_rec_catalog() -> list[dict[str, Any]]:
+    if not REC_CATALOG_PATH.is_file():
+        return []
+    try:
+        data = json.loads(REC_CATALOG_PATH.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return []
+    rows = data.get("songs") if isinstance(data, dict) else None
+    if not isinstance(rows, list):
+        return []
+    out: list[dict[str, Any]] = []
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        title = str(row.get("title") or "").strip()
+        if not title:
+            continue
+        themes_raw = row.get("themes") or []
+        themes = (
+            [str(t).strip().lower() for t in themes_raw if str(t).strip()]
+            if isinstance(themes_raw, list)
+            else []
+        )
+        out.append(
+            {
+                "title": title,
+                "artist": str(row.get("artist") or "").strip(),
+                "note": str(row.get("note") or "").strip(),
+                "themes": themes,
+            }
+        )
+    return out
+
+
+def _theme_query_tokens(q: str) -> list[str]:
+    raw = re.sub(r"[^a-z0-9]+", " ", (q or "").lower()).strip()
+    if not raw:
+        return []
+    return [t for t in raw.split() if len(t) > 1]
+
+
+def _song_search_blob(song: dict[str, Any]) -> str:
+    parts = [
+        str(song.get("title") or ""),
+        str(song.get("artist") or ""),
+        str(song.get("note") or ""),
+        " ".join(song.get("themes") or []),
+    ]
+    return re.sub(r"[^a-z0-9]+", " ", " ".join(parts).lower())
+
+
+def recommend_catalog(theme: str = "") -> dict[str, Any]:
+    songs = _load_rec_catalog()
+    tokens = _theme_query_tokens(theme)
+    if not tokens:
+        return {"ok": True, "count": len(songs), "theme": "", "songs": songs}
+
+    scored: list[tuple[int, dict[str, Any]]] = []
+    for song in songs:
+        blob = _song_search_blob(song)
+        theme_set = set(song.get("themes") or [])
+        score = 0
+        for tok in tokens:
+            if tok in theme_set:
+                score += 3
+            if tok in blob:
+                score += 1
+        if score > 0:
+            scored.append((score, song))
+    scored.sort(key=lambda pair: (-pair[0], pair[1].get("title") or ""))
+    matched = [s for _, s in scored]
+    return {"ok": True, "count": len(matched), "theme": theme.strip(), "songs": matched}
 
 
 def _songcheck_disk_path(key: str) -> Path:
@@ -701,7 +778,8 @@ class Handler(BaseHTTPRequestHandler):
         return
 
     def do_GET(self) -> None:
-        path = urllib.parse.urlparse(self.path).path
+        parsed = urllib.parse.urlparse(self.path)
+        path = parsed.path
         if path in ("/api/health", "/health"):
             _json_response(
                 self,
@@ -716,6 +794,12 @@ class Handler(BaseHTTPRequestHandler):
                     ),
                 },
             )
+            return
+        if path in ("/api/recommend/catalog", "/recommend/catalog", "/api/recommend", "/recommend"):
+            qs = urllib.parse.parse_qs(parsed.query or "")
+            theme = str((qs.get("theme") or [""])[0] or "")
+            payload = recommend_catalog(theme)
+            _json_response(self, 200, payload)
             return
         _json_response(self, 404, {"ok": False, "error": "not_found"})
 
