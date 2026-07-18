@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "note": "Owner-curated recommendation pool only. Do not auto-add Songcheck fine results. Omit Dance in the Dark (Home) and darker JT Music until filter work expands.",
+  "note": "Owner-curated recommendation pool only. Do not auto-add Songcheck fine results. Never add songs from culturally inaccurate, racist, or sexist sources (e.g. Aladdin). Omit Dance in the Dark (Home) and darker JT Music until filter work expands.",
   "songs": [
     {
       "title": "Hideaway",
@@ -25,12 +25,6 @@
       "artist": "Disney",
       "note": "Classic Disney wish song — gentle and family-leaning.",
       "themes": ["disney_kids", "kids_movie", "hope", "comfort"]
-    },
-    {
-      "title": "A Whole New World",
-      "artist": "Disney",
-      "note": "Aladdin — adventure and wonder; soft romance tone — parent preview if needed.",
-      "themes": ["disney_kids", "kids_movie", "adventure", "wonder"]
     },
     {
       "title": "How Far I'll Go",

@@ -112,3 +112,4 @@
 
 - [x] **2026-07-11** — Product is a **filter** (ForeWarner-style check-before-play), **not** a streaming/player service for now.
 - [x] **2026-07-17** — Recommend tab + stated prefs; curated catalog only; beta “still check yourself” disclaimer on hub + site.
+- [x] **2026-07-17** — Recommend never suggests songs from culturally inaccurate, racist, or sexist sources (e.g. Aladdin). Standing product intent; owner judgment on catalog adds.

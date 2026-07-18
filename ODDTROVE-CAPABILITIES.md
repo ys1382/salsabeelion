@@ -147,12 +147,14 @@ Last updated: 2026-07-17
 - Flagged songs stay flags-only; OK / leaning OK can expand lyrics
 - My shelf in localStorage
 - **Recommend** — theme search over owner `config/rec_catalog.json` only; link-out search; stated prefs on device for ranking
+- Recommend excludes songs from culturally inaccurate, racist, or sexist sources (e.g. Aladdin) — catalog curation rule, not an auto-filter
 
 **Cannot do without new work:**
 - Rate limits on the API
 - Accounts / shelf sync
 - Streaming-app filters or in-app playback
 - Open-web or AI-invented recommendation titles (catalog only)
+- Auto-detecting every culturally inaccurate / harmful franchise (owner judgment when growing the catalog)
 
 **Deploy:** `bash top/scripts/deploy-halalyrics.sh` — restarts 8083/8084 and reloads nginx by default (also syncs hub `index.html`). Hub-only: `deploy-kids-sites.sh --site=hub`. Treat as **public** (ask before deploy).
 
