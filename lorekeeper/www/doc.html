@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Document — LoreKeeper</title>
   <link rel="stylesheet" href="./vendor/quill/1.3.7/dist/quill.snow.css" />
-  <link rel="stylesheet" href="./lk-shared.css?v=76" />
+  <link rel="stylesheet" href="./lk-shared.css?v=77" />
 </head>
 <body class="lk-page-doc">
   <div class="lk-wrap lk-doc-wrap">
@@ -41,6 +41,15 @@
                   aria-controls="docAskPanel"
                   data-tab="ask">
             <span class="lk-doc-sidebar-rail-label">Ask</span>
+          </button>
+          <button type="button"
+                  class="lk-doc-sidebar-tab"
+                  id="docSidebarTabNotes"
+                  role="tab"
+                  aria-selected="false"
+                  aria-controls="docNotesPanel"
+                  data-tab="notes">
+            <span class="lk-doc-sidebar-rail-label">Notes</span>
           </button>
           <button type="button"
                   class="lk-doc-sidebar-collapse"
@@ -163,6 +172,7 @@
             <div class="lk-field">
               <label for="docNoteWork">Work title <span class="muted">(tag)</span></label>
               <input type="text" id="docNoteWork" autocomplete="off" placeholder="Same as project name" />
+              <p class="muted lk-field-hint">Leave blank for a floating idea. To rule a work out, write e.g. “doesn’t belong in Ice and Isolation” or tag <code>not:Title</code>.</p>
             </div>
             <div class="lk-doc-note-actions">
               <button type="button" class="lk-btn secondary" id="docNoteAppendBtn">Append to page</button>
@@ -206,6 +216,17 @@
             <div class="lk-ask-answer lk-doc-ask-answer" id="docAskAnswer" hidden></div>
             <ul class="lk-ask-sources" id="docAskSources" hidden aria-label="Sources"></ul>
             <p class="muted lk-doc-ask-privacy">From your saved notes and drafts only — nothing invented.</p>
+          </aside>
+
+          <aside class="lk-doc-sidebar lk-panel lk-doc-notes" id="docNotesPanel" role="tabpanel" aria-labelledby="docSidebarTabNotes" hidden>
+            <p class="lk-panel-title">Notes for this work</p>
+            <p class="muted lk-side-hint" id="docNotesMeta">This work’s notes, plus floating ideas — not other projects.</p>
+            <div class="lk-toolbar lk-doc-notes-toolbar">
+              <button type="button" class="lk-btn secondary" id="docNotesRefreshBtn">Refresh</button>
+              <a class="lk-btn secondary" href="./index.html">All notes on home</a>
+            </div>
+            <p class="muted lk-doc-notes-empty" id="docNotesEmpty" hidden>No notes for this work yet. Floating ideas still show here unless they rule this work out.</p>
+            <ul class="lk-doc-notes-list" id="docNotesList" aria-label="Notes for this document"></ul>
           </aside>
         </div>
       </div>

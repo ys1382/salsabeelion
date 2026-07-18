@@ -106,6 +106,9 @@
         setStatus(msg, true);
         resetForm(true);
         syncWorkTitle(getDoc);
+        if (global.LoreKeeperDocNotesList && global.LoreKeeperDocNotesList.refresh) {
+          global.LoreKeeperDocNotesList.refresh();
+        }
         var titleEl = document.getElementById("docNoteTitle");
         if (titleEl) titleEl.focus();
       });

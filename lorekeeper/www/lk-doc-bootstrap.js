@@ -13,6 +13,7 @@
     "./lk-documents.js?v=53",
     "./lk-doc-collab.js?v=1",
     "./lk-entries.js?v=4",
+    "./lk-work-membership.js?v=1",
     "./lk-font-loader.js?v=1",
     "./lk-font-catalog.js?v=56",
     "./lk-recall.js?v=8",
@@ -20,8 +21,9 @@
     "./lk-site-feedback.js?v=1",
     "./lk-ask-feedback.js?v=1",
     "./lk-tier-a-checklist.js?v=5",
-    "./lk-doc-quick-note.js?v=54",
+    "./lk-doc-quick-note.js?v=55",
     "./lk-doc-ask.js?v=6",
+    "./lk-doc-notes-list.js?v=1",
     "./lk-doc-update-nudge.js?v=1",
     "./lk-doc-longpress.js?v=4",
     "./lk-doc-typo-jump.js?v=1",
@@ -34,7 +36,7 @@
     "./lk-bt-keyboard.js?v=1",
     "./lk-mobile-restore.js?v=1",
     "./lk-mobile-handoff.js?v=1",
-    "./lk-doc-editor.js?v=77",
+    "./lk-doc-editor.js?v=78",
   ];
 
   function loadNext(index) {

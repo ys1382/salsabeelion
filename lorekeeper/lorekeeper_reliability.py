@@ -6,6 +6,7 @@ from typing import Any, Literal
 
 from lorekeeper_character_compose import is_composed_reference_answer
 from lorekeeper_section_scope import is_section_scope_phrase, work_hint_from_section_phrase
+from lorekeeper_work_membership import note_visible_for_work
 
 MaterialState = Literal["nothing_saved", "fragments_only", "summarizable"]
 
@@ -346,10 +347,18 @@ def filter_entries_by_work(
     work_hints: set[str],
     *,
     strict: bool,
+    document_id: str = "",
 ) -> list[dict[str, Any]]:
+    """Work scope: this work + unassigned/idk notes (unless ruled out), never other works."""
     if not work_hints:
         return entries
-    filtered = [e for e in entries if isinstance(e, dict) and entry_matches_work(e, work_hints)]
+    work_title = max(work_hints, key=len)
+    filtered = [
+        e
+        for e in entries
+        if isinstance(e, dict)
+        and note_visible_for_work(e, work_title, document_id=document_id)
+    ]
     if strict:
         return filtered
     return filtered or entries
@@ -387,7 +396,13 @@ def filter_entries_by_recall_scope(
         return scoped, work_hints, bool(work_hints or scoped)
 
     if work_hints:
-        return filter_entries_by_work(entries, work_hints, strict=True), work_hints, True
+        return (
+            filter_entries_by_work(
+                entries, work_hints, strict=True, document_id=doc_id
+            ),
+            work_hints,
+            True,
+        )
     return entries, work_hints, False
 
 

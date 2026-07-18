@@ -1414,8 +1414,10 @@
     var tabSettings = document.getElementById("docSidebarTabSettings");
     var tabNote = document.getElementById("docSidebarTabNote");
     var tabAsk = document.getElementById("docSidebarTabAsk");
+    var tabNotes = document.getElementById("docSidebarTabNotes");
     var notePanel = document.getElementById("docQuickNotePanel");
     var askPanel = document.getElementById("docAskPanel");
+    var notesPanel = document.getElementById("docNotesPanel");
     if (!layout || !shell || !toggle) return;
 
     var SIDEBAR_OPEN_KEY = "lk-doc-sidebar-open";
@@ -1435,9 +1437,11 @@
       var isSettings = tab === "settings";
       var isNote = tab === "note";
       var isAsk = tab === "ask";
+      var isNotes = tab === "notes";
       shell.classList.toggle("is-sidebar-tab-settings", isSettings);
       shell.classList.toggle("is-sidebar-tab-note", isNote);
       shell.classList.toggle("is-sidebar-tab-ask", isAsk);
+      shell.classList.toggle("is-sidebar-tab-notes", isNotes);
       if (tabSettings) {
         tabSettings.classList.toggle("is-active", isSettings);
         tabSettings.setAttribute("aria-selected", isSettings ? "true" : "false");
@@ -1450,8 +1454,13 @@
         tabAsk.classList.toggle("is-active", isAsk);
         tabAsk.setAttribute("aria-selected", isAsk ? "true" : "false");
       }
+      if (tabNotes) {
+        tabNotes.classList.toggle("is-active", isNotes);
+        tabNotes.setAttribute("aria-selected", isNotes ? "true" : "false");
+      }
       if (notePanel) notePanel.hidden = !isNote;
       if (askPanel) askPanel.hidden = !isAsk;
+      if (notesPanel) notesPanel.hidden = !isNotes;
       if (isNote) {
         setOpen(true);
         if (global.LoreKeeperDocQuickNote && global.LoreKeeperDocQuickNote.syncWorkTitle) {
@@ -1460,6 +1469,12 @@
       }
       if (isAsk) {
         setOpen(true);
+      }
+      if (isNotes) {
+        setOpen(true);
+        if (global.LoreKeeperDocNotesList && global.LoreKeeperDocNotesList.refresh) {
+          global.LoreKeeperDocNotesList.refresh();
+        }
       }
       try {
         localStorage.setItem(SIDEBAR_TAB_KEY, tab);
@@ -1480,6 +1495,8 @@
       setTab("note");
     } else if (storedTab === "ask") {
       setTab("ask");
+    } else if (storedTab === "notes") {
+      setTab("notes");
     } else {
       setTab("settings");
     }
@@ -1507,12 +1524,20 @@
         setTab("ask");
       });
     }
+    if (tabNotes) {
+      tabNotes.addEventListener("click", function () {
+        setTab("notes");
+      });
+    }
 
     if (global.initDocQuickNote) {
       global.initDocQuickNote(getDoc);
     }
     if (global.LoreKeeperDocAsk && global.LoreKeeperDocAsk.initDocAsk) {
       global.LoreKeeperDocAsk.initDocAsk(getDoc, parkSave);
+    }
+    if (global.initDocNotesList) {
+      global.initDocNotesList(getDoc);
     }
     if (global.LoreKeeperDocUpdateNudge && global.LoreKeeperDocUpdateNudge.init) {
       global.LoreKeeperDocUpdateNudge.init();

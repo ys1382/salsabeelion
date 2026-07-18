@@ -276,6 +276,11 @@ Run **one row at a time** in Cursor. Don’t skip Phase 0 — it costs nothing a
 
 ## Your additions
 
+### Doc-scoped notes sidebar (shipped 2026-07-17)
+
+- [x] **Notes tab on document** — while writing, list only this work’s notes (+ floating/idk ideas); hide other works (e.g. Ice and Fire while on Ice and Isolation); hide floating notes that rule out this work (`not:Title` or “doesn’t belong in …”)
+- [x] **Same membership for work-scoped Ask**
+
 ### Draft vs notes — dual Ask + doc cadence (shipped 2026-07-13)
 
 - [x] **Ask dual summary when draft and notes conflict** — draft first (**This is what the main draft says:**), then notes (**This is what your notes say:**); no winner / no scolding / no AI rewrite
