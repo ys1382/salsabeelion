@@ -326,17 +326,33 @@ SHELF_PROMPT = """You read book titles from a photo of a real bookshelf (spines 
 Return ONLY valid JSON:
 {
   "books": [
-    {"title": "book title without marketing fluff", "author": "primary author or empty string", "confidence": "high|medium|low"}
+    {
+      "title": "book title without marketing fluff",
+      "author": "primary author — required when readable",
+      "confidence": "high|medium|low",
+      "status": "ok|obstruction|author_unclear|partial"
+    }
+  ],
+  "incomplete": [
+    {
+      "title": "partial or blocked title if any letters are clear, else empty",
+      "author": "",
+      "confidence": "low",
+      "status": "obstruction|author_unclear|partial"
+    }
   ],
   "brief": "one short sentence about the photo"
 }
 Rules:
-- List every distinct book you can reasonably read from the photo (max 40).
+- List every distinct book you can reasonably read from the photo (max 40 total across books + incomplete).
 - Prefer spine text when books are spine-out; use cover text when face-out.
-- Omit books you cannot read at all.
-- Do not invent famous titles that are not visible in the image.
-- author may be an empty string if only the title is readable.
-- If no books are readable, return books: []."""
+- Author is NOT optional for a successful read. Many books share the same title (e.g. Dust, Grim). Never invent an author. Never attach a famous author because the title sounds familiar.
+- Put a book in "books" only when BOTH title AND author are clearly lettered in the image (status "ok").
+- If the title is readable but the author is not, put it in "incomplete" with status "author_unclear" — do not guess the author.
+- If part of the book is blocked (finger, another book, shelf lip, glare, shadow covering letters), do NOT invent the missing text. Put it in "incomplete" with status "obstruction" (include any clear partial title; leave author empty if unknown).
+- If only a fragment is readable, status "partial" in "incomplete" — never complete it from memory.
+- Do NOT invent famous titles that are not clearly visible. Do NOT substitute a similar-sounding popular title (wrong Unicorn book, wrong Dreamers book, etc.). Prefer omit over a wrong guess.
+- If no books are readable, return books: [] and incomplete: []."""
 
 
 def log_lookup(
@@ -1096,26 +1112,60 @@ def call_gemini_shelf(image_b64: str, mime: str) -> dict[str, Any]:
         return {"ok": False, "error": "ai_parse_error", "message": text[:300]}
 
     books_out: list[dict[str, Any]] = []
+    incomplete_out: list[dict[str, Any]] = []
     seen: set[str] = set()
-    for item in (parsed.get("books") or [])[:40]:
-        if not isinstance(item, dict):
-            continue
+
+    def _norm_status(raw: str, has_author: bool) -> str:
+        s = (raw or "").strip().lower()
+        if s in ("ok", "obstruction", "author_unclear", "partial"):
+            return s
+        if not has_author:
+            return "author_unclear"
+        return "ok"
+
+    def _append_book(item: dict[str, Any], *, force_incomplete: bool = False) -> None:
         title = str(item.get("title") or "").strip()[:300]
-        if not title:
-            continue
+        if not title and not force_incomplete:
+            return
         author = str(item.get("author") or "").strip()[:200]
         conf = str(item.get("confidence") or "medium").lower()
         if conf not in ("high", "medium", "low"):
             conf = "medium"
-        key = re.sub(r"\s+", " ", title.lower()) + "|" + re.sub(r"\s+", " ", author.lower())
+        status = _norm_status(str(item.get("status") or ""), bool(author))
+        if force_incomplete and status == "ok":
+            status = "partial" if title else "obstruction"
+        key = re.sub(r"\s+", " ", title.lower()) + "|" + re.sub(r"\s+", " ", author.lower()) + "|" + status
         if key in seen:
-            continue
+            return
         seen.add(key)
-        books_out.append({"title": title, "author": author, "confidence": conf})
+        row = {"title": title, "author": author, "confidence": conf, "status": status}
+        if status != "ok" or not author or force_incomplete:
+            if not title and status == "obstruction":
+                row["title"] = "(obstruction)"
+            row["confidence"] = "low"
+            if status == "ok":
+                row["status"] = "author_unclear"
+            incomplete_out.append(row)
+            return
+        books_out.append(row)
+
+    for item in (parsed.get("books") or [])[:40]:
+        if isinstance(item, dict):
+            _append_book(item)
+
+    for item in (parsed.get("incomplete") or [])[:40]:
+        if isinstance(item, dict):
+            _append_book(item, force_incomplete=True)
+
+    # Cap total rows returned
+    if len(books_out) + len(incomplete_out) > 40:
+        room = max(0, 40 - len(books_out))
+        incomplete_out = incomplete_out[:room]
 
     return {
         "ok": True,
         "books": books_out,
+        "incomplete": incomplete_out,
         "brief": str(parsed.get("brief") or "")[:280],
         "imageDiscarded": True,
         "model": MODEL,

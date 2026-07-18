@@ -35,13 +35,7 @@
   margin: 0.65rem 0;
 }
 
-.owner-shelf-file-label {
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-}
-
-.owner-shelf-file-label--primary {
+.owner-shelf-start-primary {
   font-weight: 600;
   border-color: rgba(227, 184, 106, 0.55);
   background: rgba(227, 184, 106, 0.14);
@@ -178,6 +172,14 @@
 .owner-shelf-conf {
   font-size: 0.75rem;
   white-space: nowrap;
+}
+
+.owner-shelf-row--obstruction,
+.owner-shelf-row--author_unclear,
+.owner-shelf-row--partial {
+  outline: 1px solid rgba(220, 140, 100, 0.35);
+  border-radius: 8px;
+  padding: 0.2rem 0.25rem;
 }
 
 .owner-scanner-divider {

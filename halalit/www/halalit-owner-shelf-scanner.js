@@ -5,11 +5,13 @@
 (function (global) {
   var SHELF_CAPTURE_MAX_EDGE = 3000;
   var SHELF_JPEG_QUALITY = 0.9;
-  var LIVE_COACH_MS = 450;
-  var BLUR_TOO_LOW = 45;
-  var BLUR_SOFT = 110;
-  var EDGE_TOO_LOW = 0.018;
-  var EDGE_SOFT = 0.038;
+  var LIVE_COACH_MS = 350;
+  var BLUR_TOO_LOW = 40;
+  var BLUR_SOFT = 78;
+  var EDGE_TOO_LOW = 0.016;
+  var EDGE_SOFT = 0.032;
+  var SPINE_FILL_TOO_LOW = 0.1;
+  var SPINE_FILL_SOFT = 0.16;
 
   function apiUrl(suffix) {
     var Config = global.HalalitBookcheckConfig;
@@ -242,6 +244,31 @@
     return hits / total;
   }
 
+  /** Fraction of narrow columns that look spine-like (vertical texture), not empty shelf wood. */
+  function spineFillScore(gray, w, h) {
+    var colW = 8;
+    var cols = Math.max(1, Math.floor(w / colW));
+    var strong = 0;
+    var y0 = Math.floor(h * 0.12);
+    var y1 = Math.floor(h * 0.88);
+    for (var c = 0; c < cols; c++) {
+      var hits = 0;
+      var total = 0;
+      var x0 = c * colW;
+      var x1 = Math.min(w - 1, x0 + colW);
+      for (var y = y0; y < y1; y++) {
+        for (var x = x0 + 1; x < x1; x++) {
+          var i = y * w + x;
+          var grad = Math.abs(gray[i + 1] - gray[i - 1]);
+          if (grad > 16) hits++;
+          total++;
+        }
+      }
+      if (total && hits / total > 0.07) strong++;
+    }
+    return strong / cols;
+  }
+
   function analyzeShelfFrame(video) {
     if (!video || !video.videoWidth) {
       return { ok: false, hint: "Starting camera…", level: "wait" };
@@ -273,25 +300,43 @@
     if (brightness < 35) {
       return { ok: false, hint: "Too dark — add light or angle toward the shelf.", level: "bad" };
     }
+    if (brightness > 245) {
+      return { ok: false, hint: "Too bright — ease glare off the spines.", level: "bad" };
+    }
     var blur = laplacianVariance(gray, sampleW, sampleH);
     if (blur < BLUR_TOO_LOW) {
-      return { ok: false, hint: "Too blurry — hold the phone still.", level: "bad" };
+      return { ok: false, hint: "Too blurry — hold still a second.", level: "bad" };
+    }
+    var fill = spineFillScore(gray, sampleW, sampleH);
+    if (fill < SPINE_FILL_TOO_LOW) {
+      return {
+        ok: false,
+        hint: "Mostly empty shelf — fill the dashed box with books (stay ~3–5 ft).",
+        level: "bad",
+      };
     }
     var edges = verticalEdgeFraction(gray, sampleW, sampleH);
     if (edges < EDGE_TOO_LOW) {
       return {
         ok: false,
-        hint: "Move closer — spine text looks too small (about arm’s length to 5 ft on one section).",
+        hint: "Spines look faint — step a little closer or more light (not nose-to-shelf).",
         level: "bad",
       };
     }
+    if (fill < SPINE_FILL_SOFT) {
+      return {
+        ok: false,
+        hint: "Aim so more books fill the dashed box — same distance is fine.",
+        level: "soft",
+      };
+    }
     if (blur < BLUR_SOFT) {
-      return { ok: false, hint: "Almost sharp — hold still a moment.", level: "soft" };
+      return { ok: false, hint: "Almost ready — hold still a moment.", level: "soft" };
     }
     if (edges < EDGE_SOFT) {
       return {
         ok: false,
-        hint: "A little closer — fill the frame with one shelf section.",
+        hint: "A touch closer or brighter — keep one shelf section in frame.",
         level: "soft",
       };
     }
@@ -324,6 +369,28 @@
       var title = String((b && b.title) || "").trim();
       if (!title) return;
       var author = String((b && b.author) || "").trim();
+      var status = String((b && b.status) || "").trim().toLowerCase();
+      var confidence = (b && b.confidence) || "medium";
+      if (status === "obstruction" || status === "author_unclear" || status === "partial") {
+        keep.push({
+          title: title,
+          author: author,
+          confidence: confidence,
+          status: status,
+          selected: false,
+        });
+        return;
+      }
+      if (!author) {
+        keep.push({
+          title: title,
+          author: "",
+          confidence: "low",
+          status: "author_unclear",
+          selected: false,
+        });
+        return;
+      }
       if (isSettledTitle(title, author, opts)) {
         skipped.push({ title: title, author: author, reason: "settled" });
         return;
@@ -331,8 +398,9 @@
       keep.push({
         title: title,
         author: author,
-        confidence: (b && b.confidence) || "medium",
-        selected: true,
+        confidence: confidence,
+        status: "",
+        selected: confidence !== "low",
       });
     });
     return { keep: keep, skipped: skipped };
@@ -347,7 +415,6 @@
     var listEl = root.querySelector("[data-shelf='list']");
     var skippedEl = root.querySelector("[data-shelf='skipped']");
     var previewEl = root.querySelector("[data-shelf='preview']");
-    var fileInput = root.querySelector("[data-shelf='file']");
     var video = root.querySelector("[data-shelf='video']");
     var liveEl = root.querySelector("[data-shelf='live']");
     var liveHint = root.querySelector("[data-shelf='liveHint']");
@@ -491,14 +558,19 @@
         authorIn.type = "text";
         authorIn.className = "owner-shelf-author";
         authorIn.value = book.author || "";
-        authorIn.placeholder = "Author (optional)";
+        authorIn.placeholder = "Author (required)";
         authorIn.setAttribute("aria-label", "Author");
         authorIn.addEventListener("input", function () {
           book.author = authorIn.value;
         });
         var conf = document.createElement("span");
         conf.className = "muted owner-shelf-conf";
-        conf.textContent = book.confidence || "";
+        var statusLabel = "";
+        if (book.status === "obstruction") statusLabel = "obstruction";
+        else if (book.status === "author_unclear") statusLabel = "author unclear";
+        else if (book.status === "partial") statusLabel = "partial";
+        conf.textContent = [book.confidence || "", statusLabel].filter(Boolean).join(" · ");
+        if (book.status) row.className += " owner-shelf-row--" + book.status;
         row.appendChild(check);
         row.appendChild(titleIn);
         row.appendChild(authorIn);
@@ -546,7 +618,7 @@
 
     function runIdentifyWithPayload(payload) {
       if (!payload || !payload.base64) {
-        finishScan("Add a shelf photo first — Take shelf photo or Live camera.", "error");
+        finishScan("Start the camera coach and tap Capture & scan first.", "error");
         return;
       }
       finishScan("Scanning shelf… photo is not kept after this.", "busy");
@@ -562,8 +634,9 @@
           var rawCount = 0;
           var filtered = { keep: [], skipped: [] };
           try {
-            rawCount = (res.books && res.books.length) || 0;
-            filtered = filterUnnoted(res.books || [], {
+            var merged = (res.books || []).concat(res.incomplete || []);
+            rawCount = merged.length;
+            filtered = filterUnnoted(merged, {
               rosterSettled: opts.rosterSettled,
               alreadyQueued: opts.alreadyQueued,
             });
@@ -575,9 +648,12 @@
           renderSkipped(filtered.skipped);
           renderList();
           var brief = res.brief ? " " + res.brief : "";
+          var flagged = pendingBooks.filter(function (b) {
+            return b.status === "obstruction" || b.status === "author_unclear" || b.status === "partial";
+          }).length;
           if (!rawCount) {
             finishScan(
-              "No titles read — try Live camera hints, one section of shelf, about 3–5 feet away." + brief,
+              "No clear title+author reads — one section of shelf, about 3–5 feet, good light." + brief,
               "error"
             );
             return;
@@ -597,10 +673,11 @@
           finishScan(
             "Found " +
               pendingBooks.length +
-              " new title" +
+              " row" +
               (pendingBooks.length === 1 ? "" : "s") +
+              (flagged ? " (" + flagged + " need author / obstruction check)" : "") +
               (filtered.skipped.length ? " (" + filtered.skipped.length + " already noted)" : "") +
-              ". Photo discarded. Uncheck mistakes, then add to Owner scanned TBR." +
+              ". Photo discarded. Fix authors, uncheck mistakes, then add to Owner scanned TBR." +
               brief,
             "success"
           );
@@ -616,7 +693,7 @@
 
     function runIdentify() {
       if (!pendingImage) {
-        finishScan("Add a shelf photo first — Take shelf photo or Live camera.", "error");
+        finishScan("Start the camera coach and tap Capture & scan first.", "error");
         return;
       }
       runIdentifyWithPayload(pendingImage);
@@ -635,13 +712,13 @@
     function addSelected() {
       var books = pendingBooks
         .filter(function (b) {
-          return b.selected && String(b.title || "").trim();
+          return b.selected && String(b.title || "").trim() && String(b.author || "").trim();
         })
         .map(function (b) {
           return { title: String(b.title).trim(), author: String(b.author || "").trim() };
         });
       if (!books.length) {
-        setStatus("Select at least one title.");
+        setStatus("Select titles that have both title and author filled in.");
         return;
       }
       if (addBtn) addBtn.disabled = true;
@@ -663,33 +740,14 @@
       });
     }
 
-    if (fileInput) {
-      fileInput.addEventListener("change", function () {
-        var file = fileInput.files && fileInput.files[0];
-        if (!file) return;
-        stopCamera();
-        setStatus("Preparing photo…");
-        fileToImagePayload(file, SHELF_CAPTURE_MAX_EDGE)
-          .then(function (payload) {
-            acceptImage(payload, true);
-          })
-          .catch(function () {
-            setStatus(
-              "Could not open that image. Use Take shelf photo (camera) or Live camera with on-screen hints."
-            );
-          });
-        fileInput.value = "";
-      });
-    }
-
     if (startCamBtn) {
       startCamBtn.addEventListener("click", function () {
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-          setStatus("Camera not available — use Take shelf photo instead.");
+          setStatus("Camera not available on this device.");
           return;
         }
         stopCamera();
-        setStatus("Live coach on — watch the hint on the camera.");
+        setStatus("Camera coach on — watch the hint, then Capture & scan.");
         navigator.mediaDevices
           .getUserMedia({
             video: {
@@ -712,7 +770,7 @@
             startLiveCoach();
           })
           .catch(function () {
-            setStatus("Camera permission denied — use Take shelf photo instead.");
+            setStatus("Camera permission denied — allow camera for Owner’s Office.");
           });
       });
     }
@@ -720,7 +778,7 @@
     if (snapBtn) {
       snapBtn.addEventListener("click", function () {
         if (!coachReady) {
-          setStatus("Wait for Good — tap Capture & scan, or move closer / hold still.");
+          setStatus("Wait for Good — then tap Capture & scan.");
           return;
         }
         stopLiveCoach();

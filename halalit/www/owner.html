@@ -266,23 +266,20 @@
         </summary>
         <div class="office-section__body">
           <p class="owner-testing-lab-banner" role="note">
-            <strong>Owner only.</strong> Shelf photos and single-cover tests stay off reader lookup lists, reader My TBR, scanner malfunction alerts, and “hand vet in progress.”
-            Unnoted titles from shelf photos go to <strong>Owner scanned TBR</strong> below — never as a reader scan.
+            <strong>Owner only.</strong> Shelf camera scans and single-cover tests stay off reader lookup lists, reader My TBR, scanner malfunction alerts, and “hand vet in progress.”
+            Unnoted titles from shelf scans go to <strong>Owner scanned TBR</strong> below — never as a reader scan.
           </p>
 
           <div class="owner-shelf-scanner" id="ownerShelfScannerPanel">
-            <h3>Shelf photo</h3>
+            <h3>Shelf camera coach</h3>
             <p class="hint owner-shelf-range" style="margin-top:0">
-              <strong>Range:</strong> one section of shelf (~3–4 ft wide), about <strong>3–5 feet</strong> away for normal paperbacks;
-              small or dark spines need closer. Not across the room — plan a few photos along a long wall.
-              Photos are <strong>not saved</strong> — discarded right after titles are read.
+              <strong>Range:</strong> one section of shelf (~3–4 ft wide), about <strong>3–5 feet</strong> away for normal paperbacks —
+              not across the room, and not pressed into the books. Small or dark spines may need a step closer.
+              On-screen hints say when the frame is ready. Photos are <strong>not saved</strong> — discarded right after titles are read.
+              Reads need a visible <strong>title and author</strong>; blocked or half-hidden spines are flagged, not guessed.
             </p>
             <div class="owner-shelf-actions">
-              <label class="import-btn owner-shelf-file-label owner-shelf-file-label--primary">
-                Take shelf photo
-                <input type="file" accept="image/*,.heic,.heif" capture="environment" data-shelf="file" hidden />
-              </label>
-              <button type="button" class="import-btn" data-shelf="startCam">Live camera coach</button>
+              <button type="button" class="import-btn owner-shelf-start-primary" data-shelf="startCam">Start camera coach</button>
               <button type="button" class="import-btn" data-shelf="snap" disabled>Capture &amp; scan</button>
               <button type="button" class="import-btn" data-shelf="stopCam" hidden>Stop camera</button>
               <button type="button" class="import-btn" data-shelf="read" disabled>Scan again</button>
@@ -409,7 +406,7 @@
           <span class="office-section__toggle" aria-hidden="true"></span>
         </summary>
         <div class="office-section__body">
-          <p class="hint">Titles <strong>you</strong> scanned (shelf photos or owner Scroll Scanner) — separate from reader My TBR. Already vetted or rejected titles are not added here.</p>
+          <p class="hint">Titles <strong>you</strong> scanned (shelf camera or owner Scroll Scanner) — separate from reader My TBR. Already vetted or rejected titles are not added here.</p>
           <table>
             <thead>
               <tr><th>Title</th><th>Author</th><th>Source</th><th>Added</th><th></th></tr>
@@ -666,7 +663,7 @@
   <script src="./halalit-lookup-quality.js?v=20260610c"></script>
   <script src="./halalit-scroll-scanner.js?v=20260701a"></script>
   <script src="./halalit-owner-cover-preview.js?v=20260611f"></script>
-  <script src="./halalit-owner-shelf-scanner.js?v=20260716e"></script>
+  <script src="./halalit-owner-shelf-scanner.js?v=20260717a"></script>
   <script src="./halalit-bookcheck.js?v=20260716a"></script>
   <script src="./halalit-auth.js?v=20260715a"></script>
   <script>
@@ -838,7 +835,7 @@
           var empty = document.createElement("tr");
           var td = document.createElement("td");
           td.colSpan = 5;
-          td.textContent = "No owner-scanned titles yet — use Shelf photo above.";
+          td.textContent = "No owner-scanned titles yet — use Shelf camera coach above.";
           empty.appendChild(td);
           tbody.appendChild(empty);
           return;
@@ -852,7 +849,7 @@
           }
           cell(row.title);
           cell(row.author);
-          cell(row.source === "scroll" ? "Scroll Scanner" : row.source === "manual" ? "Manual" : "Shelf photo");
+          cell(row.source === "scroll" ? "Scroll Scanner" : row.source === "manual" ? "Manual" : "Shelf scan");
           cell(row.createdAt ? fmtDate(row.createdAt) : "—");
           var actions = document.createElement("td");
           var rm = document.createElement("button");
