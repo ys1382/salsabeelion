@@ -55,6 +55,12 @@ from lorekeeper_reliability import (
     prefer_known_work_hints,
     sources_from_ranked,
 )
+from lorekeeper_work_membership import (
+    compose_floaters_digest,
+    filter_entries_floaters_only,
+    is_floaters_inventory_question,
+    is_floaters_question,
+)
 
 ENTRIES_KEY = "lorekeeper_entries_v1"
 DOCUMENTS_KEY = "lorekeeper_documents_v1"
@@ -612,8 +618,12 @@ def recall_from_user_data(
     if len(question) > 2000:
         question = question[:2000]
 
+    floaters_only = False
+
     def _finish(payload: dict[str, Any]) -> dict[str, Any]:
         if payload.get("ok"):
+            if floaters_only:
+                payload.setdefault("recallScope", "floaters")
             return focus_ask_response(question, payload, spot_check=spot_check)
         return payload
 
@@ -635,9 +645,10 @@ def recall_from_user_data(
 
     entries = _all_entries(data)
     recall_mode = "brief" if (mode or "").strip().lower() == "brief" else "full"
+    floaters_only = is_floaters_question(question)
 
     section_hints = extract_section_hints(question)
-    if section_hints:
+    if section_hints and not floaters_only:
         section_scoped = filter_entries_by_section(entries, section_hints)
         if section_scoped:
             entries = section_scoped
@@ -655,7 +666,47 @@ def recall_from_user_data(
                 "entryCount": len(_all_entries(data)),
             })
 
-    if scope_work or (scope_mode == "document" and scope_doc_id):
+    if floaters_only:
+        # Floaters Ask: never mix in work-tagged notes; ignore doc/work scope.
+        entries = filter_entries_floaters_only(entries)
+        scope_hints: set[str] = set()
+        scope_strict = False
+        if is_floaters_inventory_question(question):
+            answer, source_ids = compose_floaters_digest(entries)
+            ranked_rows = []
+            for eid in source_ids:
+                for entry in entries:
+                    if str(entry.get("id") or "") != eid:
+                        continue
+                    ranked_rows.append(
+                        {
+                            "id": eid,
+                            "title": str(entry.get("title") or "Untitled"),
+                            "kind": str(entry.get("kind") or "note"),
+                            "kindLabel": _kind_label(str(entry.get("kind") or "note")),
+                            "excerpt": _best_excerpt(
+                                str(entry.get("body") or ""), _tokenize(question), 220
+                            ),
+                            "score": 10,
+                        }
+                    )
+                    break
+            material_state: Any = (
+                "summarizable" if source_ids else "nothing_saved"
+            )
+            return _finish({
+                "ok": True,
+                "answer": answer,
+                "sources": sources_from_ranked(ranked_rows, material_state),
+                "materialState": material_state,
+                "mode": recall_mode,
+                "questionKind": "list",
+                "recallVersion": RECALL_VERSION,
+                "recallEngine": "local",
+                "recallScope": "floaters",
+                "entryCount": len(entries),
+            })
+    elif scope_work or (scope_mode == "document" and scope_doc_id):
         entries, scope_hints, scope_strict = filter_entries_by_recall_scope(
             entries,
             work_title=scope_work,
@@ -676,50 +727,57 @@ def recall_from_user_data(
             "questionKind": "fallback",
             "recallVersion": RECALL_VERSION,
             "recallEngine": "local",
+            "recallScope": "floaters" if floaters_only else "",
             "entryCount": 0,
         })
 
     known_works = distinct_work_tags(entries)
-    explicit = prefer_known_work_hints(
-        explicit_work_hints(question, known_works, entries), known_works
-    )
-    work_hints = prefer_known_work_hints(
-        extract_work_hints(question, entries), known_works
-    )
-    strict_work = bool(explicit)
-    if scope_hints:
-        work_hints = set(scope_hints)
-        strict_work = scope_strict
-        # Known explicit work titles refine scope; junk never wipes doc/work scope.
-        if explicit:
-            work_hints = explicit | set(scope_hints)
-            strict_work = True
-    elif explicit:
-        work_hints = explicit
-        strict_work = True
-    elif work_hints:
+    if floaters_only:
+        # Stay inside the floater pile — no work filter, no disambiguation.
+        work_hints: set[str] = set()
         strict_work = False
+        scoped = list(entries)
+    else:
+        explicit = prefer_known_work_hints(
+            explicit_work_hints(question, known_works, entries), known_works
+        )
+        work_hints = prefer_known_work_hints(
+            extract_work_hints(question, entries), known_works
+        )
+        strict_work = bool(explicit)
+        if scope_hints:
+            work_hints = set(scope_hints)
+            strict_work = scope_strict
+            # Known explicit work titles refine scope; junk never wipes doc/work scope.
+            if explicit:
+                work_hints = explicit | set(scope_hints)
+                strict_work = True
+        elif explicit:
+            work_hints = explicit
+            strict_work = True
+        elif work_hints:
+            strict_work = False
 
-    disambiguation = check_work_disambiguation(
-        question,
-        entries,
-        scope_work=scope_work,
-        strict_work=strict_work,
-    )
-    if disambiguation:
-        return _finish({
-            "ok": True,
-            "answer": disambiguation,
-            "sources": [],
-            "materialState": "fragments_only",
-            "mode": recall_mode,
-            "questionKind": "fallback",
-            "recallVersion": RECALL_VERSION,
-            "recallEngine": "local",
-            "entryCount": len(entries),
-        })
+        disambiguation = check_work_disambiguation(
+            question,
+            entries,
+            scope_work=scope_work,
+            strict_work=strict_work,
+        )
+        if disambiguation:
+            return _finish({
+                "ok": True,
+                "answer": disambiguation,
+                "sources": [],
+                "materialState": "fragments_only",
+                "mode": recall_mode,
+                "questionKind": "fallback",
+                "recallVersion": RECALL_VERSION,
+                "recallEngine": "local",
+                "entryCount": len(entries),
+            })
 
-    scoped = filter_entries_by_work(entries, work_hints, strict=strict_work)
+        scoped = filter_entries_by_work(entries, work_hints, strict=strict_work)
 
     if strict_work and not scoped:
         label = character_targets(question)

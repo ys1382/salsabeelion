@@ -569,7 +569,9 @@
           }
           askStatus.textContent = res.syncWarning || "From your saved writing.";
           askStatus.className = "lk-status ok";
-          if (res.materialState === "summarizable") {
+          if (res.recallScope === "floaters") {
+            askStatus.textContent = "From your floating / unspecified notes only.";
+          } else if (res.materialState === "summarizable") {
             askStatus.textContent = "Summary from your notes and drafts.";
           } else if (res.materialState === "fragments_only") {
             askStatus.textContent =

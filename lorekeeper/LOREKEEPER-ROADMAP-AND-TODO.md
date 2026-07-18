@@ -281,6 +281,10 @@ Run **one row at a time** in Cursor. Don’t skip Phase 0 — it costs nothing a
 - [x] **Notes tab on document** — while writing, list only this work’s notes (+ floating/idk ideas); hide other works (e.g. Ice and Fire while on Ice and Isolation); hide floating notes that rule out this work (`not:Title` or “doesn’t belong in …”)
 - [x] **Same membership for work-scoped Ask**
 
+### Floaters-only Ask (shipped 2026-07-17)
+
+- [x] **Ask floating / unspecified pile** — phrasing like “floating ideas,” “unspecified notes,” “jumbled ideas”; lists only unassigned notes; never mixes in work-tagged notes; character Ask inside floaters stays in that pile
+
 ### Draft vs notes — dual Ask + doc cadence (shipped 2026-07-13)
 
 - [x] **Ask dual summary when draft and notes conflict** — draft first (**This is what the main draft says:**), then notes (**This is what your notes say:**); no winner / no scolding / no AI rewrite

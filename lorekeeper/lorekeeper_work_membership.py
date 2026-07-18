@@ -188,3 +188,117 @@ def filter_entries_visible_for_work(
         if isinstance(e, dict)
         and note_visible_for_work(e, work, document_id=document_id)
     ]
+
+
+# --- Floaters-only Ask (unassigned notes; never mix in tagged works) ---
+
+_FLOATERS_SCOPE_Q = re.compile(
+    r"\b("
+    r"floating(?:\s+ideas?)?|floaters?|"
+    r"unspecified(?:\s+(?:ideas?|notes?))?|"
+    r"unassigned(?:\s+(?:ideas?|notes?))?|"
+    r"jumbled(?:\s+(?:ideas?|notes?))?|"
+    r"idk(?:\s+(?:which\s+work|notes?|ideas?))?|"
+    r"notes?\s+without\s+(?:a\s+)?work|"
+    r"(?:ideas?|notes?)\s+(?:that\s+)?(?:don'?t|do\s+not)\s+belong\s+anywhere|"
+    r"no\s+(?:specific\s+)?work(?:\s+yet|\s+assigned)?|"
+    r"inbox(?:\s+(?:ideas?|notes?))?"
+    r")\b",
+    re.I,
+)
+
+_FLOATERS_INVENTORY_Q = re.compile(
+    r"\b("
+    r"all|list|summarize|summary|give\s+me|show\s+me|what\s+are|"
+    r"dump|rundown|digest|overview"
+    r")\b",
+    re.I,
+)
+
+FLOATERS_DIGEST_CAP = 40
+
+
+def is_floaters_question(question: str) -> bool:
+    """Writer asked about floating / unspecified / no-work notes."""
+    return bool(_FLOATERS_SCOPE_Q.search(question or ""))
+
+
+def is_floaters_inventory_question(question: str) -> bool:
+    """List or summarize the floater pile (not a single character inside it)."""
+    q = question or ""
+    if not is_floaters_question(q):
+        return False
+    return bool(_FLOATERS_INVENTORY_Q.search(q))
+
+
+def filter_entries_floaters_only(entries: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Unassigned notes only — excludes anything with a concrete work tag."""
+    return [
+        e
+        for e in entries
+        if isinstance(e, dict) and note_is_unassigned(e) and str(e.get("kind") or "") != "document"
+    ]
+
+
+def _floater_excerpt(body: str, limit: int = 160) -> str:
+    text = re.sub(r"\s+", " ", (body or "").strip())
+    if not text:
+        return ""
+    if len(text) <= limit:
+        return text
+    cut = text[: limit - 1].rsplit(" ", 1)[0]
+    return (cut or text[: limit - 1]).rstrip(".,;:") + "…"
+
+
+def compose_floaters_digest(
+    entries: list[dict[str, Any]],
+    *,
+    cap: int = FLOATERS_DIGEST_CAP,
+) -> tuple[str, list[str]]:
+    """Clear list of every floater (capped). Returns (answer, source_ids)."""
+    floaters = filter_entries_floaters_only(entries)
+    if not floaters:
+        return (
+            "You don't have any floating / unspecified notes yet — "
+            "notes with no work title (or tagged idk / unassigned) will show up here.\n\n"
+            "— From your notes only. Nothing invented.",
+            [],
+        )
+
+    # Stable order: newest-ish ids last often; prefer title sort for predictability.
+    ordered = sorted(
+        floaters,
+        key=lambda e: (str(e.get("title") or "").lower(), str(e.get("id") or "")),
+    )
+    total = len(ordered)
+    shown = ordered[: max(1, cap)]
+    source_ids = [str(e.get("id") or "") for e in shown if e.get("id")]
+
+    lines = [
+        f"Your floating / unspecified ideas ({total} note"
+        + ("s" if total != 1 else "")
+        + " — none tagged to a specific work):\n"
+    ]
+    for entry in shown:
+        title = str(entry.get("title") or "Untitled").strip() or "Untitled"
+        excerpt = _floater_excerpt(str(entry.get("body") or ""))
+        if excerpt:
+            lines.append(f"• {title} — {excerpt}")
+        else:
+            lines.append(f"• {title} — (title only; no body saved yet)")
+
+    if total > len(shown):
+        rest = total - len(shown)
+        lines.append(
+            f"\n…and {rest} more floating note"
+            + ("s" if rest != 1 else "")
+            + ". Ask about a character or topic in your floaters to narrow, "
+            "or assign work titles when you know where an idea belongs."
+        )
+    else:
+        lines.append(
+            "\nThat's the full floater pile from what you've saved. "
+            "Thin scraps are listed as-is — nothing filled in."
+        )
+    lines.append("\n— From your notes only. Nothing invented.")
+    return "\n".join(lines), source_ids

@@ -117,6 +117,19 @@
     });
   }
 
+  var FLOATERS_SCOPE_Q =
+    /\b(?:floating(?:\s+ideas?)?|floaters?|unspecified(?:\s+(?:ideas?|notes?))?|unassigned(?:\s+(?:ideas?|notes?))?|jumbled(?:\s+(?:ideas?|notes?))?|idk(?:\s+(?:which\s+work|notes?|ideas?))?|notes?\s+without\s+(?:a\s+)?work|(?:ideas?|notes?)\s+(?:that\s+)?(?:don'?t|do\s+not)\s+belong\s+anywhere|no\s+(?:specific\s+)?work(?:\s+yet|\s+assigned)?|inbox(?:\s+(?:ideas?|notes))?)\b/i;
+
+  function isFloatersQuestion(question) {
+    return FLOATERS_SCOPE_Q.test(String(question || ""));
+  }
+
+  function filterEntriesFloatersOnly(entries) {
+    return (entries || []).filter(function (e) {
+      return noteIsUnassigned(e) && String((e && e.kind) || "") !== "document";
+    });
+  }
+
   global.LoreKeeperWorkMembership = {
     normalizeWorkKey: normalizeWorkKey,
     noteIsUnassigned: noteIsUnassigned,
@@ -125,5 +138,7 @@
     noteBelongsToOtherWork: noteBelongsToOtherWork,
     noteVisibleForWork: noteVisibleForWork,
     filterEntriesVisibleForWork: filterEntriesVisibleForWork,
+    isFloatersQuestion: isFloatersQuestion,
+    filterEntriesFloatersOnly: filterEntriesFloatersOnly,
   };
 })(typeof window !== "undefined" ? window : globalThis);
