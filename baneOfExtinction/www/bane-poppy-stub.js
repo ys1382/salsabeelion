@@ -14,6 +14,21 @@
   var stillEl = document.getElementById("organismStill");
   var creditEl = document.getElementById("artCredit");
 
+  var STILLS = {
+    poppy: {
+      src: "assets/california-poppy-subject.png",
+      credit:
+        "Still: California poppy subject cutout (Sedovo photo, CC BY-SA 3.0).",
+      match: /poppy|eschscholzia/i,
+    },
+    sunflower: {
+      src: "assets/common-sunflower-subject.png",
+      credit:
+        "Still: common sunflower subject cutout (Soph556 photo, CC BY-SA 3.0).",
+      match: /sunflower|helianthus/i,
+    },
+  };
+
   var state = {
     commonName: "California poppy",
     latinName: "Eschscholzia californica",
@@ -24,6 +39,20 @@
 
   function setStatus(msg) {
     if (statusEl) statusEl.textContent = msg || "";
+  }
+
+  function applyStill(commonName, latinName) {
+    if (!stillEl) return;
+    var blob = (commonName || "") + " " + (latinName || "");
+    var key;
+    for (key in STILLS) {
+      if (STILLS[key].match.test(blob)) {
+        stillEl.src = STILLS[key].src;
+        stillEl.alt = commonName || key;
+        if (creditEl) creditEl.textContent = STILLS[key].credit;
+        return;
+      }
+    }
   }
 
   function applyIdentity(id) {
@@ -41,14 +70,7 @@
         state.cultivar && /watermelon/i.test(state.cultivar)
       );
     }
-    if (stillEl && /poppy|eschscholzia/i.test(state.commonName + " " + state.latinName)) {
-      stillEl.src = "assets/california-poppy-subject.png";
-      stillEl.alt = state.commonName || "California poppy";
-      if (creditEl) {
-        creditEl.textContent =
-          "Still: California poppy subject cutout from Kaldari photo (CC0).";
-      }
-    }
+    applyStill(state.commonName, state.latinName);
   }
 
   function renderCallouts(callouts) {
@@ -112,6 +134,10 @@
         }
         if (commonOut) commonOut.textContent = data.displayName || data.commonName || state.commonName;
         if (latinOut) latinOut.textContent = data.latinName || state.latinName || "—";
+        applyStill(
+          data.commonName || state.commonName,
+          data.latinName || state.latinName
+        );
         renderCallouts(data.callouts || []);
         if (disclaimerEl) {
           disclaimerEl.hidden = false;

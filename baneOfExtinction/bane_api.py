@@ -38,7 +38,7 @@ POPPY_DEFAULT = {
     "anchors": ["petals", "center", "foliage", "habit", "seed_pod"],
 }
 
-FALLBACK_CALLOUTS = [
+FALLBACK_CALLOUTS_POPPY = [
     {
         "anchor": "petals",
         "label": "Petals",
@@ -61,14 +61,45 @@ FALLBACK_CALLOUTS = [
     },
 ]
 
+FALLBACK_CALLOUTS_SUNFLOWER = [
+    {
+        "anchor": "head",
+        "label": "Flower head",
+        "fact": "What looks like one big flower is a head of many tiny flowers. The bright outer ring are ray florets; the center is packed disk florets.",
+    },
+    {
+        "anchor": "disk",
+        "label": "Center disk",
+        "fact": "The disk turns from greenish buds to brown as seeds form. Bees and other pollinators work this busy middle zone.",
+    },
+    {
+        "anchor": "leaves",
+        "label": "Leaves & stem",
+        "fact": "Common sunflower leaves are broad and rough. Stems are sturdy and often hairy — built for tall growth in open sun.",
+    },
+    {
+        "anchor": "habit",
+        "label": "Sun follower",
+        "fact": "Young plants often track the sun across the day (heliotropism). Mature heads usually face a fixed direction, often east.",
+    },
+]
+
+# Back-compat alias used nowhere new, but keep name for any external refs
+FALLBACK_CALLOUTS = FALLBACK_CALLOUTS_POPPY
+
 IDENTIFY_PROMPT = (
     "You identify wildlife, plants, fungi, or clear evidence of them "
     "(tracks, nests, seed pods, chewed plants, bloom patches) for a family-friendly "
     "conservation learning game. Return ONLY JSON.\n"
     "Focus on the organism (or evidence), not people, hands, faces, or private property details.\n"
     "Be as accurate as you reasonably can. Prefer the species (or best clear taxon) you think it is. "
-    "If cultivar is unclear, use the species (e.g. California poppy / Eschscholzia californica) "
-    "rather than guessing a garden variety.\n"
+    "If cultivar is unclear, use the species (e.g. California poppy / Eschscholzia californica, "
+    "or common sunflower / Helianthus annuus) rather than guessing a garden variety.\n"
+    "For sunflowers: prefer Helianthus species when clear (often Helianthus annuus for garden/"
+    "field common sunflower). If you only know genus, use Helianthus and say so in shortNote. "
+    "Do not invent cultivar names (e.g. Teddy Bear) unless clearly labeled in the photo.\n"
+    "For poppies in California-style orange blooms: prefer Eschscholzia californica when that "
+    "is the best match; do not invent cultivar names unless clearly labeled.\n"
     "JSON shape:\n"
     "{"
     '"commonName":"...",'
@@ -479,7 +510,9 @@ def build_callouts(
         + f"; type: {org_type}. "
         "Write callouts that are accurate for THIS identification. "
         "Example: if this is a golden California poppy (not Watermelon Heaven), "
-        "describe golden/orange California poppy traits — do not invent pink cultivar facts."
+        "describe golden/orange California poppy traits — do not invent pink cultivar facts. "
+        "Example: if this is common sunflower (Helianthus annuus), describe that species — "
+        "do not invent named garden cultivars unless the identification includes them."
     )
     if evidence:
         scope += " Frame as evidence/clues the player noticed."
@@ -514,7 +547,9 @@ def build_callouts(
     except Exception as exc:  # noqa: BLE001
         blob = (display + " " + latin_n).lower()
         if "poppy" in blob or "eschscholzia" in blob:
-            callouts = list(FALLBACK_CALLOUTS)
+            callouts = list(FALLBACK_CALLOUTS_POPPY)
+        elif "sunflower" in blob or "helianthus" in blob:
+            callouts = list(FALLBACK_CALLOUTS_SUNFLOWER)
         else:
             callouts = [
                 {

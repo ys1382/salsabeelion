@@ -122,14 +122,16 @@ After the still “freezes” on the codex card:
 - Tone: useful learning helper, not a guaranteed field guide.
 - Desktop can browse callouts once an entry exists; phone not required for browsing.
 
-### First stub — California poppies
+### First stubs — California poppies + common sunflower
 
 - Live demo lives on the **main wildlife codex**: `/bane-of-extinction/codex.html` (also from hub → Bane → Open wildlife codex)
 - `/bane-of-extinction/poppy.html` redirects to the codex (old bookmarks still work)
 - Species: **California poppy** (*Eschscholzia californica*) — works for California poppies **generally**
-- Optional cultivar preference: **Watermelon Heaven** (pink petals, creamy center) when the toggle is on
+- Species: **common sunflower** (*Helianthus annuus*) — camera + callouts prefer species when clear; cultivar names only if obvious
+- Optional cultivar preference: **Watermelon Heaven** (pink petals, creamy center) when the toggle is on (poppy)
 - Claude callouts via `/bane-of-extinction/api/callouts` (port **8086**)
-- Fallback curated facts if Claude is down so layout is still testable
+- Fallback curated facts for poppy and sunflower if Claude is down
+- Codex still switches between poppy / sunflower subject cutouts from the ID
 
 ---
 
@@ -206,6 +208,7 @@ Owner pins from chat go here.
 - [x] California poppy stub for testing (species-wide; Watermelon Heaven optional cultivar)
 - [x] Phone wildlife camera scan (Gemini + Claude); facts follow the guessed ID
 - [x] Fix codex still animation with CC0 poppy photo + clearer idle motion
+- [x] Common sunflower stub (species-aimed ID hints, fallback callouts, codex still cutout)
 
 ### 2026-07-10 — original design chat
 
