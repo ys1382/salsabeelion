@@ -126,8 +126,21 @@
         // Drop local frame ASAP
         clearCanvas();
         payload.imageBase64 = "";
-        return res.json().then(function (data) {
-          return { res: res, data: data };
+        return res.text().then(function (text) {
+          var data = null;
+          try {
+            data = text ? JSON.parse(text) : {};
+          } catch (parseErr) {
+            if (res.status === 413) {
+              throw new Error("Photo too large for the server. Try again a bit farther back.");
+            }
+            throw new Error(
+              "Bad response from scan API (HTTP " +
+                res.status +
+                "). Try again — if this keeps happening, the server may be blocking the photo size."
+            );
+          }
+          return { res: res, data: data || {} };
         });
       })
       .then(function (pack) {
