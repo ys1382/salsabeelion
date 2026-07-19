@@ -581,10 +581,8 @@ def local_pipeline_skips_rag(
     if plan and (plan.intent == "relationship" or kind == "relationship"):
         from lorekeeper_relations import is_story_arc_relationship_question
 
+        # Story-arc needs a synthesized answer — never treat a note dump as final.
         if is_story_arc_relationship_question(question):
-            low = answer.lower()
-            if low.strip() and "nothing clear is saved yet about how" not in low:
-                return True
             return False
         return bool(answer.strip())
 
@@ -927,9 +925,22 @@ def recall_from_user_data(
     skip_local = (
         ask_plan
         and ask_plan.pipeline == "rag_summarize"
-        and ask_plan.intent not in ("character_portrait", "relationship")
+        and ask_plan.intent not in ("character_portrait",)
         and not knowledge_narrow
     )
+    # Story-arc relationship asks need synthesis — skip the local note-dump and use RAG.
+    if (
+        ask_plan
+        and ask_plan.intent == "relationship"
+        and ask_plan.pipeline == "rag_summarize"
+    ):
+        from lorekeeper_relations import is_story_arc_relationship_question
+
+        if is_story_arc_relationship_question(question):
+            skip_local = True
+        else:
+            # Kinship can stay local (short family-tie restatement).
+            skip_local = False
     local_pipeline = None
     if not skip_local:
         local_pipeline = answer_for_work(

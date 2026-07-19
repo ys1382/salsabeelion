@@ -196,8 +196,10 @@ _RELATIONSHIP_ARC = """
 This is a STORY-RELATIONSHIP question — how these people stand toward each other in the plot (trust, rivalry, alliance, change over time).
 
 Rules:
+- Write a CLEAR, CONCISE SUMMARY in reference voice (1–3 short sentences or two short paragraphs max).
+- Synthesize what the notes and draft say — do NOT paste or quote a whole note, and do NOT dump bullet excerpts of raw lines.
 - Answer the developing / emotional / situational relationship from sources — NOT biological or family ties unless the writer explicitly asked about family/blood.
-- If the question asks pre/post, before/after, or during a war/event, structure before vs after from sources only.
+- If the question asks pre/post, before/after, or during a war/event, cover those phases briefly from sources only.
 - Use the names the writer used in the question; do not swap to an earlier persona unless asked.
 - Prefer draft/notes about trust, loyalty, conflict, alliance, and how they treat each other.
 - Do NOT lead with "they are siblings/related by blood" when the question is about how their relationship develops.

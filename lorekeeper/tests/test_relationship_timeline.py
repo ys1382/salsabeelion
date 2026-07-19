@@ -67,9 +67,8 @@ class RelationshipTimelineTests(unittest.TestCase):
         from lorekeeper_relations import (
             is_kinship_relationship_question,
             is_story_arc_relationship_question,
+            answer_story_arc_relationship,
         )
-        from lorekeeper_recall import recall_from_user_data
-        import json
 
         self.assertTrue(is_story_arc_relationship_question(self.Q))
         self.assertFalse(is_kinship_relationship_question(self.Q))
@@ -102,26 +101,35 @@ class RelationshipTimelineTests(unittest.TestCase):
                 "kind": "relationship",
             },
         ]
-        # Force local path (no RAG) for deterministic kinship-vs-arc check.
-        import os
+        answer, _ = answer_story_arc_relationship(self.Q, entries)
+        assert answer is not None
+        low = answer.lower()
+        self.assertIn("trusted", low)
+        self.assertNotIn("half-brother", low)
+        self.assertNotIn("biological", low)
+        self.assertNotIn("before/through the arc", low)
+        self.assertNotIn("•", answer)
 
-        old = os.environ.get("LOREKEEPER_RAG")
-        os.environ["LOREKEEPER_RAG"] = "0"
-        try:
-            res = recall_from_user_data(
+    def test_story_arc_uses_synthesis_prompt_not_note_dump(self):
+        plan = local_ask_plan(self.Q)
+        system = _system_for_kind(self.Q, "relationship", brief=False, plan=plan)
+        self.assertIn("CLEAR, CONCISE SUMMARY", system)
+        self.assertIn("do NOT paste", system)
+        # Local note-dump must not win over RAG for story-arc.
+        from lorekeeper_recall import local_pipeline_skips_rag
+
+        self.assertFalse(
+            local_pipeline_skips_rag(
                 self.Q,
-                {"lorekeeper_entries_v1": json.dumps(entries)},
+                {
+                    "answer": "Before the war they trusted each other.",
+                    "materialState": "summarizable",
+                    "questionKind": "relationship",
+                },
+                [],
+                plan=plan,
             )
-        finally:
-            if old is None:
-                os.environ.pop("LOREKEEPER_RAG", None)
-            else:
-                os.environ["LOREKEEPER_RAG"] = old
-        answer = (res.get("answer") or "").lower()
-        self.assertEqual(res.get("questionKind"), "relationship")
-        self.assertIn("trusted", answer)
-        self.assertNotIn("half-brother", answer)
-        self.assertNotIn("biological", answer)
+        )
 
 
 if __name__ == "__main__":

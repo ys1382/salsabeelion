@@ -634,10 +634,13 @@ def answer_story_arc_relationship(
     picked = [s for sc, s, _ in hits if sc >= 2][:3]
     if not picked:
         picked = [hits[0][1]]
+    # Concise local summary (RAG synthesizes when available; this is fallback only).
     if len(picked) == 1:
         answer = picked[0]
+    elif len(picked) == 2:
+        answer = f"{picked[0]} Later: {picked[1]}"
     else:
-        answer = "Before/through the arc in your notes:\n\n• " + "\n• ".join(picked)
+        answer = f"{picked[0]} {picked[1]} Later: {picked[2]}"
     answer += "\n\n— From your notes only. Nothing invented."
     return answer, source_ids
 
