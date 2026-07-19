@@ -3,9 +3,20 @@
 
   var API = "/bane-of-extinction/api/wildlife-identify";
   var STORAGE_KEY = "bane_last_id";
-  var ASSET_V = "20260719c";
+  var ASSET_V = "20260719d";
+  var LIVE_COACH_MS = 350;
+  var BLUR_TOO_LOW = 36;
+  var BLUR_SOFT = 70;
+  var EDGE_TOO_LOW = 0.014;
+  var EDGE_SOFT = 0.028;
+  var FILL_TOO_LOW = 0.12;
+  var FILL_SOFT = 0.2;
+  var VARIANCE_TOO_LOW = 180;
+  var VARIANCE_SOFT = 320;
+
   var desktopBlock = document.getElementById("desktopBlock");
   var scanUi = document.getElementById("scanUi");
+  var scanStage = document.querySelector(".scan-stage");
   var video = document.getElementById("scanVideo");
   var canvas = document.getElementById("scanCanvas");
   var captureBtn = document.getElementById("captureBtn");
@@ -22,6 +33,8 @@
   var busy = false;
   var lastRecord = null;
   var redirectTimer = null;
+  var coachTimer = null;
+  var coachReady = false;
 
   function setStatus(msg) {
     if (statusEl) statusEl.textContent = msg || "";
@@ -58,7 +71,238 @@
     return "codex.html?" + q.toString();
   }
 
+  function laplacianVariance(gray, w, h) {
+    var sum = 0;
+    var sumSq = 0;
+    var n = 0;
+    for (var y = 1; y < h - 1; y++) {
+      for (var x = 1; x < w - 1; x++) {
+        var i = y * w + x;
+        var lap =
+          -4 * gray[i] + gray[i - 1] + gray[i + 1] + gray[i - w] + gray[i + w];
+        sum += lap;
+        sumSq += lap * lap;
+        n++;
+      }
+    }
+    if (!n) return 0;
+    var mean = sum / n;
+    return sumSq / n - mean * mean;
+  }
+
+  function edgeFraction(gray, w, h) {
+    var hits = 0;
+    var total = 0;
+    for (var y = 1; y < h - 1; y++) {
+      for (var x = 1; x < w - 1; x++) {
+        var i = y * w + x;
+        var gx = Math.abs(gray[i + 1] - gray[i - 1]);
+        var gy = Math.abs(gray[i + w] - gray[i - w]);
+        if (gx + gy > 28) hits++;
+        total++;
+      }
+    }
+    return total ? hits / total : 0;
+  }
+
+  /**
+   * Fraction of guide-box tiles with real mid-scale structure (any color).
+   * Empty wall / sky / bare wood → low. Leaves, blooms, bark, feathers → higher.
+   */
+  function subjectFillScore(gray, w, h) {
+    var cols = 8;
+    var rows = 10;
+    var tileW = Math.max(1, Math.floor(w / cols));
+    var tileH = Math.max(1, Math.floor(h / rows));
+    var active = 0;
+    var counted = 0;
+    for (var r = 0; r < rows; r++) {
+      for (var c = 0; c < cols; c++) {
+        var x0 = c * tileW;
+        var y0 = r * tileH;
+        var x1 = Math.min(w, x0 + tileW);
+        var y1 = Math.min(h, y0 + tileH);
+        if (x1 - x0 < 3 || y1 - y0 < 3) continue;
+        var sum = 0;
+        var sumSq = 0;
+        var edgeHits = 0;
+        var n = 0;
+        for (var y = y0 + 1; y < y1 - 1; y++) {
+          for (var x = x0 + 1; x < x1 - 1; x++) {
+            var i = y * w + x;
+            var g = gray[i];
+            sum += g;
+            sumSq += g * g;
+            var gx = Math.abs(gray[i + 1] - gray[i - 1]);
+            var gy = Math.abs(gray[i + w] - gray[i - w]);
+            if (gx + gy > 22) edgeHits++;
+            n++;
+          }
+        }
+        counted++;
+        if (!n) continue;
+        var mean = sum / n;
+        var variance = sumSq / n - mean * mean;
+        var edgeRate = edgeHits / n;
+        if (variance > 90 || edgeRate > 0.06) active++;
+      }
+    }
+    return counted ? active / counted : 0;
+  }
+
+  function analyzeOrganismFrame(vid) {
+    if (!vid || !vid.videoWidth) {
+      return { ok: false, hint: "Starting camera…", level: "wait" };
+    }
+    var vw = vid.videoWidth;
+    var vh = vid.videoHeight;
+    var sampleW = 320;
+    var sampleH = Math.max(1, Math.round((vh / vw) * sampleW));
+    var sample = document.createElement("canvas");
+    sample.width = sampleW;
+    sample.height = sampleH;
+    var ctx = sample.getContext("2d");
+    // Match the dashed guide box (~10% / 12% inset).
+    var insetX = Math.round(vw * 0.1);
+    var insetY = Math.round(vh * 0.12);
+    var sw = Math.max(1, vw - insetX * 2);
+    var sh = Math.max(1, vh - insetY * 2);
+    ctx.drawImage(vid, insetX, insetY, sw, sh, 0, 0, sampleW, sampleH);
+    var img = ctx.getImageData(0, 0, sampleW, sampleH);
+    var d = img.data;
+    var gray = new Float32Array(sampleW * sampleH);
+    var brightness = 0;
+    var brightSumSq = 0;
+    for (var i = 0; i < sampleW * sampleH; i++) {
+      var o = i * 4;
+      var g = 0.299 * d[o] + 0.587 * d[o + 1] + 0.114 * d[o + 2];
+      gray[i] = g;
+      brightness += g;
+      brightSumSq += g * g;
+    }
+    var pixels = sampleW * sampleH;
+    brightness /= pixels;
+    var variance = brightSumSq / pixels - brightness * brightness;
+
+    if (brightness < 32) {
+      return {
+        ok: false,
+        hint: "Too dark — add light or aim toward the organism.",
+        level: "bad",
+      };
+    }
+    if (brightness > 248) {
+      return {
+        ok: false,
+        hint: "Too bright — ease glare off the subject.",
+        level: "bad",
+      };
+    }
+    var blur = laplacianVariance(gray, sampleW, sampleH);
+    if (blur < BLUR_TOO_LOW) {
+      return { ok: false, hint: "Too blurry — hold still a second.", level: "bad" };
+    }
+    if (variance < VARIANCE_TOO_LOW) {
+      return {
+        ok: false,
+        hint: "Looks empty — fill the dashed box with the organism or clear evidence.",
+        level: "bad",
+      };
+    }
+    var fill = subjectFillScore(gray, sampleW, sampleH);
+    if (fill < FILL_TOO_LOW) {
+      return {
+        ok: false,
+        hint: "Mostly background — move so the plant, animal, or evidence fills the box.",
+        level: "bad",
+      };
+    }
+    var edges = edgeFraction(gray, sampleW, sampleH);
+    if (edges < EDGE_TOO_LOW) {
+      return {
+        ok: false,
+        hint: "Subject looks faint — step a little closer or add light.",
+        level: "bad",
+      };
+    }
+    if (variance < VARIANCE_SOFT) {
+      return {
+        ok: false,
+        hint: "Almost — put more of the organism inside the dashed box.",
+        level: "soft",
+      };
+    }
+    if (fill < FILL_SOFT) {
+      return {
+        ok: false,
+        hint: "Aim so more of the organism fills the dashed box.",
+        level: "soft",
+      };
+    }
+    if (blur < BLUR_SOFT) {
+      return { ok: false, hint: "Almost ready — hold still a moment.", level: "soft" };
+    }
+    if (edges < EDGE_SOFT) {
+      return {
+        ok: false,
+        hint: "A touch closer or brighter — keep the subject in the box.",
+        level: "soft",
+      };
+    }
+    return {
+      ok: true,
+      hint: "Good — tap Capture & scan.",
+      level: "good",
+    };
+  }
+
+  function setLiveCoach(analysis) {
+    if (!coachHint) return;
+    if (!analysis) {
+      coachHint.textContent =
+        "Frame the organism (or clear evidence). Avoid faces/hands when you can.";
+      if (scanStage) scanStage.className = "scan-stage";
+      coachReady = false;
+      if (captureBtn && stream && !busy) captureBtn.disabled = true;
+      return;
+    }
+    coachHint.textContent = analysis.hint || "";
+    if (scanStage) {
+      scanStage.className = "scan-stage scan-stage--" + (analysis.level || "wait");
+    }
+    coachReady = !!analysis.ok;
+    if (captureBtn && stream && !busy) captureBtn.disabled = !coachReady;
+  }
+
+  function stopLiveCoach() {
+    if (coachTimer) {
+      clearInterval(coachTimer);
+      coachTimer = null;
+    }
+    coachReady = false;
+  }
+
+  function tickLiveCoach() {
+    if (!video || !stream || busy) return;
+    try {
+      setLiveCoach(analyzeOrganismFrame(video));
+    } catch (e) {
+      setLiveCoach({
+        ok: false,
+        hint: "Point the camera at the organism or clear evidence.",
+        level: "wait",
+      });
+    }
+  }
+
+  function startLiveCoach() {
+    stopLiveCoach();
+    tickLiveCoach();
+    coachTimer = setInterval(tickLiveCoach, LIVE_COACH_MS);
+  }
+
   function stopCamera() {
+    stopLiveCoach();
     if (stream) {
       stream.getTracks().forEach(function (t) {
         try {
@@ -70,6 +314,7 @@
     if (video) video.srcObject = null;
     if (captureBtn) captureBtn.disabled = true;
     if (stopCamBtn) stopCamBtn.hidden = true;
+    if (scanStage) scanStage.className = "scan-stage";
   }
 
   function startCamera() {
@@ -93,13 +338,9 @@
         return video.play();
       })
       .then(function () {
-        if (captureBtn) captureBtn.disabled = false;
         if (stopCamBtn) stopCamBtn.hidden = false;
-        if (coachHint) {
-          coachHint.textContent =
-            "Fill the frame with the organism or clear evidence. Then tap Capture & scan.";
-        }
-        setStatus("Camera ready. One tap — wait until it finishes (often 10–20s).");
+        startLiveCoach();
+        setStatus("Camera ready. Wait for the green coach, then tap Capture & scan.");
       })
       .catch(function (err) {
         setStatus(
@@ -190,13 +431,18 @@
         (lastRecord.displayName || lastRecord.commonName) +
         ". Opening wildlife codex in a moment…"
     );
-    // Auto-open so a footer Codex tap isn’t required (that path used to lose the ID).
     redirectTimer = setTimeout(openCodex, 1200);
   }
 
   function onCapture() {
     if (busy) {
       setStatus("Still scanning… please wait (often 10–20 seconds). One tap is enough.");
+      return;
+    }
+    var check = analyzeOrganismFrame(video);
+    setLiveCoach(check);
+    if (!check.ok) {
+      setStatus(check.hint || "Frame the organism first, then scan.");
       return;
     }
     busy = true;
@@ -222,7 +468,7 @@
     } catch (e) {
       clearInterval(tick);
       busy = false;
-      if (captureBtn) captureBtn.disabled = false;
+      tickLiveCoach();
       setStatus(e && e.message ? e.message : "Capture failed");
       return;
     }
@@ -268,7 +514,9 @@
         clearInterval(tick);
         clearCanvas();
         setStatus("Scan failed: " + (err && err.message ? err.message : "error"));
-        if (captureBtn) captureBtn.disabled = !stream;
+        busy = false;
+        if (stream) startLiveCoach();
+        else if (captureBtn) captureBtn.disabled = true;
       })
       .then(function () {
         busy = false;

@@ -115,6 +115,12 @@ IDENTIFY_PROMPT = (
     "(tracks, nests, seed pods, chewed plants, bloom patches) for a family-friendly "
     "conservation learning game. Return ONLY JSON.\n"
     "Focus on the organism (or evidence), not people, hands, faces, or private property details.\n"
+    "REFUSAL — if there is no clear organism and no clear evidence "
+    "(empty ground, wall, sky, furniture, shelf wood, blur with nothing identifiable, "
+    "mostly hands/faces, or a frame that is only background), do NOT invent a species. Return:\n"
+    '{"commonName":"","latinName":"","cultivar":"","organismType":"none","evidence":false,'
+    '"confidence":"low","shortNote":"No clear organism or evidence in frame.",'
+    '"alternatives":[],"noOrganism":true}\n'
     "Be as accurate as you reasonably can. Prefer the species (or best clear taxon) you think it is. "
     "If cultivar is unclear, use the species rather than guessing a garden variety.\n"
     "CRITICAL — do NOT default to California poppy. Identify what is actually in the photo.\n"
@@ -132,7 +138,7 @@ IDENTIFY_PROMPT = (
     "Other plants: name the best real match. If unsure between species, pick the best guess and "
     "list alternatives; never fall back to California poppy just because this game also uses that stub.\n"
     "Do not invent sunflower or philodendron cultivar names unless clearly labeled in the photo.\n"
-    "JSON shape:\n"
+    "JSON shape (success):\n"
     "{"
     '"commonName":"...",'
     '"latinName":"...",'
@@ -141,7 +147,8 @@ IDENTIFY_PROMPT = (
     '"evidence":false,'
     '"confidence":"high|medium|low",'
     '"shortNote":"one short plain sentence naming a visible trait that supports the ID",'
-    '"alternatives":[{"commonName":"...","latinName":"..."}]'
+    '"alternatives":[{"commonName":"...","latinName":"..."}],'
+    '"noOrganism":false'
     "}"
 )
 
@@ -394,43 +401,67 @@ def _norm_id(parsed: dict[str, Any]) -> dict[str, Any]:
                 "latinName": str(item.get("latinName") or "").strip()[:160],
             }
         )
+    organism_type = str(parsed.get("organismType") or "other").strip()[:40].lower()
+    no_organism = bool(parsed.get("noOrganism")) or organism_type in (
+        "none",
+        "empty",
+        "invalid",
+        "background",
+    )
+    common = str(parsed.get("commonName") or "").strip()[:120]
+    if no_organism:
+        common = ""
+        organism_type = "none"
     return {
-        "commonName": str(parsed.get("commonName") or "").strip()[:120],
+        "commonName": common,
         "latinName": str(parsed.get("latinName") or "").strip()[:160],
         "cultivar": str(parsed.get("cultivar") or "").strip()[:80],
-        "organismType": str(parsed.get("organismType") or "other").strip()[:40],
+        "organismType": organism_type,
         "evidence": bool(parsed.get("evidence")),
         "confidence": conf,
         "shortNote": str(parsed.get("shortNote") or "").strip()[:240],
         "alternatives": alts,
+        "noOrganism": no_organism,
     }
+
+
+def _is_refusal(parsed: dict[str, Any] | None) -> bool:
+    if not parsed:
+        return True
+    if parsed.get("noOrganism"):
+        return True
+    if not (parsed.get("commonName") or "").strip():
+        return True
+    return False
 
 
 def _prefer_id(a: dict[str, Any] | None, b: dict[str, Any] | None) -> dict[str, Any]:
     """Prefer higher confidence; if tie, prefer Gemini when names agree else Claude."""
     rank = {"high": 3, "medium": 2, "low": 1}
-    if a and not b:
-        return a
-    if b and not a:
-        return b
-    if not a and not b:
-        return {}
-    assert a and b
-    ra = rank.get(a.get("confidence") or "low", 1)
-    rb = rank.get(b.get("confidence") or "low", 1)
+    a_ok = a if a and not _is_refusal(a) else None
+    b_ok = b if b and not _is_refusal(b) else None
+    if a_ok and not b_ok:
+        return a_ok
+    if b_ok and not a_ok:
+        return b_ok
+    if not a_ok and not b_ok:
+        return {"noOrganism": True, "commonName": "", "organismType": "none", "confidence": "low"}
+    assert a_ok and b_ok
+    ra = rank.get(a_ok.get("confidence") or "low", 1)
+    rb = rank.get(b_ok.get("confidence") or "low", 1)
     if ra > rb:
-        return a
+        return a_ok
     if rb > ra:
-        return b
+        return b_ok
     # same confidence — if common names roughly match, keep richer latin
-    ca = (a.get("commonName") or "").lower()
-    cb = (b.get("commonName") or "").lower()
+    ca = (a_ok.get("commonName") or "").lower()
+    cb = (b_ok.get("commonName") or "").lower()
     if ca and cb and (ca in cb or cb in ca):
-        if len(a.get("latinName") or "") >= len(b.get("latinName") or ""):
-            return a
-        return b
+        if len(a_ok.get("latinName") or "") >= len(b_ok.get("latinName") or ""):
+            return a_ok
+        return b_ok
     # Prefer Gemini (a) as primary when tied and disagree
-    return a if a.get("commonName") else b
+    return a_ok if a_ok.get("commonName") else b_ok
 
 
 def identify_wildlife(image_b64: str, mime: str) -> dict[str, Any]:
@@ -453,6 +484,33 @@ def identify_wildlife(image_b64: str, mime: str) -> dict[str, Any]:
         claude_err = f"{type(exc).__name__}: {exc}"
 
     chosen = _prefer_id(gemini_id, claude_id)
+    if _is_refusal(chosen):
+        print(
+            "bane_identify refuse "
+            f"gemini={(gemini_id or {}).get('commonName')!r}/"
+            f"no={(gemini_id or {}).get('noOrganism')} "
+            f"claude={(claude_id or {}).get('commonName')!r}/"
+            f"no={(claude_id or {}).get('noOrganism')} "
+            f"gemini_err={gemini_err!r} claude_err={claude_err!r}",
+            flush=True,
+        )
+        return {
+            "ok": False,
+            "error": "no_organism",
+            "message": (
+                "No clear organism or evidence in this photo. "
+                "Fill the dashed box and try again."
+            ),
+            "geminiError": gemini_err or None,
+            "claudeError": claude_err or None,
+            "geminiConfigured": bool(gemini_api_key()),
+            "claudeConfigured": bool(anthropic_api_key()),
+            "sources": {
+                "gemini": gemini_id,
+                "claude": claude_id,
+            },
+        }
+
     if not chosen or not chosen.get("commonName"):
         print(
             f"bane_identify fail gemini={gemini_err!r} claude={claude_err!r}",
