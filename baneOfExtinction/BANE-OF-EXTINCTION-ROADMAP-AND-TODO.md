@@ -124,7 +124,8 @@ After the still “freezes” on the codex card:
 
 ### First stub — California poppies
 
-- Live demo: `/bane-of-extinction/poppy.html`
+- Live demo lives on the **main wildlife codex**: `/bane-of-extinction/codex.html` (also from hub → Bane → Open wildlife codex)
+- `/bane-of-extinction/poppy.html` redirects to the codex (old bookmarks still work)
 - Species: **California poppy** (*Eschscholzia californica*) — works for California poppies **generally**
 - Optional cultivar preference: **Watermelon Heaven** (pink petals, creamy center) when the toggle is on
 - Claude callouts via `/bane-of-extinction/api/callouts` (port **8086**)
