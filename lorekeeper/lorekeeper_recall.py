@@ -35,7 +35,11 @@ from lorekeeper_work_recall import answer_for_work, route_question
 RECALL_VERSION = RAG_VERSION
 from lorekeeper_corpus_text import normalize_corpus_text
 from lorekeeper_answer_focus import focus_ask_response
-from lorekeeper_relations import is_relationship_between_question, restate_relationships
+from lorekeeper_relations import (
+    is_relationship_between_question,
+    relationship_between_pair,
+    restate_relationships,
+)
 from lorekeeper_recall_scope import (
     check_work_disambiguation,
     distinct_work_tags,
@@ -181,6 +185,22 @@ def _score_entry(question: str, entry: dict[str, Any]) -> int:
             score += 4 + min(name_hits, 3) * 2
             if _SCENE_BEAT_Q.search(question or ""):
                 score += 6
+    # Relationship + timeline questions: prefer notes that name the asked people and era.
+    pair = relationship_between_pair(question)
+    if pair:
+        pair_hits = sum(
+            1
+            for name in pair
+            if name
+            and name.lower()
+            not in ("protagonist", "antagonist", "hero", "heroine", "villain")
+            and re.search(rf"\b{re.escape(name)}\b", hay_text, re.I)
+        )
+        if pair_hits:
+            score += 8 + pair_hits * 4
+        if re.search(r"\b(pre|post|before|after|during|war|timeline)\b", q_lower):
+            if re.search(r"\b(pre|post|before|after|during|war|timeline)\b", hay_text):
+                score += 10
     return score
 
 

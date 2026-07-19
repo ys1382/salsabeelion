@@ -48,11 +48,13 @@ _SYSTEM_BASE = """You are LoreKeeper — a librarian for one writer's private no
 Rules (non-negotiable):
 - Answer ONLY from the numbered SOURCE blocks provided. Never use outside knowledge.
 - Answer ONLY what the question asks — omit unrelated characters, plot, and lore not needed for this answer.
+- Prefer the names and time window the writer asked about (e.g. a later name + pre/post war). Do not replace them with earlier personas or a different era unless the question asks for that.
 - Never invent story, lore, motives, relationships, or facts not supported by the sources.
 - Never equate two characters as a "human counterpart", "version of", or "alternate form of" another unless a source states that explicitly.
 - Never add causal twists like "despite their biological relation" unless the sources say that tension exists.
 - Connect dots the sources support (e.g. dialogue calling someone "brother" → sibling tie) but never upgrade into unstated backstory.
 - Do not dump every source — pick the minimum needed for a direct answer.
+- Never write meta lines like "the sources establish/indicate/show that…" — just state the supported facts.
 - End with a blank line then exactly: — From your notes only. Nothing invented."""
 
 _STORY_POSITION = """
@@ -186,9 +188,12 @@ _RELATIONSHIP_CARD = """
 This is a RELATIONSHIP-BETWEEN question — answer how these two named people are tied.
 
 Rules:
-- One or two short sentences stating the tie (sibling, spouse, parent/child, etc.) only if sources support it.
-- Do NOT include full character profiles, protagonist arcs, or unrelated third parties.
-- If sources do not state a tie between them, say so honestly."""
+- Use the names the writer used in the question (e.g. if they said Galloxidor, say Galloxidor — do not swap to an earlier persona or alias unless the question asked about that earlier name).
+- If the question asks pre/post, before/after, or during a war/event, structure the answer in those phases (before vs after) from sources only.
+- One to three short sentences stating the tie and how it changes across those phases when sources support it.
+- Do NOT include full character profiles, unrelated third parties, or a lecture that they are "the same two characters."
+- Never say "the sources establish/indicate/show" — state the facts in reference voice.
+- If sources do not state a tie between them for a phase, say that phase is not spelled out yet."""
 
 _SYSTEM_BRIEF_SUFFIX = "\n- Keep the answer to 1–2 sentences maximum."
 
@@ -220,10 +225,10 @@ def _system_for_kind(
         parts.append(_CHARACTER_PORTRAIT)
     elif plan and plan.intent == "narrow_fact" and is_awareness_question(question):
         parts.append(_AWARENESS)
+    elif (plan and plan.intent == "relationship") or question_kind == "relationship":
+        parts.append(_RELATIONSHIP_CARD)
     elif plan and plan.pipeline == "rag_summarize":
         parts.append(_SUMMARIZE)
-    elif question_kind == "relationship":
-        parts.append(_RELATIONSHIP_CARD)
     elif _uses_cast_card(question, question_kind, plan):
         parts.append(_WHO_CAST_CARD)
     elif is_audit_question(question):
@@ -363,6 +368,16 @@ def _build_user_prompt(
         kind_hint = _CHARACTER_PORTRAIT + "\n"
     elif plan and plan.intent == "narrow_fact" and is_awareness_question(question):
         kind_hint = _AWARENESS + "\n"
+    elif (plan and plan.intent == "relationship") or question_kind == "relationship":
+        kind_hint = _RELATIONSHIP_CARD + "\n"
+        from lorekeeper_relations import relationship_between_pair
+
+        pair = relationship_between_pair(question)
+        if pair:
+            kind_hint += (
+                f"Pair named in the question: {pair[0]} and {pair[1]}. "
+                "Keep those labels; answer pre/post phases if the question asks.\n"
+            )
     elif plan and plan.pipeline == "rag_summarize":
         kind_hint = _SUMMARIZE + "\n"
     elif (plan and plan.pipeline == "rag_resume") or is_story_position_question(question) or question_kind == "resume":

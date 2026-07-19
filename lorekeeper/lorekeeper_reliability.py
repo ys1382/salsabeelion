@@ -104,7 +104,7 @@ def primary_work_hints(question: str) -> set[str]:
     # "summarize Ashford Saga" / "summary of Ashford Saga" / "tell me about Ashford Saga"
     for m in re.finditer(
         r"\b(?:summarize|summary of|tell me about|overview of)\s+"
-        r"(?!what\b|who\b|where\b|how\b|the story\b|what'?s\b)"
+        r"(?!what\b|who\b|where\b|how\b|the story\b|what'?s\b|the relationship\b)"
         r"(.+?)(?:\?|$)",
         question,
         re.I,
@@ -112,6 +112,15 @@ def primary_work_hints(question: str) -> set[str]:
         hint = re.sub(r"\s+", " ", m.group(1).strip().lower().rstrip("?.!:;"))
         # Trailing politeness only — never strip a title that ends in "for me".
         hint = re.sub(r"\s+please\.?$", "", hint, flags=re.I).strip()
+        # Do not treat relationship / timeline questions as a fake work title.
+        if re.search(
+            r"\b(relationship|between|protagonist|antagonist|pre|post|war|before|after)\b",
+            hint,
+            re.I,
+        ):
+            continue
+        if len(hint.split()) > 6:
+            continue
         if len(hint) > 2 and not _is_junk_work_hint(hint) and not is_section_scope_phrase(hint):
             hints.add(hint)
     hints.update(_hints_from_my_phrase(question))

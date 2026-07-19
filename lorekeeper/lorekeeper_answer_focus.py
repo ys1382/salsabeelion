@@ -404,12 +404,31 @@ def filter_sources_for_answer(
     return sources[:3]
 
 
+_SOURCES_META = re.compile(
+    r"\b(?:the\s+)?sources?\s+(?:establish|indicate|show|suggest|state|say)\s+"
+    r"(?:that\s+)?",
+    re.I,
+)
+_SAME_TWO_CHARS = re.compile(
+    r"\b(?:this is |that this is )?(?:the )?relationship between (?:the )?same two characters\b[^.?!]*[.?!]?\s*",
+    re.I,
+)
+
+
 def scrub_rag_artifacts(question: str, answer: str, *, allow_broad: bool) -> str:
-    if allow_broad or not answer:
+    if not answer:
         return answer
     body, footer = _split_footer(answer)
     body = _INVENTED_EQUIV.sub("", body)
     body = _DESPITE_BIO.sub("", body)
+    body = _SOURCES_META.sub("", body)
+    body = _SAME_TWO_CHARS.sub("", body)
+    body = re.sub(r"^[a-z]", lambda m: m.group(0).upper(), body.strip(), count=1) if body.strip() else body
+    if allow_broad:
+        body = re.sub(r"\n{3,}", "\n\n", body).strip()
+        if footer:
+            return body + "\n\n" + footer
+        return body
     if not is_who_is_question(question) and (
         _CAST_CARD_HEADER.search(body) or "**Role" in body or "**Key Ties" in body
     ):
@@ -459,6 +478,9 @@ def focus_ask_response(
     allow_broad = wants_broad_answer(question, question_kind=kind)
     if result.get("askIntent") in ("character_portrait", "summarize_story", "story_resume"):
         allow_broad = True
+    # Relationship questions stay narrow even if the writer said "summarize".
+    if kind == "relationship" or result.get("askIntent") == "relationship":
+        allow_broad = False
     if kind == "resume":
         allow_broad = True
     answer = focus_topic_gather_answer(question, answer, allow_broad=allow_broad)

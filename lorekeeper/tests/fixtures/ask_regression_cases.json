@@ -281,6 +281,43 @@
         "answerContains": ["Mara"],
         "answerNotContains": ["only in your head", "Nothing saved for"]
       }
+    },
+    {
+      "id": "relationship_pre_post_war_routes",
+      "label": "relationship that develops between + pre/post war routes as relationship",
+      "entries": [
+        {
+          "id": "r1",
+          "title": "Galloxidor before war",
+          "body": "Before the war, the protagonist and Galloxidor traded scrap and trusted each other.",
+          "tags": ["Cities of Rust"],
+          "kind": "relationship"
+        },
+        {
+          "id": "r2",
+          "title": "Galloxidor after war",
+          "body": "After the war began, Galloxidor sided with the council against the protagonist.",
+          "tags": ["Cities of Rust"],
+          "kind": "relationship"
+        },
+        {
+          "id": "a1",
+          "title": "Earlier persona",
+          "body": "Galloxidor is also known as Scrapfox. Scrapfox was a street thief years earlier.",
+          "tags": ["Cities of Rust"],
+          "kind": "character"
+        }
+      ],
+      "question": "I want you to summarize the relationship that develops between the protagonist and galloxidor pre and post beginning of the war in Cities of Rust",
+      "assert": {
+        "questionKind": "relationship",
+        "answerContains": ["Galloxidor"],
+        "answerNotContains": [
+          "same two characters",
+          "sources indicate",
+          "sources establish"
+        ]
+      }
     }
   ]
 }

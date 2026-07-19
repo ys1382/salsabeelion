@@ -451,10 +451,21 @@ def restate_relationships(
 _REL_BETWEEN_RE = re.compile(
     r"(?i)\b(?:"
     r"how are (.+?) and (.+?) related|"
-    r"relationship between (.+?) and (.+?)|"
-    r"what is the relationship between (.+?) and (.+?)|"
+    r"relationship\s+(?:that\s+\w+\s+|developing\s+)?between\s+(.+?)\s+and\s+(.+?)|"
+    r"what is the relationship\s+(?:that\s+\w+\s+)?between\s+(.+?)\s+and\s+(.+?)|"
     r"how (?:is|are) (.+?) related to (.+?)"
-    r")\??\s*$"
+    r")(?=\s*(?:$|\?|,|pre\b|post\b|before\b|after\b|during\b|in\s+[A-Z]|for\s+[A-Z]))"
+)
+
+_PAIR_TRAILING_JUNK = re.compile(
+    r"(?i)\s+(?:"
+    r"pre(?:\s+and\s+post)?(?:\s+beginning)?(?:\s+of)?(?:\s+the)?(?:\s+war)?|"
+    r"post(?:\s+beginning)?(?:\s+of)?(?:\s+the)?(?:\s+war)?|"
+    r"before(?:\s+the)?(?:\s+war)?|"
+    r"after(?:\s+the)?(?:\s+war)?|"
+    r"during(?:\s+the)?(?:\s+war)?|"
+    r"in\s+.+"
+    r")\s*$"
 )
 
 
@@ -464,7 +475,9 @@ def is_relationship_between_question(question: str) -> bool:
     q = (question or "").strip()
     return bool(
         re.search(
-            r"(?i)\b(?:how are .+ and .+ related|relationship between|related to)\b",
+            r"(?i)\b(?:how are .+ and .+ related|"
+            r"relationship\s+(?:that\s+\w+\s+|developing\s+)?between|"
+            r"related to)\b",
             q,
         )
     )
@@ -472,11 +485,29 @@ def is_relationship_between_question(question: str) -> bool:
 
 def _clean_pair_name(raw: str) -> str:
     name = re.sub(r"\s+", " ", (raw or "").strip(" \t.,;:!?\"'"))
+    name = _PAIR_TRAILING_JUNK.sub("", name).strip()
     name = re.sub(r"^(?:in|for|from|about)\s+.+?(?:,\s*|\s+who\s+)", "", name, flags=re.I)
     m = re.fullmatch(r"character\s+([a-z0-9]+)", name, re.I)
     if m:
         return f"Character {m.group(1).upper()}"
-    return _clean_name(name)
+    # Role labels asked as one side of a relationship.
+    role = re.fullmatch(
+        r"(?:the\s+)?(protagonist|antagonist|hero|heroine|villain)\b",
+        name,
+        re.I,
+    )
+    if role:
+        return role.group(1).lower()
+    cleaned = _clean_name(name)
+    if cleaned:
+        # Preserve asked casing for multi-word; title-case lone lowercase names.
+        if " " not in cleaned and cleaned == cleaned.lower():
+            return cleaned[:1].upper() + cleaned[1:]
+        return cleaned
+    # Lowercase proper names typed without capitals (e.g. galloxidor).
+    if name and re.fullmatch(r"[A-Za-z][A-Za-z'-]{2,}", name):
+        return name[:1].upper() + name[1:]
+    return name
 
 
 def relationship_between_pair(question: str) -> tuple[str, str] | None:
@@ -498,10 +529,20 @@ def relationship_between_pair(question: str) -> tuple[str, str] | None:
         b = _clean_pair_name(m2.group(2))
         if a and b and _name_key(a) != _name_key(b):
             return a, b
-    m3 = re.search(r"(?i)how (?:is|are) (.+?) related to (.+?)(?:\?|$)", q)
+    m3 = re.search(r"(?i)how (?:is|are) (.+?) related to (.+?)(?:\?|$|,|\s+in\s+)", q)
     if m3:
         a = _clean_pair_name(m3.group(1))
         b = _clean_pair_name(m3.group(2))
+        if a and b and _name_key(a) != _name_key(b):
+            return a, b
+    m4 = re.search(
+        r"(?i)relationship\s+(?:that\s+\w+\s+|developing\s+)?between\s+(.+?)\s+and\s+(.+?)"
+        r"(?=\s*(?:$|\?|,|pre\b|post\b|before\b|after\b|during\b|in\s+))",
+        q,
+    )
+    if m4:
+        a = _clean_pair_name(m4.group(1))
+        b = _clean_pair_name(m4.group(2))
         if a and b and _name_key(a) != _name_key(b):
             return a, b
     return None
