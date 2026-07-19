@@ -114,6 +114,45 @@ def note_excludes_work(entry: dict[str, Any], work_title: str) -> bool:
     return False
 
 
+def _tags_soft_match(tag: str, work: str) -> bool:
+    """Near-equal work titles (Cities Of Rust ≈ Cities Of Rust For Me)."""
+    nt = normalize_work_key(tag)
+    nw = normalize_work_key(work)
+    if not nt or not nw:
+        return False
+    if nt == nw:
+        return True
+    shorter, longer = (nt, nw) if len(nt) <= len(nw) else (nw, nt)
+    # Require a substantial shared title — avoid tiny tags matching by accident.
+    if len(shorter) >= 8 and shorter in longer:
+        return True
+    return False
+
+
+def _entry_is_documentish(entry: dict[str, Any]) -> bool:
+    kind = str(entry.get("kind") or "")
+    eid = str(entry.get("id") or "")
+    if kind == "document" or "#p" in eid:
+        return True
+    return bool(str(entry.get("parentDocId") or "").strip())
+
+
+def _document_body_names_work(entry: dict[str, Any], work: str) -> bool:
+    """Draft prose often leads with the work title even when the work field is blank."""
+    if not work or len(work) < 8 or not _entry_is_documentish(entry):
+        return False
+    body = normalize_work_key(str(entry.get("body") or ""))
+    if not body:
+        return False
+    # Premise / title lines are usually near the top.
+    if work in body[:800]:
+        return True
+    # Longer titles may appear later in a draft; short ones stay head-only.
+    if len(work.split()) >= 3 and work in body:
+        return True
+    return False
+
+
 def note_belongs_to_work(
     entry: dict[str, Any],
     work_title: str,
@@ -131,13 +170,20 @@ def note_belongs_to_work(
         return False
 
     for tag in _concrete_work_tags(entry):
-        if normalize_work_key(tag) == work:
+        if _tags_soft_match(tag, work):
             return True
 
     # Soft match: work name in note title (same spirit as entry_matches_work).
     title = normalize_work_key(str(entry.get("title") or ""))
     title_base = title.split(" / ")[0].strip()
-    if work and (work in title or work in title_base):
+    if work and title_base:
+        if work in title or work in title_base:
+            return True
+        # Doc titled "Cities Of Rust" asked as "Cities Of Rust For Me"
+        if len(title_base) >= 8 and title_base in work:
+            return True
+
+    if _document_body_names_work(entry, work):
         return True
     return False
 
@@ -152,7 +198,7 @@ def note_belongs_to_other_work(entry: dict[str, Any], work_title: str) -> bool:
         return False
     if not work:
         return True
-    return all(normalize_work_key(t) != work for t in tags)
+    return all(not _tags_soft_match(t, work) for t in tags)
 
 
 def note_visible_for_work(

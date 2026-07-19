@@ -522,15 +522,31 @@ def work_label_from_hints(hints: set[str]) -> str:
 
 
 def format_nothing_saved(
-    question: str, work_hints: set[str], target_label: str | None = None
+    question: str,
+    work_hints: set[str],
+    target_label: str | None = None,
+    *,
+    corpus_nonempty: bool = False,
 ) -> str:
     work = work_label_from_hints(work_hints)
     if target_label:
+        if corpus_nonempty and work_hints:
+            return (
+                f"Nothing under “{work}” answers {target_label} yet. "
+                f"If your draft is for that project, set its work title to “{work}” "
+                "(or ask from inside that document), then try again."
+            )
         return (
             f"Nothing saved on {target_label} in {work} yet — only in your head until you "
             "add a note or draft for that project."
         )
     if work_hints:
+        if corpus_nonempty:
+            return (
+                f"Nothing is tagged “{work}” yet. "
+                f"Open your draft and set its work title to “{work}” "
+                "(or ask from inside that document), then try again."
+            )
         return (
             f"Nothing saved for {work} yet — only in your head until you add notes or a "
             "draft tagged with that work title."

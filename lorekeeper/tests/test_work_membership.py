@@ -142,6 +142,34 @@ class FloatersAskTests(unittest.TestCase):
         self.assertNotIn("Tagged work beat", res.get("answer") or "")
         self.assertNotIn("Isolation plot", res.get("answer") or "")
 
+    def test_document_body_names_work_when_work_field_blank(self):
+        from lorekeeper_work_membership import note_belongs_to_work, note_visible_for_work
+
+        doc = {
+            "id": "d1",
+            "title": "My draft",
+            "body": (
+                "Cities Of Rust For Me — premise. Mara scavenges in a rusted "
+                "coastal city. The sea is poison."
+            ),
+            "tags": ["My draft"],
+            "kind": "document",
+        }
+        self.assertTrue(note_belongs_to_work(doc, "Cities Of Rust For Me"))
+        self.assertTrue(note_visible_for_work(doc, "Cities Of Rust For Me"))
+
+    def test_soft_work_tag_near_match(self):
+        from lorekeeper_work_membership import note_belongs_to_work
+
+        doc = {
+            "id": "d2",
+            "title": "Draft",
+            "body": "Mara scavenges scrap in the rust cities.",
+            "tags": ["Cities Of Rust"],
+            "kind": "document",
+        }
+        self.assertTrue(note_belongs_to_work(doc, "Cities Of Rust For Me"))
+
 
 if __name__ == "__main__":
     unittest.main()

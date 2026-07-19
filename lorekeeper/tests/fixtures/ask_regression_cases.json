@@ -240,6 +240,28 @@
         "answerContains": ["ballroom"],
         "answerNotContains": ["Nothing saved for Notes"]
       }
+    },
+    {
+      "id": "untagged_draft_body_summarize",
+      "label": "Draft with work name in body — not only-in-your-head",
+      "documents": [
+        {
+          "id": "d1",
+          "title": "My draft",
+          "workTag": "",
+          "bodyFormat": "html",
+          "bodyHtml": "<p>Cities Of Rust For Me — premise. Mara scavenges in a rusted coastal city. The sea is poison. She finds a forbidden map. Rival scavengers want it.</p>"
+        }
+      ],
+      "question": "In Cities Of Rust For Me, summarize what's going on",
+      "assert": {
+        "materialStateNot": "nothing_saved",
+        "answerContains": ["Mara"],
+        "answerNotContains": [
+          "only in your head",
+          "Nothing saved for Cities Of Rust For Me"
+        ]
+      }
     }
   ]
 }

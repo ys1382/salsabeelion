@@ -29,6 +29,17 @@ class QuestionRouteTests(unittest.TestCase):
         self.assertTrue(is_story_position_question(q))
         self.assertEqual(route_question(q), "resume")
 
+    def test_summarize_whats_going_on_is_resume_not_person(self) -> None:
+        q = "In Cities Of Rust For Me, summarize what's going on"
+        self.assertTrue(is_story_position_question(q))
+        self.assertEqual(route_question(q), "resume")
+        self.assertEqual(extract_what_subject(q), "")
+
+    def test_story_so_far_is_resume(self) -> None:
+        q = "Cities Of Rust For Me, what's the story so far"
+        self.assertTrue(is_story_position_question(q))
+        self.assertEqual(route_question(q), "resume")
+
     def test_prologue_section_filter(self) -> None:
         hints = extract_section_hints("In Work, what happens in the prologue?")
         self.assertEqual(hints.get("section"), "prologue")

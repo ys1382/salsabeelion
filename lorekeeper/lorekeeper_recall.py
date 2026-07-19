@@ -403,7 +403,9 @@ def _legacy_fallback_answer(
     if character_targets(question) or is_who_is_question(question):
         label = character_targets(question)[0] if character_targets(question) else "that character"
         if strict_work and not entries:
-            return format_nothing_saved(question, hints, target_label=label)
+            return format_nothing_saved(
+                question, hints, target_label=label, corpus_nonempty=False
+            )
         return (
             f"I couldn't find anything about {label} in your saved notes for this work. "
             "Tag entries with the work name on every note for that project, then ask again — "
@@ -412,7 +414,9 @@ def _legacy_fallback_answer(
 
     if not ranked:
         if strict_work:
-            return format_nothing_saved(question, hints)
+            return format_nothing_saved(
+                question, hints, corpus_nonempty=bool(entries)
+            )
         return (
             "I looked through your saved notes and documents and didn't find anything that clearly matches. "
             "Tag entries with the title of the work — the book, script, skit, or game name "
@@ -809,7 +813,12 @@ def recall_from_user_data(
         target = label[0] if label else None
         return _finish({
             "ok": True,
-            "answer": format_nothing_saved(question, work_hints, target_label=target),
+            "answer": format_nothing_saved(
+                question,
+                work_hints,
+                target_label=target,
+                corpus_nonempty=bool(entries),
+            ),
             "sources": [],
             "materialState": "nothing_saved",
             "mode": recall_mode,

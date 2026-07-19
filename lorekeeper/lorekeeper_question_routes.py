@@ -18,6 +18,8 @@ _STORY_POSITION_Q = re.compile(
     r"where i left off|where the story (?:is|stands|left off)|"
     r"what(?:'s|\s+is)\s+going on(?: in the story| where i left off| now)?|"
     r"what is going on where i left off|"
+    r"summarize what(?:'s|\s+is)\s+going on|"
+    r"what(?:'s|\s+is)\s+the story so far|story so far\b|"
     r"current (?:state|point) (?:of the story|in the story)|"
     r"pick up where i left off|left off in the story|"
     r"where did i leave off|story so far at the end"
@@ -106,7 +108,8 @@ _NON_PERSON_SUBJECT = re.compile(
     r"\b("
     r"gate|city|kingdom|realm|faction|prologue|chapter|story|plot|theme|setting|"
     r"world|magic|spell|artifact|place|location|alliance|war|peace|motivation|"
-    r"event|scene|draft|mirror|north|south|east|west"
+    r"event|scene|draft|mirror|north|south|east|west|"
+    r"going on|happening|story so far"
     r")\b",
     re.I,
 )
@@ -139,6 +142,9 @@ def extract_what_subject(question: str) -> str:
     """Name or role tail from a what-is question (not who-is)."""
     if not question or is_who_is_question(question):
         return ""
+    # Story-state questions — not a cast/topic name.
+    if is_story_position_question(question):
+        return ""
     for pattern in (_KIND_OF_PERSON, _WHAT_LIKE, _WHAT_SUBJECT):
         m = pattern.search(question.strip())
         if not m:
@@ -146,6 +152,8 @@ def extract_what_subject(question: str) -> str:
         tail = re.sub(r"\s*\([^)]*\)", "", m.group(1).strip()).strip().rstrip("?.!")
         tail = re.sub(r"^(?:the\s+)", "", tail, flags=re.I).strip()
         tail = re.sub(r"\s+in\s+[A-Z].*$", "", tail).strip()
+        if re.match(r"^(?:going on|happening|story so far)\b", tail, re.I):
+            continue
         if len(tail) >= 2:
             return tail
     return ""

@@ -589,7 +589,9 @@ def answer_with_rag(
 
     if strict_work and not scoped:
         return {
-            "answer": format_nothing_saved(question, work_hints),
+            "answer": format_nothing_saved(
+                question, work_hints, corpus_nonempty=bool(entries)
+            ),
             "sources": [],
             "materialState": "nothing_saved",
             "questionKind": effective_kind,
@@ -599,13 +601,18 @@ def answer_with_rag(
     if not ranked:
         if not scoped:
             return {
-                "answer": format_nothing_saved(question, work_hints),
+                "answer": format_nothing_saved(
+                    question, work_hints, corpus_nonempty=bool(entries)
+                ),
                 "sources": [],
                 "materialState": "nothing_saved",
                 "questionKind": effective_kind,
                 "retrievalCount": 0,
             }
-        msg = format_nothing_saved(question, work_hints)
+        msg = (
+            "I found notes for this work, but nothing clear enough to answer that yet. "
+            "Try a narrower question, or add more draft/notes, then ask again."
+        )
         if effective_kind == "who" or is_who_is_question(question):
             msg = (
                 "I couldn't find clear saved material that answers that. "

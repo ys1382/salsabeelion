@@ -258,6 +258,37 @@ class RecallReliabilityTests(unittest.TestCase):
             {"smoke and mirrors"},
         )
 
+    def test_untagged_draft_body_not_only_in_your_head(self) -> None:
+        """Premise draft titled something else still counts when the work name is in the body."""
+        import json
+        from lorekeeper_recall import recall_from_user_data
+
+        docs = [
+            {
+                "id": "d1",
+                "title": "My draft",
+                "workTag": "",
+                "bodyFormat": "html",
+                "bodyHtml": (
+                    "<p>Cities Of Rust For Me — premise. Mara scavenges in a rusted "
+                    "coastal city. The sea is poison. She finds a forbidden map. "
+                    "Rival scavengers want it. The council wants silence.</p>"
+                ),
+            }
+        ]
+        res = recall_from_user_data(
+            "In Cities Of Rust For Me, summarize what's going on",
+            {"lorekeeper_documents_v1": json.dumps(docs)},
+        )
+        answer = res.get("answer") or ""
+        self.assertNotEqual(res.get("materialState"), "nothing_saved")
+        self.assertNotIn("only in your head", answer)
+        self.assertNotIn("Nothing saved for Cities Of Rust For Me", answer)
+        self.assertTrue(
+            "Mara" in answer or "rust" in answer.lower() or "map" in answer.lower(),
+            msg=answer[:300],
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
