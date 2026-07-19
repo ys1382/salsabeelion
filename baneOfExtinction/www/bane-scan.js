@@ -102,14 +102,27 @@
   }
 
   function onCapture() {
-    if (busy) return;
+    if (busy) {
+      setStatus("Still scanning… please wait (can take ~10–20 seconds).");
+      return;
+    }
     busy = true;
     if (captureBtn) captureBtn.disabled = true;
+    var started = Date.now();
+    var tick = setInterval(function () {
+      var sec = Math.round((Date.now() - started) / 1000);
+      setStatus(
+        "Scanning with Gemini + Claude… " +
+          sec +
+          "s (photo will not be kept). One tap is enough."
+      );
+    }, 500);
     setStatus("Scanning with Gemini + Claude… photo will not be kept.");
     var payload;
     try {
       payload = captureFrame();
     } catch (e) {
+      clearInterval(tick);
       busy = false;
       if (captureBtn) captureBtn.disabled = false;
       setStatus(e && e.message ? e.message : "Capture failed");
@@ -150,20 +163,22 @@
             (data && data.message) || (data && data.error) || "identify_failed"
           );
         }
+        var record = {
+          displayName: data.displayName,
+          commonName: data.commonName,
+          latinName: data.latinName,
+          cultivar: data.cultivar,
+          evidence: data.evidence,
+          organismType: data.organismType,
+          confidence: data.confidence,
+        };
         try {
-          sessionStorage.setItem(
-            STORAGE_KEY,
-            JSON.stringify({
-              displayName: data.displayName,
-              commonName: data.commonName,
-              latinName: data.latinName,
-              cultivar: data.cultivar,
-              evidence: data.evidence,
-              organismType: data.organismType,
-              confidence: data.confidence,
-            })
-          );
+          sessionStorage.setItem(STORAGE_KEY, JSON.stringify(record));
         } catch (e) {}
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(record));
+        } catch (e2) {}
+        clearInterval(tick);
         setStatus(
           "Looks like: " +
             (data.displayName || data.commonName) +
@@ -172,9 +187,10 @@
             "). Opening codex…"
         );
         stopCamera();
-        window.location.href = "codex.html";
+        window.location.href = "codex.html?from=scan";
       })
       .catch(function (err) {
+        clearInterval(tick);
         clearCanvas();
         setStatus("Scan failed: " + (err && err.message ? err.message : "error"));
         if (captureBtn) captureBtn.disabled = !stream;

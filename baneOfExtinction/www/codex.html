@@ -20,17 +20,19 @@
     </header>
 
     <div class="card-toolbar">
-      <label class="chk">
-        <input type="checkbox" id="cultivarOn" checked />
-        Prefer Watermelon Heaven notes when useful (manual load)
+      <label class="chk" id="cultivarRow" hidden>
+        <input type="checkbox" id="cultivarOn" />
+        Prefer Watermelon Heaven notes when useful (poppy only)
       </label>
       <label class="chk">
         <input type="checkbox" id="evidenceOn" />
         Treat as evidence
       </label>
       <button type="button" class="btn primary" id="loadFacts">Load Claude callouts</button>
+      <button type="button" class="btn secondary" id="demoPoppy">Demo: poppy</button>
+      <button type="button" class="btn secondary" id="demoSunflower">Demo: sunflower</button>
     </div>
-    <p class="status" id="status" aria-live="polite">Tap Load Claude callouts, or scan on a phone.</p>
+    <p class="status" id="status" aria-live="polite">Scan on a phone, or try a demo.</p>
 
     <div class="codex-card blueprint" id="codexCard">
       <div class="blueprint__grid" aria-hidden="true"></div>
@@ -43,15 +45,16 @@
               src="assets/california-poppy-subject.png"
               width="501"
               height="501"
-              alt="California poppy bloom"
+              alt=""
+              hidden
             />
           </div>
           <p class="codex-card__names">
-            <strong id="commonOut">California poppy</strong>
-            <span id="latinOut">Eschscholzia californica</span>
+            <strong id="commonOut">No organism yet</strong>
+            <span id="latinOut">—</span>
           </p>
           <p class="codex-card__credit" id="artCredit">
-            Still: California poppy subject cutout (Sedovo photo, CC BY-SA 3.0).
+            After a scan, the still matches that guess (poppy or sunflower so far).
           </p>
         </div>
         <aside class="codex-card__callouts" id="calloutList" aria-label="Organism callouts">

@@ -84,6 +84,29 @@ FALLBACK_CALLOUTS_SUNFLOWER = [
     },
 ]
 
+FALLBACK_CALLOUTS_PHILODENDRON = [
+    {
+        "anchor": "leaves",
+        "label": "Heart-shaped leaves",
+        "fact": "Sweetheart philodendron is named for its glossy, heart-shaped leaves. Young leaves often start a bit bronze, then settle into deep green.",
+    },
+    {
+        "anchor": "stems",
+        "label": "Trailing stems",
+        "fact": "Long, flexible stems climb or trail. Outdoors in the tropics it can scramble; indoors it often drapes from a pot or shelf.",
+    },
+    {
+        "anchor": "habit",
+        "label": "Light & home life",
+        "fact": "A classic houseplant: prefers bright, indirect light and evenly moist soil. Too little light means long, sparse stems with smaller leaves.",
+    },
+    {
+        "anchor": "safety",
+        "label": "Look, don’t nibble",
+        "fact": "Like many aroids, this plant’s sap can irritate mouths and tummies if chewed. Fine to admire — not a snack for kids or pets.",
+    },
+]
+
 # Back-compat alias used nowhere new, but keep name for any external refs
 FALLBACK_CALLOUTS = FALLBACK_CALLOUTS_POPPY
 
@@ -93,13 +116,22 @@ IDENTIFY_PROMPT = (
     "conservation learning game. Return ONLY JSON.\n"
     "Focus on the organism (or evidence), not people, hands, faces, or private property details.\n"
     "Be as accurate as you reasonably can. Prefer the species (or best clear taxon) you think it is. "
-    "If cultivar is unclear, use the species (e.g. California poppy / Eschscholzia californica, "
-    "or common sunflower / Helianthus annuus) rather than guessing a garden variety.\n"
-    "For sunflowers: prefer Helianthus species when clear (often Helianthus annuus for garden/"
-    "field common sunflower). If you only know genus, use Helianthus and say so in shortNote. "
-    "Do not invent cultivar names (e.g. Teddy Bear) unless clearly labeled in the photo.\n"
-    "For poppies in California-style orange blooms: prefer Eschscholzia californica when that "
-    "is the best match; do not invent cultivar names unless clearly labeled.\n"
+    "If cultivar is unclear, use the species rather than guessing a garden variety.\n"
+    "CRITICAL — do NOT default to California poppy. Identify what is actually in the photo.\n"
+    "Disambiguation for yellow/orange blooms:\n"
+    "- Common sunflower (Helianthus annuus): ONE large head that looks like many tiny flowers — "
+    "outer yellow ray florets + a big textured brown/green disk of packed disk florets. "
+    "Broad rough leaves; thick often-hairy stem. A tight close-up of the face is still a sunflower.\n"
+    "- California poppy (Eschscholzia californica): usually FOUR silky crepe-paper petals, "
+    "cup/bowl shape, feathery blue-green foliage — NOT a big composite disk of hundreds of florets.\n"
+    "For heart-shaped trailing houseplant philodendrons (glossy green cordate leaves; also called "
+    "heartleaf or sweetheart plant): prefer commonName \"Sweetheart philodendron\" and "
+    "latinName \"Philodendron hederaceum\" (synonym Philodendron scandens is OK in shortNote). "
+    "Do not invent cultivar names (Brasil, Micans, Lemon Lime, etc.) unless clearly labeled or "
+    "unmistakable from leaf pattern/color in the photo.\n"
+    "Other plants: name the best real match. If unsure between species, pick the best guess and "
+    "list alternatives; never fall back to California poppy just because this game also uses that stub.\n"
+    "Do not invent sunflower or philodendron cultivar names unless clearly labeled in the photo.\n"
     "JSON shape:\n"
     "{"
     '"commonName":"...",'
@@ -108,7 +140,7 @@ IDENTIFY_PROMPT = (
     '"organismType":"bird|mammal|flower|plant|fungus|insect|reptile|evidence|other",'
     '"evidence":false,'
     '"confidence":"high|medium|low",'
-    '"shortNote":"one short plain sentence",'
+    '"shortNote":"one short plain sentence naming a visible trait that supports the ID",'
     '"alternatives":[{"commonName":"...","latinName":"..."}]'
     "}"
 )
@@ -489,7 +521,9 @@ def build_callouts(
     evidence: bool,
     organism_type: str = "",
 ) -> dict[str, Any]:
-    display = common.strip() or POPPY_DEFAULT["common"]
+    display = common.strip()
+    if not display:
+        raise ValueError("commonName required")
     latin_n = latin.strip()
     cultivar_n = cultivar.strip()
     org_type = (organism_type or ("evidence" if evidence else "organism")).strip()[:40]
@@ -512,7 +546,9 @@ def build_callouts(
         "Example: if this is a golden California poppy (not Watermelon Heaven), "
         "describe golden/orange California poppy traits — do not invent pink cultivar facts. "
         "Example: if this is common sunflower (Helianthus annuus), describe that species — "
-        "do not invent named garden cultivars unless the identification includes them."
+        "do not invent named garden cultivars unless the identification includes them. "
+        "Example: if this is sweetheart philodendron (Philodendron hederaceum), describe that "
+        "species — do not invent named cultivars (Brasil, Micans, Lemon Lime) unless included."
     )
     if evidence:
         scope += " Frame as evidence/clues the player noticed."
@@ -550,6 +586,14 @@ def build_callouts(
             callouts = list(FALLBACK_CALLOUTS_POPPY)
         elif "sunflower" in blob or "helianthus" in blob:
             callouts = list(FALLBACK_CALLOUTS_SUNFLOWER)
+        elif (
+            "philodendron" in blob
+            or "hederaceum" in blob
+            or "scandens" in blob
+            or "sweetheart" in blob
+            or "heartleaf" in blob
+        ):
+            callouts = list(FALLBACK_CALLOUTS_PHILODENDRON)
         else:
             callouts = [
                 {
@@ -640,8 +684,16 @@ class Handler(BaseHTTPRequestHandler):
             evidence = bool(body.get("evidence"))
             organism_type = str(body.get("organismType") or "").strip()
             if not common:
-                common = POPPY_DEFAULT["common"]
-                latin = latin or POPPY_DEFAULT["latin"]
+                _json(
+                    self,
+                    400,
+                    {
+                        "ok": False,
+                        "error": "missing_organism",
+                        "message": "commonName is required — scan first or pick a demo.",
+                    },
+                )
+                return
             result = build_callouts(
                 common=common,
                 latin=latin,
