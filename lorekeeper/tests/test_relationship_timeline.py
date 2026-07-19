@@ -47,10 +47,10 @@ class RelationshipTimelineTests(unittest.TestCase):
         system = _system_for_kind(
             self.Q, "relationship", brief=False, plan=plan
         )
-        self.assertIn("RELATIONSHIP-BETWEEN", system)
+        self.assertIn("STORY-RELATIONSHIP", system)
         self.assertNotIn("This needs a SUMMARY from the writer's saved notes", system)
         self.assertIn("pre/post", system.lower())
-        self.assertIn("earlier persona", system.lower())
+        self.assertNotIn("KINSHIP / FAMILY-TIE", system)
 
     def test_scrubs_sources_indicate_meta(self):
         raw = (
@@ -62,6 +62,66 @@ class RelationshipTimelineTests(unittest.TestCase):
         self.assertNotIn("sources indicate", cleaned.lower())
         self.assertNotIn("same two characters", cleaned.lower())
         self.assertIn("Before the war", cleaned)
+
+    def test_story_arc_not_kinship_local(self):
+        from lorekeeper_relations import (
+            is_kinship_relationship_question,
+            is_story_arc_relationship_question,
+        )
+        from lorekeeper_recall import recall_from_user_data
+        import json
+
+        self.assertTrue(is_story_arc_relationship_question(self.Q))
+        self.assertFalse(is_kinship_relationship_question(self.Q))
+        self.assertTrue(
+            is_kinship_relationship_question(
+                "In Cities of Rust, how are the protagonist and Galloxidor related?"
+            )
+        )
+
+        entries = [
+            {
+                "id": "k1",
+                "title": "Blood",
+                "body": "Galloxidor is the protagonist's half-brother by blood.",
+                "tags": ["Cities of Rust"],
+                "kind": "relationship",
+            },
+            {
+                "id": "a1",
+                "title": "Before war",
+                "body": "Before the war, the protagonist and Galloxidor trusted each other and traded scrap.",
+                "tags": ["Cities of Rust"],
+                "kind": "relationship",
+            },
+            {
+                "id": "a2",
+                "title": "After war",
+                "body": "After the war began, Galloxidor sided with the council against the protagonist.",
+                "tags": ["Cities of Rust"],
+                "kind": "relationship",
+            },
+        ]
+        # Force local path (no RAG) for deterministic kinship-vs-arc check.
+        import os
+
+        old = os.environ.get("LOREKEEPER_RAG")
+        os.environ["LOREKEEPER_RAG"] = "0"
+        try:
+            res = recall_from_user_data(
+                self.Q,
+                {"lorekeeper_entries_v1": json.dumps(entries)},
+            )
+        finally:
+            if old is None:
+                os.environ.pop("LOREKEEPER_RAG", None)
+            else:
+                os.environ["LOREKEEPER_RAG"] = old
+        answer = (res.get("answer") or "").lower()
+        self.assertEqual(res.get("questionKind"), "relationship")
+        self.assertIn("trusted", answer)
+        self.assertNotIn("half-brother", answer)
+        self.assertNotIn("biological", answer)
 
 
 if __name__ == "__main__":

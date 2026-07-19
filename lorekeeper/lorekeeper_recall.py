@@ -188,6 +188,8 @@ def _score_entry(question: str, entry: dict[str, Any]) -> int:
     # Relationship + timeline questions: prefer notes that name the asked people and era.
     pair = relationship_between_pair(question)
     if pair:
+        from lorekeeper_relations import is_story_arc_relationship_question
+
         pair_hits = sum(
             1
             for name in pair
@@ -201,6 +203,21 @@ def _score_entry(question: str, entry: dict[str, Any]) -> int:
         if re.search(r"\b(pre|post|before|after|during|war|timeline)\b", q_lower):
             if re.search(r"\b(pre|post|before|after|during|war|timeline)\b", hay_text):
                 score += 10
+        if is_story_arc_relationship_question(question):
+            # Prefer dynamics; downrank pure kinship blurbs for arc asks.
+            if re.search(
+                r"\b(trust|ally|alliance|rival|enemy|betray|sided|loyal)\b",
+                hay_text,
+            ):
+                score += 12
+            if re.search(
+                r"\b(brother|sister|sibling|biological|blood|mother|father)\b",
+                hay_text,
+            ) and not re.search(
+                r"\b(trust|ally|alliance|rival|war|before|after)\b",
+                hay_text,
+            ):
+                score -= 8
     return score
 
 
@@ -548,7 +565,7 @@ def local_pipeline_skips_rag(
         )
         if (
             plan.pipeline == "rag_summarize"
-            and plan.intent != "character_portrait"
+            and plan.intent not in ("character_portrait", "relationship")
             and not knowledge_narrow
         ):
             return False
@@ -560,6 +577,16 @@ def local_pipeline_skips_rag(
         kind = str(local_pipeline.get("questionKind") or route_question(question))
     state = str(local_pipeline.get("materialState") or "")
     answer = str(local_pipeline.get("answer") or "")
+
+    if plan and (plan.intent == "relationship" or kind == "relationship"):
+        from lorekeeper_relations import is_story_arc_relationship_question
+
+        if is_story_arc_relationship_question(question):
+            low = answer.lower()
+            if low.strip() and "nothing clear is saved yet about how" not in low:
+                return True
+            return False
+        return bool(answer.strip())
 
     if spot_check and kind not in ("who", "knowledge"):
         if plan and plan.intent in ("character_portrait", "narrow_fact"):
@@ -900,7 +927,7 @@ def recall_from_user_data(
     skip_local = (
         ask_plan
         and ask_plan.pipeline == "rag_summarize"
-        and ask_plan.intent != "character_portrait"
+        and ask_plan.intent not in ("character_portrait", "relationship")
         and not knowledge_narrow
     )
     local_pipeline = None

@@ -287,6 +287,13 @@
       "label": "relationship that develops between + pre/post war routes as relationship",
       "entries": [
         {
+          "id": "k1",
+          "title": "Blood",
+          "body": "Galloxidor is the protagonist's half-brother by blood.",
+          "tags": ["Cities of Rust"],
+          "kind": "relationship"
+        },
+        {
           "id": "r1",
           "title": "Galloxidor before war",
           "body": "Before the war, the protagonist and Galloxidor traded scrap and trusted each other.",
@@ -311,11 +318,13 @@
       "question": "I want you to summarize the relationship that develops between the protagonist and galloxidor pre and post beginning of the war in Cities of Rust",
       "assert": {
         "questionKind": "relationship",
-        "answerContains": ["Galloxidor"],
+        "answerContains": ["Galloxidor", "trusted"],
         "answerNotContains": [
           "same two characters",
           "sources indicate",
-          "sources establish"
+          "sources establish",
+          "half-brother",
+          "biological"
         ]
       }
     }

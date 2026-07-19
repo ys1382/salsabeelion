@@ -469,6 +469,179 @@ _PAIR_TRAILING_JUNK = re.compile(
 )
 
 
+_KINSHIP_ASK = re.compile(
+    r"(?i)\b("
+    r"how are .+ and .+ related|"
+    r"how (?:is|are) .+ related to|"
+    r"are they (?:related|siblings?|brothers?|sisters?|family)|"
+    r"biological|blood relat|family tie|kinship|"
+    r"(?:brother|sister|mother|father|parent|cousin|spouse|husband|wife)\b"
+    r")",
+)
+
+_STORY_ARC_ASK = re.compile(
+    r"(?i)\b("
+    r"develops?|developing|dynamic|evolves?|evolution|arc\b|"
+    r"pre\s+and\s+post|before\s+and\s+after|before.+after|"
+    r"relationship\s+like|how\s+(?:do|does|did)\s+.+stand|"
+    r"trust|ally|allies|alliance|rival|enemies|friends|"
+    r"feel(?:s|ings)?\s+about|attitude\s+toward"
+    r")\b",
+)
+
+
+def is_kinship_relationship_question(question: str) -> bool:
+    """Family / blood / 'how are they related' — not story-arc dynamics."""
+    q = (question or "").strip()
+    if not q:
+        return False
+    if _KINSHIP_ASK.search(q):
+        # "brother" in a story-arc question about wartime can still be kinship-primary
+        # only when the ask is clearly kinship-shaped.
+        if re.search(r"(?i)\bhow are .+ and .+ related\b", q):
+            return True
+        if re.search(r"(?i)\bhow (?:is|are) .+ related to\b", q):
+            return True
+        if re.search(
+            r"(?i)\b(biological|blood relat|family tie|kinship|"
+            r"are they (?:related|siblings?|brothers?|sisters?))\b",
+            q,
+        ):
+            return True
+        # Bare kinship word without arc cues → kinship.
+        if not _STORY_ARC_ASK.search(q):
+            return True
+    return False
+
+
+def is_story_arc_relationship_question(question: str) -> bool:
+    """Story dynamics / develops over time — not 'are they siblings'."""
+    if not is_relationship_between_question(question):
+        return False
+    if is_kinship_relationship_question(question):
+        return False
+    q = (question or "").strip()
+    if _STORY_ARC_ASK.search(q):
+        return True
+    # Default: "relationship between A and B" in a writer tool → story arc.
+    if re.search(r"(?i)\brelationship\b", q):
+        return True
+    return False
+
+
+_KINSHIP_SENTENCE = re.compile(
+    r"(?i)\b("
+    r"brother|sister|sibling|mother|father|parent|son|daughter|cousin|"
+    r"husband|wife|spouse|biological|blood\b|half[- ]brother|half[- ]sister"
+    r")\b",
+)
+
+_ARC_CUE = re.compile(
+    r"(?i)\b("
+    r"trust|ally|allies|alliance|rival|enemy|enemies|friend|friends|"
+    r"before|after|during|war|pre|post|betray|sided|against|with|"
+    r"loved|hated|feared|respected|loyal|loyalty|bond|together"
+    r")\b",
+)
+
+
+def _sentence_mentions_pair(sentence: str, a: str, b: str) -> bool:
+    low = (sentence or "").lower()
+    names = []
+    for raw in (a, b):
+        n = (raw or "").strip()
+        if not n or n.lower() in (
+            "protagonist",
+            "antagonist",
+            "hero",
+            "heroine",
+            "villain",
+        ):
+            continue
+        names.append(n.lower())
+    if len(names) < 1:
+        return False
+    if len(names) == 1:
+        return names[0] in low and (
+            "protagonist" in low
+            or "antagonist" in low
+            or "hero" in low
+            or bool(re.search(r"\b(?:she|he|they|them)\b", low))
+        )
+    return all(n in low for n in names)
+
+
+def answer_story_arc_relationship(
+    question: str, entries: list[dict[str, Any]]
+) -> tuple[str, list[str]] | None:
+    """Gather story-dynamic lines for a pair — skip pure kinship facts."""
+    pair = relationship_between_pair(question)
+    if not pair:
+        return None
+    a, b = pair
+    hits: list[tuple[int, str, str]] = []
+    source_ids: list[str] = []
+    for entry in entries:
+        if not isinstance(entry, dict):
+            continue
+        body = str(entry.get("body") or "")
+        if not body.strip():
+            continue
+        eid = str(entry.get("id") or "")
+        title = str(entry.get("title") or "Untitled")
+        for sentence in _split_sentences(body):
+            if not _sentence_mentions_pair(sentence, a, b):
+                # Soft: name + protagonist role
+                low = sentence.lower()
+                other = b if a.lower() == "protagonist" else a if b.lower() == "protagonist" else ""
+                if not other:
+                    named = [
+                        n
+                        for n in (a, b)
+                        if n.lower()
+                        not in (
+                            "protagonist",
+                            "antagonist",
+                            "hero",
+                            "heroine",
+                            "villain",
+                        )
+                    ]
+                    if len(named) == 1 and named[0].lower() in low:
+                        other = named[0]
+                    else:
+                        continue
+                elif other.lower() not in low:
+                    continue
+            if _KINSHIP_SENTENCE.search(sentence) and not _ARC_CUE.search(sentence):
+                continue
+            score = 2
+            if _ARC_CUE.search(sentence):
+                score += 4
+            if _KINSHIP_SENTENCE.search(sentence):
+                score -= 3
+            hits.append((score, sentence.strip(), eid))
+            if eid and eid not in source_ids:
+                source_ids.append(eid)
+    if not hits:
+        return (
+            f"Your notes name {a} and {b}, but nothing clear is saved yet about how "
+            "their relationship develops (beyond family ties, if any).",
+            source_ids,
+        )
+    hits.sort(key=lambda row: row[0], reverse=True)
+    # Prefer up to 3 high-scoring arc sentences; skip weak kinship leftovers.
+    picked = [s for sc, s, _ in hits if sc >= 2][:3]
+    if not picked:
+        picked = [hits[0][1]]
+    if len(picked) == 1:
+        answer = picked[0]
+    else:
+        answer = "Before/through the arc in your notes:\n\n• " + "\n• ".join(picked)
+    answer += "\n\n— From your notes only. Nothing invented."
+    return answer, source_ids
+
+
 def is_relationship_between_question(question: str) -> bool:
     if relationship_between_pair(question) is not None:
         return True

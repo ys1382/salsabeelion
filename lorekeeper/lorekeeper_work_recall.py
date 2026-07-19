@@ -21,7 +21,12 @@ from lorekeeper_character_summary import (
     character_targets,
     is_who_is_question,
 )
-from lorekeeper_relations import answer_relationship_between, is_relationship_between_question
+from lorekeeper_relations import (
+    answer_relationship_between,
+    answer_story_arc_relationship,
+    is_relationship_between_question,
+    is_story_arc_relationship_question,
+)
 from lorekeeper_shaped_recall import answer_shaped_recall, shaped_question_kind
 from lorekeeper_reliability import (
     MaterialState,
@@ -314,7 +319,10 @@ def answer_for_work(
         }
 
     if kind == "relationship":
-        rel = answer_relationship_between(question, scoped)
+        if is_story_arc_relationship_question(question):
+            rel = answer_story_arc_relationship(question, scoped)
+        else:
+            rel = answer_relationship_between(question, scoped)
         if not rel:
             return None
         answer, source_ids = rel

@@ -185,15 +185,24 @@ Rules:
 """
 
 _RELATIONSHIP_CARD = """
-This is a RELATIONSHIP-BETWEEN question — answer how these two named people are tied.
+This is a KINSHIP / FAMILY-TIE question — how these two people are related by family or marriage.
 
 Rules:
-- Use the names the writer used in the question (e.g. if they said Galloxidor, say Galloxidor — do not swap to an earlier persona or alias unless the question asked about that earlier name).
-- If the question asks pre/post, before/after, or during a war/event, structure the answer in those phases (before vs after) from sources only.
-- One to three short sentences stating the tie and how it changes across those phases when sources support it.
-- Do NOT include full character profiles, unrelated third parties, or a lecture that they are "the same two characters."
+- State sibling / parent / spouse / cousin ties ONLY if sources support them.
+- One or two short sentences. Do NOT dump story arcs, wartime dynamics, or full profiles.
+- If sources do not state a family tie, say so honestly."""
+
+_RELATIONSHIP_ARC = """
+This is a STORY-RELATIONSHIP question — how these people stand toward each other in the plot (trust, rivalry, alliance, change over time).
+
+Rules:
+- Answer the developing / emotional / situational relationship from sources — NOT biological or family ties unless the writer explicitly asked about family/blood.
+- If the question asks pre/post, before/after, or during a war/event, structure before vs after from sources only.
+- Use the names the writer used in the question; do not swap to an earlier persona unless asked.
+- Prefer draft/notes about trust, loyalty, conflict, alliance, and how they treat each other.
+- Do NOT lead with "they are siblings/related by blood" when the question is about how their relationship develops.
 - Never say "the sources establish/indicate/show" — state the facts in reference voice.
-- If sources do not state a tie between them for a phase, say that phase is not spelled out yet."""
+- If story-dynamic material is thin, say what is saved and what is not — do not invent feelings."""
 
 _SYSTEM_BRIEF_SUFFIX = "\n- Keep the answer to 1–2 sentences maximum."
 
@@ -226,7 +235,12 @@ def _system_for_kind(
     elif plan and plan.intent == "narrow_fact" and is_awareness_question(question):
         parts.append(_AWARENESS)
     elif (plan and plan.intent == "relationship") or question_kind == "relationship":
-        parts.append(_RELATIONSHIP_CARD)
+        from lorekeeper_relations import is_story_arc_relationship_question
+
+        if is_story_arc_relationship_question(question):
+            parts.append(_RELATIONSHIP_ARC)
+        else:
+            parts.append(_RELATIONSHIP_CARD)
     elif plan and plan.pipeline == "rag_summarize":
         parts.append(_SUMMARIZE)
     elif _uses_cast_card(question, question_kind, plan):
@@ -369,15 +383,28 @@ def _build_user_prompt(
     elif plan and plan.intent == "narrow_fact" and is_awareness_question(question):
         kind_hint = _AWARENESS + "\n"
     elif (plan and plan.intent == "relationship") or question_kind == "relationship":
-        kind_hint = _RELATIONSHIP_CARD + "\n"
-        from lorekeeper_relations import relationship_between_pair
+        from lorekeeper_relations import (
+            is_story_arc_relationship_question,
+            relationship_between_pair,
+        )
 
+        if is_story_arc_relationship_question(question):
+            kind_hint = _RELATIONSHIP_ARC + "\n"
+        else:
+            kind_hint = _RELATIONSHIP_CARD + "\n"
         pair = relationship_between_pair(question)
         if pair:
             kind_hint += (
                 f"Pair named in the question: {pair[0]} and {pair[1]}. "
-                "Keep those labels; answer pre/post phases if the question asks.\n"
+                "Keep those labels"
             )
+            if is_story_arc_relationship_question(question):
+                kind_hint += (
+                    "; answer story dynamics / pre-post phases — "
+                    "not biological kinship unless asked.\n"
+                )
+            else:
+                kind_hint += "; answer family/kinship ties only.\n"
     elif plan and plan.pipeline == "rag_summarize":
         kind_hint = _SUMMARIZE + "\n"
     elif (plan and plan.pipeline == "rag_resume") or is_story_position_question(question) or question_kind == "resume":
