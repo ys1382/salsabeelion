@@ -193,6 +193,22 @@ Last updated: 2026-07-17
 
 ---
 
+### Bane of Extinction (`baneOfExtinction/` → owner-only `/bane-of-extinction/`)
+
+**Is:** Family walk / wildlife-learning game (Pokémon Go–style motivation, real organisms). Owner-only beta shell on Odd Trove. Roadmap: [`baneOfExtinction/BANE-OF-EXTINCTION-ROADMAP-AND-TODO.md`](baneOfExtinction/BANE-OF-EXTINCTION-ROADMAP-AND-TODO.md).
+
+**Can do now:**
+- Browse **wildlife codex** stub on desktop or phone (owner hub cookie)
+- Deploy: `bash top/scripts/deploy-bane-of-extinction.sh` (port **8085**; reloads nginx by default)
+
+**Cannot do without new work:**
+- Camera / Seek-style scan (phone-only when built — same handheld gate idea as Halalit scanners)
+- Trail Guide, walk timer, buddy, stylized still generation, real codex entries
+
+**Not:** Climatic Mysteries. Path **`/bane/`** still redirects to Climatic Mysteries — do not reuse it.
+
+---
+
 ### Climatic Mysteries (`climaticMysteries/` → owner-only `/climatic-mysteries/`)
 
 **Is:** Godot web export shell (`app.html`, `godot.html`, wasm/js) + HTML/JS narrative shell.

@@ -1,0 +1,237 @@
+/* Bane of Extinction — owner beta shell */
+:root {
+  --bg0: #0c1a14;
+  --bg1: #132820;
+  --ink: #e8f2ea;
+  --muted: #8fa898;
+  --accent: #6bc48a;
+  --accent-dim: rgba(107, 196, 138, 0.18);
+  --line: rgba(232, 242, 234, 0.12);
+  --blueprint: #1a3a4a;
+  --blueprint-line: rgba(120, 190, 210, 0.22);
+  --warn: #d4b46a;
+}
+
+* { box-sizing: border-box; }
+
+html {
+  overscroll-behavior-x: none;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  color: var(--ink);
+  background:
+    radial-gradient(900px 480px at 15% -10%, #1e3d30 0%, transparent 55%),
+    radial-gradient(700px 400px at 90% 20%, #243a28 0%, transparent 50%),
+    linear-gradient(165deg, var(--bg1), var(--bg0) 60%);
+  line-height: 1.55;
+}
+
+.wrap {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: clamp(1.5rem, 4vw, 2.75rem);
+}
+
+.hero { margin-bottom: 1.75rem; }
+.hero--compact { margin-bottom: 1.25rem; }
+
+.eyebrow {
+  margin: 0 0 0.5rem;
+  font-family: system-ui, sans-serif;
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.eyebrow a {
+  color: var(--muted);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+}
+
+.eyebrow a:hover {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+.brand {
+  margin: 0 0 0.65rem;
+  font-size: clamp(1.85rem, 5vw, 2.45rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.tagline {
+  margin: 0 0 1rem;
+  color: var(--muted);
+  font-size: 1.05rem;
+  max-width: 34rem;
+}
+
+.note {
+  margin: 0;
+  padding: 0.85rem 1rem;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: rgba(0, 0, 0, 0.22);
+  font-family: system-ui, sans-serif;
+  font-size: 0.92rem;
+  color: var(--muted);
+}
+
+.note strong { color: var(--warn); font-weight: 600; }
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin: 0 0 1rem;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.7rem 1.15rem;
+  border-radius: 10px;
+  font-family: system-ui, sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-decoration: none;
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+
+.btn.primary {
+  background: var(--accent-dim);
+  border-color: rgba(107, 196, 138, 0.45);
+  color: var(--accent);
+}
+
+.btn.primary:hover {
+  background: rgba(107, 196, 138, 0.28);
+}
+
+.btn.secondary {
+  background: transparent;
+  border-color: var(--line);
+  color: var(--ink);
+}
+
+.btn.secondary:hover {
+  border-color: rgba(232, 242, 234, 0.28);
+}
+
+.btn:disabled,
+.btn[aria-disabled="true"] {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.status {
+  min-height: 1.4em;
+  margin: 0 0 1.5rem;
+  font-family: system-ui, sans-serif;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.panel {
+  padding: 1.15rem 1.25rem;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: rgba(0, 0, 0, 0.18);
+  margin-bottom: 1.75rem;
+}
+
+.panel h2 {
+  margin: 0 0 0.65rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.plain {
+  margin: 0;
+  padding-left: 1.15rem;
+  color: var(--muted);
+  font-family: system-ui, sans-serif;
+  font-size: 0.95rem;
+}
+
+.plain li { margin-bottom: 0.35rem; }
+
+.blueprint {
+  position: relative;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(120, 190, 210, 0.35);
+  background: var(--blueprint);
+  min-height: 16rem;
+  margin-bottom: 1.75rem;
+}
+
+.blueprint__grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--blueprint-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--blueprint-line) 1px, transparent 1px);
+  background-size: 28px 28px;
+  opacity: 0.9;
+  pointer-events: none;
+}
+
+.blueprint__inner {
+  position: relative;
+  padding: clamp(1.5rem, 4vw, 2.25rem);
+  text-align: center;
+}
+
+.blueprint__empty-label {
+  margin: 0 0 0.5rem;
+  font-family: system-ui, sans-serif;
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(180, 220, 230, 0.85);
+}
+
+.blueprint__empty-copy,
+.blueprint__hint {
+  margin: 0 auto 0.75rem;
+  max-width: 28rem;
+  color: rgba(210, 230, 235, 0.88);
+  font-family: system-ui, sans-serif;
+  font-size: 0.95rem;
+}
+
+.blueprint__hint {
+  margin-bottom: 0;
+  color: rgba(180, 210, 220, 0.7);
+  font-size: 0.88rem;
+}
+
+.foot {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.foot a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.foot a:hover { text-decoration: underline; }
+
+.foot code {
+  font-size: 0.9em;
+  color: rgba(232, 242, 234, 0.75);
+}
