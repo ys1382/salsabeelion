@@ -4,13 +4,13 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
   <title>LoreKeeper</title>
-  <link rel="stylesheet" href="./lk-shared.css?v=90" />
+  <link rel="stylesheet" href="./lk-shared.css?v=91" />
 </head>
 <body class="lk-page-home">
   <div class="lk-wrap">
     <p class="header-nav"><a href="https://oddtrove.art/">← Odd Trove</a></p>
     <h1>LoreKeeper <span class="muted" style="font-size:0.5em;font-weight:500;vertical-align:0.18em">beta</span></h1>
-    <p class="lk-lead"><strong>Documents</strong> are for full project writing — one flowing doc with formatting, like picking up where you left off on a computer. <strong>Notes</strong> are scattered scraps — relationships, intrigue, fonts, visual beats, anything jumbled. Same work title on both so Ask can search the whole project.</p>
+    <p class="lk-lead"><strong>Documents</strong> are for full project writing — one flowing doc with formatting, like picking up where you left off on a computer. <strong>Notes</strong> are scattered scraps — relationships, intrigue, fonts, visual beats, anything jumbled. Same work title on both so Ask can search the whole project. Use <strong>Find</strong> below to look up a word or phrase in everything you saved.</p>
     <p class="lk-auth-bar" id="lkAuthBar"></p>
     <p class="lk-privacy">Private to your account. Not shared with other writers. Your drafts live on the server — not in the public website code.</p>
 
@@ -72,7 +72,7 @@
             <select id="filterKind" aria-label="Filter by type">
               <option value="">All types</option>
             </select>
-            <input type="search" id="searchBox" placeholder="Search notes…" autocomplete="off" />
+            <input type="search" id="searchBox" placeholder="Filter this list…" autocomplete="off" />
           </div>
           <ul class="lk-entry-list" id="noteList" aria-live="polite"></ul>
           <div class="lk-note-pager" id="noteListPager" hidden>
@@ -119,6 +119,26 @@
       </div>
       <p class="lk-status" id="noteEditorStatus"></p>
       <button type="button" class="lk-btn secondary lk-sync-retry" id="retryNoteSyncBtn" hidden>Retry sync</button>
+    </div>
+
+    <div class="lk-panel" id="findPanel">
+      <h2 class="lk-panel-title">Find in your writing</h2>
+      <p class="muted lk-section-lead">
+        Plain search through <strong>documents and notes</strong> on this account — look up a name, phrase, or scrap. Not Ask, not AI.
+      </p>
+      <div class="lk-toolbar lk-find-toolbar">
+        <input
+          type="search"
+          id="findBox"
+          class="lk-find-input"
+          placeholder="e.g. a character name, a place, a line you remember…"
+          autocomplete="off"
+          aria-label="Find in documents and notes"
+        />
+        <button type="button" class="lk-btn" id="findBtn">Find</button>
+      </div>
+      <p class="lk-status" id="findStatus" hidden aria-live="polite"></p>
+      <ul class="lk-find-results" id="findResults" aria-live="polite"></ul>
     </div>
 
     <div class="lk-panel lk-tools-panel" id="writer-tools">
@@ -219,6 +239,7 @@
   <script src="./lk-auth-gate.js?v=3"></script>
   <script src="./lk-documents.js?v=52"></script>
   <script src="./lk-entries.js?v=4"></script>
+  <script src="./lk-find.js?v=1"></script>
   <script src="./lk-recall.js?v=9"></script>
   <script src="./lk-auth.js?v=3"></script>
   <script src="./lk-site-feedback.js?v=1"></script>
@@ -235,6 +256,6 @@
   <script src="./lk-mobile-jot.js?v=1"></script>
   <script src="./lk-bt-keyboard.js?v=1"></script>
   <script src="./lk-mobile-handoff.js?v=1"></script>
-  <script src="./lk-home.js?v=51"></script>
+  <script src="./lk-home.js?v=52"></script>
 </body>
 </html>

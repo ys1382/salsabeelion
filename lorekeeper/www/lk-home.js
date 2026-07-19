@@ -526,6 +526,14 @@
       a.click();
       URL.revokeObjectURL(a.href);
     });
+    global.addEventListener("lorekeeper-open-note", function (ev) {
+      var id = ev && ev.detail && ev.detail.id;
+      if (!id) return;
+      openNoteEditor(id);
+      if (editorPanel && editorPanel.scrollIntoView) {
+        editorPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    });
     renderNotes();
     global.addEventListener("lorekeeper-data-hydrated", renderNotes);
     global.addEventListener("lorekeeper-keyboard-save", function () {
@@ -698,6 +706,9 @@
     }
     initDocs();
     initNotes();
+    if (global.LoreKeeperFind && typeof global.LoreKeeperFind.init === "function") {
+      global.LoreKeeperFind.init();
+    }
     initAsk();
     if (global.LoreKeeperMobileComfort && global.LoreKeeperMobileComfort.initHomeNotes) {
       global.LoreKeeperMobileComfort.initHomeNotes();

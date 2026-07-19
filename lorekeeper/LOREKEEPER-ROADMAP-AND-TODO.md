@@ -18,6 +18,7 @@
 - [x] Owner nginx gate + hub Owner sites link
 - [x] Sign-in required; notes on server per account
 - [x] Entry types, search, export/import JSON
+- [x] **Find in your writing** — plain home search across documents + notes (not Ask / not AI); opens the matching note or doc
 - [x] Documents with pages — new doc, add pages, auto-save, continue where you left off
 - [x] Owner’s Office — accounts, sign-up switch, private feedback (no other writers’ note text)
 - [x] Junk / throwaway email recommended on sign-up (Halalit-style copy)

@@ -154,6 +154,70 @@ a { color: var(--accent); }
   border: 1px solid var(--line);
   font-size: 0.98rem;
 }
+.lk-find-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+.lk-find-input {
+  flex: 1 1 14rem;
+  min-width: 0;
+  font: inherit;
+  padding: 0.55rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: rgba(0, 0, 0, 0.2);
+  color: var(--ink);
+}
+.lk-find-results {
+  list-style: none;
+  margin: 0.65rem 0 0;
+  padding: 0;
+}
+.lk-find-results li {
+  margin: 0 0 0.45rem;
+}
+.lk-find-hit {
+  display: block;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  background: rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0.7rem 0.85rem;
+  cursor: pointer;
+}
+.lk-find-hit:hover {
+  border-color: var(--accent);
+}
+.lk-find-hit-kind {
+  display: block;
+  font-family: system-ui, sans-serif;
+  font-size: 0.75rem;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.15rem;
+}
+.lk-find-hit strong {
+  color: var(--ink);
+}
+.lk-find-hit-snippet {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 0.9rem;
+  color: var(--soft);
+  line-height: 1.35;
+}
+.lk-find-hit-snippet mark {
+  background: rgba(201, 168, 108, 0.35);
+  color: var(--ink);
+  padding: 0 0.1em;
+  border-radius: 2px;
+}
 .lk-ask-sources {
   list-style: none;
   margin: 0.75rem 0 0;
