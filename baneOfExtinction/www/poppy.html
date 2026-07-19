@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>California poppy — wildlife codex stub</title>
+  <link rel="stylesheet" href="bane.css" />
+  <link rel="stylesheet" href="bane-codex-card.css" />
+</head>
+<body>
+  <div class="wrap wrap--wide">
+    <header class="hero hero--compact">
+      <p class="eyebrow"><a href="index.html">Bane of Extinction</a> · callout stub</p>
+      <h1 class="brand">California poppy</h1>
+      <p class="tagline" id="latinLine"><em>Eschscholzia californica</em> · try cultivar Watermelon Heaven · works for California poppies generally</p>
+    </header>
+
+    <div class="card-toolbar">
+      <label class="chk">
+        <input type="checkbox" id="cultivarOn" checked />
+        Prefer Watermelon Heaven notes when useful
+      </label>
+      <label class="chk">
+        <input type="checkbox" id="evidenceOn" />
+        Treat as evidence (bloom / patch noticed)
+      </label>
+      <button type="button" class="btn primary" id="loadFacts">Load Claude callouts</button>
+    </div>
+    <p class="status" id="status" aria-live="polite">Tap Load Claude callouts to fetch facts for this poppy card.</p>
+
+    <div class="codex-card blueprint" id="codexCard">
+      <div class="blueprint__grid" aria-hidden="true"></div>
+      <div class="codex-card__layout">
+        <div class="codex-card__art" aria-hidden="true">
+          <div class="poppy" id="poppyArt">
+            <div class="poppy__stem"></div>
+            <div class="poppy__leaf poppy__leaf--l"></div>
+            <div class="poppy__leaf poppy__leaf--r"></div>
+            <div class="poppy__bloom">
+              <span class="poppy__petal p1"></span>
+              <span class="poppy__petal p2"></span>
+              <span class="poppy__petal p3"></span>
+              <span class="poppy__petal p4"></span>
+              <span class="poppy__center"></span>
+            </div>
+          </div>
+          <p class="codex-card__names">
+            <strong id="commonOut">California poppy</strong>
+            <span id="latinOut">Eschscholzia californica</span>
+          </p>
+        </div>
+        <aside class="codex-card__callouts" id="calloutList" aria-label="Organism callouts">
+          <p class="callout-empty">Callouts will appear here — petals, center, foliage, sun habits, and more.</p>
+        </aside>
+      </div>
+    </div>
+
+    <p class="disclaimer" id="disclaimer" hidden></p>
+
+    <p class="foot">
+      <a href="codex.html">← Codex home</a>
+      · Owner beta stub · Claude facts (no Wikipedia)
+    </p>
+  </div>
+  <script src="bane-poppy-stub.js"></script>
+</body>
+</html>

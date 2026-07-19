@@ -199,11 +199,13 @@ Last updated: 2026-07-17
 
 **Can do now:**
 - Browse **wildlife codex** stub on desktop or phone (owner hub cookie)
-- Deploy: `bash top/scripts/deploy-bane-of-extinction.sh` (port **8085**; reloads nginx by default)
+- **California poppy callout stub** — `poppy.html`; Claude facts via `/bane-of-extinction/api/` (shared `anthropic.key`)
+- Deploy: `bash top/scripts/deploy-bane-of-extinction.sh` (ports **8085** static + **8086** API; reloads nginx by default)
 
 **Cannot do without new work:**
 - Camera / Seek-style scan (phone-only when built — same handheld gate idea as Halalit scanners)
-- Trail Guide, walk timer, buddy, stylized still generation, real codex entries
+- Trail Guide, walk timer, buddy, stylized still from photo, multi-species callouts beyond poppy stub
+- Wikipedia / open-web scrape for facts (**not** in scope — Claude + curated packs only)
 
 **Not:** Climatic Mysteries. Path **`/bane/`** still redirects to Climatic Mysteries — do not reuse it.
 

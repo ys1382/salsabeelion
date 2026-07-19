@@ -109,6 +109,27 @@ PoGo “new Pokédex entry” energy, for real organisms:
 - Subtle still-image idle animation OK; not a live moving photo of the real animal.
 - Curated royalty-free reference art may fill entries when camera stylize is not used (Trail Guide–only path).
 
+### Callout labels (locked direction 2026-07-18)
+
+After the still “freezes” on the codex card:
+
+- Show a **reasonable list of callout text boxes** to the right of the organism (leader-line feel).
+- Each callout points at a **visible part or clue** (beak, belly, petals, track shape, etc.) with a short fact.
+- Examples: toucan beak color/size role; belly → fruit diet; poppy petals / cream center / drought habit.
+- Not an internal anatomy scan — educational facts about the organism (or **evidence** of it: tracks, nest, seed pod, chewed plant, bloom patch).
+- **Claude API** builds / helps the facts base when the player encounters the organism or evidence (server key; never in public `www/`).
+- **No Wikipedia** (and no open-web scrape) for this facts path — Claude helper knowledge + later curated packs only.
+- Tone: useful learning helper, not a guaranteed field guide.
+- Desktop can browse callouts once an entry exists; phone not required for browsing.
+
+### First stub — California poppies
+
+- Live demo: `/bane-of-extinction/poppy.html`
+- Species: **California poppy** (*Eschscholzia californica*) — works for California poppies **generally**
+- Optional cultivar preference: **Watermelon Heaven** (pink petals, creamy center) when the toggle is on
+- Claude callouts via `/bane-of-extinction/api/callouts` (port **8086**)
+- Fallback curated facts if Claude is down so layout is still testable
+
 ---
 
 ## PoGo feel, safely
@@ -132,25 +153,29 @@ PoGo “new Pokédex entry” energy, for real organisms:
 - [x] Owner-only beta shell on Odd Trove (`/bane-of-extinction/`, hub link, nginx + deploy script)
 - [x] Wildlife codex stub page (desktop + phone browse)
 - [x] Handheld gate messaging (camera later; desktop = codex)
+- [x] Codex callout panel direction (Claude facts; organism + evidence; no Wikipedia)
+- [x] California poppy stub (`poppy.html` + Claude `/api/callouts`; Watermelon Heaven optional)
 - [ ] Core loop: walk → optional place → ID → codex → buddy/streak
 - [ ] Trail Guide engine (fast path + skip-place path with hard cap)
 - [ ] Size-first disambiguation (crow vs raven as test case)
 - [ ] Ethics / non-invasive onboarding copy
 - [ ] First regional content pack (species, questions, reference art + common + Latin)
-- [ ] Wildlife codex UI — blueprint reveal + permanent entries (real data)
+- [ ] Wildlife codex UI — blueprint reveal + permanent entries (real data beyond poppy stub)
 - [ ] Seek-style camera path — organism-only crop, delete photo, Halalit privacy (phone only)
 - [ ] Stylize still (cartoonish semi-realistic) from organism crop → codex art
+- [ ] Leader-lines from callouts to exact body-part anchors on stylized art
 - [ ] Platform polish (PWA optional; no GPS required)
 
 ## MVP (v1) — suggested order
 
 1. ~~Owner-only shell + empty codex~~ **shipped**
-2. Walk + buddy + streak  
-3. Trail Guide for one region, 2–3 habitats  
-4. Codex from IDs (blueprint reveal; curated stills OK)  
-5. Ethics onboarding  
-6. Optional: a few test QR trail stops  
-7. Phone Seek-style camera + stylize (after Trail Guide)
+2. ~~California poppy Claude callout stub~~ **shipped** (`poppy.html`)
+3. Walk + buddy + streak  
+4. Trail Guide for one region, 2–3 habitats  
+5. Codex from IDs (blueprint reveal; curated stills OK)  
+6. Ethics onboarding  
+7. Optional: a few test QR trail stops  
+8. Phone Seek-style camera + stylize (after Trail Guide)
 
 ## Later / parked
 
@@ -173,6 +198,9 @@ Owner pins from chat go here.
 - [x] Codex reveal: blueprint-style background like PoGo new Pokédex entry; wildlife codex holds that still (+ light idle OK)
 - [x] Owner-only Odd Trove beta at `/bane-of-extinction/`; desktop codex; camera phone-only when built
 - [x] Stub site + deploy script shipped (empty codex; scan not built yet)
+- [x] Codex callouts to the right of organism still (part/clue facts; not insides scan)
+- [x] Claude API for facts base on organism **or evidence** encounter (no Wikipedia / no scrape)
+- [x] California poppy stub for testing (species-wide; Watermelon Heaven optional cultivar)
 
 ### 2026-07-10 — original design chat
 

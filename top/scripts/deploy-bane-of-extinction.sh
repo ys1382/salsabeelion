@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# Deploy Bane of Extinction owner-beta static only — port 8085.
+# Deploy Bane of Extinction owner-beta — static 8085 + API 8086.
 # Also syncs hub index.html. Reloads nginx unless BANE_SKIP_NGINX=1.
+# Uses shared ~/kids-sites/anthropic.key for Claude callouts (same as LoreKeeper).
 # Does NOT restart Halalit or other kids sites.
 #
 # Usage:
@@ -21,6 +22,7 @@ SSH_OPTS=(
 export RSYNC_RSH="ssh ${SSH_OPTS[*]}"
 
 BANE_PORT="${BANE_PORT:-8085}"
+BANE_API_PORT="${BANE_API_PORT:-8086}"
 BIND="${BIND:-127.0.0.1}"
 
 ssh_cmd() {
@@ -35,23 +37,29 @@ if [[ ! -d "$ROOT/baneOfExtinction/www" ]]; then
   echo "Error: baneOfExtinction/www not found." >&2
   exit 1
 fi
+if [[ ! -f "$ROOT/baneOfExtinction/bane_api.py" ]]; then
+  echo "Error: baneOfExtinction/bane_api.py not found." >&2
+  exit 1
+fi
 
 echo "Syncing Bane of Extinction to $HOST:~/$REMOTE_BASE/ ..."
-ssh_cmd "$HOST" "mkdir -p ~/$REMOTE_BASE/ssl ~/$REMOTE_BASE/bane-of-extinction ~/$REMOTE_BASE/hub"
+ssh_cmd "$HOST" "mkdir -p ~/$REMOTE_BASE/ssl ~/$REMOTE_BASE/bane-of-extinction ~/$REMOTE_BASE/bane-server ~/$REMOTE_BASE/hub"
 
-rsync_cmd "$ROOT/top/_shared/serve_static_https.py" "$HOST:~/$REMOTE_BASE/"
+rsync_cmd "$ROOT/top/_shared/serve_static_https.py" "$ROOT/top/_shared/kids-watchdog.sh" "$HOST:~/$REMOTE_BASE/"
 rsync_cmd "$ROOT/baneOfExtinction/www/" "$HOST:~/$REMOTE_BASE/bane-of-extinction/"
+rsync_cmd "$ROOT/baneOfExtinction/bane_api.py" "$HOST:~/$REMOTE_BASE/bane-server/bane_api.py"
 rsync_cmd "$ROOT/top/directory/www/index.html" "$HOST:~/$REMOTE_BASE/hub/index.html"
 
 ssh_cmd "$HOST" \
   REMOTE_BASE="$REMOTE_BASE" \
   BANE_PORT="$BANE_PORT" \
+  BANE_API_PORT="$BANE_API_PORT" \
   BIND="$BIND" \
   'bash -s' << 'REMOTE'
 set -euo pipefail
 BASE="$HOME/$REMOTE_BASE"
 SSL="$BASE/ssl"
-mkdir -p "$SSL" "$BASE/bane-of-extinction"
+mkdir -p "$SSL" "$BASE/bane-of-extinction" "$BASE/bane-server"
 if [[ ! -f "$SSL/key.pem" || ! -f "$SSL/cert.pem" ]]; then
   openssl req -x509 -newkey rsa:2048 \
     -keyout "$SSL/key.pem" -out "$SSL/cert.pem" \
@@ -61,6 +69,14 @@ fi
 PY="$BASE/serve_static_https.py"
 KEY="$SSL/key.pem"
 CERT="$SSL/cert.pem"
+# shellcheck source=/dev/null
+source "$BASE/kids-watchdog.sh"
+
+echo "Smoke test: import bane_api before restart..."
+if ! (cd "$BASE/bane-server" && python3 -c "import bane_api"); then
+  echo "Error: bane_api import failed — leaving existing processes running." >&2
+  exit 1
+fi
 
 pkill -f "serve_static_https.py $BANE_PORT " 2>/dev/null || true
 sleep 0.2
@@ -68,14 +84,35 @@ nohup python3 "$PY" "$BANE_PORT" "$BASE/bane-of-extinction" "$KEY" "$CERT" "$BIN
   </dev/null >"/tmp/kids-site-${BANE_PORT}.log" 2>&1 &
 echo "Started Bane of Extinction static on port $BANE_PORT ($BIND)"
 
+wd_name="bane-api-${BANE_API_PORT}"
+wd_pidfile="$(kids_watchdog_pidfile "$wd_name")"
+kids_stop_watchdog "$wd_name" "bane-api.log 2>&1"
+pkill -f "bane_api.py" 2>/dev/null || true
+sleep 0.2
+nohup bash -c '
+  echo $$ > "'"$wd_pidfile"'"
+  while true; do
+    BANE_API_PORT="'"$BANE_API_PORT"'" \
+    BANE_API_BIND="'"$BIND"'" \
+    KIDS_SITES_ANTHROPIC_KEY_PATH="'"$BASE"'/anthropic.key" \
+      python3 "'"$BASE"'/bane-server/bane_api.py" >>/tmp/bane-api.log 2>&1
+    echo "Bane API exited — restarting in 2s" >>/tmp/bane-api.log
+    sleep 2
+  done
+  rm -f "'"$wd_pidfile"'"
+' </dev/null >/dev/null 2>&1 &
+echo "Started Bane API on port $BANE_API_PORT ($BIND)"
+
 sleep 1
 curl -sk -o /dev/null -w "Bane static port ${BANE_PORT}: %{http_code}\n" \
   "https://127.0.0.1:${BANE_PORT}/" || true
+curl -s -o /dev/null -w "Bane API port ${BANE_API_PORT}: %{http_code}\n" \
+  "http://127.0.0.1:${BANE_API_PORT}/api/health" || true
 REMOTE
 
 echo ""
 echo "Done. Bane of Extinction only — other sites were not restarted."
-echo "After nginx reload: https://oddtrove.art/bane-of-extinction/ (owner gate)"
+echo "After nginx reload: https://oddtrove.art/bane-of-extinction/poppy.html (owner gate)"
 
 if [[ "${BANE_SKIP_NGINX:-0}" != "1" ]]; then
   echo "Syncing nginx config for /bane-of-extinction/ ..."
