@@ -3,6 +3,7 @@
 
   var API = "/bane-of-extinction/api/wildlife-identify";
   var STORAGE_KEY = "bane_last_id";
+  var ASSET_V = "20260719a";
   var desktopBlock = document.getElementById("desktopBlock");
   var scanUi = document.getElementById("scanUi");
   var video = document.getElementById("scanVideo");
@@ -11,8 +12,15 @@
   var stopCamBtn = document.getElementById("stopCamBtn");
   var statusEl = document.getElementById("scanStatus");
   var coachHint = document.getElementById("coachHint");
+  var resultBox = document.getElementById("scanResult");
+  var resultName = document.getElementById("resultName");
+  var resultLatin = document.getElementById("resultLatin");
+  var resultMeta = document.getElementById("resultMeta");
+  var openCodexBtn = document.getElementById("openCodexBtn");
+  var rescanBtn = document.getElementById("rescanBtn");
   var stream = null;
   var busy = false;
+  var lastRecord = null;
 
   function setStatus(msg) {
     if (statusEl) statusEl.textContent = msg || "";
@@ -20,6 +28,18 @@
 
   function isHandheld() {
     return window.BaneHandheld && window.BaneHandheld.isHandheld();
+  }
+
+  function encodeId(record) {
+    try {
+      var json = JSON.stringify(record);
+      return btoa(unescape(encodeURIComponent(json)))
+        .replace(/\+/g, "-")
+        .replace(/\//g, "_")
+        .replace(/=+$/g, "");
+    } catch (e) {
+      return "";
+    }
   }
 
   function stopCamera() {
@@ -63,7 +83,7 @@
           coachHint.textContent =
             "Fill the frame with the organism or clear evidence. Then tap Capture & scan.";
         }
-        setStatus("Camera ready.");
+        setStatus("Camera ready. One tap — wait until it finishes (often 10–20s).");
       })
       .catch(function (err) {
         setStatus(
@@ -101,13 +121,70 @@
     canvas.height = 1;
   }
 
+  function showResult(data) {
+    lastRecord = {
+      displayName: data.displayName,
+      commonName: data.commonName,
+      latinName: data.latinName,
+      cultivar: data.cultivar || "",
+      evidence: !!data.evidence,
+      organismType: data.organismType || "flower",
+      confidence: data.confidence || "",
+      shortNote: data.shortNote || "",
+      geminiName:
+        data.sources && data.sources.gemini
+          ? data.sources.gemini.commonName
+          : "",
+      claudeName:
+        data.sources && data.sources.claude
+          ? data.sources.claude.commonName
+          : "",
+    };
+    try {
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(lastRecord));
+    } catch (e) {}
+    // Clear any stale localStorage leftover from older builds
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch (e2) {}
+
+    if (resultName) {
+      resultName.textContent = lastRecord.displayName || lastRecord.commonName || "Unknown";
+    }
+    if (resultLatin) resultLatin.textContent = lastRecord.latinName || "—";
+    if (resultMeta) {
+      var bits = [];
+      if (lastRecord.confidence) bits.push("confidence: " + lastRecord.confidence);
+      if (lastRecord.geminiName) bits.push("Gemini: " + lastRecord.geminiName);
+      if (lastRecord.claudeName) bits.push("Claude: " + lastRecord.claudeName);
+      if (lastRecord.shortNote) bits.push(lastRecord.shortNote);
+      resultMeta.textContent = bits.join(" · ");
+    }
+    if (resultBox) resultBox.hidden = false;
+    setStatus(
+      "Scan finished. If this name is wrong, the models misread the photo — not the codex defaulting to poppy."
+    );
+  }
+
+  function openCodex() {
+    if (!lastRecord || !lastRecord.commonName) {
+      setStatus("Scan first, then open the codex.");
+      return;
+    }
+    var token = encodeId(lastRecord);
+    var url = "codex.html?from=scan&v=" + ASSET_V;
+    if (token) url += "&id=" + encodeURIComponent(token);
+    window.location.href = url;
+  }
+
   function onCapture() {
     if (busy) {
-      setStatus("Still scanning… please wait (can take ~10–20 seconds).");
+      setStatus("Still scanning… please wait (often 10–20 seconds). One tap is enough.");
       return;
     }
     busy = true;
     if (captureBtn) captureBtn.disabled = true;
+    if (resultBox) resultBox.hidden = true;
     var started = Date.now();
     var tick = setInterval(function () {
       var sec = Math.round((Date.now() - started) / 1000);
@@ -136,7 +213,6 @@
       body: JSON.stringify(payload),
     })
       .then(function (res) {
-        // Drop local frame ASAP
         clearCanvas();
         payload.imageBase64 = "";
         return res.text().then(function (text) {
@@ -150,7 +226,7 @@
             throw new Error(
               "Bad response from scan API (HTTP " +
                 res.status +
-                "). Try again — if this keeps happening, the server may be blocking the photo size."
+                "). Try again."
             );
           }
           return { res: res, data: data || {} };
@@ -163,31 +239,10 @@
             (data && data.message) || (data && data.error) || "identify_failed"
           );
         }
-        var record = {
-          displayName: data.displayName,
-          commonName: data.commonName,
-          latinName: data.latinName,
-          cultivar: data.cultivar,
-          evidence: data.evidence,
-          organismType: data.organismType,
-          confidence: data.confidence,
-        };
-        try {
-          sessionStorage.setItem(STORAGE_KEY, JSON.stringify(record));
-        } catch (e) {}
-        try {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(record));
-        } catch (e2) {}
         clearInterval(tick);
-        setStatus(
-          "Looks like: " +
-            (data.displayName || data.commonName) +
-            " (" +
-            (data.confidence || "?") +
-            "). Opening codex…"
-        );
         stopCamera();
-        window.location.href = "codex.html?from=scan";
+        showResult(data);
+        if (captureBtn) captureBtn.disabled = true;
       })
       .catch(function (err) {
         clearInterval(tick);
@@ -211,6 +266,14 @@
   if (scanUi) scanUi.hidden = false;
   if (captureBtn) captureBtn.addEventListener("click", onCapture);
   if (stopCamBtn) stopCamBtn.addEventListener("click", stopCamera);
+  if (openCodexBtn) openCodexBtn.addEventListener("click", openCodex);
+  if (rescanBtn) {
+    rescanBtn.addEventListener("click", function () {
+      if (resultBox) resultBox.hidden = true;
+      lastRecord = null;
+      startCamera();
+    });
+  }
   startCamera();
   window.addEventListener("pagehide", stopCamera);
 })();

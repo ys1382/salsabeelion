@@ -454,6 +454,10 @@ def identify_wildlife(image_b64: str, mime: str) -> dict[str, Any]:
 
     chosen = _prefer_id(gemini_id, claude_id)
     if not chosen or not chosen.get("commonName"):
+        print(
+            f"bane_identify fail gemini={gemini_err!r} claude={claude_err!r}",
+            flush=True,
+        )
         return {
             "ok": False,
             "error": "identify_failed",
@@ -467,6 +471,15 @@ def identify_wildlife(image_b64: str, mime: str) -> dict[str, Any]:
     display = chosen["commonName"]
     if chosen.get("cultivar"):
         display = f"{chosen['commonName']} ({chosen['cultivar']})"
+
+    print(
+        "bane_identify ok "
+        f"chosen={chosen.get('commonName')!r} "
+        f"latin={chosen.get('latinName')!r} "
+        f"gemini={(gemini_id or {}).get('commonName')!r} "
+        f"claude={(claude_id or {}).get('commonName')!r}",
+        flush=True,
+    )
 
     return {
         "ok": True,

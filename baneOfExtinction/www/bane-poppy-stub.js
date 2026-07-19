@@ -29,15 +29,8 @@
         "Still: common sunflower subject cutout (Soph556 photo, CC BY-SA 3.0).",
       match: /sunflower|helianthus/i,
     },
-    philodendron: {
-      src: "assets/sweetheart-philodendron-subject.png",
-      credit:
-        "Still: sweetheart philodendron subject cutout (KENPEI photo, CC BY-SA 3.0).",
-      match: /philodendron|hederaceum|scandens|sweetheart|heartleaf/i,
-    },
   };
 
-  // Neutral until a scan (or demo) sets an identity — do NOT default to poppy.
   var state = {
     commonName: "",
     latinName: "",
@@ -60,9 +53,8 @@
     var poppy = isPoppy(state.commonName, state.latinName);
     if (cultivarRow) cultivarRow.hidden = !poppy;
     if (cultivarOn) {
-      if (!poppy) {
-        cultivarOn.checked = false;
-      } else if (state.cultivar && /watermelon/i.test(state.cultivar)) {
+      if (!poppy) cultivarOn.checked = false;
+      else if (state.cultivar && /watermelon/i.test(state.cultivar)) {
         cultivarOn.checked = true;
       }
     }
@@ -82,7 +74,6 @@
         return;
       }
     }
-    // Known name but no local still yet — keep names, hide art
     if (commonName) {
       stillEl.hidden = true;
       if (creditEl) {
@@ -94,10 +85,10 @@
 
   function applyIdentity(id) {
     if (!id) return;
-    // Replace defaults entirely from the scan payload (never keep a leftover poppy).
     var common =
       (id.commonName && String(id.commonName).trim()) ||
-      (id.displayName && String(id.displayName).replace(/\s*\(.*\)\s*$/, "").trim()) ||
+      (id.displayName &&
+        String(id.displayName).replace(/\s*\(.*\)\s*$/, "").trim()) ||
       "";
     state.commonName = common;
     state.latinName = (id.latinName && String(id.latinName).trim()) || "";
@@ -131,7 +122,8 @@
         '<p class="callout__label"></p>' +
         '<p class="callout__fact"></p>' +
         "</div>";
-      article.querySelector(".callout__label").textContent = c.label || c.anchor || "Note";
+      article.querySelector(".callout__label").textContent =
+        c.label || c.anchor || "Note";
       article.querySelector(".callout__fact").textContent = c.fact || "";
       listEl.appendChild(article);
     });
@@ -151,11 +143,6 @@
       cultivarOn.checked
     ) {
       cultivar = state.cultivar || "Watermelon Heaven";
-    } else if (state.cultivar && !(cultivarOn && cultivarOn.checked)) {
-      cultivar = state.cultivar;
-      if (/watermelon/i.test(cultivar) && cultivarOn && !cultivarOn.checked) {
-        cultivar = "";
-      }
     }
     var body = {
       commonName: state.commonName,
@@ -178,14 +165,19 @@
       .then(function (pack) {
         var data = pack.data || {};
         if (!pack.res.ok || !data.ok) {
-          throw new Error((data && data.message) || (data && data.error) || "request_failed");
+          throw new Error(
+            (data && data.message) || (data && data.error) || "request_failed"
+          );
         }
-        // Keep scanned identity authoritative — callouts must not rename the organism.
+        // Keep scanned identity authoritative — do not let callouts rename it.
         if (commonOut) {
           commonOut.textContent =
-            data.displayName || data.commonName || state.commonName;
+            state.commonName +
+            (state.cultivar && isPoppy(state.commonName, state.latinName)
+              ? " (" + state.cultivar + ")"
+              : "");
         }
-        if (latinOut) latinOut.textContent = data.latinName || state.latinName || "—";
+        if (latinOut) latinOut.textContent = state.latinName || "—";
         applyStill(state.commonName, state.latinName);
         renderCallouts(data.callouts || []);
         if (disclaimerEl) {
@@ -197,36 +189,63 @@
         setStatus(
           data.source && String(data.source).indexOf("fallback") === 0
             ? "Showing fallback facts (Claude unavailable)."
-            : "Callouts loaded for: " +
-                (data.displayName || data.commonName || "this organism") +
-                "."
+            : "Callouts loaded for: " + state.commonName + "."
         );
       })
       .catch(function (err) {
-        setStatus("Could not load callouts: " + (err && err.message ? err.message : "error"));
+        setStatus(
+          "Could not load callouts: " +
+            (err && err.message ? err.message : "error")
+        );
       })
       .then(function () {
         if (loadBtn) loadBtn.disabled = false;
       });
   }
 
-  function readStoredId() {
+  function decodeIdToken(token) {
+    if (!token) return null;
+    try {
+      var b64 = String(token).replace(/-/g, "+").replace(/_/g, "/");
+      while (b64.length % 4) b64 += "=";
+      var json = decodeURIComponent(escape(atob(b64)));
+      return JSON.parse(json);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function readScanId() {
+    var params = new URLSearchParams(window.location.search || "");
+    var fromScan = params.get("from") === "scan";
+    var fromUrl = decodeIdToken(params.get("id") || "");
+    if (fromUrl && (fromUrl.commonName || fromUrl.displayName)) {
+      try {
+        sessionStorage.removeItem(STORAGE_KEY);
+      } catch (e) {}
+      try {
+        localStorage.removeItem(STORAGE_KEY);
+      } catch (e2) {}
+      return fromUrl;
+    }
+    // Only touch storage when arriving from a scan — never revive a stale poppy.
+    if (!fromScan) {
+      try {
+        localStorage.removeItem(STORAGE_KEY);
+      } catch (e3) {}
+      return null;
+    }
     var raw = null;
     try {
       raw = sessionStorage.getItem(STORAGE_KEY);
-    } catch (e) {}
-    if (!raw) {
-      try {
-        raw = localStorage.getItem(STORAGE_KEY);
-      } catch (e2) {}
-    }
+    } catch (e4) {}
     if (!raw) return null;
     try {
       sessionStorage.removeItem(STORAGE_KEY);
-    } catch (e3) {}
+    } catch (e5) {}
     try {
       localStorage.removeItem(STORAGE_KEY);
-    } catch (e4) {}
+    } catch (e6) {}
     return JSON.parse(raw);
   }
 
@@ -257,12 +276,12 @@
 
   var parsed = null;
   try {
-    parsed = readStoredId();
+    parsed = readScanId();
   } catch (e) {}
   if (parsed && (parsed.commonName || parsed.displayName)) {
     applyIdentity(parsed);
     setStatus(
-      "From your last scan: " +
+      "From your scan: " +
         (parsed.displayName || parsed.commonName || "organism") +
         ". Loading callouts…"
     );
