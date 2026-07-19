@@ -167,6 +167,40 @@ class RecallReliabilityTests(unittest.TestCase):
             )
         )
 
+    def test_mid_sentence_work_title_counts_as_named(self):
+        """You do not need to start with the work title — mid-sentence is enough."""
+        from lorekeeper_reliability import (
+            explicit_work_hints,
+            primary_work_hints,
+            work_named_in_question,
+        )
+
+        known = ["Cities Of Rust For Me", "Ashford Saga"]
+        entries = [
+            _entry("e1", "note", "body", tags=["Cities Of Rust For Me"]),
+            _entry("e2", "note", "body", tags=["Ashford Saga"]),
+        ]
+        for q in (
+            "summarize Cities Of Rust For Me",
+            "can you summarize Cities Of Rust For Me",
+            "give me a summary of Cities Of Rust For Me",
+            "tell me about Cities Of Rust For Me",
+            "for Cities Of Rust For Me, summarize the story",
+        ):
+            with self.subTest(q=q):
+                self.assertTrue(
+                    work_named_in_question(q, known_works=known, entries=entries),
+                    msg=q,
+                )
+                self.assertIn(
+                    "cities of rust for me",
+                    explicit_work_hints(q, known, entries),
+                )
+        self.assertIn(
+            "cities of rust for me",
+            primary_work_hints("summarize Cities Of Rust For Me"),
+        )
+
     def test_prologue_in_phrase_not_work_title(self) -> None:
         from lorekeeper_reliability import primary_work_hints, work_named_in_question
         from lorekeeper_section_scope import is_section_scope_phrase

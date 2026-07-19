@@ -96,6 +96,24 @@ def primary_work_hints(question: str) -> set[str]:
                 hints.add(work)
             continue
         hints.add(hint)
+    # "for Ashford Saga, summarize…" — comma required so "… For Me" titles stay intact.
+    for m in re.finditer(r"\bfor\s+([^,]+),", question, re.I):
+        hint = re.sub(r"\s+", " ", m.group(1).strip().lower().rstrip("?.!"))
+        if len(hint) > 2 and not _is_junk_work_hint(hint) and not is_section_scope_phrase(hint):
+            hints.add(hint)
+    # "summarize Ashford Saga" / "summary of Ashford Saga" / "tell me about Ashford Saga"
+    for m in re.finditer(
+        r"\b(?:summarize|summary of|tell me about|overview of)\s+"
+        r"(?!what\b|who\b|where\b|how\b|the story\b|what'?s\b)"
+        r"(.+?)(?:\?|$)",
+        question,
+        re.I,
+    ):
+        hint = re.sub(r"\s+", " ", m.group(1).strip().lower().rstrip("?.!:;"))
+        # Trailing politeness only — never strip a title that ends in "for me".
+        hint = re.sub(r"\s+please\.?$", "", hint, flags=re.I).strip()
+        if len(hint) > 2 and not _is_junk_work_hint(hint) and not is_section_scope_phrase(hint):
+            hints.add(hint)
     hints.update(_hints_from_my_phrase(question))
     return hints
 
@@ -235,6 +253,41 @@ def _hints_from_leading_work_tag(question: str, known_works: list[str]) -> set[s
     return {w.lower() for w in collapsed}
 
 
+def _hints_from_known_work_anywhere(question: str, known_works: list[str]) -> set[str]:
+    """'summarize Cities Of Rust For Me' / 'summary of Ashford Saga' — title anywhere."""
+    q = (question or "").strip()
+    if not q or not known_works:
+        return set()
+    ql = q.lower()
+    # Longest titles first so "Cities Of Rust For Me" wins over "Cities Of Rust".
+    ordered = sorted(
+        (str(w or "").strip() for w in known_works if str(w or "").strip()),
+        key=len,
+        reverse=True,
+    )
+    candidates: list[str] = []
+    for wl in ordered:
+        if len(wl) <= 2:
+            continue
+        wlow = wl.lower()
+        idx = ql.find(wlow)
+        if idx < 0:
+            continue
+        before = ql[idx - 1] if idx > 0 else " "
+        after_i = idx + len(wlow)
+        after = ql[after_i] if after_i < len(ql) else " "
+        # Prefer whole-title boundaries (not a substring of a longer word).
+        if before.isalnum() or after.isalnum():
+            continue
+        candidates.append(wl)
+        # One strong hit is enough; longer titles already preferred by sort.
+        break
+    if not candidates:
+        return set()
+    collapsed = collapse_near_duplicate_work_tags(question, candidates)
+    return {w.lower() for w in collapsed}
+
+
 def explicit_work_hints(
     question: str,
     known_works: list[str],
@@ -242,6 +295,7 @@ def explicit_work_hints(
 ) -> set[str]:
     hints = set(primary_work_hints(question))
     hints.update(_hints_from_leading_work_tag(question, known_works))
+    hints.update(_hints_from_known_work_anywhere(question, known_works))
     return _collapse_work_hint_set(question, hints, entries)
 
 

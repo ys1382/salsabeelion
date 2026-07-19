@@ -262,6 +262,25 @@
           "Nothing saved for Cities Of Rust For Me"
         ]
       }
+    },
+    {
+      "id": "mid_sentence_summarize_work",
+      "label": "summarize WorkTitle mid-sentence — no leading title required",
+      "documents": [
+        {
+          "id": "d1",
+          "title": "Cities Of Rust For Me",
+          "workTag": "Cities Of Rust For Me",
+          "bodyFormat": "html",
+          "bodyHtml": "<p>Mara scavenges in a rusted coastal city. The sea is poison. She finds a forbidden map.</p>"
+        }
+      ],
+      "question": "can you summarize Cities Of Rust For Me",
+      "assert": {
+        "materialStateNot": "nothing_saved",
+        "answerContains": ["Mara"],
+        "answerNotContains": ["only in your head", "Nothing saved for"]
+      }
     }
   ]
 }
