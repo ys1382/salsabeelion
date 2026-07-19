@@ -547,28 +547,36 @@ _ARC_CUE = re.compile(
 
 def _sentence_mentions_pair(sentence: str, a: str, b: str) -> bool:
     low = (sentence or "").lower()
+    roles = {
+        "protagonist",
+        "antagonist",
+        "hero",
+        "heroine",
+        "villain",
+    }
     names = []
     for raw in (a, b):
         n = (raw or "").strip()
-        if not n or n.lower() in (
-            "protagonist",
-            "antagonist",
-            "hero",
-            "heroine",
-            "villain",
-        ):
+        if not n:
+            continue
+        if n.lower() in roles:
             continue
         names.append(n.lower())
-    if len(names) < 1:
+    role_hit = any(r in low for r in roles if r in {(a or "").lower(), (b or "").lower()})
+    if len(names) >= 2:
+        if all(n in low for n in names):
+            return True
+        # One named person + arc cue is enough when the other is also in the question.
+        if any(n in low for n in names) and _ARC_CUE.search(sentence or ""):
+            return True
         return False
     if len(names) == 1:
-        return names[0] in low and (
-            "protagonist" in low
-            or "antagonist" in low
-            or "hero" in low
-            or bool(re.search(r"\b(?:she|he|they|them)\b", low))
-        )
-    return all(n in low for n in names)
+        if names[0] not in low:
+            return False
+        return bool(role_hit or _ARC_CUE.search(sentence or "") or re.search(
+            r"\b(?:she|he|they|them|his|her|their)\b", low
+        ))
+    return False
 
 
 def answer_story_arc_relationship(

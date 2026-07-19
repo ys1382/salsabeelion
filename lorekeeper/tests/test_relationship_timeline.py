@@ -110,26 +110,56 @@ class RelationshipTimelineTests(unittest.TestCase):
         self.assertNotIn("before/through the arc", low)
         self.assertNotIn("•", answer)
 
-    def test_story_arc_uses_synthesis_prompt_not_note_dump(self):
-        plan = local_ask_plan(self.Q)
-        system = _system_for_kind(self.Q, "relationship", brief=False, plan=plan)
-        self.assertIn("CLEAR, CONCISE SUMMARY", system)
-        self.assertIn("do NOT paste", system)
-        # Local note-dump must not win over RAG for story-arc.
-        from lorekeeper_recall import local_pipeline_skips_rag
-
-        self.assertFalse(
-            local_pipeline_skips_rag(
-                self.Q,
-                {
-                    "answer": "Before the war they trusted each other.",
-                    "materialState": "summarizable",
-                    "questionKind": "relationship",
-                },
-                [],
-                plan=plan,
-            )
+    def test_pair_names_reach_ask_plan(self):
+        q = (
+            "summarize the relationship that develops between Platinus and Galloxidor "
+            "pre and post beginning of the war in Cities of Rust"
         )
+        plan = local_ask_plan(q)
+        self.assertIsNotNone(plan)
+        assert plan is not None
+        names = {n.lower() for n in plan.character_names}
+        self.assertIn("platinus", names)
+        self.assertIn("galloxidor", names)
+
+    def test_false_arc_gap_scrubbed(self):
+        raw = (
+            "The notes saved for Cities of Rust do not contain story-dynamic material "
+            "covering how Platinus and Galloxidor's relationship develops before or after "
+            "the start of any war. Before the war they traded scrap.\n\n"
+            "— From your notes only. Nothing invented."
+        )
+        cleaned = scrub_rag_artifacts(self.Q, raw, allow_broad=True)
+        self.assertNotIn("story-dynamic", cleaned.lower())
+        self.assertIn("traded scrap", cleaned.lower())
+
+    def test_either_name_with_arc_cue_counts(self):
+        from lorekeeper_relations import answer_story_arc_relationship
+
+        q = (
+            "summarize the relationship that develops between Platinus and Galloxidor "
+            "pre and post beginning of the war in Cities of Rust"
+        )
+        entries = [
+            {
+                "id": "1",
+                "title": "Before",
+                "body": "Platinus trusted Galloxidor with the scrap routes before the war.",
+                "tags": ["Cities of Rust"],
+                "kind": "note",
+            },
+            {
+                "id": "2",
+                "title": "Solo beat",
+                "body": "Galloxidor later sided against the council's enemies after the war began.",
+                "tags": ["Cities of Rust"],
+                "kind": "note",
+            },
+        ]
+        answer, ids = answer_story_arc_relationship(q, entries)
+        assert answer is not None
+        self.assertIn("trusted", answer.lower())
+        self.assertTrue(ids)
 
 
 if __name__ == "__main__":

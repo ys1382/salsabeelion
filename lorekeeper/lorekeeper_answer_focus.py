@@ -413,6 +413,11 @@ _SAME_TWO_CHARS = re.compile(
     r"\b(?:this is |that this is )?(?:the )?relationship between (?:the )?same two characters\b[^.?!]*[.?!]?\s*",
     re.I,
 )
+_FALSE_ARC_GAP = re.compile(
+    r"(?is)\b(?:the\s+)?notes?\s+(?:saved\s+)?(?:for\s+[^.]{0,80}\s+)?"
+    r"do not contain\s+story[- ]dynamic\s+material\b[^.?!]*[.?!]?\s*"
+    r"|\bstory[- ]dynamic\s+material\s+(?:covering|about|on)\b[^.?!]*[.?!]?\s*",
+)
 
 
 def scrub_rag_artifacts(question: str, answer: str, *, allow_broad: bool) -> str:
@@ -423,6 +428,7 @@ def scrub_rag_artifacts(question: str, answer: str, *, allow_broad: bool) -> str
     body = _DESPITE_BIO.sub("", body)
     body = _SOURCES_META.sub("", body)
     body = _SAME_TWO_CHARS.sub("", body)
+    body = _FALSE_ARC_GAP.sub("", body)
     body = re.sub(r"^[a-z]", lambda m: m.group(0).upper(), body.strip(), count=1) if body.strip() else body
     if allow_broad:
         body = re.sub(r"\n{3,}", "\n\n", body).strip()

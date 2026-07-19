@@ -197,14 +197,14 @@ This is a STORY-RELATIONSHIP question — how these people stand toward each oth
 
 Rules:
 - Write a CLEAR, CONCISE SUMMARY in reference voice (1–3 short sentences or two short paragraphs max).
-- Synthesize what the notes and draft say — do NOT paste or quote a whole note, and do NOT dump bullet excerpts of raw lines.
-- Answer the developing / emotional / situational relationship from sources — NOT biological or family ties unless the writer explicitly asked about family/blood.
-- If the question asks pre/post, before/after, or during a war/event, cover those phases briefly from sources only.
+- Synthesize what the notes and draft say about these people — do NOT paste a whole note.
+- Use ANY saved material about how they treat, trust, oppose, ally with, or feel toward each other — even if it does not use the word "war" or "relationship."
+- If the question asks pre/post or before/after a war/event, cover those phases when sources support them. If only one phase is saved, summarize that phase and briefly note the other phase is not spelled out yet.
+- NEVER claim the notes "do not contain story-dynamic material" (or similar) when SOURCE blocks mention either named person interacting, trusting, fighting, allying, or changing toward the other. Summarize what IS there.
+- Answer story dynamics — NOT biological/family ties unless the writer asked about family/blood.
 - Use the names the writer used in the question; do not swap to an earlier persona unless asked.
-- Prefer draft/notes about trust, loyalty, conflict, alliance, and how they treat each other.
-- Do NOT lead with "they are siblings/related by blood" when the question is about how their relationship develops.
 - Never say "the sources establish/indicate/show" — state the facts in reference voice.
-- If story-dynamic material is thin, say what is saved and what is not — do not invent feelings."""
+- Invent nothing. Only if sources truly say nothing about either person toward the other may you say that tie is not spelled out yet."""
 
 _SYSTEM_BRIEF_SUFFIX = "\n- Keep the answer to 1–2 sentences maximum."
 

@@ -318,11 +318,29 @@ def local_ask_plan(question: str) -> AskPlan | None:
         )
 
     if is_relationship_between_question(q):
+        from lorekeeper_relations import (
+            is_story_arc_relationship_question,
+            relationship_between_pair,
+        )
+
+        pair = relationship_between_pair(q) or ()
+        names = [n for n in pair if n and n.lower() not in (
+            "protagonist", "antagonist", "hero", "heroine", "villain"
+        )]
+        roles = [
+            n.lower()
+            for n in pair
+            if n and n.lower() in (
+                "protagonist", "antagonist", "hero", "heroine", "villain"
+            )
+        ]
         return AskPlan(
             intent="relationship",
             pipeline="rag_summarize",
             answer_model="sonnet",
             question_kind="relationship",
+            character_names=names[:6],
+            role_terms=roles[:4],
             section=section_raw,
             router_engine="local",
         )

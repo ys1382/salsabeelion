@@ -1008,6 +1008,73 @@ def recall_from_user_data(
             targets = character_labels_for_plan(ask_plan, scoped) if ask_plan else character_targets(question)
             label = targets[0] if targets else ""
             if (
+                ask_plan
+                and ask_plan.intent == "relationship"
+                and is_relationship_between_question(question)
+            ):
+                from lorekeeper_relations import (
+                    answer_story_arc_relationship,
+                    is_story_arc_relationship_question,
+                )
+
+                rag_ans = str(rag_result.get("answer") or "")
+                if is_story_arc_relationship_question(question) and re.search(
+                    r"(?i)do not contain\s+story[- ]dynamic|no story[- ]dynamic|"
+                    r"nothing (?:clear |saved )?about how .{0,40}relationship develops",
+                    rag_ans,
+                ):
+                    local_arc = answer_story_arc_relationship(question, scoped)
+                    if (
+                        local_arc
+                        and local_arc[0]
+                        and "nothing clear is saved yet about how" not in local_arc[0].lower()
+                    ):
+                        pipeline = answer_for_work(
+                            question,
+                            scoped,
+                            work_hints=work_hints,
+                            strict_work=strict_work,
+                            mode=recall_mode,
+                            tokenize=_tokenize,
+                            best_excerpt=_best_excerpt,
+                            kind_label=_kind_label,
+                        )
+                        if pipeline and str(pipeline.get("answer") or "").strip():
+                            return _finish_local_pipeline(pipeline)
+                        # Direct gatherer hit when work pipeline is empty.
+                        answer, source_ids = local_arc
+                        ranked = [
+                            {
+                                "id": sid,
+                                "title": "Note",
+                                "kind": "note",
+                                "kindLabel": "Note",
+                                "score": 50,
+                                "excerpt": answer[:200],
+                                "body": answer,
+                            }
+                            for sid in source_ids[:4]
+                        ]
+                        state = classify_material(
+                            question,
+                            scoped,
+                            ranked,
+                            answer,
+                            strict_work=strict_work,
+                            work_hints=work_hints,
+                        )
+                        return _finish(_attach_router_meta({
+                            "ok": True,
+                            "answer": answer,
+                            "sources": sources_from_ranked(ranked, state),
+                            "materialState": state,
+                            "mode": recall_mode,
+                            "questionKind": "relationship",
+                            "recallVersion": RECALL_VERSION,
+                            "recallEngine": "local",
+                            "entryCount": len(entries),
+                        }))
+            if (
                 effective_kind == "who"
                 and label
                 and cast_answer_is_thin(rag_result.get("answer") or "", label)
