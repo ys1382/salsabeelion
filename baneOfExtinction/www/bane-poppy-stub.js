@@ -42,11 +42,11 @@
       );
     }
     if (stillEl && /poppy|eschscholzia/i.test(state.commonName + " " + state.latinName)) {
-      stillEl.src = "assets/california-poppy-kaldari.jpg";
+      stillEl.src = "assets/california-poppy-subject.png";
       stillEl.alt = state.commonName || "California poppy";
       if (creditEl) {
         creditEl.textContent =
-          "Still: California poppy photo (Kaldari, CC0) — local crop; idle motion on the still.";
+          "Still: California poppy subject cutout from Kaldari photo (CC0).";
       }
     }
   }

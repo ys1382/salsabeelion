@@ -1,9 +1,9 @@
 # Media credits — Bane of Extinction
 
-## california-poppy-kaldari.jpg
+## california-poppy-kaldari.jpg / california-poppy-subject.png
 
 - Source: Wikimedia Commons — File:Kaldari_Eschscholzia_californica_01.jpg
 - Subject: California poppy (Eschscholzia californica)
 - Author: Kaldari
 - License: CC0 1.0 (public domain dedication) — https://creativecommons.org/publicdomain/zero/1.0/
-- Note: Hosted locally for the owner-beta wildlife codex still. No people in frame; organism-focused crop resized for web.
+- Note: `california-poppy-subject.png` is a local subject cutout (background removed) for the wildlife codex still. No people in frame.
