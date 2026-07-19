@@ -16,6 +16,14 @@
 - License: CC BY-SA 3.0 — https://creativecommons.org/licenses/by-sa/3.0/
 - Note: Local subject cutout for the wildlife codex still (head + leaves kept; sky/background removed). No people in frame.
 
+## sweetheart-philodendron-subject.png
+
+- Source photo: Wikimedia Commons — File:Philodendron_scandens_subsp_oxycardium2.jpg
+- Subject: Sweetheart philodendron / heartleaf philodendron (Philodendron hederaceum; syn. Philodendron scandens)
+- Author: KENPEI
+- License: CC BY-SA 3.0 — https://creativecommons.org/licenses/by-sa/3.0/
+- Note: Local subject cutout for the wildlife codex still (foliage kept; background removed). No people in frame.
+
 ## california-poppy-kaldari.jpg
 
 - Source: Wikimedia Commons — File:Kaldari_Eschscholzia_californica_01.jpg

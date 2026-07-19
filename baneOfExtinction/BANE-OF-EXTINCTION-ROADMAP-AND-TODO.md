@@ -122,16 +122,17 @@ After the still “freezes” on the codex card:
 - Tone: useful learning helper, not a guaranteed field guide.
 - Desktop can browse callouts once an entry exists; phone not required for browsing.
 
-### First stubs — California poppies + common sunflower
+### First stubs — California poppies + common sunflower + sweetheart philodendron
 
 - Live demo lives on the **main wildlife codex**: `/bane-of-extinction/codex.html` (also from hub → Bane → Open wildlife codex)
 - `/bane-of-extinction/poppy.html` redirects to the codex (old bookmarks still work)
 - Species: **California poppy** (*Eschscholzia californica*) — works for California poppies **generally**
 - Species: **common sunflower** (*Helianthus annuus*) — camera + callouts prefer species when clear; cultivar names only if obvious
+- Species: **sweetheart philodendron** (*Philodendron hederaceum*) — heartleaf / sweetheart plant; cultivar names only if obvious
 - Optional cultivar preference: **Watermelon Heaven** (pink petals, creamy center) when the toggle is on (poppy)
 - Claude callouts via `/bane-of-extinction/api/callouts` (port **8086**)
-- Fallback curated facts for poppy and sunflower if Claude is down
-- Codex still switches between poppy / sunflower subject cutouts from the ID
+- Fallback curated facts for poppy, sunflower, and philodendron if Claude is down
+- Codex still switches between poppy / sunflower / philodendron subject cutouts from the ID
 
 ---
 
@@ -209,6 +210,7 @@ Owner pins from chat go here.
 - [x] Phone wildlife camera scan (Gemini + Claude); facts follow the guessed ID
 - [x] Fix codex still animation with CC0 poppy photo + clearer idle motion
 - [x] Common sunflower stub (species-aimed ID hints, fallback callouts, codex still cutout)
+- [x] Sweetheart philodendron stub (Philodendron hederaceum; ID hints, fallback callouts, codex still)
 
 ### 2026-07-10 — original design chat
 
