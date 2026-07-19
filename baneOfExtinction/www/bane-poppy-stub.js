@@ -3,6 +3,7 @@
 
   var API_CALLOUTS = "/bane-of-extinction/api/callouts";
   var STORAGE_KEY = "bane_last_id";
+  var MAX_AGE_MS = 15 * 60 * 1000;
   var statusEl = document.getElementById("status");
   var listEl = document.getElementById("calloutList");
   var disclaimerEl = document.getElementById("disclaimer");
@@ -169,7 +170,6 @@
             (data && data.message) || (data && data.error) || "request_failed"
           );
         }
-        // Keep scanned identity authoritative — do not let callouts rename it.
         if (commonOut) {
           commonOut.textContent =
             state.commonName +
@@ -203,56 +203,80 @@
       });
   }
 
-  function decodeIdToken(token) {
-    if (!token) return null;
+  function clearStored() {
     try {
-      var b64 = String(token).replace(/-/g, "+").replace(/_/g, "/");
-      while (b64.length % 4) b64 += "=";
-      var json = decodeURIComponent(escape(atob(b64)));
-      return JSON.parse(json);
-    } catch (e) {
+      sessionStorage.removeItem(STORAGE_KEY);
+    } catch (e) {}
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch (e2) {}
+  }
+
+  function parseStored(raw) {
+    if (!raw) return null;
+    var obj = JSON.parse(raw);
+    if (!obj || !(obj.commonName || obj.displayName)) return null;
+    if (obj.savedAt && Date.now() - Number(obj.savedAt) > MAX_AGE_MS) {
       return null;
     }
+    return obj;
   }
 
   function readScanId() {
     var params = new URLSearchParams(window.location.search || "");
-    var fromScan = params.get("from") === "scan";
-    var fromUrl = decodeIdToken(params.get("id") || "");
-    if (fromUrl && (fromUrl.commonName || fromUrl.displayName)) {
-      try {
-        sessionStorage.removeItem(STORAGE_KEY);
-      } catch (e) {}
-      try {
-        localStorage.removeItem(STORAGE_KEY);
-      } catch (e2) {}
-      return fromUrl;
+
+    // Prefer plain query params from the scan page (most reliable).
+    var common = (params.get("common") || "").trim();
+    var display = (params.get("display") || "").trim();
+    if (common || display) {
+      clearStored();
+      return {
+        commonName: common || display,
+        displayName: display || common,
+        latinName: (params.get("latin") || "").trim(),
+        cultivar: (params.get("cultivar") || "").trim(),
+        organismType: (params.get("type") || "flower").trim(),
+        confidence: (params.get("conf") || "").trim(),
+        evidence: params.get("evidence") === "1",
+        shortNote: (params.get("note") || "").trim(),
+      };
     }
-    // Only touch storage when arriving from a scan — never revive a stale poppy.
-    if (!fromScan) {
-      try {
-        localStorage.removeItem(STORAGE_KEY);
-      } catch (e3) {}
-      return null;
-    }
+
     var raw = null;
     try {
       raw = sessionStorage.getItem(STORAGE_KEY);
+    } catch (e) {}
+    var fromSession = null;
+    try {
+      fromSession = parseStored(raw);
+    } catch (e2) {}
+    if (fromSession) {
+      clearStored();
+      return fromSession;
+    }
+
+    try {
+      raw = localStorage.getItem(STORAGE_KEY);
+    } catch (e3) {
+      raw = null;
+    }
+    var fromLocal = null;
+    try {
+      fromLocal = parseStored(raw);
     } catch (e4) {}
-    if (!raw) return null;
-    try {
-      sessionStorage.removeItem(STORAGE_KEY);
-    } catch (e5) {}
-    try {
-      localStorage.removeItem(STORAGE_KEY);
-    } catch (e6) {}
-    return JSON.parse(raw);
+    if (fromLocal) {
+      clearStored();
+      return fromLocal;
+    }
+
+    return null;
   }
 
   function wireDemo(btnId, id) {
     var btn = document.getElementById(btnId);
     if (!btn) return;
     btn.addEventListener("click", function () {
+      clearStored();
       applyIdentity(id);
       setStatus("Demo identity set. Loading callouts…");
       loadFacts();
@@ -289,7 +313,9 @@
   } else {
     syncCultivarToggle();
     if (stillEl) stillEl.hidden = true;
-    setStatus("Scan on a phone to learn a plant — or try a demo below.");
+    setStatus(
+      "No scan loaded. Use Wildlife camera scan on your phone, or try a demo below."
+    );
   }
 
   if (loadBtn) loadBtn.addEventListener("click", loadFacts);

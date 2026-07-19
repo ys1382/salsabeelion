@@ -3,7 +3,7 @@
 
   var API = "/bane-of-extinction/api/wildlife-identify";
   var STORAGE_KEY = "bane_last_id";
-  var ASSET_V = "20260719a";
+  var ASSET_V = "20260719c";
   var desktopBlock = document.getElementById("desktopBlock");
   var scanUi = document.getElementById("scanUi");
   var video = document.getElementById("scanVideo");
@@ -21,6 +21,7 @@
   var stream = null;
   var busy = false;
   var lastRecord = null;
+  var redirectTimer = null;
 
   function setStatus(msg) {
     if (statusEl) statusEl.textContent = msg || "";
@@ -30,16 +31,31 @@
     return window.BaneHandheld && window.BaneHandheld.isHandheld();
   }
 
-  function encodeId(record) {
+  function saveRecord(record) {
+    var packed = JSON.stringify(
+      Object.assign({}, record, { savedAt: Date.now() })
+    );
     try {
-      var json = JSON.stringify(record);
-      return btoa(unescape(encodeURIComponent(json)))
-        .replace(/\+/g, "-")
-        .replace(/\//g, "_")
-        .replace(/=+$/g, "");
-    } catch (e) {
-      return "";
-    }
+      sessionStorage.setItem(STORAGE_KEY, packed);
+    } catch (e) {}
+    try {
+      localStorage.setItem(STORAGE_KEY, packed);
+    } catch (e2) {}
+  }
+
+  function codexUrl(record) {
+    var q = new URLSearchParams();
+    q.set("from", "scan");
+    q.set("v", ASSET_V);
+    if (record.commonName) q.set("common", record.commonName);
+    if (record.displayName) q.set("display", record.displayName);
+    if (record.latinName) q.set("latin", record.latinName);
+    if (record.cultivar) q.set("cultivar", record.cultivar);
+    if (record.organismType) q.set("type", record.organismType);
+    if (record.confidence) q.set("conf", record.confidence);
+    if (record.evidence) q.set("evidence", "1");
+    if (record.shortNote) q.set("note", String(record.shortNote).slice(0, 160));
+    return "codex.html?" + q.toString();
   }
 
   function stopCamera() {
@@ -121,11 +137,24 @@
     canvas.height = 1;
   }
 
+  function openCodex() {
+    if (!lastRecord || !lastRecord.commonName) {
+      setStatus("Scan first, then open the codex.");
+      return;
+    }
+    if (redirectTimer) {
+      clearTimeout(redirectTimer);
+      redirectTimer = null;
+    }
+    saveRecord(lastRecord);
+    window.location.href = codexUrl(lastRecord);
+  }
+
   function showResult(data) {
     lastRecord = {
-      displayName: data.displayName,
-      commonName: data.commonName,
-      latinName: data.latinName,
+      displayName: data.displayName || data.commonName || "",
+      commonName: data.commonName || "",
+      latinName: data.latinName || "",
       cultivar: data.cultivar || "",
       evidence: !!data.evidence,
       organismType: data.organismType || "flower",
@@ -140,16 +169,11 @@
           ? data.sources.claude.commonName
           : "",
     };
-    try {
-      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(lastRecord));
-    } catch (e) {}
-    // Clear any stale localStorage leftover from older builds
-    try {
-      localStorage.removeItem(STORAGE_KEY);
-    } catch (e2) {}
+    saveRecord(lastRecord);
 
     if (resultName) {
-      resultName.textContent = lastRecord.displayName || lastRecord.commonName || "Unknown";
+      resultName.textContent =
+        lastRecord.displayName || lastRecord.commonName || "Unknown";
     }
     if (resultLatin) resultLatin.textContent = lastRecord.latinName || "—";
     if (resultMeta) {
@@ -162,19 +186,12 @@
     }
     if (resultBox) resultBox.hidden = false;
     setStatus(
-      "Scan finished. If this name is wrong, the models misread the photo — not the codex defaulting to poppy."
+      "Got it: " +
+        (lastRecord.displayName || lastRecord.commonName) +
+        ". Opening wildlife codex in a moment…"
     );
-  }
-
-  function openCodex() {
-    if (!lastRecord || !lastRecord.commonName) {
-      setStatus("Scan first, then open the codex.");
-      return;
-    }
-    var token = encodeId(lastRecord);
-    var url = "codex.html?from=scan&v=" + ASSET_V;
-    if (token) url += "&id=" + encodeURIComponent(token);
-    window.location.href = url;
+    // Auto-open so a footer Codex tap isn’t required (that path used to lose the ID).
+    redirectTimer = setTimeout(openCodex, 1200);
   }
 
   function onCapture() {
@@ -185,6 +202,10 @@
     busy = true;
     if (captureBtn) captureBtn.disabled = true;
     if (resultBox) resultBox.hidden = true;
+    if (redirectTimer) {
+      clearTimeout(redirectTimer);
+      redirectTimer = null;
+    }
     var started = Date.now();
     var tick = setInterval(function () {
       var sec = Math.round((Date.now() - started) / 1000);
@@ -221,12 +242,12 @@
             data = text ? JSON.parse(text) : {};
           } catch (parseErr) {
             if (res.status === 413) {
-              throw new Error("Photo too large for the server. Try again a bit farther back.");
+              throw new Error(
+                "Photo too large for the server. Try again a bit farther back."
+              );
             }
             throw new Error(
-              "Bad response from scan API (HTTP " +
-                res.status +
-                "). Try again."
+              "Bad response from scan API (HTTP " + res.status + "). Try again."
             );
           }
           return { res: res, data: data || {} };
@@ -242,7 +263,6 @@
         clearInterval(tick);
         stopCamera();
         showResult(data);
-        if (captureBtn) captureBtn.disabled = true;
       })
       .catch(function (err) {
         clearInterval(tick);
@@ -269,6 +289,10 @@
   if (openCodexBtn) openCodexBtn.addEventListener("click", openCodex);
   if (rescanBtn) {
     rescanBtn.addEventListener("click", function () {
+      if (redirectTimer) {
+        clearTimeout(redirectTimer);
+        redirectTimer = null;
+      }
       if (resultBox) resultBox.hidden = true;
       lastRecord = null;
       startCamera();
