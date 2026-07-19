@@ -7,6 +7,10 @@
   --line: rgba(201, 168, 108, 0.22);
   --ok: #8fbf9f;
 }
+html {
+  overscroll-behavior-x: none;
+}
+
 * { box-sizing: border-box; }
 html.auth-checking body { opacity: 1; }
 body {

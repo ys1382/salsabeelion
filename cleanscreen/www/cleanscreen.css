@@ -12,6 +12,10 @@
   --shadow: 0 10px 30px rgba(28, 42, 58, 0.08);
   font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
 }
+html {
+  overscroll-behavior-x: none;
+}
+
 
 * {
   box-sizing: border-box;

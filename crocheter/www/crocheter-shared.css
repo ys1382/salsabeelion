@@ -6,6 +6,10 @@
   --accent: #6b8f71;
   --line: #e5dfd4;
 }
+html {
+  overscroll-behavior-x: none;
+}
+
 * { box-sizing: border-box; }
 body {
   margin: 0;
