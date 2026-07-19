@@ -14,47 +14,48 @@
       <p class="eyebrow"><a href="index.html">Bane of Extinction</a> · owner beta</p>
       <h1 class="brand">Wildlife codex</h1>
       <p class="tagline">
-        First entry: California poppy (<em>Eschscholzia californica</em>).
-        Works for California poppies generally — optional Watermelon Heaven notes.
+        Stylized still + callout facts for what the game thinks it saw.
+        Phone: <a href="scan.html" style="color:#7ec8d8">wildlife camera scan</a>.
       </p>
     </header>
 
     <div class="card-toolbar">
       <label class="chk">
         <input type="checkbox" id="cultivarOn" checked />
-        Prefer Watermelon Heaven notes when useful
+        Prefer Watermelon Heaven notes when useful (manual load)
       </label>
       <label class="chk">
         <input type="checkbox" id="evidenceOn" />
-        Treat as evidence (bloom / patch noticed)
+        Treat as evidence
       </label>
       <button type="button" class="btn primary" id="loadFacts">Load Claude callouts</button>
     </div>
-    <p class="status" id="status" aria-live="polite">Tap Load Claude callouts for this poppy card.</p>
+    <p class="status" id="status" aria-live="polite">Tap Load Claude callouts, or scan on a phone.</p>
 
     <div class="codex-card blueprint" id="codexCard">
       <div class="blueprint__grid" aria-hidden="true"></div>
       <div class="codex-card__layout">
-        <div class="codex-card__art" aria-hidden="true">
-          <div class="poppy" id="poppyArt">
-            <div class="poppy__stem"></div>
-            <div class="poppy__leaf poppy__leaf--l"></div>
-            <div class="poppy__leaf poppy__leaf--r"></div>
-            <div class="poppy__bloom">
-              <span class="poppy__petal p1"></span>
-              <span class="poppy__petal p2"></span>
-              <span class="poppy__petal p3"></span>
-              <span class="poppy__petal p4"></span>
-              <span class="poppy__center"></span>
-            </div>
+        <div class="codex-card__art">
+          <div class="organism-still-wrap">
+            <img
+              id="organismStill"
+              class="organism-still"
+              src="assets/california-poppy-kaldari.jpg"
+              width="720"
+              height="540"
+              alt="California poppy bloom"
+            />
           </div>
           <p class="codex-card__names">
             <strong id="commonOut">California poppy</strong>
             <span id="latinOut">Eschscholzia californica</span>
           </p>
+          <p class="codex-card__credit" id="artCredit">
+            Still: California poppy photo (Kaldari, CC0) — local crop for codex idle motion.
+          </p>
         </div>
         <aside class="codex-card__callouts" id="calloutList" aria-label="Organism callouts">
-          <p class="callout-empty">Callouts will appear here — petals, center, foliage, sun habits, and more.</p>
+          <p class="callout-empty">Callouts will appear here — facts match the identified organism.</p>
         </aside>
       </div>
     </div>
@@ -63,7 +64,8 @@
 
     <p class="foot">
       <a href="index.html">← Home</a>
-      · Claude helper facts (no Wikipedia) · more species later
+      · <a href="scan.html">Camera scan</a>
+      · Claude facts for the guess (no Wikipedia)
     </p>
   </div>
   <script src="bane-poppy-stub.js"></script>

@@ -162,8 +162,10 @@ After the still “freezes” on the codex card:
 - [ ] Ethics / non-invasive onboarding copy
 - [ ] First regional content pack (species, questions, reference art + common + Latin)
 - [ ] Wildlife codex UI — blueprint reveal + permanent entries (real data beyond poppy stub)
-- [ ] Seek-style camera path — organism-only crop, delete photo, Halalit privacy (phone only)
-- [ ] Stylize still (cartoonish semi-realistic) from organism crop → codex art
+- [x] Seek-style camera path — organism-only crop, delete photo, Halalit privacy (phone only)
+- [x] Codex still uses royalty-free photo + visible idle animation (CC0 California poppy)
+- [x] ID accuracy rule: facts match the **guessed** organism (e.g. golden poppy facts if that’s the ID)
+- [ ] Stylize still (cartoonish semi-realistic) from organism crop → per-species art library
 - [ ] Leader-lines from callouts to exact body-part anchors on stylized art
 - [ ] Platform polish (PWA optional; no GPS required)
 
@@ -202,6 +204,8 @@ Owner pins from chat go here.
 - [x] Codex callouts to the right of organism still (part/clue facts; not insides scan)
 - [x] Claude API for facts base on organism **or evidence** encounter (no Wikipedia / no scrape)
 - [x] California poppy stub for testing (species-wide; Watermelon Heaven optional cultivar)
+- [x] Phone wildlife camera scan (Gemini + Claude); facts follow the guessed ID
+- [x] Fix codex still animation with CC0 poppy photo + clearer idle motion
 
 ### 2026-07-10 — original design chat
 

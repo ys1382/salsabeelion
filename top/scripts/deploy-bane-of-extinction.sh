@@ -92,6 +92,18 @@ sleep 0.2
 nohup bash -c '
   echo $$ > "'"$wd_pidfile"'"
   while true; do
+    if [[ -f "'"$BASE"'/halalit-server/.env" ]]; then
+      set -a
+      # shellcheck disable=SC1091
+      source "'"$BASE"'/halalit-server/.env"
+      set +a
+    fi
+    if [[ -f "'"$BASE"'/bane-server/.env" ]]; then
+      set -a
+      # shellcheck disable=SC1091
+      source "'"$BASE"'/bane-server/.env"
+      set +a
+    fi
     BANE_API_PORT="'"$BANE_API_PORT"'" \
     BANE_API_BIND="'"$BIND"'" \
     KIDS_SITES_ANTHROPIC_KEY_PATH="'"$BASE"'/anthropic.key" \

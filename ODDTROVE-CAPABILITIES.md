@@ -198,14 +198,15 @@ Last updated: 2026-07-17
 **Is:** Family walk / wildlife-learning game (Pokémon Go–style motivation, real organisms). Owner-only beta shell on Odd Trove. Roadmap: [`baneOfExtinction/BANE-OF-EXTINCTION-ROADMAP-AND-TODO.md`](baneOfExtinction/BANE-OF-EXTINCTION-ROADMAP-AND-TODO.md).
 
 **Can do now:**
-- Browse **wildlife codex** on desktop or phone (owner hub cookie) — California poppy Claude callouts are on the main codex page
-- Claude facts via `/bane-of-extinction/api/` (shared `anthropic.key`)
+- Browse **wildlife codex** on desktop or phone (owner hub cookie) — CC0 California poppy still with idle motion + Claude callouts
+- **Phone wildlife camera scan** — `/bane-of-extinction/scan.html` (Gemini + Claude ID; photo not stored; facts follow the guessed organism)
+- Claude facts via `/bane-of-extinction/api/` (shared `anthropic.key` + Halalit Gemini env on server)
 - Deploy: `bash top/scripts/deploy-bane-of-extinction.sh` (ports **8085** static + **8086** API; reloads nginx by default)
 
 **Cannot do without new work:**
-- Camera / Seek-style scan (phone-only when built — same handheld gate idea as Halalit scanners)
-- Trail Guide, walk timer, buddy, stylized still from photo, multi-species callouts beyond poppy stub
-- Wikipedia / open-web scrape for facts (**not** in scope — Claude + curated packs only)
+- Per-species stylized still library beyond the poppy CC0 photo
+- Trail Guide, walk timer, buddy
+- Perfect organism-only segmentation (best-effort framing coach for now)
 
 **Not:** Climatic Mysteries. Path **`/bane/`** still redirects to Climatic Mysteries — do not reuse it.
 

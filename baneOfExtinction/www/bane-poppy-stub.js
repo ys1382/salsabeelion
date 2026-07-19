@@ -1,7 +1,8 @@
 (function () {
   "use strict";
 
-  var API = "/bane-of-extinction/api/callouts";
+  var API_CALLOUTS = "/bane-of-extinction/api/callouts";
+  var STORAGE_KEY = "bane_last_id";
   var statusEl = document.getElementById("status");
   var listEl = document.getElementById("calloutList");
   var disclaimerEl = document.getElementById("disclaimer");
@@ -10,9 +11,44 @@
   var loadBtn = document.getElementById("loadFacts");
   var cultivarOn = document.getElementById("cultivarOn");
   var evidenceOn = document.getElementById("evidenceOn");
+  var stillEl = document.getElementById("organismStill");
+  var creditEl = document.getElementById("artCredit");
+
+  var state = {
+    commonName: "California poppy",
+    latinName: "Eschscholzia californica",
+    cultivar: "Watermelon Heaven",
+    evidence: false,
+    organismType: "flower",
+  };
 
   function setStatus(msg) {
     if (statusEl) statusEl.textContent = msg || "";
+  }
+
+  function applyIdentity(id) {
+    if (!id) return;
+    state.commonName = id.commonName || state.commonName;
+    state.latinName = id.latinName || "";
+    state.cultivar = id.cultivar || "";
+    state.evidence = !!id.evidence;
+    state.organismType = id.organismType || state.organismType;
+    if (commonOut) commonOut.textContent = id.displayName || state.commonName;
+    if (latinOut) latinOut.textContent = state.latinName || "—";
+    if (evidenceOn) evidenceOn.checked = state.evidence;
+    if (cultivarOn) {
+      cultivarOn.checked = !!(
+        state.cultivar && /watermelon/i.test(state.cultivar)
+      );
+    }
+    if (stillEl && /poppy|eschscholzia/i.test(state.commonName + " " + state.latinName)) {
+      stillEl.src = "assets/california-poppy-kaldari.jpg";
+      stillEl.alt = state.commonName || "California poppy";
+      if (creditEl) {
+        creditEl.textContent =
+          "Still: California poppy photo (Kaldari, CC0) — local crop; idle motion on the still.";
+      }
+    }
   }
 
   function renderCallouts(callouts) {
@@ -40,15 +76,25 @@
   }
 
   function loadFacts() {
-    setStatus("Asking Claude for California poppy callouts…");
+    setStatus("Asking Claude for callouts that match this identification…");
     if (loadBtn) loadBtn.disabled = true;
+    var cultivar = "";
+    if (cultivarOn && cultivarOn.checked) {
+      cultivar = state.cultivar || "Watermelon Heaven";
+    } else if (state.cultivar && !(cultivarOn && cultivarOn.checked)) {
+      cultivar = state.cultivar;
+      if (/watermelon/i.test(cultivar) && cultivarOn && !cultivarOn.checked) {
+        cultivar = "";
+      }
+    }
     var body = {
-      commonName: "California poppy",
-      latinName: "Eschscholzia californica",
-      cultivar: cultivarOn && cultivarOn.checked ? "Watermelon Heaven" : "",
+      commonName: state.commonName,
+      latinName: state.latinName,
+      cultivar: cultivar,
       evidence: !!(evidenceOn && evidenceOn.checked),
+      organismType: state.organismType,
     };
-    fetch(API, {
+    fetch(API_CALLOUTS, {
       method: "POST",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
@@ -64,8 +110,8 @@
         if (!pack.res.ok || !data.ok) {
           throw new Error((data && data.message) || (data && data.error) || "request_failed");
         }
-        if (commonOut) commonOut.textContent = data.displayName || data.commonName || "California poppy";
-        if (latinOut) latinOut.textContent = data.latinName || "Eschscholzia californica";
+        if (commonOut) commonOut.textContent = data.displayName || data.commonName || state.commonName;
+        if (latinOut) latinOut.textContent = data.latinName || state.latinName || "—";
         renderCallouts(data.callouts || []);
         if (disclaimerEl) {
           disclaimerEl.hidden = false;
@@ -75,8 +121,8 @@
         }
         setStatus(
           data.source && String(data.source).indexOf("fallback") === 0
-            ? "Showing fallback facts (Claude unavailable). You can still judge the layout."
-            : "Callouts loaded. Scroll the list on the right of the poppy."
+            ? "Showing fallback facts (Claude unavailable)."
+            : "Callouts loaded for: " + (data.displayName || data.commonName || "this organism") + "."
         );
       })
       .catch(function (err) {
@@ -86,6 +132,22 @@
         if (loadBtn) loadBtn.disabled = false;
       });
   }
+
+  // Restore last camera ID if present
+  try {
+    var raw = sessionStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      var parsed = JSON.parse(raw);
+      applyIdentity(parsed);
+      setStatus(
+        "From your last scan: " +
+          (parsed.displayName || parsed.commonName || "organism") +
+          ". Loading callouts…"
+      );
+      sessionStorage.removeItem(STORAGE_KEY);
+      loadFacts();
+    }
+  } catch (e) {}
 
   if (loadBtn) loadBtn.addEventListener("click", loadFacts);
 })();

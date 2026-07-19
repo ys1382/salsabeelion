@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Wildlife scan — Bane of Extinction</title>
+  <link rel="stylesheet" href="bane.css" />
+  <link rel="stylesheet" href="bane-codex-card.css" />
+</head>
+<body>
+  <div class="wrap">
+    <header class="hero hero--compact">
+      <p class="eyebrow"><a href="index.html">Bane of Extinction</a> · camera</p>
+      <h1 class="brand">Wildlife scan</h1>
+      <p class="tagline">
+        Like Halalit shelf scan: coach → Capture &amp; scan → ID → photo discarded.
+        Claude + Gemini help name what they think they see; facts follow that guess.
+      </p>
+    </header>
+
+    <p class="note" id="desktopBlock" hidden role="note">
+      <strong>Phone or tablet needed</strong> for camera scan (same idea as Halalit scanners).
+      On this device, open the <a href="codex.html" style="color:#6bc48a">wildlife codex</a> instead.
+    </p>
+
+    <div id="scanUi" hidden>
+      <div class="scan-stage">
+        <video id="scanVideo" playsinline muted autoplay></video>
+        <div class="scan-stage__guide" aria-hidden="true"></div>
+        <p class="scan-stage__hint" id="coachHint">Frame the organism (or clear evidence). Avoid faces/hands when you can.</p>
+      </div>
+      <canvas id="scanCanvas" hidden></canvas>
+      <div class="scan-actions">
+        <button type="button" class="btn primary" id="captureBtn" disabled>Capture &amp; scan</button>
+        <button type="button" class="btn secondary" id="stopCamBtn" hidden>Stop camera</button>
+      </div>
+      <p class="status" id="scanStatus" aria-live="polite"></p>
+    </div>
+
+    <p class="foot">
+      <a href="index.html">← Home</a>
+      · <a href="codex.html">Codex</a>
+    </p>
+  </div>
+  <script src="bane-handheld.js"></script>
+  <script src="bane-scan.js"></script>
+</body>
+</html>
