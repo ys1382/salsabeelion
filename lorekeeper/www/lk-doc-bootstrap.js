@@ -20,7 +20,7 @@
     "./lk-auth.js?v=3",
     "./lk-site-feedback.js?v=1",
     "./lk-ask-feedback.js?v=1",
-    "./lk-tier-a-checklist.js?v=5",
+    "./lk-tier-a-checklist.js?v=13",
     "./lk-doc-quick-note.js?v=55",
     "./lk-doc-ask.js?v=7",
     "./lk-doc-notes-list.js?v=1",

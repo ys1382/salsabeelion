@@ -18,18 +18,9 @@
       <div class="stats" id="statsRow" aria-label="Summary counts"></div>
 
       <details class="office-section" open>
-        <summary><span class="office-section__title"><strong>Phase 0 — Ask quality playbook</strong></span></summary>
+        <summary><span class="office-section__title"><strong>Ask quality — quick reference</strong></span></summary>
         <div class="office-section__body" id="phase0ChecklistMount">
-          <p class="muted">Follow this over ~2 weeks. Check each box when verified. Progress saves to your account only. Repo reference: <code>LOREKEEPER-ASK-QUALITY-PLAYBOOK.md</code>.</p>
-          <p class="lk-tier-a-progress" id="phase0ChecklistProgress" aria-live="polite">0 / 12 checked</p>
-          <p class="lk-tier-a-two-week" id="phase0TwoWeekStatus" aria-live="polite">Two-week run not started.</p>
-          <button type="button" class="lk-btn secondary lk-tier-a-start" id="phase0StartTwoWeekBtn">Start 2-week tracking</button>
-
-          <h3 class="lk-tier-a-heading">Storage</h3>
-          <div class="lk-tier-a-checks" id="phase0StorageChecks"></div>
-
-          <h3 class="lk-tier-a-heading">Ask LoreKeeper habits</h3>
-          <div class="lk-tier-a-checks" id="phase0AskChecks"></div>
+          <p class="muted">No daily checklist. For reliable Ask: wait for <strong>Saved</strong>, name the work in the question (or use doc Ask), and use <strong>It got this wrong</strong> when an answer fails. Repo reference: <code>LOREKEEPER-ASK-QUALITY-PLAYBOOK.md</code>.</p>
 
           <details class="lk-playbook-details">
             <summary>Question cheat sheet</summary>
@@ -40,9 +31,6 @@
             <summary>Note structure (helps summaries find your material)</summary>
             <div id="phase0NoteGuide"></div>
           </details>
-
-          <button type="button" class="lk-btn secondary lk-tier-a-reset" id="phase0ResetBtn">Reset checkboxes</button>
-          <p class="lk-status" id="phase0ChecklistStatus" hidden aria-live="polite"></p>
         </div>
       </details>
 
@@ -111,8 +99,7 @@
         <div class="office-section__body">
           <p class="muted">Repo is ready for public beta — see <code>lorekeeper/PUBLIC-LAUNCH.md</code>. After deploy + nginx reload, turn <strong>New sign-ups</strong> on so writers can join with Google.</p>
           <ul class="lk-launch-checklist muted">
-            <li>Phase 0 Tier A checked</li>
-            <li>Ask feels trustworthy on your usual questions</li>
+            <li>Ask feels trustworthy on your usual questions (name the work)</li>
             <li>Backups + account delete tested</li>
             <li>Deploy hub + LoreKeeper, then reload nginx</li>
           </ul>
@@ -136,7 +123,7 @@
   <script src="./lk-api-config.js?v=3"></script>
   <script src="./lk-account-storage.js?v=14"></script>
   <script src="./lk-auth.js?v=4"></script>
-  <script src="./lk-tier-a-checklist.js?v=12"></script>
+  <script src="./lk-tier-a-checklist.js?v=13"></script>
   <script>
     (function () {
       function fmtDateTime(ts) {

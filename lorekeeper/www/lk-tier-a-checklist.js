@@ -1,99 +1,8 @@
 /**
- * LoreKeeper — Phase 0 Tier A checklist + Ask quality playbook (owner account).
+ * LoreKeeper — Ask quality reference (Owner’s Office) + light owner Ask tips.
+ * Tier A checkboxes retired — reliability comes from Ask engine + naming the work.
  */
 (function (global) {
-  var CHECKLIST_KEY = "lorekeeper_tier_a_checklist_v1";
-  var TWO_WEEKS_MS = 14 * 24 * 60 * 60 * 1000;
-
-  var STORAGE_ITEMS = [
-    { id: "storage_save_line", label: "Save line — doc sidebar shows Saved (not “not synced yet”)" },
-    { id: "storage_refresh", label: "Refresh — hard refresh; last edits still there" },
-    { id: "storage_second_device", label: "Second device — same account shows same content after save" },
-    { id: "storage_tab_close", label: "Tab close — reopen doc; nothing lost (or restore backup works)" },
-    { id: "storage_export", label: "Export — home JSON export matches what you expect" },
-    { id: "storage_deploy", label: "Deploy blip — after deploy, sign in; nothing missing" },
-  ];
-
-  var ASK_ITEMS = [
-    { id: "ask_save_before", label: "Save before Ask — wait for Saved before asking" },
-    { id: "ask_name_work", label: "Name the work — in the question or doc Ask scope" },
-    { id: "ask_tag_notes", label: "Tag notes — work title / character tags on notes" },
-    { id: "ask_narrow", label: "Ask narrowly — one facet per question" },
-    {
-      id: "ask_coverage_wording",
-      label: "Coverage wording — “summarize / what have I written” only when you want breadth",
-    },
-    { id: "ask_log_corrections", label: "Log corrections — It got this wrong → Owner’s Office" },
-  ];
-
-  function defaultChecklist() {
-    var checks = {};
-    STORAGE_ITEMS.concat(ASK_ITEMS).forEach(function (item) {
-      checks[item.id] = false;
-    });
-    return { checks: checks, updatedAt: 0, startedAt: 0 };
-  }
-
-  function loadChecklist() {
-    var Store = global.LoreKeeperAccountStorage;
-    if (!Store || !Store.isSignedIn()) return defaultChecklist();
-    var raw = Store.getItem(CHECKLIST_KEY);
-    if (!raw) return defaultChecklist();
-    try {
-      var data = JSON.parse(raw);
-      var base = defaultChecklist();
-      if (data && data.checks && typeof data.checks === "object") {
-        Object.keys(data.checks).forEach(function (k) {
-          if (Object.prototype.hasOwnProperty.call(base.checks, k)) {
-            base.checks[k] = !!data.checks[k];
-          }
-        });
-      }
-      base.updatedAt = data.updatedAt || 0;
-      base.startedAt = data.startedAt || 0;
-      return base;
-    } catch (e) {
-      return defaultChecklist();
-    }
-  }
-
-  function saveChecklist(data) {
-    var Store = global.LoreKeeperAccountStorage;
-    if (!Store || !Store.isSignedIn()) return false;
-    data.updatedAt = Date.now();
-    return Store.setItem(CHECKLIST_KEY, JSON.stringify(data));
-  }
-
-  function countChecked(data) {
-    var n = 0;
-    var total = 0;
-    var checks = (data && data.checks) || {};
-    Object.keys(checks).forEach(function (k) {
-      total += 1;
-      if (checks[k]) n += 1;
-    });
-    return { done: n, total: total };
-  }
-
-  function renderCheckboxGroup(root, items, checks, onChange) {
-    items.forEach(function (item) {
-      var label = document.createElement("label");
-      label.className = "lk-tier-a-check";
-      var input = document.createElement("input");
-      input.type = "checkbox";
-      input.dataset.checkId = item.id;
-      input.checked = !!checks[item.id];
-      input.addEventListener("change", function () {
-        onChange(item.id, input.checked);
-      });
-      var span = document.createElement("span");
-      span.textContent = item.label;
-      label.appendChild(input);
-      label.appendChild(span);
-      root.appendChild(label);
-    });
-  }
-
   function renderCheatSheet(root) {
     if (!root) return;
     root.innerHTML =
@@ -131,106 +40,8 @@
     if (!mount || !global.LoreKeeperAccountStorage || !global.LoreKeeperAccountStorage.isOwner()) {
       return;
     }
-
-    var checklist = loadChecklist();
-    var statusEl = document.getElementById("phase0ChecklistStatus");
-    var progressEl = document.getElementById("phase0ChecklistProgress");
-    var twoWeekEl = document.getElementById("phase0TwoWeekStatus");
-
-    function updateProgress() {
-      var c = countChecked(checklist);
-      if (progressEl) {
-        progressEl.textContent = c.done + " / " + c.total + " checked";
-        progressEl.className =
-          "lk-tier-a-progress" + (c.done === c.total ? " lk-tier-a-progress--done" : "");
-      }
-      if (twoWeekEl) {
-        if (!checklist.startedAt) {
-          twoWeekEl.textContent = "Two-week run not started — click Start when you begin Phase 0.";
-        } else {
-          var elapsed = Date.now() - checklist.startedAt;
-          var days = Math.floor(elapsed / (24 * 60 * 60 * 1000));
-          var done = elapsed >= TWO_WEEKS_MS;
-          twoWeekEl.textContent =
-            (done ? "Two weeks complete — " : "Day " + days + " of 14 — ") +
-            (done ? "keep habits if Ask still feels right." : "check items as you verify them.");
-          twoWeekEl.className = "lk-tier-a-two-week" + (done ? " lk-tier-a-two-week--done" : "");
-        }
-      }
-    }
-
-    function persist() {
-      saveChecklist(checklist);
-      if (global.LoreKeeperAccountStorage.flush) {
-        global.LoreKeeperAccountStorage.flush().then(function () {
-          if (statusEl) {
-            statusEl.textContent = "Saved.";
-            statusEl.className = "lk-status ok";
-            statusEl.hidden = false;
-          }
-        });
-      }
-      updateProgress();
-    }
-
-    function onCheck(id, checked) {
-      checklist.checks[id] = checked;
-      if (checked && !checklist.startedAt) {
-        checklist.startedAt = Date.now();
-      }
-      persist();
-    }
-
-    var startBtn = document.getElementById("phase0StartTwoWeekBtn");
-    if (startBtn) {
-      startBtn.addEventListener("click", function () {
-        if (!checklist.startedAt) {
-          checklist.startedAt = Date.now();
-          persist();
-        }
-      });
-    }
-
-    var storageRoot = document.getElementById("phase0StorageChecks");
-    var askRoot = document.getElementById("phase0AskChecks");
-    if (storageRoot) {
-      storageRoot.innerHTML = "";
-      renderCheckboxGroup(storageRoot, STORAGE_ITEMS, checklist.checks, onCheck);
-    }
-    if (askRoot) {
-      askRoot.innerHTML = "";
-      renderCheckboxGroup(askRoot, ASK_ITEMS, checklist.checks, onCheck);
-    }
-
     renderCheatSheet(document.getElementById("phase0CheatSheet"));
     renderNoteStructureGuide(document.getElementById("phase0NoteGuide"));
-
-    var resetBtn = document.getElementById("phase0ResetBtn");
-    if (resetBtn) {
-      resetBtn.addEventListener("click", function () {
-        if (!confirm("Uncheck all Tier A items?")) return;
-        checklist = defaultChecklist();
-        saveChecklist(checklist);
-        if (storageRoot) {
-          storageRoot.querySelectorAll("input[type=checkbox]").forEach(function (el) {
-            el.checked = false;
-          });
-        }
-        if (askRoot) {
-          askRoot.querySelectorAll("input[type=checkbox]").forEach(function (el) {
-            el.checked = false;
-          });
-        }
-        updateProgress();
-        if (statusEl) {
-          statusEl.textContent = "Checklist reset.";
-          statusEl.className = "lk-status";
-          statusEl.hidden = false;
-        }
-      });
-    }
-
-    updateProgress();
   }
 
   function initOwnerAskHints(beforeNode) {
@@ -245,17 +56,13 @@
     var box = document.createElement("p");
     box.className = "lk-tier-a-hints muted";
     box.innerHTML =
-      "<strong>Ask quality habits.</strong> Wait for <strong>Saved</strong> · name the work · one facet per question · " +
-      'log failures with <strong>It got this wrong</strong> · <a href="./office.html">Owner’s Office playbook</a>.';
+      "For best Ask results: wait for <strong>Saved</strong>, name the work, and use <strong>It got this wrong</strong> when something fails. " +
+      '<a href="./office.html">Owner’s Office</a> has a short question cheat sheet.';
     beforeNode.parentNode.insertBefore(box, beforeNode);
   }
 
   global.LoreKeeperTierA = {
     initPhase0Office: initPhase0Office,
     initOwnerAskHints: initOwnerAskHints,
-    loadChecklist: loadChecklist,
-    countChecked: countChecked,
-    STORAGE_ITEMS: STORAGE_ITEMS,
-    ASK_ITEMS: ASK_ITEMS,
   };
 })(typeof window !== "undefined" ? window : this);

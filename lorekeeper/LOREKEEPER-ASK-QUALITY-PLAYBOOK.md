@@ -1,6 +1,6 @@
 # LoreKeeper Ask — quality playbook
 
-**Planning doc only** — not deployed. Owner’s Office implements the interactive checklist; this file is the repo reference for you and Cursor.
+**Planning doc only** — not deployed. Owner’s Office keeps a short question cheat sheet (no daily checkboxes). This file is the repo reference for you and Cursor.
 
 **Goal:** Ask answers summary questions at least as well as a careful reader of the same saved notes — librarian only, no invented canon.
 
@@ -20,13 +20,13 @@
 
 ---
 
-## Phase 0 — Habits (~2 weeks)
+## Phase 0 — Everyday reliability (no checklist)
 
-Use **Owner’s Office → Phase 0**. Check each box when true for two weeks.
+Tier A checkboxes are retired. You do not need a two-week checkbox run.
 
-**Storage:** Saved before Ask · refresh · second device · tab close · export · deploy blip.
+**Still matters for good Ask:** wait for **Saved** · **name the work** (or use doc Ask) · log failures with **It got this wrong**.
 
-**Ask:** Name the work · tag notes · one facet per question · coverage wording only when you want breadth · log corrections.
+Optional: work tags on notes, one facet per question, coverage wording only when you want breadth.
 
 **Question cheat sheet**
 
@@ -95,4 +95,4 @@ If a portrait fails but the name is hard to find in your own account in 30 secon
 - **After each recall deploy:** Re-ask a few questions you care about; log anything still wrong.
 - **Before public launch:** Ask feels trustworthy on your usual scoped questions.
 
-**Cursor commands:** *Run LoreKeeper full checklist Tier A* · *Fix Ask from Owner’s Office corrections* · *Add regression case for [failure type]*
+**Cursor commands:** *Fix Ask from Owner’s Office corrections* · *Add regression case for [failure type]*

@@ -126,7 +126,7 @@
 
 **Use for plan commands** — e.g. *“Run LoreKeeper full checklist Tier A”* · *“Plan Ask recall items 33–40”* · *“Implement storage items 26–32”*.
 
-**Ask quality playbook (owner process):** [LOREKEEPER-ASK-QUALITY-PLAYBOOK.md](LOREKEEPER-ASK-QUALITY-PLAYBOOK.md) — Owner’s Office Phase 0 habits + corrections loop. Spot-check Run UI deferred. Phases 5–6 deferred per owner.
+**Ask quality playbook (owner process):** [LOREKEEPER-ASK-QUALITY-PLAYBOOK.md](LOREKEEPER-ASK-QUALITY-PLAYBOOK.md) — short Office reference + corrections loop (Tier A checkboxes retired). Spot-check Run UI deferred. Phases 5–6 deferred per owner.
 
 ---
 

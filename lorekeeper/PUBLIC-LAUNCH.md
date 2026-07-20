@@ -4,7 +4,7 @@ Repo side is ready (hub public card, quiet beta copy, nginx gate removed in `top
 
 ## Before launch
 
-- [ ] Phase 0 Tier A checklist complete (Owner's Office)
+- [ ] Ask feels trustworthy on usual questions (name the work; corrections shrinking)
 - [ ] Ask feels trustworthy on your usual scoped questions
 - [ ] Off-server backups running (`lorekeeper/scripts/install-backup-cron.sh`)
 - [ ] Account delete + export tested on a throwaway account (#31)
