@@ -1192,6 +1192,13 @@ button.lk-notes-more-summary:focus-visible {
   min-height: 4.5rem;
   width: 100%;
   resize: vertical;
+  display: block;
+  box-sizing: border-box;
+  border-color: rgba(201, 168, 108, 0.45);
+}
+.lk-field textarea#askQuestion:focus {
+  outline: 2px solid rgba(201, 168, 108, 0.55);
+  outline-offset: 1px;
 }
 .lk-btn {
   font-family: system-ui, sans-serif;

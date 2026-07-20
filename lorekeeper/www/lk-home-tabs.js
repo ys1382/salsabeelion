@@ -44,6 +44,14 @@
         global.LoreKeeperWordHelp.init();
       }
     }
+    if (cur && cur.panel === "panel-ask") {
+      var askQ = document.getElementById("askQuestion");
+      if (askQ && typeof askQ.scrollIntoView === "function") {
+        global.requestAnimationFrame(function () {
+          askQ.scrollIntoView({ block: "nearest", behavior: "smooth" });
+        });
+      }
+    }
     try {
       var tail = cur ? cur.hash || "" : "";
       var u = window.location.pathname + window.location.search + tail;

@@ -687,18 +687,11 @@
 
     askQuestion.addEventListener("keydown", function (e) {
       if (e.isComposing) return;
-      if (e.key === "Enter") {
+      // Enter submits; Shift+Enter inserts a newline (textarea default is the reverse).
+      if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
         askBtn.click();
         return;
-      }
-      if (e.key === "ArrowDown") {
-        e.preventDefault();
-        var start = askQuestion.selectionStart;
-        var end = askQuestion.selectionEnd;
-        var val = askQuestion.value;
-        askQuestion.value = val.slice(0, start) + "\n" + val.slice(end);
-        askQuestion.selectionStart = askQuestion.selectionEnd = start + 1;
       }
     });
 

@@ -164,18 +164,10 @@
 
     questionEl.addEventListener("keydown", function (e) {
       if (e.isComposing) return;
-      if (e.key === "Enter") {
+      if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
         askBtn.click();
         return;
-      }
-      if (e.key === "ArrowDown") {
-        e.preventDefault();
-        var start = questionEl.selectionStart;
-        var end = questionEl.selectionEnd;
-        var val = questionEl.value;
-        questionEl.value = val.slice(0, start) + "\n" + val.slice(end);
-        questionEl.selectionStart = questionEl.selectionEnd = start + 1;
       }
     });
 
