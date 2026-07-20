@@ -95,10 +95,6 @@
     var questionEl = document.getElementById("docAskQuestion");
     if (!askBtn || !questionEl || !global.LoreKeeperRecall) return;
 
-    var pendingQuestion = "";
-    var pendingScope = null;
-    var confirmUi = null;
-
     function clearAnswerUi() {
       var answerEl = document.getElementById("docAskAnswer");
       var sourcesEl = document.getElementById("docAskSources");
@@ -110,7 +106,6 @@
         sourcesEl.hidden = true;
         sourcesEl.innerHTML = "";
       }
-      if (confirmUi) confirmUi.hide();
     }
 
     function awaitPark() {
@@ -133,14 +128,6 @@
             setStatus(global.LoreKeeperRecall.friendlyError(res && res.error));
             return;
           }
-          if (res.needsConfirm && res.candidates && res.candidates.length && confirmUi) {
-            pendingQuestion = q;
-            pendingScope = scope;
-            setStatus(materialStatus(res), true);
-            renderAnswer(res);
-            confirmUi.show(res.candidates);
-            return;
-          }
           setStatus(materialStatus(res), true);
           renderAnswer(res);
           if (global.LoreKeeperAskFeedback && global.LoreKeeperAskFeedback.recordLastAsk) {
@@ -160,39 +147,6 @@
         });
     }
 
-    if (global.LoreKeeperRecall.bindConfirmSources) {
-      confirmUi = global.LoreKeeperRecall.bindConfirmSources(
-        {
-          wrapId: "docAskConfirm",
-          listId: "docAskConfirmList",
-          confirmBtnId: "docAskConfirmBtn",
-          cancelBtnId: "docAskConfirmCancel",
-        },
-        {
-          onEmpty: function () {
-            setStatus(global.LoreKeeperRecall.friendlyError("no_sources_selected"));
-          },
-          onConfirm: function (ids) {
-            var q = pendingQuestion || questionEl.value.trim();
-            var scope = pendingScope || scopeFromUi(getDoc);
-            if (!q) return;
-            runAskRequest(q, scope, {
-              scope: scope,
-              askPhase: "answer",
-              confirmedSourceIds: ids,
-            });
-          },
-          onCancel: function () {
-            pendingQuestion = "";
-            pendingScope = null;
-            setStatus("Canceled — ask again when ready.");
-            var answerEl = document.getElementById("docAskAnswer");
-            if (answerEl) answerEl.hidden = true;
-          },
-        }
-      );
-    }
-
     askBtn.addEventListener("click", function () {
       var q = questionEl.value.trim();
       if (!q) {
@@ -204,9 +158,8 @@
         return;
       }
       var scope = scopeFromUi(getDoc);
-      pendingQuestion = q;
-      pendingScope = scope;
-      runAskRequest(q, scope, { scope: scope, askPhase: "preview" });
+      // Straight to answer — no confirm-sources checkbox step.
+      runAskRequest(q, scope, { scope: scope });
     });
 
     questionEl.addEventListener("keydown", function (e) {

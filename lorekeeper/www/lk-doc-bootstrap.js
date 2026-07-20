@@ -22,7 +22,7 @@
     "./lk-ask-feedback.js?v=1",
     "./lk-tier-a-checklist.js?v=13",
     "./lk-doc-quick-note.js?v=55",
-    "./lk-doc-ask.js?v=7",
+    "./lk-doc-ask.js?v=8",
     "./lk-doc-notes-list.js?v=1",
     "./lk-doc-update-nudge.js?v=1",
     "./lk-doc-longpress.js?v=4",

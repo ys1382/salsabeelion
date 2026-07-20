@@ -551,8 +551,6 @@
     if (!askBtn || !askQuestion) return;
 
     var ASK_CONTINUE_KEY = "lk-ask-continue";
-    var pendingQuestion = "";
-    var confirmUi = null;
 
     function loadAskContinue() {
       try {
@@ -582,7 +580,6 @@
       askAnswer.innerHTML = "";
       askSources.hidden = true;
       askSources.innerHTML = "";
-      if (confirmUi) confirmUi.hide();
     }
 
     function renderSources(res) {
@@ -606,8 +603,6 @@
       askStatus.className = "lk-status ok";
       if (res.askContinue) {
         askStatus.textContent = "Your turn — reply in Ask to narrow floaters.";
-      } else if (res.needsConfirm) {
-        askStatus.textContent = "Pick which notes to use, then summarize.";
       } else if (res.recallScope === "floaters") {
         askStatus.textContent = "From your floating / unspecified notes only.";
       } else if (res.materialState === "summarizable") {
@@ -621,7 +616,6 @@
     }
 
     function showFinalAnswer(res, q) {
-      if (confirmUi) confirmUi.hide();
       applyAnswerStatus(res);
       if (global.LoreKeeperRecall.formatAskAnswerHtml) {
         askAnswer.innerHTML = global.LoreKeeperRecall.formatAskAnswerHtml(
@@ -665,20 +659,6 @@
           } else {
             saveAskContinue(null);
           }
-          if (res.needsConfirm && res.candidates && res.candidates.length && confirmUi) {
-            pendingQuestion = q;
-            applyAnswerStatus(res);
-            if (global.LoreKeeperRecall.formatAskAnswerHtml) {
-              askAnswer.innerHTML = global.LoreKeeperRecall.formatAskAnswerHtml(
-                res.answer || ""
-              );
-            } else {
-              askAnswer.textContent = res.answer || "";
-            }
-            askAnswer.hidden = !res.answer;
-            confirmUi.show(res.candidates);
-            return;
-          }
           showFinalAnswer(res, q);
         })
         .catch(function () {
@@ -691,39 +671,6 @@
         });
     }
 
-    if (global.LoreKeeperRecall && global.LoreKeeperRecall.bindConfirmSources) {
-      confirmUi = global.LoreKeeperRecall.bindConfirmSources(
-        {
-          wrapId: "askConfirm",
-          listId: "askConfirmList",
-          confirmBtnId: "askConfirmBtn",
-          cancelBtnId: "askConfirmCancel",
-        },
-        {
-          onEmpty: function () {
-            askStatus.textContent = LoreKeeperRecall.friendlyError("no_sources_selected");
-            askStatus.className = "lk-status err";
-            askStatus.hidden = false;
-          },
-          onConfirm: function (ids) {
-            var q = pendingQuestion || askQuestion.value.trim();
-            if (!q) return;
-            runAskRequest(q, {
-              includeDocuments: false,
-              askPhase: "answer",
-              confirmedSourceIds: ids,
-            });
-          },
-          onCancel: function () {
-            pendingQuestion = "";
-            askStatus.textContent = "Canceled — ask again when ready.";
-            askStatus.className = "lk-status";
-            askAnswer.hidden = true;
-          },
-        }
-      );
-    }
-
     askBtn.addEventListener("click", function () {
       var q = askQuestion.value.trim();
       if (!q) {
@@ -731,8 +678,8 @@
         askStatus.hidden = false;
         return;
       }
-      pendingQuestion = q;
-      var askOpts = { includeDocuments: false, askPhase: "preview" };
+      // Straight to answer — no confirm-sources checkbox step.
+      var askOpts = { includeDocuments: false };
       var pending = loadAskContinue();
       if (pending) askOpts.askContinue = pending;
       runAskRequest(q, askOpts);
