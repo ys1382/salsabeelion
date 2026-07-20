@@ -349,12 +349,37 @@ def extract_work_hints(question: str, entries: list[dict[str, Any]]) -> set[str]
         hint = re.sub(r"\s+", " ", m.group(1).strip().lower().rstrip("?.!"))
         if len(hint) > 2 and not is_section_scope_phrase(hint) and not _is_junk_work_hint(hint):
             hints.add(hint)
+    # Character / species note titles are subjects, not work names — never
+    # treat "Who is Serias?" as scoping to a fake work called Serias.
+    _SUBJECT_KINDS = frozenset(
+        {
+            "character",
+            "species",
+            "relationship",
+            "faction",
+            "place",
+            "world",
+            "worldbuilding",
+        }
+    )
+    try:
+        from lorekeeper_character_summary import character_targets
+
+        subject_names = {n.lower() for n in character_targets(question)}
+    except Exception:
+        subject_names = set()
     tag_hits: list[str] = []
     for entry in entries:
         if not isinstance(entry, dict):
             continue
+        kind = str(entry.get("kind") or "").lower()
         title_base = str(entry.get("title") or "").split(" / ")[0].strip().lower()
-        if len(title_base) > 2 and title_base in q:
+        if (
+            len(title_base) > 2
+            and title_base in q
+            and kind not in _SUBJECT_KINDS
+            and title_base not in subject_names
+        ):
             tag_hits.append(title_base)
         for tag in entry.get("tags") or []:
             raw = str(tag).strip()

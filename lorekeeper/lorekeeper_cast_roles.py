@@ -5,14 +5,16 @@ import re
 from typing import Any
 
 # Recognized cast-role vocabulary (reference voice, not invented).
+# Longer phrases first — Python alternation is left-first, not longest-match.
 ROLE_TERMS = (
-    r"protagonist|antagonist|main antagonist|deuteragonist|"
-    r"hero|heroine|villain|main villain|"
-    r"narrator|point of view|pov|viewpoint character|"
-    r"mentor|sidekick|foil|"
-    r"side character|supporting character|minor character|background character|"
+    r"viewpoint character|point of view|"
+    r"main antagonist|side antagonist|main villain|side villain|"
+    r"main character|side character|supporting character|minor character|background character|"
     r"comic relief|love interest|"
-    r"main character"
+    r"protagonist|deuteragonist|antagonist|"
+    r"heroine|hero|villain|"
+    r"narrator|pov|"
+    r"mentor|sidekick|foil"
 )
 
 ROLE_TERMS_RE = re.compile(rf"\b({ROLE_TERMS})\b", re.I)
@@ -22,6 +24,13 @@ _INFERRED_VIEWPOINT = re.compile(
     r"\b(point of view|pov|narrator|viewpoint character)\b", re.I
 )
 _PROTAGONIST_PHRASE = re.compile(r"\bthe protagonist\b", re.I)
+_ANTAGONIST_SIGNAL = re.compile(
+    r"\b("
+    r"side antagonist|main antagonist|antagonist|side villain|main villain|villain|"
+    r"going after|hunts?|hunting|pursues?|pursuing|opposes?|opposing"
+    r")\b",
+    re.I,
+)
 
 _THE_ROLE = frozenset(
     """
@@ -33,10 +42,10 @@ _THE_ROLE = frozenset(
 
 def _article_for_role(role: str) -> str:
     low = role.lower().strip()
-    if low in _THE_ROLE:
-        return "the"
     if low in (
         "side character",
+        "side antagonist",
+        "side villain",
         "supporting character",
         "minor character",
         "background character",
@@ -46,6 +55,8 @@ def _article_for_role(role: str) -> str:
         "love interest",
     ):
         return "a"
+    if low in _THE_ROLE:
+        return "the"
     return "the"
 
 
@@ -153,6 +164,21 @@ def cast_role_line_about_label(line: str, label: str) -> bool:
     return False
 
 
+def label_has_antagonist_signal(label: str, text: str) -> bool:
+    """True when the writer's words cast this person as opposition, not POV."""
+    if not label or not text or not _name_in_text(label, text):
+        return False
+    explicit = extract_explicit_cast_role(label, text)
+    if explicit and re.search(r"\b(antagonist|villain)\b", explicit, re.I):
+        return True
+    for sentence in re.split(r"(?<=[.!?])\s+|\n+", text):
+        if not _name_in_text(label, sentence):
+            continue
+        if _ANTAGONIST_SIGNAL.search(sentence):
+            return True
+    return False
+
+
 def infer_viewpoint_role_only(
     label: str,
     *,
@@ -163,6 +189,9 @@ def infer_viewpoint_role_only(
     if not text or not _name_in_text(label, text):
         return None
     if extract_explicit_cast_role(label, text):
+        return None
+    # Heavy draft presence alone must not promote a hunter/antagonist to POV.
+    if label_has_antagonist_signal(label, text):
         return None
     if re.search(rf"\b{re.escape(label)}\s+(?:was|is)\s+the protagonist\b", text, re.I):
         return format_cast_role_reference(label, "protagonist")
@@ -182,7 +211,8 @@ _ROLE_LABEL_STOP = frozenset(
     """.split()
 )
 _TITLE_ROLE = re.compile(
-    r"(?i)^(protagonist|antagonist|villain|hero|heroine|deuteragonist)\s*[:\-–]\s*(.+)$"
+    r"(?i)^(protagonist|antagonist|side antagonist|main antagonist|"
+    r"villain|side villain|main villain|hero|heroine|deuteragonist)\s*[:\-–]\s*(.+)$"
 )
 _ALIAS_PAIR_TITLE = re.compile(
     r"(?i)^\s*([A-Za-z][A-Za-z'-]{1,30})\s*/\s*([A-Za-z][A-Za-z'-]{1,30})"

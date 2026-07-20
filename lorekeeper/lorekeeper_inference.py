@@ -47,6 +47,7 @@ _FAMILY_WORDS = (
 from lorekeeper_cast_roles import (
     extract_explicit_cast_role_from_entries,
     infer_viewpoint_role_only,
+    label_has_antagonist_signal,
 )
 
 _VOCATIVE_PATTERNS: tuple[tuple[str, str, re.Pattern[str]], ...] = (
@@ -281,6 +282,9 @@ def _infer_role_line(label: str, entries: list[dict[str, Any]]) -> str | None:
     if explicit:
         return explicit
     if not text or not _name_in_text(label, text):
+        return None
+    # Antagonist / hunter wording blocks viewpoint/main-character inference.
+    if label_has_antagonist_signal(label, text):
         return None
     centered = _is_story_center(label, text) or _draft_pov_leans(label, entries)
     return infer_viewpoint_role_only(label, text=text, is_story_center=centered)
@@ -925,14 +929,36 @@ _SPECIES_HEADING = re.compile(
     r"^([A-Za-z][a-z]+(?:\s+[a-z]+)?)(?:s)?:\s*(.+?)\.?\s*$",
     re.I,
 )
+# "is a/an/the <species-noun>" — never bare "one of …" (that only links, no species token).
 _MEMBER_OF = re.compile(
     r"\b(character\s+[a-z0-9]+|[A-Z][a-z]{2,}(?:\s+[A-Z][a-z]{2,})?)\s+is\s+"
-    r"(?:one|an?|the)\s+([a-z][a-z\-]+)\b",
+    r"(?:an?|the)\s+([a-z][a-z\-]+)\b",
     re.I,
 )
 _SPECIES_IS_MULTI = re.compile(
     r"\b(character\s+[a-z0-9]+|[A-Z][a-z]{2,}(?:\s+[A-Z][a-z]{2,})?)\s+is\s+"
     r"(?:an?|the)\s+([A-Za-z][a-z]+(?:\s+[A-Za-z][a-z]+)+)\b"
+)
+_SPECIES_TOKEN_STOP = frozenset(
+    """
+    side main one of them they their his her its this that with from into
+    going after after before when while because though although however
+    antagonist villain hero heroine protagonist deuteragonist narrator
+    character characters person people member members
+    """.split()
+)
+_GENDER_OPTION_RE = re.compile(
+    r"\b(?:male\s+or\s+female|female\s+or\s+male)\b", re.I
+)
+_EXPLICIT_MALE = re.compile(
+    r"\b(?:is|was)\s+male\b|\b(?:he|him)\s+is\b|"
+    r"(?:^|[.!?]\s+|\n)He\s+(?:is|was|has|had|walks|walked|looks|looked|says|said|hunts|hunted)\b",
+    re.I,
+)
+_EXPLICIT_FEMALE = re.compile(
+    r"\b(?:is|was)\s+female\b|\b(?:she|her)\s+is\b|"
+    r"(?:^|[.!?]\s+|\n)She\s+(?:is|was|has|had|walks|walked|looks|looked|says|said|hunts|hunted)\b",
+    re.I,
 )
 
 
@@ -945,6 +971,32 @@ def _species_label(name: str) -> str:
     if n.endswith("s") and not n.endswith("ss"):
         return n[:-1]
     return n
+
+
+def _is_usable_species_token(token: str) -> bool:
+    """Reject cast-role scraps and stopwords mistaken for species."""
+    from lorekeeper_cast_roles import ROLE_TERMS_RE
+
+    raw = re.sub(r"\s+", " ", (token or "").strip())
+    if not raw or len(raw) < 2:
+        return False
+    low = raw.lower()
+    if low in _SPECIES_TOKEN_STOP:
+        return False
+    if any(part in _SPECIES_TOKEN_STOP for part in low.split()):
+        return False
+    if ROLE_TERMS_RE.search(raw):
+        return False
+    if _GENDER_OPTION_RE.fullmatch(low):
+        return False
+    return True
+
+
+def _clean_species_desc(desc: str) -> str:
+    """Drop open gender options from species cards — not a character fact."""
+    d = _GENDER_OPTION_RE.sub("", desc or "")
+    d = re.sub(r"\s{2,}", " ", d).strip(" ,;:-")
+    return d
 
 
 def _species_entries(entries: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -963,6 +1015,40 @@ def _species_entries(entries: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return out
 
 
+def _infer_gender_line(label: str, entries: list[dict[str, Any]]) -> str | None:
+    """Settle he/she from the writer's pronouns when consistent — never invent."""
+    about: list[str] = []
+    for entry in entries:
+        if not isinstance(entry, dict):
+            continue
+        kind = str(entry.get("kind") or "")
+        eid = str(entry.get("id") or "")
+        if kind == "document" or "#p" in eid:
+            continue
+        body = str(entry.get("body") or "")
+        title = str(entry.get("title") or "")
+        blob = f"{title}\n{body}".strip()
+        if not blob or not _name_in_text(label, blob):
+            continue
+        for sentence in _split_sentences(blob):
+            if _name_in_text(label, sentence):
+                about.append(sentence)
+            elif re.match(r"^(?:He|She)\b", sentence.strip()):
+                # Continuation after a sentence that named them in the same note.
+                if about or _name_in_text(label, blob):
+                    about.append(sentence)
+    if not about:
+        return None
+    joined = "\n".join(about)
+    he = bool(_EXPLICIT_MALE.search(joined))
+    she = bool(_EXPLICIT_FEMALE.search(joined))
+    if he and not she:
+        return f"{label} is male."
+    if she and not he:
+        return f"{label} is female."
+    return None
+
+
 def _infer_species_traits(label: str, entries: list[dict[str, Any]]) -> list[str]:
     """Cross-link species/world notes only when the writer tied this character in (#16)."""
     traits: list[str] = []
@@ -971,11 +1057,19 @@ def _infer_species_traits(label: str, entries: list[dict[str, Any]]) -> list[str
     merged = _merged_bodies(entries)
 
     def add(line: str) -> None:
-        key = line.lower()[:100]
-        if key in seen:
+        key = re.sub(r"\s+", " ", (line or "").strip().lower())
+        # Collapse "An wolf." vs "An wolf (…)." as one species fact.
+        key = re.sub(r"\s*\([^)]*\)", "", key)
+        key = re.sub(r"[^a-z0-9]+", " ", key)
+        key = re.sub(r"\s+", " ", key).strip()[:100]
+        if not key or key in seen:
             return
         seen.add(key)
         traits.append(line)
+
+    gender = _infer_gender_line(label, entries)
+    if gender:
+        add(gender)
 
     for entry in entries:
         if not isinstance(entry, dict):
@@ -988,11 +1082,25 @@ def _infer_species_traits(label: str, entries: list[dict[str, Any]]) -> list[str
             species = m.group(2)
             if who.lower() != label_low:
                 continue
+            if not _is_usable_species_token(species):
+                continue
             add(f"An {species}.")
+        # Pronoun continuation in the same character note: "He is a Wolf."
+        kind = str(entry.get("kind") or "").lower()
+        if kind == "character" or str(entry.get("title") or "").strip().lower() == label_low:
+            for m in re.finditer(
+                r"(?:^|[.!?]\s+|\n)(?:He|She)\s+is\s+(?:an?|the)\s+([A-Za-z][a-z\-]+)\b",
+                body,
+            ):
+                species = m.group(1)
+                if _is_usable_species_token(species):
+                    add(f"An {species}.")
         for m in _SPECIES_IS_MULTI.finditer(body):
             who = m.group(1)
             species = m.group(2)
             if who.lower() != label_low:
+                continue
+            if not _is_usable_species_token(species):
                 continue
             add(f"{label} is a {species}.")
 
@@ -1017,7 +1125,7 @@ def _infer_species_traits(label: str, entries: list[dict[str, Any]]) -> list[str
             if not heading:
                 continue
             species_name = heading.group(1).strip()
-            desc = heading.group(2).strip().rstrip(".")
+            desc = _clean_species_desc(heading.group(2).strip().rstrip("."))
             linked = linked_in_body or bool(
                 re.search(
                     rf"\b{re.escape(label)}\s+is\s+(?:an?|the)\s+{re.escape(species_name)}\b",
@@ -1027,7 +1135,10 @@ def _infer_species_traits(label: str, entries: list[dict[str, Any]]) -> list[str
             )
             if not linked:
                 continue
-            add(f"An {_species_label(species_name)} ({desc}).")
+            if desc:
+                add(f"An {_species_label(species_name)} ({desc}).")
+            else:
+                add(f"An {_species_label(species_name)}.")
 
     return traits[:4]
 

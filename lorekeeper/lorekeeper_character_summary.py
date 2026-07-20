@@ -89,6 +89,7 @@ _AUTHOR_META_RE = re.compile(
     r"could start|should start|might start|same time as the|plot note|planning note|"
     r"outline|todo|fix later|rewrite|draft note|needs to|want to|going to|"
     r"might be better|consider whether|idea for|note to self|"
+    r"find more ways|ways to mention|need to mention|"
     r"i wrote|i write|i say that|i decided|i've now decided|doesn't make sense|"
     r"initially,\s*i"
     r")\b",

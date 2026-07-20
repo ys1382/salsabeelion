@@ -107,6 +107,29 @@ class InferenceTests(unittest.TestCase):
         traits = _infer_species_traits("Character A", entries)
         self.assertEqual(traits, [])
 
+    def test_side_antagonist_not_species_token(self):
+        entries = [
+            _entry(
+                "c1",
+                "Character M",
+                "Character M is a side antagonist in Smoke and Mirrors. He is a Wolf.",
+                kind="character",
+            ),
+            _entry(
+                "sp1",
+                "Species",
+                "Wolf: male or female. Character M is one of them.",
+                kind="species",
+            ),
+        ]
+        traits = _infer_species_traits("Character M", entries)
+        joined = " ".join(traits).lower()
+        self.assertNotIn("an side", joined)
+        self.assertNotIn("an of", joined)
+        self.assertNotIn("male or female", joined)
+        self.assertIn("male", joined)
+        self.assertIn("wolf", joined)
+
     def test_pov_from_draft_prose(self):
         entries = [
             _entry(

@@ -82,6 +82,79 @@ class CastRoleTests(unittest.TestCase):
         merged = merge_explicit_and_inferred(explicit_role, inferred, label="Character M")
         self.assertEqual(merged, explicit_role)
 
+    def test_explicit_side_antagonist_not_viewpoint(self):
+        entries = [
+            _entry(
+                "e1",
+                "Cast notes",
+                "Character M is a side antagonist. He is going after Character C. He is a Wolf.",
+                kind="character",
+            ),
+            _entry(
+                "sp1",
+                "Species",
+                "Wolf: male or female bipedal canids. Character M is one.",
+                kind="species",
+            ),
+            _entry(
+                "e2",
+                "Ashford draft",
+                " ".join(
+                    [
+                        "Character M walked. Character M looked. Character M felt nothing.",
+                        "Character M said he would hunt Character C. The point of view stays elsewhere.",
+                    ]
+                    * 4
+                ),
+                kind="document",
+            ),
+        ]
+        self.assertEqual(
+            extract_explicit_cast_role(
+                "Character M", "Character M is a side antagonist."
+            ),
+            "Character M is a side antagonist.",
+        )
+        res = self._ask("In Ashford Saga, who is Character M?", entries)
+        answer = (res.get("answer") or "").lower()
+        self.assertIn("side antagonist", answer)
+        self.assertNotIn("viewpoint", answer)
+        self.assertNotIn("main character", answer)
+        self.assertNotIn("male or female", answer)
+        self.assertNotIn(" is side.", answer)
+        self.assertIn("male", answer)
+        self.assertIn("wolf", answer)
+
+    def test_who_is_without_work_keeps_species_notes(self):
+        """Character title must not become a fake work scope that drops species."""
+        entries = [
+            _entry(
+                "e1",
+                "Character M",
+                "Character M is a side antagonist. He is a Wolf. He is male.",
+                kind="character",
+            ),
+            _entry(
+                "sp1",
+                "Wolves",
+                "Wolf: male or female. Character M is one.",
+                kind="species",
+            ),
+            _entry(
+                "d1",
+                "Draft",
+                "Character M walked. Character M looked. Character M said nothing.",
+                kind="document",
+            ),
+        ]
+        res = self._ask("Who is Character M?", entries)
+        answer = (res.get("answer") or "").lower()
+        self.assertIn("side antagonist", answer)
+        self.assertIn("wolf", answer)
+        self.assertIn("male", answer)
+        self.assertNotIn("male or female", answer)
+        self.assertNotIn("viewpoint", answer)
+
     def test_explicit_side_character_in_who_is(self):
         entries = [
             _entry(

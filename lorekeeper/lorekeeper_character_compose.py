@@ -200,7 +200,8 @@ _PROFILE_CLAUSE_RE = re.compile(
     r"\b("
     r"is|was|are|were|married|engaged|brother|sister|mother|father|son|daughter|"
     r"protagonist|antagonist|main character|viewpoint|point of view|pov|narrator|"
-    r"guardian|spirit|villain|hero|grey|gray|skin|tall|short|arcanist|elf|"
+    r"guardian|spirit|villain|hero|grey|gray|skin|tall|short|arcanist|elf|wolf|"
+    r"male|female|going after|hunts?|hunting|"
     r"husband|wife|spouse|cousin|species|looks like|known as|called"
     r")\b",
     re.I,
@@ -215,7 +216,8 @@ _NARRATIVE_OPENERS = re.compile(
 _AUTHOR_META_RE = re.compile(
     r"\b("
     r"i think|i thought|could start|should start|same time as the|chapter\s+\d+|"
-    r"plot note|planning note|outline|note to self|maybe|perhaps"
+    r"plot note|planning note|outline|note to self|maybe|perhaps|"
+    r"find more ways|ways to mention|need to mention|todo|fix later"
     r")\b",
     re.I,
 )
@@ -280,6 +282,15 @@ def _skip_planning_line(line: str, label: str) -> bool:
     if _AUTHOR_META_RE.search(s):
         return True
     if re.match(r"^I\s+(think|thought|feel|want|should|could|might|need)\b", s, re.I):
+        return True
+    if re.search(
+        r"\b("
+        r"find more ways|need to mention|ways to mention|remember(?:s|ed)? this if|"
+        r"todo|fix later|rewrite|outline|note to self"
+        r")\b",
+        s,
+        re.I,
+    ):
         return True
     if re.search(r"\bchapter\s+\d+\b", s, re.I) and not re.search(
         rf"\b{re.escape(label)}\b", s, re.I
@@ -348,13 +359,7 @@ def compose_character_reference(
         if clause and clause not in lead:
             lead.append(clause)
 
-    for line in identity:
-        if _skip_planning_line(line, label):
-            continue
-        clause = _to_reference_clause(line, label)
-        if clause and clause not in lead and _clause_adds_profile(clause, label):
-            lead.append(clause)
-
+    # Species / gender traits early — before identity can fill the clause cap.
     for trait in brief.get("traits") or []:
         t = str(trait).strip()
         if re.match(r"^An\s+", t, re.I):
@@ -365,6 +370,13 @@ def compose_character_reference(
             clause = _ensure_period(t)
         else:
             clause = _to_reference_clause(t, label) or _ensure_period(t)
+        if clause and clause not in lead and _clause_adds_profile(clause, label):
+            lead.append(clause)
+
+    for line in identity:
+        if _skip_planning_line(line, label):
+            continue
+        clause = _to_reference_clause(line, label)
         if clause and clause not in lead and _clause_adds_profile(clause, label):
             lead.append(clause)
 
@@ -433,11 +445,11 @@ def compose_character_reference(
     elif facet in ("role", "voice", "relationship"):
         clause_cap = 1
     else:
-        clause_cap = 3
+        clause_cap = 5
     p1 = _join_paragraph(lead, max_clauses=clause_cap)
     if p1:
         paragraphs.append(p1)
-    p2 = _join_paragraph(rel_clauses, max_clauses=clause_cap if facet == "relationship" else 2)
+    p2 = _join_paragraph(rel_clauses, max_clauses=clause_cap if facet == "relationship" else 3)
     if p2:
         paragraphs.append(p2)
 
@@ -585,13 +597,22 @@ def cast_answer_is_thin(answer: str, label: str) -> bool:
     a = (answer or "").strip()
     if not a:
         return True
+    low = a.lower()
+    # Species/role scrap leaks — never treat as a finished cast card.
+    if re.search(
+        rf"\b{re.escape(label.lower())}\s+is\s+(?:side|of|one)\s*\.?\s*(?:$|\n)",
+        low,
+    ):
+        return True
+    if re.search(r"\bmale\s+or\s+female\b|\bfemale\s+or\s+male\b", low):
+        return True
     if _UNCLEAR_SECTION_HEADING in a:
         before = a.split(_UNCLEAR_SECTION_HEADING, 1)[0]
         chunks = [p.strip() for p in before.split("\n\n") if p.strip()]
         body_chunks = [c for c in chunks if c != label and not c.startswith("—")]
         if body_chunks and len(" ".join(body_chunks)) > 45:
             if is_composed_reference_answer(a):
-                return False
+                return _composed_only_weak_pov(label, "\n\n".join(body_chunks))
             low_body = " ".join(body_chunks).lower()
             if re.search(
                 r"\b(protagonist|antagonist|villain|hero|married|brother|sister|queen|king|"
@@ -599,7 +620,6 @@ def cast_answer_is_thin(answer: str, label: str) -> bool:
                 low_body,
             ):
                 return False
-    low = a.lower()
     if "little is spelled out yet" in low or "but little is" in low:
         return True
     if "nothing saved yet" in low and "describes" in low:
@@ -607,6 +627,12 @@ def cast_answer_is_thin(answer: str, label: str) -> bool:
     if "too scattered to summarize" in low:
         return True
     if is_composed_reference_answer(a):
+        core = a.split(_UNCLEAR_SECTION_HEADING, 1)[0]
+        core = re.split(r"\n\n— From your notes only", core, maxsplit=1)[0]
+        parts = [p.strip() for p in core.split("\n\n") if p.strip()]
+        body_parts = [p for p in parts if p != label and not p.startswith("—")]
+        if _composed_only_weak_pov(label, "\n\n".join(body_parts)):
+            return True
         return False
     if re.search(
         r"\b(protagonist|antagonist|villain|hero|married|brother|sister|queen|king|"
@@ -623,6 +649,21 @@ def cast_answer_is_thin(answer: str, label: str) -> bool:
         if len(main.strip()) > 45:
             return False
     return True
+
+
+def _composed_only_weak_pov(label: str, body: str) -> bool:
+    """True when the card is only inferred viewpoint/main — prefer RAG."""
+    text = re.sub(r"\s+", " ", (body or "").strip())
+    if not text:
+        return True
+    return bool(
+        re.fullmatch(
+            rf"{re.escape(label)}\s+is the (?:viewpoint character|main character)"
+            rf"(?:\s+in [^.]{{1,80}})?\.?",
+            text,
+            re.I,
+        )
+    )
 
 
 def is_composed_reference_answer(answer: str) -> bool:
