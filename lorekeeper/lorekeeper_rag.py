@@ -193,21 +193,20 @@ Rules:
 - If sources do not state a family tie, say so honestly."""
 
 _RELATIONSHIP_ARC = """
-This is a STORY-RELATIONSHIP question — the NATURE of how these people stand toward each other (trust, rivalry, mentorship, fear, uneasy alliance, loyalty, betrayal, etc.), and how that stance shifts if the question asks.
+This is a STORY-RELATIONSHIP question — the NATURE of how these people stand toward each other (trust, rivalry, mentorship, fear, uneasy alliance, loyalty, betrayal, use-then-attachment, etc.), and how that stance shifts if the question asks.
 
-Priority (thoughtful, not longer):
+Priority (faithful depth from sources — not invention):
 1. Lead with the KIND of bond or stance the sources support — name the dynamic in plain words.
-2. Then give at most ONE short supporting beat per phase (e.g. pre-war / post-war) that shows why that label fits.
-3. Do NOT walk through a timeline of events, scenes, or plot beats. Events are evidence for the dynamic, not the answer.
+2. Then restate the supporting beats the sources actually give. If the question asks pre/post or before/after a war/event, cover each phase the sources support with enough detail to reflect what is saved (usually one short paragraph per phase). Events are evidence for the dynamic — include them when they show how the bond works; do not invent a plot walkthrough beyond the sources.
+3. Do NOT invent inner motives or feelings the sources do not support. Synthesize stance ONLY when behavior in the sources clearly supports it.
 
 Rules:
-- Stay SHORT: 1–3 short sentences, or two short paragraphs max if pre/post phases differ. Concise and reasoned — not a longer essay.
-- Synthesize what notes and draft say about how they treat, trust, oppose, ally with, or feel toward each other — even when those words are not used. Infer the stance ONLY when behavior in the sources clearly supports it (e.g. traded scrap + trusted each other → uneasy allies / mutual trust). Never invent inner motives or feelings the sources do not support.
-- If the question asks pre/post or before/after a war/event, state the dynamic for each phase the sources support. If only one phase is saved, name that phase's dynamic and briefly note the other is not spelled out yet.
-- NEVER claim the notes "do not contain story-dynamic material" (or similar) when SOURCE blocks mention either named person interacting, trusting, fighting, allying, or changing toward the other. Name the dynamic those blocks support.
+- Prefer a fuller restatement of what IS saved over declaring a gap. When multiple SOURCE blocks describe the pair, use them.
+- If only one phase is saved, cover that phase in depth and briefly note the other is not spelled out yet.
+- NEVER claim the notes "do not contain story-dynamic material", "only contain one saved draft block", or "cover only their origin" when SOURCE blocks mention either named person interacting, trusting, using, fighting, allying, attaching to, or changing toward the other. Name the dynamic those blocks support.
 - NEVER say "No sources spell out…" / "no interaction, alliance, rivalry…" when any SOURCE block names the people or describes scenes with them. Distill the stance from those blocks.
 - Answer story dynamics — NOT biological/family ties unless the writer asked about family/blood.
-- Use the names the writer used in the question; do not swap to an earlier persona unless asked.
+- Use the names the writer used in the question; when role labels (protagonist/antagonist) map to names in the notes, you may use those names.
 - Never say "the sources establish/indicate/show" — state the facts in reference voice.
 - Invent nothing. Only if sources truly say nothing about either person toward the other may you say that tie is not spelled out yet."""
 
@@ -315,16 +314,49 @@ def rag_enabled() -> bool:
 
 
 def _dedupe_ranked(ranked: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    seen: set[str] = set()
+    """Dedupe sources. Long parent docs must not suppress their paragraph chunks.
+
+    Full draft bodies are head-truncated in the prompt; keeping only the parent
+    drops later arc material. Prefer up to several #p chunks from the same doc.
+    """
+    by_base: dict[str, list[dict[str, Any]]] = {}
+    for row in ranked:
+        eid = str(row.get("id") or "")
+        base = eid.split("#")[0] if "#" in eid else eid
+        by_base.setdefault(base or eid, []).append(row)
+
+    long_parents_with_chunks: set[str] = set()
+    for base, rows in by_base.items():
+        has_chunk = any("#" in str(r.get("id") or "") for r in rows)
+        parent_long = any(
+            "#" not in str(r.get("id") or "")
+            and len(str(r.get("body") or "")) > MAX_CHUNK_CHARS
+            for r in rows
+        )
+        if has_chunk and parent_long:
+            long_parents_with_chunks.add(base)
+
+    seen_plain: set[str] = set()
+    chunk_counts: dict[str, int] = {}
     out: list[dict[str, Any]] = []
     for row in ranked:
         eid = str(row.get("id") or "")
         base = eid.split("#")[0] if "#" in eid else eid
         key = base or eid
-        if key in seen:
+        is_chunk = "#" in eid
+        if not is_chunk and key in long_parents_with_chunks:
             continue
-        seen.add(key)
-        out.append(row)
+        if is_chunk:
+            n = chunk_counts.get(key, 0)
+            if n >= 5:
+                continue
+            chunk_counts[key] = n + 1
+            out.append(row)
+        else:
+            if key in seen_plain:
+                continue
+            seen_plain.add(key)
+            out.append(row)
         if len(out) >= MAX_RETRIEVAL_CHUNKS:
             break
     return out
@@ -451,6 +483,20 @@ def _build_user_prompt(
                     "; answer story dynamics / pre-post phases — "
                     "not biological kinship unless asked.\n"
                 )
+                if scoped_entries:
+                    from lorekeeper_relations import resolve_pair_name_sets
+
+                    left, right = resolve_pair_name_sets(
+                        pair[0], pair[1], scoped_entries
+                    )
+                    left_s = ", ".join(left)
+                    right_s = ", ".join(right)
+                    if left_s or right_s:
+                        kind_hint += (
+                            f"In these notes, {pair[0]} maps to: {left_s}. "
+                            f"{pair[1]} maps to: {right_s}. "
+                            "Retrieve and answer using those names when sources use them.\n"
+                        )
             else:
                 kind_hint += "; answer family/kinship ties only.\n"
     elif plan and plan.pipeline == "rag_summarize":

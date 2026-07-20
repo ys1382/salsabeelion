@@ -175,6 +175,36 @@ def infer_viewpoint_role_only(
     return None
 
 
+_ROLE_LABEL_STOP = frozenset(
+    """
+    one of the twins one of them one of us someone somebody the character
+    this character that character the hero the heroine the villain
+    """.split()
+)
+_TITLE_ROLE = re.compile(
+    r"(?i)^(protagonist|antagonist|villain|hero|heroine|deuteragonist)\s*[:\-–]\s*(.+)$"
+)
+_ALIAS_PAIR_TITLE = re.compile(
+    r"(?i)^\s*([A-Za-z][A-Za-z'-]{1,30})\s*/\s*([A-Za-z][A-Za-z'-]{1,30})"
+    r"\s*,\s*([A-Za-z][A-Za-z'-]{1,30})\s*/\s*([A-Za-z][A-Za-z'-]{1,30})\s*$"
+)
+
+
+def _usable_cast_label(label: str) -> bool:
+    cleaned = re.sub(r"\s+", " ", (label or "").strip())
+    if len(cleaned) < 2 or len(cleaned) > 40:
+        return False
+    low = cleaned.lower()
+    if low in _ROLE_LABEL_STOP or low.startswith("one of "):
+        return False
+    if low in _THE_ROLE or low in ("the", "a", "an", "and", "or"):
+        return False
+    # Prefer proper names / Character X — reject long lowercase phrases.
+    if " " in cleaned and cleaned == cleaned.lower() and not cleaned.startswith("Character "):
+        return False
+    return True
+
+
 def labels_for_cast_role(role: str, entries: list[dict[str, Any]]) -> list[str]:
     """Character names the writer explicitly tied to this role (notes only)."""
     role = (role or "").strip().lower()
@@ -189,20 +219,71 @@ def labels_for_cast_role(role: str, entries: list[dict[str, Any]]) -> list[str]:
     )
     found: list[str] = []
     seen: set[str] = set()
+
+    def _add(label: str, *, prefer_front: bool = False) -> None:
+        label = re.sub(r"\s+", " ", (label or "").strip().rstrip(".,;:"))
+        if not _usable_cast_label(label):
+            return
+        key = label.lower()
+        if key in seen:
+            return
+        seen.add(key)
+        if prefer_front:
+            found.insert(0, label)
+        else:
+            found.append(label)
+
+    # Title "Protagonist: Platinus" beats prose false matches in long drafts.
+    for entry in entries:
+        if not isinstance(entry, dict):
+            continue
+        title = str(entry.get("title") or "").strip()
+        m = _TITLE_ROLE.match(title)
+        if m and m.group(1).lower() == role:
+            _add(m.group(2), prefer_front=str(entry.get("kind") or "") == "character")
+
     for entry in entries:
         if not isinstance(entry, dict):
             continue
         blob = str(entry.get("body") or "").strip()
         if not blob:
             continue
+        prefer = str(entry.get("kind") or "") == "character"
         for pattern in patterns:
             for m in re.finditer(pattern, blob, re.I):
-                label = re.sub(r"\s+", " ", m.group(1).strip())
-                if not label or len(label) < 2:
-                    continue
-                key = label.lower()
-                if key in seen:
-                    continue
-                seen.add(key)
-                found.append(label)
+                _add(m.group(1), prefer_front=prefer)
     return found[:4]
+
+
+def counterpart_labels_from_alias_titles(
+    known_labels: list[str], entries: list[dict[str, Any]]
+) -> list[str]:
+    """From titles like 'Prism/Platinus, Titanem/Galloxidor', return the other pair."""
+    known = {re.sub(r"\s+", " ", n.strip().lower()) for n in known_labels if n and n.strip()}
+    if not known:
+        return []
+    out: list[str] = []
+    seen: set[str] = set()
+    for entry in entries:
+        if not isinstance(entry, dict):
+            continue
+        title = str(entry.get("title") or "").strip()
+        m = _ALIAS_PAIR_TITLE.match(title)
+        if not m:
+            continue
+        left = [m.group(1), m.group(2)]
+        right = [m.group(3), m.group(4)]
+        left_hit = any(x.lower() in known for x in left)
+        right_hit = any(x.lower() in known for x in right)
+        if left_hit == right_hit:
+            continue
+        side = right if left_hit else left
+        for name in side:
+            key = name.lower()
+            if key in seen or key in known:
+                continue
+            if not _usable_cast_label(name):
+                continue
+            seen.add(key)
+            out.append(name)
+    return out[:4]

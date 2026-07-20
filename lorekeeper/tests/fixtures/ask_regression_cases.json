@@ -327,6 +327,61 @@
           "biological"
         ]
       }
+    },
+    {
+      "id": "relationship_role_pair_long_draft_arc",
+      "label": "protagonist/antagonist role pair finds late draft arc not origin-only gap",
+      "entries": [
+        {
+          "id": "c1",
+          "title": "Protagonist: Platinus",
+          "body": "Platinus leads the scrap runners.",
+          "tags": ["Cities of Rust"],
+          "kind": "character"
+        },
+        {
+          "id": "e1",
+          "title": "Prism/Platinus, Titanem/Galloxidor",
+          "body": "Alias map for the main pair.",
+          "tags": ["Cities of Rust"],
+          "kind": "event"
+        },
+        {
+          "id": "side",
+          "title": "Brothers in the War",
+          "body": "Axlegrind is on the antagonist's side; Speedlight is on the protagonist's side.",
+          "tags": ["Cities of Rust"],
+          "kind": "relationship"
+        },
+        {
+          "id": "arc",
+          "title": "Main pair arc",
+          "body": "Before the war, Galloxidor was using Platinus to reach the council. Galloxidor grew attached to Platinus. After the war began and the plan fell through, Galloxidor turned villain against Platinus.",
+          "tags": ["Cities of Rust"],
+          "kind": "relationship"
+        }
+      ],
+      "documents": [
+        {
+          "id": "d_long",
+          "title": "Cities of Rust Storywriting Draft",
+          "workTag": "Cities of Rust",
+          "bodyFormat": "html",
+          "bodyHtml": "<p>Origin setup for the twins and early scrap yards.</p><p>More origin material about childhood before any named bond.</p><p>Before the war, Galloxidor was using Platinus to reach the council.</p><p>Galloxidor grew attached to Platinus anyway.</p><p>After the war began and the plan fell through, Galloxidor turned villain against Platinus.</p>"
+        }
+      ],
+      "question": "I want you to summarize the nature of the relationship between the protagonist and the antagonist in cities of rust, specifically shortly before the war begins, and then the rest of the time/notes after the war begins",
+      "assert": {
+        "questionKind": "relationship",
+        "answerContains": ["using", "attached"],
+        "answerNotContains": [
+          "only contain one",
+          "covers their origin",
+          "not yet spelled out",
+          "Axlegrind",
+          "half-brother"
+        ]
+      }
     }
   ]
 }

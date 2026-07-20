@@ -9,10 +9,13 @@ _EMPTY_CLAIM = re.compile(
     r"no sources?\b.{0,100}(?:spell out|mention|contain|say)|"
     r"do not contain\s+story[- ]dynamic|"
     r"no story[- ]dynamic|"
+    r"only contain\s+one\s+(?:saved\s+)?draft|"
+    r"covers?\s+their\s+origin|"
     r"nothing (?:clear |saved )?(?:is saved )?(?:yet )?(?:about how|on how|about).{0,60}relationship|"
     r"nothing clear is saved yet about how|"
     r"tie is not spelled out|"
-    r"not spelled out yet\b.{0,40}(?:relationship|interaction|between)|"
+    r"not spelled out yet\b.{0,40}(?:relationship|interaction|between|window|dynamic)|"
+    r"relationship is not yet spelled out|"
     r"sources? (?:do not|don't|do not)\b.{0,60}(?:interaction|alliance|rivalry|relationship)"
     r")",
 )

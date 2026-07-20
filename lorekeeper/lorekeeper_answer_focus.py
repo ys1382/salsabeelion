@@ -93,8 +93,13 @@ _CAST_CARD_HEADER = re.compile(
 
 def wants_broad_answer(question: str, *, question_kind: str = "") -> bool:
     """Explicit summarize / coverage / audit — allow wider answers (#46)."""
-    if question_kind in ("coverage", "relationship", "planned_gaps", "flagged_fix"):
-        return question_kind in ("coverage", "planned_gaps", "flagged_fix")
+    if question_kind in ("coverage", "planned_gaps", "flagged_fix"):
+        return True
+    if question_kind == "relationship":
+        from lorekeeper_relations import is_story_arc_relationship_question
+
+        # Pre/post story dynamics need room; kinship stays narrow.
+        return is_story_arc_relationship_question(question)
     if is_planned_gap_question(question) or is_flagged_fix_question(question):
         return True
     if is_character_portrait_question(question):
@@ -418,7 +423,12 @@ _FALSE_ARC_GAP = re.compile(
     r"do not contain\s+story[- ]dynamic\s+material\b[^.?!]*[.?!]?\s*"
     r"|\bstory[- ]dynamic\s+material\s+(?:covering|about|on)\b[^.?!]*[.?!]?\s*"
     r"|\bno sources?\b[^.?!]{0,120}spell out\b[^.?!]*[.?!]?\s*"
-    r"|\bno sources?\b[^.?!]{0,120}(?:interaction|alliance|rivalry|shift)\b[^.?!]*[.?!]?\s*",
+    r"|\bno sources?\b[^.?!]{0,120}(?:interaction|alliance|rivalry|shift)\b[^.?!]*[.?!]?\s*"
+    r"|\bonly contain\s+one\s+(?:saved\s+)?draft\s+block\b[^.?!]*[.?!]?\s*"
+    r"|\bcovers?\s+their\s+origin\b[^.?!]*[.?!]?\s*"
+    r"|\bnot\s+the\s+pre[- ]?war\b[^.?!]*[.?!]?\s*"
+    r"|\brelationship is not yet spelled out\b[^.?!]*[.?!]?\s*"
+    r"|\bnot yet spelled out in the saved notes\b[^.?!]*[.?!]?\s*",
 )
 
 
@@ -486,9 +496,11 @@ def focus_ask_response(
     allow_broad = wants_broad_answer(question, question_kind=kind)
     if result.get("askIntent") in ("character_portrait", "summarize_story", "story_resume"):
         allow_broad = True
-    # Relationship questions stay narrow even if the writer said "summarize".
+    # Kinship stays narrow; story-arc relationship (pre/post dynamics) needs room.
     if kind == "relationship" or result.get("askIntent") == "relationship":
-        allow_broad = False
+        from lorekeeper_relations import is_story_arc_relationship_question
+
+        allow_broad = is_story_arc_relationship_question(question)
     if kind == "resume":
         allow_broad = True
     answer = focus_topic_gather_answer(question, answer, allow_broad=allow_broad)

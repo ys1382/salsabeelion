@@ -147,7 +147,12 @@ def _best_excerpt(body: str, question_tokens: list[str], max_len: int = 360) -> 
     return best
 
 
-def _score_entry(question: str, entry: dict[str, Any]) -> int:
+def _score_entry(
+    question: str,
+    entry: dict[str, Any],
+    *,
+    resolved_pair_names: list[str] | None = None,
+) -> int:
     question_tokens = _tokenize(question)
     q_lower = (question or "").lower()
     title = str(entry.get("title") or "")
@@ -194,13 +199,18 @@ def _score_entry(question: str, entry: dict[str, Any]) -> int:
     if pair:
         from lorekeeper_relations import is_story_arc_relationship_question
 
+        role_skip = ("protagonist", "antagonist", "hero", "heroine", "villain")
+        pair_names = list(resolved_pair_names or [])
+        if not pair_names:
+            pair_names = [
+                n
+                for n in pair
+                if n and n.lower() not in role_skip
+            ]
         pair_hits = sum(
             1
-            for name in pair
-            if name
-            and name.lower()
-            not in ("protagonist", "antagonist", "hero", "heroine", "villain")
-            and re.search(rf"\b{re.escape(name)}\b", hay_text, re.I)
+            for name in pair_names
+            if name and re.search(rf"\b{re.escape(name)}\b", hay_text, re.I)
         )
         if pair_hits:
             score += 8 + pair_hits * 4
@@ -210,7 +220,8 @@ def _score_entry(question: str, entry: dict[str, Any]) -> int:
         if is_story_arc_relationship_question(question):
             # Prefer dynamics; downrank pure kinship blurbs for arc asks.
             if re.search(
-                r"\b(trust|ally|alliance|rival|enemy|betray|sided|loyal)\b",
+                r"\b(trust|ally|alliance|rival|enemy|betray|sided|loyal|"
+                r"use|used|using|attach|villain|plan)\b",
                 hay_text,
             ):
                 score += 12
@@ -218,11 +229,40 @@ def _score_entry(question: str, entry: dict[str, Any]) -> int:
                 r"\b(brother|sister|sibling|biological|blood|mother|father)\b",
                 hay_text,
             ) and not re.search(
-                r"\b(trust|ally|alliance|rival|war|before|after)\b",
+                r"\b(trust|ally|alliance|rival|war|before|after|use|plan)\b",
                 hay_text,
             ):
                 score -= 8
+            # Long parent drafts score high on token overlap but hide late arcs;
+            # slight downrank so paragraph chunks can surface.
+            if (
+                kind == "document"
+                and "#" not in str(entry.get("id") or "")
+                and len(body) > 2000
+            ):
+                score -= 6
     return score
+
+
+def _resolved_pair_names_for_question(
+    question: str, entries: list[dict[str, Any]]
+) -> list[str]:
+    pair = relationship_between_pair(question)
+    if not pair:
+        return []
+    from lorekeeper_relations import resolve_pair_name_sets
+
+    left, right = resolve_pair_name_sets(pair[0], pair[1], entries)
+    role_skip = ("protagonist", "antagonist", "hero", "heroine", "villain")
+    out: list[str] = []
+    seen: set[str] = set()
+    for n in left + right:
+        key = (n or "").strip().lower()
+        if not key or key in role_skip or key in seen:
+            continue
+        seen.add(key)
+        out.append(n.strip())
+    return out
 
 
 def _parse_entries(raw: str | None) -> list[dict[str, Any]]:
@@ -391,10 +431,53 @@ def _rank_entries(question: str, entries: list[dict[str, Any]]) -> list[dict[str
     scan = entries
     if len(scan) > 1200:
         scan = scan[:1200]
+def _prefer_chunks_over_long_parents(
+    ranked: list[dict[str, Any]], *, max_parent_chars: int = 1800
+) -> list[dict[str, Any]]:
+    """Drop huge parent drafts when paragraph/page chunks from the same doc exist."""
+    by_base: dict[str, list[dict[str, Any]]] = {}
+    for row in ranked:
+        eid = str(row.get("id") or "")
+        base = eid.split("#")[0] if "#" in eid else eid
+        by_base.setdefault(base or eid, []).append(row)
+
+    skip_parents: set[str] = set()
+    for base, rows in by_base.items():
+        has_chunk = any("#" in str(r.get("id") or "") for r in rows)
+        parent_long = any(
+            "#" not in str(r.get("id") or "")
+            and len(str(r.get("body") or "")) > max_parent_chars
+            for r in rows
+        )
+        if has_chunk and parent_long:
+            skip_parents.add(base)
+
+    if not skip_parents:
+        return ranked
+    return [
+        row
+        for row in ranked
+        if not (
+            "#" not in str(row.get("id") or "")
+            and (str(row.get("id") or "").split("#")[0] in skip_parents)
+        )
+    ]
+
+
+def _rank_entries(question: str, entries: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    question_tokens = _tokenize(question)
+    ranked: list[dict[str, Any]] = []
+    # Large corpora: score a capped slice so Ask stays responsive on nginx timeouts.
+    scan = entries
+    if len(scan) > 1200:
+        scan = scan[:1200]
+    resolved_names = _resolved_pair_names_for_question(question, scan)
     for entry in scan:
         if not isinstance(entry, dict):
             continue
-        score = _score_entry(question, entry)
+        score = _score_entry(
+            question, entry, resolved_pair_names=resolved_names
+        )
         if score <= 0:
             continue
         ranked.append(
@@ -409,7 +492,7 @@ def _rank_entries(question: str, entries: list[dict[str, Any]]) -> list[dict[str
             }
         )
     ranked.sort(key=lambda row: row["score"], reverse=True)
-    return ranked
+    return _prefer_chunks_over_long_parents(ranked)
 
 
 def _legacy_fallback_answer(
@@ -1193,7 +1276,11 @@ def recall_from_user_data(
                     r"(?i)do not contain\s+story[- ]dynamic|no story[- ]dynamic|"
                     r"nothing (?:clear |saved )?about how .{0,40}relationship develops|"
                     r"no sources?\b.{0,100}spell out|"
-                    r"no sources?\b.{0,100}(?:interaction|alliance|rivalry)",
+                    r"no sources?\b.{0,100}(?:interaction|alliance|rivalry)|"
+                    r"only contain\s+one\s+(?:saved\s+)?draft|"
+                    r"covers?\s+their\s+origin|"
+                    r"relationship is not yet spelled out|"
+                    r"not yet spelled out.{0,40}(?:pre[- ]?war|post[- ]?war|window|dynamic)",
                     rag_ans,
                 ):
                     if confirmed_ids:

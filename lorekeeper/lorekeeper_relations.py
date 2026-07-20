@@ -540,43 +540,130 @@ _ARC_CUE = re.compile(
     r"(?i)\b("
     r"trust|ally|allies|alliance|rival|enemy|enemies|friend|friends|"
     r"before|after|during|war|pre|post|betray|sided|against|with|"
-    r"loved|hated|feared|respected|loyal|loyalty|bond|together"
+    r"loved|hated|feared|respected|loyal|loyalty|bond|together|"
+    r"use|used|using|attach|attached|attachment|villain|plan|exploit|"
+    r"manipulat\w*|genuine|genuinely"
     r")\b",
 )
 
+_ROLE_WORDS = frozenset(
+    {"protagonist", "antagonist", "hero", "heroine", "villain"}
+)
+
+
+def resolve_pair_name_sets(
+    a: str, b: str, entries: list[dict[str, Any]]
+) -> tuple[list[str], list[str]]:
+    """Map role labels in a pair to concrete names from notes (no invention)."""
+    from lorekeeper_cast_roles import (
+        counterpart_labels_from_alias_titles,
+        labels_for_cast_role,
+    )
+
+    def _side(raw: str) -> list[str]:
+        name = (raw or "").strip()
+        if not name:
+            return []
+        low = name.lower()
+        if low in _ROLE_WORDS:
+            labels = labels_for_cast_role(low, entries)
+            return labels or [name]
+        return [name]
+
+    def _with_aliases(names: list[str]) -> list[str]:
+        """Expand Prism/Platinus-style title aliases for known names."""
+        out = list(names)
+        seen = {n.lower() for n in out}
+        for entry in entries:
+            if not isinstance(entry, dict):
+                continue
+            title = str(entry.get("title") or "").strip()
+            m = re.match(
+                r"(?i)^\s*([A-Za-z][A-Za-z'-]{1,30})\s*/\s*([A-Za-z][A-Za-z'-]{1,30})"
+                r"(?:\s*,\s*([A-Za-z][A-Za-z'-]{1,30})\s*/\s*([A-Za-z][A-Za-z'-]{1,30}))?\s*$",
+                title,
+            )
+            if not m:
+                continue
+            pairs = [(m.group(1), m.group(2))]
+            if m.group(3) and m.group(4):
+                pairs.append((m.group(3), m.group(4)))
+            for x, y in pairs:
+                xl, yl = x.lower(), y.lower()
+                if xl in seen and yl not in seen:
+                    seen.add(yl)
+                    out.append(y)
+                elif yl in seen and xl not in seen:
+                    seen.add(xl)
+                    out.append(x)
+        return out
+
+    left = _with_aliases(_side(a))
+    right = _with_aliases(_side(b))
+    # If antagonist/villain side is still only a role word, try alias-pair titles.
+    def _still_role_only(names: list[str]) -> bool:
+        return len(names) == 1 and names[0].lower() in _ROLE_WORDS
+
+    if _still_role_only(right) and not _still_role_only(left):
+        extra = counterpart_labels_from_alias_titles(left, entries)
+        if extra:
+            right = _with_aliases(extra)
+    elif _still_role_only(left) and not _still_role_only(right):
+        extra = counterpart_labels_from_alias_titles(right, entries)
+        if extra:
+            left = _with_aliases(extra)
+    return left, right
+
+
+def _sentence_mentions_name_sets(
+    sentence: str, left: list[str], right: list[str]
+) -> bool:
+    low = (sentence or "").lower()
+    roles = _ROLE_WORDS
+
+    def _tokens(names: list[str]) -> list[str]:
+        out: list[str] = []
+        for n in names:
+            t = (n or "").strip().lower()
+            if t and t not in out:
+                out.append(t)
+        return out
+
+    left_t = _tokens(left)
+    right_t = _tokens(right)
+    left_names = [t for t in left_t if t not in roles]
+    right_names = [t for t in right_t if t not in roles]
+    left_roles = [t for t in left_t if t in roles]
+    right_roles = [t for t in right_t if t in roles]
+
+    def _any_in(tokens: list[str]) -> bool:
+        return any(re.search(rf"\b{re.escape(t)}\b", low) for t in tokens)
+
+    left_hit = _any_in(left_names) or _any_in(left_roles)
+    right_hit = _any_in(right_names) or _any_in(right_roles)
+    if left_names and right_names and _any_in(left_names) and _any_in(right_names):
+        return True
+    if left_hit and right_hit and _ARC_CUE.search(sentence or ""):
+        return True
+    # One concrete name + the other side's role word, or name + arc cue with role ask.
+    if left_names and _any_in(left_names) and (
+        _any_in(right_roles) or (right_roles and _ARC_CUE.search(sentence or ""))
+    ):
+        return True
+    if right_names and _any_in(right_names) and (
+        _any_in(left_roles) or (left_roles and _ARC_CUE.search(sentence or ""))
+    ):
+        return True
+    if left_names and right_names:
+        if (_any_in(left_names) or _any_in(right_names)) and _ARC_CUE.search(
+            sentence or ""
+        ):
+            return True
+    return False
+
 
 def _sentence_mentions_pair(sentence: str, a: str, b: str) -> bool:
-    low = (sentence or "").lower()
-    roles = {
-        "protagonist",
-        "antagonist",
-        "hero",
-        "heroine",
-        "villain",
-    }
-    names = []
-    for raw in (a, b):
-        n = (raw or "").strip()
-        if not n:
-            continue
-        if n.lower() in roles:
-            continue
-        names.append(n.lower())
-    role_hit = any(r in low for r in roles if r in {(a or "").lower(), (b or "").lower()})
-    if len(names) >= 2:
-        if all(n in low for n in names):
-            return True
-        # One named person + arc cue is enough when the other is also in the question.
-        if any(n in low for n in names) and _ARC_CUE.search(sentence or ""):
-            return True
-        return False
-    if len(names) == 1:
-        if names[0] not in low:
-            return False
-        return bool(role_hit or _ARC_CUE.search(sentence or "") or re.search(
-            r"\b(?:she|he|they|them|his|her|their)\b", low
-        ))
-    return False
+    return _sentence_mentions_name_sets(sentence, [a], [b])
 
 
 def answer_story_arc_relationship(
@@ -587,6 +674,7 @@ def answer_story_arc_relationship(
     if not pair:
         return None
     a, b = pair
+    left, right = resolve_pair_name_sets(a, b, entries)
     hits: list[tuple[int, str, str]] = []
     source_ids: list[str] = []
     for entry in entries:
@@ -596,31 +684,9 @@ def answer_story_arc_relationship(
         if not body.strip():
             continue
         eid = str(entry.get("id") or "")
-        title = str(entry.get("title") or "Untitled")
         for sentence in _split_sentences(body):
-            if not _sentence_mentions_pair(sentence, a, b):
-                # Soft: name + protagonist role
-                low = sentence.lower()
-                other = b if a.lower() == "protagonist" else a if b.lower() == "protagonist" else ""
-                if not other:
-                    named = [
-                        n
-                        for n in (a, b)
-                        if n.lower()
-                        not in (
-                            "protagonist",
-                            "antagonist",
-                            "hero",
-                            "heroine",
-                            "villain",
-                        )
-                    ]
-                    if len(named) == 1 and named[0].lower() in low:
-                        other = named[0]
-                    else:
-                        continue
-                elif other.lower() not in low:
-                    continue
+            if not _sentence_mentions_name_sets(sentence, left, right):
+                continue
             if _KINSHIP_SENTENCE.search(sentence) and not _ARC_CUE.search(sentence):
                 continue
             score = 2
@@ -628,6 +694,14 @@ def answer_story_arc_relationship(
                 score += 4
             if _KINSHIP_SENTENCE.search(sentence):
                 score -= 3
+            # Prefer concrete pair names over "on the antagonist's side" side-cast notes.
+            low = sentence.lower()
+            if any(
+                re.search(rf"\b{re.escape(n.lower())}\b", low)
+                for n in left + right
+                if n.lower() not in _ROLE_WORDS
+            ):
+                score += 2
             hits.append((score, sentence.strip(), eid))
             if eid and eid not in source_ids:
                 source_ids.append(eid)
@@ -638,17 +712,34 @@ def answer_story_arc_relationship(
             source_ids,
         )
     hits.sort(key=lambda row: row[0], reverse=True)
-    # Prefer up to 3 high-scoring arc sentences; skip weak kinship leftovers.
-    picked = [s for sc, s, _ in hits if sc >= 2][:3]
+    phase_q = bool(
+        re.search(r"(?i)\b(pre|post|before|after|during|war)\b", question or "")
+    )
+    limit = 6 if phase_q else 3
+    picked: list[str] = []
+    seen_norm: set[str] = set()
+    for sc, sentence, _ in hits:
+        if sc < 2:
+            continue
+        norm = re.sub(r"\s+", " ", sentence.lower()).strip()
+        if norm in seen_norm:
+            continue
+        seen_norm.add(norm)
+        picked.append(sentence)
+        if len(picked) >= limit:
+            break
     if not picked:
         picked = [hits[0][1]]
-    # Concise local summary (RAG synthesizes when available; this is fallback only).
+    # Local fallback restates saved lines; RAG synthesizes when available.
     if len(picked) == 1:
         answer = picked[0]
     elif len(picked) == 2:
         answer = f"{picked[0]} Later: {picked[1]}"
     else:
-        answer = f"{picked[0]} {picked[1]} Later: {picked[2]}"
+        mid = max(1, len(picked) // 2)
+        before = " ".join(picked[:mid])
+        after = " ".join(picked[mid:])
+        answer = f"{before}\n\nLater: {after}"
     answer += "\n\n— From your notes only. Nothing invented."
     return answer, source_ids
 
