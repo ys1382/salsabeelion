@@ -405,7 +405,7 @@
   }
 
   function parkSave() {
-    if (!doc || !quill || loading) return;
+    if (!doc || !quill || loading) return Promise.resolve();
     captureResumePosition();
     syncDocBodyFromEditor();
     syncPageSetup();
@@ -414,10 +414,12 @@
     LoreKeeperDocuments.setLastDocId(doc.id);
     var flush = LoreKeeperAccountStorage.flush({ keepalive: true });
     if (flush && flush.then) {
-      flush.then(function (sent) {
+      return flush.then(function (sent) {
         if (!sent) dirty = true;
+        return sent;
       });
     }
+    return Promise.resolve(flush);
   }
 
   function flushSave(force) {

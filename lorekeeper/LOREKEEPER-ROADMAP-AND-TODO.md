@@ -277,6 +277,10 @@ Run **one row at a time** in Cursor. Don’t skip Phase 0 — it costs nothing a
 
 ## Your additions
 
+### Ask confirm-sources (shipped 2026-07-19)
+
+- [x] **Ask confirm-sources** — preview ranked notes/draft bits → writer confirms → summarize only those (`askPhase` / `confirmedSourceIds`; home + doc Ask).
+
 ### Doc-scoped notes sidebar (shipped 2026-07-17)
 
 - [x] **Notes tab on document** — while writing, list only this work’s notes (+ floating/idk ideas); hide other works (e.g. Ice and Fire while on Ice and Isolation); hide floating notes that rule out this work (`not:Title` or “doesn’t belong in …”)

@@ -897,6 +897,13 @@ class Handler(BaseHTTPRequestHandler):
                 if isinstance(body.get("askContinue"), dict)
                 else None
             )
+            ask_phase = str(body.get("askPhase") or "").strip().lower() or None
+            raw_confirmed = body.get("confirmedSourceIds")
+            confirmed_source_ids = (
+                [str(x).strip() for x in raw_confirmed if str(x).strip()]
+                if isinstance(raw_confirmed, list)
+                else None
+            )
             try:
                 result = recall_from_user_data(
                     question,
@@ -907,6 +914,8 @@ class Handler(BaseHTTPRequestHandler):
                     scope=scope,
                     spot_check=spot_check,
                     ask_continue=ask_continue,
+                    ask_phase=ask_phase,
+                    confirmed_source_ids=confirmed_source_ids,
                 )
             except Exception as exc:
                 import sys

@@ -650,6 +650,78 @@ def local_pipeline_skips_rag(
     return False
 
 
+def _entry_matches_confirmed(entry_id: str, confirmed: set[str]) -> bool:
+    eid = str(entry_id or "").strip()
+    if not eid or not confirmed:
+        return False
+    if eid in confirmed:
+        return True
+    base = eid.split("#", 1)[0]
+    if base in confirmed:
+        return True
+    for cid in confirmed:
+        if cid.startswith(eid + "#") or eid.startswith(cid + "#"):
+            return True
+    return False
+
+
+def _filter_entries_by_confirmed(
+    entries: list[dict[str, Any]], confirmed_ids: list[str]
+) -> list[dict[str, Any]]:
+    confirmed = {str(x).strip() for x in confirmed_ids if str(x).strip()}
+    if not confirmed:
+        return list(entries)
+    return [
+        e
+        for e in entries
+        if isinstance(e, dict) and _entry_matches_confirmed(str(e.get("id") or ""), confirmed)
+    ]
+
+
+def _build_confirm_candidates(
+    question: str,
+    scoped: list[dict[str, Any]],
+    ask_plan: AskPlan | None,
+    *,
+    limit: int = 12,
+) -> list[dict[str, Any]]:
+    """Rank notes/draft bits for the confirm-sources preview step."""
+    ranked = _rank_entries(question, scoped)
+    ranked = augment_ranked_for_targets(
+        question,
+        scoped,
+        ranked,
+        rank_entry=_score_entry,
+        kind_label=_kind_label,
+        best_excerpt=_best_excerpt,
+        tokenize=_tokenize,
+    )
+    ranked = _merge_ranked_for_plan(question, scoped, ranked, ask_plan)
+    filtered = filter_ranked_by_threshold(ranked, question)
+    if not filtered:
+        filtered = ranked
+    out: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for row in filtered:
+        eid = str(row.get("id") or "").strip()
+        if not eid or eid in seen:
+            continue
+        seen.add(eid)
+        out.append(
+            {
+                "id": eid,
+                "title": str(row.get("title") or "Untitled"),
+                "kind": str(row.get("kind") or "note"),
+                "kindLabel": str(row.get("kindLabel") or _kind_label(str(row.get("kind") or "note"))),
+                "excerpt": str(row.get("excerpt") or "")[:220],
+                "score": int(row.get("score") or 0),
+            }
+        )
+        if len(out) >= limit:
+            break
+    return out
+
+
 def recall_from_user_data(
     question: str,
     user_data: dict[str, Any],
@@ -660,12 +732,23 @@ def recall_from_user_data(
     scope: dict[str, Any] | None = None,
     spot_check: bool = False,
     ask_continue: dict[str, Any] | None = None,
+    ask_phase: str | None = None,
+    confirmed_source_ids: list[str] | None = None,
 ) -> dict[str, Any]:
     question = (question or "").strip()
     if not question:
         return {"ok": False, "error": "empty_question"}
     if len(question) > 2000:
         question = question[:2000]
+
+    phase = (ask_phase or "").strip().lower()
+    confirmed_ids: list[str] = []
+    if isinstance(confirmed_source_ids, list):
+        confirmed_ids = [str(x).strip() for x in confirmed_source_ids if str(x).strip()]
+    if confirmed_ids:
+        phase = "answer"
+    if phase not in ("preview", "answer"):
+        phase = "answer"
 
     floaters_only = False
 
@@ -676,6 +759,9 @@ def recall_from_user_data(
                 # Floater digests / clarify turns are already gathered lists — don't trim.
                 if payload.get("askContinue") or payload.get("questionKind") == "list":
                     return payload
+            # Confirm-sources preview: keep the pick list; don't focus/trim the prompt.
+            if payload.get("needsConfirm") or payload.get("askPhase") == "preview":
+                return payload
             return focus_ask_response(question, payload, spot_check=spot_check)
         return payload
 
@@ -895,6 +981,60 @@ def recall_from_user_data(
                 "recallVersion": RECALL_VERSION,
                 "recallEngine": "local",
                 "entryCount": len(entries),
+            })
+
+    if confirmed_ids:
+        scoped = _filter_entries_by_confirmed(scoped, confirmed_ids)
+        if not scoped:
+            scoped = _filter_entries_by_confirmed(entries, confirmed_ids)
+        if not scoped:
+            return _finish({
+                "ok": True,
+                "answer": (
+                    "None of the notes you selected are available anymore. "
+                    "Ask again to pick from what is saved now."
+                ),
+                "sources": [],
+                "candidates": [],
+                "needsConfirm": False,
+                "askPhase": "answer",
+                "materialState": "nothing_saved",
+                "mode": recall_mode,
+                "questionKind": ask_plan.question_kind if ask_plan else route_question(question),
+                "recallVersion": RECALL_VERSION,
+                "recallEngine": "local",
+                "entryCount": len(entries),
+            })
+
+    # Confirm-sources preview: show ranked notes/draft bits before summarizing.
+    # Skip for spot-check, floaters (own clarify flow), and when ids already confirmed.
+    if (
+        phase == "preview"
+        and not spot_check
+        and not floaters_only
+        and not confirmed_ids
+    ):
+        candidates = _build_confirm_candidates(question, scoped, ask_plan)
+        if candidates:
+            return _finish({
+                "ok": True,
+                "answer": (
+                    "Here is what I found in your saved writing. "
+                    "Uncheck anything that does not belong, then Summarize selected."
+                ),
+                "sources": [],
+                "candidates": candidates,
+                "needsConfirm": True,
+                "askPhase": "preview",
+                "materialState": "summarizable",
+                "mode": recall_mode,
+                "questionKind": ask_plan.question_kind if ask_plan else route_question(question),
+                "recallVersion": RECALL_VERSION,
+                "recallEngine": "local",
+                "entryCount": len(entries),
+                "routerEngine": ask_plan.router_engine if ask_plan else "",
+                "askIntent": ask_plan.intent if ask_plan else "",
+                "askPipeline": ask_plan.pipeline if ask_plan else "",
             })
 
     effective_kind = ask_plan.question_kind if ask_plan else route_question(question)

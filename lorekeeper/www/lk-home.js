@@ -551,6 +551,8 @@
     if (!askBtn || !askQuestion) return;
 
     var ASK_CONTINUE_KEY = "lk-ask-continue";
+    var pendingQuestion = "";
+    var confirmUi = null;
 
     function loadAskContinue() {
       try {
@@ -575,28 +577,83 @@
       }
     }
 
-    askBtn.addEventListener("click", function () {
-      var q = askQuestion.value.trim();
-      if (!q) {
-        askStatus.textContent = "Type a question first.";
-        askStatus.hidden = false;
-        return;
+    function clearAnswerUi() {
+      askAnswer.hidden = true;
+      askAnswer.innerHTML = "";
+      askSources.hidden = true;
+      askSources.innerHTML = "";
+      if (confirmUi) confirmUi.hide();
+    }
+
+    function renderSources(res) {
+      askSources.innerHTML = "";
+      if (res.sources && res.sources.length) {
+        res.sources.forEach(function (src) {
+          var li = document.createElement("li");
+          var span = document.createElement("span");
+          span.className = "lk-ask-source-btn";
+          span.textContent =
+            (src.title || "Untitled") + " (" + (src.kindLabel || "Note") + ")";
+          li.appendChild(span);
+          askSources.appendChild(li);
+        });
+        askSources.hidden = false;
       }
+    }
+
+    function applyAnswerStatus(res) {
+      askStatus.textContent = res.syncWarning || "From your saved writing.";
+      askStatus.className = "lk-status ok";
+      if (res.askContinue) {
+        askStatus.textContent = "Your turn — reply in Ask to narrow floaters.";
+      } else if (res.needsConfirm) {
+        askStatus.textContent = "Pick which notes to use, then summarize.";
+      } else if (res.recallScope === "floaters") {
+        askStatus.textContent = "From your floating / unspecified notes only.";
+      } else if (res.materialState === "summarizable") {
+        askStatus.textContent = "Summary from your notes and drafts.";
+      } else if (res.materialState === "fragments_only") {
+        askStatus.textContent =
+          "Partial — not enough saved yet for a full summary.";
+      } else if (res.materialState === "nothing_saved") {
+        askStatus.textContent = "Nothing saved on that yet.";
+      }
+    }
+
+    function showFinalAnswer(res, q) {
+      if (confirmUi) confirmUi.hide();
+      applyAnswerStatus(res);
+      if (global.LoreKeeperRecall.formatAskAnswerHtml) {
+        askAnswer.innerHTML = global.LoreKeeperRecall.formatAskAnswerHtml(
+          res.answer || ""
+        );
+      } else {
+        askAnswer.textContent = res.answer || "";
+      }
+      askAnswer.hidden = !res.answer;
+      renderSources(res);
+      if (global.LoreKeeperAskFeedback && global.LoreKeeperAskFeedback.recordLastAsk) {
+        global.LoreKeeperAskFeedback.recordLastAsk({
+          question: q,
+          answer: res.answer || "",
+          materialState: res.materialState || "",
+        });
+      }
+    }
+
+    function runAskRequest(q, askOpts) {
       askStatus.textContent = "Searching documents and notes…";
       askStatus.className = "lk-status";
       askStatus.hidden = false;
-      askAnswer.hidden = true;
-      askSources.hidden = true;
+      clearAnswerUi();
       askBtn.disabled = true;
       var slowTimer = setTimeout(function () {
         if (askBtn.disabled) {
-          askStatus.textContent = "Still searching your notes — complex questions can take a minute…";
+          askStatus.textContent =
+            "Still searching your notes — complex questions can take a minute…";
         }
       }, 12000);
-      var askOpts = { includeDocuments: false };
-      var pending = loadAskContinue();
-      if (pending) askOpts.askContinue = pending;
-      LoreKeeperRecall.ask(q, askOpts)
+      return LoreKeeperRecall.ask(q, askOpts)
         .then(function (res) {
           if (!res || !res.ok) {
             askStatus.textContent = LoreKeeperRecall.friendlyError(res && res.error);
@@ -608,55 +665,77 @@
           } else {
             saveAskContinue(null);
           }
-          askStatus.textContent = res.syncWarning || "From your saved writing.";
-          askStatus.className = "lk-status ok";
-          if (res.askContinue) {
-            askStatus.textContent = "Your turn — reply in Ask to narrow floaters.";
-          } else if (res.recallScope === "floaters") {
-            askStatus.textContent = "From your floating / unspecified notes only.";
-          } else if (res.materialState === "summarizable") {
-            askStatus.textContent = "Summary from your notes and drafts.";
-          } else if (res.materialState === "fragments_only") {
-            askStatus.textContent =
-              "Partial — not enough saved yet for a full summary.";
-          } else if (res.materialState === "nothing_saved") {
-            askStatus.textContent = "Nothing saved on that yet.";
+          if (res.needsConfirm && res.candidates && res.candidates.length && confirmUi) {
+            pendingQuestion = q;
+            applyAnswerStatus(res);
+            if (global.LoreKeeperRecall.formatAskAnswerHtml) {
+              askAnswer.innerHTML = global.LoreKeeperRecall.formatAskAnswerHtml(
+                res.answer || ""
+              );
+            } else {
+              askAnswer.textContent = res.answer || "";
+            }
+            askAnswer.hidden = !res.answer;
+            confirmUi.show(res.candidates);
+            return;
           }
-          if (global.LoreKeeperRecall.formatAskAnswerHtml) {
-            askAnswer.innerHTML = global.LoreKeeperRecall.formatAskAnswerHtml(
-              res.answer || ""
-            );
-          } else {
-            askAnswer.textContent = res.answer || "";
-          }
-          askAnswer.hidden = !res.answer;
-          askSources.innerHTML = "";
-          if (res.sources && res.sources.length) {
-            res.sources.forEach(function (src) {
-              var li = document.createElement("li");
-              var span = document.createElement("span");
-              span.className = "lk-ask-source-btn";
-              span.textContent = (src.title || "Untitled") + " (" + (src.kindLabel || "Note") + ")";
-              li.appendChild(span);
-              askSources.appendChild(li);
-            });
-            askSources.hidden = false;
-          }
-          if (global.LoreKeeperAskFeedback && global.LoreKeeperAskFeedback.recordLastAsk) {
-            global.LoreKeeperAskFeedback.recordLastAsk({
-              question: q,
-              answer: res.answer || "",
-              materialState: res.materialState || "",
-            });
-          }
+          showFinalAnswer(res, q);
         })
         .catch(function () {
           askStatus.textContent = LoreKeeperRecall.friendlyError("network_error");
+          askStatus.className = "lk-status err";
         })
         .finally(function () {
           clearTimeout(slowTimer);
           askBtn.disabled = false;
         });
+    }
+
+    if (global.LoreKeeperRecall && global.LoreKeeperRecall.bindConfirmSources) {
+      confirmUi = global.LoreKeeperRecall.bindConfirmSources(
+        {
+          wrapId: "askConfirm",
+          listId: "askConfirmList",
+          confirmBtnId: "askConfirmBtn",
+          cancelBtnId: "askConfirmCancel",
+        },
+        {
+          onEmpty: function () {
+            askStatus.textContent = LoreKeeperRecall.friendlyError("no_sources_selected");
+            askStatus.className = "lk-status err";
+            askStatus.hidden = false;
+          },
+          onConfirm: function (ids) {
+            var q = pendingQuestion || askQuestion.value.trim();
+            if (!q) return;
+            runAskRequest(q, {
+              includeDocuments: false,
+              askPhase: "answer",
+              confirmedSourceIds: ids,
+            });
+          },
+          onCancel: function () {
+            pendingQuestion = "";
+            askStatus.textContent = "Canceled — ask again when ready.";
+            askStatus.className = "lk-status";
+            askAnswer.hidden = true;
+          },
+        }
+      );
+    }
+
+    askBtn.addEventListener("click", function () {
+      var q = askQuestion.value.trim();
+      if (!q) {
+        askStatus.textContent = "Type a question first.";
+        askStatus.hidden = false;
+        return;
+      }
+      pendingQuestion = q;
+      var askOpts = { includeDocuments: false, askPhase: "preview" };
+      var pending = loadAskContinue();
+      if (pending) askOpts.askContinue = pending;
+      runAskRequest(q, askOpts);
     });
 
     askQuestion.addEventListener("keydown", function (e) {

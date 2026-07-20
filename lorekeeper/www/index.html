@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
   <title>LoreKeeper</title>
-  <link rel="stylesheet" href="./lk-shared.css?v=91" />
+  <link rel="stylesheet" href="./lk-shared.css?v=92" />
 </head>
 <body class="lk-page-home">
   <div class="lk-wrap">
@@ -152,6 +152,7 @@
       <div id="panel-ask" class="lk-tools-panel-body" role="tabpanel" aria-labelledby="tab-btn-ask">
         <p class="muted lk-ask-lead">
           Searches <strong>documents and notes</strong> you saved on LoreKeeper. Name the work in your question.
+          Ask shows what it found first — you confirm, then it summarizes.
         </p>
         <p class="lk-privacy lk-ask-privacy">
           <strong>Your drafts stay on LoreKeeper.</strong> Ask runs on the server from your saved writing — it does not use Word help’s language model and does not read what you type in other tabs.
@@ -172,6 +173,14 @@
           </div>
           <button type="button" class="lk-btn secondary" id="askSaveFeedbackBtn">Save feedback</button>
           <p class="lk-status" id="askFeedbackStatus" hidden aria-live="polite"></p>
+        </div>
+        <div class="lk-ask-confirm" id="askConfirm" hidden>
+          <p class="muted lk-ask-confirm-lead">I’ll use these. Uncheck anything that doesn’t belong, then summarize.</p>
+          <ul class="lk-ask-confirm-list" id="askConfirmList" aria-label="Notes and draft bits to use"></ul>
+          <div class="lk-toolbar lk-ask-confirm-toolbar">
+            <button type="button" class="lk-btn" id="askConfirmBtn">Summarize selected</button>
+            <button type="button" class="lk-btn secondary" id="askConfirmCancel">Cancel</button>
+          </div>
         </div>
         <div class="lk-ask-answer" id="askAnswer" hidden></div>
         <ul class="lk-ask-sources" id="askSources" hidden aria-label="Sources"></ul>
@@ -240,7 +249,7 @@
   <script src="./lk-documents.js?v=52"></script>
   <script src="./lk-entries.js?v=4"></script>
   <script src="./lk-find.js?v=1"></script>
-  <script src="./lk-recall.js?v=9"></script>
+  <script src="./lk-recall.js?v=10"></script>
   <script src="./lk-auth.js?v=3"></script>
   <script src="./lk-site-feedback.js?v=1"></script>
   <script src="./lk-ask-feedback.js?v=1"></script>
@@ -256,6 +265,6 @@
   <script src="./lk-mobile-jot.js?v=1"></script>
   <script src="./lk-bt-keyboard.js?v=1"></script>
   <script src="./lk-mobile-handoff.js?v=1"></script>
-  <script src="./lk-home.js?v=52"></script>
+  <script src="./lk-home.js?v=53"></script>
 </body>
 </html>

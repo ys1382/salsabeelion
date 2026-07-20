@@ -75,6 +75,9 @@
   }
 
   function materialStatus(res) {
+    if (res.needsConfirm) {
+      return "Pick which notes to use, then summarize.";
+    }
     if (res.materialState === "summarizable") {
       return "Summary from your notes and drafts.";
     }
@@ -92,26 +95,50 @@
     var questionEl = document.getElementById("docAskQuestion");
     if (!askBtn || !questionEl || !global.LoreKeeperRecall) return;
 
-    askBtn.addEventListener("click", function () {
-      var q = questionEl.value.trim();
-      if (!q) {
-        setStatus("Type a question first.");
-        return;
+    var pendingQuestion = "";
+    var pendingScope = null;
+    var confirmUi = null;
+
+    function clearAnswerUi() {
+      var answerEl = document.getElementById("docAskAnswer");
+      var sourcesEl = document.getElementById("docAskSources");
+      if (answerEl) {
+        answerEl.hidden = true;
+        answerEl.innerHTML = "";
       }
-      if (!global.LoreKeeperAccountStorage.isSignedIn()) {
-        setStatus(global.LoreKeeperRecall.friendlyError("not_signed_in"));
-        return;
+      if (sourcesEl) {
+        sourcesEl.hidden = true;
+        sourcesEl.innerHTML = "";
       }
-      var scope = scopeFromUi(getDoc);
+      if (confirmUi) confirmUi.hide();
+    }
+
+    function awaitPark() {
+      var parked = flushSave ? flushSave(true) : null;
+      return Promise.resolve(parked).catch(function () {
+        return null;
+      });
+    }
+
+    function runAskRequest(q, scope, askOpts) {
       setStatus(scopeHint(scope));
-      document.getElementById("docAskAnswer").hidden = true;
-      document.getElementById("docAskSources").hidden = true;
+      clearAnswerUi();
       askBtn.disabled = true;
-      if (flushSave) flushSave(true);
-      global.LoreKeeperRecall.ask(q, { scope: scope })
+      return awaitPark()
+        .then(function () {
+          return global.LoreKeeperRecall.ask(q, askOpts);
+        })
         .then(function (res) {
           if (!res || !res.ok) {
             setStatus(global.LoreKeeperRecall.friendlyError(res && res.error));
+            return;
+          }
+          if (res.needsConfirm && res.candidates && res.candidates.length && confirmUi) {
+            pendingQuestion = q;
+            pendingScope = scope;
+            setStatus(materialStatus(res), true);
+            renderAnswer(res);
+            confirmUi.show(res.candidates);
             return;
           }
           setStatus(materialStatus(res), true);
@@ -131,6 +158,55 @@
         .finally(function () {
           askBtn.disabled = false;
         });
+    }
+
+    if (global.LoreKeeperRecall.bindConfirmSources) {
+      confirmUi = global.LoreKeeperRecall.bindConfirmSources(
+        {
+          wrapId: "docAskConfirm",
+          listId: "docAskConfirmList",
+          confirmBtnId: "docAskConfirmBtn",
+          cancelBtnId: "docAskConfirmCancel",
+        },
+        {
+          onEmpty: function () {
+            setStatus(global.LoreKeeperRecall.friendlyError("no_sources_selected"));
+          },
+          onConfirm: function (ids) {
+            var q = pendingQuestion || questionEl.value.trim();
+            var scope = pendingScope || scopeFromUi(getDoc);
+            if (!q) return;
+            runAskRequest(q, scope, {
+              scope: scope,
+              askPhase: "answer",
+              confirmedSourceIds: ids,
+            });
+          },
+          onCancel: function () {
+            pendingQuestion = "";
+            pendingScope = null;
+            setStatus("Canceled — ask again when ready.");
+            var answerEl = document.getElementById("docAskAnswer");
+            if (answerEl) answerEl.hidden = true;
+          },
+        }
+      );
+    }
+
+    askBtn.addEventListener("click", function () {
+      var q = questionEl.value.trim();
+      if (!q) {
+        setStatus("Type a question first.");
+        return;
+      }
+      if (!global.LoreKeeperAccountStorage.isSignedIn()) {
+        setStatus(global.LoreKeeperRecall.friendlyError("not_signed_in"));
+        return;
+      }
+      var scope = scopeFromUi(getDoc);
+      pendingQuestion = q;
+      pendingScope = scope;
+      runAskRequest(q, scope, { scope: scope, askPhase: "preview" });
     });
 
     questionEl.addEventListener("keydown", function (e) {

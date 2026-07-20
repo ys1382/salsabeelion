@@ -30,6 +30,13 @@
     if (options.askContinue && typeof options.askContinue === "object") {
       payload.askContinue = options.askContinue;
     }
+    if (options.askPhase) {
+      payload.askPhase = options.askPhase;
+    }
+    if (options.confirmedSourceIds && options.confirmedSourceIds.length) {
+      payload.confirmedSourceIds = options.confirmedSourceIds;
+      payload.askPhase = "answer";
+    }
     if (useServerCorpus(options)) {
       return payload;
     }
@@ -207,13 +214,103 @@
       server_error: "LoreKeeper hit a server error. Try again in a moment.",
       sync_failed: "Could not sync your notes. Try again in a moment.",
       recall_failed: "Could not search your notes right now. Try again.",
+      no_sources_selected: "Pick at least one note or draft bit to summarize.",
     };
     return map[code] || "Something went wrong. Try again.";
+  }
+
+  /**
+   * Confirm-sources UI: list candidates with checkboxes (default on).
+   * ids: { wrap, list, confirmBtn, cancelBtn }
+   * onConfirm(ids) / onCancel()
+   */
+  function bindConfirmSources(ids, handlers) {
+    handlers = handlers || {};
+    var wrap = document.getElementById(ids.wrapId);
+    var list = document.getElementById(ids.listId);
+    var confirmBtn = document.getElementById(ids.confirmBtnId);
+    var cancelBtn = document.getElementById(ids.cancelBtnId);
+    if (!wrap || !list) {
+      return {
+        show: function () {},
+        hide: function () {},
+        selectedIds: function () {
+          return [];
+        },
+      };
+    }
+
+    function hide() {
+      wrap.hidden = true;
+      list.innerHTML = "";
+    }
+
+    function show(candidates) {
+      list.innerHTML = "";
+      (candidates || []).forEach(function (src, i) {
+        var li = document.createElement("li");
+        li.className = "lk-ask-confirm-item";
+        var label = document.createElement("label");
+        label.className = "lk-ask-confirm-label";
+        var cb = document.createElement("input");
+        cb.type = "checkbox";
+        cb.checked = true;
+        cb.value = src.id || "";
+        cb.setAttribute("data-source-id", src.id || "");
+        var text = document.createElement("span");
+        text.className = "lk-ask-confirm-text";
+        var title = document.createElement("strong");
+        title.textContent =
+          (src.title || "Untitled") + " (" + (src.kindLabel || "Note") + ")";
+        text.appendChild(title);
+        if (src.excerpt) {
+          var ex = document.createElement("span");
+          ex.className = "lk-ask-confirm-excerpt";
+          ex.textContent = src.excerpt;
+          text.appendChild(ex);
+        }
+        label.appendChild(cb);
+        label.appendChild(text);
+        li.appendChild(label);
+        list.appendChild(li);
+      });
+      wrap.hidden = !(candidates && candidates.length);
+    }
+
+    function selectedIds() {
+      var idsOut = [];
+      list.querySelectorAll('input[type="checkbox"]').forEach(function (cb) {
+        if (cb.checked && cb.value) idsOut.push(cb.value);
+      });
+      return idsOut;
+    }
+
+    if (confirmBtn && !confirmBtn.__lkConfirmBound) {
+      confirmBtn.__lkConfirmBound = true;
+      confirmBtn.addEventListener("click", function () {
+        var picked = selectedIds();
+        if (!picked.length) {
+          if (handlers.onEmpty) handlers.onEmpty();
+          return;
+        }
+        if (handlers.onConfirm) handlers.onConfirm(picked);
+      });
+    }
+    if (cancelBtn && !cancelBtn.__lkConfirmBound) {
+      cancelBtn.__lkConfirmBound = true;
+      cancelBtn.addEventListener("click", function () {
+        hide();
+        if (handlers.onCancel) handlers.onCancel();
+      });
+    }
+
+    return { show: show, hide: hide, selectedIds: selectedIds };
   }
 
   global.LoreKeeperRecall = {
     ask: ask,
     friendlyError: friendlyError,
     formatAskAnswerHtml: formatAskAnswerHtml,
+    bindConfirmSources: bindConfirmSources,
   };
 })(typeof window !== "undefined" ? window : this);
