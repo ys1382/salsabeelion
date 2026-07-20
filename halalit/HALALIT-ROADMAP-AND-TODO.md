@@ -256,7 +256,7 @@ Bring these into planning and design so they are not dropped across sessions.
 
 **Intent:** Use **Google** (search + AI—exact product/API TBD) to help **find whether a book has themes Halalit already tracks**, not to change Halalit’s stances.
 
-- [x] **Google theme scan (live Jun 2026)** — Bookcheck calls server API on port 8075; needs `HALALIT_GEMINI_API_KEY` in `halalit-server/.env` on VPS. See `halalit/server/README-BOOKCHECK-AI.md`. Themes: LGBTQ, magic, deity/mythology, pro-colonial, romance, substance, etc.—**never fanservice** (comics: “not checked yet” for panels; owner: Pokemon manga). Rules unchanged; hand-vet wins.
+- [x] **Google theme scan (live Jun 2026)** — Bookcheck calls server API on port 8075; needs `HALALIT_GEMINI_API_KEY` in `oddtrove-server/.env` on VPS. See `halalit/server/README-BOOKCHECK-AI.md`. Themes: LGBTQ, magic, deity/mythology, pro-colonial, romance, substance, etc.—**never fanservice** (comics: “not checked yet” for panels; owner: Pokemon manga). Rules unchanged; hand-vet wins.
 - **Halalit rules are unchanged.** Google output is **theme presence only**—it does **not** decide pass/fail, soften hardest never-recommend, or override hand-vet. Same policy engine applies after detection.
 - **Trust order:** hand-vet / coded lists **beat** Google when they disagree; Google fills gaps when catalogs and Wikipedia are thin or wrong (e.g. series LGBTQ in a later volume).
 - **Owner hand-vet stays separate (Cursor).** Google must **not** replace or auto-merge into owner vet tracking. Keep **your** lists in Cursor/planning files so if Google gets worse—or is weak on certain titles—you still know what **you** hand-read, parked, or put on **My TBR**:

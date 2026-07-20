@@ -9,9 +9,9 @@ Match warnings to **who can see the site** and **what could touch reader progres
 
 ## Site tiers
 
-**Owner-only** (basically only you): Maestro's (`/maestros/`), envDyst (`/envdyst/`), Climatic Mysteries (`/climatic-mysteries/`), CleanScreen (`/cleanscreen/`), HalaLyrics (`/halalyrics/`). Low reader risk.
+**Owner-only** (basically only you): Maestro's (`/maestros/`), envDyst (`/envdyst/`), Climatic Mysteries (`/climatic-mysteries/`), CleanScreen (`/cleanscreen/`). Low reader risk.
 
-**Public** (real readers): Halalit (`/halalit/`), Crocheter (`/crocheter/`), LoreKeeper (`/lorekeeper/` — account gate, quiet beta), oddtrove.art hub when served.
+**Public** (real readers): Halalit (`/halalit/`), Crocheter (`/crocheter/`), LoreKeeper (`/lorekeeper/` — account gate, quiet beta), HalaLyrics (`/halalyrics/`), oddtrove.art hub when served.
 
 ## Deploy check — always before running deploy
 

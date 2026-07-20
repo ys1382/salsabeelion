@@ -47,6 +47,12 @@ from oddtrove_password_reset import (  # noqa: E402
     token_expires_at,
     within_rate_limit,
 )
+from oddtrove_sso import (  # noqa: E402
+    PUBLIC_ORIGIN as ODDTROVE_PUBLIC_ORIGIN,
+    cookie_header_value as sso_cookie_header,
+    identity_from_cookie_header,
+    sign_identity as sso_sign_identity,
+)
 from oddtrove_transactional_mail import send_password_reset  # noqa: E402
 
 PORT = int(os.environ.get("LOREKEEPER_API_PORT", "8080"))
@@ -450,7 +456,16 @@ class Handler(BaseHTTPRequestHandler):
         except (json.JSONDecodeError, UnicodeDecodeError):
             return {}
 
-    def _json(self, status: int, payload: dict[str, Any], set_cookie: str | None = None, clear_cookie: bool = False) -> None:
+    def _json(
+        self,
+        status: int,
+        payload: dict[str, Any],
+        set_cookie: str | None = None,
+        clear_cookie: bool = False,
+        sso_email: str | None = None,
+        sso_sub: str = "",
+        clear_sso: bool = False,
+    ) -> None:
         body = json.dumps(payload).encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
@@ -463,6 +478,16 @@ class Handler(BaseHTTPRequestHandler):
             self.send_header("Set-Cookie", f"{COOKIE_NAME}={set_cookie}; {_cookie_attrs(self)}")
         if clear_cookie:
             self.send_header("Set-Cookie", f"{COOKIE_NAME}=; {_cookie_attrs(self)}; Max-Age=0")
+        if sso_email:
+            self.send_header(
+                "Set-Cookie",
+                sso_cookie_header(sso_sign_identity(sso_email, sso_sub), headers=self.headers),
+            )
+        if clear_sso:
+            self.send_header(
+                "Set-Cookie",
+                sso_cookie_header("", headers=self.headers, clear=True),
+            )
         self.end_headers()
         try:
             self.wfile.write(body)
@@ -470,26 +495,50 @@ class Handler(BaseHTTPRequestHandler):
             # Client or nginx closed early (timeout, navigation) — answer was built; do not crash.
             return
 
-    def _redirect(self, location: str, set_cookie: str | None = None) -> None:
+    def _redirect(
+        self,
+        location: str,
+        set_cookie: str | None = None,
+        sso_email: str | None = None,
+        sso_sub: str = "",
+    ) -> None:
         self.send_response(302)
         self.send_header("Location", location)
         if set_cookie:
             self.send_header("Set-Cookie", f"{COOKIE_NAME}={set_cookie}; {_cookie_attrs(self)}")
+        if sso_email:
+            self.send_header(
+                "Set-Cookie",
+                sso_cookie_header(sso_sign_identity(sso_email, sso_sub), headers=self.headers),
+            )
         self.end_headers()
 
     def _session_email(self) -> str | None:
         cookies = _parse_cookies(self.headers.get("Cookie"))
         token = cookies.get(COOKIE_NAME)
-        if not token:
-            return None
-        email = _verify_token(token)
-        if not email:
+        if token:
+            email = _verify_token(token)
+            if email:
+                with _store_lock:
+                    store = _load_store()
+                    if email in store.get("users", {}):
+                        return email
+        identity = identity_from_cookie_header(self.headers.get("Cookie"))
+        if not identity:
             return None
         with _store_lock:
             store = _load_store()
-            if email not in store.get("users", {}):
+            sub = identity.get("google_sub") or ""
+            if sub:
+                status, payload = _google_find_or_create(store, sub, identity["email"])
+                if status == 200 and payload.get("ok"):
+                    _save_store(store)
+                    return str(payload.get("email") or identity["email"])
                 return None
-        return email
+            email = identity["email"]
+            if email in store.get("users", {}):
+                return email
+        return None
 
     def _api_path(self) -> str:
         path = urlparse(self.path).path
@@ -512,13 +561,15 @@ class Handler(BaseHTTPRequestHandler):
         email = self._session_email()
 
         if path == "/auth/google/start":
-            if not google_configured():
-                self._json(503, {"ok": False, "error": "google_not_configured"})
-                return
             qs = parse_qs(urlparse(self.path).query)
             return_raw = str((qs.get("return") or [""])[0]).strip()
-            state = make_state(return_raw)
-            self._redirect(authorize_url(redirect_uri=_google_redirect_uri(), state=state))
+            if not return_raw or return_raw.startswith("./"):
+                return_raw = f"{_public_site_base()}/account.html"
+            elif return_raw.startswith("/") and not return_raw.startswith("//"):
+                return_raw = f"{ODDTROVE_PUBLIC_ORIGIN}{return_raw}"
+            self._redirect(
+                f"{ODDTROVE_PUBLIC_ORIGIN}/hub/api/auth/google/start?return={quote(return_raw, safe='')}"
+            )
             return
 
         if path == "/auth/google/callback":
@@ -550,7 +601,12 @@ class Handler(BaseHTTPRequestHandler):
                     done = (
                         f"{_public_site_base()}/account.html?google=1&return={quote(ret, safe='')}"
                     )
-                    self._redirect(done, set_cookie=_sign_token(norm, exp, auth_rev))
+                    self._redirect(
+                        done,
+                        set_cookie=_sign_token(norm, exp, auth_rev),
+                        sso_email=norm,
+                        sso_sub=profile["sub"],
+                    )
                     return
             err_code = str(payload.get("error") or "google_auth_failed")
             self._redirect(
@@ -687,46 +743,7 @@ class Handler(BaseHTTPRequestHandler):
         email = self._session_email()
 
         if path == "/auth/signup":
-            # Temporary: email/password signup while Google OAuth is not configured on the VPS.
-            raw_email = str(body.get("email") or "")
-            password = _normalize_password(str(body.get("password") or ""))
-            norm = _normalize_email(raw_email)
-            if not norm:
-                self._json(400, {"ok": False, "error": "invalid_email"})
-                return
-            if len(password) < 8:
-                self._json(400, {"ok": False, "error": "password_too_short"})
-                return
-            with _store_lock:
-                store = _load_store()
-                users = store.setdefault("users", {})
-                settings = store.setdefault("settings", {})
-                user_count = len(users)
-                if norm in users:
-                    self._json(409, {"ok": False, "error": "email_taken"})
-                    return
-                signups_on = bool(settings.get("signupsEnabled"))
-                if not signups_on and user_count > 0:
-                    self._json(403, {"ok": False, "error": "signups_disabled"})
-                    return
-                pwd_hash, salt = _hash_password(password)
-                is_owner = norm == OWNER_EMAIL if OWNER_EMAIL else user_count == 0
-                users[norm] = {
-                    "email": norm,
-                    "password_hash": pwd_hash,
-                    "salt": salt,
-                    "created_at": int(time.time()),
-                    "is_owner": is_owner,
-                    "auth_rev": 0,
-                    "data": {},
-                }
-                _save_store(store)
-            exp = int(time.time()) + COOKIE_MAX_AGE
-            self._json(
-                200,
-                {"ok": True, "email": norm, "isOwner": is_owner},
-                set_cookie=_sign_token(norm, exp, 0),
-            )
+            self._json(403, {"ok": False, "error": "signup_google_only"})
             return
 
         if path == "/auth/forgot-password":
@@ -823,11 +840,13 @@ class Handler(BaseHTTPRequestHandler):
                 200,
                 {"ok": True, "email": norm, "isOwner": _is_owner_email(norm)},
                 set_cookie=_sign_token(norm, exp, auth_rev),
+                sso_email=norm,
+                sso_sub=str((user or {}).get("google_sub") or ""),
             )
             return
 
         if path == "/auth/logout":
-            self._json(200, {"ok": True}, clear_cookie=True)
+            self._json(200, {"ok": True}, clear_cookie=True, clear_sso=True)
             return
 
         if path == "/user/data/bulk":

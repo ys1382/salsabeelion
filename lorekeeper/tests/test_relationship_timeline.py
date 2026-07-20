@@ -50,6 +50,8 @@ class RelationshipTimelineTests(unittest.TestCase):
         self.assertIn("STORY-RELATIONSHIP", system)
         self.assertNotIn("This needs a SUMMARY from the writer's saved notes", system)
         self.assertIn("pre/post", system.lower())
+        self.assertIn("KIND of bond", system)
+        self.assertIn("Do NOT walk through a timeline", system)
         self.assertNotIn("KINSHIP / FAMILY-TIE", system)
 
     def test_scrubs_sources_indicate_meta(self):

@@ -28,7 +28,7 @@ _ALNUM = re.compile(r"[^a-z0-9]+")
 def _db_path() -> str:
     return os.environ.get(
         "HALALIT_ACCOUNTS_DB",
-        os.path.expanduser("~/kids-sites/halalit-server/halalit_accounts.sqlite"),
+        os.path.expanduser("~/kids-sites/oddtrove-server/halalit_accounts.sqlite"),
     )
 
 

@@ -171,11 +171,77 @@
     }
     .owner-msg.ok { color: var(--ok); }
     #ownerSites[hidden] { display: none !important; }
+    .sso-bar {
+      margin: 0 0 1.75rem;
+      max-width: 640px;
+      padding: 1rem 1.25rem;
+      background: var(--card);
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .sso-bar p {
+      margin: 0 0 0.75rem;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+    .sso-bar p:last-child { margin-bottom: 0; }
+    a.google-btn {
+      display: inline-block;
+      text-decoration: none;
+      padding: 0.65rem 1.1rem;
+      border-radius: 10px;
+      border: 1px solid rgba(110, 181, 255, 0.35);
+      background: rgba(110, 181, 255, 0.14);
+      color: var(--accent);
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+    a.google-btn:hover {
+      background: rgba(110, 181, 255, 0.22);
+    }
+    .sso-signed {
+      color: var(--text);
+      font-size: 0.95rem;
+    }
+    .sso-signed strong { color: var(--ok); }
+    .sso-signout {
+      margin-left: 0.5rem;
+      background: none;
+      border: none;
+      color: var(--muted);
+      font: inherit;
+      font-size: 0.9rem;
+      cursor: pointer;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      padding: 0;
+    }
+    .sso-signout:hover { color: var(--accent); }
+    .sso-msg {
+      margin: 0.65rem 0 0;
+      font-size: 0.88rem;
+      color: var(--err);
+    }
+    .sso-msg[hidden] { display: none !important; }
   </style>
 </head>
 <body>
   <h1>Odd Trove</h1>
   <p class="lead">Family-friendly reading, cozy crochet, private writing tools, and a song lyrics check—pick a site to visit.</p>
+
+  <div class="sso-bar" id="ssoBar">
+    <div id="ssoSignedOut">
+      <p>One Odd Trove account works on HalaLit, Crocheter, and LoreKeeper. A spare Google account is fine.</p>
+      <a class="google-btn" id="googleContinueBtn" href="#">Continue with Google</a>
+      <p class="sso-msg" id="ssoMsg" hidden></p>
+    </div>
+    <div id="ssoSignedIn" hidden>
+      <p class="sso-signed">Signed in as <strong id="ssoEmail"></strong>
+        <button type="button" class="sso-signout" id="ssoSignOut">Sign out</button>
+      </p>
+    </div>
+  </div>
+
   <ul id="publicSites">
     <li>
       <a class="site" href="/halalit/">
@@ -184,15 +250,15 @@
       </a>
     </li>
     <li>
-      <a class="site" href="/crocheter/account.html?signup=1">
+      <a class="site" href="/crocheter/">
         <strong>Cozy Crocheter’s Sanctum</strong>
-        <span class="desc">Pattern library with steps, focus mode, and stitch help. Create a free account to enter.</span>
+        <span class="desc">Pattern library with steps, focus mode, and stitch help. Sign in with Google above to enter.</span>
       </a>
     </li>
     <li>
-      <a class="site" href="/lorekeeper/account.html?signup=1">
+      <a class="site" href="/lorekeeper/">
         <strong>LoreKeeper <span class="beta-tag">beta</span></strong>
-        <span class="desc">A private writing space for notes and documents. Create a free account with email (junk email OK).</span>
+        <span class="desc">A private writing space for notes and documents. Sign in with Google above — your notes stay yours.</span>
       </a>
     </li>
     <li>
@@ -243,7 +309,8 @@
     <button type="button" class="owner-toggle" id="ownerToggle" hidden>Owner sign-in</button>
     <div class="owner-panel" id="ownerPanel" hidden>
       <p style="margin:0 0 0.5rem;font-size:0.92rem;color:var(--muted);">
-        For the site owner only—not Crocheter accounts. Use your private owner username and password.
+        Prefer Continue with Google above with your owner email—that unlocks private sites too.
+        Or use the old owner username and password as a backup.
       </p>
       <label for="ownerUser">Username</label>
       <input type="text" id="ownerUser" autocomplete="off" autocapitalize="off" spellcheck="false" />
@@ -269,6 +336,58 @@
     var ownerToggle = document.getElementById("ownerToggle");
     var ownerSignedIn = document.getElementById("ownerSignedIn");
     var ownerMsg = document.getElementById("ownerMsg");
+    var params = new URLSearchParams(location.search);
+
+    // —— Reader Google SSO (Odd Trove account) ——
+    var ssoOut = document.getElementById("ssoSignedOut");
+    var ssoIn = document.getElementById("ssoSignedIn");
+    var ssoEmail = document.getElementById("ssoEmail");
+    var ssoMsg = document.getElementById("ssoMsg");
+    var googleBtn = document.getElementById("googleContinueBtn");
+    if (googleBtn) {
+      googleBtn.href =
+        "/hub/api/auth/google/start?return=" +
+        encodeURIComponent("https://oddtrove.art/?google=1");
+    }
+    if (params.get("google_error")) {
+      ssoMsg.hidden = false;
+      ssoMsg.textContent = "Google sign-in didn’t work. Try again.";
+    }
+    function showSsoSignedIn(email) {
+      ssoOut.hidden = true;
+      ssoIn.hidden = false;
+      ssoEmail.textContent = email || "";
+      ssoMsg.hidden = true;
+    }
+    function showSsoSignedOut() {
+      ssoOut.hidden = false;
+      ssoIn.hidden = true;
+    }
+    function checkSso() {
+      return fetch("/hub/api/auth/me", { credentials: "include", cache: "no-store" })
+        .then(function (res) { return res.json(); })
+        .then(function (data) {
+          if (data && data.ok && data.signedIn && data.email) {
+            showSsoSignedIn(data.email);
+            return data;
+          }
+          showSsoSignedOut();
+          return null;
+        })
+        .catch(function () {
+          showSsoSignedOut();
+          return null;
+        });
+    }
+    document.getElementById("ssoSignOut").addEventListener("click", function () {
+      fetch("/hub/api/auth/logout", { method: "POST", credentials: "include" })
+        .catch(function () {})
+        .then(function () {
+          showSsoSignedOut();
+          hideOwnerLinks();
+          ownerToggle.hidden = false;
+        });
+    });
 
     function showOwnerLinks() {
       ownerSites.hidden = false;
@@ -356,7 +475,11 @@
     });
 
     document.getElementById("ownerSignOut").addEventListener("click", function () {
-      ownerLogout().then(function () {
+      Promise.all([
+        ownerLogout(),
+        fetch("/hub/api/auth/logout", { method: "POST", credentials: "include" }).catch(function () {}),
+      ]).then(function () {
+        showSsoSignedOut();
         hideOwnerLinks();
         setMsg("");
       });
@@ -375,16 +498,22 @@
       btn.setAttribute("aria-pressed", show ? "true" : "false");
     });
 
-    checkOwnerSession().then(function (signedIn) {
-      if (signedIn) showOwnerLinks();
-      else ownerToggle.hidden = false;
+    checkSso().then(function (sso) {
+      return checkOwnerSession().then(function (signedIn) {
+        if (signedIn || (sso && sso.isOwner)) {
+          showOwnerLinks();
+        } else {
+          ownerToggle.hidden = false;
+          if (params.get("owner") === "1") {
+            ownerPanel.hidden = false;
+            ownerToggle.hidden = true;
+            setMsg(
+              "Sign in with Google (owner email) above, or use the owner password here, then open private sites from this page."
+            );
+          }
+        }
+      });
     });
-
-    if (new URLSearchParams(location.search).get("owner") === "1") {
-      ownerPanel.hidden = false;
-      ownerToggle.hidden = true;
-      setMsg("Sign in on the homepage first, then open owner sites from here.");
-    }
   })();
   </script>
 </body>

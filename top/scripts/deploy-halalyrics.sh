@@ -69,10 +69,10 @@ chmod 600 "$ENV_FILE"
 
 # Reuse Halalit Gemini key when HalaLyrics key is not set.
 if ! grep -q "^HALALYRICS_GEMINI_API_KEY=" "$ENV_FILE" 2>/dev/null; then
-  if [[ -f "$BASE/halalit-server/.env" ]]; then
-    LEGACY_KEY="$(grep "^HALALIT_GEMINI_API_KEY=" "$BASE/halalit-server/.env" 2>/dev/null | head -1 | cut -d= -f2- || true)"
+  if [[ -f "$BASE/oddtrove-server/.env" ]]; then
+    LEGACY_KEY="$(grep "^HALALIT_GEMINI_API_KEY=" "$BASE/oddtrove-server/.env" 2>/dev/null | head -1 | cut -d= -f2- || true)"
     if [[ -z "$LEGACY_KEY" ]]; then
-      LEGACY_KEY="$(grep "^GEMINI_API_KEY=" "$BASE/halalit-server/.env" 2>/dev/null | head -1 | cut -d= -f2- || true)"
+      LEGACY_KEY="$(grep "^GEMINI_API_KEY=" "$BASE/oddtrove-server/.env" 2>/dev/null | head -1 | cut -d= -f2- || true)"
     fi
     if [[ -n "$LEGACY_KEY" ]]; then
       printf "\nHALALYRICS_GEMINI_API_KEY=%s\n" "$LEGACY_KEY" >> "$ENV_FILE"
@@ -80,8 +80,8 @@ if ! grep -q "^HALALYRICS_GEMINI_API_KEY=" "$ENV_FILE" 2>/dev/null; then
   fi
 fi
 if ! grep -q "^HALALYRICS_GEMINI_MODEL=" "$ENV_FILE" 2>/dev/null; then
-  if [[ -f "$BASE/halalit-server/.env" ]]; then
-    LEGACY_MODEL="$(grep "^HALALIT_GEMINI_MODEL=" "$BASE/halalit-server/.env" 2>/dev/null | head -1 | cut -d= -f2- || true)"
+  if [[ -f "$BASE/oddtrove-server/.env" ]]; then
+    LEGACY_MODEL="$(grep "^HALALIT_GEMINI_MODEL=" "$BASE/oddtrove-server/.env" 2>/dev/null | head -1 | cut -d= -f2- || true)"
   fi
   printf "HALALYRICS_GEMINI_MODEL=%s\n" "${LEGACY_MODEL:-gemini-2.5-flash-lite}" >> "$ENV_FILE"
 fi
@@ -145,7 +145,7 @@ REMOTE
 
 echo ""
 echo "Done. HalaLyrics only — other sites were not restarted."
-echo "After nginx reload: https://oddtrove.art/halalyrics/ (owner gate)"
+echo "After nginx reload: https://oddtrove.art/halalyrics/"
 echo ""
 echo "Gemini: reuses Halalit key on server when HALALYRICS_GEMINI_API_KEY is unset."
 

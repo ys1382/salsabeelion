@@ -46,11 +46,8 @@
   }
 
   function googleStartUrl(returnUrl) {
-    var base = apiBase() + "/auth/google/start";
-    if (returnUrl) {
-      return base + "?return=" + encodeURIComponent(returnUrl);
-    }
-    return base;
+    var ret = returnUrl || (global.location && (global.location.origin + global.location.pathname)) || "";
+    return "https://oddtrove.art/hub/api/auth/google/start?return=" + encodeURIComponent(ret);
   }
 
   function signUp(email, password) {

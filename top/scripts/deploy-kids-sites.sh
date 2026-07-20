@@ -77,10 +77,13 @@ if site_enabled halalit || site_enabled crocheter || site_enabled lorekeeper || 
     "$ROOT/top/_shared/oddtrove_password_reset.py" \
     "$ROOT/top/_shared/oddtrove_transactional_mail.py" \
     "$ROOT/top/_shared/oddtrove_google_oauth.py" \
+    "$ROOT/top/_shared/oddtrove_sso.py" \
     "$HOST:~/$REMOTE_BASE/_shared/"
 fi
 if site_enabled hub || site_enabled all; then
+  ssh_cmd "$HOST" "mkdir -p ~/$REMOTE_BASE/_shared"
   rsync -avz "$ROOT/top/_shared/hub_owner_api.py" "$HOST:~/$REMOTE_BASE/"
+  rsync -avz "$ROOT/top/_shared/oddtrove_sso.py" "$ROOT/top/_shared/oddtrove_google_oauth.py" "$HOST:~/$REMOTE_BASE/_shared/"
 fi
 if site_enabled maestros || site_enabled all; then
   rsync -avz "$ROOT/maestrosOdyssey/serve.py" "$HOST:~/$REMOTE_BASE/"
@@ -136,14 +139,14 @@ if site_enabled halalit; then
     echo "Note: halalit/www not in this checkout — leaving existing halalit files on server."
   fi
   if [[ -d "$ROOT/halalit/server" ]]; then
-    ssh_cmd "$HOST" "mkdir -p ~/$REMOTE_BASE/halalit-server"
+    ssh_cmd "$HOST" "mkdir -p ~/$REMOTE_BASE/oddtrove-server"
     rsync -avz \
       --exclude '.env' \
       --exclude 'halalit_accounts.sqlite' \
       --exclude '*.local.sqlite' \
       --exclude 'lookup-log.jsonl' \
       --exclude '__pycache__' \
-      "$ROOT/halalit/server/" "$HOST:~/$REMOTE_BASE/halalit-server/"
+      "$ROOT/halalit/server/" "$HOST:~/$REMOTE_BASE/oddtrove-server/"
   fi
 fi
 if site_enabled rpg; then
@@ -213,11 +216,11 @@ ANTHROPIC_KEY_FILE="$BASE/anthropic.key"
 if [[ -z "${ANTHROPIC_API_KEY:-}" && -f "$ANTHROPIC_KEY_FILE" ]]; then
   export ANTHROPIC_API_KEY="$(tr -d '\n\r' < "$ANTHROPIC_KEY_FILE")"
 fi
-# Google OAuth for account login (shared .env on Halalit server)
-if [[ -f "$BASE/halalit-server/.env" ]]; then
+# Google OAuth + shared SSO secret (shared .env on Halalit server)
+if [[ -f "$BASE/oddtrove-server/.env" ]]; then
   set -a
   # shellcheck disable=SC1090
-  source <(grep -E '^ODDTROVE_GOOGLE_(CLIENT_ID|CLIENT_SECRET|STATE_SECRET)=' "$BASE/halalit-server/.env" || true)
+  source <(grep -E '^ODDTROVE_(GOOGLE_(CLIENT_ID|CLIENT_SECRET|STATE_SECRET)|SSO_SECRET)=' "$BASE/oddtrove-server/.env" || true)
   set +a
 fi
 # shellcheck source=/dev/null
@@ -288,6 +291,7 @@ start_lorekeeper_api() {
       ODDTROVE_GOOGLE_CLIENT_ID="'"${ODDTROVE_GOOGLE_CLIENT_ID:-}"'" \
       ODDTROVE_GOOGLE_CLIENT_SECRET="'"${ODDTROVE_GOOGLE_CLIENT_SECRET:-}"'" \
       ODDTROVE_GOOGLE_STATE_SECRET="'"${ODDTROVE_GOOGLE_STATE_SECRET:-}"'" \
+      ODDTROVE_SSO_SECRET="'"${ODDTROVE_SSO_SECRET:-}"'" \
         python3 "'"$BASE"'/lorekeeper_api.py" >>/tmp/lorekeeper-api.log 2>&1
       echo "LoreKeeper API exited — restarting in 2s" >>/tmp/lorekeeper-api.log
       sleep 2
@@ -307,7 +311,7 @@ start_lorekeeper_api() {
 }
 
 start_halalit_api() {
-  if [[ ! -d "$BASE/halalit-server" || ! -f "$BASE/halalit-server/start-api.sh" ]]; then
+  if [[ ! -d "$BASE/oddtrove-server" || ! -f "$BASE/oddtrove-server/start-api.sh" ]]; then
     return 0
   fi
   local wd_name="halalit-bookcheck-api"
@@ -316,15 +320,15 @@ start_halalit_api() {
   kids_stop_watchdog "$wd_name" "kids-site-ai-8075.log 2>&1"
   pkill -f "bookcheck_theme_api.py" 2>/dev/null || true
   sleep 0.15
-  chmod +x "$BASE/halalit-server/start-api.sh"
-  if [[ -f /root/halalit/.env ]] && ! grep -q "^HALALIT_GEMINI_API_KEY=" "$BASE/halalit-server/.env" 2>/dev/null; then
+  chmod +x "$BASE/oddtrove-server/start-api.sh"
+  if [[ -f /root/halalit/.env ]] && ! grep -q "^HALALIT_GEMINI_API_KEY=" "$BASE/oddtrove-server/.env" 2>/dev/null; then
     LEGACY_KEY="$(grep "^GEMINI_API_KEY=" /root/halalit/.env 2>/dev/null | head -1 | cut -d= -f2- || true)"
     if [[ -n "$LEGACY_KEY" ]]; then
-      printf "\nHALALIT_GEMINI_API_KEY=%s\n" "$LEGACY_KEY" >> "$BASE/halalit-server/.env"
+      printf "\nHALALIT_GEMINI_API_KEY=%s\n" "$LEGACY_KEY" >> "$BASE/oddtrove-server/.env"
     fi
   fi
-  if ! grep -q "^HALALIT_GEMINI_MODEL=" "$BASE/halalit-server/.env" 2>/dev/null; then
-    printf "HALALIT_GEMINI_MODEL=gemini-2.5-flash\n" >> "$BASE/halalit-server/.env"
+  if ! grep -q "^HALALIT_GEMINI_MODEL=" "$BASE/oddtrove-server/.env" 2>/dev/null; then
+    printf "HALALIT_GEMINI_MODEL=gemini-2.5-flash\n" >> "$BASE/oddtrove-server/.env"
   fi
   nohup bash -c '
     echo $$ > "'"$wd_pidfile"'"
@@ -333,7 +337,7 @@ start_halalit_api() {
       KIDS_SITES_ANTHROPIC_KEY_PATH="'"$ANTHROPIC_KEY_FILE"'" \
       HALALIT_ANTHROPIC_MODEL="'"${HALALIT_ANTHROPIC_MODEL:-claude-sonnet-4-6}"'" \
       BRAVE_SEARCH_API_KEY="'"${BRAVE_SEARCH_API_KEY:-}"'" \
-      "'"$BASE"'/halalit-server/start-api.sh" >>/tmp/kids-site-ai-8075.log 2>&1
+      "'"$BASE"'/oddtrove-server/start-api.sh" >>/tmp/kids-site-ai-8075.log 2>&1
       echo "Halalit Bookcheck API exited — restarting in 2s" >>/tmp/kids-site-ai-8075.log
       sleep 2
     done
@@ -345,7 +349,7 @@ start_halalit_api() {
   else
     echo "Note: Halalit Bookcheck Claude disabled — Gemini only until anthropic.key is on server"
   fi
-  echo "Halalit Bookcheck review search: DuckDuckGo lite (no key). Optional BRAVE_SEARCH_API_KEY in halalit-server/.env."
+  echo "Halalit Bookcheck review search: DuckDuckGo lite (no key). Optional BRAVE_SEARCH_API_KEY in oddtrove-server/.env."
 }
 
 start_crocheter_api() {
@@ -374,6 +378,7 @@ start_crocheter_api() {
       ODDTROVE_GOOGLE_CLIENT_ID="'"${ODDTROVE_GOOGLE_CLIENT_ID:-}"'" \
       ODDTROVE_GOOGLE_CLIENT_SECRET="'"${ODDTROVE_GOOGLE_CLIENT_SECRET:-}"'" \
       ODDTROVE_GOOGLE_STATE_SECRET="'"${ODDTROVE_GOOGLE_STATE_SECRET:-}"'" \
+      ODDTROVE_SSO_SECRET="'"${ODDTROVE_SSO_SECRET:-}"'" \
         python3 "'"$BASE"'/crocheter_api.py" >>/tmp/crocheter-api.log 2>&1
       echo "Crocheter API exited — restarting in 2s" >>/tmp/crocheter-api.log
       sleep 2
@@ -419,8 +424,18 @@ fi
 if site_enabled hub || site_enabled all; then
   pkill -f "hub_owner_api.py" 2>/dev/null || true
   sleep 0.15
-  nohup python3 "$BASE/hub_owner_api.py" </dev/null >"/tmp/hub-owner-api.log" 2>&1 &
-  echo "Started hub owner API on port $HUB_OWNER_API_PORT ($BIND)"
+  ODDTROVE_GOOGLE_CLIENT_ID="${ODDTROVE_GOOGLE_CLIENT_ID:-}" \
+  ODDTROVE_GOOGLE_CLIENT_SECRET="${ODDTROVE_GOOGLE_CLIENT_SECRET:-}" \
+  ODDTROVE_GOOGLE_STATE_SECRET="${ODDTROVE_GOOGLE_STATE_SECRET:-}" \
+  ODDTROVE_SSO_SECRET="${ODDTROVE_SSO_SECRET:-}" \
+  PYTHONPATH="$BASE/_shared" \
+    nohup python3 "$BASE/hub_owner_api.py" </dev/null >"/tmp/hub-owner-api.log" 2>&1 &
+  echo "Started hub API (owner + Google SSO) on port $HUB_OWNER_API_PORT ($BIND)"
+  if [[ -n "${ODDTROVE_GOOGLE_CLIENT_ID:-}" ]]; then
+    echo "Google SSO: client id loaded"
+  else
+    echo "Note: Google SSO not configured — set ODDTROVE_GOOGLE_CLIENT_ID/SECRET in oddtrove-server/.env"
+  fi
 fi
 
 sleep 1

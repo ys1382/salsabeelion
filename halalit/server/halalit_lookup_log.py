@@ -33,7 +33,7 @@ def _vet_index() -> dict[str, list[dict[str, str]]]:
     """Lazy load owner on-site vets for display canonicalization."""
     db_path = os.environ.get(
         "HALALIT_ACCOUNTS_DB",
-        os.path.expanduser("~/kids-sites/halalit-server/halalit_accounts.sqlite"),
+        os.path.expanduser("~/kids-sites/oddtrove-server/halalit_accounts.sqlite"),
     )
     if not os.path.isfile(db_path):
         return {}

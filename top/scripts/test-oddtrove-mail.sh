@@ -17,8 +17,8 @@ if [[ -d "$(dirname "$ROOT")/kids-sites/_shared" ]]; then
 fi
 
 ENV_FILE="${ODDTROVE_MAIL_ENV:-$ROOT/halalit/server/.env}"
-if [[ -f /root/kids-sites/halalit-server/.env ]]; then
-  ENV_FILE="/root/kids-sites/halalit-server/.env"
+if [[ -f /root/kids-sites/oddtrove-server/.env ]]; then
+  ENV_FILE="/root/kids-sites/oddtrove-server/.env"
 fi
 
 if [[ -f "$ENV_FILE" ]]; then

@@ -94,40 +94,29 @@
 
     <div id="authView">
       <p class="lk-privacy">
-        For now, create an account with email and password. A <strong>junk or throwaway email</strong> is fine —
-        we’d rather you not share a personal inbox you don’t need to. Google sign-in will come back when it’s ready.
+        New LoreKeeper accounts use <strong>Google</strong> (one Odd Trove sign-in). A spare or junk Google account is a nice fit
+        if you’d rather keep this separate from your main inbox — up to you.
       </p>
-      <div class="lk-toolbar" role="tablist" style="margin-bottom:1rem">
-        <button type="button" class="lk-btn" role="tab" id="tabSignIn" aria-selected="true">Sign in</button>
-        <button type="button" class="lk-btn secondary" role="tab" id="tabSignUp" aria-selected="false">Create account</button>
-      </div>
-      <div class="lk-panel" id="formSignIn" role="tabpanel">
-        <form id="signInForm" novalidate>
-          <div class="lk-field">
-            <label for="signInEmail">Email</label>
-            <input type="email" id="signInEmail" autocomplete="username" required />
-          </div>
-          <div class="lk-field">
-            <label for="signInPassword">Password</label>
-            <input type="password" id="signInPassword" autocomplete="current-password" required minlength="8" />
-          </div>
-          <button type="submit" class="lk-btn">Sign in</button>
-        </form>
-        <p style="margin:0.85rem 0 0;font-size:0.9rem"><a href="./reset-password.html">Forgot password?</a></p>
-      </div>
-      <div class="lk-panel" id="formSignUp" role="tabpanel" hidden>
-        <form id="signUpForm" novalidate>
-          <div class="lk-field">
-            <label for="signUpEmail">Email (junk / throwaway OK)</label>
-            <input type="email" id="signUpEmail" autocomplete="username" required />
-          </div>
-          <div class="lk-field">
-            <label for="signUpPassword">Password (8+ characters)</label>
-            <input type="password" id="signUpPassword" autocomplete="new-password" required minlength="8" />
-          </div>
-          <button type="submit" class="lk-btn">Create account</button>
-        </form>
-      </div>
+      <p style="margin:0 0 1rem">
+        <a class="lk-btn" id="googleContinueBtn" href="#" style="display:block;text-align:center;text-decoration:none">Continue with Google</a>
+      </p>
+      <details class="lk-legacy-signin" style="margin-top:1.25rem;font-family:system-ui,sans-serif;font-size:0.9rem;color:var(--soft)">
+        <summary style="cursor:pointer;color:var(--accent)">Already have an email &amp; password account?</summary>
+        <div class="lk-panel" style="margin-top:0.85rem">
+          <form id="signInForm" novalidate>
+            <div class="lk-field">
+              <label for="signInEmail">Email</label>
+              <input type="email" id="signInEmail" autocomplete="username" required />
+            </div>
+            <div class="lk-field">
+              <label for="signInPassword">Password</label>
+              <input type="password" id="signInPassword" autocomplete="current-password" required minlength="8" />
+            </div>
+            <button type="submit" class="lk-btn">Sign in</button>
+          </form>
+          <p style="margin:0.85rem 0 0;font-size:0.9rem"><a href="./reset-password.html">Forgot password?</a></p>
+        </div>
+      </details>
       <p class="lk-status" id="authError" role="alert"></p>
     </div>
   </div>
@@ -138,7 +127,7 @@
   <script src="./lk-spell-settings.js?v=2"></script>
   <script src="./lk-writing-snippet-settings.js?v=1"></script>
   <script src="./lk-mobile-handoff.js?v=1"></script>
-  <script src="./lk-auth.js?v=6"></script>
+  <script src="./lk-auth.js?v=7"></script>
   <script>
     (function () {
       var params = new URLSearchParams(location.search);
@@ -168,23 +157,12 @@
         });
       }
 
-      function selectTab(which) {
-        var signIn = which === "signin";
-        document.getElementById("formSignIn").hidden = !signIn;
-        document.getElementById("formSignUp").hidden = signIn;
-        document.getElementById("tabSignIn").classList.toggle("secondary", !signIn);
-        document.getElementById("tabSignUp").classList.toggle("secondary", signIn);
-        document.getElementById("tabSignIn").setAttribute("aria-selected", signIn ? "true" : "false");
-        document.getElementById("tabSignUp").setAttribute("aria-selected", signIn ? "false" : "true");
-        showError("");
+      var googleBtn = document.getElementById("googleContinueBtn");
+      if (googleBtn) {
+        googleBtn.href = LoreKeeperAuth.googleStartUrl(
+          returnUrl.indexOf("http") === 0 ? returnUrl : "https://oddtrove.art/lorekeeper/account.html"
+        );
       }
-
-      document.getElementById("tabSignIn").addEventListener("click", function () {
-        selectTab("signin");
-      });
-      document.getElementById("tabSignUp").addEventListener("click", function () {
-        selectTab("signup");
-      });
 
       if (params.get("google_error")) {
         showError(LoreKeeperAuth.friendlyError(params.get("google_error")));
@@ -192,10 +170,7 @@
 
       if (params.get("api_down") === "1") {
         showError("LoreKeeper could not reach the server. Wait a moment, then try Sign in again.");
-        selectTab("signin");
       }
-
-      if (params.get("signup") === "1") selectTab("signup");
 
       document.getElementById("signInForm").addEventListener("submit", function (e) {
         e.preventDefault();
@@ -217,41 +192,6 @@
           })
           .finally(function () {
             setBusy("signInForm", false);
-          });
-      });
-
-      document.getElementById("signUpForm").addEventListener("submit", function (e) {
-        e.preventDefault();
-        showError("");
-        var email = document.getElementById("signUpEmail").value.trim();
-        var pass = document.getElementById("signUpPassword").value;
-        if (!email || !pass) {
-          showError("Enter your email and password.");
-          return;
-        }
-        if (pass.length < 8) {
-          showError("Password needs at least 8 characters.");
-          return;
-        }
-        setBusy("signUpForm", true);
-        LoreKeeperAuth.signUp(email, pass)
-          .then(function (res) {
-            if (res && res.ok) return LoreKeeperAuth.afterAuthSuccess(returnUrl);
-            showError(LoreKeeperAuth.friendlyError(res && res.error));
-            if (res && (res.error === "email_taken" || res.error === "signups_disabled")) {
-              showError(
-                res.error === "email_taken"
-                  ? "That email already has an account — try Sign in."
-                  : LoreKeeperAuth.friendlyError(res.error)
-              );
-              if (res.error === "email_taken") selectTab("signin");
-            }
-          })
-          .catch(function () {
-            showError("Could not reach LoreKeeper. Try again in a moment.");
-          })
-          .finally(function () {
-            setBusy("signUpForm", false);
           });
       });
 

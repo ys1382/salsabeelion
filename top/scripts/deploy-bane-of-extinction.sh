@@ -92,10 +92,10 @@ sleep 0.2
 nohup bash -c '
   echo $$ > "'"$wd_pidfile"'"
   while true; do
-    if [[ -f "'"$BASE"'/halalit-server/.env" ]]; then
+    if [[ -f "'"$BASE"'/oddtrove-server/.env" ]]; then
       set -a
       # shellcheck disable=SC1091
-      source "'"$BASE"'/halalit-server/.env"
+      source "'"$BASE"'/oddtrove-server/.env"
       set +a
     fi
     if [[ -f "'"$BASE"'/bane-server/.env" ]]; then

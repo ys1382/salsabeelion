@@ -89,6 +89,7 @@ rsync_cmd \
   "$ROOT/top/_shared/oddtrove_password_reset.py" \
   "$ROOT/top/_shared/oddtrove_transactional_mail.py" \
   "$ROOT/top/_shared/oddtrove_google_oauth.py" \
+  "$ROOT/top/_shared/oddtrove_sso.py" \
   "$HOST:~/$REMOTE_BASE/_shared/"
 if [[ "$LK_CODE_ONLY" == "1" ]]; then
   rsync_cmd --exclude 'fonts/' "$ROOT/lorekeeper/www/" "$HOST:~/$REMOTE_BASE/lorekeeper/"
@@ -141,10 +142,10 @@ ANTHROPIC_KEY_FILE="$BASE/anthropic.key"
 if [[ -z "${ANTHROPIC_API_KEY:-}" && -f "$ANTHROPIC_KEY_FILE" ]]; then
   export ANTHROPIC_API_KEY="$(tr -d '\n\r' < "$ANTHROPIC_KEY_FILE")"
 fi
-if [[ -f "$BASE/halalit-server/.env" ]]; then
+if [[ -f "$BASE/oddtrove-server/.env" ]]; then
   set -a
   # shellcheck disable=SC1090
-  source <(grep -E '^ODDTROVE_GOOGLE_(CLIENT_ID|CLIENT_SECRET|STATE_SECRET)=' "$BASE/halalit-server/.env" || true)
+  source <(grep -E '^ODDTROVE_(GOOGLE_(CLIENT_ID|CLIENT_SECRET|STATE_SECRET)|SSO_SECRET)=' "$BASE/oddtrove-server/.env" || true)
   set +a
 fi
 # shellcheck source=/dev/null
@@ -185,6 +186,7 @@ restart_api() {
       ODDTROVE_GOOGLE_CLIENT_ID="'"${ODDTROVE_GOOGLE_CLIENT_ID:-}"'" \
       ODDTROVE_GOOGLE_CLIENT_SECRET="'"${ODDTROVE_GOOGLE_CLIENT_SECRET:-}"'" \
       ODDTROVE_GOOGLE_STATE_SECRET="'"${ODDTROVE_GOOGLE_STATE_SECRET:-}"'" \
+      ODDTROVE_SSO_SECRET="'"${ODDTROVE_SSO_SECRET:-}"'" \
         python3 "'"$BASE"'/lorekeeper_api.py" >>/tmp/lorekeeper-api.log 2>&1
       echo "LoreKeeper API exited — restarting in 2s" >>/tmp/lorekeeper-api.log
       sleep 2
@@ -207,9 +209,9 @@ else
   echo "      (or LOREKEEPER_RAG=0 in the API env to silence Ask RAG attempts)"
 fi
 if [[ -n "${ODDTROVE_GOOGLE_CLIENT_ID:-}" ]]; then
-  echo "LoreKeeper Google login: client id loaded from halalit-server/.env"
+  echo "LoreKeeper Google login: client id loaded from oddtrove-server/.env"
 else
-  echo "Note: Google login not configured — set ODDTROVE_GOOGLE_CLIENT_ID/SECRET in halalit-server/.env"
+  echo "Note: Google login not configured — set ODDTROVE_GOOGLE_CLIENT_ID/SECRET in oddtrove-server/.env"
 fi
 
 sleep 1

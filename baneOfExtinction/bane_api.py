@@ -176,7 +176,7 @@ def _bootstrap_env() -> None:
     for path in (
         os.environ.get("BANE_ENV_PATH", "").strip(),
         os.path.join(home, "kids-sites", "bane-server", ".env"),
-        os.path.join(home, "kids-sites", "halalit-server", ".env"),
+        os.path.join(home, "kids-sites", "oddtrove-server", ".env"),
     ):
         _load_dotenv_file(path)
 

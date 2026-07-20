@@ -43,7 +43,7 @@ Last updated: 2026-07-17
 | Deploy via SSH + rsync | Needs working SSH to `root@157.230.130.12`. LoreKeeper-only: `bash top/scripts/deploy-lorekeeper.sh`. Full sync: `bash top/scripts/deploy-kids-sites.sh`. See `ODDTROVE-OPS.md`. |
 | Python static HTTPS on localhost | Backends bind **127.0.0.1** only; nginx on `oddtrove.art` proxies to them. |
 | Nginx + basic auth / hub cookie | Maestro's, envDyst, Climatic Mysteries (and other owner betas) are **owner-only** unless the owner explicitly asks to go public. LoreKeeper is **public** (account gate). |
-| Owner session API | `top/_shared/hub_owner_api.py` — owner sign-in cookie for hub paths; not a general user database. |
+| Owner + reader SSO API | `top/_shared/hub_owner_api.py` — owner htpasswd cookie for private paths; **Google SSO** (`oddtrove_session`) for Halalit / Crocheter / LoreKeeper via `/hub/api/auth/google/*`. **Owner Google email** (`ODDTROVE_OWNER_EMAIL`, default `nightofhonour@gmail.com`) also unlocks private nginx paths. Shared env: `~/kids-sites/oddtrove-server/.env`. Site data stores stay separate (keyed by email). |
 
 **Deploy cannot run** if SSH is down, keys missing, or `halalit/www` is absent from this checkout (script leaves server copy as-is).
 

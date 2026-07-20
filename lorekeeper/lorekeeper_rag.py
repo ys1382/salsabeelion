@@ -193,15 +193,19 @@ Rules:
 - If sources do not state a family tie, say so honestly."""
 
 _RELATIONSHIP_ARC = """
-This is a STORY-RELATIONSHIP question — how these people stand toward each other in the plot (trust, rivalry, alliance, change over time).
+This is a STORY-RELATIONSHIP question — the NATURE of how these people stand toward each other (trust, rivalry, mentorship, fear, uneasy alliance, loyalty, betrayal, etc.), and how that stance shifts if the question asks.
+
+Priority (thoughtful, not longer):
+1. Lead with the KIND of bond or stance the sources support — name the dynamic in plain words.
+2. Then give at most ONE short supporting beat per phase (e.g. pre-war / post-war) that shows why that label fits.
+3. Do NOT walk through a timeline of events, scenes, or plot beats. Events are evidence for the dynamic, not the answer.
 
 Rules:
-- Write a CLEAR, CONCISE SUMMARY in reference voice (1–3 short sentences or two short paragraphs max).
-- Synthesize what the notes and draft say about these people — do NOT paste a whole note.
-- Use ANY saved material about how they treat, trust, oppose, ally with, or feel toward each other — even if it does not use the word "war" or "relationship."
-- If the question asks pre/post or before/after a war/event, cover those phases when sources support them. If only one phase is saved, summarize that phase and briefly note the other phase is not spelled out yet.
-- NEVER claim the notes "do not contain story-dynamic material" (or similar) when SOURCE blocks mention either named person interacting, trusting, fighting, allying, or changing toward the other. Summarize what IS there.
-- NEVER say "No sources spell out…" / "no interaction, alliance, rivalry…" when any SOURCE block names the people or describes scenes with them. Summarize those blocks.
+- Stay SHORT: 1–3 short sentences, or two short paragraphs max if pre/post phases differ. Concise and reasoned — not a longer essay.
+- Synthesize what notes and draft say about how they treat, trust, oppose, ally with, or feel toward each other — even when those words are not used. Infer the stance ONLY when behavior in the sources clearly supports it (e.g. traded scrap + trusted each other → uneasy allies / mutual trust). Never invent inner motives or feelings the sources do not support.
+- If the question asks pre/post or before/after a war/event, state the dynamic for each phase the sources support. If only one phase is saved, name that phase's dynamic and briefly note the other is not spelled out yet.
+- NEVER claim the notes "do not contain story-dynamic material" (or similar) when SOURCE blocks mention either named person interacting, trusting, fighting, allying, or changing toward the other. Name the dynamic those blocks support.
+- NEVER say "No sources spell out…" / "no interaction, alliance, rivalry…" when any SOURCE block names the people or describes scenes with them. Distill the stance from those blocks.
 - Answer story dynamics — NOT biological/family ties unless the writer asked about family/blood.
 - Use the names the writer used in the question; do not swap to an earlier persona unless asked.
 - Never say "the sources establish/indicate/show" — state the facts in reference voice.

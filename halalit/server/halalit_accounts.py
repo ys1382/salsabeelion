@@ -61,11 +61,17 @@ from oddtrove_password_reset import (  # noqa: E402
     token_expires_at,
     within_rate_limit,
 )
+from oddtrove_sso import (  # noqa: E402
+    PUBLIC_ORIGIN as ODDTROVE_PUBLIC_ORIGIN,
+    cookie_header_value as sso_cookie_header,
+    identity_from_cookie_header,
+    sign_identity as sso_sign_identity,
+)
 from oddtrove_transactional_mail import send_password_reset  # noqa: E402
 
 DB_PATH = os.environ.get(
     "HALALIT_ACCOUNTS_DB",
-    os.path.expanduser("~/kids-sites/halalit-server/halalit_accounts.sqlite"),
+    os.path.expanduser("~/kids-sites/oddtrove-server/halalit_accounts.sqlite"),
 )
 OWNER_EMAIL = os.environ.get("HALALIT_OWNER_EMAIL", "").strip().lower()
 COOKIE_NAME = "halalit_session"
@@ -358,34 +364,76 @@ def _clear_session_cookie(handler: BaseHTTPRequestHandler) -> None:
     handler.send_header("Set-Cookie", "; ".join(parts))
 
 
+def _set_sso_cookie(handler: BaseHTTPRequestHandler, email: str, google_sub: str = "") -> None:
+    handler.send_header(
+        "Set-Cookie",
+        sso_cookie_header(sso_sign_identity(email, google_sub), headers=handler.headers),
+    )
+
+
+def _clear_sso_cookie(handler: BaseHTTPRequestHandler) -> None:
+    handler.send_header(
+        "Set-Cookie",
+        sso_cookie_header("", headers=handler.headers, clear=True),
+    )
+
+
+def _user_from_sso(handler: BaseHTTPRequestHandler) -> dict[str, Any] | None:
+    identity = identity_from_cookie_header(handler.headers.get("Cookie"))
+    if not identity:
+        return None
+    email = identity["email"]
+    sub = identity.get("google_sub") or ""
+    if sub:
+        status, payload = google_find_or_create(sub, email)
+        if status != 200 or not payload.get("ok") or not payload.get("userId"):
+            return None
+        return {
+            "id": int(payload["userId"]),
+            "email": payload["email"],
+            "is_owner": bool(payload.get("isOwner")),
+        }
+    with _connect() as conn:
+        row = conn.execute(
+            "SELECT id, email, is_owner FROM users WHERE email = ?",
+            (email,),
+        ).fetchone()
+    if not row:
+        return None
+    return {
+        "id": row["id"],
+        "email": row["email"],
+        "is_owner": bool(row["is_owner"]),
+    }
+
+
 def session_user(handler: BaseHTTPRequestHandler) -> dict[str, Any] | None:
     return _session_user(handler)
 
 
 def _session_user(handler: BaseHTTPRequestHandler) -> dict[str, Any] | None:
     token = _parse_cookies(handler).get(COOKIE_NAME)
-    if not token:
-        return None
-    now = time.time()
-    with _connect() as conn:
-        row = conn.execute(
-            """
-            SELECT u.id, u.email, u.is_owner, s.expires_at
-            FROM sessions s JOIN users u ON u.id = s.user_id
-            WHERE s.token = ?
-            """,
-            (token,),
-        ).fetchone()
-        if not row or row["expires_at"] < now:
+    if token:
+        now = time.time()
+        with _connect() as conn:
+            row = conn.execute(
+                """
+                SELECT u.id, u.email, u.is_owner, s.expires_at
+                FROM sessions s JOIN users u ON u.id = s.user_id
+                WHERE s.token = ?
+                """,
+                (token,),
+            ).fetchone()
+            if row and row["expires_at"] >= now:
+                return {
+                    "id": row["id"],
+                    "email": row["email"],
+                    "is_owner": bool(row["is_owner"]),
+                }
             if row:
                 conn.execute("DELETE FROM sessions WHERE token = ?", (token,))
                 conn.commit()
-            return None
-        return {
-            "id": row["id"],
-            "email": row["email"],
-            "is_owner": bool(row["is_owner"]),
-        }
+    return _user_from_sso(handler)
 
 
 def _create_session(user_id: int) -> str:
@@ -550,12 +598,18 @@ def google_find_or_create(sub: str, email: str) -> tuple[int, dict[str, Any]]:
 
 
 def _send_redirect(
-    handler: BaseHTTPRequestHandler, location: str, cookie_token: str | None = None
+    handler: BaseHTTPRequestHandler,
+    location: str,
+    cookie_token: str | None = None,
+    sso_email: str | None = None,
+    sso_sub: str = "",
 ) -> None:
     handler.send_response(302)
     handler.send_header("Location", location)
     if cookie_token:
         _set_session_cookie(handler, cookie_token)
+    if sso_email:
+        _set_sso_cookie(handler, sso_email, sso_sub)
     handler.end_headers()
 
 
@@ -610,7 +664,7 @@ def forgot_password(email: str, handler: BaseHTTPRequestHandler) -> tuple[int, d
             reset_url = f"{_public_site_base()}/reset-password.html?token={raw_token}"
             if not send_password_reset(to_email=email_n, reset_url=reset_url, site_name="Halalit"):
                 print(
-                    "Halalit password reset: email not sent — set ODDTROVE_SMTP_* in halalit-server/.env",
+                    "Halalit password reset: email not sent — set ODDTROVE_SMTP_* in oddtrove-server/.env",
                     file=sys.stderr,
                     flush=True,
                 )
@@ -1486,15 +1540,16 @@ def _owner_user_id() -> int | None:
 
 def handle_get(path: str, handler: BaseHTTPRequestHandler, json_response) -> bool:
     if path == "/api/auth/google/start":
-        if not google_configured():
-            json_response(handler, 503, {"ok": False, "error": "google_not_configured"})
-            return True
+        # Shared Odd Trove SSO — one Google callback on /hub/api/
         qs = parse_qs(urlparse(handler.path).query)
         return_raw = str((qs.get("return") or [""])[0]).strip()
-        state = make_state(return_raw)
+        if not return_raw or return_raw.startswith("./"):
+            return_raw = f"{_public_site_base()}/account.html"
+        elif return_raw.startswith("/") and not return_raw.startswith("//"):
+            return_raw = f"{ODDTROVE_PUBLIC_ORIGIN}{return_raw}"
         _send_redirect(
             handler,
-            authorize_url(redirect_uri=_google_redirect_uri(), state=state),
+            f"{ODDTROVE_PUBLIC_ORIGIN}/hub/api/auth/google/start?return={quote(return_raw, safe='')}",
         )
         return True
 
@@ -1526,7 +1581,13 @@ def handle_get(path: str, handler: BaseHTTPRequestHandler, json_response) -> boo
         done_url = (
             f"{_public_site_base()}/account.html?google=1&return={quote(ret, safe='')}"
         )
-        _send_redirect(handler, done_url, cookie_token=token)
+        _send_redirect(
+            handler,
+            done_url,
+            cookie_token=token,
+            sso_email=str(payload.get("email") or profile["email"]),
+            sso_sub=profile["sub"],
+        )
         return True
 
     if path == "/api/auth/me":
@@ -1955,7 +2016,7 @@ def handle_post(
         if status == 200 and payload.get("ok"):
             with _connect() as conn:
                 row = conn.execute(
-                    "SELECT id FROM users WHERE email = ?",
+                    "SELECT id, email, google_sub FROM users WHERE email = ?",
                     (_normalize_email(body.get("email") or ""),),
                 ).fetchone()
             if row:
@@ -1963,6 +2024,7 @@ def handle_post(
                 handler.send_response(status)
                 cors_headers(handler)
                 _set_session_cookie(handler, token)
+                _set_sso_cookie(handler, row["email"], row["google_sub"] or "")
                 _write_json_body(handler, payload)
                 return True
         json_response(handler, status, payload)
@@ -1994,6 +2056,7 @@ def handle_post(
         handler.send_response(200)
         cors_headers(handler)
         _clear_session_cookie(handler)
+        _clear_sso_cookie(handler)
         _write_json_body(handler, {"ok": True})
         return True
 

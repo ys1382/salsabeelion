@@ -102,7 +102,7 @@ tail -30 /tmp/kids-site-8074.log
 
 Uses shared helpers in `top/_shared/oddtrove_transactional_mail.py` (rsynced to `~/kids-sites/_shared/` on deploy).
 
-**Recommended:** Gmail SMTP with a [Google App Password](https://myaccount.google.com/apppasswords) for `nightofhonour@gmail.com`. Add to **`~/kids-sites/halalit-server/.env`** on the VPS (same vars are read by all three APIs via their process env — copy into crocheter/lorekeeper startup if you split env files later):
+**Recommended:** Gmail SMTP with a [Google App Password](https://myaccount.google.com/apppasswords) for `nightofhonour@gmail.com`. Add to **`~/kids-sites/oddtrove-server/.env`** on the VPS (same vars are read by all three APIs via their process env — copy into crocheter/lorekeeper startup if you split env files later):
 
 ```bash
 ODDTROVE_MAIL_MODE=smtp
@@ -125,26 +125,30 @@ Until mail is configured, the reset UI still works but **no email is delivered**
 
 ---
 
-## Google login (new accounts — Halalit, Crocheter, LoreKeeper)
+## Google login (one Odd Trove SSO)
 
-New accounts use **Continue with Google**. Existing email/password accounts still sign in under “Already have an email & password account?”
+New accounts use **Continue with Google** — **one** Odd Trove sign-in cookie (`oddtrove_session`) shared across Halalit, Crocheter, and LoreKeeper. Existing email/password accounts still sign in under “Already have an email & password account?” on each site.
+
+**Owner private paths:** Google with **`ODDTROVE_OWNER_EMAIL`** (default `nightofhonour@gmail.com`) also unlocks Maestro’s / envDyst / Climatic Mysteries / CleanScreen / Bane. `/hub/api/owner-check` accepts that Google cookie or the old hub password cookie. Old owner username/password stays as backup.
 
 1. In [Google Cloud Console](https://console.cloud.google.com/) create (or reuse) a project → **APIs & Services → Credentials → Create OAuth client ID → Web application**.
-2. Authorized redirect URIs (all three):
-   - `https://oddtrove.art/halalit/api/auth/google/callback`
-   - `https://oddtrove.art/crocheter/api/auth/google/callback`
-   - `https://oddtrove.art/lorekeeper/api/auth/google/callback`
+2. Authorized redirect URI (**one**):
+   - `https://oddtrove.art/hub/api/auth/google/callback`
 3. OAuth consent screen: External; publish when ready for real readers (Testing mode only allows listed test users).
-4. Put on the VPS in **`~/kids-sites/halalit-server/.env`** (Halalit `start-api.sh` sources this; deploy scripts pass the same vars to Crocheter and LoreKeeper):
+4. Put on the VPS in **`~/kids-sites/oddtrove-server/.env`** (deploy scripts pass these to hub + site APIs):
 
 ```bash
 ODDTROVE_GOOGLE_CLIENT_ID=<client-id>.apps.googleusercontent.com
 ODDTROVE_GOOGLE_CLIENT_SECRET=<client-secret>
+# Optional dedicated SSO cookie secret (otherwise falls back to Google state/client secret):
+# ODDTROVE_SSO_SECRET=<long-random-string>
+# Optional override (defaults to nightofhonour@gmail.com):
+# ODDTROVE_OWNER_EMAIL=nightofhonour@gmail.com
 ```
 
-5. Redeploy: `bash top/scripts/deploy-kids-sites.sh` (or site filters) so APIs restart and pick up the env.
+5. Redeploy: `bash top/scripts/deploy-kids-sites.sh` so hub API + site APIs restart and pick up the env. Reload nginx only if you changed `oddtrove.art.conf` (SSO uses existing `/hub/api/`).
 
-Shared code: `top/_shared/oddtrove_google_oauth.py`.
+Shared code: `top/_shared/oddtrove_google_oauth.py`, `top/_shared/oddtrove_sso.py`, hub routes in `hub_owner_api.py`.
 
 ---
 
