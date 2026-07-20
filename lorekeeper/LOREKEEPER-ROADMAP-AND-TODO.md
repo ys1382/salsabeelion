@@ -277,9 +277,9 @@ Run **one row at a time** in Cursor. Don’t skip Phase 0 — it costs nothing a
 
 ## Your additions
 
-### Ask confirm-sources (shipped 2026-07-19)
+### Ask confirm-sources (retired as default UI 2026-07-20)
 
-- [x] **Ask confirm-sources** — preview ranked notes/draft bits → writer confirms → summarize only those (`askPhase` / `confirmedSourceIds`; home + doc Ask).
+- [x] **Ask confirm-sources** — preview/confirm checkbox step shipped 2026-07-19; **default Ask now answers in one step** (no tick list). Backend preview/confirm still exists for tests; home + doc Ask no longer call it.
 
 ### Doc-scoped notes sidebar (shipped 2026-07-17)
 
