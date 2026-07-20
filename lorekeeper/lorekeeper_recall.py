@@ -64,6 +64,10 @@ from lorekeeper_work_membership import (
     is_floaters_question,
 )
 from lorekeeper_floaters_ask import answer_floaters_ask, is_floaters_followup_context
+from lorekeeper_confirmed_ask import (
+    answer_looks_like_empty_claim,
+    summarize_confirmed_entries,
+)
 
 ENTRIES_KEY = "lorekeeper_entries_v1"
 DOCUMENTS_KEY = "lorekeeper_documents_v1"
@@ -1144,7 +1148,34 @@ def recall_from_user_data(
                 augment_ranked=_augment_with_plan,
                 question_kind=effective_kind,
                 plan=ask_plan,
+                writer_confirmed=bool(confirmed_ids),
             )
+            # Writer pinned sources: never keep a false "nothing there" answer.
+            if confirmed_ids and answer_looks_like_empty_claim(
+                str(rag_result.get("answer") or "")
+            ):
+                conf_answer, conf_rows = summarize_confirmed_entries(question, scoped)
+                conf_state = classify_material(
+                    question,
+                    scoped,
+                    conf_rows,
+                    conf_answer,
+                    strict_work=strict_work,
+                    work_hints=work_hints,
+                )
+                return _finish(_attach_router_meta({
+                    "ok": True,
+                    "answer": conf_answer,
+                    "sources": sources_from_ranked(conf_rows, conf_state),
+                    "materialState": conf_state,
+                    "mode": recall_mode,
+                    "questionKind": effective_kind,
+                    "askPhase": "answer",
+                    "needsConfirm": False,
+                    "recallVersion": RECALL_VERSION,
+                    "recallEngine": "local",
+                    "entryCount": len(entries),
+                }))
             targets = character_labels_for_plan(ask_plan, scoped) if ask_plan else character_targets(question)
             label = targets[0] if targets else ""
             if (
@@ -1160,9 +1191,36 @@ def recall_from_user_data(
                 rag_ans = str(rag_result.get("answer") or "")
                 if is_story_arc_relationship_question(question) and re.search(
                     r"(?i)do not contain\s+story[- ]dynamic|no story[- ]dynamic|"
-                    r"nothing (?:clear |saved )?about how .{0,40}relationship develops",
+                    r"nothing (?:clear |saved )?about how .{0,40}relationship develops|"
+                    r"no sources?\b.{0,100}spell out|"
+                    r"no sources?\b.{0,100}(?:interaction|alliance|rivalry)",
                     rag_ans,
                 ):
+                    if confirmed_ids:
+                        conf_answer, conf_rows = summarize_confirmed_entries(
+                            question, scoped
+                        )
+                        conf_state = classify_material(
+                            question,
+                            scoped,
+                            conf_rows,
+                            conf_answer,
+                            strict_work=strict_work,
+                            work_hints=work_hints,
+                        )
+                        return _finish(_attach_router_meta({
+                            "ok": True,
+                            "answer": conf_answer,
+                            "sources": sources_from_ranked(conf_rows, conf_state),
+                            "materialState": conf_state,
+                            "mode": recall_mode,
+                            "questionKind": "relationship",
+                            "askPhase": "answer",
+                            "needsConfirm": False,
+                            "recallVersion": RECALL_VERSION,
+                            "recallEngine": "local",
+                            "entryCount": len(entries),
+                        }))
                     local_arc = answer_story_arc_relationship(question, scoped)
                     if (
                         local_arc
@@ -1260,6 +1318,31 @@ def recall_from_user_data(
             import sys
 
             print(f"LoreKeeper RAG failed, falling back to local: {exc}", file=sys.stderr)
+
+    # Confirmed notes: summarize those bodies rather than a second fuzzy search.
+    if confirmed_ids:
+        conf_answer, conf_rows = summarize_confirmed_entries(question, scoped)
+        conf_state = classify_material(
+            question,
+            scoped,
+            conf_rows,
+            conf_answer,
+            strict_work=strict_work,
+            work_hints=work_hints,
+        )
+        return _finish(_attach_router_meta({
+            "ok": True,
+            "answer": conf_answer,
+            "sources": sources_from_ranked(conf_rows, conf_state),
+            "materialState": conf_state,
+            "mode": recall_mode,
+            "questionKind": effective_kind,
+            "askPhase": "answer",
+            "needsConfirm": False,
+            "recallVersion": RECALL_VERSION,
+            "recallEngine": "local",
+            "entryCount": len(entries),
+        }))
 
     pipeline = answer_for_work(
         question,

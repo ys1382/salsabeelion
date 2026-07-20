@@ -92,3 +92,44 @@ class ConfirmSourcesTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ConfirmSourcesFalseGapTests(unittest.TestCase):
+    def test_empty_claim_detector_catches_spell_out_phrasing(self) -> None:
+        from lorekeeper_confirmed_ask import answer_looks_like_empty_claim
+
+        msg = (
+            "No sources in your notes spell out any interaction, alliance, rivalry, or shift "
+            "between the protagonist and Galloxidor — pre-war or post-war — in *Cities of Rust*."
+        )
+        self.assertTrue(answer_looks_like_empty_claim(msg))
+
+    def test_confirmed_answer_uses_selected_body_not_false_gap(self) -> None:
+        entries = [
+            {
+                "id": "n-good",
+                "title": "Galloxidor scenes",
+                "kind": "note",
+                "tags": ["Cities Of Rust"],
+                "body": (
+                    "Galloxidor meets the protagonist in the scrap yards before the war. "
+                    "After the war begins, Galloxidor shields her and their trust hardens "
+                    "into an uneasy alliance."
+                ),
+            },
+        ]
+        user_data = {
+            "lorekeeper_entries_v1": json.dumps(entries),
+            "lorekeeper_documents_v1": json.dumps([]),
+        }
+        q = (
+            "In Cities Of Rust, summarize the relationship that develops between "
+            "the protagonist and Galloxidor pre and post war"
+        )
+        res = recall_from_user_data(
+            q, user_data, ask_phase="answer", confirmed_source_ids=["n-good"]
+        )
+        answer = (res.get("answer") or "").lower()
+        self.assertTrue(res.get("ok"))
+        self.assertIn("galloxidor", answer)
+        self.assertNotIn("spell out", answer)

@@ -201,10 +201,18 @@ Rules:
 - Use ANY saved material about how they treat, trust, oppose, ally with, or feel toward each other — even if it does not use the word "war" or "relationship."
 - If the question asks pre/post or before/after a war/event, cover those phases when sources support them. If only one phase is saved, summarize that phase and briefly note the other phase is not spelled out yet.
 - NEVER claim the notes "do not contain story-dynamic material" (or similar) when SOURCE blocks mention either named person interacting, trusting, fighting, allying, or changing toward the other. Summarize what IS there.
+- NEVER say "No sources spell out…" / "no interaction, alliance, rivalry…" when any SOURCE block names the people or describes scenes with them. Summarize those blocks.
 - Answer story dynamics — NOT biological/family ties unless the writer asked about family/blood.
 - Use the names the writer used in the question; do not swap to an earlier persona unless asked.
 - Never say "the sources establish/indicate/show" — state the facts in reference voice.
 - Invent nothing. Only if sources truly say nothing about either person toward the other may you say that tie is not spelled out yet."""
+
+_WRITER_CONFIRMED = """
+The writer already confirmed these SOURCE blocks. You MUST answer from them.
+- Do not claim the sources are empty, missing, or silent if any SOURCE text is present below.
+- If a name from the question appears in a SOURCE, use that material in the answer.
+- Prefer a short faithful summary of what the selected notes say over declaring a gap.
+"""
 
 _SYSTEM_BRIEF_SUFFIX = "\n- Keep the answer to 1–2 sentences maximum."
 
@@ -229,7 +237,12 @@ Rules:
 
 
 def _system_for_kind(
-    question: str, question_kind: str, *, brief: bool, plan: AskPlan | None = None
+    question: str,
+    question_kind: str,
+    *,
+    brief: bool,
+    plan: AskPlan | None = None,
+    writer_confirmed: bool = False,
 ) -> str:
     parts = [_SYSTEM_BASE]
     if plan and plan.intent == "character_portrait":
@@ -257,6 +270,8 @@ def _system_for_kind(
         parts.append(_ALLUSION_TOPIC)
     else:
         parts.append(_TOPIC_DEFAULT)
+    if writer_confirmed:
+        parts.append(_WRITER_CONFIRMED)
     system = "\n".join(parts)
     if brief:
         system += _SYSTEM_BRIEF_SUFFIX
@@ -320,8 +335,35 @@ def retrieve_for_question(
         [str, list[dict[str, Any]], list[dict[str, Any]]], list[dict[str, Any]]
     ]
     | None = None,
+    writer_confirmed: bool = False,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]], set[str], bool]:
     """Return (scoped_entries, ranked_chunks, work_hints, strict_work)."""
+    if writer_confirmed:
+        # Writer already pinned these notes — do not re-filter by work membership.
+        scoped = [e for e in entries if isinstance(e, dict)]
+        work_hints = extract_work_hints(question, scoped)
+        ranked = rank_entries(question, scoped)
+        if augment_ranked:
+            ranked = augment_ranked(question, scoped, ranked)
+        if not ranked:
+            ranked = []
+            for entry in scoped:
+                body = str(entry.get("body") or "")
+                ranked.append(
+                    {
+                        "id": str(entry.get("id") or ""),
+                        "title": str(entry.get("title") or "Untitled"),
+                        "kind": str(entry.get("kind") or "note"),
+                        "kindLabel": str(entry.get("kindLabel") or "Note"),
+                        "score": 40,
+                        "excerpt": body[:220],
+                        "body": body[:8000],
+                    }
+                )
+        ranked.sort(key=lambda r: r.get("score", 0), reverse=True)
+        ranked = _dedupe_ranked(ranked)
+        return scoped, ranked, work_hints, False
+
     work_hints = extract_work_hints(question, entries)
     strict_work = work_named_in_question(question) and bool(primary_work_hints(question))
     if strict_work:
@@ -619,6 +661,7 @@ def answer_with_rag(
     | None = None,
     question_kind: str = "fallback",
     plan: AskPlan | None = None,
+    writer_confirmed: bool = False,
 ) -> dict[str, Any]:
     """Retrieve locally, compose with Anthropic. Raises on API failure."""
     effective_kind = plan.question_kind if plan else question_kind
@@ -629,6 +672,7 @@ def answer_with_rag(
         entries,
         rank_entries=rank_entries,
         augment_ranked=augment_ranked,
+        writer_confirmed=writer_confirmed,
     )
 
     if strict_work and not scoped:
@@ -672,7 +716,11 @@ def answer_with_rag(
         }
 
     system = _system_for_kind(
-        question, effective_kind, brief=(mode == "brief"), plan=plan
+        question,
+        effective_kind,
+        brief=(mode == "brief"),
+        plan=plan,
+        writer_confirmed=writer_confirmed,
     )
     user_prompt = _build_user_prompt(
         question,

@@ -416,7 +416,9 @@ _SAME_TWO_CHARS = re.compile(
 _FALSE_ARC_GAP = re.compile(
     r"(?is)\b(?:the\s+)?notes?\s+(?:saved\s+)?(?:for\s+[^.]{0,80}\s+)?"
     r"do not contain\s+story[- ]dynamic\s+material\b[^.?!]*[.?!]?\s*"
-    r"|\bstory[- ]dynamic\s+material\s+(?:covering|about|on)\b[^.?!]*[.?!]?\s*",
+    r"|\bstory[- ]dynamic\s+material\s+(?:covering|about|on)\b[^.?!]*[.?!]?\s*"
+    r"|\bno sources?\b[^.?!]{0,120}spell out\b[^.?!]*[.?!]?\s*"
+    r"|\bno sources?\b[^.?!]{0,120}(?:interaction|alliance|rivalry|shift)\b[^.?!]*[.?!]?\s*",
 )
 
 
