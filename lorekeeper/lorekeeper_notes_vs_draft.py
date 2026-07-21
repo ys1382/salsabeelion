@@ -423,6 +423,19 @@ def _group_items_by_note(
     return groups
 
 
+def _claims_to_paragraph(claims: list[str]) -> str:
+    """Join claim scraps into one readable paragraph."""
+    parts: list[str] = []
+    for raw in claims:
+        c = _tidy_claim_line(raw)
+        if not c:
+            continue
+        if c[-1] not in ".!?…\"'”’":
+            c = c + "."
+        parts.append(c)
+    return " ".join(parts)
+
+
 def compose_notes_not_in_draft_local(
     work_hints: set[str],
     items: list[dict[str, str]],
@@ -430,7 +443,7 @@ def compose_notes_not_in_draft_local(
     has_notes: bool,
     has_draft: bool,
 ) -> str:
-    """Grouped local layout — neat headings + bullets, no raw paste dump."""
+    """Grouped local layout — short paragraphs by note, no bullet walls."""
     work = _work_phrase(work_hints)
     lines = [
         f"In your notes for {work}, but not clearly in the main document yet:\n"
@@ -447,14 +460,16 @@ def compose_notes_not_in_draft_local(
     elif items:
         cleaned = _near_dedupe_items(items)[:MAX_UNUSED_LINES]
         groups = _group_items_by_note(cleaned)
-        for title, bullets in groups:
+        for title, claims in groups:
+            para = _claims_to_paragraph(claims)
+            if not para:
+                continue
             lines.append(title)
-            for bullet in bullets:
-                lines.append(f"• {bullet}")
+            lines.append(para)
             lines.append("")
         extra = len(items) - len(cleaned)
         if extra > 0:
-            lines.append(f"• …and {extra} more note line(s) not shown here.")
+            lines.append(f"…and {extra} more note detail(s) not shown here.")
             lines.append("")
         while lines and lines[-1] == "":
             lines.pop()
@@ -475,10 +490,11 @@ _ORGANIZE_SYSTEM = """You are LoreKeeper — a librarian organizing one writer's
 Rules (non-negotiable):
 - ONLY restate and organize the NOTE LINES below. Never add facts, motives, plot, or themes.
 - Group under clear headings (prefer the note titles given).
-- Each bullet: one neat, short line with clean grammar — not a raw scrap dump.
+- Under each heading, write ONE short calm paragraph — not bullet lists, not a scrap dump.
 - Keep every distinct fact from the note lines; do not drop unique details.
 - Do not invent what the draft is missing beyond what these note lines say.
-- Start with one short lead line naming the work, then the grouped list.
+- Start with one short lead line naming the work, then the headed paragraphs.
+- No bullet points (•) and no dash lists.
 - End with a blank line then exactly: — From your notes vs draft only. Nothing invented. Not a full literary read of whether something was 'touched upon.'"""
 
 
@@ -508,7 +524,7 @@ def _organize_with_librarian(
         "These note lines are NOT clearly in the main draft yet "
         "(already filtered — do not re-judge that):\n\n"
         + "\n".join(blocks)
-        + "\n\nOrganize them into a neat librarian answer."
+        + "\n\nOrganize them into calm paragraph sections — no bullets."
     )
     try:
         answer, _ = _call_anthropic(
@@ -522,7 +538,8 @@ def _organize_with_librarian(
     text = (answer or "").strip()
     if not text or len(text) < 40:
         return local_fallback
-    if "•" not in text and "\n-" not in text:
+    # Prefer paragraph answers; if the model returns a bullet wall, fall back.
+    if text.count("•") >= 3 or text.count("\n- ") >= 3:
         return local_fallback
     if _FOOTER.split(".")[0] not in text and "From your notes vs draft only" not in text:
         text = text.rstrip() + "\n\n" + _FOOTER

@@ -220,13 +220,14 @@ class NotesNotInDraftAskTests(unittest.TestCase):
         out = compose_notes_not_in_draft_local(
             {"Smoke and Mirrors"}, items, has_notes=True, has_draft=True
         )
-        # Grouped headings, not "(Etherei)" suffixes on every bullet.
         self.assertIn("\nEtherei\n", "\n" + out)
         self.assertIn("\nPlaces\n", "\n" + out)
         self.assertNotIn("(Etherei)", out)
-        self.assertLess(out.lower().count("etherei\n"), 3)
+        self.assertNotIn("•", out)
+        self.assertIn("brass attic key", out.lower())
+        self.assertIn("glass market", out.lower())
 
-    def test_focus_does_not_strip_or_duplicate_bullets(self):
+    def test_focus_does_not_strip_paragraph_sections(self):
         q = (
             "In Smoke and Mirrors, tell me what I've written in notes that "
             "hasn't been touched upon in the main document"
@@ -235,12 +236,11 @@ class NotesNotInDraftAskTests(unittest.TestCase):
             "In your notes for smoke and mirrors, but not clearly in the main document yet:\n"
             "\n"
             "Etherei\n"
-            "• Not older by enough to be mistaken for Etherei's father "
-            "but by a decent year gap.\n"
-            "• Etherei keeps a brass attic key hidden in a boot.\n"
+            "Not older by enough to be mistaken for Etherei's father "
+            "but by a decent year gap. Etherei keeps a brass attic key hidden in a boot.\n"
             "\n"
             "Places\n"
-            "• The glass market only opens at dusk.\n"
+            "The glass market only opens at dusk.\n"
             "\n"
             "— From your notes vs draft only. Nothing invented. "
             "Not a full literary read of whether something was 'touched upon.'"
@@ -258,6 +258,7 @@ class NotesNotInDraftAskTests(unittest.TestCase):
         self.assertEqual(result.count("decent year gap"), 1)
         self.assertIn("brass attic key", result.lower())
         self.assertIn("glass market", result.lower())
+        self.assertNotIn("•", result)
         self.assertTrue(result.strip().endswith("touched upon.'") or "touched upon" in result)
 
     def test_doc_scope_still_sees_unlinked_work_notes(self):
