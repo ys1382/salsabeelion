@@ -93,9 +93,9 @@ FALLBACK_CALLOUTS_POPPY = [
         "fact": "A lighter center helps you tell one bloom from the next in bright sun — useful when you’re matching what you see to a garden form.",
     },
     {
-        "anchor": "habit",
-        "label": "Sun & soil",
-        "fact": "They like the same dry, sunny spots many California yards already have. Extra-rich soil or lots of water often means more leaves and fewer flowers for you.",
+        "anchor": "help",
+        "label": "Small help",
+        "fact": "If they already grow in a sunny patch near you, leaving that dry, lean soil alone (skip heavy water and rich fertilizer there) helps them keep blooming without you fighting their habits.",
     },
     {
         "anchor": "foliage",
@@ -116,9 +116,9 @@ FALLBACK_CALLOUTS_SUNFLOWER = [
         "fact": "Ray colors range from classic yellow-gold to red, burgundy, and near-black — match the shade you actually see, not a textbook yellow.",
     },
     {
-        "anchor": "habit",
-        "label": "Sun follower",
-        "fact": "Young plants track the sun across the day, so a backyard planting can seem to “turn” with you from morning to afternoon.",
+        "anchor": "help",
+        "label": "Small help",
+        "fact": "If you grow one, leaving a spent seed head standing for a while offers birds an easy snack — a small, local kindness that doesn’t require fixing the whole food system.",
     },
     {
         "anchor": "head",
@@ -139,9 +139,9 @@ FALLBACK_CALLOUTS_PHILODENDRON = [
         "fact": "Bright, indirect light and evenly moist soil keep it happy at home; too little light and you’ll see long, sparse stems with smaller leaves.",
     },
     {
-        "anchor": "safety",
-        "label": "Look, don’t nibble",
-        "fact": "Like many aroids, its sap can irritate mouths and tummies if chewed — fine to admire, not a snack for kids or pets.",
+        "anchor": "help",
+        "label": "Small help",
+        "fact": "Keep houseplant prunings and old pots in the bin or compost meant for them — don’t “free” tropical houseplants outdoors where they can struggle or crowd local plants.",
     },
     {
         "anchor": "stems",
@@ -1338,6 +1338,7 @@ def build_callouts(
     organism_type: str = "",
     short_note: str = "",
     bloom_color: str = "",
+    avoid_facts: list[str] | None = None,
 ) -> dict[str, Any]:
     display = common.strip()
     if not display:
@@ -1347,6 +1348,11 @@ def build_callouts(
     note_n = short_note.strip()
     color_n = bloom_color.strip()
     org_type = (organism_type or ("evidence" if evidence else "organism")).strip()[:40]
+    avoid = [
+        str(x).strip()[:320]
+        for x in (avoid_facts or [])
+        if str(x).strip()
+    ][:40]
 
     system = (
         "You write short, family-friendly wildlife and plant education callouts for "
@@ -1357,13 +1363,21 @@ def build_callouts(
         "CRITICAL: match petal/ray COLOR from the identification and scan note. "
         "A red or dark sunflower must NOT get yellow-only petal facts. "
         "TONE — help a walker feel this organism belongs in THEIR world, not a textbook dump. "
-        "ALL BUT ONE callouts must tie the organism to everyday human life in a gentle way "
+        "Most callouts must tie the organism to everyday human life in a gentle way "
         "(what you’d notice on a walk or in a yard, shared air/water/food webs, shade, "
         "pollinators near people, pets/kids safety when relevant, seasons you meet it, "
         "how it shares neighborhoods). Warm and concrete — not lecturey. "
-        "EXACTLY ONE callout should be a wonder fact about the species itself "
-        "(its own trick, life cycle, or ecology) that is less about direct human impact. "
-        "Do not invent personal medical advice. Do not guilt-trip or panic about extinction."
+        "EXACTLY ONE of those everyday callouts must be a SMALL HELP tip: something a "
+        "walker or neighbor can actually do that supports THIS species’ natural world "
+        "or nearby habitat (leave a patch alone, skip a pesticide on that plant, keep a "
+        "water dish for pollinators, don’t dig a nest, plant a native companion, etc.). "
+        "Help tip rules: practical and local; never guilt-trip; never blame everyday "
+        "survival needs (staple foods, housing, transit they don’t control); never blame "
+        "people for industrial waste or systems they don’t get a say in; never panic about "
+        "extinction. Prefer kindness they can choose over blame for what they can’t. "
+        "EXACTLY ONE callout (separate from the help tip) should be a wonder fact about "
+        "the species itself (its own trick, life cycle, or ecology) with less direct "
+        "human impact. Do not invent personal medical advice."
     )
     scope = (
         f"Identified as: {display}"
@@ -1374,10 +1388,17 @@ def build_callouts(
         + f"; type: {org_type}. "
         "Write callouts accurate for THIS identification and visible color. "
         "If red/dark sunflower rays, describe those — not classic yellow-only petals. "
-        "Put the single species-wonder fact last when possible."
+        "Put the help tip near the middle when possible; put the species-wonder fact last."
     )
     if evidence:
         scope += " Frame as evidence/clues the player noticed."
+    if avoid:
+        scope += (
+            " FRESHNESS — the player already saw these facts for this species recently. "
+            "Do NOT repeat or closely paraphrase them. Pick new angles, parts, seasons, "
+            "neighbors, help tips, or wonder: "
+            + " | ".join(avoid[:24])
+        )
 
     user = (
         scope
@@ -1395,7 +1416,8 @@ def build_callouts(
             }
         )
         + f"\nUse 3 to {MAX_CALLOUTS} callouts. "
-        "Most facts: player-world connection. Exactly one: species-own wonder."
+        "Mix: everyday player-world facts (including EXACTLY ONE small-help tip for "
+        "this species’ world) + EXACTLY ONE species-own wonder. Fresh angles if avoid-list given."
     )
 
     try:
@@ -1620,6 +1642,12 @@ class Handler(BaseHTTPRequestHandler):
             organism_type = str(body.get("organismType") or "").strip()
             short_note = str(body.get("shortNote") or body.get("note") or "").strip()
             bloom_color = str(body.get("bloomColor") or "").strip()
+            avoid_raw = body.get("avoidFacts") or body.get("recentFacts") or []
+            if not isinstance(avoid_raw, list):
+                avoid_raw = []
+            avoid_facts = [
+                str(x).strip()[:320] for x in avoid_raw if str(x).strip()
+            ][:40]
             if not common:
                 _json(
                     self,
@@ -1639,6 +1667,7 @@ class Handler(BaseHTTPRequestHandler):
                 organism_type=organism_type,
                 short_note=short_note,
                 bloom_color=bloom_color,
+                avoid_facts=avoid_facts,
             )
             _json(self, 200, result)
             return

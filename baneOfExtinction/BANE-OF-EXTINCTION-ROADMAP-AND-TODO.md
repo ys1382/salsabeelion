@@ -121,6 +121,7 @@ After the still “freezes” on the codex card:
 - **No Wikipedia** (and no open-web scrape) for this facts path — Claude helper knowledge + later curated packs only.
 - Tone: useful learning helper, not a guaranteed field guide.
 - **Player-world facts (2026-07-20):** most callouts tie the organism to everyday life (walks, yards, shared air/food webs, what you’d notice) — not a textbook dump. **Exactly one** fact per set can be a cooler species-own wonder with less direct human impact. Goal: feel more understanding of wildlife around you, not become a field-guide expert.
+- **Small-help tip + fresh rescans (2026-07-21):** among the everyday facts, **exactly one** is a gentle, species-specific “what you can do for this organism’s world” tip (no guilt; don’t blame staple foods or systems people don’t control). Device remembers recent fact text per species (not photos) so Load / rescan can ask Claude for a fresh set.
 - Desktop can browse callouts once an entry exists; phone not required for browsing.
 
 ### First stubs — California poppies + common sunflower + sweetheart philodendron
@@ -216,6 +217,7 @@ Owner pins from chat go here.
 - [x] Fix codex still animation with CC0 poppy photo + clearer idle motion
 - [x] Common sunflower stub (species-aimed ID hints, fallback callouts, codex still cutout)
 - [x] Sweetheart philodendron stub (Philodendron hederaceum; ID hints, fallback callouts, codex still)
+- [x] Callouts: one small-help tip per set (no guilt) + remember recent facts for fresh rescans
 
 ### 2026-07-10 — original design chat
 

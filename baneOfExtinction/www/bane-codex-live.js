@@ -4,6 +4,8 @@
   var API_CALLOUTS = "/bane-of-extinction/api/callouts";
   var STORAGE_KEY = "bane_last_id";
   var STILL_KEY = "bane_last_still";
+  var RECENT_FACTS_KEY = "bane_callout_recent_v1";
+  var MAX_RECENT_FACTS = 24;
   var MAX_AGE_MS = 15 * 60 * 1000;
   var statusEl = document.getElementById("status");
   var listEl = document.getElementById("calloutList");
@@ -227,6 +229,70 @@
     });
   }
 
+  function recentFactsSpeciesKey(common, latin) {
+    var lat = String(latin || "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 80);
+    if (lat) return "lat:" + lat;
+    var com = String(common || "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 80);
+    return com ? "com:" + com : "";
+  }
+
+  function readRecentFactsMap() {
+    try {
+      var raw = localStorage.getItem(RECENT_FACTS_KEY);
+      if (!raw) return {};
+      var map = JSON.parse(raw);
+      return map && typeof map === "object" ? map : {};
+    } catch (e) {
+      return {};
+    }
+  }
+
+  function getRecentFacts(common, latin) {
+    var key = recentFactsSpeciesKey(common, latin);
+    if (!key) return [];
+    var map = readRecentFactsMap();
+    var list = map[key];
+    if (!Array.isArray(list)) return [];
+    return list
+      .map(function (f) {
+        return String(f || "").trim();
+      })
+      .filter(Boolean)
+      .slice(-MAX_RECENT_FACTS);
+  }
+
+  function rememberCalloutFacts(common, latin, callouts) {
+    var key = recentFactsSpeciesKey(common, latin);
+    if (!key || !callouts || !callouts.length) return;
+    var map = readRecentFactsMap();
+    var prev = Array.isArray(map[key]) ? map[key].slice() : [];
+    var seen = {};
+    prev.forEach(function (f) {
+      var t = String(f || "").trim().toLowerCase();
+      if (t) seen[t] = true;
+    });
+    callouts.forEach(function (c) {
+      var fact = String((c && c.fact) || "").trim();
+      if (!fact) return;
+      var low = fact.toLowerCase();
+      if (seen[low]) return;
+      seen[low] = true;
+      prev.push(fact);
+    });
+    map[key] = prev.slice(-MAX_RECENT_FACTS);
+    try {
+      localStorage.setItem(RECENT_FACTS_KEY, JSON.stringify(map));
+    } catch (e) {}
+  }
+
   function loadFacts() {
     if (!state.commonName) {
       setStatus("Scan a plant first (or use a demo below). Nothing is selected yet.");
@@ -242,6 +308,7 @@
     ) {
       cultivar = state.cultivar || "Watermelon Heaven";
     }
+    var avoidFacts = getRecentFacts(state.commonName, state.latinName);
     var body = {
       commonName: state.commonName,
       latinName: state.latinName,
@@ -250,6 +317,7 @@
       organismType: state.organismType,
       shortNote: state.shortNote || "",
       bloomColor: state.bloomColor || "",
+      avoidFacts: avoidFacts,
     };
     fetch(API_CALLOUTS, {
       method: "POST",
@@ -278,7 +346,9 @@
         }
         if (latinOut) latinOut.textContent = state.latinName || "—";
         applyStill();
-        renderCallouts(data.callouts || []);
+        var callouts = data.callouts || [];
+        renderCallouts(callouts);
+        rememberCalloutFacts(state.commonName, state.latinName, callouts);
         if (disclaimerEl) {
           disclaimerEl.hidden = false;
           disclaimerEl.textContent =
@@ -288,7 +358,11 @@
         setStatus(
           data.source && String(data.source).indexOf("fallback") === 0
             ? "Showing fallback facts (Claude unavailable)."
-            : "Callouts loaded for: " + state.commonName + "."
+            : "Callouts loaded for: " +
+                state.commonName +
+                (avoidFacts.length
+                  ? " (fresh set — skipping recent repeats)."
+                  : ".")
         );
       })
       .catch(function (err) {
