@@ -33,12 +33,14 @@ _GENERIC_WORK_WORDS = frozenset(
 # Topic language after "my notes on …" / similar — never a work title.
 _JUNK_WORK_HINT = re.compile(
     r"^(?:"
-    r"notes?\s+(?:on|about|for|regarding)\b|"
+    r"notes?\s+(?:on|about|for|regarding|that)\b|"
     r"all\s+notes?\b|"
     r"that\s+\w+|"
     r"this\s+\w+|"
-    r"the\s+(?:look|expression|face|scene|beat|moment)\b|"
-    r"expression\b|look\b|face\b"
+    r"the\s+(?:look|expression|face|scene|beat|moment|main\s+document|draft)\b|"
+    r"expression\b|look\b|face\b|"
+    r".*\btouched\s+upon\b|"
+    r".*\bmain\s+document\b"
     r")",
     re.I,
 )

@@ -23,6 +23,7 @@ from lorekeeper_ask_router import (
 )
 from lorekeeper_rag import RAG_VERSION, answer_with_rag, rag_enabled
 from lorekeeper_knowledge_pov import awareness_parts, is_awareness_question, is_knowledge_pov_question
+from lorekeeper_notes_vs_draft import is_notes_not_in_draft_question
 from lorekeeper_question_routes import is_story_position_question
 from lorekeeper_section_scope import (
     extract_section_hints,
@@ -864,6 +865,9 @@ def recall_from_user_data(
         scope_mode = str(scope.get("mode") or "work").strip().lower()
         scope_work = str(scope.get("workTitle") or "").strip()
         scope_doc_id = str(scope.get("documentId") or "").strip()
+    # Notes-vs-draft needs every note for the work, not only notes linked to the open doc.
+    if is_notes_not_in_draft_question(question):
+        scope_mode = "work"
     if scope_work:
         question = augment_question_with_scope_work(question, scope_work)
 
@@ -874,6 +878,21 @@ def recall_from_user_data(
     )
 
     entries = _all_entries(data)
+    if is_notes_not_in_draft_question(question) and not scope_work and scope_doc_id:
+        for entry in entries:
+            if not isinstance(entry, dict):
+                continue
+            eid = str(entry.get("id") or "")
+            if eid != scope_doc_id and not eid.startswith(f"{scope_doc_id}#"):
+                continue
+            for tag in entry.get("tags") or []:
+                tag_s = str(tag).strip()
+                if tag_s and len(tag_s) > 2:
+                    scope_work = tag_s
+                    question = augment_question_with_scope_work(question, scope_work)
+                    break
+            if scope_work:
+                break
     recall_mode = "brief" if (mode or "").strip().lower() == "brief" else "full"
     continue_ctx = ask_continue if isinstance(ask_continue, dict) else None
     if continue_ctx is None and isinstance(scope, dict):
@@ -996,7 +1015,7 @@ def recall_from_user_data(
             work_hints = set(scope_hints)
             strict_work = scope_strict or bool(scope_doc_id)
             # Known explicit work titles refine scope; junk never wipes doc/work scope.
-            if explicit:
+            if explicit and not is_notes_not_in_draft_question(question):
                 work_hints = explicit | set(scope_hints)
                 strict_work = True
         elif scope_doc_id and scope_strict:
@@ -1008,6 +1027,11 @@ def recall_from_user_data(
             strict_work = True
         elif work_hints:
             strict_work = False
+
+        # Notes-vs-draft: trust the scoped work title; ignore meta phrases from the question.
+        if is_notes_not_in_draft_question(question) and scope_work:
+            work_hints = {scope_work.strip()}
+            strict_work = True
 
         disambiguation = check_work_disambiguation(
             question,

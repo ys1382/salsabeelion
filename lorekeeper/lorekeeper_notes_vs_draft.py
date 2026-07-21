@@ -133,6 +133,11 @@ _STOPWORDS = frozenset(
 
 _BULLET_PREFIX = re.compile(r"^\s*[-*•–—]\s+")
 _SENTENCE_SPLIT = re.compile(r"(?<=[.!?])\s+|\n+")
+_FOOTER = (
+    "— From your notes vs draft only. Nothing invented. "
+    "Not a full literary read of whether something was 'touched upon.'"
+)
+MAX_UNUSED_LINES = 40
 
 
 def is_notes_not_in_draft_question(question: str) -> bool:
@@ -174,7 +179,8 @@ def _split_claims(body: str) -> list[str]:
         if not block:
             continue
         lines = [ln.strip() for ln in block.splitlines() if ln.strip()]
-        if len(lines) > 1 and all(_BULLET_PREFIX.match(ln) or len(ln) < 120 for ln in lines):
+        # Prefer line / bullet splits whenever there are multiple lines.
+        if len(lines) > 1:
             for ln in lines:
                 cleaned = _BULLET_PREFIX.sub("", ln).strip()
                 if cleaned:
@@ -191,36 +197,73 @@ def _claim_is_usable(claim: str) -> bool:
     tokens = _content_tokens(claim)
     if len(tokens) < 2:
         return False
-    if len(claim.strip()) < 18:
+    if len(claim.strip()) < 16:
         return False
-    # Skip pure meta / labels
-    if re.match(r"^(planned|fix|todo\s+fix)\s*:", claim.strip(), re.I):
-        return True  # still list planned note lines as unused if not in draft
     return True
 
 
-def _claim_touched_in_draft(claim: str, draft_norm: str, draft_token_set: set[str]) -> bool:
-    """True when draft clearly reflects this note claim (overlap only — not themes)."""
+def _claim_touched_in_draft(claim: str, draft_norm: str) -> bool:
+    """
+    True only when draft clearly restates this claim via a contiguous phrase.
+    Bag-of-words is intentionally NOT used — shared cast names made almost
+    every note look 'touched.'
+    """
     if not claim.strip() or not draft_norm:
         return False
     claim_norm = _normalize(claim)
-    if len(claim_norm) >= 24 and claim_norm in draft_norm:
+    if len(claim_norm) >= 20 and claim_norm in draft_norm:
         return True
-    # Contiguous multi-word phrase from the claim
     words = claim_norm.split()
-    if len(words) >= 4:
-        for i in range(len(words) - 3):
-            phrase = " ".join(words[i : i + 4])
-            if len(phrase) >= 16 and phrase in draft_norm:
+    # Need a real multi-word span present as written (or near-as-written).
+    window = 5 if len(words) >= 8 else 4
+    if len(words) < window:
+        # Short claims: whole claim must appear, or all content tokens as a phrase.
+        if len(claim_norm) >= 16 and claim_norm in draft_norm:
+            return True
+        content = _content_tokens(claim)
+        if len(content) >= 3:
+            phrase = " ".join(content)
+            if phrase in draft_norm:
                 return True
-    tokens = _content_tokens(claim)
-    if not tokens:
         return False
-    hits = sum(1 for t in tokens if t in draft_token_set)
-    # Need most distinctive words present in the draft corpus
-    if len(tokens) <= 3:
-        return hits == len(tokens)
-    return hits / len(tokens) >= 0.65
+    for i in range(len(words) - window + 1):
+        phrase = " ".join(words[i : i + window])
+        if len(phrase) >= 18 and phrase in draft_norm:
+            return True
+    return False
+
+
+def _draft_corpus(entries: list[dict[str, Any]]) -> str:
+    """Prefer full documents; fall back to paragraph chunks. Dedupe by base id."""
+    full_docs: list[str] = []
+    chunks: list[str] = []
+    seen_full: set[str] = set()
+    seen_chunk: set[str] = set()
+    for entry in entries:
+        if not isinstance(entry, dict) or not _is_draft_entry(entry):
+            continue
+        body = str(entry.get("body") or "").strip()
+        if not body:
+            continue
+        eid = str(entry.get("id") or "")
+        base = eid.split("#", 1)[0]
+        if "#p" in eid:
+            if base in seen_full or eid in seen_chunk:
+                continue
+            seen_chunk.add(eid)
+            chunks.append(body)
+        else:
+            if base in seen_full:
+                continue
+            seen_full.add(base)
+            full_docs.append(body)
+    if full_docs:
+        return "\n\n".join(full_docs)
+    return "\n\n".join(chunks)
+
+
+def _dedupe_key(claim: str) -> str:
+    return _normalize(claim)[:160]
 
 
 def collect_notes_not_in_draft(
@@ -231,7 +274,6 @@ def collect_notes_not_in_draft(
     Rows: entryId, noteTitle, line.
     """
     notes: list[dict[str, Any]] = []
-    drafts: list[dict[str, Any]] = []
     for entry in entries:
         if not isinstance(entry, dict):
             continue
@@ -239,20 +281,17 @@ def collect_notes_not_in_draft(
             # Intentional gaps stay on the planned route; skip here.
             continue
         if _is_draft_entry(entry):
-            if str(entry.get("body") or "").strip():
-                drafts.append(entry)
-        else:
-            if str(entry.get("body") or "").strip() or str(entry.get("title") or "").strip():
-                notes.append(entry)
+            continue
+        if str(entry.get("body") or "").strip() or str(entry.get("title") or "").strip():
+            notes.append(entry)
 
+    draft_blob = _draft_corpus(entries)
     has_notes = bool(notes)
-    has_draft = bool(drafts)
+    has_draft = bool(draft_blob.strip())
     if not has_notes or not has_draft:
         return [], has_notes, has_draft
 
-    draft_blob = "\n\n".join(str(d.get("body") or "") for d in drafts)
     draft_norm = _normalize(draft_blob)
-    draft_token_set = set(_content_tokens(draft_blob))
 
     unused: list[dict[str, str]] = []
     seen: set[str] = set()
@@ -264,15 +303,19 @@ def collect_notes_not_in_draft(
         if not claims and title.lower() not in ("untitled", "untitled note", "note"):
             claims = [title]
         for claim in claims:
-            if not _claim_is_usable(claim):
+            cleaned = claim.strip()
+            # Drop orphan closing/opening from mid-sentence splits.
+            cleaned = re.sub(r"^[)\],;:\-–—]+\s*", "", cleaned)
+            cleaned = re.sub(r"\s+[(\[]+$", "", cleaned)
+            if not _claim_is_usable(cleaned):
                 continue
-            if _claim_touched_in_draft(claim, draft_norm, draft_token_set):
+            if _claim_touched_in_draft(cleaned, draft_norm):
                 continue
-            key = _normalize(claim)[:140]
+            key = _dedupe_key(cleaned)
             if key in seen:
                 continue
             seen.add(key)
-            unused.append({"entryId": eid, "noteTitle": title, "line": claim})
+            unused.append({"entryId": eid, "noteTitle": title, "line": cleaned})
     return unused, has_notes, has_draft
 
 
@@ -292,7 +335,7 @@ def compose_notes_not_in_draft_answer(
     work = _work_phrase(work_hints)
     lines = [
         f"In your notes for {work}, but not clearly in the main document yet "
-        f"(word overlap only — not a theme judgment):\n"
+        f"(phrase match only — not a theme judgment):\n"
     ]
     if not has_notes:
         lines.append(
@@ -304,7 +347,8 @@ def compose_notes_not_in_draft_answer(
             "Open or save a document for this work, then ask again."
         )
     elif items:
-        for row in items[:14]:
+        shown = items[:MAX_UNUSED_LINES]
+        for row in shown:
             note = row.get("noteTitle") or "Note"
             text = (row.get("line") or "").strip()
             if not text:
@@ -313,15 +357,15 @@ def compose_notes_not_in_draft_answer(
                 lines.append(f"• {text}")
             else:
                 lines.append(f"• {text} ({note})")
+        extra = len(items) - len(shown)
+        if extra > 0:
+            lines.append(f"• …and {extra} more note line(s) not shown here.")
     else:
         lines.append(
             "Nothing clear stood out as notes-only — clear note lines also show up "
-            "in the draft by word overlap. Narrower notes or a longer draft may help."
+            "in the draft by phrase match. Try shorter note lines if this feels wrong."
         )
-    lines.append(
-        "\n— From your notes vs draft only. Nothing invented. "
-        "Not a full literary read of whether something was 'touched upon.'"
-    )
+    lines.append("\n" + _FOOTER)
     return "\n".join(lines)
 
 
@@ -334,9 +378,16 @@ def answer_notes_not_in_draft(
     answer = compose_notes_not_in_draft_answer(
         work_hints, items, has_notes=has_notes, has_draft=has_draft
     )
-    source_ids = [row["entryId"] for row in items if row.get("entryId")][:10]
+    source_ids: list[str] = []
+    seen_ids: set[str] = set()
+    for row in items:
+        eid = str(row.get("entryId") or "")
+        if eid and eid not in seen_ids:
+            seen_ids.add(eid)
+            source_ids.append(eid)
+        if len(source_ids) >= 12:
+            break
     if not source_ids and has_notes:
-        # Still cite a note so the UI can show sources when empty-unused.
         for entry in entries:
             if (
                 isinstance(entry, dict)

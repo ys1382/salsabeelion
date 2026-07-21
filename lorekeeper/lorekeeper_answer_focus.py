@@ -72,6 +72,7 @@ _APPEARANCE_WORDS = re.compile(
 
 _FOOTER_MARKERS = (
     "— From your notes only",
+    "— From your notes vs draft only",
     "— Restated from what you wrote",
     "— Pulled from your notes only",
     "— Combined from your notes only",
@@ -93,7 +94,12 @@ _CAST_CARD_HEADER = re.compile(
 
 def wants_broad_answer(question: str, *, question_kind: str = "") -> bool:
     """Explicit summarize / coverage / audit — allow wider answers (#46)."""
-    if question_kind in ("coverage", "planned_gaps", "flagged_fix"):
+    if question_kind in (
+        "coverage",
+        "planned_gaps",
+        "flagged_fix",
+        "notes_not_in_draft",
+    ):
         return True
     if question_kind == "relationship":
         from lorekeeper_relations import is_story_arc_relationship_question
@@ -101,6 +107,10 @@ def wants_broad_answer(question: str, *, question_kind: str = "") -> bool:
         # Pre/post story dynamics need room; kinship stays narrow.
         return is_story_arc_relationship_question(question)
     if is_planned_gap_question(question) or is_flagged_fix_question(question):
+        return True
+    from lorekeeper_notes_vs_draft import is_notes_not_in_draft_question
+
+    if is_notes_not_in_draft_question(question):
         return True
     if is_character_portrait_question(question):
         return True
@@ -496,6 +506,14 @@ def focus_ask_response(
     allow_broad = wants_broad_answer(question, question_kind=kind)
     if result.get("askIntent") in ("character_portrait", "summarize_story", "story_resume"):
         allow_broad = True
+    # Compare/tag lists must stay intact — never trim bullets as off-topic.
+    if kind in ("notes_not_in_draft", "planned_gaps", "flagged_fix"):
+        allow_broad = True
+        out = dict(result)
+        sources = result.get("sources")
+        if isinstance(sources, list):
+            out["sources"] = filter_sources_for_answer(sources, answer, question)
+        return out
     # Kinship stays narrow; story-arc relationship (pre/post dynamics) needs room.
     if kind == "relationship" or result.get("askIntent") == "relationship":
         from lorekeeper_relations import is_story_arc_relationship_question
