@@ -227,7 +227,7 @@
 
   function drawMantis() {
     var base = "art/orchid-mantis/";
-    var bust = "20260720e";
+    var bust = "20260720f";
     var labels = STAGE_LABELS.mantis;
     var html = "";
     var i;

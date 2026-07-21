@@ -118,6 +118,13 @@ body {
   padding: 0;
 }
 
+.scene[data-art="paint"] {
+  aspect-ratio: 1 / 1;
+  min-height: 0;
+  width: 100%;
+  max-height: min(36rem, 92vw);
+}
+
 .scene[data-art="svg"] {
   padding: 1.25rem 1rem 2.6rem;
 }
@@ -255,7 +262,8 @@ body {
 }
 
 .scene[data-art="paint"] .creature .frame-still img {
-  object-fit: cover;
+  object-fit: contain;
+  object-position: center center;
   border-radius: 0;
 }
 
