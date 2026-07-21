@@ -1,19 +1,22 @@
 /**
- * Bane of Extinction — neighborhood missions (after ~15 finds).
- * Signature-sign adventures; ant mission gets full with/without + cutaway reveal.
+ * Bane of Extinction — neighborhood missions.
+ * Level 1 = basic scans (elsewhere). Level 2 = signature-sign beginnings.
+ * Level 3 = place-meaning / under-the-hood big picture (not tourist postcard facts).
  * No GPS. No photo-vs-screen checks. No "found outside" checkbox.
  */
 (function () {
   "use strict";
 
   var UNLOCK_FINDS = 15;
+  var L3_NEED_L2 = 3;
   var PROGRESS_KEY = "bane_missions_done_v1";
   var PEEK_KEY = "bane_missions_peek_v1";
 
-  /** Latest quest pack only — dropped: squirrel fruit, slug trails, paper nests, oak galls. */
-  var QUESTS = [
+  /** Level 2 — signature signs. Dropped: squirrel fruit, slug trails, paper nests, oak galls. */
+  var QUESTS_L2 = [
     {
       id: "ant-mound",
+      level: 2,
       title: "The city under the lawn",
       placeTags: ["garden", "urban", "woodland"],
       placeHint: "Yard · park · woodland edge",
@@ -27,6 +30,7 @@
     },
     {
       id: "signature-feather",
+      level: 2,
       title: "A feather with a name",
       placeTags: ["garden", "urban", "coast", "woodland"],
       placeHint: "Any looking-at place",
@@ -40,6 +44,7 @@
     },
     {
       id: "woodpecker-work",
+      level: 2,
       title: "The hole that keeps giving",
       placeTags: ["garden", "urban", "woodland"],
       placeHint: "Yard · street trees · oak woodland",
@@ -53,6 +58,7 @@
     },
     {
       id: "leaf-circles",
+      level: 2,
       title: "Perfect circles in a leaf",
       placeTags: ["garden", "urban"],
       placeHint: "Garden · yard · city plantings",
@@ -66,6 +72,7 @@
     },
     {
       id: "shrike-pantry",
+      level: 2,
       title: "The butcher’s pantry",
       placeTags: ["garden", "coast", "woodland"],
       placeHint: "Open edges · fences · scrub",
@@ -79,6 +86,7 @@
     },
     {
       id: "ice-plant-carpet",
+      level: 2,
       title: "The carpet that crowds the shore",
       placeTags: ["coast"],
       placeHint: "Beach · coast (SoCal coast / shore)",
@@ -92,6 +100,7 @@
     },
     {
       id: "ivy-trunk",
+      level: 2,
       title: "The curtain on the oak",
       placeTags: ["woodland"],
       placeHint: "Oak woodland · forest",
@@ -105,6 +114,7 @@
     },
     {
       id: "hotspot-patch",
+      level: 2,
       title: "Plant a hotspot",
       placeTags: ["garden", "urban"],
       placeHint: "Backyard · garden · city plantings",
@@ -118,6 +128,7 @@
     },
     {
       id: "leave-it-be",
+      level: 2,
       title: "Leave it be",
       placeTags: ["garden", "urban", "coast", "woodland"],
       placeHint: "Any place",
@@ -131,6 +142,7 @@
     },
     {
       id: "kind-act",
+      level: 2,
       title: "One kind act",
       placeTags: ["garden", "urban", "coast", "woodland"],
       placeHint: "Tied to something you already learned",
@@ -141,6 +153,178 @@
         "Skip the spray on that mound. Leave a leaf-litter corner. Don’t plant ice plant. Put the right milkweed in the right garden. Tiny moves, louder yard over time.",
       care: "No guilt lecture — just one act you control on your block.",
       visual: "story",
+    },
+  ];
+
+  /**
+   * Level 3 — same face, different meaning by place; under-the-hood landscape stories.
+   * Not generic tips. Not vacation-postcard facts.
+   */
+  var QUESTS_L3 = [
+    {
+      id: "l3-ice-plant-meanings",
+      level: 3,
+      title: "Ice plant: three readings",
+      placeTags: ["coast", "garden", "urban"],
+      placeHint: "Coast vs yard vs “just planted”",
+      blurb: "Same shiny carpet — healthy, meh, or a warning, depending on the place you’re looking at.",
+      lookFor:
+        "Ice plant (Carpobrotus-type mats) from the path — or a native dune plant that should be there instead.",
+      story:
+        "Tourists see a soft green blanket. The under-the-hood story is whether this place can still host what belongs here.",
+      care: "Don’t plant ice plant on wild shorelines. Prefer natives that keep the dune’s own cast employed.",
+      visual: "meanings",
+      meanings: [
+        {
+          tone: "warning",
+          placeLabel: "SoCal / West Coast dunes & bluffs",
+          text: "Bad sign. Invasive here — it crowds natives. A thick mat often means the shoreline’s own plants already lost ground.",
+        },
+        {
+          tone: "meh",
+          placeLabel: "A managed yard far from wild dunes",
+          text: "Meh. Not a native hero, not automatically a dune crisis on a city patio — still don’t “share” cuttings onto wild coasts.",
+        },
+        {
+          tone: "healthy",
+          placeLabel: "Native dune / bluff plant cover (looking at healthy shore)",
+          text: "Healthy sign when natives hold the ground instead — more room for the insects and birds that evolved with this coast.",
+        },
+      ],
+    },
+    {
+      id: "l3-ivy-meanings",
+      level: 3,
+      title: "Ivy: curtain or cage?",
+      placeTags: ["woodland", "garden", "urban"],
+      placeHint: "Oak woodland vs garden wall",
+      blurb: "English ivy reads different on an oak trail than on a trimmed fence.",
+      lookFor: "Ivy on a trunk or understory — from the path only.",
+      story:
+        "Postcard England loves ivy on stone. California oak woodland tells a harder story when that curtain seals the understory shut.",
+      care: "Remove when safe and allowed in wild or semi-wild woods; never rip through active nests.",
+      visual: "meanings",
+      meanings: [
+        {
+          tone: "warning",
+          placeLabel: "NorCal oak woodland / forest understory",
+          text: "Warning. Invasive climber — steals light, carpets the floor, and can mean the woodland’s own plants are already losing.",
+        },
+        {
+          tone: "meh",
+          placeLabel: "Contained garden wall or planter",
+          text: "Meh if truly contained — still a hitchhiker risk if birds or trimmings move it into wild edges.",
+        },
+        {
+          tone: "healthy",
+          placeLabel: "Oak woodland without an ivy sleeve",
+          text: "Healthy sign: open understory, room for the plants and insects that belong with coast live oak.",
+        },
+      ],
+    },
+    {
+      id: "l3-poppy-meanings",
+      level: 3,
+      title: "Poppy: belonging vs décor",
+      placeTags: ["garden", "coast", "urban", "woodland"],
+      placeHint: "CA places vs planted-elsewhere",
+      blurb: "California poppy can mean “home team” here — or just a pretty transplant elsewhere.",
+      lookFor: "California poppy in sun — whole plant from the path.",
+      story:
+        "Vacation photos love the orange splash. The deeper read is whether this flower is a neighbor or a costume.",
+      care: "In its range, lean soil and sun beat heavy water. Don’t treat every orange bloom as interchangeable with rare local endemics.",
+      visual: "meanings",
+      meanings: [
+        {
+          tone: "healthy",
+          placeLabel: "SoCal / NorCal yard, coast edge, oak openings (CA)",
+          text: "Healthy sign. Native here — bees notice; lean dry ground is a feature, not a failure.",
+        },
+        {
+          tone: "meh",
+          placeLabel: "Garden outside its native story (planted ornamental)",
+          text: "Meh. Lovely décor, not proof this landscape’s own cast is thriving.",
+        },
+        {
+          tone: "warning",
+          placeLabel: "If it’s replacing a rarer local native community",
+          text: "Warning only when plantings erase what was rarer and local — pretty can still be a quiet takeover.",
+        },
+      ],
+    },
+    {
+      id: "l3-eucalyptus-meanings",
+      level: 3,
+      title: "Eucalyptus: planted giant",
+      placeTags: ["garden", "urban", "coast", "woodland"],
+      placeHint: "CA plantings & parks",
+      blurb: "Tall, famous, and not a native California teammate.",
+      lookFor: "Eucalyptus from a path or park edge — no need to stand under shedding bark.",
+      story:
+        "Tourists remember the smell and the height. The everyday truth is introduced trees reshaping shade, litter, and what can live underneath.",
+      care: "Check local guidance before planting more; don’t pretend it’s a stand-in for oak woodland.",
+      visual: "meanings",
+      meanings: [
+        {
+          tone: "meh",
+          placeLabel: "City park / street / older CA planting",
+          text: "Meh-to-complicated. Introduced — wildlife may use it, but it isn’t the oak’s story.",
+        },
+        {
+          tone: "warning",
+          placeLabel: "Where it crowds out native woodland structure",
+          text: "Warning when it dominates: different litter, different understory, fewer of the partnerships natives built over time.",
+        },
+        {
+          tone: "healthy",
+          placeLabel: "Looking at native oak / chaparral instead",
+          text: "Healthy contrast: coast live oak and local shrubs keep the cast that evolved here.",
+        },
+      ],
+    },
+    {
+      id: "l3-missing-apex",
+      level: 3,
+      title: "Missing pieces (under the postcard)",
+      placeTags: ["garden", "urban", "coast", "woodland"],
+      placeHint: "Big-picture landscape story",
+      blurb: "Why a “pretty” countryside can still be running on empty — the tourist view skips this.",
+      lookFor:
+        "No close-up needed. Notice a quiet wood, heavy deer browse, or a landscape that feels full of plants but thin on balance — then open this card.",
+      story:
+        "England’s green hills photograph like a vacation dream. Under that polish, wildlife has been doing poorly in places where certain apex predators were wiped out — the top of the food web removed, and everything downstream gone weird: too many browsers, quieter woods, species hanging on in a system already off-kilter. You don’t see that on the tour bus. Same idea anywhere: what’s missing matters as much as what’s cute in the frame.",
+      care: "Don’t chase predators or stage encounters. The mission is understanding the system — then supporting the living neighborhood you can actually help (habitat, natives, not harassing wildlife).",
+      visual: "story",
+    },
+    {
+      id: "l3-houseplant-boundary",
+      level: 3,
+      title: "Houseplant vs wild",
+      placeTags: ["garden", "urban"],
+      placeHint: "Indoor sweetheart vs outdoor world",
+      blurb: "A philodendron on a sill is fine. “Freed” into a CA yard is a different story.",
+      lookFor: "Sweetheart / heartleaf philodendron indoors — or someone planting tropicals outside.",
+      story:
+        "Gift-shop green isn’t the same as neighborhood wildlife. Level 3 is noticing the boundary tourists skip: indoor pet plant vs outdoor living web.",
+      care: "Keep tropical houseplants indoors. Don’t dump them in parks or creek edges.",
+      visual: "meanings",
+      meanings: [
+        {
+          tone: "healthy",
+          placeLabel: "On a windowsill (indoors)",
+          text: "Fine. It’s a house companion — not a claim about local wild health.",
+        },
+        {
+          tone: "meh",
+          placeLabel: "Patio décor, still contained",
+          text: "Meh if it never escapes — still zero native food-web credit.",
+        },
+        {
+          tone: "warning",
+          placeLabel: "Dumped or planted into CA wild / creek edges",
+          text: "Warning. Wrong climate story outdoors; dumping houseplants can seed problems natives didn’t ask for.",
+        },
+      ],
     },
   ];
 
@@ -169,6 +353,15 @@
     } catch (e) {}
   }
 
+  function countDoneIn(list) {
+    var done = readDone();
+    var n = 0;
+    (list || []).forEach(function (q) {
+      if (done[q.id]) n += 1;
+    });
+    return n;
+  }
+
   function isPeeking() {
     try {
       return localStorage.getItem(PEEK_KEY) === "1";
@@ -195,9 +388,9 @@
     return typeof window !== "undefined" ? window.BanePlaceLens : null;
   }
 
-  function questsForHabitat(habitat) {
-    if (!habitat) return QUESTS.slice();
-    return QUESTS.filter(function (q) {
+  function questsForHabitat(list, habitat) {
+    if (!habitat) return list.slice();
+    return list.filter(function (q) {
       return q.placeTags.indexOf(habitat) >= 0;
     });
   }
@@ -307,37 +500,38 @@
     );
   }
 
-  function renderBoard(unlocked) {
-    var grid = document.getElementById("missionGrid");
-    var board = document.getElementById("missionBoard");
-    var hint = document.getElementById("boardHint");
-    if (!grid || !board) return;
+  function meaningsHtml(meanings) {
+    if (!meanings || !meanings.length) return "";
+    var bits = [
+      '<div class="meaning-stack">',
+      '<p class="ant-reveal__label">Same organism · different place meaning</p>',
+    ];
+    meanings.forEach(function (m) {
+      bits.push(
+        '<article class="meaning-card meaning-card--' +
+          (m.tone || "meh") +
+          '">' +
+          '<p class="meaning-card__tone"></p>' +
+          '<p class="meaning-card__place"></p>' +
+          '<p class="meaning-card__text"></p>' +
+          "</article>"
+      );
+    });
+    bits.push("</div>");
+    var wrap = document.createElement("div");
+    wrap.innerHTML = bits.join("");
+    var cards = wrap.querySelectorAll(".meaning-card");
+    meanings.forEach(function (m, i) {
+      var toneLabel =
+        m.tone === "healthy" ? "Healthy sign" : m.tone === "warning" ? "Warning" : "Meh";
+      cards[i].querySelector(".meaning-card__tone").textContent = toneLabel;
+      cards[i].querySelector(".meaning-card__place").textContent = m.placeLabel || "";
+      cards[i].querySelector(".meaning-card__text").textContent = m.text || "";
+    });
+    return wrap.innerHTML;
+  }
 
-    var habitat = currentHabitat();
-    var list = questsForHabitat(habitat);
-    var done = readDone();
-
-    if (hint) {
-      hint.textContent = habitat
-        ? "Showing missions that fit your looking-at habitat (" +
-          habitat +
-          "). Signature signs only."
-        : "Pick a looking-at place above to focus the board — or browse all.";
-    }
-
-    board.hidden = !unlocked;
-    if (!unlocked) {
-      grid.innerHTML = "";
-      return;
-    }
-
-    if (!list.length) {
-      grid.innerHTML =
-        '<p class="mission-board__hint">No missions tagged for this habitat yet — try garden, coast, or woodland.</p>';
-      return;
-    }
-
-    grid.innerHTML = "";
+  function appendQuestCards(grid, list, done) {
     list.forEach(function (q) {
       var btn = document.createElement("button");
       btn.type = "button";
@@ -355,6 +549,8 @@
       if (done[q.id]) {
         badge.textContent = "Done";
         badge.className = "mission-card__badge mission-card__badge--done";
+      } else if (q.level === 3) {
+        badge.textContent = q.visual === "meanings" ? "Place meanings" : "Big picture";
       } else if (q.visual === "ant") {
         badge.textContent = "Full visual";
       } else {
@@ -367,13 +563,68 @@
     });
   }
 
+  function renderBoard(l2Open, l3Open) {
+    var habitat = currentHabitat();
+    var done = readDone();
+    var board2 = document.getElementById("missionBoard");
+    var board3 = document.getElementById("missionBoardL3");
+    var grid2 = document.getElementById("missionGrid");
+    var grid3 = document.getElementById("missionGridL3");
+    var hint2 = document.getElementById("boardHint");
+    var hint3 = document.getElementById("boardHintL3");
+    var list2 = questsForHabitat(QUESTS_L2, habitat);
+    var list3 = questsForHabitat(QUESTS_L3, habitat);
+
+    if (hint2) {
+      hint2.textContent = habitat
+        ? "Level 2 · habitat " + habitat + " · signature signs only · no dangerous close-ups."
+        : "Level 2 · beginning missions · signature signs · pick a looking-at place or browse all.";
+    }
+    if (hint3) {
+      hint3.textContent = habitat
+        ? "Level 3 · habitat " +
+          habitat +
+          " · same face, different meaning · under-the-hood (not tourist postcard)."
+        : "Level 3 · place meanings + landscape stories tourists usually miss.";
+    }
+
+    if (board2) board2.hidden = !l2Open;
+    if (board3) board3.hidden = !l3Open;
+
+    if (grid2) {
+      grid2.innerHTML = "";
+      if (l2Open) {
+        if (!list2.length) {
+          grid2.innerHTML =
+            '<p class="mission-board__hint">No Level 2 missions for this habitat — try garden, coast, or woodland.</p>';
+        } else {
+          appendQuestCards(grid2, list2, done);
+        }
+      }
+    }
+
+    if (grid3) {
+      grid3.innerHTML = "";
+      if (l3Open) {
+        if (!list3.length) {
+          grid3.innerHTML =
+            '<p class="mission-board__hint">No Level 3 missions for this habitat — try another looking-at place.</p>';
+        } else {
+          appendQuestCards(grid3, list3, done);
+        }
+      }
+    }
+  }
+
   function openMission(q) {
     var dialog = document.getElementById("missionDialog");
     var body = document.getElementById("missionDialogBody");
     if (!dialog || !body) return;
 
     var done = readDone();
-    var visualBlock = q.visual === "ant" ? antRevealHtml() : "";
+    var visualBlock = "";
+    if (q.visual === "ant") visualBlock = antRevealHtml();
+    else if (q.visual === "meanings") visualBlock = meaningsHtml(q.meanings);
 
     body.innerHTML =
       '<p class="mission-story__kicker" id="missionDialogTitle"></p>' +
@@ -387,8 +638,15 @@
       '<button type="button" class="btn primary" id="missionCompleteBtn"></button>' +
       "</div>";
 
-    body.querySelector(".mission-story__kicker").textContent =
-      q.visual === "ant" ? "Signature sign · visual adventure" : "Signature sign · story adventure";
+    var kicker =
+      q.level === 3
+        ? q.visual === "meanings"
+          ? "Level 3 · place meanings"
+          : "Level 3 · under the postcard"
+        : q.visual === "ant"
+          ? "Level 2 · signature sign · visual adventure"
+          : "Level 2 · signature sign · story adventure";
+    body.querySelector(".mission-story__kicker").textContent = kicker;
     body.querySelector(".mission-story__title").textContent = q.title;
     body.querySelector("[data-look]").textContent = q.lookFor;
     body.querySelector("[data-story]").textContent = q.story;
@@ -406,7 +664,7 @@
         writeDone(map);
         completeBtn.textContent = "Completed";
         completeBtn.disabled = true;
-        renderBoard(true);
+        refresh();
       });
     }
 
@@ -414,13 +672,15 @@
     else dialog.setAttribute("open", "open");
   }
 
-  function updateUnlockUi(finds, unlocked) {
+  function updateUnlockUi(finds, l2Done, l2Open, l3Open) {
     var copy = document.getElementById("unlockCopy");
     var meta = document.getElementById("unlockMeta");
     var fill = document.getElementById("unlockFill");
     var bar = document.getElementById("unlockBar");
     var peekBtn = document.getElementById("peekBtn");
+    var l3Meta = document.getElementById("unlockL3Meta");
     var pct = Math.min(100, Math.round((finds / UNLOCK_FINDS) * 100));
+    var peek = isPeeking();
 
     if (fill) fill.style.width = pct + "%";
     if (bar) {
@@ -428,41 +688,78 @@
       bar.setAttribute("aria-valuemax", String(UNLOCK_FINDS));
     }
 
-    if (unlocked && finds >= UNLOCK_FINDS) {
+    if (l3Meta) {
+      l3Meta.textContent = l3Open
+        ? "Level 3 open — place meanings & under-the-hood stories (not tourist postcard facts)."
+        : "Level 3 unlocks after " +
+          L3_NEED_L2 +
+          " Level 2 missions done (" +
+          l2Done +
+          " / " +
+          L3_NEED_L2 +
+          ").";
+    }
+
+    if (peek) {
       if (copy) {
         copy.textContent =
-          "Missions unlocked. Beginner scans taught you faces — these cards are homes, signs, and care.";
-      }
-      if (meta) meta.textContent = finds + " finds on this device (need " + UNLOCK_FINDS + ").";
-      if (peekBtn) peekBtn.hidden = true;
-    } else if (unlocked && isPeeking()) {
-      if (copy) {
-        copy.textContent =
-          "Peek mode (owner beta). Earn " +
+          "Peek mode (owner beta). Real unlocks: " +
           UNLOCK_FINDS +
-          " finds for a real unlock — board is open so you can try the ant reveal.";
+          " finds → Level 2; " +
+          L3_NEED_L2 +
+          " Level 2 missions → Level 3.";
       }
       if (meta) {
-        meta.textContent = finds + " / " + UNLOCK_FINDS + " finds so far.";
+        meta.textContent =
+          finds +
+          " / " +
+          UNLOCK_FINDS +
+          " finds · Level 2 done " +
+          l2Done +
+          " / " +
+          L3_NEED_L2 +
+          ".";
       }
       if (peekBtn) {
         peekBtn.hidden = false;
         peekBtn.textContent = "Exit peek";
       }
-    } else {
+      return;
+    }
+
+    if (l2Open) {
       if (copy) {
-        copy.textContent =
-          "Learn " +
-          UNLOCK_FINDS +
-          " wildlife finds (scans) first — then missions open. Same neighborhood; bigger stories.";
+        copy.textContent = l3Open
+          ? "Levels 2 and 3 open. Level 1 was scans — now signs, care, and place meanings."
+          : "Level 2 open. Finish " +
+            L3_NEED_L2 +
+            " of these beginning missions to unlock Level 3.";
       }
       if (meta) {
-        meta.textContent = finds + " / " + UNLOCK_FINDS + " finds so far.";
+        meta.textContent =
+          finds +
+          " finds · Level 2 missions done " +
+          l2Done +
+          " / " +
+          L3_NEED_L2 +
+          ".";
       }
-      if (peekBtn) {
-        peekBtn.hidden = false;
-        peekBtn.textContent = "Peek the board (owner beta)";
-      }
+      if (peekBtn) peekBtn.hidden = true;
+      return;
+    }
+
+    if (copy) {
+      copy.textContent =
+        "Level 1 = scans. Level 2 opens after " +
+        UNLOCK_FINDS +
+        " finds. Level 3 after " +
+        L3_NEED_L2 +
+        " Level 2 missions.";
+    }
+    if (meta) meta.textContent = finds + " / " + UNLOCK_FINDS + " finds so far.";
+    if (peekBtn) {
+      peekBtn.hidden = false;
+      peekBtn.textContent = "Peek the boards (owner beta)";
     }
   }
 
@@ -470,9 +767,12 @@
     var coll = window.BaneCodexCollection;
     var entries = coll && coll.readAll ? coll.readAll() : [];
     var finds = totalFinds(entries);
-    var unlocked = finds >= UNLOCK_FINDS || isPeeking();
-    updateUnlockUi(finds, unlocked);
-    renderBoard(unlocked);
+    var l2Done = countDoneIn(QUESTS_L2);
+    var peek = isPeeking();
+    var l2Open = finds >= UNLOCK_FINDS || peek;
+    var l3Open = (l2Open && l2Done >= L3_NEED_L2) || peek;
+    updateUnlockUi(finds, l2Done, l2Open, l3Open);
+    renderBoard(l2Open, l3Open);
   }
 
   function boot() {

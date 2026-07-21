@@ -6,7 +6,7 @@
   <meta name="robots" content="noindex, nofollow" />
   <title>Neighborhood missions — Bane of Extinction</title>
   <link rel="stylesheet" href="bane.css?v=live7" />
-  <link rel="stylesheet" href="bane-missions.css?v=live2" />
+  <link rel="stylesheet" href="bane-missions.css?v=live3" />
 </head>
 <body>
   <div class="wrap wrap--wide">
@@ -14,8 +14,10 @@
       <p class="eyebrow"><a href="index.html">Bane of Extinction</a> · owner beta</p>
       <h1 class="brand">Neighborhood missions</h1>
       <p class="tagline">
-        After you learn enough faces nearby, open adventure cards about homes, signs, and care —
-        not a second ID grind. No GPS. Stay on the path; don’t bother wildlife.
+        <strong>Level 1</strong> = scans (meet the neighbor).
+        <strong>Level 2</strong> = beginning missions (homes, signs, care).
+        <strong>Level 3</strong> = place meanings &amp; under-the-hood landscape stories — not tourist postcard facts.
+        No GPS. Don’t get too close.
       </p>
       <p class="note" role="note">
         <strong>Don’t get too close.</strong> No quest needs a risky close-up. A calm yard squirrel a few feet away is one thing;
@@ -29,22 +31,31 @@
     </section>
 
     <section class="panel mission-unlock" id="missionUnlock" aria-live="polite">
-      <h2 class="mission-unlock__title">Mission unlock</h2>
+      <h2 class="mission-unlock__title">Progress</h2>
       <p class="mission-unlock__copy" id="unlockCopy">Checking your learned finds…</p>
       <div class="mission-unlock__bar" role="progressbar" aria-valuemin="0" aria-valuemax="15" aria-valuenow="0" id="unlockBar">
         <div class="mission-unlock__fill" id="unlockFill"></div>
       </div>
       <p class="mission-unlock__meta" id="unlockMeta"></p>
-      <button type="button" class="btn secondary" id="peekBtn" hidden>Peek the board (owner beta)</button>
+      <p class="mission-unlock__meta" id="unlockL3Meta"></p>
+      <button type="button" class="btn secondary" id="peekBtn" hidden>Peek the boards (owner beta)</button>
     </section>
 
-    <section class="mission-board" id="missionBoard" aria-label="Mission board" hidden>
-      <h2 class="mission-board__title">Open adventures</h2>
+    <section class="mission-board" id="missionBoard" aria-label="Level 2 mission board" hidden>
+      <h2 class="mission-board__title">Level 2 — beginning missions</h2>
       <p class="mission-board__hint" id="boardHint">
         Signature signs only — easy tells that can name a real species. Filtered by your looking-at place.
         Nothing here needs a dangerous close-up.
       </p>
       <div class="mission-board__grid" id="missionGrid"></div>
+    </section>
+
+    <section class="mission-board mission-board--l3" id="missionBoardL3" aria-label="Level 3 mission board" hidden>
+      <h2 class="mission-board__title">Level 3 — place meanings</h2>
+      <p class="mission-board__hint" id="boardHintL3">
+        Same organism, different meaning by place — healthy, meh, or warning — plus landscape stories you usually miss on vacation.
+      </p>
+      <div class="mission-board__grid" id="missionGridL3"></div>
     </section>
 
     <dialog class="mission-dialog" id="missionDialog" aria-labelledby="missionDialogTitle">
@@ -62,6 +73,6 @@
   </div>
   <script src="bane-place-lens.js?v=live1"></script>
   <script src="bane-codex-collection.js?v=live2"></script>
-  <script src="bane-missions.js?v=live2"></script>
+  <script src="bane-missions.js?v=live3"></script>
 </body>
 </html>

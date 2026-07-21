@@ -38,6 +38,78 @@
   transition: width 0.45s ease;
 }
 
+.mission-board--l3 {
+  margin-top: 0.25rem;
+  padding-top: 0.25rem;
+  border-top: 1px solid var(--line);
+}
+
+.meaning-stack {
+  margin: 1rem 0 0.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.meaning-card {
+  padding: 0.75rem 0.85rem;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: rgba(0, 0, 0, 0.22);
+}
+
+.meaning-card__tone {
+  margin: 0 0 0.25rem;
+  font-family: system-ui, sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.meaning-card__place {
+  margin: 0 0 0.35rem;
+  font-family: system-ui, sans-serif;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.meaning-card__text {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  font-size: 0.9rem;
+  color: rgba(232, 242, 234, 0.88);
+  line-height: 1.45;
+}
+
+.meaning-card--healthy {
+  border-color: rgba(107, 196, 138, 0.4);
+  background: rgba(107, 196, 138, 0.08);
+}
+
+.meaning-card--healthy .meaning-card__tone {
+  color: var(--accent);
+}
+
+.meaning-card--meh {
+  border-color: rgba(212, 180, 106, 0.4);
+  background: rgba(212, 180, 106, 0.08);
+}
+
+.meaning-card--meh .meaning-card__tone {
+  color: var(--warn);
+}
+
+.meaning-card--warning {
+  border-color: rgba(232, 160, 144, 0.45);
+  background: rgba(232, 160, 144, 0.1);
+}
+
+.meaning-card--warning .meaning-card__tone {
+  color: #e8a090;
+}
+
 .mission-board {
   margin-bottom: 1.75rem;
 }

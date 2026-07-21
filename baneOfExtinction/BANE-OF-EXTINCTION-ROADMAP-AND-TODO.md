@@ -195,6 +195,7 @@ After the still “freezes” on the codex card:
 - [x] Place lens stack on codex (favorites like Halalit libraries; looking-at + compare; browse-by-area; season; no GPS)
 - [x] Callouts API accepts place lens (localStatus / compareNote; place-aware help tips)
 - [x] Neighborhood missions v1 — unlock after ~15 finds; signature-sign quests; ant mound full visual (with/without + cutaway); other quests story cards
+- [x] Level ladder labeled: L1 scans → L2 beginning missions → L3 place meanings / under-the-hood (after 3 L2 missions)
 - [ ] Per-species permanent art library / cloud cache (optional later)
 - [ ] Leader-lines from callouts to exact body-part anchors on stylized art
 - [ ] Platform polish (PWA optional; no GPS required)
@@ -251,6 +252,7 @@ Owner pins from chat go here.
 - [x] Beginner scans = meet the neighbor; missions = homes / signs / care + adventure reveals (dramatic without melodrama)
 - [x] Ant mission: animated with/without garden compare + underground cross-section
 - [x] Don’t-get-too-close rule of thumb on home, scan, missions (and each mission card) — no risky close-ups; signs OK for biting/surprising animals
+- [x] Level 3 starter pack: ice plant / ivy / poppy / eucalyptus place meanings; missing-apex under-the-postcard story; houseplant boundary
 
 ### 2026-07-10 — original design chat
 
