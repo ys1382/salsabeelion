@@ -207,7 +207,7 @@ Last updated: 2026-07-17
 - **Neighborhood missions** — `/bane-of-extinction/missions.html`
   - **Level 1** = scans (codex faces)
   - **Level 2** after ~15 finds — signature-sign quests; ant mound with/without + cutaway
-  - **Level 3** after a few Level 2 missions — same organism healthy/meh/warning by place + under-the-hood landscape stories (not tourist postcard facts)
+  - **Level 3** after a handful of Level 2 missions (**5**) — same organism healthy/meh/warning by place + under-the-hood landscape stories (not tourist postcard facts)
 - Deploy: `bash top/scripts/deploy-bane-of-extinction.sh` (ports **8085** static + **8086** API; reloads nginx by default)
 
 **Cannot do without new work:**
