@@ -378,6 +378,7 @@
     body.innerHTML =
       '<p class="mission-story__kicker" id="missionDialogTitle"></p>' +
       '<h3 class="mission-story__title"></h3>' +
+      '<p class="note mission-story__distance" role="note"><strong>Don’t get too close.</strong> This quest works from a safe distance or from signs — never crowd animals that can bite, scratch, or surprise you.</p>' +
       '<p class="mission-story__look"><strong>Look for:</strong> <span data-look></span></p>' +
       '<p class="mission-story__body" data-story></p>' +
       '<p class="mission-story__care"><strong>Care:</strong> <span data-care></span></p>' +

@@ -32,6 +32,7 @@
 - Collection language: **“learned”** / codex entry — never “caught.”
 - Quiet-walk mode encouraged.
 - Stops (if any) = QR at **human** places (signs, gardens), not animal spots.
+- **Don’t get too close (rule of thumb):** No scan or mission needs a risky close-up. Calm animals you already share space with (e.g. a squirrel a few feet away in a yard) are one thing; animals that can bite, scratch, or surprise you (opossum, raccoon, skunk, coyote, snakes, nest defenders, etc.) are another — stay back, use zoom/path distance, or switch to **signs** (tracks, nests, feathers, mounds). Prefer evidence over crowding the animal.
 
 ### Privacy (Halalit-style camera)
 
@@ -249,6 +250,7 @@ Owner pins from chat go here.
 - [x] Explicitly not shipping: squirrel fruit, slug trails, paper nests, oak galls, outside checkbox, photo-vs-screen detection
 - [x] Beginner scans = meet the neighbor; missions = homes / signs / care + adventure reveals (dramatic without melodrama)
 - [x] Ant mission: animated with/without garden compare + underground cross-section
+- [x] Don’t-get-too-close rule of thumb on home, scan, missions (and each mission card) — no risky close-ups; signs OK for biting/surprising animals
 
 ### 2026-07-10 — original design chat
 

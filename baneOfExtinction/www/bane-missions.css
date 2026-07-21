@@ -173,6 +173,10 @@
   line-height: 1.2;
 }
 
+.mission-story__distance {
+  margin: 0 0 0.85rem;
+}
+
 .mission-story__look,
 .mission-story__body,
 .mission-story__care {
