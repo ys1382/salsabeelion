@@ -19,8 +19,11 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         super().__init__(*args, directory=DIRECTORY, **kwargs)
 
     def end_headers(self):
-        path = self.path.split("?", 1)[0].lower()
-        if path.endswith(
+        path = self.path.split("?", 1)[0].lower().rstrip("/")
+        # HTML (and directory index) must revalidate so asset ?v= cache-bust works.
+        if not path or path.endswith(".html"):
+            self.send_header("Cache-Control", "no-cache")
+        elif path.endswith(
             (
                 ".js",
                 ".css",
