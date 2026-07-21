@@ -14,7 +14,8 @@ Working name: **Habit Tree**. Private habit companion ideas (Odd Trove). Owner-o
 
 ### Companion options
 
-- [x] **Orchid mantis** — real ootheca egg case; hatch with nymphs; 6 painted frames through Full bloom as care continues; painting fills the scene panel
+- [x] **Orchid mantis** — painted frames 0–15 (egg → full bloom → sparse additive elegance); ~10 taps per frame; forward only (no ping-pong); holds peak until more frames are added
+- [x] **Forever creature growth** — SVG companions keep gaining elegance on themselves past adult; mantis uses real painted stills (additive ladder, not scenery overlays)
 - [ ] **Peacock** — moon phases on the tail instead of the usual eyespot pattern
 - [ ] **Reindeer** — ice/snow colors; horns of snow/ice in a snowflake-esque shape, sturdy not delicate
 - [ ] **Red stag** — fall-color coat; antler tines that end in candle flame

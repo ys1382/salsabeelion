@@ -2,13 +2,45 @@
   "use strict";
 
   var STORAGE_KEY = "habitTree.v0";
-  var CARE_PER_STAGE = 2;
+  var CARE_PER_STAGE = 10;
 
   var STAGE_LABELS = {
     hatch: ["Egg", "Cracking", "Hatched", "Grown"],
     grow: ["Young", "Growing", "Nearly grown", "Grown"],
-    mantis: ["Egg case", "Hatching", "Hatched", "Growing", "Blooming", "Full bloom"],
+    mantis: [
+      "Egg case",
+      "Hatching",
+      "Hatched",
+      "Growing",
+      "Blooming",
+      "Full bloom",
+      "Poised",
+      "Graceful",
+      "Refined",
+      "Radiant",
+      "Noble",
+      "Resplendent",
+      "Luminous",
+      "Ethereal",
+      "Ornate",
+      "Timeless",
+    ],
   };
+
+  var MANTIS_FRAMES = 16;
+  var MANTIS_BLOOM = 5;
+
+  /* After adult, creature elegance keeps changing — not the scenery. */
+  var ELEGANCE_LABELS = [
+    "Poised",
+    "Graceful",
+    "Refined",
+    "Radiant",
+    "Noble",
+    "Resplendent",
+    "Luminous",
+    "Timeless",
+  ];
 
   var COMPANIONS = [
     { id: "orchid-mantis", name: "Orchid mantis", kind: "hatch", draw: "mantis" },
@@ -55,16 +87,62 @@
   }
 
   function maxStageFor(companion) {
-    if (companion.draw === "mantis") return 5;
+    if (companion.draw === "mantis") return MANTIS_FRAMES - 1;
     return 3;
   }
 
+  function rawGrowthStep(care) {
+    return Math.floor(Math.max(0, care) / CARE_PER_STAGE);
+  }
+
+  /* Painted mantis: 0–15 stills forward only; hold peak after last frame (no ping-pong). */
+  function mantisFrameFromCare(care) {
+    var step = rawGrowthStep(care);
+    var max = MANTIS_FRAMES - 1;
+    if (step < 0) return 0;
+    if (step > max) return max;
+    return step;
+  }
+
   function stageFromCare(care, companion) {
+    if (companion && companion.draw === "mantis") {
+      return mantisFrameFromCare(care);
+    }
     var max = companion ? maxStageFor(companion) : 3;
-    var s = Math.floor(care / CARE_PER_STAGE);
+    var s = rawGrowthStep(care);
     if (s > max) s = max;
     if (s < 0) s = 0;
     return s;
+  }
+
+  /* Extra creature polish past adult — never caps. */
+  function eleganceFromCare(care, companion) {
+    if (companion && companion.draw === "mantis") {
+      return Math.max(0, rawGrowthStep(care) - MANTIS_BLOOM);
+    }
+    var max = companion ? maxStageFor(companion) : 3;
+    return Math.max(0, rawGrowthStep(care) - max);
+  }
+
+  function growthLabel(care, companion) {
+    var step = rawGrowthStep(care);
+    var e;
+    var name;
+    if (companion.draw === "mantis") {
+      if (step < STAGE_LABELS.mantis.length) {
+        return STAGE_LABELS.mantis[mantisFrameFromCare(care)];
+      }
+      /* Past painted ladder — stay on peak look; label can still note continued care. */
+      e = step - MANTIS_BLOOM;
+      return "Timeless · " + e;
+    }
+    var max = maxStageFor(companion);
+    var labels = STAGE_LABELS[companion.kind];
+    if (step <= max) return labels[Math.min(step, max)];
+    e = step - max;
+    name = ELEGANCE_LABELS[(e - 1) % ELEGANCE_LABELS.length];
+    if (e > ELEGANCE_LABELS.length) return name + " · " + e;
+    return name;
   }
 
   function svgDefs() {
@@ -225,28 +303,23 @@
     );
   }
 
-  function drawMantis() {
+  function drawMantis(stage) {
+    var frame = Math.max(0, Math.min(stage || 0, MANTIS_FRAMES - 1));
     var base = "art/orchid-mantis/";
-    var bust = "20260720f";
-    var labels = STAGE_LABELS.mantis;
-    var html = "";
-    var i;
-    for (i = 0; i < 6; i++) {
-      html +=
-        '<div class="layer layer-' +
-        i +
-        ' frame-still">' +
-        '<img src="' +
-        base +
-        i +
-        ".png?v=" +
-        bust +
-        '" alt="Orchid mantis — ' +
-        labels[i] +
-        '" width="512" height="512" decoding="async" />' +
-        "</div>";
-    }
-    return html;
+    var bust = "20260721a";
+    var label = STAGE_LABELS.mantis[Math.min(frame, STAGE_LABELS.mantis.length - 1)];
+    return (
+      '<div class="frame-still mantis-frame">' +
+      '<img src="' +
+      base +
+      frame +
+      ".png?v=" +
+      bust +
+      '" alt="Orchid mantis — ' +
+      label +
+      '" width="512" height="512" decoding="async" />' +
+      "</div>"
+    );
   }
 
   function moonPhase(cx, cy, r, phase) {
@@ -307,50 +380,121 @@
     );
   }
 
-  function peacockStill(grown) {
-    var fan = grown
-      ? peacockFeatherStill(48, 78, 22, 42, "#1f4d42", 6.5, 9, 0) +
+  /* Adult body size stays fixed; elegance adds plumage detail on the bird. */
+  function peacockStill(grown, elegance) {
+    var e = elegance || 0;
+    var fan;
+    var crest;
+    var sheen;
+    var i;
+    var t;
+    var tipX;
+    var tipY;
+    var qx;
+    var qy;
+    var colors = ["#1f4d42", "#2f6b5a", "#3a7f6a", "#2a6a58", "#245f4a"];
+    var phases = [0, 1, 4, 2, 3, 1, 2, 4, 0, 3];
+
+    if (!grown) {
+      fan =
+        peacockFeatherStill(62, 72, 40, 48, "#2f6b5a", 7, 7.5, 1) +
+        peacockFeatherStill(100, 50, 100, 32, "#3a7f6a", 8, 8.5, 4) +
+        peacockFeatherStill(138, 72, 160, 48, "#2f6b5a", 7, 7.5, 2);
+      crest =
+        '<path d="M100 54 L100 42" stroke="#c9a24a" stroke-width="2.4" stroke-linecap="round"/>' +
+        '<path d="M100 42 Q94 34 90 36 M100 42 Q106 34 110 36 M100 40 Q100 30 100 28" fill="none" stroke="#3a7f6a" stroke-width="2" stroke-linecap="round"/>';
+    } else {
+      fan =
+        peacockFeatherStill(48, 78, 22, 42, "#1f4d42", 6.5, 9, 0) +
         peacockFeatherStill(68, 55, 48, 24, "#2f6b5a", 7, 8, 1) +
         peacockFeatherStill(100, 42, 100, 14, "#3a7f6a", 8.5, 10, 4) +
         peacockFeatherStill(132, 55, 152, 24, "#2f6b5a", 7, 8, 2) +
-        peacockFeatherStill(152, 78, 178, 42, "#1f4d42", 6.5, 9, 3)
-      : peacockFeatherStill(62, 72, 40, 48, "#2f6b5a", 7, 7.5, 1) +
-        peacockFeatherStill(100, 50, 100, 32, "#3a7f6a", 8, 8.5, 4) +
-        peacockFeatherStill(138, 72, 160, 48, "#2f6b5a", 7, 7.5, 2);
+        peacockFeatherStill(152, 78, 178, 42, "#1f4d42", 6.5, 9, 3);
+      /* More train feathers — same adult body, richer fan. */
+      for (i = 0; i < Math.min(e, 12); i++) {
+        t = (i + 0.5) / (Math.min(e, 12) + 1);
+        tipX = 22 + t * 156;
+        tipY = 18 + Math.abs(t - 0.5) * 36 + (i % 3) * 3;
+        qx = 50 + t * 100;
+        qy = 48 + (i % 2) * 8;
+        fan += peacockFeatherStill(
+          qx,
+          qy,
+          tipX,
+          tipY,
+          colors[i % colors.length],
+          5.2 + (i % 3) * 0.4,
+          6.5 + (i % 4) * 0.4,
+          phases[i % phases.length]
+        );
+      }
+      crest =
+        '<path d="M100 54 L100 40" stroke="#c9a24a" stroke-width="2.4" stroke-linecap="round"/>' +
+        '<path d="M100 42 Q94 34 90 36 M100 42 Q106 34 110 36 M100 40 Q100 28 100 24" fill="none" stroke="#3a7f6a" stroke-width="2" stroke-linecap="round"/>';
+      for (i = 0; i < Math.min(e, 6); i++) {
+        crest +=
+          '<path d="M100 44 Q' +
+          (92 - i * 2) +
+          " " +
+          (30 - i) +
+          " " +
+          (86 - i * 3) +
+          " " +
+          (32 - i) +
+          '" fill="none" stroke="#3a7f6a" stroke-width="1.6" stroke-linecap="round"/>' +
+          '<path d="M100 44 Q' +
+          (108 + i * 2) +
+          " " +
+          (30 - i) +
+          " " +
+          (114 + i * 3) +
+          " " +
+          (32 - i) +
+          '" fill="none" stroke="#3a7f6a" stroke-width="1.6" stroke-linecap="round"/>';
+      }
+    }
+
+    sheen =
+      grown && e > 0
+        ? '<ellipse cx="102" cy="118" rx="10" ry="8" fill="#9fd4e8" opacity="' +
+          Math.min(0.35, 0.1 + e * 0.02).toFixed(3) +
+          '"/>'
+        : "";
 
     return (
       '<ellipse cx="100" cy="162" rx="30" ry="6" fill="rgba(30,50,30,0.28)"/>' +
       fan +
-      /* legs */
       '<path d="M94 140 L90 158 M90 158 L84 160" stroke="#c9a24a" stroke-width="2.8" stroke-linecap="round"/>' +
       '<path d="M108 140 L112 158 M112 158 L118 160" stroke="#c9a24a" stroke-width="2.8" stroke-linecap="round"/>' +
-      /* body */
       '<ellipse cx="102" cy="128" rx="24" ry="28" fill="url(#peacockBody)"/>' +
+      sheen +
       '<ellipse cx="102" cy="120" rx="14" ry="12" fill="#3486a8" opacity="0.5"/>' +
-      /* wing hint */
       '<ellipse cx="86" cy="126" rx="10" ry="16" fill="#245f7a" opacity="0.55" transform="rotate(-18 86 126)"/>' +
       '<ellipse cx="118" cy="126" rx="10" ry="16" fill="#245f7a" opacity="0.55" transform="rotate(18 118 126)"/>' +
-      /* neck + head */
       '<path d="M102 108 C108 92 108 78 102 68" fill="none" stroke="url(#peacockNeck)" stroke-width="12" stroke-linecap="round"/>' +
       '<ellipse cx="100" cy="62" rx="12" ry="11" fill="#245f7a"/>' +
       '<circle cx="96" cy="60" r="2.2" fill="#f4f0e4"/>' +
       '<circle cx="104" cy="60" r="2.2" fill="#f4f0e4"/>' +
-      '<path d="M100 54 L100 42" stroke="#c9a24a" stroke-width="2.4" stroke-linecap="round"/>' +
-      '<path d="M100 42 Q94 34 90 36 M100 42 Q106 34 110 36 M100 40 Q100 30 100 28" fill="none" stroke="#3a7f6a" stroke-width="2" stroke-linecap="round"/>'
+      crest
     );
   }
 
-  function drawPeacock() {
+  function drawPeacock(stage, elegance) {
+    var body;
+    if (stage <= 0) {
+      body = eggStill('<ellipse cx="100" cy="118" rx="34" ry="44" fill="#d6e8ef" opacity="0.22"/>');
+    } else if (stage === 1) {
+      body = crackEggStill();
+    } else if (stage === 2) {
+      body = peacockStill(false, 0);
+    } else {
+      body = peacockStill(true, elegance || 0);
+    }
     return (
       '<svg viewBox="0 0 200 180" role="img" aria-label="Peacock">' +
       svgDefs() +
-      eggStill('<ellipse cx="100" cy="118" rx="34" ry="44" fill="#d6e8ef" opacity="0.22"/>') +
-      crackEggStill() +
-      '<g class="layer layer-2">' +
-      peacockStill(false) +
-      "</g>" +
-      '<g class="layer layer-3">' +
-      peacockStill(true) +
+      "<g>" +
+      body +
       "</g>" +
       "</svg>"
     );
@@ -365,7 +509,6 @@
       '<ellipse cx="100" cy="162" rx="' +
       34 * s +
       '" ry="6" fill="rgba(30,50,30,0.28)"/>' +
-      /* legs — filled tapered */
       '<path d="M' +
       (100 - 16 * s) +
       " " +
@@ -462,7 +605,6 @@
       '" fill="' +
       dark +
       '"/>' +
-      /* body + haunch */
       '<ellipse cx="98" cy="' +
       cy +
       '" rx="' +
@@ -483,7 +625,6 @@
       '" fill="' +
       fill +
       '"/>' +
-      /* neck */
       '<path d="M' +
       (100 + 14 * s) +
       " " +
@@ -501,7 +642,6 @@
       '" stroke-width="' +
       15 * s +
       '" stroke-linecap="round"/>' +
-      /* head */
       '<ellipse cx="' +
       hx +
       '" cy="' +
@@ -533,7 +673,6 @@
       '" fill="' +
       dark +
       '"/>' +
-      /* ears */
       '<ellipse cx="' +
       (hx - 4 * s) +
       '" cy="' +
@@ -584,7 +723,61 @@
     );
   }
 
-  function drawDeerFamily(opts) {
+  /* Extra antler tines + coat sheen on the animal — body scale stays adult. */
+  function deerEleganceExtra(elegance, antlerStroke, tipExtra) {
+    var e = elegance || 0;
+    var out = tipExtra || "";
+    var i;
+    var sheen;
+    if (e <= 0) return out;
+    sheen =
+      '<ellipse cx="92" cy="112" rx="11" ry="6" fill="#fff6e8" opacity="' +
+      Math.min(0.32, 0.08 + e * 0.015).toFixed(3) +
+      '"/>' +
+      '<circle cx="134" cy="102" r="1.4" fill="#fff8e8" opacity="' +
+      Math.min(0.55, 0.2 + e * 0.02).toFixed(3) +
+      '"/>';
+    for (i = 0; i < Math.min(e, 10); i++) {
+      out +=
+        '<path d="M' +
+        (118 + (i % 3) * 2) +
+        " " +
+        (70 - i * 2) +
+        " Q" +
+        (112 - i) +
+        " " +
+        (58 - i * 2) +
+        " " +
+        (108 - i * 1.5) +
+        " " +
+        (48 - i) +
+        '" fill="none" stroke="' +
+        antlerStroke +
+        '" stroke-width="' +
+        (1.6 + (i % 3) * 0.25) +
+        '" stroke-linecap="round" opacity="0.85"/>' +
+        '<path d="M' +
+        (140 - (i % 3) * 2) +
+        " " +
+        (70 - i * 2) +
+        " Q" +
+        (146 + i) +
+        " " +
+        (58 - i * 2) +
+        " " +
+        (150 + i * 1.5) +
+        " " +
+        (48 - i) +
+        '" fill="none" stroke="' +
+        antlerStroke +
+        '" stroke-width="' +
+        (1.6 + (i % 3) * 0.25) +
+        '" stroke-linecap="round" opacity="0.85"/>';
+    }
+    return sheen + out;
+  }
+
+  function drawDeerFamily(opts, stage, elegance) {
     var fill = opts.fill;
     var youngFill = opts.youngFill || fill;
     var antlerStroke = opts.antlerStroke;
@@ -594,127 +787,186 @@
     var label = opts.label;
     var stubL = "M122 92 Q116 76 112 64";
     var stubR = "M134 92 Q140 76 144 64";
+    var e = elegance || 0;
+    var s = stage || 0;
+    var body;
+    var antlerW;
+
+    if (s <= 0) {
+      body = deerStill(youngFill, 0.72, "", "", antlerStroke, 2, "");
+    } else if (s === 1) {
+      body = deerStill(youngFill, 0.85, stubL, stubR, antlerStroke, 2.4, "");
+    } else if (s === 2) {
+      body = deerStill(fill, 0.95, antlerL, antlerR, antlerStroke, 2.9, tipExtra);
+    } else {
+      /* Adult size locked; elegance deepens antlers + sheen only. */
+      antlerW = 3.3 + Math.min(1.1, e * 0.06);
+      body = deerStill(
+        fill,
+        1,
+        antlerL,
+        antlerR,
+        antlerStroke,
+        antlerW,
+        deerEleganceExtra(e, antlerStroke, tipExtra)
+      );
+    }
 
     return (
       '<svg viewBox="0 0 200 180" role="img" aria-label="' +
       label +
       '">' +
       svgDefs() +
-      '<g class="layer layer-0">' +
-      deerStill(youngFill, 0.72, "", "", antlerStroke, 2, "") +
-      "</g>" +
-      '<g class="layer layer-1">' +
-      deerStill(youngFill, 0.85, stubL, stubR, antlerStroke, 2.4, "") +
-      "</g>" +
-      '<g class="layer layer-2">' +
-      deerStill(fill, 0.95, antlerL, antlerR, antlerStroke, 2.9, tipExtra) +
-      "</g>" +
-      '<g class="layer layer-3">' +
-      deerStill(fill, 1, antlerL, antlerR, antlerStroke, 3.3, tipExtra) +
+      "<g>" +
+      body +
       "</g>" +
       "</svg>"
     );
   }
 
   var DRAW = {
-    mantis: drawMantis,
-    peacock: drawPeacock,
-    reindeer: function () {
-      return drawDeerFamily({
-        label: "Reindeer",
-        fill: "#d8e4ef",
-        youngFill: "#e8eef4",
-        antlerStroke: "#b8d4ea",
-        antlerL: "M122 90 Q110 68 98 48 Q104 56 112 44 Q114 60 122 66",
-        antlerR: "M136 90 Q148 68 160 48 Q154 56 146 44 Q144 60 136 66",
-      });
+    mantis: function (stage) {
+      return drawMantis(stage);
     },
-    "red-stag": function () {
-      return drawDeerFamily({
-        label: "Red stag",
-        fill: "#a85a32",
-        youngFill: "#c48458",
-        antlerStroke: "#6b3a22",
-        antlerL: "M122 90 Q114 68 108 48 Q104 40 100 34",
-        antlerR: "M136 90 Q144 68 150 48 Q154 40 158 34",
-        tipExtra:
-          '<path d="M100 34 Q98 26 100 20" stroke="#e8a23a" stroke-width="3" stroke-linecap="round"/>' +
-          '<path d="M158 34 Q160 26 158 20" stroke="#e8a23a" stroke-width="3" stroke-linecap="round"/>',
-      });
+    peacock: function (stage, elegance) {
+      return drawPeacock(stage, elegance);
     },
-    "deer-fern": function () {
-      return drawDeerFamily({
-        label: "Barasingha fern antlers",
-        fill: "#8b6a45",
-        antlerStroke: "#4f7a3e",
-        antlerL: "M122 90 Q116 72 112 56 M112 70 Q104 64 100 54 M112 62 Q106 56 102 48",
-        antlerR: "M136 90 Q142 72 146 56 M146 70 Q154 64 158 54 M146 62 Q152 56 156 48",
-      });
+    reindeer: function (stage, elegance) {
+      return drawDeerFamily(
+        {
+          label: "Reindeer",
+          fill: "#d8e4ef",
+          youngFill: "#e8eef4",
+          antlerStroke: "#b8d4ea",
+          antlerL: "M122 90 Q110 68 98 48 Q104 56 112 44 Q114 60 122 66",
+          antlerR: "M136 90 Q148 68 160 48 Q154 56 146 44 Q144 60 136 66",
+        },
+        stage,
+        elegance
+      );
     },
-    "deer-vine": function () {
-      return drawDeerFamily({
-        label: "Eld’s deer vine antlers",
-        fill: "#7a5a3a",
-        antlerStroke: "#3f6b38",
-        antlerL: "M122 90 Q112 76 104 64 Q96 56 92 46 Q100 52 108 46",
-        antlerR: "M136 90 Q146 76 154 64 Q162 56 166 46 Q158 52 150 46",
-      });
+    "red-stag": function (stage, elegance) {
+      return drawDeerFamily(
+        {
+          label: "Red stag",
+          fill: "#a85a32",
+          youngFill: "#c48458",
+          antlerStroke: "#6b3a22",
+          antlerL: "M122 90 Q114 68 108 48 Q104 40 100 34",
+          antlerR: "M136 90 Q144 68 150 48 Q154 40 158 34",
+          tipExtra:
+            '<path d="M100 34 Q98 26 100 20" stroke="#e8a23a" stroke-width="3" stroke-linecap="round"/>' +
+            '<path d="M158 34 Q160 26 158 20" stroke="#e8a23a" stroke-width="3" stroke-linecap="round"/>',
+        },
+        stage,
+        elegance
+      );
     },
-    "deer-twig": function () {
-      return drawDeerFamily({
-        label: "Red deer twig antlers",
-        fill: "#8a5a36",
-        antlerStroke: "#5a3a22",
-        antlerL: "M122 90 L114 66 L108 48 M114 66 L106 60 M114 58 L120 52",
-        antlerR: "M136 90 L144 66 L150 48 M144 66 L152 60 M144 58 L138 52",
-      });
+    "deer-fern": function (stage, elegance) {
+      return drawDeerFamily(
+        {
+          label: "Barasingha fern antlers",
+          fill: "#8b6a45",
+          antlerStroke: "#4f7a3e",
+          antlerL: "M122 90 Q116 72 112 56 M112 70 Q104 64 100 54 M112 62 Q106 56 102 48",
+          antlerR: "M136 90 Q142 72 146 56 M146 70 Q154 64 158 54 M146 62 Q152 56 156 48",
+        },
+        stage,
+        elegance
+      );
     },
-    "deer-coral": function () {
-      return drawDeerFamily({
-        label: "Barasingha coral antlers",
-        fill: "#8b6a45",
-        antlerStroke: "#c46b6b",
-        antlerL: "M122 90 Q116 74 110 58 Q102 52 104 44 Q112 50 116 42 Q114 56 122 62",
-        antlerR: "M136 90 Q142 74 148 58 Q156 52 154 44 Q146 50 142 42 Q144 56 136 62",
-      });
+    "deer-vine": function (stage, elegance) {
+      return drawDeerFamily(
+        {
+          label: "Eld’s deer vine antlers",
+          fill: "#7a5a3a",
+          antlerStroke: "#3f6b38",
+          antlerL: "M122 90 Q112 76 104 64 Q96 56 92 46 Q100 52 108 46",
+          antlerR: "M136 90 Q146 76 154 64 Q162 56 166 46 Q158 52 150 46",
+        },
+        stage,
+        elegance
+      );
     },
-    "deer-seafan": function () {
-      return drawDeerFamily({
-        label: "Reindeer sea-fan antlers",
-        fill: "#d8e4ef",
-        youngFill: "#e8eef4",
-        antlerStroke: "#6aa8b8",
-        antlerL: "M122 90 Q112 74 100 60 Q94 52 88 46 M100 60 Q96 50 92 42 M104 64 Q108 52 112 44",
-        antlerR: "M136 90 Q146 74 158 60 Q164 52 170 46 M158 60 Q162 50 166 42 M154 64 Q150 52 146 44",
-      });
+    "deer-twig": function (stage, elegance) {
+      return drawDeerFamily(
+        {
+          label: "Red deer twig antlers",
+          fill: "#8a5a36",
+          antlerStroke: "#5a3a22",
+          antlerL: "M122 90 L114 66 L108 48 M114 66 L106 60 M114 58 L120 52",
+          antlerR: "M136 90 L144 66 L150 48 M144 66 L152 60 M144 58 L138 52",
+        },
+        stage,
+        elegance
+      );
     },
-    "deer-sponge": function () {
-      return drawDeerFamily({
-        label: "Fallow deer sponge antlers",
-        fill: "#9a7a4a",
-        antlerStroke: "#c49a72",
-        antlerL: "M122 90 Q116 76 110 62 Q104 54 106 46 Q112 52 116 44 Q114 58 122 66",
-        antlerR: "M136 90 Q142 76 148 62 Q154 54 152 46 Q146 52 142 44 Q144 58 136 66",
-      });
+    "deer-coral": function (stage, elegance) {
+      return drawDeerFamily(
+        {
+          label: "Barasingha coral antlers",
+          fill: "#8b6a45",
+          antlerStroke: "#c46b6b",
+          antlerL: "M122 90 Q116 74 110 58 Q102 52 104 44 Q112 50 116 42 Q114 56 122 62",
+          antlerR: "M136 90 Q142 74 148 58 Q156 52 154 44 Q146 50 142 42 Q144 56 136 62",
+        },
+        stage,
+        elegance
+      );
     },
-    "deer-lightning": function () {
-      return drawDeerFamily({
-        label: "Reindeer lightning antlers",
-        fill: "#d8e4ef",
-        youngFill: "#e8eef4",
-        antlerStroke: "#6ec8ff",
-        antlerL: "M122 90 L116 74 L122 66 L112 54 L118 46 L108 36",
-        antlerR: "M136 90 L142 74 L136 66 L146 54 L140 46 L150 36",
-      });
+    "deer-seafan": function (stage, elegance) {
+      return drawDeerFamily(
+        {
+          label: "Reindeer sea-fan antlers",
+          fill: "#d8e4ef",
+          youngFill: "#e8eef4",
+          antlerStroke: "#6aa8b8",
+          antlerL: "M122 90 Q112 74 100 60 Q94 52 88 46 M100 60 Q96 50 92 42 M104 64 Q108 52 112 44",
+          antlerR: "M136 90 Q146 74 158 60 Q164 52 170 46 M158 60 Q162 50 166 42 M154 64 Q150 52 146 44",
+        },
+        stage,
+        elegance
+      );
     },
-    "deer-mineral": function () {
-      return drawDeerFamily({
-        label: "Deer mineral antlers",
-        fill: "#8b6a45",
-        antlerStroke: "#9bb0c4",
-        antlerL: "M122 90 Q114 76 108 62 Q102 50 96 42 M108 62 Q112 52 116 44 M104 58 Q98 50 94 42",
-        antlerR: "M136 90 Q144 76 150 62 Q156 50 162 42 M150 62 Q146 52 142 44 M154 58 Q160 50 164 42",
-      });
+    "deer-sponge": function (stage, elegance) {
+      return drawDeerFamily(
+        {
+          label: "Fallow deer sponge antlers",
+          fill: "#9a7a4a",
+          antlerStroke: "#c49a72",
+          antlerL: "M122 90 Q116 76 110 62 Q104 54 106 46 Q112 52 116 44 Q114 58 122 66",
+          antlerR: "M136 90 Q142 76 148 62 Q154 54 152 46 Q146 52 142 44 Q144 58 136 66",
+        },
+        stage,
+        elegance
+      );
+    },
+    "deer-lightning": function (stage, elegance) {
+      return drawDeerFamily(
+        {
+          label: "Reindeer lightning antlers",
+          fill: "#d8e4ef",
+          youngFill: "#e8eef4",
+          antlerStroke: "#6ec8ff",
+          antlerL: "M122 90 L116 74 L122 66 L112 54 L118 46 L108 36",
+          antlerR: "M136 90 L142 74 L136 66 L146 54 L140 46 L150 36",
+        },
+        stage,
+        elegance
+      );
+    },
+    "deer-mineral": function (stage, elegance) {
+      return drawDeerFamily(
+        {
+          label: "Deer mineral antlers",
+          fill: "#8b6a45",
+          antlerStroke: "#9bb0c4",
+          antlerL: "M122 90 Q114 76 108 62 Q102 50 96 42 M108 62 Q112 52 116 44 M104 58 Q98 50 94 42",
+          antlerR: "M136 90 Q144 76 150 62 Q156 50 162 42 M150 62 Q146 52 142 44 M154 58 Q160 50 164 42",
+        },
+        stage,
+        elegance
+      );
     },
   };
 
@@ -747,13 +999,14 @@
   function renderCreature() {
     var c = findCompanion(state.companionId);
     var stage = stageFromCare(state.care, c);
-    var draw = DRAW[c.draw] || drawMantis;
-    var labels = c.draw === "mantis" ? STAGE_LABELS.mantis : STAGE_LABELS[c.kind];
-    creatureEl.innerHTML = draw();
+    var elegance = eleganceFromCare(state.care, c);
+    var draw = DRAW[c.draw] || DRAW.mantis;
+    creatureEl.innerHTML = draw(stage, elegance);
     sceneEl.dataset.kind = c.kind;
     sceneEl.dataset.stage = String(stage);
+    sceneEl.dataset.elegance = String(Math.min(elegance, 99));
     sceneEl.dataset.art = c.draw === "mantis" ? "paint" : "svg";
-    stageLabelEl.textContent = labels[stage];
+    stageLabelEl.textContent = growthLabel(state.care, c);
     careMeterEl.textContent = "Care " + state.care;
   }
 

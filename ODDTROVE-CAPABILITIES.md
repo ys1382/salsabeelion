@@ -201,7 +201,7 @@ Last updated: 2026-07-17
 - Browse **wildlife codex** on desktop or phone (owner hub cookie) — Claude callouts; demos use CC0 cutouts
 - **Learned shelf** — past scans sync to **Odd Trove Google sign-in** (server store + device cache; one entry per species; stylized still + ID; never raw camera)
 - **Phone wildlife camera scan** — `/bane-of-extinction/scan.html` (Gemini + Claude ID + life stage; then Gemini semi-realistic still matched to species/color/form/**stage**; photo not stored; facts follow the guessed organism)
-- Claude facts via `/bane-of-extinction/api/` (shared `anthropic.key` + Halalit Gemini env on server)
+- Claude facts via `/bane-of-extinction/api/` (shared `anthropic.key` + Halalit Gemini env on server) — player-world tone, one small-help tip per set, one wonder fact; device remembers recent fact text so rescans can stay fresh (no photo retention)
 - Deploy: `bash top/scripts/deploy-bane-of-extinction.sh` (ports **8085** static + **8086** API; reloads nginx by default)
 
 **Cannot do without new work:**
@@ -221,7 +221,7 @@ Last updated: 2026-07-17
 **Can do now:**
 - Pick a companion (orchid mantis, peacock, reindeer, stag / deer variants)
 - Care advances hatch (egg → grown) or grow (young → adult) as **still flipbook frames** (no looping creature motion); about **10** taps per stage
-- After adult size, **creature elegance keeps growing** (richer plumage / antlers on SVG companions; orchid mantis uses painted stills **0–15**, then ping-pongs elegance frames forever)
+- After adult size, **creature elegance keeps growing** (richer plumage / antlers on SVG companions; orchid mantis uses painted stills **0–15** in a sparse additive ladder — forward only, holds peak until more frames are added)
 - **Orchid mantis** painted PNGs in `art/orchid-mantis/` (egg case → full bloom → poised…timeless); painting fills the scene panel; other companions still use SVG stills for now
 - Quiet scene backdrop; progress in browser localStorage on this device
 - Deploy: `bash top/scripts/deploy-habit-tree.sh` (port **8087**; reloads nginx by default)

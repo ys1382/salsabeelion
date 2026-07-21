@@ -202,7 +202,7 @@ body {
 .flash {
   position: absolute;
   inset: 0;
-  z-index: 2;
+  z-index: 4;
   pointer-events: none;
   background: radial-gradient(circle at 50% 55%, rgba(255, 236, 170, 0.45), transparent 55%);
   opacity: 0;
@@ -265,6 +265,11 @@ body {
   object-fit: contain;
   object-position: center center;
   border-radius: 0;
+}
+
+.mantis-frame {
+  opacity: 1;
+  pointer-events: none;
 }
 
 .stage-label,
