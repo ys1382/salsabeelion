@@ -195,7 +195,7 @@ After the still “freezes” on the codex card:
 - [x] Place lens stack on codex (favorites like Halalit libraries; looking-at + compare; browse-by-area; season; no GPS)
 - [x] Callouts API accepts place lens (localStatus / compareNote; place-aware help tips)
 - [x] Neighborhood missions v1 — unlock after ~15 finds; signature-sign quests; ant mound full visual (with/without + cutaway); other quests story cards
-- [x] Level ladder labeled: L1 scans → L2 beginning missions → L3 place meanings / under-the-hood (after 3 L2 missions)
+- [x] Level ladder labeled: L1 scans → L2 beginning missions → L3 place meanings / under-the-hood (after a handful of L2 missions — **5**, not 2 and not 15)
 - [ ] Per-species permanent art library / cloud cache (optional later)
 - [ ] Leader-lines from callouts to exact body-part anchors on stylized art
 - [ ] Platform polish (PWA optional; no GPS required)

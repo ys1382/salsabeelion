@@ -8,7 +8,7 @@
   "use strict";
 
   var UNLOCK_FINDS = 15;
-  var L3_NEED_L2 = 3;
+  var L3_NEED_L2 = 5;
   var PROGRESS_KEY = "bane_missions_done_v1";
   var PEEK_KEY = "bane_missions_peek_v1";
 
