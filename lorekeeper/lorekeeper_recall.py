@@ -709,6 +709,11 @@ def local_pipeline_skips_rag(
     if kind in ("planned_gaps", "flagged_fix", "notes_not_in_draft"):
         return bool(answer.strip())
 
+    # Prefer pipeline kind when local compare/tag routes already composed.
+    pipe_kind = str(local_pipeline.get("questionKind") or "")
+    if pipe_kind in ("planned_gaps", "flagged_fix", "notes_not_in_draft"):
+        return bool(answer.strip())
+
     if kind in ("who", "knowledge") or is_who_is_question(question) or is_knowledge_pov_question(
         question
     ):
@@ -1149,11 +1154,21 @@ def recall_from_user_data(
     knowledge_narrow = ask_plan and ask_plan.intent == "narrow_fact" and (
         is_knowledge_pov_question(question) or is_awareness_question(question)
     )
+    # Tag/compare routes are local-only — never skip to RAG (Haiku used to steal them).
+    local_only_kinds = frozenset(
+        {"planned_gaps", "flagged_fix", "notes_not_in_draft"}
+    )
+    routed_kind = route_question(question)
     skip_local = (
         ask_plan
         and ask_plan.pipeline == "rag_summarize"
         and ask_plan.intent not in ("character_portrait",)
         and not knowledge_narrow
+        and routed_kind not in local_only_kinds
+        and not (
+            ask_plan
+            and ask_plan.question_kind in local_only_kinds
+        )
     )
     # Story-arc relationship asks need synthesis — skip the local note-dump and use RAG.
     if (
@@ -1181,6 +1196,9 @@ def recall_from_user_data(
             kind_label=_kind_label,
         )
     if local_pipeline is not None:
+        pipe_kind = str(local_pipeline.get("questionKind") or "")
+        if pipe_kind in local_only_kinds and str(local_pipeline.get("answer") or "").strip():
+            return _finish_local_pipeline(local_pipeline)
         if local_pipeline_skips_rag(
             question, local_pipeline, scoped, spot_check=spot_check, plan=ask_plan
         ):

@@ -358,10 +358,25 @@ def local_ask_plan(question: str) -> AskPlan | None:
         )
 
     if is_planned_gap_question(q) or is_flagged_fix_question(q):
-        return None
+        kind = "planned_gaps" if is_planned_gap_question(q) else "flagged_fix"
+        return AskPlan(
+            intent=kind,
+            pipeline="rag_summarize",
+            answer_model="haiku",
+            question_kind=kind,
+            section=section_raw,
+            router_engine="local",
+        )
 
     if is_notes_not_in_draft_question(q):
-        return None
+        return AskPlan(
+            intent="notes_not_in_draft",
+            pipeline="rag_summarize",
+            answer_model="haiku",
+            question_kind="notes_not_in_draft",
+            section=section_raw,
+            router_engine="local",
+        )
 
     if is_audit_question(q) or is_coverage_question(q):
         return AskPlan(

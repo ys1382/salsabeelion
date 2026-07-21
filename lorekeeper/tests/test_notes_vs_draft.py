@@ -129,6 +129,38 @@ class NotesNotInDraftAskTests(unittest.TestCase):
         self.assertNotIn("nothing clear enough to answer", answer)
         self.assertNotIn("attic smells like rain", answer)
 
+    def test_ask_stays_local_even_when_rag_on(self):
+        """Regression: Haiku/RAG used to steal this route and return fragments_only."""
+        from unittest.mock import patch
+
+        entries = [
+            _entry(
+                "n1",
+                "World notes",
+                "Character Mira keeps a brass key that opens the attic.",
+            ),
+            _entry(
+                "d1",
+                "Main draft",
+                "Mira climbed the stairs and paused at the landing.",
+                kind="document",
+            ),
+        ]
+        q = (
+            "in smoke and mirrors, tell me what ive written in notes that "
+            "hasn't been touched upon in the main document"
+        )
+        with patch("lorekeeper_recall.rag_enabled", return_value=True):
+            with patch(
+                "lorekeeper_recall.answer_with_rag",
+                side_effect=AssertionError("RAG must not run for notes_not_in_draft"),
+            ):
+                res = self._ask(q, entries)
+        self.assertEqual(res.get("questionKind"), "notes_not_in_draft")
+        self.assertEqual(res.get("recallEngine"), "local")
+        self.assertIn("brass key", (res.get("answer") or "").lower())
+        self.assertNotIn("nothing clear enough", (res.get("answer") or "").lower())
+
     def test_ask_no_document_honest(self):
         entries = [_entry("n1", "World notes", "A brass key opens the attic.")]
         q = (
