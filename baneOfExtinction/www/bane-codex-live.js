@@ -24,28 +24,6 @@
   var shelfGrid = document.getElementById("codexShelfGrid");
   var syncEl = document.getElementById("codexSync");
 
-  /* Demo-only cutouts — never used as a fallback for real scans. */
-  var DEMO_STILLS = {
-    poppy: {
-      src: "assets/california-poppy-subject.png",
-      credit:
-        "Demo still: California poppy subject cutout (Sedovo photo, CC BY-SA 3.0).",
-      match: /poppy|eschscholzia/i,
-    },
-    sunflower: {
-      src: "assets/common-sunflower-subject.png",
-      credit:
-        "Demo still: common sunflower subject cutout (Soph556 photo, CC BY-SA 3.0).",
-      match: /sunflower|helianthus/i,
-    },
-    philodendron: {
-      src: "assets/sweetheart-philodendron-subject.png",
-      credit:
-        "Demo still: sweetheart philodendron subject cutout (CC-licensed photo).",
-      match: /philodendron|hederaceum|heartleaf|sweetheart/i,
-    },
-  };
-
   var state = {
     commonName: "",
     latinName: "",
@@ -108,23 +86,6 @@
     if (creditEl) creditEl.textContent = credit || "";
   }
 
-  function applyDemoStill(commonName, latinName) {
-    var blob = (commonName || "") + " " + (latinName || "");
-    var key;
-    for (key in DEMO_STILLS) {
-      if (DEMO_STILLS[key].match.test(blob)) {
-        showStill(
-          DEMO_STILLS[key].src,
-          commonName || key,
-          DEMO_STILLS[key].credit,
-          true
-        );
-        return;
-      }
-    }
-    hideStill("Demo has no local still for this organism.");
-  }
-
   function applyStill() {
     if (state.stillToken) {
       var url = "/bane-of-extinction/api/still/" + encodeURIComponent(state.stillToken);
@@ -154,14 +115,13 @@
       );
       return;
     }
-    if (state.fromScan) {
-      hideStill(
-        "No matching codex art for this scan yet — facts still follow the ID. " +
-          "Generic poppy/sunflower stubs are not used for scans."
-      );
-      return;
-    }
-    applyDemoStill(state.commonName, state.latinName);
+    hideStill(
+      state.fromScan
+        ? "No matching codex art for this scan yet — facts still follow the ID."
+        : state.commonName
+          ? "No codex art for this entry yet — facts still follow the ID."
+          : "Scan on a phone to add an organism, or open one from your learned shelf."
+    );
   }
 
   function applyIdentity(id, opts) {
@@ -316,7 +276,7 @@
 
   function loadFacts() {
     if (!state.commonName) {
-      setStatus("Scan a plant first (or use a demo below). Nothing is selected yet.");
+      setStatus("Scan a plant first (or open a learned entry). Nothing is selected yet.");
       return;
     }
     setStatus("Asking Claude for callouts that match this identification…");
@@ -632,37 +592,6 @@
     return null;
   }
 
-  function wireDemo(btnId, id) {
-    var btn = document.getElementById(btnId);
-    if (!btn) return;
-    btn.addEventListener("click", function () {
-      clearStored();
-      clearStillStorage();
-      state.collectionKey = "";
-      applyIdentity(id, { fromScan: false, generatedStill: null });
-      markShelfActive();
-      setStatus("Demo identity set. Loading callouts…");
-      loadFacts();
-    });
-  }
-
-  wireDemo("demoPoppy", {
-    commonName: "California poppy",
-    latinName: "Eschscholzia californica",
-    cultivar: "",
-    organismType: "flower",
-    lifeStage: "flowering",
-    displayName: "California poppy",
-  });
-  wireDemo("demoSunflower", {
-    commonName: "Common sunflower",
-    latinName: "Helianthus annuus",
-    cultivar: "",
-    organismType: "flower",
-    lifeStage: "flowering",
-    displayName: "Common sunflower",
-  });
-
   function bootCodex() {
     renderShelf();
     updateSyncStatus();
@@ -762,7 +691,7 @@
           "After a scan, art matches that species and life stage — not your photo."
         );
         setStatus(
-          "No learns yet. Use Wildlife camera scan on your phone, or try a demo below."
+          "No learns yet. Use Wildlife camera scan on your phone."
         );
       }
     }
