@@ -14,7 +14,7 @@ Working name: **Habit Tree**. Private habit companion ideas (Odd Trove). Owner-o
 
 ### Companion options
 
-- [ ] **Orchid mantis** — egg stage included; actual flowers grow with care **without covering** the mantis
+- [x] **Orchid mantis** — egg stage included; painted flipbook stills (egg → crack → hatched → grown); orchids beside, not covering
 - [ ] **Peacock** — moon phases on the tail instead of the usual eyespot pattern
 - [ ] **Reindeer** — ice/snow colors; horns of snow/ice in a snowflake-esque shape, sturdy not delicate
 - [ ] **Red stag** — fall-color coat; antler tines that end in candle flame

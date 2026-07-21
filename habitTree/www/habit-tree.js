@@ -219,24 +219,27 @@
   }
 
   function drawMantis() {
-    return (
-      '<svg viewBox="0 0 200 180" role="img" aria-label="Orchid mantis">' +
-      svgDefs() +
-      eggStill() +
-      crackEggStill() +
-      '<g class="layer layer-2">' +
-      orchidCluster(34, 120, 0.72) +
-      orchidCluster(166, 124, 0.62) +
-      mantisStill(false) +
-      "</g>" +
-      '<g class="layer layer-3">' +
-      orchidCluster(26, 108, 0.9) +
-      orchidCluster(174, 104, 0.85) +
-      orchidCluster(100, 168, 0.55) +
-      mantisStill(true) +
-      "</g>" +
-      "</svg>"
-    );
+    var base = "art/orchid-mantis/";
+    var bust = "20260720d";
+    var labels = ["Egg", "Cracking", "Hatched", "Grown"];
+    var html = "";
+    var i;
+    for (i = 0; i < 4; i++) {
+      html +=
+        '<div class="layer layer-' +
+        i +
+        ' frame-still">' +
+        '<img src="' +
+        base +
+        i +
+        ".png?v=" +
+        bust +
+        '" alt="Orchid mantis — ' +
+        labels[i] +
+        '" width="512" height="512" decoding="async" />' +
+        "</div>";
+    }
+    return html;
   }
 
   function moonPhase(cx, cy, r, phase) {
