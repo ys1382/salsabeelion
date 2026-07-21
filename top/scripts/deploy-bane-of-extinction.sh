@@ -43,9 +43,10 @@ if [[ ! -f "$ROOT/baneOfExtinction/bane_api.py" ]]; then
 fi
 
 echo "Syncing Bane of Extinction to $HOST:~/$REMOTE_BASE/ ..."
-ssh_cmd "$HOST" "mkdir -p ~/$REMOTE_BASE/ssl ~/$REMOTE_BASE/bane-of-extinction ~/$REMOTE_BASE/bane-server ~/$REMOTE_BASE/hub"
+ssh_cmd "$HOST" "mkdir -p ~/$REMOTE_BASE/ssl ~/$REMOTE_BASE/bane-of-extinction ~/$REMOTE_BASE/bane-server/learned ~/$REMOTE_BASE/hub ~/$REMOTE_BASE/_shared"
 
 rsync_cmd "$ROOT/top/_shared/serve_static_https.py" "$ROOT/top/_shared/kids-watchdog.sh" "$HOST:~/$REMOTE_BASE/"
+rsync_cmd "$ROOT/top/_shared/oddtrove_sso.py" "$HOST:~/$REMOTE_BASE/_shared/oddtrove_sso.py"
 rsync_cmd "$ROOT/baneOfExtinction/www/" "$HOST:~/$REMOTE_BASE/bane-of-extinction/"
 rsync_cmd "$ROOT/baneOfExtinction/bane_api.py" "$HOST:~/$REMOTE_BASE/bane-server/bane_api.py"
 rsync_cmd "$ROOT/top/directory/www/index.html" "$HOST:~/$REMOTE_BASE/hub/index.html"
@@ -72,8 +73,16 @@ CERT="$SSL/cert.pem"
 # shellcheck source=/dev/null
 source "$BASE/kids-watchdog.sh"
 
+echo "Ensure Pillow for codex-still shrink..."
+if ! python3 -c "from PIL import Image" 2>/dev/null; then
+  apt-get install -y -qq python3-pil >/tmp/bane-pillow-apt.log 2>&1 || \
+    python3 -m pip install --user --break-system-packages -q Pillow >/tmp/bane-pillow-pip.log 2>&1 || \
+    echo "Pillow install skipped/failed (client still shrinks)" >&2
+fi
+python3 -c "from PIL import Image; print('Pillow OK', Image.__version__)" 2>/dev/null || true
+
 echo "Smoke test: import bane_api before restart..."
-if ! (cd "$BASE/bane-server" && python3 -c "import bane_api"); then
+if ! (cd "$BASE/bane-server" && PYTHONPATH="$BASE/_shared" python3 -c "import bane_api; assert bane_api.identity_from_cookie_header is not None"); then
   echo "Error: bane_api import failed — leaving existing processes running." >&2
   exit 1
 fi
@@ -106,6 +115,8 @@ nohup bash -c '
     fi
     BANE_API_PORT="'"$BANE_API_PORT"'" \
     BANE_API_BIND="'"$BIND"'" \
+    BANE_SHARED_PATH="'"$BASE"'/_shared" \
+    PYTHONPATH="'"$BASE"'/_shared" \
     KIDS_SITES_ANTHROPIC_KEY_PATH="'"$BASE"'/anthropic.key" \
       python3 "'"$BASE"'/bane-server/bane_api.py" >>/tmp/bane-api.log 2>&1
     echo "Bane API exited — restarting in 2s" >>/tmp/bane-api.log
@@ -120,6 +131,24 @@ curl -sk -o /dev/null -w "Bane static port ${BANE_PORT}: %{http_code}\n" \
   "https://127.0.0.1:${BANE_PORT}/" || true
 curl -s -o /dev/null -w "Bane API port ${BANE_API_PORT}: %{http_code}\n" \
   "http://127.0.0.1:${BANE_API_PORT}/api/health" || true
+
+# Restart hub owner API so updated oddtrove_sso return allowlist (BoE) is live.
+if [[ -f "$BASE/hub_owner_api.py" ]]; then
+  pkill -f "hub_owner_api.py" 2>/dev/null || true
+  sleep 0.2
+  (
+    cd "$BASE"
+    if [[ -f "$BASE/oddtrove-server/.env" ]]; then
+      set -a
+      # shellcheck disable=SC1091
+      source "$BASE/oddtrove-server/.env"
+      set +a
+    fi
+    PYTHONPATH="$BASE/_shared" \
+      nohup python3 "$BASE/hub_owner_api.py" </dev/null >/tmp/hub-owner-api.log 2>&1 &
+  )
+  echo "Restarted hub owner API (Google return → /bane-of-extinction/ allowed)"
+fi
 REMOTE
 
 echo ""

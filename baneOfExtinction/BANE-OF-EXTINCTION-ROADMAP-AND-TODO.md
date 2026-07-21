@@ -93,7 +93,7 @@ Inspired by **iNaturalist Seek**, with Halalit photo privacy:
 2. App isolates **organism only** (not hand/person/background clutter meant as PII).
 3. ID runs on that crop (plus optional region/habitat pool).
 4. Photo deleted after wildlife is recorded.
-5. Player gets a **cartoonish, semi-realistic stylized still** of the organism (generated from the crop — not a Live Photo / moving real video). Subtle idle (bob/sway) on the still is OK; full “animate the photo into video” is out of scope.
+5. Player gets a **natural field-guide still** of the organism (generated from the crop + ID — not a Live Photo / moving raw video). Matches color and form of *this* scan (e.g. red sunflower stays red). Subtle idle (bob/sway) on the still is OK; full “animate the photo into video” stays out of scope.
 
 **v1 note:** Trail Guide can ship first; camera + stylize may be v2 if needed — but privacy + codex rules above stay locked either way.
 
@@ -120,6 +120,7 @@ After the still “freezes” on the codex card:
 - **Claude API** builds / helps the facts base when the player encounters the organism or evidence (server key; never in public `www/`).
 - **No Wikipedia** (and no open-web scrape) for this facts path — Claude helper knowledge + later curated packs only.
 - Tone: useful learning helper, not a guaranteed field guide.
+- **Player-world facts (2026-07-20):** most callouts tie the organism to everyday life (walks, yards, shared air/food webs, what you’d notice) — not a textbook dump. **Exactly one** fact per set can be a cooler species-own wonder with less direct human impact. Goal: feel more understanding of wildlife around you, not become a field-guide expert.
 - Desktop can browse callouts once an entry exists; phone not required for browsing.
 
 ### First stubs — California poppies + common sunflower + sweetheart philodendron
@@ -164,11 +165,15 @@ After the still “freezes” on the codex card:
 - [ ] Size-first disambiguation (crow vs raven as test case)
 - [ ] Ethics / non-invasive onboarding copy
 - [ ] First regional content pack (species, questions, reference art + common + Latin)
-- [ ] Wildlife codex UI — blueprint reveal + permanent entries (real data beyond poppy stub)
+- [x] Wildlife codex UI — blueprint reveal + permanent entries (device-local learned shelf; real IDs beyond demos)
 - [x] Seek-style camera path — organism-only crop, delete photo, Halalit privacy (phone only)
 - [x] Codex still uses royalty-free photo + visible idle animation (CC0 California poppy)
 - [x] ID accuracy rule: facts match the **guessed** organism (e.g. golden poppy facts if that’s the ID)
-- [ ] Stylize still (cartoonish semi-realistic) from organism crop → per-species art library
+- [x] Scan → matching field-guide still (Gemini image; color/form follow ID; no generic stub swap)
+- [x] Codex still: semi-realistic **new** portrait (not raw photo); same species + **life stage** as the scan
+- [x] Device-local learned collection (PoGo-style shelf on codex; one entry per species)
+- [x] Learned shelf syncs to Odd Trove **Google sign-in** (server + device cache; cross-device)
+- [ ] Per-species permanent art library / cloud cache (optional later)
 - [ ] Leader-lines from callouts to exact body-part anchors on stylized art
 - [ ] Platform polish (PWA optional; no GPS required)
 

@@ -2,23 +2,47 @@
 Bane of Extinction — owner-beta API.
 
 - POST /api/wildlife-identify  — Gemini + Claude vision ID (photo not stored)
+- POST /api/codex-still        — Gemini image: field-guide still matching this ID + crop
 - POST /api/callouts           — Claude helper facts for whatever species was identified
+- GET  /api/auth/me            — Odd Trove Google SSO identity (for learned sync)
+- GET/PUT /api/learned         — wildlife learns synced to signed-in Google account
 - GET  /api/health
 
 Binds 127.0.0.1 only. Keys from env / shared kids-sites files.
 No Wikipedia / no open-web scrape for facts.
+Raw scan photos are never written to disk.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import re
+import secrets
 import ssl
+import sys
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any
+
+# Shared Odd Trove SSO (oddtrove_sso.py) — kids-sites/_shared or repo top/_shared.
+_HERE = os.path.dirname(os.path.abspath(__file__))
+for _shared in (
+    os.environ.get("BANE_SHARED_PATH", "").strip(),
+    os.path.join(os.path.expanduser("~"), "kids-sites", "_shared"),
+    os.path.join(_HERE, "..", "top", "_shared"),
+    os.path.join(_HERE, "_shared"),
+):
+    if _shared and os.path.isdir(_shared) and _shared not in sys.path:
+        sys.path.insert(0, _shared)
+
+try:
+    from oddtrove_sso import identity_from_cookie_header  # type: ignore
+except ImportError:  # pragma: no cover
+    identity_from_cookie_header = None  # type: ignore
 
 BIND = os.environ.get("BANE_API_BIND", "127.0.0.1")
 PORT = int(os.environ.get("BANE_API_PORT", "8086"))
@@ -27,8 +51,27 @@ GEMINI_MODEL = os.environ.get(
     "BANE_GEMINI_MODEL",
     os.environ.get("HALALIT_GEMINI_MODEL", "gemini-2.0-flash"),
 )
+# Image models tried in order until one returns an image.
+_DEFAULT_IMAGE_MODELS = (
+    "gemini-2.5-flash-image",
+    "gemini-3.1-flash-image",
+    "gemini-2.0-flash-preview-image-generation",
+)
+GEMINI_IMAGE_MODEL = os.environ.get("BANE_GEMINI_IMAGE_MODEL", "").strip()
 MAX_CALLOUTS = 5
 MAX_IMAGE_B64 = 4_500_000
+MAX_LEARNED_ENTRIES = 48
+MAX_LEARNED_BODY = 3_500_000
+LEARNED_DIR = os.environ.get(
+    "BANE_LEARNED_DIR",
+    os.path.join(os.path.expanduser("~"), "kids-sites", "bane-server", "learned"),
+)
+STILL_DIR = os.environ.get(
+    "BANE_STILL_DIR",
+    os.path.join(os.path.expanduser("~"), "kids-sites", "bane-still-cache"),
+)
+STILL_TTL_SEC = int(os.environ.get("BANE_STILL_TTL_SEC", "1200"))  # 20 min
+_STILL_META: dict[str, float] = {}  # token -> expires_at
 
 POPPY_DEFAULT = {
     "common": "California poppy",
@@ -42,45 +85,45 @@ FALLBACK_CALLOUTS_POPPY = [
     {
         "anchor": "petals",
         "label": "Petals",
-        "fact": "California poppy petals look like soft crepe paper. Classic wild blooms are often bright orange-gold; garden forms vary.",
+        "fact": "Those soft, crepe-paper petals are what make a roadside or yard pop of orange catch your eye on a sunny walk.",
     },
     {
         "anchor": "center",
         "label": "Flower center",
-        "fact": "Many forms show a lighter center that stands out in full sun.",
-    },
-    {
-        "anchor": "foliage",
-        "label": "Feathery leaves",
-        "fact": "Blue-green, finely cut leaves help the plant handle dry, sunny spots.",
+        "fact": "A lighter center helps you tell one bloom from the next in bright sun — useful when you’re matching what you see to a garden form.",
     },
     {
         "anchor": "habit",
         "label": "Sun & soil",
-        "fact": "Prefers full sun and well-drained or even poor soil. Rich soil or overwatering can mean more leaves, fewer flowers.",
+        "fact": "They like the same dry, sunny spots many California yards already have. Extra-rich soil or lots of water often means more leaves and fewer flowers for you.",
+    },
+    {
+        "anchor": "foliage",
+        "label": "Feathery leaves",
+        "fact": "Blue-green, finely cut leaves help the plant itself handle heat and thin soil — a quiet drought trick of its own.",
     },
 ]
 
 FALLBACK_CALLOUTS_SUNFLOWER = [
     {
-        "anchor": "head",
-        "label": "Flower head",
-        "fact": "What looks like one big flower is a head of many tiny flowers. The bright outer ring are ray florets; the center is packed disk florets.",
-    },
-    {
         "anchor": "disk",
         "label": "Center disk",
-        "fact": "The disk turns from greenish buds to brown as seeds form. Bees and other pollinators work this busy middle zone.",
+        "fact": "That busy middle feeds bees and other pollinators that also visit the flowers you grow or pass on a walk.",
     },
     {
-        "anchor": "leaves",
-        "label": "Leaves & stem",
-        "fact": "Common sunflower leaves are broad and rough. Stems are sturdy and often hairy — built for tall growth in open sun.",
+        "anchor": "petals",
+        "label": "Ray color",
+        "fact": "Ray colors range from classic yellow-gold to red, burgundy, and near-black — match the shade you actually see, not a textbook yellow.",
     },
     {
         "anchor": "habit",
         "label": "Sun follower",
-        "fact": "Young plants often track the sun across the day (heliotropism). Mature heads usually face a fixed direction, often east.",
+        "fact": "Young plants track the sun across the day, so a backyard planting can seem to “turn” with you from morning to afternoon.",
+    },
+    {
+        "anchor": "head",
+        "label": "Flower head",
+        "fact": "What looks like one big flower is really a head of many tiny florets — ray florets outside, packed disk florets in the middle.",
     },
 ]
 
@@ -88,22 +131,22 @@ FALLBACK_CALLOUTS_PHILODENDRON = [
     {
         "anchor": "leaves",
         "label": "Heart-shaped leaves",
-        "fact": "Sweetheart philodendron is named for its glossy, heart-shaped leaves. Young leaves often start a bit bronze, then settle into deep green.",
-    },
-    {
-        "anchor": "stems",
-        "label": "Trailing stems",
-        "fact": "Long, flexible stems climb or trail. Outdoors in the tropics it can scramble; indoors it often drapes from a pot or shelf.",
+        "fact": "Those glossy heart-shaped leaves are why this plant shows up on so many shelves and windowsills — easy to recognize once you know the shape.",
     },
     {
         "anchor": "habit",
         "label": "Light & home life",
-        "fact": "A classic houseplant: prefers bright, indirect light and evenly moist soil. Too little light means long, sparse stems with smaller leaves.",
+        "fact": "Bright, indirect light and evenly moist soil keep it happy at home; too little light and you’ll see long, sparse stems with smaller leaves.",
     },
     {
         "anchor": "safety",
         "label": "Look, don’t nibble",
-        "fact": "Like many aroids, this plant’s sap can irritate mouths and tummies if chewed. Fine to admire — not a snack for kids or pets.",
+        "fact": "Like many aroids, its sap can irritate mouths and tummies if chewed — fine to admire, not a snack for kids or pets.",
+    },
+    {
+        "anchor": "stems",
+        "label": "Climbing habit",
+        "fact": "In the tropics those same flexible stems scramble and climb — a plant trick of its own, not only a shelf decoration.",
     },
 ]
 
@@ -118,15 +161,19 @@ IDENTIFY_PROMPT = (
     "REFUSAL — if there is no clear organism and no clear evidence "
     "(empty ground, wall, sky, furniture, shelf wood, blur with nothing identifiable, "
     "mostly hands/faces, or a frame that is only background), do NOT invent a species. Return:\n"
-    '{"commonName":"","latinName":"","cultivar":"","organismType":"none","evidence":false,'
-    '"confidence":"low","shortNote":"No clear organism or evidence in frame.",'
+    '{"commonName":"","latinName":"","cultivar":"","bloomColor":"","organismType":"none",'
+    '"lifeStage":"","evidence":false,"confidence":"low",'
+    '"shortNote":"No clear organism or evidence in frame.",'
     '"alternatives":[],"noOrganism":true}\n'
-    "Be as accurate as you reasonably can. Prefer the species (or best clear taxon) you think it is. "
-    "If cultivar is unclear, use the species rather than guessing a garden variety.\n"
+    "Be as accurate as you reasonably can. Prefer the species (or best clear taxon) you think it is.\n"
+    "COLOR MATTERS — for flowers, set bloomColor to the dominant petal/ray color you see "
+    "(e.g. red, yellow, orange, burgundy, bicolor, near-black). "
+    "If rays are clearly red/burgundy/dark, do NOT describe a generic yellow sunflower in shortNote. "
+    "Put the color in commonName when helpful (e.g. \"Red sunflower\") and/or cultivar when known.\n"
     "CRITICAL — do NOT default to California poppy. Identify what is actually in the photo.\n"
-    "Disambiguation for yellow/orange blooms:\n"
+    "Disambiguation for blooms:\n"
     "- Common sunflower (Helianthus annuus): ONE large head that looks like many tiny flowers — "
-    "outer yellow ray florets + a big textured brown/green disk of packed disk florets. "
+    "outer ray florets (any color) + a big textured disk of packed disk florets. "
     "Broad rough leaves; thick often-hairy stem. A tight close-up of the face is still a sunflower.\n"
     "- California poppy (Eschscholzia californica): usually FOUR silky crepe-paper petals, "
     "cup/bowl shape, feathery blue-green foliage — NOT a big composite disk of hundreds of florets.\n"
@@ -138,15 +185,21 @@ IDENTIFY_PROMPT = (
     "Other plants: name the best real match. If unsure between species, pick the best guess and "
     "list alternatives; never fall back to California poppy just because this game also uses that stub.\n"
     "Do not invent sunflower or philodendron cultivar names unless clearly labeled in the photo.\n"
+    "LIFE STAGE — set lifeStage to what is actually visible (not a different stage of the "
+    "same species). Examples: seed, seedling, sprout, bud, flowering, fruiting, adult, "
+    "juvenile, egg, larva, nestling, fledgling, evidence. If the photo is a blossom/bloom, "
+    "use flowering (not seed). If only a seed pod or seed, say so.\n"
     "JSON shape (success):\n"
     "{"
     '"commonName":"...",'
     '"latinName":"...",'
     '"cultivar":"" ,'
+    '"bloomColor":"red|yellow|orange|burgundy|bicolor|other|",'
     '"organismType":"bird|mammal|flower|plant|fungus|insect|reptile|evidence|other",'
+    '"lifeStage":"flowering|fruiting|seedling|adult|juvenile|evidence|...",'
     '"evidence":false,'
     '"confidence":"high|medium|low",'
-    '"shortNote":"one short plain sentence naming a visible trait that supports the ID",'
+    '"shortNote":"one short plain sentence naming a visible trait that supports the ID (include color)",'
     '"alternatives":[{"commonName":"...","latinName":"..."}],'
     '"noOrganism":false'
     "}"
@@ -182,6 +235,77 @@ def _bootstrap_env() -> None:
 
 
 _bootstrap_env()
+
+
+def _ensure_still_dir() -> str:
+    os.makedirs(STILL_DIR, exist_ok=True)
+    return STILL_DIR
+
+
+def _purge_expired_stills() -> None:
+    now = time.time()
+    dead = [t for t, exp in _STILL_META.items() if exp <= now]
+    for token in dead:
+        _STILL_META.pop(token, None)
+        path = os.path.join(STILL_DIR, f"{token}.jpg")
+        try:
+            if os.path.isfile(path):
+                os.remove(path)
+        except OSError:
+            pass
+
+
+def save_still_token(mime: str, data_b64: str) -> str | None:
+    """Persist a shrunk still; return opaque token for GET /api/still/<token>."""
+    import base64
+    from io import BytesIO
+
+    if not data_b64:
+        return None
+    _ensure_still_dir()
+    _purge_expired_stills()
+    raw = base64.b64decode(data_b64, validate=False)
+    # Prefer JPEG bytes; if PNG, try Pillow convert.
+    out = raw
+    if not (mime or "").lower().startswith("image/jpeg"):
+        try:
+            from PIL import Image  # type: ignore
+
+            img = Image.open(BytesIO(raw)).convert("RGB")
+            buf = BytesIO()
+            img.save(buf, format="JPEG", quality=82, optimize=True)
+            out = buf.getvalue()
+        except Exception:
+            out = raw
+    token = secrets.token_urlsafe(16)
+    path = os.path.join(STILL_DIR, f"{token}.jpg")
+    with open(path, "wb") as f:
+        f.write(out)
+    _STILL_META[token] = time.time() + STILL_TTL_SEC
+    return token
+
+
+def load_still_bytes(token: str) -> tuple[str, bytes] | None:
+    token = (token or "").strip()
+    if not token or not re.fullmatch(r"[A-Za-z0-9_-]{8,64}", token):
+        return None
+    _purge_expired_stills()
+    exp = _STILL_META.get(token)
+    path = os.path.join(STILL_DIR, f"{token}.jpg")
+    if exp is not None and exp <= time.time():
+        _STILL_META.pop(token, None)
+        try:
+            os.remove(path)
+        except OSError:
+            pass
+        return None
+    if not os.path.isfile(path):
+        return None
+    try:
+        with open(path, "rb") as f:
+            return "image/jpeg", f.read()
+    except OSError:
+        return None
 
 
 def _key_paths() -> list[str]:
@@ -228,8 +352,16 @@ def gemini_api_key() -> str:
 
 
 def _cors(handler: BaseHTTPRequestHandler) -> None:
-    handler.send_header("Access-Control-Allow-Origin", "*")
-    handler.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+    origin = (handler.headers.get("Origin") or "").strip()
+    if origin.endswith("oddtrove.art") or origin in (
+        "https://oddtrove.art",
+        "http://oddtrove.art",
+    ):
+        handler.send_header("Access-Control-Allow-Origin", origin)
+        handler.send_header("Access-Control-Allow-Credentials", "true")
+    else:
+        handler.send_header("Access-Control-Allow-Origin", "*")
+    handler.send_header("Access-Control-Allow-Methods", "GET, POST, PUT, OPTIONS")
     handler.send_header("Access-Control-Allow-Headers", "Content-Type")
 
 
@@ -241,6 +373,161 @@ def _json(handler: BaseHTTPRequestHandler, code: int, payload: dict[str, Any]) -
     _cors(handler)
     handler.end_headers()
     handler.wfile.write(body)
+
+
+def _sso_identity(handler: BaseHTTPRequestHandler) -> dict[str, str] | None:
+    if identity_from_cookie_header is None:
+        return None
+    try:
+        return identity_from_cookie_header(handler.headers.get("Cookie"))
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def _learned_path(email: str) -> str:
+    digest = hashlib.sha256(email.strip().lower().encode("utf-8")).hexdigest()[:40]
+    return os.path.join(LEARNED_DIR, f"{digest}.json")
+
+
+def _ensure_learned_dir() -> None:
+    os.makedirs(LEARNED_DIR, exist_ok=True)
+
+
+def _sanitize_learned_entry(raw: Any) -> dict[str, Any] | None:
+    if not isinstance(raw, dict):
+        return None
+    key = str(raw.get("key") or "").strip()[:100]
+    common = str(raw.get("commonName") or "").strip()[:120]
+    display = str(raw.get("displayName") or common).strip()[:160]
+    if not key or not (common or display):
+        return None
+    still_b64 = str(raw.get("stillBase64") or "").strip()
+    if len(still_b64) > 900_000:
+        still_b64 = ""
+    mime = str(raw.get("stillMime") or "").split(";")[0].strip()[:40]
+    if still_b64 and not mime.startswith("image/"):
+        mime = "image/jpeg"
+    try:
+        learned_at = int(raw.get("learnedAt") or 0)
+    except (TypeError, ValueError):
+        learned_at = 0
+    try:
+        last_seen = int(raw.get("lastSeenAt") or 0)
+    except (TypeError, ValueError):
+        last_seen = 0
+    try:
+        encounters = int(raw.get("encounterCount") or 1)
+    except (TypeError, ValueError):
+        encounters = 1
+    return {
+        "key": key,
+        "displayName": display or common,
+        "commonName": common or display,
+        "latinName": str(raw.get("latinName") or "").strip()[:160],
+        "cultivar": str(raw.get("cultivar") or "").strip()[:80],
+        "bloomColor": str(raw.get("bloomColor") or "").strip()[:40],
+        "organismType": str(raw.get("organismType") or "other").strip()[:40],
+        "lifeStage": str(raw.get("lifeStage") or "").strip()[:40],
+        "shortNote": str(raw.get("shortNote") or "").strip()[:240],
+        "evidence": bool(raw.get("evidence")),
+        "stillMime": mime if still_b64 else "",
+        "stillBase64": still_b64,
+        "learnedAt": learned_at or int(time.time() * 1000),
+        "lastSeenAt": last_seen or learned_at or int(time.time() * 1000),
+        "encounterCount": max(1, min(encounters, 9999)),
+    }
+
+
+def _normalize_learned_list(raw: Any) -> list[dict[str, Any]]:
+    if not isinstance(raw, list):
+        return []
+    out: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for item in raw:
+        entry = _sanitize_learned_entry(item)
+        if not entry or entry["key"] in seen:
+            continue
+        seen.add(entry["key"])
+        out.append(entry)
+        if len(out) >= MAX_LEARNED_ENTRIES:
+            break
+    out.sort(key=lambda e: int(e.get("lastSeenAt") or 0), reverse=True)
+    return out[:MAX_LEARNED_ENTRIES]
+
+
+def load_learned(email: str) -> list[dict[str, Any]]:
+    path = _learned_path(email)
+    if not os.path.isfile(path):
+        return []
+    try:
+        with open(path, encoding="utf-8") as f:
+            raw = json.load(f)
+    except (OSError, json.JSONDecodeError, TypeError):
+        return []
+    if isinstance(raw, dict) and isinstance(raw.get("entries"), list):
+        return _normalize_learned_list(raw["entries"])
+    return _normalize_learned_list(raw)
+
+
+def save_learned(email: str, entries: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    cleaned = _normalize_learned_list(entries)
+    _ensure_learned_dir()
+    path = _learned_path(email)
+    tmp = path + ".tmp"
+    payload = {
+        "version": 1,
+        "email": email.strip().lower(),
+        "updatedAt": int(time.time() * 1000),
+        "entries": cleaned,
+    }
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(payload, f, ensure_ascii=False, separators=(",", ":"))
+    os.replace(tmp, path)
+    return cleaned
+
+
+def merge_learned(
+    local: list[dict[str, Any]], remote: list[dict[str, Any]]
+) -> list[dict[str, Any]]:
+    """Prefer newer lastSeenAt; keep still art if only one side has it."""
+    by_key: dict[str, dict[str, Any]] = {}
+    for src in (remote or []) + (local or []):
+        entry = _sanitize_learned_entry(src)
+        if not entry:
+            continue
+        key = entry["key"]
+        prev = by_key.get(key)
+        if not prev:
+            by_key[key] = entry
+            continue
+        newer = entry if int(entry["lastSeenAt"]) >= int(prev["lastSeenAt"]) else prev
+        older = prev if newer is entry else entry
+        merged = dict(newer)
+        if not merged.get("stillBase64") and older.get("stillBase64"):
+            merged["stillBase64"] = older["stillBase64"]
+            merged["stillMime"] = older.get("stillMime") or "image/jpeg"
+        for field in (
+            "latinName",
+            "cultivar",
+            "bloomColor",
+            "lifeStage",
+            "shortNote",
+            "organismType",
+        ):
+            if not merged.get(field) and older.get(field):
+                merged[field] = older[field]
+        merged["learnedAt"] = min(
+            int(merged.get("learnedAt") or 0) or int(time.time() * 1000),
+            int(older.get("learnedAt") or 0) or int(time.time() * 1000),
+        )
+        merged["encounterCount"] = max(
+            int(merged.get("encounterCount") or 1),
+            int(older.get("encounterCount") or 1),
+        )
+        by_key[key] = merged
+    out = list(by_key.values())
+    out.sort(key=lambda e: int(e.get("lastSeenAt") or 0), reverse=True)
+    return out[:MAX_LEARNED_ENTRIES]
 
 
 def _extract_json_object(text: str) -> dict[str, Any]:
@@ -384,6 +671,318 @@ def _call_gemini_vision(image_b64: str, mime: str) -> dict[str, Any]:
     return _extract_json_object(text)
 
 
+def _image_model_candidates() -> list[str]:
+    models: list[str] = []
+    if GEMINI_IMAGE_MODEL:
+        models.append(GEMINI_IMAGE_MODEL)
+    for name in _DEFAULT_IMAGE_MODELS:
+        if name not in models:
+            models.append(name)
+    return models
+
+
+def _codex_still_prompt(
+    *,
+    common: str,
+    latin: str,
+    cultivar: str,
+    organism_type: str,
+    short_note: str,
+    life_stage: str = "",
+) -> str:
+    bits = [common.strip() or "this organism"]
+    if latin.strip():
+        bits.append(f"({latin.strip()})")
+    if cultivar.strip():
+        bits.append(f"cultivar/form: {cultivar.strip()}")
+    if organism_type.strip():
+        bits.append(f"type: {organism_type.strip()}")
+    if life_stage.strip():
+        bits.append(f"life stage in photo: {life_stage.strip()}")
+    if short_note.strip():
+        bits.append(f"scan note: {short_note.strip()[:180]}")
+    subject = "; ".join(bits)
+    stage_line = (
+        f"Show the complete organism at THIS life stage only: {life_stage.strip()}. "
+        if life_stage.strip()
+        else "Match the life stage visible in the reference (e.g. flowering blossom → "
+        "flowering plant, not a seed or seedling; chick → juvenile, not adult).\n"
+    )
+    return (
+        "Create ONE brand-new wildlife-codex portrait for a family-friendly nature game.\n"
+        f"Identified subject: {subject}.\n"
+        "PRIVACY — the attached photo is a private reference for traits only. "
+        "Invent a fresh semi-realistic field-guide portrait of the SAME species. "
+        "Do NOT copy, redraw, or recreate that photo’s pixels, background, angle, "
+        "crop, lighting, or scene. Different pose and plain soft background.\n"
+        "Match species, color, markings, bloom/leaf/body form, and cultivar traits "
+        "(example: a red sunflower must stay red, not turn generic yellow).\n"
+        f"{stage_line}"
+        "If the reference shows a blossom or bloom, depict a complete flowering plant "
+        "(or clear flowering head) at that stage — never a seed, seedling, or unrelated stage. "
+        "If it shows a seed or seedling, stay at that stage. For animals, match age class.\n"
+        "Do NOT invent a different species. Do NOT substitute a stock generic look.\n"
+        "Style: calm semi-realistic field-guide art — believable nature illustration. "
+        "Avoid heavy cartoon, anime, chibi, glossy CGI, or uncanny hyper-detail. "
+        "Soft plain muted background. Organism only — no people, no hands, no phone, "
+        "no text, no watermark, no logo.\n"
+        "Square composition, subject filling most of the frame. Return an image."
+    )
+
+
+def _extract_gemini_inline_image(raw: dict[str, Any]) -> tuple[str, str]:
+    """Return (mime, base64) from a Gemini generateContent response."""
+    try:
+        parts = raw["candidates"][0]["content"]["parts"]
+    except (KeyError, IndexError, TypeError) as exc:
+        raise RuntimeError("Gemini image response missing parts") from exc
+    if not isinstance(parts, list):
+        raise RuntimeError("Gemini image response parts invalid")
+    for part in parts:
+        if not isinstance(part, dict):
+            continue
+        inline = part.get("inlineData") or part.get("inline_data")
+        if not isinstance(inline, dict):
+            continue
+        data = str(inline.get("data") or "").strip()
+        if not data:
+            continue
+        mime = str(
+            inline.get("mimeType") or inline.get("mime_type") or "image/png"
+        ).split(";")[0].strip() or "image/png"
+        if not mime.startswith("image/"):
+            mime = "image/png"
+        return mime, data
+    raise RuntimeError("Gemini returned no image data")
+
+
+def _shrink_still_b64(mime: str, data_b64: str, max_edge: int = 640, quality: int = 82) -> tuple[str, str]:
+    """Downscale codex still so phones can store/show it (Pillow if available)."""
+    try:
+        import base64
+        from io import BytesIO
+
+        from PIL import Image  # type: ignore
+    except Exception:
+        return mime, data_b64
+    try:
+        raw = base64.b64decode(data_b64, validate=False)
+        img = Image.open(BytesIO(raw))
+        img = img.convert("RGB")
+        w, h = img.size
+        scale = min(1.0, float(max_edge) / float(max(w, h) or 1))
+        if scale < 0.999:
+            img = img.resize(
+                (max(1, int(w * scale)), max(1, int(h * scale))),
+                Image.Resampling.LANCZOS,
+            )
+        buf = BytesIO()
+        img.save(buf, format="JPEG", quality=quality, optimize=True)
+        out = base64.b64encode(buf.getvalue()).decode("ascii")
+        return "image/jpeg", out
+    except Exception as exc:  # noqa: BLE001
+        __import__("sys").stderr.write(f"bane_still_shrink skip: {exc}\n")
+        return mime, data_b64
+
+
+def _call_gemini_codex_still(
+    image_b64: str | None,
+    mime: str,
+    *,
+    common: str,
+    latin: str,
+    cultivar: str,
+    organism_type: str,
+    short_note: str,
+    life_stage: str = "",
+    allow_text_only: bool = True,
+) -> dict[str, Any]:
+    key = gemini_api_key()
+    if not key:
+        raise RuntimeError("GEMINI_API_KEY not set")
+    mime = (mime or "image/jpeg").split(";")[0].strip() or "image/jpeg"
+    if not mime.startswith("image/"):
+        mime = "image/jpeg"
+    prompt = _codex_still_prompt(
+        common=common,
+        latin=latin,
+        cultivar=cultivar,
+        organism_type=organism_type,
+        short_note=short_note,
+        life_stage=life_stage,
+    )
+    parts: list[dict[str, Any]] = [{"text": prompt}]
+    if image_b64:
+        parts.append({"inline_data": {"mime_type": mime, "data": image_b64}})
+    elif not allow_text_only:
+        raise RuntimeError("image required for still")
+    else:
+        stage_bit = (
+            f" Stay at life stage: {life_stage}." if life_stage else ""
+        )
+        parts[0] = {
+            "text": prompt
+            + "\nNo photo attached — invent a careful semi-realistic field-guide portrait "
+            "from the identified name, traits, and life stage only (still match color/form; "
+            f"e.g. red sunflower must be red).{stage_bit}"
+        }
+
+    payload = {
+        "contents": [{"parts": parts}],
+        "generationConfig": {
+            "temperature": 0.35,
+            "responseModalities": ["TEXT", "IMAGE"],
+            "imageConfig": {
+                "aspectRatio": "1:1",
+                "imageSize": "512",
+            },
+        },
+    }
+    errors: list[str] = []
+    for model in _image_model_candidates():
+        url = (
+            f"https://generativelanguage.googleapis.com/v1beta/models/"
+            f"{urllib.parse.quote(model, safe='')}:generateContent"
+            f"?key={urllib.parse.quote(key, safe='')}"
+        )
+        req = urllib.request.Request(
+            url,
+            data=json.dumps(payload).encode("utf-8"),
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        try:
+            with urllib.request.urlopen(
+                req, timeout=100, context=ssl.create_default_context()
+            ) as resp:
+                raw = json.loads(resp.read().decode("utf-8"))
+            out_mime, out_b64 = _extract_gemini_inline_image(raw)
+            out_mime, out_b64 = _shrink_still_b64(out_mime, out_b64)
+            return {
+                "ok": True,
+                "mimeType": out_mime,
+                "imageBase64": out_b64,
+                "model": model,
+                "matched": True,
+                "fromPhoto": bool(image_b64),
+            }
+        except urllib.error.HTTPError as exc:
+            detail = ""
+            try:
+                detail = exc.read().decode("utf-8", errors="replace")[:400]
+            except OSError:
+                detail = str(exc)
+            errors.append(f"{model}: HTTP {exc.code} {detail}")
+            # Older image models may reject imageConfig — retry once without it.
+            if "imageConfig" in detail or exc.code in (400, 404):
+                slim = {
+                    "contents": payload["contents"],
+                    "generationConfig": {
+                        "temperature": 0.35,
+                        "responseModalities": ["TEXT", "IMAGE"],
+                    },
+                }
+                req2 = urllib.request.Request(
+                    url,
+                    data=json.dumps(slim).encode("utf-8"),
+                    headers={"Content-Type": "application/json"},
+                    method="POST",
+                )
+                try:
+                    with urllib.request.urlopen(
+                        req2, timeout=100, context=ssl.create_default_context()
+                    ) as resp2:
+                        raw2 = json.loads(resp2.read().decode("utf-8"))
+                    out_mime, out_b64 = _extract_gemini_inline_image(raw2)
+                    out_mime, out_b64 = _shrink_still_b64(out_mime, out_b64)
+                    return {
+                        "ok": True,
+                        "mimeType": out_mime,
+                        "imageBase64": out_b64,
+                        "model": model,
+                        "matched": True,
+                        "fromPhoto": bool(image_b64),
+                    }
+                except Exception as exc2:  # noqa: BLE001
+                    errors.append(f"{model}/slim: {type(exc2).__name__}: {exc2}")
+        except Exception as exc:  # noqa: BLE001
+            errors.append(f"{model}: {type(exc).__name__}: {exc}")
+
+    # Last chance: text-only if photo path failed.
+    if image_b64 and allow_text_only:
+        try:
+            return _call_gemini_codex_still(
+                None,
+                mime,
+                common=common,
+                latin=latin,
+                cultivar=cultivar,
+                organism_type=organism_type,
+                short_note=short_note,
+                life_stage=life_stage,
+                allow_text_only=True,
+            )
+        except Exception as exc:  # noqa: BLE001
+            errors.append(f"text_only: {type(exc).__name__}: {exc}")
+
+    raise RuntimeError("; ".join(errors) or "image_generation_failed")
+
+
+def generate_codex_still(
+    image_b64: str | None,
+    mime: str,
+    *,
+    common: str,
+    latin: str = "",
+    cultivar: str = "",
+    organism_type: str = "",
+    short_note: str = "",
+    life_stage: str = "",
+) -> dict[str, Any]:
+    if image_b64 is not None and (not image_b64 or len(image_b64) > MAX_IMAGE_B64):
+        return {
+            "ok": False,
+            "error": "image_invalid",
+            "message": "Image missing or too large.",
+        }
+    if not (common or "").strip():
+        return {
+            "ok": False,
+            "error": "missing_organism",
+            "message": "commonName is required so the still matches the ID.",
+        }
+    try:
+        result = _call_gemini_codex_still(
+            image_b64,
+            mime,
+            common=common.strip(),
+            latin=(latin or "").strip(),
+            cultivar=(cultivar or "").strip(),
+            organism_type=(organism_type or "").strip(),
+            short_note=(short_note or "").strip(),
+            life_stage=(life_stage or "").strip(),
+        )
+        result["commonName"] = common.strip()
+        result["latinName"] = (latin or "").strip()
+        result["cultivar"] = (cultivar or "").strip() or None
+        result["lifeStage"] = (life_stage or "").strip() or None
+        result["disclaimer"] = (
+            "Codex art is a new semi-realistic portrait of this species at the "
+            "same life stage — not your raw photo, and not a mismatched stage."
+        )
+        return result
+    except Exception as exc:  # noqa: BLE001
+        __import__("sys").stderr.write(
+            f"bane_codex_still fail common={common!r}: {exc}\n"
+        )
+        return {
+            "ok": False,
+            "error": "still_failed",
+            "message": f"Could not build matching codex still: {exc}",
+            "geminiConfigured": bool(gemini_api_key()),
+        }
+
+
 def _norm_id(parsed: dict[str, Any]) -> dict[str, Any]:
     conf = str(parsed.get("confidence") or "low").lower()
     if conf not in ("high", "medium", "low"):
@@ -412,11 +1011,15 @@ def _norm_id(parsed: dict[str, Any]) -> dict[str, Any]:
     if no_organism:
         common = ""
         organism_type = "none"
+    life_stage = str(parsed.get("lifeStage") or "").strip()[:40].lower()
+    life_stage = re.sub(r"[^a-z0-9_\- ]+", "", life_stage).strip()[:40]
     return {
         "commonName": common,
         "latinName": str(parsed.get("latinName") or "").strip()[:160],
         "cultivar": str(parsed.get("cultivar") or "").strip()[:80],
+        "bloomColor": str(parsed.get("bloomColor") or "").strip()[:40],
         "organismType": organism_type,
+        "lifeStage": life_stage,
         "evidence": bool(parsed.get("evidence")),
         "confidence": conf,
         "shortNote": str(parsed.get("shortNote") or "").strip()[:240],
@@ -435,8 +1038,85 @@ def _is_refusal(parsed: dict[str, Any] | None) -> bool:
     return False
 
 
+def _name_richness(parsed: dict[str, Any] | None) -> int:
+    if not parsed:
+        return 0
+    blob = " ".join(
+        [
+            str(parsed.get("commonName") or ""),
+            str(parsed.get("cultivar") or ""),
+            str(parsed.get("bloomColor") or ""),
+            str(parsed.get("shortNote") or ""),
+        ]
+    ).lower()
+    score = len(blob)
+    for word in (
+        "red",
+        "burgundy",
+        "crimson",
+        "dark",
+        "black",
+        "bicolor",
+        "orange",
+        "pink",
+        "ring of fire",
+        "mahogany",
+    ):
+        if word in blob:
+            score += 40
+    if parsed.get("cultivar"):
+        score += 25
+    if parsed.get("bloomColor"):
+        score += 20
+    return score
+
+
+def _merge_id_details(
+    chosen: dict[str, Any], other: dict[str, Any] | None
+) -> dict[str, Any]:
+    """Keep the chosen ID, but borrow cultivar/color/note when the other guess is richer."""
+    if not other or _is_refusal(other):
+        return chosen
+    out = dict(chosen)
+    if not out.get("cultivar") and other.get("cultivar"):
+        out["cultivar"] = other["cultivar"]
+    if not out.get("bloomColor") and other.get("bloomColor"):
+        out["bloomColor"] = other["bloomColor"]
+    if not out.get("lifeStage") and other.get("lifeStage"):
+        out["lifeStage"] = other["lifeStage"]
+    # Prefer a more color-specific common name (Red sunflower > Sunflower)
+    if _name_richness(other) > _name_richness(out) + 15:
+        ca = (out.get("commonName") or "").lower()
+        cb = (other.get("commonName") or "").lower()
+        if ca and cb and (ca in cb or cb in ca or "sunflower" in ca and "sunflower" in cb):
+            out["commonName"] = other["commonName"]
+            if other.get("cultivar"):
+                out["cultivar"] = other["cultivar"]
+            if other.get("bloomColor"):
+                out["bloomColor"] = other["bloomColor"]
+            if other.get("shortNote") and len(str(other.get("shortNote") or "")) > len(
+                str(out.get("shortNote") or "")
+            ):
+                out["shortNote"] = other["shortNote"]
+    elif other.get("shortNote") and (
+        not out.get("shortNote")
+        or (
+            any(
+                c in str(other.get("shortNote") or "").lower()
+                for c in ("red", "dark", "black", "burgundy", "bicolor")
+            )
+            and not any(
+                c in str(out.get("shortNote") or "").lower()
+                for c in ("red", "dark", "black", "burgundy", "bicolor")
+            )
+        )
+    ):
+        out["shortNote"] = other["shortNote"]
+    return out
+
+
 def _prefer_id(a: dict[str, Any] | None, b: dict[str, Any] | None) -> dict[str, Any]:
-    """Prefer higher confidence; if tie, prefer Gemini when names agree else Claude."""
+    """Prefer higher confidence; if tie, prefer richer color/cultivar naming."""
     rank = {"high": 3, "medium": 2, "low": 1}
     a_ok = a if a and not _is_refusal(a) else None
     b_ok = b if b and not _is_refusal(b) else None
@@ -450,21 +1130,18 @@ def _prefer_id(a: dict[str, Any] | None, b: dict[str, Any] | None) -> dict[str, 
     ra = rank.get(a_ok.get("confidence") or "low", 1)
     rb = rank.get(b_ok.get("confidence") or "low", 1)
     if ra > rb:
-        return a_ok
+        return _merge_id_details(a_ok, b_ok)
     if rb > ra:
-        return b_ok
-    # same confidence — if common names roughly match, keep richer latin
-    ca = (a_ok.get("commonName") or "").lower()
-    cb = (b_ok.get("commonName") or "").lower()
-    if ca and cb and (ca in cb or cb in ca):
-        if len(a_ok.get("latinName") or "") >= len(b_ok.get("latinName") or ""):
-            return a_ok
-        return b_ok
-    # Prefer Gemini (a) as primary when tied and disagree
-    return a_ok if a_ok.get("commonName") else b_ok
+        return _merge_id_details(b_ok, a_ok)
+    # same confidence — prefer richer color/cultivar naming, then Gemini (a)
+    if _name_richness(b_ok) > _name_richness(a_ok):
+        return _merge_id_details(b_ok, a_ok)
+    return _merge_id_details(a_ok, b_ok)
 
 
-def identify_wildlife(image_b64: str, mime: str) -> dict[str, Any]:
+def identify_wildlife(
+    image_b64: str, mime: str, *, want_codex_still: bool = False
+) -> dict[str, Any]:
     if not image_b64 or len(image_b64) > MAX_IMAGE_B64:
         return {"ok": False, "error": "image_invalid", "message": "Image missing or too large."}
 
@@ -539,14 +1216,16 @@ def identify_wildlife(image_b64: str, mime: str) -> dict[str, Any]:
         flush=True,
     )
 
-    return {
+    result: dict[str, Any] = {
         "ok": True,
         "privacy": "Photo used for this request only — not stored by Bane.",
         "displayName": display,
         "commonName": chosen["commonName"],
         "latinName": chosen.get("latinName") or "",
         "cultivar": chosen.get("cultivar") or "",
+        "bloomColor": chosen.get("bloomColor") or "",
         "organismType": chosen.get("organismType") or "other",
+        "lifeStage": chosen.get("lifeStage") or "",
         "evidence": bool(chosen.get("evidence")),
         "confidence": chosen.get("confidence") or "low",
         "shortNote": chosen.get("shortNote") or "",
@@ -562,6 +1241,72 @@ def identify_wildlife(image_b64: str, mime: str) -> dict[str, Any]:
             "(e.g. golden California poppy), even if the cultivar guess is wrong."
         ),
     }
+
+    if want_codex_still:
+        still = generate_codex_still(
+            image_b64,
+            mime,
+            common=str(result["commonName"]),
+            latin=str(result.get("latinName") or ""),
+            cultivar=str(result.get("cultivar") or ""),
+            organism_type=str(result.get("organismType") or ""),
+            life_stage=str(result.get("lifeStage") or ""),
+            short_note=str(
+                (result.get("bloomColor") or "")
+                + " "
+                + (result.get("shortNote") or "")
+            ).strip(),
+        )
+        if still.get("ok") and still.get("imageBase64"):
+            token = save_still_token(
+                str(still.get("mimeType") or "image/jpeg"),
+                str(still["imageBase64"]),
+            )
+            if token:
+                result["stillToken"] = token
+                result["stillUrl"] = f"/bane-of-extinction/api/still/{token}"
+                result["codexStill"] = {
+                    "token": token,
+                    "url": result["stillUrl"],
+                    "mimeType": still.get("mimeType") or "image/jpeg",
+                    "imageBase64": still["imageBase64"],
+                    "matched": True,
+                    "fromPhoto": still.get("fromPhoto", True),
+                    "lifeStage": result.get("lifeStage") or "",
+                    "model": still.get("model"),
+                }
+                print(
+                    f"bane_codex_still ok common={result['commonName']!r} "
+                    f"stage={result.get('lifeStage')!r} "
+                    f"model={still.get('model')!r} token={token}",
+                    flush=True,
+                )
+            else:
+                result["stillToken"] = None
+                result["codexStill"] = {
+                    "mimeType": still.get("mimeType") or "image/jpeg",
+                    "imageBase64": still["imageBase64"],
+                    "matched": True,
+                    "fromPhoto": still.get("fromPhoto", True),
+                    "lifeStage": result.get("lifeStage") or "",
+                    "model": still.get("model"),
+                }
+                result["codexStillError"] = "still_store_failed"
+                print(
+                    f"bane_codex_still store_fail common={result['commonName']!r}",
+                    flush=True,
+                )
+        else:
+            result["stillToken"] = None
+            result["codexStill"] = None
+            result["codexStillError"] = still.get("message") or still.get("error")
+            print(
+                f"bane_codex_still miss common={result['commonName']!r} "
+                f"err={result['codexStillError']!r}",
+                flush=True,
+            )
+
+    return result
 
 
 def _normalize_callouts(raw: Any) -> list[dict[str, str]]:
@@ -591,35 +1336,45 @@ def build_callouts(
     cultivar: str,
     evidence: bool,
     organism_type: str = "",
+    short_note: str = "",
+    bloom_color: str = "",
 ) -> dict[str, Any]:
     display = common.strip()
     if not display:
         raise ValueError("commonName required")
     latin_n = latin.strip()
     cultivar_n = cultivar.strip()
+    note_n = short_note.strip()
+    color_n = bloom_color.strip()
     org_type = (organism_type or ("evidence" if evidence else "organism")).strip()[:40]
 
     system = (
         "You write short, family-friendly wildlife and plant education callouts for "
         "Bane of Extinction. Return ONLY valid JSON. No Wikipedia, no URLs, no scraping. "
         "Use well-established general knowledge about the NAMED organism below "
-        "(the game's best guess). If the guess might be a close relative, still give "
-        "accurate facts for that named organism. If unsure, say so gently. "
-        "No medical claims. Visible traits / ecology / diet / habitat / pollinators — "
-        "not internal anatomy scans."
+        "(the game's best guess). If unsure, say so gently. No medical claims. "
+        "Visible traits / ecology / diet / habitat / pollinators — not internal anatomy. "
+        "CRITICAL: match petal/ray COLOR from the identification and scan note. "
+        "A red or dark sunflower must NOT get yellow-only petal facts. "
+        "TONE — help a walker feel this organism belongs in THEIR world, not a textbook dump. "
+        "ALL BUT ONE callouts must tie the organism to everyday human life in a gentle way "
+        "(what you’d notice on a walk or in a yard, shared air/water/food webs, shade, "
+        "pollinators near people, pets/kids safety when relevant, seasons you meet it, "
+        "how it shares neighborhoods). Warm and concrete — not lecturey. "
+        "EXACTLY ONE callout should be a wonder fact about the species itself "
+        "(its own trick, life cycle, or ecology) that is less about direct human impact. "
+        "Do not invent personal medical advice. Do not guilt-trip or panic about extinction."
     )
     scope = (
         f"Identified as: {display}"
         + (f" ({latin_n})" if latin_n else "")
         + (f"; cultivar note: {cultivar_n}" if cultivar_n else "")
+        + (f"; bloom color: {color_n}" if color_n else "")
+        + (f"; scan note: {note_n}" if note_n else "")
         + f"; type: {org_type}. "
-        "Write callouts that are accurate for THIS identification. "
-        "Example: if this is a golden California poppy (not Watermelon Heaven), "
-        "describe golden/orange California poppy traits — do not invent pink cultivar facts. "
-        "Example: if this is common sunflower (Helianthus annuus), describe that species — "
-        "do not invent named garden cultivars unless the identification includes them. "
-        "Example: if this is sweetheart philodendron (Philodendron hederaceum), describe that "
-        "species — do not invent named cultivars (Brasil, Micans, Lemon Lime) unless included."
+        "Write callouts accurate for THIS identification and visible color. "
+        "If red/dark sunflower rays, describe those — not classic yellow-only petals. "
+        "Put the single species-wonder fact last when possible."
     )
     if evidence:
         scope += " Frame as evidence/clues the player noticed."
@@ -639,7 +1394,8 @@ def build_callouts(
                 ],
             }
         )
-        + f"\nUse 3 to {MAX_CALLOUTS} callouts."
+        + f"\nUse 3 to {MAX_CALLOUTS} callouts. "
+        "Most facts: player-world connection. Exactly one: species-own wonder."
     )
 
     try:
@@ -652,11 +1408,21 @@ def build_callouts(
         if not organism_type and parsed.get("organismType"):
             org_type = str(parsed.get("organismType"))[:40]
     except Exception as exc:  # noqa: BLE001
-        blob = (display + " " + latin_n).lower()
+        blob = (display + " " + latin_n + " " + note_n + " " + color_n).lower()
         if "poppy" in blob or "eschscholzia" in blob:
             callouts = list(FALLBACK_CALLOUTS_POPPY)
         elif "sunflower" in blob or "helianthus" in blob:
             callouts = list(FALLBACK_CALLOUTS_SUNFLOWER)
+            if any(c in blob for c in ("red", "burgundy", "crimson", "dark", "black")):
+                callouts = [
+                    {
+                        "anchor": "petals",
+                        "label": "Ray color",
+                        "fact": "This form shows dark or red ray florets instead of classic yellow — garden sunflowers come in many petal colors.",
+                    },
+                    *callouts[1:3],
+                    callouts[-1],
+                ][:MAX_CALLOUTS]
         elif (
             "philodendron" in blob
             or "hederaceum" in blob
@@ -715,8 +1481,74 @@ class Handler(BaseHTTPRequestHandler):
                     "service": "bane-of-extinction",
                     "claudeKey": bool(anthropic_api_key()),
                     "geminiKey": bool(gemini_api_key()),
+                    "geminiImageModels": _image_model_candidates(),
+                    "sso": identity_from_cookie_header is not None,
                 },
             )
+            return
+        if path in ("/api/auth/me", "/auth/me"):
+            identity = _sso_identity(self)
+            if identity:
+                _json(
+                    self,
+                    200,
+                    {
+                        "ok": True,
+                        "signedIn": True,
+                        "email": identity.get("email") or "",
+                        "googleSub": identity.get("google_sub") or "",
+                    },
+                )
+            else:
+                _json(
+                    self,
+                    200,
+                    {
+                        "ok": True,
+                        "signedIn": False,
+                        "ssoAvailable": identity_from_cookie_header is not None,
+                    },
+                )
+            return
+        if path == "/api/learned":
+            identity = _sso_identity(self)
+            if not identity or not identity.get("email"):
+                _json(
+                    self,
+                    401,
+                    {
+                        "ok": False,
+                        "error": "sign_in_required",
+                        "message": "Sign in with Google to sync learns across devices.",
+                    },
+                )
+                return
+            entries = load_learned(str(identity["email"]))
+            _json(
+                self,
+                200,
+                {
+                    "ok": True,
+                    "signedIn": True,
+                    "email": identity["email"],
+                    "entries": entries,
+                },
+            )
+            return
+        still_m = re.fullmatch(r"/api/still/([A-Za-z0-9_-]{8,64})", path)
+        if still_m:
+            packed = load_still_bytes(still_m.group(1))
+            if not packed:
+                _json(self, 404, {"ok": False, "error": "still_not_found"})
+                return
+            mime, data = packed
+            self.send_response(200)
+            self.send_header("Content-Type", mime)
+            self.send_header("Content-Length", str(len(data)))
+            self.send_header("Cache-Control", "private, max-age=600")
+            _cors(self)
+            self.end_headers()
+            self.wfile.write(data)
             return
         _json(self, 404, {"ok": False, "error": "not_found"})
 
@@ -739,11 +1571,43 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/wildlife-identify":
             image_b64 = str(body.get("imageBase64") or "").strip()
             mime = str(body.get("mimeType") or "image/jpeg").strip()
-            result = identify_wildlife(image_b64, mime)
+            want_still = bool(
+                body.get("wantCodexStill")
+                or body.get("wantStill")
+                or body.get("includeCodexStill")
+            )
+            result = identify_wildlife(
+                image_b64, mime, want_codex_still=want_still
+            )
             code = 200 if result.get("ok") else (
                 503
                 if not gemini_api_key() and not anthropic_api_key()
                 else 502
+            )
+            _json(self, code, result)
+            return
+
+        if path == "/api/codex-still":
+            image_b64 = str(body.get("imageBase64") or "").strip()
+            mime = str(body.get("mimeType") or "image/jpeg").strip()
+            common = str(body.get("commonName") or body.get("common") or "").strip()
+            latin = str(body.get("latinName") or body.get("latin") or "").strip()
+            cultivar = str(body.get("cultivar") or "").strip()
+            organism_type = str(body.get("organismType") or "").strip()
+            short_note = str(body.get("shortNote") or "").strip()
+            life_stage = str(body.get("lifeStage") or "").strip()
+            result = generate_codex_still(
+                image_b64 or None,
+                mime,
+                common=common,
+                latin=latin,
+                cultivar=cultivar,
+                organism_type=organism_type,
+                short_note=short_note,
+                life_stage=life_stage,
+            )
+            code = 200 if result.get("ok") else (
+                503 if not gemini_api_key() else 502
             )
             _json(self, code, result)
             return
@@ -754,6 +1618,8 @@ class Handler(BaseHTTPRequestHandler):
             cultivar = str(body.get("cultivar") or "").strip()
             evidence = bool(body.get("evidence"))
             organism_type = str(body.get("organismType") or "").strip()
+            short_note = str(body.get("shortNote") or body.get("note") or "").strip()
+            bloom_color = str(body.get("bloomColor") or "").strip()
             if not common:
                 _json(
                     self,
@@ -771,11 +1637,53 @@ class Handler(BaseHTTPRequestHandler):
                 cultivar=cultivar,
                 evidence=evidence,
                 organism_type=organism_type,
+                short_note=short_note,
+                bloom_color=bloom_color,
             )
             _json(self, 200, result)
             return
 
+        if path in ("/api/learned", "/api/learned/sync"):
+            identity = _sso_identity(self)
+            if not identity or not identity.get("email"):
+                _json(
+                    self,
+                    401,
+                    {
+                        "ok": False,
+                        "error": "sign_in_required",
+                        "message": "Sign in with Google to sync learns across devices.",
+                    },
+                )
+                return
+            email = str(identity["email"])
+            remote = load_learned(email)
+            incoming = body.get("entries")
+            if incoming is None and isinstance(body.get("entry"), dict):
+                incoming = [body["entry"]]
+            local = _normalize_learned_list(incoming if incoming is not None else [])
+            mode = str(body.get("mode") or "merge").strip().lower()
+            if mode == "replace":
+                saved = save_learned(email, local)
+            else:
+                saved = save_learned(email, merge_learned(local, remote))
+            _json(
+                self,
+                200,
+                {
+                    "ok": True,
+                    "signedIn": True,
+                    "email": email,
+                    "entries": saved,
+                    "mode": mode if mode in ("merge", "replace") else "merge",
+                },
+            )
+            return
+
         _json(self, 404, {"ok": False, "error": "not_found"})
+
+    def do_PUT(self) -> None:  # noqa: N802
+        self.do_POST()
 
 
 def main() -> None:

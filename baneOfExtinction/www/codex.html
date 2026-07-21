@@ -4,9 +4,10 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
   <meta name="robots" content="noindex, nofollow" />
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate" />
   <title>Wildlife codex — Bane of Extinction</title>
-  <link rel="stylesheet" href="bane.css?v=20260719b" />
-  <link rel="stylesheet" href="bane-codex-card.css?v=20260719b" />
+  <link rel="stylesheet" href="bane.css?v=live4" />
+  <link rel="stylesheet" href="bane-codex-card.css?v=live4" />
 </head>
 <body>
   <div class="wrap wrap--wide">
@@ -14,10 +15,18 @@
       <p class="eyebrow"><a href="index.html">Bane of Extinction</a> · owner beta</p>
       <h1 class="brand">Wildlife codex</h1>
       <p class="tagline">
-        Stylized still + callout facts for what the game thinks it saw.
-        Phone: <a href="scan.html" style="color:#7ec8d8">wildlife camera scan</a>.
+        Past learns sync to your Odd Trove Google sign-in (and stay cached on this device).
+        Art is a new semi-realistic portrait — same species and life stage, never your raw photo.
+        Phone: <a href="wildlife-scan.html" style="color:#7ec8d8">wildlife camera scan</a>.
       </p>
     </header>
+
+    <p class="codex-sync" id="codexSync" aria-live="polite">Checking Google sign-in…</p>
+
+    <section class="codex-shelf" id="codexShelf" aria-label="Learned organisms" hidden>
+      <h2 class="codex-shelf__title">Learned on this device</h2>
+      <div class="codex-shelf__grid" id="codexShelfGrid"></div>
+    </section>
 
     <div class="card-toolbar">
       <label class="chk" id="cultivarRow" hidden>
@@ -42,7 +51,6 @@
             <img
               id="organismStill"
               class="organism-still"
-              src="assets/california-poppy-subject.png"
               width="501"
               height="501"
               alt=""
@@ -54,7 +62,7 @@
             <span id="latinOut">—</span>
           </p>
           <p class="codex-card__credit" id="artCredit">
-            After a scan, the still matches that guess (poppy or sunflower so far).
+            After a scan, art matches that species and life stage — not your photo.
           </p>
         </div>
         <aside class="codex-card__callouts" id="calloutList" aria-label="Organism callouts">
@@ -67,10 +75,11 @@
 
     <p class="foot">
       <a href="index.html">← Home</a>
-      · <a href="scan.html">Camera scan</a>
+      · <a href="wildlife-scan.html">Camera scan</a>
       · Claude facts for the guess (no Wikipedia)
     </p>
   </div>
-  <script src="bane-poppy-stub.js?v=20260719c"></script>
+  <script src="bane-codex-collection.js?v=live2"></script>
+  <script src="bane-codex-live.js?v=live4"></script>
 </body>
 </html>

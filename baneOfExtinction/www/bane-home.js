@@ -16,7 +16,7 @@
       scanBtn.disabled = false;
       scanBtn.removeAttribute("aria-disabled");
       scanBtn.addEventListener("click", function () {
-        window.location.href = "scan.html";
+        window.location.href = "wildlife-scan.html";
       });
     }
   } else {

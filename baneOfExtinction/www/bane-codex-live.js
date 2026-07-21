@@ -17,6 +17,9 @@
   var stillEl = document.getElementById("organismStill");
   var creditEl = document.getElementById("artCredit");
   var stillWrap = document.querySelector(".organism-still-wrap");
+  var shelfEl = document.getElementById("codexShelf");
+  var shelfGrid = document.getElementById("codexShelfGrid");
+  var syncEl = document.getElementById("codexSync");
 
   /* Demo-only cutouts — never used as a fallback for real scans. */
   var DEMO_STILLS = {
@@ -44,10 +47,15 @@
     commonName: "",
     latinName: "",
     cultivar: "",
+    bloomColor: "",
+    shortNote: "",
     evidence: false,
     organismType: "flower",
+    lifeStage: "",
     fromScan: false,
+    stillToken: "",
     generatedStill: null,
+    collectionKey: "",
   };
 
   function setStatus(msg) {
@@ -115,16 +123,30 @@
   }
 
   function applyStill() {
-    if (state.generatedStill && state.generatedStill.dataUrl) {
-      var g = state.generatedStill;
+    if (state.stillToken) {
+      var url = "/bane-of-extinction/api/still/" + encodeURIComponent(state.stillToken);
       var label = state.commonName || "Scanned organism";
       if (state.cultivar) label += " (" + state.cultivar + ")";
       showStill(
-        g.dataUrl,
+        url,
         label,
-        "Codex art matched to this scan" +
-          (state.commonName ? " (" + state.commonName + ")" : "") +
-          " — not your raw photo, not a generic stub.",
+        "Semi-realistic field-guide art for this scan" +
+          (state.lifeStage ? " (" + state.lifeStage + ")" : "") +
+          (state.bloomColor ? " · " + state.bloomColor : "") +
+          " — not your raw photo.",
+        true
+      );
+      return;
+    }
+    if (state.generatedStill && state.generatedStill.dataUrl) {
+      var g = state.generatedStill;
+      var label2 = state.commonName || "Scanned organism";
+      showStill(
+        g.dataUrl,
+        label2,
+        "Semi-realistic codex art — same species" +
+          (state.lifeStage ? " at " + state.lifeStage : "") +
+          " — not your raw photo.",
         true
       );
       return;
@@ -150,18 +172,34 @@
     state.commonName = common;
     state.latinName = (id.latinName && String(id.latinName).trim()) || "";
     state.cultivar = (id.cultivar && String(id.cultivar).trim()) || "";
+    state.bloomColor = (id.bloomColor && String(id.bloomColor).trim()) || "";
+    state.shortNote = (id.shortNote && String(id.shortNote).trim()) || "";
     state.evidence = !!id.evidence;
     state.organismType = id.organismType || "flower";
+    state.lifeStage = (id.lifeStage && String(id.lifeStage).trim()) || "";
     state.fromScan = !!opts.fromScan;
+    state.stillToken =
+      (opts.stillToken && String(opts.stillToken).trim()) ||
+      (id.stillToken && String(id.stillToken).trim()) ||
+      "";
+    state.collectionKey =
+      (opts.collectionKey && String(opts.collectionKey).trim()) ||
+      (id.key && String(id.key).trim()) ||
+      "";
     if (opts.generatedStill) state.generatedStill = opts.generatedStill;
     else if (!opts.keepStill) state.generatedStill = null;
     if (commonOut) {
       commonOut.textContent = id.displayName || state.commonName || "Unknown";
     }
-    if (latinOut) latinOut.textContent = state.latinName || "—";
+    if (latinOut) {
+      var latinLine = state.latinName || "—";
+      if (state.lifeStage) latinLine += " · " + state.lifeStage;
+      latinOut.textContent = latinLine;
+    }
     if (evidenceOn) evidenceOn.checked = state.evidence;
     syncCultivarToggle();
     applyStill();
+    markShelfActive();
   }
 
   function renderCallouts(callouts) {
@@ -210,6 +248,8 @@
       cultivar: cultivar,
       evidence: !!(evidenceOn && evidenceOn.checked),
       organismType: state.organismType,
+      shortNote: state.shortNote || "",
+      bloomColor: state.bloomColor || "",
     };
     fetch(API_CALLOUTS, {
       method: "POST",
@@ -284,6 +324,7 @@
     if (!raw) return null;
     var obj = JSON.parse(raw);
     if (!obj || !(obj.commonName || obj.displayName)) return null;
+    // Handoff from scan page only — short TTL. Collection entries do not expire.
     if (obj.savedAt && Date.now() - Number(obj.savedAt) > MAX_AGE_MS) {
       return null;
     }
@@ -312,6 +353,8 @@
       var mime = (obj.mimeType || "image/png").split(";")[0] || "image/png";
       return {
         dataUrl: "data:" + mime + ";base64," + obj.imageBase64,
+        mimeType: mime,
+        imageBase64: obj.imageBase64,
         commonName: obj.commonName || "",
         latinName: obj.latinName || "",
         cultivar: obj.cultivar || "",
@@ -319,6 +362,122 @@
     } catch (e3) {
       return null;
     }
+  }
+
+  function updateSyncStatus() {
+    if (!syncEl || !window.BaneCodexCollection) return;
+    var st =
+      window.BaneCodexCollection.getSyncState &&
+      window.BaneCodexCollection.getSyncState();
+    if (!st) return;
+    if (st.signedIn && st.email) {
+      syncEl.innerHTML =
+        "Synced to Google: <strong></strong> — learns follow this sign-in on other devices.";
+      syncEl.querySelector("strong").textContent = st.email;
+      return;
+    }
+    var url =
+      (window.BaneCodexCollection.googleSignInUrl &&
+        window.BaneCodexCollection.googleSignInUrl()) ||
+      "#";
+    syncEl.innerHTML =
+      'Not synced yet. <a href="' +
+      url +
+      '">Sign in with Google</a> so learns follow your account (not just this phone).';
+  }
+
+  function markShelfActive() {
+    if (!shelfGrid) return;
+    var buttons = shelfGrid.querySelectorAll(".codex-shelf__item");
+    var i;
+    for (i = 0; i < buttons.length; i++) {
+      var btn = buttons[i];
+      if (state.collectionKey && btn.dataset.key === state.collectionKey) {
+        btn.classList.add("is-active");
+      } else {
+        btn.classList.remove("is-active");
+      }
+    }
+  }
+
+  function openLearnedEntry(entry, opts) {
+    if (!entry) return;
+    opts = opts || {};
+    var still = null;
+    var dataUrl =
+      window.BaneCodexCollection && window.BaneCodexCollection.stillDataUrl
+        ? window.BaneCodexCollection.stillDataUrl(entry)
+        : "";
+    if (dataUrl) {
+      still = { dataUrl: dataUrl };
+    }
+    applyIdentity(entry, {
+      fromScan: !!opts.fromScan,
+      stillToken: "",
+      generatedStill: still,
+      collectionKey: entry.key,
+    });
+    setStatus(
+      (opts.fromScan ? "From your scan: " : "From your learns: ") +
+        (entry.displayName || entry.commonName || "organism") +
+        (still ? " (matched art)" : "") +
+        ". Loading callouts…"
+    );
+    loadFacts();
+  }
+
+  function renderShelf() {
+    if (!shelfEl || !shelfGrid || !window.BaneCodexCollection) return;
+    var list = window.BaneCodexCollection.readAll();
+    shelfGrid.innerHTML = "";
+    if (!list.length) {
+      shelfEl.hidden = true;
+      return;
+    }
+    shelfEl.hidden = false;
+    list.forEach(function (entry) {
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "codex-shelf__item";
+      btn.dataset.key = entry.key;
+      var thumbHtml = "";
+      var dataUrl = window.BaneCodexCollection.stillDataUrl(entry);
+      if (dataUrl) {
+        thumbHtml =
+          '<img class="codex-shelf__thumb" alt="" src="' +
+          dataUrl.replace(/"/g, "") +
+          '" />';
+      } else {
+        thumbHtml = '<div class="codex-shelf__thumb codex-shelf__thumb--empty">?</div>';
+      }
+      btn.innerHTML =
+        thumbHtml +
+        '<p class="codex-shelf__name"></p>';
+      btn.querySelector(".codex-shelf__name").textContent =
+        entry.displayName || entry.commonName || "Organism";
+      btn.addEventListener("click", function () {
+        openLearnedEntry(entry, { fromScan: false });
+      });
+      shelfGrid.appendChild(btn);
+    });
+    markShelfActive();
+  }
+
+  function rememberInCollection(record, still) {
+    if (!window.BaneCodexCollection || !record) return null;
+    var packedStill = null;
+    if (still && still.imageBase64) {
+      packedStill = {
+        mimeType: still.mimeType || "image/jpeg",
+        imageBase64: still.imageBase64,
+      };
+    } else if (still && still.dataUrl) {
+      var m = /^data:(image\/[a-z0-9.+-]+);base64,(.+)$/i.exec(still.dataUrl);
+      if (m) packedStill = { mimeType: m[1], imageBase64: m[2] };
+    }
+    var entry = window.BaneCodexCollection.upsert(record, packedStill);
+    renderShelf();
+    return entry;
   }
 
   function readScanId() {
@@ -334,10 +493,13 @@
         displayName: display || common,
         latinName: (params.get("latin") || "").trim(),
         cultivar: (params.get("cultivar") || "").trim(),
+        bloomColor: (params.get("color") || "").trim(),
         organismType: (params.get("type") || "flower").trim(),
+        lifeStage: (params.get("stage") || "").trim(),
         confidence: (params.get("conf") || "").trim(),
         evidence: params.get("evidence") === "1",
         shortNote: (params.get("note") || "").trim(),
+        stillToken: (params.get("still") || "").trim(),
         fromScan: true,
       };
     }
@@ -380,7 +542,9 @@
     btn.addEventListener("click", function () {
       clearStored();
       clearStillStorage();
+      state.collectionKey = "";
       applyIdentity(id, { fromScan: false, generatedStill: null });
+      markShelfActive();
       setStatus("Demo identity set. Loading callouts…");
       loadFacts();
     });
@@ -391,6 +555,7 @@
     latinName: "Eschscholzia californica",
     cultivar: "",
     organismType: "flower",
+    lifeStage: "flowering",
     displayName: "California poppy",
   });
   wireDemo("demoSunflower", {
@@ -398,40 +563,125 @@
     latinName: "Helianthus annuus",
     cultivar: "",
     organismType: "flower",
+    lifeStage: "flowering",
     displayName: "Common sunflower",
   });
 
-  var parsed = null;
-  try {
-    parsed = readScanId();
-  } catch (e) {}
-  var generated = null;
-  try {
-    generated = readGeneratedStill();
-  } catch (e2) {}
-  if (generated) {
-    clearStillStorage();
+  function bootCodex() {
+    renderShelf();
+    updateSyncStatus();
+
+    var parsed = null;
+    try {
+      parsed = readScanId();
+    } catch (e) {}
+    var generated = null;
+    try {
+      generated = readGeneratedStill();
+    } catch (e2) {}
+    if (generated) {
+      clearStillStorage();
+    }
+    if (parsed && (parsed.commonName || parsed.displayName)) {
+      var remembered = rememberInCollection(parsed, generated);
+      var entry =
+        remembered ||
+        Object.assign({}, parsed, {
+          key:
+            (window.BaneCodexCollection &&
+              window.BaneCodexCollection.entryKey(parsed)) ||
+            "",
+          stillBase64: generated && generated.imageBase64,
+          stillMime: generated && generated.mimeType,
+        });
+      var still = null;
+      var dataUrl =
+        window.BaneCodexCollection && window.BaneCodexCollection.stillDataUrl
+          ? window.BaneCodexCollection.stillDataUrl(entry)
+          : "";
+      if (dataUrl) still = { dataUrl: dataUrl };
+      else if (generated && generated.dataUrl) still = generated;
+      applyIdentity(entry, {
+        fromScan: true,
+        stillToken: (!still && parsed.stillToken) || "",
+        generatedStill: still,
+        collectionKey: entry.key || "",
+      });
+      setStatus(
+        "From your scan: " +
+          (entry.displayName || entry.commonName || "organism") +
+          (still || parsed.stillToken ? " (matched art)" : "") +
+          ". Loading callouts…"
+      );
+      loadFacts();
+      if (!still && parsed.stillToken && window.BaneCodexCollection) {
+        fetch(
+          "/bane-of-extinction/api/still/" + encodeURIComponent(parsed.stillToken),
+          { credentials: "include" }
+        )
+          .then(function (res) {
+            if (!res.ok) throw new Error("still");
+            return res.blob();
+          })
+          .then(function (blob) {
+            return new Promise(function (resolve) {
+              var reader = new FileReader();
+              reader.onload = function () {
+                var m = /^data:(image\/[a-z0-9.+-]+);base64,(.+)$/i.exec(
+                  String(reader.result || "")
+                );
+                resolve(m ? { mimeType: m[1], imageBase64: m[2] } : null);
+              };
+              reader.onerror = function () {
+                resolve(null);
+              };
+              reader.readAsDataURL(blob);
+            });
+          })
+          .then(function (packed) {
+            if (!packed) return;
+            var updated = window.BaneCodexCollection.upsert(entry, packed);
+            renderShelf();
+            applyIdentity(updated || entry, {
+              fromScan: true,
+              generatedStill: {
+                dataUrl: "data:" + packed.mimeType + ";base64," + packed.imageBase64,
+              },
+              collectionKey: (updated && updated.key) || entry.key,
+              keepStill: true,
+            });
+          })
+          .catch(function () {});
+      }
+    } else {
+      var learned =
+        window.BaneCodexCollection && window.BaneCodexCollection.readAll
+          ? window.BaneCodexCollection.readAll()
+          : [];
+      if (learned.length) {
+        openLearnedEntry(learned[0], { fromScan: false });
+      } else {
+        syncCultivarToggle();
+        hideStill(
+          "After a scan, art matches that species and life stage — not your photo."
+        );
+        setStatus(
+          "No learns yet. Use Wildlife camera scan on your phone, or try a demo below."
+        );
+      }
+    }
   }
-  if (parsed && (parsed.commonName || parsed.displayName)) {
-    applyIdentity(parsed, {
-      fromScan: true,
-      generatedStill: generated,
-    });
-    setStatus(
-      "From your scan: " +
-        (parsed.displayName || parsed.commonName || "organism") +
-        (generated ? " (matched codex art)" : "") +
-        ". Loading callouts…"
-    );
-    loadFacts();
+
+  if (window.BaneCodexCollection && window.BaneCodexCollection.syncNow) {
+    window.BaneCodexCollection.syncNow()
+      .then(function () {
+        bootCodex();
+      })
+      .catch(function () {
+        bootCodex();
+      });
   } else {
-    syncCultivarToggle();
-    hideStill(
-      "After a scan, codex art is built to match that ID (color and form) — not a generic stub."
-    );
-    setStatus(
-      "No scan loaded. Use Wildlife camera scan on your phone, or try a demo below."
-    );
+    bootCodex();
   }
 
   if (loadBtn) loadBtn.addEventListener("click", loadFacts);

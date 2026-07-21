@@ -4,7 +4,7 @@
   var API = "/bane-of-extinction/api/wildlife-identify";
   var STORAGE_KEY = "bane_last_id";
   var STILL_KEY = "bane_last_still";
-  var ASSET_V = "20260720b";
+  var ASSET_V = "20260720live";
   var LIVE_COACH_MS = 350;
   var BLUR_TOO_LOW = 36;
   var BLUR_SOFT = 70;
@@ -146,10 +146,13 @@
     if (record.displayName) q.set("display", record.displayName);
     if (record.latinName) q.set("latin", record.latinName);
     if (record.cultivar) q.set("cultivar", record.cultivar);
+    if (record.bloomColor) q.set("color", record.bloomColor);
     if (record.organismType) q.set("type", record.organismType);
     if (record.confidence) q.set("conf", record.confidence);
     if (record.evidence) q.set("evidence", "1");
     if (record.shortNote) q.set("note", String(record.shortNote).slice(0, 160));
+    if (record.stillToken) q.set("still", record.stillToken);
+    if (record.lifeStage) q.set("stage", record.lifeStage);
     return "codex.html?" + q.toString();
   }
 
@@ -473,17 +476,23 @@
     window.location.href = codexUrl(lastRecord);
   }
 
-  function showResult(data, still) {
+  function showResult(data, stillPayload) {
     lastRecord = {
       displayName: data.displayName || data.commonName || "",
       commonName: data.commonName || "",
       latinName: data.latinName || "",
       cultivar: data.cultivar || "",
+      bloomColor: data.bloomColor || "",
       evidence: !!data.evidence,
       organismType: data.organismType || "flower",
+      lifeStage: data.lifeStage || "",
       confidence: data.confidence || "",
       shortNote: data.shortNote || "",
-      hasStill: false,
+      stillToken: (stillPayload && stillPayload.token) || data.stillToken || "",
+      hasStill: !!(
+        stillPayload &&
+        (stillPayload.token || stillPayload.imageBase64 || stillPayload.url)
+      ),
       geminiName:
         data.sources && data.sources.gemini
           ? data.sources.gemini.commonName
@@ -493,23 +502,24 @@
           ? data.sources.claude.commonName
           : "",
     };
+    clearStill();
+    saveRecord(lastRecord);
 
-    function finish(stillToSave) {
-      clearStill();
-      var stillSaved = false;
-      if (stillToSave && stillToSave.imageBase64) {
-        stillSaved = saveStill({
-          mimeType: stillToSave.mimeType || "image/jpeg",
-          imageBase64: stillToSave.imageBase64,
-          commonName: lastRecord.commonName,
-          latinName: lastRecord.latinName,
-          cultivar: lastRecord.cultivar,
-          matched: true,
-        });
+    function finishLearn(stillToSave) {
+      if (window.BaneCodexCollection && lastRecord.commonName) {
+        window.BaneCodexCollection.upsert(
+          lastRecord,
+          stillToSave && stillToSave.imageBase64
+            ? {
+                mimeType: stillToSave.mimeType || "image/jpeg",
+                imageBase64: stillToSave.imageBase64,
+              }
+            : null
+        );
+        if (window.BaneCodexCollection.syncNow) {
+          window.BaneCodexCollection.syncNow().catch(function () {});
+        }
       }
-      lastRecord.hasStill = stillSaved;
-      saveRecord(lastRecord);
-
       if (resultName) {
         resultName.textContent =
           lastRecord.displayName || lastRecord.commonName || "Unknown";
@@ -518,30 +528,78 @@
       if (resultMeta) {
         var bits = [];
         if (lastRecord.confidence) bits.push("confidence: " + lastRecord.confidence);
-        if (lastRecord.geminiName) bits.push("Gemini: " + lastRecord.geminiName);
-        if (lastRecord.claudeName) bits.push("Claude: " + lastRecord.claudeName);
-        if (stillSaved) bits.push("codex art matched to this scan");
-        else if (still && still.imageBase64)
-          bits.push("codex art built but phone storage was full");
+        if (lastRecord.lifeStage) bits.push("stage: " + lastRecord.lifeStage);
+        if (lastRecord.bloomColor) bits.push("color: " + lastRecord.bloomColor);
+        if (lastRecord.hasStill) bits.push("codex art ready");
         else bits.push("codex art unavailable — facts still match ID");
         if (lastRecord.shortNote) bits.push(lastRecord.shortNote);
         resultMeta.textContent = bits.join(" · ");
       }
       if (resultBox) resultBox.hidden = false;
       setStatus(
-        "Got it: " +
+        "Learned: " +
           (lastRecord.displayName || lastRecord.commonName) +
-          (stillSaved ? " + matching art" : "") +
-          ". Opening wildlife codex in a moment…"
+          (lastRecord.hasStill ? " + matching art" : "") +
+          ". Opening wildlife codex…"
       );
-      redirectTimer = setTimeout(openCodex, 900);
+      redirectTimer = setTimeout(openCodex, 700);
     }
 
-    if (still && still.imageBase64) {
-      shrinkStillForPhone(still).then(finish);
-    } else {
-      finish(null);
+    if (stillPayload && stillPayload.imageBase64) {
+      shrinkStillForPhone({
+        mimeType: stillPayload.mimeType || "image/jpeg",
+        imageBase64: stillPayload.imageBase64,
+        commonName: lastRecord.commonName,
+        latinName: lastRecord.latinName,
+        cultivar: lastRecord.cultivar,
+        matched: true,
+      }).then(finishLearn);
+      return;
     }
+    if (stillPayload && stillPayload.url) {
+      fetch(stillPayload.url, { credentials: "include" })
+        .then(function (res) {
+          if (!res.ok) throw new Error("still_fetch");
+          return res.blob();
+        })
+        .then(function (blob) {
+          return new Promise(function (resolve) {
+            var reader = new FileReader();
+            reader.onload = function () {
+              var dataUrl = String(reader.result || "");
+              var m = /^data:(image\/[a-z0-9.+-]+);base64,(.+)$/i.exec(dataUrl);
+              if (!m) {
+                resolve(null);
+                return;
+              }
+              resolve({ mimeType: m[1], imageBase64: m[2] });
+            };
+            reader.onerror = function () {
+              resolve(null);
+            };
+            reader.readAsDataURL(blob);
+          });
+        })
+        .then(function (still) {
+          if (still && still.imageBase64) {
+            return shrinkStillForPhone(
+              Object.assign({}, still, {
+                commonName: lastRecord.commonName,
+                latinName: lastRecord.latinName,
+                cultivar: lastRecord.cultivar,
+                matched: true,
+              })
+            );
+          }
+          return null;
+        })
+        .then(finishLearn)
+        .catch(function () {
+          finishLearn(null);
+        });
+      return;
+    }
+    finishLearn(null);
   }
 
   function onCapture() {
@@ -568,7 +626,7 @@
       setStatus(
         "Scanning… " +
           sec +
-          "s (ID + matching codex art; photo will not be kept). One tap is enough."
+          "s (ID + matching animated codex art). One tap is enough."
       );
     }, 500);
     setStatus("Scanning: ID + matching codex art (can take up to a minute)…");
@@ -622,8 +680,17 @@
         }
         clearInterval(tick);
         stopCamera();
-        var still = data.codexStill && data.codexStill.imageBase64 ? data.codexStill : null;
-        showResult(data, still);
+        var stillInfo = null;
+        var cs = data.codexStill || null;
+        if (data.stillToken || (cs && (cs.token || cs.imageBase64 || cs.url))) {
+          stillInfo = {
+            token: data.stillToken || (cs && cs.token) || "",
+            url: data.stillUrl || (cs && cs.url) || "",
+            mimeType: (cs && cs.mimeType) || "image/jpeg",
+            imageBase64: (cs && cs.imageBase64) || "",
+          };
+        }
+        showResult(data, stillInfo);
       })
       .catch(function (err) {
         clearInterval(tick);

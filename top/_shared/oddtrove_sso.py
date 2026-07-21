@@ -138,6 +138,12 @@ def safe_return_url(raw: str | None, default: str | None = None) -> str:
             "/lorekeeper/",
             "/hub/",
             "/halalyrics/",
+            "/bane-of-extinction/",
+            "/habit-tree/",
+            "/maestros/",
+            "/envdyst/",
+            "/climatic-mysteries/",
+            "/cleanscreen/",
         )
         if path == "/" or any(path.startswith(p) for p in allowed_prefixes):
             return f"{PUBLIC_ORIGIN}{path}"
