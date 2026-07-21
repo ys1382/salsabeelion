@@ -11,6 +11,10 @@ from lorekeeper_loose_ends import (
     is_flagged_fix_question,
     is_planned_gap_question,
 )
+from lorekeeper_notes_vs_draft import (
+    answer_notes_not_in_draft,
+    is_notes_not_in_draft_question,
+)
 from lorekeeper_knowledge_pov import build_knowledge_pov_answer, is_knowledge_pov_question
 from lorekeeper_question_routes import is_story_position_question, is_what_question
 from lorekeeper_story_position import build_story_position_answer
@@ -49,6 +53,7 @@ QuestionKind = Literal[
     "resume",
     "planned_gaps",
     "flagged_fix",
+    "notes_not_in_draft",
     "fallback",
 ]
 RecallMode = Literal["full", "brief"]
@@ -66,6 +71,7 @@ PIPELINE_KINDS = frozenset(
         "resume",
         "planned_gaps",
         "flagged_fix",
+        "notes_not_in_draft",
     }
 )
 
@@ -75,6 +81,8 @@ def route_question(question: str) -> QuestionKind:
         return "planned_gaps"
     if is_flagged_fix_question(question):
         return "flagged_fix"
+    if is_notes_not_in_draft_question(question):
+        return "notes_not_in_draft"
     if is_knowledge_pov_question(question):
         return "knowledge"
     if is_relationship_between_question(question):
@@ -228,14 +236,21 @@ def answer_for_work(
     """Compose a work-scoped answer for who / topic / coverage / relationship questions."""
     kind = route_question(question)
 
-    if kind in ("planned_gaps", "flagged_fix"):
+    if kind in ("planned_gaps", "flagged_fix", "notes_not_in_draft"):
         if kind == "planned_gaps":
             answer, source_ids = answer_planned_gaps(scoped, work_hints=work_hints)
-        else:
+        elif kind == "flagged_fix":
             answer, source_ids = answer_flagged_fixes(scoped, work_hints=work_hints)
+        else:
+            answer, source_ids = answer_notes_not_in_draft(
+                scoped, work_hints=work_hints
+            )
         material_state: MaterialState = (
             "summarizable" if source_ids else "nothing_saved"
         )
+        # Honest empty compare (no notes / no draft) still counts as answered.
+        if kind == "notes_not_in_draft" and answer.strip():
+            material_state = "summarizable"
         ranked = _ranked_from_source_ids(
             scoped,
             source_ids,

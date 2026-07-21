@@ -706,7 +706,7 @@ def local_pipeline_skips_rag(
             return False
         return len(answer.strip()) > 100
 
-    if kind in ("planned_gaps", "flagged_fix"):
+    if kind in ("planned_gaps", "flagged_fix", "notes_not_in_draft"):
         return bool(answer.strip())
 
     if kind in ("who", "knowledge") or is_who_is_question(question) or is_knowledge_pov_question(

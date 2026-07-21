@@ -39,6 +39,7 @@ Optional: work tags on notes, one facet per question, coverage wording only when
 | What does Elara know about …? | POV knowledge | knowledge |
 | Where did I leave off? | Latest draft state | story_resume |
 | What happens in the prologue? | Prologue-scoped summary | summarize_story |
+| What’s in my notes but not in the main document? | Note lines not clearly in the draft | notes_not_in_draft |
 
 ---
 

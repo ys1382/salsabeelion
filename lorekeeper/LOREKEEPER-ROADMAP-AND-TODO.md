@@ -294,6 +294,7 @@ Run **one row at a time** in Cursor. Don’t skip Phase 0 — it costs nothing a
 ### Draft vs notes — dual Ask + doc cadence (shipped 2026-07-13)
 
 - [x] **Ask dual summary when draft and notes conflict** — draft first (**This is what the main draft says:**), then notes (**This is what your notes say:**); no winner / no scolding / no AI rewrite
+- [x] **Ask notes not yet in main document** — work-scoped compare: list clear note lines that don't show up in the draft by word overlap (not a theme judgment); honest empty when no notes or no document (2026-07-20)
 - [x] **Doc bottom “Update document?”** — ~every 3 days; Don’t show again; short Feedback path for custom schedule; focuses editor for manual paste (no Docs import)
 
 ### Mobile comfort writing — solutions table (planning; not built)
