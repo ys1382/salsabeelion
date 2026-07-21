@@ -198,7 +198,14 @@
     if (!metaEl) return;
     var range = String((data && data.nativeRange) || "").trim();
     var status = String((data && data.conservationStatus) || "").trim();
+    var local = String((data && data.localStatus) || "").trim();
+    var lens = String((data && data.placeLabel) || "").trim();
+    var compare = String((data && data.compareNote) || "").trim();
     var bits = [];
+    if (lens && local) bits.push("Looking at " + lens + ": " + local);
+    else if (local) bits.push(local);
+    else if (lens) bits.push("Looking at " + lens);
+    if (compare) bits.push(compare);
     if (range) bits.push(range);
     if (status) bits.push("Status: " + status);
     if (!bits.length) {
@@ -208,6 +215,14 @@
     }
     metaEl.hidden = false;
     metaEl.textContent = bits.join(" · ");
+  }
+
+  function placePayload() {
+    var Lens = window.BanePlaceLens;
+    if (Lens && typeof Lens.apiPlacePayload === "function") {
+      return Lens.apiPlacePayload();
+    }
+    return {};
   }
 
   function recentFactsSpeciesKey(common, latin) {
@@ -290,6 +305,7 @@
       cultivar = state.cultivar || "Watermelon Heaven";
     }
     var avoidFacts = getRecentFacts(state.commonName, state.latinName);
+    var place = placePayload();
     var body = {
       commonName: state.commonName,
       latinName: state.latinName,
@@ -299,6 +315,14 @@
       shortNote: state.shortNote || "",
       bloomColor: state.bloomColor || "",
       avoidFacts: avoidFacts,
+      placeId: place.placeId || "",
+      placeLabel: place.placeLabel || "",
+      region: place.region || "",
+      habitat: place.habitat || "",
+      habitatOnly: !!place.habitatOnly,
+      comparePlaceId: place.comparePlaceId || "",
+      comparePlaceLabel: place.comparePlaceLabel || "",
+      season: place.season || "",
     };
     fetch(API_CALLOUTS, {
       method: "POST",
@@ -342,6 +366,9 @@
             ? "Showing fallback facts (Claude unavailable)."
             : "Callouts loaded for: " +
                 state.commonName +
+                (place.placeLabel
+                  ? " · looking at " + place.placeLabel
+                  : "") +
                 (avoidFacts.length
                   ? " (fresh set — skipping recent repeats)."
                   : ".")
@@ -710,4 +737,16 @@
   }
 
   if (loadBtn) loadBtn.addEventListener("click", loadFacts);
+
+  var placeRoot = document.getElementById("placeLensRoot");
+  if (
+    placeRoot &&
+    window.BanePlaceLens &&
+    typeof window.BanePlaceLens.renderPlaceLensUi === "function"
+  ) {
+    window.BanePlaceLens.renderPlaceLensUi(placeRoot);
+  }
+  window.addEventListener("bane-place-lens-change", function () {
+    // Ready for reload; player hits Load Claude callouts when they want fresh place-aware facts.
+  });
 })();

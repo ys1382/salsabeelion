@@ -47,6 +47,20 @@
 - If place is **skipped**, Trail Guide still works — a few extra place-like questions first, hard-capped so it does not drag.
 - Season can come from the date.
 
+### Place lens stack (locked 2026-07-21 — personalized facts, no tracking)
+
+All of these ship together as one stack. BoE never claims “you are here” — only **“facts for the place you’re looking at.”**
+
+1. **Chosen lens** — player picks a region/habitat (or skips).
+2. **Favorite places (Halalit-style)** — checkboxes on this device, like favorite libraries; **Looking at** defaults to first favorite / last choice.
+3. **Compare two places** — optional second place for contrast (native here / invasive there).
+4. **Fact variants** — Claude callouts + localStatus / compareNote personalized to the lens.
+5. **Habitat-only** — coarser places (garden / beach / forest / city) when they skip named region.
+6. **Season + place** — device date season + chosen place.
+7. **Browse-by-area species list** — native + invasive (and planted/houseplant) for the chosen place.
+
+Privacy copy: for all the game knows, they’re reading about somewhere they know — not where they stand.
+
 ### Size as a first-class ID clue
 
 - When species differ mainly by size (e.g. **raven bigger than crow**), the game must use size — do not flatten them into one “black bird.”
@@ -177,6 +191,8 @@ After the still “freezes” on the codex card:
 - [x] Device-local learned collection (PoGo-style shelf on codex; one entry per species)
 - [x] Learned shelf syncs to Odd Trove **Google sign-in** (server + device cache; cross-device)
 - [x] Codex still caption: native range + NatureServe status (no IUCN scrape)
+- [x] Place lens stack on codex (favorites like Halalit libraries; looking-at + compare; browse-by-area; season; no GPS)
+- [x] Callouts API accepts place lens (localStatus / compareNote; place-aware help tips)
 - [ ] Per-species permanent art library / cloud cache (optional later)
 - [ ] Leader-lines from callouts to exact body-part anchors on stylized art
 - [ ] Platform polish (PWA optional; no GPS required)
@@ -196,6 +212,7 @@ After the still “freezes” on the codex card:
 
 - [ ] Camera + stylize as full Seek-like path (if not in v1)
 - [ ] Remember last region/habitat on device
+- [x] Favorite / looking-at places on device (Halalit favorite-library pattern); compare + browse packs
 - [ ] Odd Trove hosting vs standalone brand
 - [ ] More regional packs beyond first biome
 
@@ -221,6 +238,7 @@ Owner pins from chat go here.
 - [x] Common sunflower stub (species-aimed ID hints, fallback callouts, codex still cutout)
 - [x] Sweetheart philodendron stub (Philodendron hederaceum; ID hints, fallback callouts, codex still)
 - [x] Callouts: one small-help tip per set (no guilt) + remember recent facts for fresh rescans
+- [x] Place lens stack (all layers): favorites, looking-at default, compare, fact variants, habitat-only, season, browse-by-area — no GPS
 
 ### 2026-07-10 — original design chat
 

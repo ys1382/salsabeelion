@@ -202,6 +202,7 @@ Last updated: 2026-07-17
 - **Learned shelf** — past scans sync to **Odd Trove Google sign-in** (server store + device cache; one entry per species; stylized still + ID; never raw camera)
 - **Phone wildlife camera scan** — `/bane-of-extinction/scan.html` (Gemini + Claude ID + life stage; then Gemini semi-realistic still matched to species/color/form/**stage**; photo not stored; facts follow the guessed organism)
 - Claude facts via `/bane-of-extinction/api/` (shared `anthropic.key` + Halalit Gemini env on server) — player-world tone, one small-help tip per set, one wonder fact; device remembers recent fact text so rescans can stay fresh (no photo retention)
+- **Looking-at places** — Halalit-style favorite places on device; facts + browse lists follow chosen region/habitat (optional compare); season from date; **no GPS**
 - Codex still caption: **native range** + **NatureServe** conservation status (CC BY; no IUCN site/API; Claude may refine CA to NorCal/SoCal)
 - Deploy: `bash top/scripts/deploy-bane-of-extinction.sh` (ports **8085** static + **8086** API; reloads nginx by default)
 

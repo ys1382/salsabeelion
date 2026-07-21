@@ -4,6 +4,7 @@ Bane of Extinction — owner-beta API.
 - POST /api/wildlife-identify  — Gemini + Claude vision ID (photo not stored)
 - POST /api/codex-still        — Gemini image: field-guide still matching this ID + crop
 - POST /api/callouts           — Claude helper facts + native range / conservation status
+                                  (optional looking-at place lens; no GPS)
 - GET  /api/auth/me            — Odd Trove Google SSO identity (for learned sync)
 - GET/PUT /api/learned         — wildlife learns synced to signed-in Google account
 - GET  /api/health
@@ -1696,6 +1697,14 @@ def build_callouts(
     short_note: str = "",
     bloom_color: str = "",
     avoid_facts: list[str] | None = None,
+    place_id: str = "",
+    place_label: str = "",
+    region: str = "",
+    habitat: str = "",
+    habitat_only: bool = False,
+    compare_place_id: str = "",
+    compare_place_label: str = "",
+    season: str = "",
 ) -> dict[str, Any]:
     display = common.strip()
     if not display:
@@ -1710,6 +1719,13 @@ def build_callouts(
         for x in (avoid_facts or [])
         if str(x).strip()
     ][:40]
+    place_id_n = place_id.strip()[:64]
+    place_label_n = place_label.strip()[:120]
+    region_n = region.strip()[:40]
+    habitat_n = habitat.strip()[:40]
+    compare_id_n = compare_place_id.strip()[:64]
+    compare_label_n = compare_place_label.strip()[:120]
+    season_n = season.strip()[:20] or ""
 
     ns_meta = _fetch_natureserve_meta(latin_n) if latin_n else None
     fallback_meta = _fallback_species_meta(display, latin_n)
@@ -1727,11 +1743,17 @@ def build_callouts(
         "(what you’d notice on a walk or in a yard, shared air/water/food webs, shade, "
         "pollinators near people, pets/kids safety when relevant, seasons you meet it, "
         "how it shares neighborhoods). Warm and concrete — not lecturey. "
+        "PLACE LENS — the player chose a place they are LOOKING AT (not GPS). "
+        "Personalize tips to that lens: native vs introduced vs invasive THERE, "
+        "whether backyard/bee advice makes sense THERE, and what a neighbor might do "
+        "in THAT kind of place. If only a habitat was chosen (no region), keep advice "
+        "habitat-shaped and say status may differ by region. Never claim you know where "
+        "the player is standing. "
         "EXACTLY ONE of those everyday callouts must be a SMALL HELP tip: something a "
         "walker or neighbor can actually do that supports THIS species’ natural world "
         "or nearby habitat (leave a patch alone, skip a pesticide on that plant, keep a "
         "water dish for pollinators, don’t dig a nest, plant a native companion, etc.). "
-        "Help tip rules: practical and local; never guilt-trip; never blame everyday "
+        "Help tip rules: practical and local to the place lens; never guilt-trip; never blame everyday "
         "survival needs (staple foods, housing, transit they don’t control); never blame "
         "people for industrial waste or systems they don’t get a say in; never panic about "
         "extinction. Prefer kindness they can choose over blame for what they can’t. "
@@ -1743,7 +1765,11 @@ def build_callouts(
         "western U.S., tropical Americas) — never county-level unless status truly differs "
         "that finely. Status: plain words like Secure, Vulnerable, Imperiled, or "
         "'common garden plant / not tracked wild in the U.S.' Do NOT cite IUCN or invent "
-        "Red List codes. Do not paste Wikipedia lists."
+        "Red List codes. Do not paste Wikipedia lists. "
+        "Also fill localStatus (short: e.g. 'Native in SoCal yards', 'Invasive on CA coast', "
+        "'Houseplant only — not wild here') for the LOOKING-AT place, or empty if place skipped. "
+        "If a compare place is given, fill compareNote with one short contrast "
+        "(e.g. 'Native in CA; often invasive on Southeastern dunes') — else empty."
     )
     scope = (
         f"Identified as: {display}"
@@ -1756,6 +1782,28 @@ def build_callouts(
         "If red/dark sunflower rays, describe those — not classic yellow-only petals. "
         "Put the help tip near the middle when possible; put the species-wonder fact last."
     )
+    if place_label_n or place_id_n:
+        scope += (
+            f" LOOKING-AT place (chosen, not GPS): {place_label_n or place_id_n}"
+            + (f" [id={place_id_n}]" if place_id_n and place_label_n else "")
+            + (f"; region={region_n}" if region_n else "")
+            + (f"; habitat={habitat_n}" if habitat_n else "")
+            + ("; habitat-only lens (no named region)" if habitat_only else "")
+            + ". Personalize native/invasive/help tips for THIS lens."
+        )
+    else:
+        scope += (
+            " No place lens chosen — keep facts generally accurate; avoid claiming "
+            "a backyard tip is always good everywhere; prefer range-aware wording."
+        )
+    if compare_label_n or compare_id_n:
+        scope += (
+            f" COMPARE place (also chosen, not GPS): "
+            f"{compare_label_n or compare_id_n}. "
+            "Fill compareNote with one short contrast vs the looking-at place."
+        )
+    if season_n:
+        scope += f" Season cue from device date: {season_n}."
     if ns_meta:
         if ns_meta.get("nativeRange"):
             scope += (
@@ -1790,6 +1838,8 @@ def build_callouts(
                 "organismType": org_type or "organism",
                 "nativeRangeRefine": "short native-range caption or empty",
                 "conservationStatus": "short status caption or empty",
+                "localStatus": "short status for looking-at place or empty",
+                "compareNote": "short contrast vs compare place or empty",
                 "callouts": [
                     {
                         "anchor": "part_or_clue",
@@ -1802,10 +1852,12 @@ def build_callouts(
         + f"\nUse 3 to {MAX_CALLOUTS} callouts. "
         "Mix: everyday player-world facts (including EXACTLY ONE small-help tip for "
         "this species’ world) + EXACTLY ONE species-own wonder. Fresh angles if avoid-list given. "
-        "Keep nativeRangeRefine and conservationStatus out of the callout list."
+        "Keep nativeRangeRefine, conservationStatus, localStatus, and compareNote out of the callout list."
     )
 
     claude_meta: dict[str, Any] = {}
+    local_status = ""
+    compare_note = ""
     try:
         raw_text = _call_claude_text(system, user)
         parsed = _extract_json_object(raw_text)
@@ -1820,6 +1872,8 @@ def build_callouts(
             or parsed.get("nativeRange"),
             "conservationStatus": parsed.get("conservationStatus"),
         }
+        local_status = str(parsed.get("localStatus") or "").strip()[:160]
+        compare_note = str(parsed.get("compareNote") or "").strip()[:200]
     except Exception as exc:  # noqa: BLE001
         blob = (display + " " + latin_n + " " + note_n + " " + color_n).lower()
         if "poppy" in blob or "eschscholzia" in blob:
@@ -1853,6 +1907,16 @@ def build_callouts(
                 }
             ]
         source = f"fallback:{type(exc).__name__}"
+        local_status, compare_note = _fallback_place_status(
+            display,
+            latin_n,
+            place_id_n,
+            place_label_n,
+            region_n,
+            habitat_n,
+            habitat_only,
+            compare_label_n,
+        )
 
     meta = _merge_species_meta(ns_meta, claude_meta, fallback_meta)
 
@@ -1864,6 +1928,10 @@ def build_callouts(
         "Helper facts for what the game thinks it saw — useful for learning, "
         "not a guaranteed field guide."
     )
+    if place_label_n:
+        disclaimer += (
+            " Place tips follow the looking-at place you chose — not GPS or where you stand."
+        )
     if meta.get("attribution"):
         disclaimer += " " + meta["attribution"]
 
@@ -1880,8 +1948,60 @@ def build_callouts(
         "conservationStatus": meta.get("conservationStatus") or "",
         "statusSource": meta.get("statusSource") or "",
         "rangeSource": meta.get("rangeSource") or "",
+        "placeId": place_id_n,
+        "placeLabel": place_label_n,
+        "localStatus": local_status,
+        "comparePlaceId": compare_id_n,
+        "comparePlaceLabel": compare_label_n,
+        "compareNote": compare_note,
+        "season": season_n,
         "disclaimer": disclaimer,
     }
+
+
+def _fallback_place_status(
+    common: str,
+    latin: str,
+    place_id: str,
+    place_label: str,
+    region: str,
+    habitat: str,
+    habitat_only: bool,
+    compare_label: str,
+) -> tuple[str, str]:
+    """Simple localStatus / compareNote when Claude is unavailable."""
+    blob = (common + " " + latin).lower()
+    pid = (place_id or "").lower()
+    reg = (region or "").lower()
+    local = ""
+    if "eschscholzia" in blob or "poppy" in blob:
+        if "socal" in pid or "norcal" in pid or reg in ("socal", "norcal"):
+            local = "Native in California"
+        elif habitat_only:
+            local = "Native in CA; elsewhere often a planted ornamental"
+        else:
+            local = "Native range centered on California / Southwest"
+    elif "helianthus" in blob or "sunflower" in blob:
+        if "backyard" in pid or habitat == "garden":
+            local = "Often planted for pollinators; native to North America broadly"
+        else:
+            local = "Native to North America; widely planted"
+    elif "philodendron" in blob or "hederaceum" in blob or "sweetheart" in blob:
+        local = "Houseplant here — not a local wild species"
+    elif "eucalyptus" in blob:
+        if "socal" in pid or "norcal" in pid or reg in ("socal", "norcal"):
+            local = "Introduced / planted in California — not native"
+        else:
+            local = "Australian origin; status depends on the place you pick"
+    if not local and place_label:
+        local = f"See facts for {place_label}"
+    compare = ""
+    if compare_label and local:
+        compare = f"Vs {compare_label}: status can flip — reload with Claude for a contrast note."
+    elif compare_label:
+        compare = f"Comparing with {compare_label}"
+    return local[:160], compare[:200]
+
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -2049,6 +2169,14 @@ class Handler(BaseHTTPRequestHandler):
             avoid_facts = [
                 str(x).strip()[:320] for x in avoid_raw if str(x).strip()
             ][:40]
+            place_id = str(body.get("placeId") or "").strip()
+            place_label = str(body.get("placeLabel") or "").strip()
+            region = str(body.get("region") or "").strip()
+            habitat = str(body.get("habitat") or "").strip()
+            habitat_only = bool(body.get("habitatOnly"))
+            compare_place_id = str(body.get("comparePlaceId") or "").strip()
+            compare_place_label = str(body.get("comparePlaceLabel") or "").strip()
+            season = str(body.get("season") or "").strip()
             if not common:
                 _json(
                     self,
@@ -2069,6 +2197,14 @@ class Handler(BaseHTTPRequestHandler):
                 short_note=short_note,
                 bloom_color=bloom_color,
                 avoid_facts=avoid_facts,
+                place_id=place_id,
+                place_label=place_label,
+                region=region,
+                habitat=habitat,
+                habitat_only=habitat_only,
+                compare_place_id=compare_place_id,
+                compare_place_label=compare_place_label,
+                season=season,
             )
             _json(self, 200, result)
             return

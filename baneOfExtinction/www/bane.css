@@ -166,6 +166,172 @@ body {
 
 .plain li { margin-bottom: 0.35rem; }
 
+/* Place lens — Halalit-style favorites, no GPS */
+.place-lens-panel {
+  margin-bottom: 1.35rem;
+}
+
+.place-lens__heading {
+  margin: 0 0 0.35rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.place-lens__hint,
+.place-lens__privacy,
+.place-lens__browse-empty,
+.place-lens__species-note {
+  margin: 0 0 0.65rem;
+  font-family: system-ui, sans-serif;
+  font-size: 0.88rem;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.place-lens__sub,
+.place-lens__browse-heading {
+  margin: 0.85rem 0 0.4rem;
+  font-family: system-ui, sans-serif;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.place-lens__fav-list,
+.place-lens__species {
+  list-style: none;
+  margin: 0 0 0.75rem;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.place-lens__fav-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  font-family: system-ui, sans-serif;
+  font-size: 0.88rem;
+  color: var(--ink);
+  cursor: pointer;
+  line-height: 1.35;
+}
+
+.place-lens__fav-check {
+  margin-top: 0.15rem;
+  flex-shrink: 0;
+}
+
+.place-lens__initials {
+  display: inline-block;
+  min-width: 1.5rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  color: var(--accent);
+}
+
+.place-lens__tag {
+  font-size: 0.75rem;
+  color: var(--warn);
+  font-weight: 600;
+}
+
+.place-lens__controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+  margin: 0.75rem 0;
+}
+
+.place-lens__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-family: system-ui, sans-serif;
+  font-size: 0.82rem;
+  color: var(--muted);
+  min-width: min(100%, 16rem);
+  flex: 1 1 14rem;
+}
+
+.place-lens__select {
+  font-family: system-ui, sans-serif;
+  font-size: 0.9rem;
+  padding: 0.5rem 0.7rem;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: rgba(0, 0, 0, 0.28);
+  color: var(--ink);
+}
+
+.place-lens__select:focus-visible {
+  outline: 2px solid rgba(107, 196, 138, 0.55);
+  outline-offset: 2px;
+}
+
+.place-lens__season {
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.place-lens__species-item {
+  padding: 0.55rem 0.65rem;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: rgba(0, 0, 0, 0.16);
+  font-family: system-ui, sans-serif;
+  font-size: 0.9rem;
+}
+
+.place-lens__latin {
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.place-lens__role {
+  display: inline-block;
+  margin-right: 0.35rem;
+  margin-bottom: 0.2rem;
+  padding: 0.12rem 0.45rem;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  border: 1px solid var(--line);
+  color: var(--muted);
+}
+
+.place-lens__role--native {
+  color: var(--accent);
+  border-color: rgba(107, 196, 138, 0.4);
+  background: var(--accent-dim);
+}
+
+.place-lens__role--invasive {
+  color: #e8a090;
+  border-color: rgba(232, 160, 144, 0.4);
+  background: rgba(232, 160, 144, 0.12);
+}
+
+.place-lens__role--introduced,
+.place-lens__role--planted {
+  color: var(--warn);
+  border-color: rgba(212, 180, 106, 0.4);
+  background: rgba(212, 180, 106, 0.1);
+}
+
+.place-lens__role--houseplant {
+  color: #9eb8d4;
+  border-color: rgba(158, 184, 212, 0.35);
+  background: rgba(158, 184, 212, 0.1);
+}
+
+.place-lens__species-note {
+  margin: 0.35rem 0 0;
+}
+
 .blueprint {
   position: relative;
   border-radius: 14px;
