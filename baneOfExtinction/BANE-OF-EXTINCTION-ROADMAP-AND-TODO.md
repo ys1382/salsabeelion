@@ -193,6 +193,7 @@ After the still “freezes” on the codex card:
 - [x] Codex still caption: native range + NatureServe status (no IUCN scrape)
 - [x] Place lens stack on codex (favorites like Halalit libraries; looking-at + compare; browse-by-area; season; no GPS)
 - [x] Callouts API accepts place lens (localStatus / compareNote; place-aware help tips)
+- [x] Neighborhood missions v1 — unlock after ~15 finds; signature-sign quests; ant mound full visual (with/without + cutaway); other quests story cards
 - [ ] Per-species permanent art library / cloud cache (optional later)
 - [ ] Leader-lines from callouts to exact body-part anchors on stylized art
 - [ ] Platform polish (PWA optional; no GPS required)
@@ -239,6 +240,15 @@ Owner pins from chat go here.
 - [x] Sweetheart philodendron stub (Philodendron hederaceum; ID hints, fallback callouts, codex still)
 - [x] Callouts: one small-help tip per set (no guilt) + remember recent facts for fresh rescans
 - [x] Place lens stack (all layers): favorites, looking-at default, compare, fact variants, habitat-only, season, browse-by-area — no GPS
+
+### 2026-07-21 — neighborhood missions
+
+- [x] Unlock after ~15 learned finds (device shelf encounter total); owner-beta peek while learning
+- [x] Signature-sign missions only (easy tells → real species); filtered by looking-at habitat
+- [x] Quests live: ant mound (full visual), signature feather, woodpecker work, leafcutter circles, shrike pantry, ice plant carpet, ivy on trunk, hotspot patch, leave it be, one kind act
+- [x] Explicitly not shipping: squirrel fruit, slug trails, paper nests, oak galls, outside checkbox, photo-vs-screen detection
+- [x] Beginner scans = meet the neighbor; missions = homes / signs / care + adventure reveals (dramatic without melodrama)
+- [x] Ant mission: animated with/without garden compare + underground cross-section
 
 ### 2026-07-10 — original design chat
 

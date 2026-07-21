@@ -204,11 +204,13 @@ Last updated: 2026-07-17
 - Claude facts via `/bane-of-extinction/api/` (shared `anthropic.key` + Halalit Gemini env on server) — player-world tone, one small-help tip per set, one wonder fact; device remembers recent fact text so rescans can stay fresh (no photo retention)
 - **Looking-at places** — Halalit-style favorite places on device; facts + browse lists follow chosen region/habitat (optional compare); season from date; **no GPS**
 - Codex still caption: **native range** + **NatureServe** conservation status (CC BY; no IUCN site/API; Claude may refine CA to NorCal/SoCal)
+- **Neighborhood missions** — after ~15 finds (`/bane-of-extinction/missions.html`); signature-sign quests; ant mound gets with/without garden + cutaway reveal; other quests story cards for now
 - Deploy: `bash top/scripts/deploy-bane-of-extinction.sh` (ports **8085** static + **8086** API; reloads nginx by default)
 
 **Cannot do without new work:**
 - Permanent curated art library beyond per-account learned stills
 - Trail Guide, walk timer, buddy
+- Full visual packs for non-ant missions (story cards only until art catches up)
 - Perfect organism-only segmentation (best-effort framing coach for now)
 - Full video / Live Photo of the raw camera frame (out of scope; subtle idle on the generated still only)
 

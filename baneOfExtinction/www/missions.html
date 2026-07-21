@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Neighborhood missions — Bane of Extinction</title>
+  <link rel="stylesheet" href="bane.css?v=live7" />
+  <link rel="stylesheet" href="bane-missions.css?v=live1" />
+</head>
+<body>
+  <div class="wrap wrap--wide">
+    <header class="hero hero--compact">
+      <p class="eyebrow"><a href="index.html">Bane of Extinction</a> · owner beta</p>
+      <h1 class="brand">Neighborhood missions</h1>
+      <p class="tagline">
+        After you learn enough faces nearby, open adventure cards about homes, signs, and care —
+        not a second ID grind. No GPS. Stay on the path; don’t bother wildlife.
+      </p>
+    </header>
+
+    <section class="panel place-lens-panel" id="placeLensRoot" aria-label="Looking-at places">
+      <!-- Filled by bane-place-lens.js -->
+    </section>
+
+    <section class="panel mission-unlock" id="missionUnlock" aria-live="polite">
+      <h2 class="mission-unlock__title">Mission unlock</h2>
+      <p class="mission-unlock__copy" id="unlockCopy">Checking your learned finds…</p>
+      <div class="mission-unlock__bar" role="progressbar" aria-valuemin="0" aria-valuemax="15" aria-valuenow="0" id="unlockBar">
+        <div class="mission-unlock__fill" id="unlockFill"></div>
+      </div>
+      <p class="mission-unlock__meta" id="unlockMeta"></p>
+      <button type="button" class="btn secondary" id="peekBtn" hidden>Peek the board (owner beta)</button>
+    </section>
+
+    <section class="mission-board" id="missionBoard" aria-label="Mission board" hidden>
+      <h2 class="mission-board__title">Open adventures</h2>
+      <p class="mission-board__hint" id="boardHint">
+        Signature signs only — easy tells that can name a real species. Filtered by your looking-at place.
+      </p>
+      <div class="mission-board__grid" id="missionGrid"></div>
+    </section>
+
+    <dialog class="mission-dialog" id="missionDialog" aria-labelledby="missionDialogTitle">
+      <form method="dialog" class="mission-dialog__chrome">
+        <button type="submit" class="mission-dialog__close" value="close" aria-label="Close">×</button>
+      </form>
+      <div class="mission-dialog__body" id="missionDialogBody"></div>
+    </dialog>
+
+    <p class="foot">
+      <a href="index.html">← Home</a>
+      · <a href="codex.html">Wildlife codex</a>
+      · <a href="wildlife-scan.html">Camera scan</a>
+    </p>
+  </div>
+  <script src="bane-place-lens.js?v=live1"></script>
+  <script src="bane-codex-collection.js?v=live2"></script>
+  <script src="bane-missions.js?v=live1"></script>
+</body>
+</html>
