@@ -237,10 +237,132 @@ def _subject_hits_text(subject: str, text: str) -> bool:
     return all(t in blob for t in toks)
 
 
+_HONORIFICS = frozenset(
+    {
+        "duke",
+        "duchess",
+        "lord",
+        "lady",
+        "sir",
+        "dame",
+        "king",
+        "queen",
+        "prince",
+        "princess",
+        "count",
+        "countess",
+        "baron",
+        "baroness",
+        "marquis",
+        "earl",
+    }
+)
+
+
+def _subject_core_tokens(subject: str) -> list[str]:
+    """Distinctive name tokens — drop duke/lord so 'dijon' matches 'Duke Dijon'."""
+    toks = _content_tokens(subject)
+    core = [t for t in toks if t not in _HONORIFICS]
+    return core or toks
+
+
+def _primary_name_token(subject: str) -> str:
+    core = _subject_core_tokens(subject)
+    if not core:
+        return ""
+    return max(core, key=len)
+
+
+def _title_is_about_subject(title: str, subject: str) -> bool:
+    """Note title is primarily this subject (e.g. 'Duke Dijon'), not a long unrelated heading."""
+    t = _normalize(title)
+    if not t or not subject.strip():
+        return False
+    if _normalize(subject) == t:
+        return True
+    core = _subject_core_tokens(subject)
+    if not core or not all(c in t for c in core):
+        return False
+    title_toks = _content_tokens(title)
+    # Cast-card / short title centered on the name.
+    if len(title_toks) <= len(core) + 2:
+        return True
+    # "Duke Dijon — northern court notes"
+    if title_toks and (
+        title_toks[0] in _HONORIFICS or title_toks[0] in core
+    ):
+        return True
+    return False
+
+
+def _claim_is_about_subject(line: str, subject: str) -> bool:
+    """
+    True when the claim is about the subject as topic/actor —
+    not a brief side mention (e.g. \"Dijon's world\" while describing someone else).
+    """
+    raw = (line or "").strip()
+    if not raw or not subject.strip():
+        return False
+    if not _subject_hits_text(subject, raw):
+        return False
+    name = _primary_name_token(subject)
+    if not name or len(name) < 3:
+        return False
+    name_re = re.escape(name)
+    honor = r"(?:(?:duke|duchess|lord|lady|sir|dame|king|queen|prince|princess|count|countess|baron|baroness)\s+)?"
+
+    # Possessive-only mention(s): "Dijon's world of origin" — not about Dijon.
+    bare = list(re.finditer(rf"\b{name_re}\b(?!'s)", raw, re.I))
+    poss = list(re.finditer(rf"\b{name_re}'s\b", raw, re.I))
+    if poss and not bare:
+        return False
+
+    # Lead: "Dijon …" / "Duke Dijon …"
+    if re.match(rf"^{honor}{name_re}\b", raw, re.I):
+        return True
+
+    # Actor / topic verb after the name.
+    if re.search(
+        rf"\b{honor}{name_re}\s+"
+        rf"(?:is|was|were|are|be|been|being|has|have|had|does|did|will|would|"
+        rf"can|could|may|might|must|shall|should|keeps?|owes?|reads?|knows?|"
+        rf"thinks?|feels?|wants?|goes?|comes?|leaves?|realizes?|believes?|"
+        rf"learns?|sees?|hears?|says?|tells?|asks?|lives?|dies?|fights?|"
+        rf"hides?|finds?|holds?|carries?|wears?|speaks?|writes?|sends?|"
+        rf"receives?|meets?|joins?|refuses?|agrees?|fears?|hopes?)\b",
+        raw,
+        re.I,
+    ):
+        return True
+
+    # Explicit topic phrasing inside the claim.
+    if re.search(
+        rf"\b(?:about|regarding|concerning|relating\s+to)\s+{honor}{name_re}\b",
+        raw,
+        re.I,
+    ):
+        return True
+
+    norm = _normalize(raw)
+    words = norm.split()
+    # Name early in the line → likely the focus.
+    if name in words[:6]:
+        return True
+    # Repeated bare mentions → about them.
+    if len(bare) >= 2:
+        return True
+    # Single late bare mention only → side reference; drop.
+    return False
+
+
 def filter_unused_by_subject(
     items: list[dict[str, str]], subject: str
 ) -> list[dict[str, str]]:
-    """Keep unused claim rows that mention the subject (title or line)."""
+    """
+    Keep unused claims that are ABOUT the subject.
+    Title-matched notes (e.g. 'Duke Dijon') keep all their unused lines;
+    other notes only keep lines where the subject is the topic/actor.
+    """
     subj = (subject or "").strip()
     if not subj:
         return items
@@ -248,7 +370,9 @@ def filter_unused_by_subject(
     for row in items:
         title = str(row.get("noteTitle") or "")
         line = str(row.get("line") or "")
-        if _subject_hits_text(subj, title) or _subject_hits_text(subj, line):
+        if _title_is_about_subject(title, subj):
+            out.append(row)
+        elif _claim_is_about_subject(line, subj):
             out.append(row)
     return out
 
@@ -613,7 +737,30 @@ Rules (non-negotiable):
 - Do not invent what the draft is missing beyond what these note lines say.
 - Start with one short lead line naming the work, then the headed paragraphs.
 - No bullet points (•) and no dash lists.
+- Finish every sentence. Never end mid-clause or mid-quote.
+- If a subject focus is given, stay on that subject only — skip side mentions.
 - End with a blank line then exactly: — From your notes vs draft only. Nothing invented. Not a full literary read of whether something was 'touched upon.'"""
+
+
+def _answer_body_incomplete(text: str) -> bool:
+    """True when organize output looks cut off before a clean ending."""
+    from lorekeeper_answer_focus import _looks_incomplete_tail
+
+    raw = (text or "").strip()
+    if not raw:
+        return True
+    body = raw
+    for marker in (
+        "— From your notes vs draft only",
+        "— From your notes only",
+    ):
+        if marker in body:
+            body = body.split(marker, 1)[0].rstrip()
+            break
+    body = body.rstrip()
+    if not body:
+        return True
+    return _looks_incomplete_tail(body)
 
 
 def _organize_with_librarian(
@@ -641,22 +788,38 @@ def _organize_with_librarian(
         blocks.append(f"{i}. [{title}] {line}")
     focus = ""
     if (subject or "").strip():
-        focus = f"Subject focus (keep only this angle): {subject.strip()}\n"
+        focus = (
+            f"Subject focus: {subject.strip()}\n"
+            "Stay on this subject as the topic — do not expand side characters "
+            "except as they relate to the subject.\n"
+        )
     user = (
         f"Work: {work}\n"
         + focus
         + "\nThese note lines are NOT clearly in the main draft yet "
         "(already filtered — do not re-judge that):\n\n"
         + "\n".join(blocks)
-        + "\n\nOrganize them into calm paragraph sections — no bullets."
+        + "\n\nOrganize them into calm paragraph sections — no bullets. "
+        "Finish every sentence; include the required footer."
     )
+    # Larger budget + retry on max_tokens so long dumps don't cut mid-sentence.
+    token_budget = 1600 if len(cleaned) > 8 else 1200
     try:
-        answer, _ = _call_anthropic(
+        answer, stop_reason = _call_anthropic(
             system=_ORGANIZE_SYSTEM,
             user_content=user,
-            max_tokens=900,
+            max_tokens=token_budget,
             model=ANSWER_MODEL_HAIKU,
         )
+        if stop_reason == "max_tokens":
+            bump = min(max(token_budget * 2, token_budget + 400), 2400)
+            if bump > token_budget:
+                answer, stop_reason = _call_anthropic(
+                    system=_ORGANIZE_SYSTEM,
+                    user_content=user,
+                    max_tokens=bump,
+                    model=ANSWER_MODEL_HAIKU,
+                )
     except Exception:
         return local_fallback
     text = (answer or "").strip()
@@ -664,6 +827,9 @@ def _organize_with_librarian(
         return local_fallback
     # Prefer paragraph answers; if the model returns a bullet wall, fall back.
     if text.count("•") >= 3 or text.count("\n- ") >= 3:
+        return local_fallback
+    # Still cut off (or truncated mid-thought) → local has every claim complete.
+    if stop_reason == "max_tokens" or _answer_body_incomplete(text):
         return local_fallback
     if _FOOTER.split(".")[0] not in text and "From your notes vs draft only" not in text:
         text = text.rstrip() + "\n\n" + _FOOTER

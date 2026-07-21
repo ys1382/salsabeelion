@@ -8,8 +8,11 @@ from unittest.mock import patch
 from lorekeeper_answer_focus import focus_ask_response
 from lorekeeper_character_compose import is_coverage_question
 from lorekeeper_notes_vs_draft import (
+    _answer_body_incomplete,
+    _claim_is_about_subject,
     collect_notes_not_in_draft,
     extract_notes_not_in_draft_subject,
+    filter_unused_by_subject,
     is_notes_not_in_draft_question,
 )
 from lorekeeper_recall import recall_from_user_data
@@ -219,6 +222,74 @@ class NotesNotInDraftAskTests(unittest.TestCase):
         self.assertIn("dijon", dijon_ans)
         self.assertNotIn("glass market", dijon_ans)
         self.assertNotEqual(all_ans, dijon_ans)
+
+    def test_subject_drops_brief_possessive_mentions(self):
+        """'Dijon's world' in someone else's note is not about Dijon."""
+        items = [
+            {
+                "entryId": "n1",
+                "noteTitle": "Duke Dijon",
+                "line": "Dijon does not realize that Maxim and Tenebris are close confidants.",
+            },
+            {
+                "entryId": "n2",
+                "noteTitle": "Etherei",
+                "line": "Etherei came from Dijon's world of origin before the crossing.",
+            },
+            {
+                "entryId": "n3",
+                "noteTitle": "Places",
+                "line": "The glass market only opens at dusk.",
+            },
+        ]
+        focused = filter_unused_by_subject(items, "dijon")
+        texts = " ".join(r["line"].lower() for r in focused)
+        self.assertIn("does not realize", texts)
+        self.assertNotIn("world of origin", texts)
+        self.assertNotIn("glass market", texts)
+        self.assertTrue(_claim_is_about_subject(items[0]["line"], "dijon"))
+        self.assertFalse(_claim_is_about_subject(items[1]["line"], "dijon"))
+
+    def test_incomplete_organize_falls_back_to_local(self):
+        """Mid-sentence Haiku output must not ship — use local paragraphs."""
+        entries = [
+            _entry(
+                "n_dijon",
+                "Duke Dijon",
+                "Dijon does not realize that Maxim and Tenebris are close confidants, "
+                "due to Predatory political intrigue. When Dijon reads Tenebris's letter "
+                "he finally understands the alliance.",
+            ),
+            _entry(
+                "d1",
+                "Main draft",
+                "Someone walked through the hall and left.",
+                kind="document",
+            ),
+        ]
+        q = (
+            "In Smoke and Mirrors, tell me what I've written in notes that "
+            "hasn't been touched upon in the main document relating to dijon"
+        )
+        cut = (
+            "In your notes for Smoke and Mirrors relating to dijon:\n\n"
+            "Duke Dijon\n"
+            "Dijon does not realize that Maxim and Tenebris are close confidants, "
+            "due to Predatory political intrigue. When Dijon reads Tenebris's letter"
+        )
+        self.assertTrue(_answer_body_incomplete(cut))
+
+        def _fake_call(*, system, user_content, max_tokens, model=None):
+            return (cut, "max_tokens")
+
+        with patch("lorekeeper_rag.rag_enabled", return_value=True), patch(
+            "lorekeeper_rag._call_anthropic", side_effect=_fake_call
+        ):
+            res = self._ask(q, entries)
+        answer = res.get("answer") or ""
+        self.assertIn("finally understands", answer.lower())
+        self.assertFalse(answer.rstrip().endswith("letter"))
+        self.assertFalse(_answer_body_incomplete(answer))
 
     def test_ask_stays_local_even_when_rag_on(self):
         """Regression: full RAG retrieve must not run; organize may use Haiku."""
