@@ -197,17 +197,23 @@
   function renderSpeciesMeta(data) {
     if (!metaEl) return;
     var range = String((data && data.nativeRange) || "").trim();
+    var elsewhere = String((data && data.rangeElsewhere) || "").trim();
     var status = String((data && data.conservationStatus) || "").trim();
     var local = String((data && data.localStatus) || "").trim();
     var lens = String((data && data.placeLabel) || "").trim();
     var compare = String((data && data.compareNote) || "").trim();
     var bits = [];
+    if (status) bits.push("Status: " + status);
+    if (range) bits.push(range);
+    if (elsewhere) {
+      bits.push(
+        /^caution:/i.test(elsewhere) ? elsewhere : "Caution: " + elsewhere
+      );
+    }
     if (lens && local) bits.push("Looking at " + lens + ": " + local);
     else if (local) bits.push(local);
     else if (lens) bits.push("Looking at " + lens);
     if (compare) bits.push(compare);
-    if (range) bits.push(range);
-    if (status) bits.push("Status: " + status);
     if (!bits.length) {
       metaEl.hidden = true;
       metaEl.textContent = "";

@@ -12,7 +12,9 @@ Bane of Extinction — owner-beta API.
 Binds 127.0.0.1 only. Keys from env / shared kids-sites files.
 Facts: Claude helper knowledge + curated fallbacks. Status/range: NatureServe Explorer
 (CC BY) when a scientific name matches — never IUCN site/API, never Wikipedia as sole source.
-Raw scan photos are never written to disk.
+Caption fields: conservation status when possible; native range; where introduced/often
+invasive elsewhere (no compare-place required). Soft wording — NatureServe marks exotic,
+not always invasive. Raw scan photos are never written to disk.
 """
 from __future__ import annotations
 
@@ -1449,8 +1451,6 @@ def _place_label(nation: str, code: str) -> str:
 def _summarize_native_places(
     us_native: list[str],
     ca_native: list[str],
-    *,
-    has_exotic: bool,
 ) -> str:
     us = sorted({c.upper() for c in us_native if c})
     ca = sorted({c.upper() for c in ca_native if c})
@@ -1486,10 +1486,50 @@ def _summarize_native_places(
 
     if not parts:
         return ""
-    text = "; ".join(parts)
-    if has_exotic:
-        text += "; planted or escaped elsewhere"
-    return text[:180]
+    return "; ".join(parts)[:180]
+
+
+def _summarize_exotic_places(us_exotic: list[str], ca_exotic: list[str]) -> str:
+    """Soft 'elsewhere' line from NatureServe exotic flags (not a legal invasive list)."""
+    us = sorted({c.upper() for c in us_exotic if c})
+    ca = sorted({c.upper() for c in ca_exotic if c})
+    parts: list[str] = []
+
+    if us:
+        names = [_place_label("US", c) for c in us]
+        # Soft caution — NatureServe marks exotic/introduced, not a legal invasive list.
+        if len(us) >= 20:
+            parts.append(
+                "Caution: often introduced or invasive across much of the United States"
+            )
+        elif len(us) >= 8:
+            sample = ", ".join(names[:5])
+            parts.append(
+                f"Caution: often introduced or invasive in several U.S. states (e.g. {sample})"
+            )
+        elif len(us) == 1:
+            parts.append(
+                f"Caution: often introduced or invasive in U.S. states such as {names[0]}"
+            )
+        else:
+            sample = ", ".join(names[:6])
+            more = "…" if len(names) > 6 else ""
+            parts.append(
+                f"Caution: often introduced or invasive in U.S. states such as {sample}{more}"
+            )
+
+    if ca:
+        names = [_place_label("CA", c) for c in ca]
+        if len(ca) >= 6:
+            parts.append("also introduced in parts of Canada")
+        else:
+            parts.append(
+                "also introduced in " + ", ".join(names) + " (Canada)"
+            )
+
+    if not parts:
+        return ""
+    return "; ".join(parts)[:180]
 
 
 def _fallback_species_meta(common: str, latin: str) -> dict[str, str]:
@@ -1497,13 +1537,15 @@ def _fallback_species_meta(common: str, latin: str) -> dict[str, str]:
     if "poppy" in blob or "eschscholzia" in blob:
         return {
             "nativeRange": "Native to California and nearby Southwest (NorCal & SoCal)",
+            "rangeElsewhere": "Caution: planted ornamentally outside its native Southwest range",
             "conservationStatus": "Apparently secure (NatureServe G4)",
             "statusSource": "curated",
             "rangeSource": "curated",
         }
     if "sunflower" in blob or "helianthus" in blob:
         return {
-            "nativeRange": "Native to North America; widely planted",
+            "nativeRange": "Native to North America",
+            "rangeElsewhere": "Caution: widely planted in gardens far from wild stands",
             "conservationStatus": "Secure (NatureServe G5)",
             "statusSource": "curated",
             "rangeSource": "curated",
@@ -1516,13 +1558,15 @@ def _fallback_species_meta(common: str, latin: str) -> dict[str, str]:
         or "heartleaf" in blob
     ):
         return {
-            "nativeRange": "Native to tropical Central & South America (houseplant elsewhere)",
+            "nativeRange": "Native to tropical Central & South America",
+            "rangeElsewhere": "Caution: houseplant / greenhouse plant elsewhere — not a wild U.S. native",
             "conservationStatus": "Not tracked as a wild U.S. species",
             "statusSource": "curated",
             "rangeSource": "curated",
         }
     return {
         "nativeRange": "",
+        "rangeElsewhere": "",
         "conservationStatus": "",
         "statusSource": "",
         "rangeSource": "",
@@ -1593,7 +1637,8 @@ def _fetch_natureserve_meta(latin: str) -> dict[str, Any] | None:
     status = _status_from_grank(grank)
     us_native: list[str] = []
     ca_native: list[str] = []
-    has_exotic = False
+    us_exotic: list[str] = []
+    ca_exotic: list[str] = []
     for nation in hit.get("nations") or []:
         if not isinstance(nation, dict):
             continue
@@ -1604,25 +1649,29 @@ def _fetch_natureserve_meta(latin: str) -> dict[str, Any] | None:
             scode = str(sub.get("subnationCode") or "").strip().upper()
             if not scode:
                 continue
-            if sub.get("exotic") and not sub.get("native"):
-                has_exotic = True
-            if not sub.get("native"):
-                continue
-            if ncode == "US":
-                us_native.append(scode)
-            elif ncode == "CA":
-                ca_native.append(scode)
+            is_native = bool(sub.get("native"))
+            is_exotic = bool(sub.get("exotic")) and not is_native
+            if is_native:
+                if ncode == "US":
+                    us_native.append(scode)
+                elif ncode == "CA":
+                    ca_native.append(scode)
+            elif is_exotic:
+                if ncode == "US":
+                    us_exotic.append(scode)
+                elif ncode == "CA":
+                    ca_exotic.append(scode)
 
-    native_range = _summarize_native_places(
-        us_native, ca_native, has_exotic=has_exotic
-    )
-    if not status and not native_range:
+    native_range = _summarize_native_places(us_native, ca_native)
+    range_elsewhere = _summarize_exotic_places(us_exotic, ca_exotic)
+    if not status and not native_range and not range_elsewhere:
         return None
     return {
         "nativeRange": native_range,
+        "rangeElsewhere": range_elsewhere,
         "conservationStatus": status,
         "statusSource": "natureserve" if status else "",
-        "rangeSource": "natureserve" if native_range else "",
+        "rangeSource": "natureserve" if (native_range or range_elsewhere) else "",
         "grank": _grank_base(grank),
         "caNative": "CA" in {c.upper() for c in us_native},
         "scientificName": str(hit.get("scientificName") or name),
@@ -1641,6 +1690,7 @@ def _merge_species_meta(
     ns = ns or {}
     claude_meta = claude_meta or {}
     native = str(ns.get("nativeRange") or "").strip()
+    elsewhere = str(ns.get("rangeElsewhere") or "").strip()
     status = str(ns.get("conservationStatus") or "").strip()
     range_src = str(ns.get("rangeSource") or "")
     status_src = str(ns.get("statusSource") or "")
@@ -1654,7 +1704,14 @@ def _merge_species_meta(
     if refine and len(refine) <= 160:
         low = refine.lower()
         if ns.get("caNative") and any(
-            t in low for t in ("norcal", "socal", "northern california", "southern california", "statewide")
+            t in low
+            for t in (
+                "norcal",
+                "socal",
+                "northern california",
+                "southern california",
+                "statewide",
+            )
         ):
             native = refine
             range_src = "natureserve+claude"
@@ -1662,8 +1719,21 @@ def _merge_species_meta(
             native = refine
             range_src = "claude"
 
+    claude_elsewhere = str(
+        claude_meta.get("rangeElsewhere") or claude_meta.get("invasiveElsewhere") or ""
+    ).strip()
+    if claude_elsewhere and len(claude_elsewhere) <= 180:
+        if not elsewhere:
+            elsewhere = claude_elsewhere
+            if "claude" not in range_src:
+                range_src = (range_src + "+claude").strip("+") if range_src else "claude"
+        elif "invasive" in claude_elsewhere.lower() and "invasive" not in elsewhere.lower():
+            # NatureServe only marks exotic; Claude may add soft invasive wording.
+            elsewhere = claude_elsewhere
+            range_src = "natureserve+claude"
+
     claude_status = str(claude_meta.get("conservationStatus") or "").strip()
-    if not status and claude_status and len(claude_status) <= 80:
+    if not status and claude_status and len(claude_status) <= 100:
         # Plain helper wording only — do not ship IUCN codes as official.
         if not re.search(r"\bIUCN\b", claude_status, re.I):
             status = claude_status
@@ -1673,13 +1743,23 @@ def _merge_species_meta(
         native = fallback.get("nativeRange") or ""
         if native:
             range_src = fallback.get("rangeSource") or "curated"
+    if not elsewhere:
+        elsewhere = fallback.get("rangeElsewhere") or ""
+        if elsewhere and not range_src:
+            range_src = fallback.get("rangeSource") or "curated"
     if not status:
         status = fallback.get("conservationStatus") or ""
         if status:
             status_src = fallback.get("statusSource") or "curated"
 
+    # Prefer showing a status line whenever we have any range/ID context.
+    if not status and (native or elsewhere or ns.get("scientificName")):
+        status = "Not listed in NatureServe data we checked"
+        status_src = status_src or "fallback"
+
     return {
         "nativeRange": native[:180],
+        "rangeElsewhere": elsewhere[:180],
         "conservationStatus": status[:100],
         "statusSource": status_src[:40],
         "rangeSource": range_src[:40],
@@ -1760,12 +1840,22 @@ def build_callouts(
         "EXACTLY ONE callout (separate from the help tip) should be a wonder fact about "
         "the species itself (its own trick, life cycle, or ecology) with less direct "
         "human impact. Do not invent personal medical advice. "
-        "Also fill nativeRangeRefine and conservationStatus as SHORT caption fields "
-        "(not extra callouts). Range: region/state level (NorCal, SoCal, statewide CA, "
-        "western U.S., tropical Americas) — never county-level unless status truly differs "
-        "that finely. Status: plain words like Secure, Vulnerable, Imperiled, or "
-        "'common garden plant / not tracked wild in the U.S.' Do NOT cite IUCN or invent "
-        "Red List codes. Do not paste Wikipedia lists. "
+        "Also fill nativeRangeRefine, rangeElsewhere, and conservationStatus as SHORT "
+        "caption fields (not extra callouts). "
+        "nativeRangeRefine: where it is native (region/country/state level — e.g. "
+        "'Native in Mexico', 'Native to California and nearby Southwest'). Never "
+        "county-level unless status truly differs that finely. "
+        "rangeElsewhere: where it is introduced or often invasive OUTSIDE that native "
+        "range (e.g. 'Caution: often invasive in U.S. states such as Oklahoma, California'). "
+        "Do NOT require a compare place for this — always fill when known. Start with "
+        "'Caution:' when invasive/introduced — this is a learning heads-up, NOT an official "
+        "invasive-species registry. Soft wording ('often invasive', 'introduced') when "
+        "unsure of legal lists. Empty only if it is not meaningfully invasive/introduced "
+        "elsewhere, or truly unknown. "
+        "conservationStatus: ALWAYS fill when possible — plain words like Secure, "
+        "Apparently secure, Vulnerable, Imperiled, or 'common garden plant / not tracked "
+        "wild in the U.S.' Do NOT cite IUCN or invent Red List codes. Do not paste "
+        "Wikipedia lists. "
         "Also fill localStatus (short: e.g. 'Native in SoCal yards', 'Invasive on CA coast', "
         "'Houseplant only — not wild here') for the LOOKING-AT place, or empty if place skipped. "
         "If a compare place is given, fill compareNote with one short contrast "
@@ -1810,16 +1900,39 @@ def build_callouts(
                 f" NatureServe native summary (prefer refining CA to NorCal/SoCal/"
                 f"statewide when useful): {ns_meta['nativeRange']}."
             )
+        if ns_meta.get("rangeElsewhere"):
+            scope += (
+                f" NatureServe introduced/exotic elsewhere (you may soft-word as "
+                f"'often invasive' when that is well known): {ns_meta['rangeElsewhere']}."
+            )
         if ns_meta.get("conservationStatus"):
             scope += (
                 f" NatureServe status already known — leave conservationStatus empty "
                 f"or echo the same idea without IUCN: {ns_meta['conservationStatus']}."
+            )
+        else:
+            scope += (
+                " NatureServe had no usable conservation status — fill "
+                "conservationStatus with a short plain-words best estimate, or say "
+                "common/not tracked if that fits."
             )
         if ns_meta.get("caNative"):
             scope += (
                 " This species is marked native in California — nativeRangeRefine may say "
                 "NorCal, SoCal, or statewide California when that distinction matters."
             )
+        if not ns_meta.get("rangeElsewhere"):
+            scope += (
+                " No NatureServe exotic-state list — still fill rangeElsewhere from "
+                "well-known native vs introduced/invasive regions when you know them "
+                "(e.g. native in Mexico; often invasive in some U.S. states)."
+            )
+    else:
+        scope += (
+            " No NatureServe hit — still fill nativeRangeRefine, rangeElsewhere, and "
+            "conservationStatus from well-established knowledge when you can "
+            "(native vs often invasive/introduced elsewhere; plain-words status)."
+        )
     if evidence:
         scope += " Frame as evidence/clues the player noticed."
     if avoid:
@@ -1837,7 +1950,10 @@ def build_callouts(
             {
                 "organismType": org_type or "organism",
                 "nativeRangeRefine": "short native-range caption or empty",
-                "conservationStatus": "short status caption or empty",
+                "rangeElsewhere": (
+                    "short introduced/often-invasive-elsewhere caption or empty"
+                ),
+                "conservationStatus": "short status caption (prefer always fill)",
                 "localStatus": "short status for looking-at place or empty",
                 "compareNote": "short contrast vs compare place or empty",
                 "callouts": [
@@ -1852,7 +1968,8 @@ def build_callouts(
         + f"\nUse 3 to {MAX_CALLOUTS} callouts. "
         "Mix: everyday player-world facts (including EXACTLY ONE small-help tip for "
         "this species’ world) + EXACTLY ONE species-own wonder. Fresh angles if avoid-list given. "
-        "Keep nativeRangeRefine, conservationStatus, localStatus, and compareNote out of the callout list."
+        "Keep nativeRangeRefine, rangeElsewhere, conservationStatus, localStatus, and "
+        "compareNote out of the callout list."
     )
 
     claude_meta: dict[str, Any] = {}
@@ -1870,6 +1987,8 @@ def build_callouts(
         claude_meta = {
             "nativeRangeRefine": parsed.get("nativeRangeRefine")
             or parsed.get("nativeRange"),
+            "rangeElsewhere": parsed.get("rangeElsewhere")
+            or parsed.get("invasiveElsewhere"),
             "conservationStatus": parsed.get("conservationStatus"),
         }
         local_status = str(parsed.get("localStatus") or "").strip()[:160]
@@ -1945,6 +2064,7 @@ def build_callouts(
         "displayName": title,
         "callouts": callouts,
         "nativeRange": meta.get("nativeRange") or "",
+        "rangeElsewhere": meta.get("rangeElsewhere") or "",
         "conservationStatus": meta.get("conservationStatus") or "",
         "statusSource": meta.get("statusSource") or "",
         "rangeSource": meta.get("rangeSource") or "",
