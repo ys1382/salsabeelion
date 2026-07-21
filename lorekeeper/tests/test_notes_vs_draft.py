@@ -163,7 +163,7 @@ class NotesNotInDraftAskTests(unittest.TestCase):
         self.assertNotIn("attic smells like rain", answer)
 
     def test_ask_stays_local_even_when_rag_on(self):
-        """Regression: Haiku/RAG used to steal this route and return fragments_only."""
+        """Regression: full RAG retrieve must not run; organize may use Haiku."""
         entries = [
             _entry(
                 "n1",
@@ -186,11 +186,45 @@ class NotesNotInDraftAskTests(unittest.TestCase):
                 "lorekeeper_recall.answer_with_rag",
                 side_effect=AssertionError("RAG must not run for notes_not_in_draft"),
             ):
-                res = self._ask(q, entries)
+                with patch(
+                    "lorekeeper_notes_vs_draft._organize_with_librarian",
+                    side_effect=lambda work_hints, items, local_fallback: local_fallback,
+                ):
+                    res = self._ask(q, entries)
         self.assertEqual(res.get("questionKind"), "notes_not_in_draft")
         self.assertEqual(res.get("recallEngine"), "local")
         self.assertIn("brass key", (res.get("answer") or "").lower())
         self.assertNotIn("nothing clear enough", (res.get("answer") or "").lower())
+
+    def test_local_compose_groups_by_note(self):
+        from lorekeeper_notes_vs_draft import compose_notes_not_in_draft_local
+
+        items = [
+            {
+                "entryId": "n1",
+                "noteTitle": "Etherei",
+                "line": "Not older by enough to be mistaken for Etherei's father "
+                "but by a decent year gap.",
+            },
+            {
+                "entryId": "n1",
+                "noteTitle": "Etherei",
+                "line": "Etherei keeps a brass attic key hidden in a boot.",
+            },
+            {
+                "entryId": "n2",
+                "noteTitle": "Places",
+                "line": "The glass market only opens at dusk.",
+            },
+        ]
+        out = compose_notes_not_in_draft_local(
+            {"Smoke and Mirrors"}, items, has_notes=True, has_draft=True
+        )
+        # Grouped headings, not "(Etherei)" suffixes on every bullet.
+        self.assertIn("\nEtherei\n", "\n" + out)
+        self.assertIn("\nPlaces\n", "\n" + out)
+        self.assertNotIn("(Etherei)", out)
+        self.assertLess(out.lower().count("etherei\n"), 3)
 
     def test_focus_does_not_strip_or_duplicate_bullets(self):
         q = (
@@ -198,13 +232,15 @@ class NotesNotInDraftAskTests(unittest.TestCase):
             "hasn't been touched upon in the main document"
         )
         answer = (
-            "In your notes for smoke and mirrors, but not clearly in the main document yet "
-            "(phrase match only — not a theme judgment):\n"
+            "In your notes for smoke and mirrors, but not clearly in the main document yet:\n"
             "\n"
+            "Etherei\n"
             "• Not older by enough to be mistaken for Etherei's father "
-            "but by a decent year gap. (Etherei)\n"
-            "• Etherei keeps a brass attic key hidden in a boot. (Etherei)\n"
-            "• The glass market only opens at dusk. (Places)\n"
+            "but by a decent year gap.\n"
+            "• Etherei keeps a brass attic key hidden in a boot.\n"
+            "\n"
+            "Places\n"
+            "• The glass market only opens at dusk.\n"
             "\n"
             "— From your notes vs draft only. Nothing invented. "
             "Not a full literary read of whether something was 'touched upon.'"

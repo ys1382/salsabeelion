@@ -325,17 +325,115 @@ def _work_phrase(work_hints: set[str]) -> str:
     return sorted(work_hints, key=len, reverse=True)[0]
 
 
-def compose_notes_not_in_draft_answer(
+def _tidy_claim_line(text: str) -> str:
+    s = re.sub(r"\s+", " ", (text or "").strip())
+    if not s:
+        return s
+    s = re.sub(r"^[)\],;:\-–—]+\s*", "", s)
+    s = re.sub(r"\s+[(\[]+$", "", s)
+    if s and s[0].islower():
+        s = s[0].upper() + s[1:]
+    return s
+
+
+def _near_dedupe_items(items: list[dict[str, str]]) -> list[dict[str, str]]:
+    """Drop near-duplicate / subsumed lines — keep the clearer longer claim."""
+    # Longest first so shorter scraps lose to fuller lines.
+    ranked = sorted(
+        (
+            {
+                **row,
+                "line": _tidy_claim_line(str(row.get("line") or "")),
+                "_orig": i,
+            }
+            for i, row in enumerate(items)
+        ),
+        key=lambda r: len(_normalize(str(r.get("line") or ""))),
+        reverse=True,
+    )
+    kept: list[dict[str, str]] = []
+    kept_norms: list[str] = []
+    for row in ranked:
+        line = str(row.get("line") or "")
+        if not line:
+            continue
+        norm = _normalize(line)
+        if not norm:
+            continue
+        if any(
+            (norm in kn or kn in norm)
+            for kn in kept_norms
+            if min(len(norm), len(kn)) >= 24
+        ):
+            continue
+        toks = set(_content_tokens(line))
+        skip = False
+        for prev in kept:
+            prev_toks = set(_content_tokens(str(prev.get("line") or "")))
+            if not toks or not prev_toks:
+                continue
+            overlap = len(toks & prev_toks) / max(1, min(len(toks), len(prev_toks)))
+            if overlap >= 0.85 and abs(len(toks) - len(prev_toks)) <= 2:
+                skip = True
+                break
+        if skip:
+            continue
+        kept.append(
+            {
+                "entryId": str(row.get("entryId") or ""),
+                "noteTitle": str(row.get("noteTitle") or "Note"),
+                "line": line,
+                "_orig": row.get("_orig", 0),
+            }
+        )
+        kept_norms.append(norm)
+    kept.sort(
+        key=lambda r: (
+            str(r.get("noteTitle") or "").lower(),
+            int(r.get("_orig") or 0),
+        )
+    )
+    return [
+        {
+            "entryId": str(r.get("entryId") or ""),
+            "noteTitle": str(r.get("noteTitle") or "Note"),
+            "line": str(r.get("line") or ""),
+        }
+        for r in kept
+    ]
+
+
+def _group_items_by_note(
+    items: list[dict[str, str]],
+) -> list[tuple[str, list[str]]]:
+    groups: list[tuple[str, list[str]]] = []
+    index: dict[str, int] = {}
+    for row in items:
+        title = str(row.get("noteTitle") or "Note").strip() or "Note"
+        line = str(row.get("line") or "").strip()
+        if not line:
+            continue
+        key = title.lower()
+        if key not in index:
+            index[key] = len(groups)
+            groups.append((title, []))
+        bucket = groups[index[key]][1]
+        if line.lower() not in {b.lower() for b in bucket}:
+            bucket.append(line)
+    return groups
+
+
+def compose_notes_not_in_draft_local(
     work_hints: set[str],
     items: list[dict[str, str]],
     *,
     has_notes: bool,
     has_draft: bool,
 ) -> str:
+    """Grouped local layout — neat headings + bullets, no raw paste dump."""
     work = _work_phrase(work_hints)
     lines = [
-        f"In your notes for {work}, but not clearly in the main document yet "
-        f"(phrase match only — not a theme judgment):\n"
+        f"In your notes for {work}, but not clearly in the main document yet:\n"
     ]
     if not has_notes:
         lines.append(
@@ -347,19 +445,19 @@ def compose_notes_not_in_draft_answer(
             "Open or save a document for this work, then ask again."
         )
     elif items:
-        shown = items[:MAX_UNUSED_LINES]
-        for row in shown:
-            note = row.get("noteTitle") or "Note"
-            text = (row.get("line") or "").strip()
-            if not text:
-                continue
-            if text.lower() == note.lower():
-                lines.append(f"• {text}")
-            else:
-                lines.append(f"• {text} ({note})")
-        extra = len(items) - len(shown)
+        cleaned = _near_dedupe_items(items)[:MAX_UNUSED_LINES]
+        groups = _group_items_by_note(cleaned)
+        for title, bullets in groups:
+            lines.append(title)
+            for bullet in bullets:
+                lines.append(f"• {bullet}")
+            lines.append("")
+        extra = len(items) - len(cleaned)
         if extra > 0:
             lines.append(f"• …and {extra} more note line(s) not shown here.")
+            lines.append("")
+        while lines and lines[-1] == "":
+            lines.pop()
     else:
         lines.append(
             "Nothing clear stood out as notes-only — clear note lines also show up "
@@ -369,15 +467,81 @@ def compose_notes_not_in_draft_answer(
     return "\n".join(lines)
 
 
+# Back-compat alias for tests / callers
+compose_notes_not_in_draft_answer = compose_notes_not_in_draft_local
+
+_ORGANIZE_SYSTEM = """You are LoreKeeper — a librarian organizing one writer's private note scraps.
+
+Rules (non-negotiable):
+- ONLY restate and organize the NOTE LINES below. Never add facts, motives, plot, or themes.
+- Group under clear headings (prefer the note titles given).
+- Each bullet: one neat, short line with clean grammar — not a raw scrap dump.
+- Keep every distinct fact from the note lines; do not drop unique details.
+- Do not invent what the draft is missing beyond what these note lines say.
+- Start with one short lead line naming the work, then the grouped list.
+- End with a blank line then exactly: — From your notes vs draft only. Nothing invented. Not a full literary read of whether something was 'touched upon.'"""
+
+
+def _organize_with_librarian(
+    work_hints: set[str],
+    items: list[dict[str, str]],
+    local_fallback: str,
+) -> str:
+    """Optional Haiku tidy-up of already-filtered unused lines — librarian only."""
+    try:
+        from lorekeeper_ask_plan import ANSWER_MODEL_HAIKU
+        from lorekeeper_rag import _call_anthropic, rag_enabled
+    except ImportError:
+        return local_fallback
+    if not rag_enabled() or not items:
+        return local_fallback
+
+    work = _work_phrase(work_hints)
+    cleaned = _near_dedupe_items(items)[:MAX_UNUSED_LINES]
+    blocks: list[str] = []
+    for i, row in enumerate(cleaned, start=1):
+        title = row.get("noteTitle") or "Note"
+        line = row.get("line") or ""
+        blocks.append(f"{i}. [{title}] {line}")
+    user = (
+        f"Work: {work}\n\n"
+        "These note lines are NOT clearly in the main draft yet "
+        "(already filtered — do not re-judge that):\n\n"
+        + "\n".join(blocks)
+        + "\n\nOrganize them into a neat librarian answer."
+    )
+    try:
+        answer, _ = _call_anthropic(
+            system=_ORGANIZE_SYSTEM,
+            user_content=user,
+            max_tokens=900,
+            model=ANSWER_MODEL_HAIKU,
+        )
+    except Exception:
+        return local_fallback
+    text = (answer or "").strip()
+    if not text or len(text) < 40:
+        return local_fallback
+    if "•" not in text and "\n-" not in text:
+        return local_fallback
+    if _FOOTER.split(".")[0] not in text and "From your notes vs draft only" not in text:
+        text = text.rstrip() + "\n\n" + _FOOTER
+    return text
+
+
 def answer_notes_not_in_draft(
     entries: list[dict[str, Any]],
     *,
     work_hints: set[str],
 ) -> tuple[str, list[str]]:
     items, has_notes, has_draft = collect_notes_not_in_draft(entries)
-    answer = compose_notes_not_in_draft_answer(
+    local = compose_notes_not_in_draft_local(
         work_hints, items, has_notes=has_notes, has_draft=has_draft
     )
+    if items and has_notes and has_draft:
+        answer = _organize_with_librarian(work_hints, items, local)
+    else:
+        answer = local
     source_ids: list[str] = []
     seen_ids: set[str] = set()
     for row in items:
