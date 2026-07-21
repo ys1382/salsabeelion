@@ -139,6 +139,43 @@ _FOOTER = (
 )
 MAX_UNUSED_LINES = 40
 
+# Subject focus: "…relating to Dijon", "notes about Dijon that haven't…"
+_SUBJECT_AFTER_SCOPE = re.compile(
+    r"(?:document|draft|manuscript)\s+"
+    r"(?:relating\s+to|related\s+to|regarding|concerning|about)\s+"
+    r"(.+?)\s*[?.!]?\s*$",
+    re.I,
+)
+_SUBJECT_NOTES_ABOUT = re.compile(
+    r"\bnotes?\s+(?:that\s+(?:i(?:'?ve| have)\s+)?(?:written|saved)\s+)?"
+    r"(?:relating\s+to|related\s+to|regarding|concerning|about)\s+"
+    r"(.+?)(?=\s+that\b|\s+which\b|\s+haven|\s+hasn|\s+have\s+not|"
+    r"\s+has\s+not|\s+not\b|,|\?|$)",
+    re.I,
+)
+_SUBJECT_RELATING = re.compile(
+    r"\b(?:relating\s+to|related\s+to|regarding|concerning)\s+"
+    r"(.+?)\s*[?.!]?\s*$",
+    re.I,
+)
+_SUBJECT_JUNK = frozenset(
+    {
+        "the main document",
+        "the document",
+        "the draft",
+        "the manuscript",
+        "main document",
+        "this work",
+        "my notes",
+        "the notes",
+        "notes",
+        "it",
+        "them",
+        "that",
+        "this",
+    }
+)
+
 
 def is_notes_not_in_draft_question(question: str) -> bool:
     """Writer asked what note material is not yet in the main draft."""
@@ -146,6 +183,74 @@ def is_notes_not_in_draft_question(question: str) -> bool:
     if is_planned_gap_question(q):
         return False
     return bool(_NOTES_NOT_IN_DRAFT_Q.search(q))
+
+
+def extract_notes_not_in_draft_subject(question: str) -> str:
+    """
+    Optional subject filter from the ask — e.g. 'dijon' from
+    '…main document relating to dijon' or 'notes about Dijon that haven't…'.
+    Empty string = whole-work unused dump (legacy behavior).
+    """
+    q = (question or "").strip()
+    if not q:
+        return ""
+    candidates: list[str] = []
+    for pattern in (_SUBJECT_AFTER_SCOPE, _SUBJECT_NOTES_ABOUT, _SUBJECT_RELATING):
+        m = pattern.search(q)
+        if m:
+            candidates.append(m.group(1).strip().rstrip("?.!,"))
+    for raw in candidates:
+        cleaned = re.sub(r"\s+", " ", raw).strip(" \t\"'“”‘’")
+        if not cleaned or len(cleaned) > 60:
+            continue
+        low = cleaned.lower()
+        if low in _SUBJECT_JUNK:
+            continue
+        # Drop trailing filler: "dijon in my notes" → "dijon"
+        cleaned = re.sub(
+            r"\s+(?:in|from|with)\s+(?:my\s+|the\s+)?(?:notes?|draft|document).*$",
+            "",
+            cleaned,
+            flags=re.I,
+        ).strip()
+        if not cleaned or cleaned.lower() in _SUBJECT_JUNK:
+            continue
+        # Single junk token
+        toks = _content_tokens(cleaned)
+        if not toks:
+            continue
+        return cleaned[:80]
+    return ""
+
+
+def _subject_hits_text(subject: str, text: str) -> bool:
+    """True when subject phrase or all its content tokens appear in text."""
+    subj = _normalize(subject)
+    blob = _normalize(text)
+    if not subj or not blob:
+        return False
+    if subj in blob:
+        return True
+    toks = _content_tokens(subj)
+    if not toks:
+        return False
+    return all(t in blob for t in toks)
+
+
+def filter_unused_by_subject(
+    items: list[dict[str, str]], subject: str
+) -> list[dict[str, str]]:
+    """Keep unused claim rows that mention the subject (title or line)."""
+    subj = (subject or "").strip()
+    if not subj:
+        return items
+    out: list[dict[str, str]] = []
+    for row in items:
+        title = str(row.get("noteTitle") or "")
+        line = str(row.get("line") or "")
+        if _subject_hits_text(subj, title) or _subject_hits_text(subj, line):
+            out.append(row)
+    return out
 
 
 def _is_draft_entry(entry: dict[str, Any]) -> bool:
@@ -442,12 +547,19 @@ def compose_notes_not_in_draft_local(
     *,
     has_notes: bool,
     has_draft: bool,
+    subject: str = "",
 ) -> str:
     """Grouped local layout — short paragraphs by note, no bullet walls."""
     work = _work_phrase(work_hints)
-    lines = [
-        f"In your notes for {work}, but not clearly in the main document yet:\n"
-    ]
+    subj = (subject or "").strip()
+    if subj:
+        lead = (
+            f"In your notes for {work} relating to {subj}, "
+            f"but not clearly in the main document yet:\n"
+        )
+    else:
+        lead = f"In your notes for {work}, but not clearly in the main document yet:\n"
+    lines = [lead]
     if not has_notes:
         lines.append(
             "No notes found for this work to compare. Add notes, then ask again."
@@ -473,6 +585,12 @@ def compose_notes_not_in_draft_local(
             lines.append("")
         while lines and lines[-1] == "":
             lines.pop()
+    elif subj:
+        lines.append(
+            f"Nothing clear stood out as unused notes relating to {subj} — "
+            "either those note lines also show up in the draft by phrase match, "
+            "or no notes for that subject were found. Try another name spelling if this feels wrong."
+        )
     else:
         lines.append(
             "Nothing clear stood out as notes-only — clear note lines also show up "
@@ -502,6 +620,8 @@ def _organize_with_librarian(
     work_hints: set[str],
     items: list[dict[str, str]],
     local_fallback: str,
+    *,
+    subject: str = "",
 ) -> str:
     """Optional Haiku tidy-up of already-filtered unused lines — librarian only."""
     try:
@@ -519,9 +639,13 @@ def _organize_with_librarian(
         title = row.get("noteTitle") or "Note"
         line = row.get("line") or ""
         blocks.append(f"{i}. [{title}] {line}")
+    focus = ""
+    if (subject or "").strip():
+        focus = f"Subject focus (keep only this angle): {subject.strip()}\n"
     user = (
-        f"Work: {work}\n\n"
-        "These note lines are NOT clearly in the main draft yet "
+        f"Work: {work}\n"
+        + focus
+        + "\nThese note lines are NOT clearly in the main draft yet "
         "(already filtered — do not re-judge that):\n\n"
         + "\n".join(blocks)
         + "\n\nOrganize them into calm paragraph sections — no bullets."
@@ -550,13 +674,23 @@ def answer_notes_not_in_draft(
     entries: list[dict[str, Any]],
     *,
     work_hints: set[str],
+    question: str = "",
 ) -> tuple[str, list[str]]:
     items, has_notes, has_draft = collect_notes_not_in_draft(entries)
+    subject = extract_notes_not_in_draft_subject(question)
+    if subject:
+        items = filter_unused_by_subject(items, subject)
     local = compose_notes_not_in_draft_local(
-        work_hints, items, has_notes=has_notes, has_draft=has_draft
+        work_hints,
+        items,
+        has_notes=has_notes,
+        has_draft=has_draft,
+        subject=subject,
     )
     if items and has_notes and has_draft:
-        answer = _organize_with_librarian(work_hints, items, local)
+        answer = _organize_with_librarian(
+            work_hints, items, local, subject=subject
+        )
     else:
         answer = local
     source_ids: list[str] = []
@@ -568,7 +702,9 @@ def answer_notes_not_in_draft(
             source_ids.append(eid)
         if len(source_ids) >= 12:
             break
-    if not source_ids and has_notes:
+    # Unfocused empty: still point at a few notes so sources aren't blank.
+    # Subject focus with no hits: leave sources empty (honest "nothing for X").
+    if not source_ids and has_notes and not subject:
         for entry in entries:
             if (
                 isinstance(entry, dict)

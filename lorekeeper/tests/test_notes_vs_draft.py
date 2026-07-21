@@ -9,6 +9,7 @@ from lorekeeper_answer_focus import focus_ask_response
 from lorekeeper_character_compose import is_coverage_question
 from lorekeeper_notes_vs_draft import (
     collect_notes_not_in_draft,
+    extract_notes_not_in_draft_subject,
     is_notes_not_in_draft_question,
 )
 from lorekeeper_recall import recall_from_user_data
@@ -43,6 +44,26 @@ class NotesNotInDraftDetectionTests(unittest.TestCase):
         self.assertTrue(is_notes_not_in_draft_question(q))
         self.assertEqual(route_question(q), "notes_not_in_draft")
         self.assertFalse(is_coverage_question(q))
+        self.assertEqual(extract_notes_not_in_draft_subject(q), "")
+
+    def test_subject_relating_to(self):
+        q = (
+            "in smoke and mirrors, tell me what ive written in notes that "
+            "hasn't been touched upon in the main document relating to dijon"
+        )
+        self.assertTrue(is_notes_not_in_draft_question(q))
+        self.assertEqual(
+            extract_notes_not_in_draft_subject(q).lower(), "dijon"
+        )
+
+    def test_subject_notes_about(self):
+        q = (
+            "In Smoke and Mirrors, notes about Duke Dijon that haven't "
+            "been touched upon in the main document"
+        )
+        self.assertEqual(
+            extract_notes_not_in_draft_subject(q).lower(), "duke dijon"
+        )
 
     def test_other_phrasings(self):
         self.assertTrue(
@@ -162,6 +183,43 @@ class NotesNotInDraftAskTests(unittest.TestCase):
         self.assertNotIn("nothing clear enough to answer", answer)
         self.assertNotIn("attic smells like rain", answer)
 
+    def test_ask_filters_to_subject(self):
+        """Subject focus must change the answer — not dump every unused note."""
+        entries = [
+            _entry(
+                "n_dijon",
+                "Duke Dijon",
+                "Duke Dijon keeps a silver cufflink from the northern court. "
+                "He owes Lord Tenebris a quiet favor.",
+            ),
+            _entry(
+                "n_other",
+                "Places",
+                "The glass market only opens at dusk.",
+            ),
+            _entry(
+                "d1",
+                "Main draft",
+                "Someone walked through the hall and left.",
+                kind="document",
+            ),
+        ]
+        q_all = (
+            "In Smoke and Mirrors, tell me what I've written in notes that "
+            "hasn't been touched upon in the main document"
+        )
+        q_dijon = q_all + " relating to dijon"
+        res_all = self._ask(q_all, entries)
+        res_dijon = self._ask(q_dijon, entries)
+        all_ans = (res_all.get("answer") or "").lower()
+        dijon_ans = (res_dijon.get("answer") or "").lower()
+        self.assertIn("glass market", all_ans)
+        self.assertIn("silver cufflink", all_ans)
+        self.assertIn("silver cufflink", dijon_ans)
+        self.assertIn("dijon", dijon_ans)
+        self.assertNotIn("glass market", dijon_ans)
+        self.assertNotEqual(all_ans, dijon_ans)
+
     def test_ask_stays_local_even_when_rag_on(self):
         """Regression: full RAG retrieve must not run; organize may use Haiku."""
         entries = [
@@ -186,9 +244,12 @@ class NotesNotInDraftAskTests(unittest.TestCase):
                 "lorekeeper_recall.answer_with_rag",
                 side_effect=AssertionError("RAG must not run for notes_not_in_draft"),
             ):
+                def _fake_organize(work_hints, items, local_fallback, subject=""):
+                    return local_fallback
+
                 with patch(
                     "lorekeeper_notes_vs_draft._organize_with_librarian",
-                    side_effect=lambda work_hints, items, local_fallback: local_fallback,
+                    side_effect=_fake_organize,
                 ):
                     res = self._ask(q, entries)
         self.assertEqual(res.get("questionKind"), "notes_not_in_draft")

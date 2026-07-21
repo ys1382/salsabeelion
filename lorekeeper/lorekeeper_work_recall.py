@@ -243,7 +243,7 @@ def answer_for_work(
             answer, source_ids = answer_flagged_fixes(scoped, work_hints=work_hints)
         else:
             answer, source_ids = answer_notes_not_in_draft(
-                scoped, work_hints=work_hints
+                scoped, work_hints=work_hints, question=question
             )
         material_state: MaterialState = (
             "summarizable" if source_ids else "nothing_saved"
