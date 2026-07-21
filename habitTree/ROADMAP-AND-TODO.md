@@ -7,7 +7,8 @@ Working name: **Habit Tree**. Private habit companion ideas (Odd Trove). Owner-o
 - [x] Owner-only page with **Exercise / Work / Chores** buttons
 - [x] Companions: hatch path (mantis, peacock) vs grow path (deer / reindeer / stag)
 - [ ] Fuller habit menu (concrete safe actions; no private notes) — details later
-- [x] Real art / richer motion (articulated SVG + CM-style CSS idle — v0 pass)
+- [x] Companion stills as flipbook stages (no looping creature motion)
+- [x] Scene backdrop (ground, light, still motes)
 
 ## Your additions
 

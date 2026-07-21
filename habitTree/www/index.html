@@ -6,7 +6,7 @@
   <meta name="robots" content="noindex, nofollow" />
   <title>Habit Tree — owner beta</title>
   <meta http-equiv="Cache-Control" content="no-cache" />
-  <link rel="stylesheet" href="habit-tree.css?v=20260720b" />
+  <link rel="stylesheet" href="habit-tree.css?v=20260720c" />
 </head>
 <body>
   <div class="page">
@@ -23,6 +23,15 @@
 
     <section class="stage-panel" aria-live="polite">
       <div class="scene" id="scene" data-stage="0" data-kind="hatch">
+        <div class="scene-bg" aria-hidden="true">
+          <span class="scene-mote"></span>
+          <span class="scene-mote"></span>
+          <span class="scene-mote"></span>
+          <span class="scene-mote"></span>
+          <span class="scene-mote"></span>
+          <div class="scene-ground"></div>
+          <div class="scene-shadow"></div>
+        </div>
         <div class="flash" id="careFlash" aria-hidden="true"></div>
         <div class="creature" id="creature"></div>
         <p class="stage-label" id="stageLabel">Egg</p>
@@ -37,11 +46,11 @@
         <button type="button" class="habit-btn" data-habit="work">Work</button>
         <button type="button" class="habit-btn" data-habit="chores">Chores</button>
       </div>
-      <p class="hint">Each tap feeds care. Non-mammals start as an egg and hatch; mammals grow from young to adult.</p>
+      <p class="hint">Each tap adds care and flips to the next still frame — egg to grown, or young to adult. Companions stay still; only the picture changes.</p>
     </section>
 
     <p class="foot">Owner-only stub. Details later. Progress stays on this device for now.</p>
   </div>
-  <script src="habit-tree.js?v=20260720b"></script>
+  <script src="habit-tree.js?v=20260720c"></script>
 </body>
 </html>

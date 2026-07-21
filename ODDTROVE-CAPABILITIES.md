@@ -218,8 +218,8 @@ Last updated: 2026-07-17
 
 **Can do now:**
 - Pick a companion (orchid mantis, peacock, reindeer, stag / deer variants)
-- Tap **Exercise**, **Work**, or **Chores** — care advances hatch (egg → grown) or grow (young → adult) stages
-- Articulated SVG companions with CM-style CSS idle motion (head tilt, limb sway, feather/antler ambient — not walk loops)
+- Care advances hatch (egg → grown) or grow (young → adult) as **still flipbook frames** (no looping creature motion)
+- Richer SVG stills (orchid mantis with petal lobes, peacock moon-phase tail, deer family) plus still scene backdrop
 - Progress in browser localStorage on this device
 - Deploy: `bash top/scripts/deploy-habit-tree.sh` (port **8087**; reloads nginx by default)
 

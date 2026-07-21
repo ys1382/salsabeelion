@@ -60,27 +60,85 @@
     return s;
   }
 
-  function eggSvg(extra) {
+  function svgDefs() {
     return (
-      '<g class="layer layer-0 egg-sway">' +
-      '<ellipse cx="100" cy="118" rx="34" ry="44" fill="#f4e8d4" stroke="#c9b28a" stroke-width="3"/>' +
-      '<ellipse cx="88" cy="100" rx="10" ry="14" fill="#fff8ea" opacity="0.55"/>' +
-      (extra || "") +
+      "<defs>" +
+      '<radialGradient id="eggShine" cx="35%" cy="30%" r="55%">' +
+      '<stop offset="0%" stop-color="#fffaf0"/>' +
+      '<stop offset="55%" stop-color="#f4e8d4"/>' +
+      '<stop offset="100%" stop-color="#e2d0b0"/>' +
+      "</radialGradient>" +
+      '<linearGradient id="mantisPink" x1="0%" y1="0%" x2="0%" y2="100%">' +
+      '<stop offset="0%" stop-color="#fce4ec"/>' +
+      '<stop offset="45%" stop-color="#f4c4d4"/>' +
+      '<stop offset="100%" stop-color="#e8a8bc"/>' +
+      "</linearGradient>" +
+      '<linearGradient id="mantisDeep" x1="0%" y1="0%" x2="100%" y2="100%">' +
+      '<stop offset="0%" stop-color="#f7d2de"/>' +
+      '<stop offset="100%" stop-color="#d992ab"/>' +
+      "</linearGradient>" +
+      '<radialGradient id="petalGlow" cx="40%" cy="40%" r="60%">' +
+      '<stop offset="0%" stop-color="#fff0f5"/>' +
+      '<stop offset="60%" stop-color="#f5bdd0"/>' +
+      '<stop offset="100%" stop-color="#ef9fba"/>' +
+      "</radialGradient>" +
+      '<linearGradient id="peacockBody" x1="0%" y1="0%" x2="100%" y2="100%">' +
+      '<stop offset="0%" stop-color="#3a8fb0"/>' +
+      '<stop offset="100%" stop-color="#1e5a72"/>' +
+      "</linearGradient>" +
+      '<linearGradient id="peacockNeck" x1="0%" y1="0%" x2="0%" y2="100%">' +
+      '<stop offset="0%" stop-color="#2a7a58"/>' +
+      '<stop offset="100%" stop-color="#245f7a"/>' +
+      "</linearGradient>" +
+      "</defs>"
+    );
+  }
+
+  function eggStill(tint) {
+    return (
+      '<g class="layer layer-0">' +
+      '<ellipse cx="100" cy="158" rx="28" ry="6" fill="rgba(30,50,30,0.28)"/>' +
+      '<ellipse cx="100" cy="118" rx="36" ry="46" fill="url(#eggShine)" stroke="#c9b28a" stroke-width="2.5"/>' +
+      '<ellipse cx="86" cy="98" rx="11" ry="16" fill="#fff8ea" opacity="0.5"/>' +
+      '<ellipse cx="108" cy="130" rx="8" ry="5" fill="#e8d5b5" opacity="0.35"/>' +
+      (tint || "") +
       "</g>"
     );
   }
 
-  function crackEggSvg() {
+  function crackEggStill() {
     return (
-      '<g class="layer layer-1 egg-sway">' +
-      '<ellipse cx="100" cy="118" rx="34" ry="44" fill="#f4e8d4" stroke="#c9b28a" stroke-width="3"/>' +
-      '<path class="crack-line" d="M86 96 L96 108 L90 118 L102 128 L94 140" fill="none" stroke="#8a6d45" stroke-width="2.5" stroke-linecap="round"/>' +
-      '<ellipse cx="100" cy="118" rx="34" ry="44" fill="none" stroke="#c9b28a" stroke-width="3"/>' +
+      '<g class="layer layer-1">' +
+      '<ellipse cx="100" cy="158" rx="28" ry="6" fill="rgba(30,50,30,0.28)"/>' +
+      '<ellipse cx="100" cy="118" rx="36" ry="46" fill="url(#eggShine)" stroke="#c9b28a" stroke-width="2.5"/>' +
+      '<path d="M84 92 L94 104 L88 116 L100 124 L92 136 L104 144" fill="none" stroke="#8a6d45" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>' +
+      '<path d="M112 98 L118 110 L110 120" fill="none" stroke="#a08050" stroke-width="1.8" stroke-linecap="round"/>' +
+      '<ellipse cx="86" cy="98" rx="11" ry="16" fill="#fff8ea" opacity="0.4"/>' +
       "</g>"
     );
   }
 
-  function orchidBloom(cx, cy, scale, late) {
+  function orchidPetal(cx, cy, rot, sx, sy) {
+    return (
+      '<g transform="translate(' +
+      cx +
+      " " +
+      cy +
+      ") rotate(" +
+      rot +
+      ") scale(" +
+      sx +
+      " " +
+      sy +
+      ')">' +
+      '<ellipse cx="0" cy="0" rx="14" ry="22" fill="url(#petalGlow)"/>' +
+      '<ellipse cx="0" cy="2" rx="6" ry="12" fill="#fce4ec" opacity="0.7"/>' +
+      '<path d="M0 -18 Q3 -4 0 16" fill="none" stroke="#e89ab4" stroke-width="1" opacity="0.5"/>' +
+      "</g>"
+    );
+  }
+
+  function orchidCluster(cx, cy, scale) {
     var s = scale || 1;
     return (
       '<g transform="translate(' +
@@ -90,226 +148,72 @@
       ") scale(" +
       s +
       ')">' +
-      '<g class="bloom' +
-      (late ? " bloom-late" : "") +
-      '">' +
-      '<ellipse cx="0" cy="4" rx="16" ry="9" fill="#ef9fba"/>' +
-      '<ellipse cx="-8" cy="-4" rx="8" ry="12" fill="#f5bdd0"/>' +
-      '<ellipse cx="8" cy="-4" rx="8" ry="12" fill="#f5bdd0"/>' +
-      '<ellipse cx="0" cy="-2" rx="6" ry="8" fill="#f9d4e2"/>' +
-      '<circle cx="0" cy="0" r="3.5" fill="#f2b6c8"/>' +
-      "</g></g>"
+      orchidPetal(0, 0, -28, 1, 1) +
+      orchidPetal(10, -2, 22, 0.92, 0.95) +
+      orchidPetal(-10, 2, -50, 0.85, 0.9) +
+      orchidPetal(0, -8, 5, 0.7, 0.75) +
+      '<circle cx="0" cy="2" r="5" fill="#f2b6c8"/>' +
+      '<circle cx="0" cy="2" r="2.2" fill="#e88aa8"/>' +
+      "</g>"
     );
   }
 
-  function mantisFigure(grown) {
-    var g = grown ? 1 : 0.88;
-    var bodyY = grown ? 108 : 112;
-    var headY = grown ? 58 : 64;
+  /* Three-quarter orchid mantis still — petal lobes on femurs, folded raptors */
+  function mantisStill(grown) {
+    var s = grown ? 1 : 0.9;
+    var y = grown ? 0 : 4;
     return (
-      '<g class="mantis-idle">' +
-      /* mid + hind legs — thick tapered segments, connected */
-      '<g class="leg-mid leg-l">' +
-      '<path d="M90 ' +
-      (bodyY + 6) +
-      " L78 " +
-      (bodyY + 22) +
-      " L70 " +
-      (bodyY + 38) +
-      " L64 " +
-      (bodyY + 48) +
-      '" fill="none" stroke="#d992ab" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>' +
-      '<ellipse cx="64" cy="' +
-      (bodyY + 50) +
-      '" rx="5" ry="3" fill="#c97f9a"/>' +
+      '<g transform="translate(0 ' +
+      y +
+      ") scale(" +
+      s +
+      ')">' +
+      '<ellipse cx="100" cy="162" rx="32" ry="7" fill="rgba(30,50,30,0.3)"/>' +
+      /* hind legs */
+      '<path d="M98 128 C86 138 78 150 72 158" fill="none" stroke="#d0849e" stroke-width="7" stroke-linecap="round"/>' +
+      '<path d="M108 130 C118 140 126 150 132 158" fill="none" stroke="#d0849e" stroke-width="7" stroke-linecap="round"/>' +
+      '<ellipse cx="72" cy="159" rx="5" ry="3" fill="#c97f9a"/>' +
+      '<ellipse cx="132" cy="159" rx="5" ry="3" fill="#c97f9a"/>' +
+      /* mid legs with orchid petal lobes */
+      '<path d="M92 118 C74 124 60 136 52 148" fill="none" stroke="#e09ab2" stroke-width="8" stroke-linecap="round"/>' +
+      '<path d="M112 118 C130 124 144 136 152 148" fill="none" stroke="#e09ab2" stroke-width="8" stroke-linecap="round"/>' +
+      '<ellipse cx="68" cy="128" rx="14" ry="9" fill="url(#petalGlow)" transform="rotate(-35 68 128)"/>' +
+      '<ellipse cx="132" cy="128" rx="14" ry="9" fill="url(#petalGlow)" transform="rotate(35 132 128)"/>' +
+      '<ellipse cx="52" cy="149" rx="4.5" ry="2.8" fill="#c97f9a"/>' +
+      '<ellipse cx="152" cy="149" rx="4.5" ry="2.8" fill="#c97f9a"/>' +
+      /* long abdomen */
+      '<ellipse cx="100" cy="138" rx="15" ry="28" fill="url(#mantisPink)"/>' +
+      '<ellipse cx="100" cy="148" rx="11" ry="14" fill="#f0b8cc" opacity="0.55"/>' +
+      '<path d="M90 122 Q100 132 110 122" fill="none" stroke="#e8a8bc" stroke-width="1.4" opacity="0.6"/>' +
+      '<path d="M91 134 Q100 142 109 134" fill="none" stroke="#e8a8bc" stroke-width="1.2" opacity="0.45"/>' +
+      /* thorax */
+      '<ellipse cx="100" cy="102" rx="20" ry="16" fill="url(#mantisDeep)"/>' +
+      '<ellipse cx="100" cy="98" rx="12" ry="8" fill="#fce4ec" opacity="0.45"/>' +
+      /* folded raptorial forelegs — praying pose, thick + petal lobes */
+      '<g>' +
+      '<ellipse cx="78" cy="96" rx="16" ry="10" fill="url(#petalGlow)" transform="rotate(-48 78 96)"/>' +
+      '<path d="M88 100 C72 108 58 104 48 92" fill="none" stroke="#e8a8bc" stroke-width="9" stroke-linecap="round"/>' +
+      '<path d="M48 92 C42 82 46 72 54 68" fill="none" stroke="#f0b8cc" stroke-width="7.5" stroke-linecap="round"/>' +
+      '<path d="M54 68 L46 78 M52 70 L44 80 M56 72 L50 82" stroke="#c97f9a" stroke-width="2" stroke-linecap="round"/>' +
       "</g>" +
-      '<g class="leg-mid leg-r">' +
-      '<path d="M110 ' +
-      (bodyY + 6) +
-      " L122 " +
-      (bodyY + 22) +
-      " L130 " +
-      (bodyY + 38) +
-      " L136 " +
-      (bodyY + 48) +
-      '" fill="none" stroke="#d992ab" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>' +
-      '<ellipse cx="136" cy="' +
-      (bodyY + 50) +
-      '" rx="5" ry="3" fill="#c97f9a"/>' +
+      '<g>' +
+      '<ellipse cx="122" cy="96" rx="16" ry="10" fill="url(#petalGlow)" transform="rotate(48 122 96)"/>' +
+      '<path d="M112 100 C128 108 142 104 152 92" fill="none" stroke="#e8a8bc" stroke-width="9" stroke-linecap="round"/>' +
+      '<path d="M152 92 C158 82 154 72 146 68" fill="none" stroke="#f0b8cc" stroke-width="7.5" stroke-linecap="round"/>' +
+      '<path d="M146 68 L154 78 M148 70 L156 80 M144 72 L150 82" stroke="#c97f9a" stroke-width="2" stroke-linecap="round"/>' +
       "</g>" +
-      '<g class="leg-hind leg-l">' +
-      '<path d="M94 ' +
-      (bodyY + 16) +
-      " L86 " +
-      (bodyY + 32) +
-      " L80 " +
-      (bodyY + 48) +
-      '" fill="none" stroke="#c97f9a" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>' +
-      '<ellipse cx="80" cy="' +
-      (bodyY + 50) +
-      '" rx="4.5" ry="2.8" fill="#b86f8c"/>' +
-      "</g>" +
-      '<g class="leg-hind leg-r">' +
-      '<path d="M106 ' +
-      (bodyY + 16) +
-      " L114 " +
-      (bodyY + 32) +
-      " L120 " +
-      (bodyY + 48) +
-      '" fill="none" stroke="#c97f9a" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>' +
-      '<ellipse cx="120" cy="' +
-      (bodyY + 50) +
-      '" rx="4.5" ry="2.8" fill="#b86f8c"/>' +
-      "</g>" +
-      /* abdomen + thorax — elongated mantis silhouette */
-      '<g class="mantis-body">' +
-      '<ellipse cx="100" cy="' +
-      (bodyY + 26) +
-      '" rx="' +
-      13 * g +
-      '" ry="' +
-      28 * g +
-      '" fill="#f0b8cc"/>' +
-      '<ellipse cx="100" cy="' +
-      (bodyY + 8) +
-      '" rx="' +
-      12 * g +
-      '" ry="' +
-      11 * g +
-      '" fill="#f4c4d4"/>' +
-      '<ellipse cx="100" cy="' +
-      (bodyY - 8) +
-      '" rx="' +
-      17 * g +
-      '" ry="' +
-      13 * g +
-      '" fill="#f7d2de"/>' +
-      '<path d="M88 ' +
-      (bodyY - 4) +
-      " Q100 " +
-      (bodyY + 12) +
-      " 112 " +
-      (bodyY - 4) +
-      '" fill="none" stroke="#e8a8bc" stroke-width="1.5" opacity="0.55"/>' +
-      /* neck bridge */
-      '<ellipse cx="100" cy="' +
-      (bodyY - 20) +
-      '" rx="' +
-      8 * g +
-      '" ry="' +
-      7 * g +
-      '" fill="#f4c4d4"/>' +
-      "</g>" +
-      /* raptorial forelegs — folded, thick filled segments */
-      '<g class="forearm forearm-l">' +
-      '<ellipse cx="78" cy="' +
-      (bodyY - 4) +
-      '" rx="11" ry="6.5" fill="#e8a8bc" transform="rotate(-42 78 ' +
-      (bodyY - 4) +
-      ')"/>' +
-      '<ellipse cx="60" cy="' +
-      (bodyY + 2) +
-      '" rx="10" ry="5.5" fill="#f0b8cc" transform="rotate(48 60 ' +
-      (bodyY + 2) +
-      ')"/>' +
-      '<ellipse cx="50" cy="' +
-      (bodyY - 8) +
-      '" rx="8" ry="4.5" fill="#e09ab2" transform="rotate(-55 50 ' +
-      (bodyY - 8) +
-      ')"/>' +
-      '<path d="M46 ' +
-      (bodyY - 2) +
-      " L42 " +
-      (bodyY + 10) +
-      " M48 " +
-      (bodyY + 0) +
-      " L46 " +
-      (bodyY + 12) +
-      " M50 " +
-      (bodyY + 1) +
-      " L50 " +
-      (bodyY + 12) +
-      '" stroke="#c97f9a" stroke-width="2.2" stroke-linecap="round"/>' +
-      "</g>" +
-      '<g class="forearm forearm-r">' +
-      '<ellipse cx="122" cy="' +
-      (bodyY - 4) +
-      '" rx="11" ry="6.5" fill="#e8a8bc" transform="rotate(42 122 ' +
-      (bodyY - 4) +
-      ')"/>' +
-      '<ellipse cx="140" cy="' +
-      (bodyY + 2) +
-      '" rx="10" ry="5.5" fill="#f0b8cc" transform="rotate(-48 140 ' +
-      (bodyY + 2) +
-      ')"/>' +
-      '<ellipse cx="150" cy="' +
-      (bodyY - 8) +
-      '" rx="8" ry="4.5" fill="#e09ab2" transform="rotate(55 150 ' +
-      (bodyY - 8) +
-      ')"/>' +
-      '<path d="M154 ' +
-      (bodyY - 2) +
-      " L158 " +
-      (bodyY + 10) +
-      " M152 " +
-      (bodyY + 0) +
-      " L154 " +
-      (bodyY + 12) +
-      " M150 " +
-      (bodyY + 1) +
-      " L150 " +
-      (bodyY + 12) +
-      '" stroke="#c97f9a" stroke-width="2.2" stroke-linecap="round"/>' +
-      "</g>" +
-      /* triangular mantis head + antennae */
-      '<g class="mantis-head">' +
-      '<path d="M100 ' +
-      (headY - 16) +
-      " L120 " +
-      (headY + 10) +
-      " L80 " +
-      (headY + 10) +
-      ' Z" fill="#f7d2de"/>' +
-      '<ellipse cx="100" cy="' +
-      (headY + 4) +
-      '" rx="15" ry="9" fill="#f4c4d4"/>' +
-      '<circle cx="91" cy="' +
-      (headY + 2) +
-      '" r="3.4" fill="#3a2a30"/>' +
-      '<circle cx="109" cy="' +
-      (headY + 2) +
-      '" r="3.4" fill="#3a2a30"/>' +
-      '<circle cx="92" cy="' +
-      headY +
-      '" r="1.1" fill="#f9e8ef"/>' +
-      '<circle cx="110" cy="' +
-      headY +
-      '" r="1.1" fill="#f9e8ef"/>' +
-      '<g class="antenna antenna-l">' +
-      '<path d="M88 ' +
-      (headY - 10) +
-      " Q74 " +
-      (headY - 26) +
-      " 66 " +
-      (headY - 38) +
-      '" fill="none" stroke="#e09ab2" stroke-width="2.2" stroke-linecap="round"/>' +
-      '<circle cx="66" cy="' +
-      (headY - 38) +
-      '" r="2" fill="#f0b8cc"/>' +
-      "</g>" +
-      '<g class="antenna antenna-r">' +
-      '<path d="M112 ' +
-      (headY - 10) +
-      " Q126 " +
-      (headY - 26) +
-      " 134 " +
-      (headY - 38) +
-      '" fill="none" stroke="#e09ab2" stroke-width="2.2" stroke-linecap="round"/>' +
-      '<circle cx="134" cy="' +
-      (headY - 38) +
-      '" r="2" fill="#f0b8cc"/>' +
-      "</g>" +
-      "</g>" +
+      /* neck + triangular head */
+      '<ellipse cx="100" cy="84" rx="9" ry="8" fill="#f4c4d4"/>' +
+      '<path d="M100 52 L122 82 L78 82 Z" fill="url(#mantisPink)" stroke="#e8a8bc" stroke-width="1"/>' +
+      '<ellipse cx="100" cy="74" rx="16" ry="10" fill="#f7d2de"/>' +
+      '<ellipse cx="90" cy="72" rx="5.5" ry="5" fill="#3a2a30"/>' +
+      '<ellipse cx="110" cy="72" rx="5.5" ry="5" fill="#3a2a30"/>' +
+      '<circle cx="91.5" cy="70.5" r="1.6" fill="#f9e8ef"/>' +
+      '<circle cx="111.5" cy="70.5" r="1.6" fill="#f9e8ef"/>' +
+      '<path d="M88 58 Q72 42 62 34" fill="none" stroke="#e09ab2" stroke-width="2.2" stroke-linecap="round"/>' +
+      '<path d="M112 58 Q128 42 138 34" fill="none" stroke="#e09ab2" stroke-width="2.2" stroke-linecap="round"/>' +
+      '<circle cx="62" cy="34" r="2.2" fill="#f4c4d4"/>' +
+      '<circle cx="138" cy="34" r="2.2" fill="#f4c4d4"/>' +
       "</g>"
     );
   }
@@ -317,46 +221,66 @@
   function drawMantis() {
     return (
       '<svg viewBox="0 0 200 180" role="img" aria-label="Orchid mantis">' +
-      eggSvg() +
-      crackEggSvg() +
+      svgDefs() +
+      eggStill() +
+      crackEggStill() +
       '<g class="layer layer-2">' +
-      orchidBloom(36, 118, 0.8, false) +
-      orchidBloom(164, 122, 0.7, true) +
-      mantisFigure(false) +
+      orchidCluster(34, 120, 0.72) +
+      orchidCluster(166, 124, 0.62) +
+      mantisStill(false) +
       "</g>" +
       '<g class="layer layer-3">' +
-      orchidBloom(28, 112, 0.95, false) +
-      orchidBloom(172, 108, 0.9, true) +
-      orchidBloom(100, 162, 0.65, true) +
-      mantisFigure(true) +
+      orchidCluster(26, 108, 0.9) +
+      orchidCluster(174, 104, 0.85) +
+      orchidCluster(100, 168, 0.55) +
+      mantisStill(true) +
       "</g>" +
       "</svg>"
     );
   }
 
-  function moonSpot(cx, cy, r) {
+  function moonPhase(cx, cy, r, phase) {
+    /* phase: 0 new, 1 crescent, 2 half, 3 gibbous, 4 full */
+    var base =
+      '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="#1e2a44"/>';
+    if (phase === 0) {
+      return base;
+    }
+    if (phase === 4) {
+      return (
+        base +
+        '<circle cx="' +
+        cx +
+        '" cy="' +
+        cy +
+        '" r="' +
+        r * 0.92 +
+        '" fill="#e8eef8"/>'
+      );
+    }
+    var offset = phase === 1 ? r * 0.55 : phase === 2 ? r * 0.35 : r * 0.18;
     return (
+      base +
+      '<circle cx="' +
+      (cx - offset) +
+      '" cy="' +
+      cy +
+      '" r="' +
+      r * 0.92 +
+      '" fill="#e8eef8"/>' +
       '<circle cx="' +
       cx +
       '" cy="' +
       cy +
       '" r="' +
       r +
-      '" fill="#1e2a44"/>' +
-      '<circle cx="' +
-      (cx - r * 0.25) +
-      '" cy="' +
-      (cy - r * 0.15) +
-      '" r="' +
-      r * 0.55 +
-      '" fill="#dfe7f5"/>'
+      '" fill="none" stroke="#1e2a44" stroke-width="1"/>'
     );
   }
 
-  function peacockFeather(qx, qy, tipX, tipY, stroke, width, moonR) {
+  function peacockFeatherStill(qx, qy, tipX, tipY, color, width, moonR, phase) {
     return (
-      '<g class="feather">' +
-      '<path d="M100 124 Q' +
+      '<path d="M102 128 Q' +
       qx +
       " " +
       qy +
@@ -365,177 +289,118 @@
       " " +
       tipY +
       '" fill="none" stroke="' +
-      stroke +
+      color +
       '" stroke-width="' +
       width +
       '" stroke-linecap="round"/>' +
-      moonSpot(tipX, tipY, moonR) +
-      "</g>"
+      moonPhase(tipX, tipY, moonR, phase)
     );
   }
 
-  function peacockBody(grown) {
-    var s = grown ? 1 : 0.92;
-    var bodyY = grown ? 124 : 122;
+  function peacockStill(grown) {
+    var fan = grown
+      ? peacockFeatherStill(48, 78, 22, 42, "#1f4d42", 6.5, 9, 0) +
+        peacockFeatherStill(68, 55, 48, 24, "#2f6b5a", 7, 8, 1) +
+        peacockFeatherStill(100, 42, 100, 14, "#3a7f6a", 8.5, 10, 4) +
+        peacockFeatherStill(132, 55, 152, 24, "#2f6b5a", 7, 8, 2) +
+        peacockFeatherStill(152, 78, 178, 42, "#1f4d42", 6.5, 9, 3)
+      : peacockFeatherStill(62, 72, 40, 48, "#2f6b5a", 7, 7.5, 1) +
+        peacockFeatherStill(100, 50, 100, 32, "#3a7f6a", 8, 8.5, 4) +
+        peacockFeatherStill(138, 72, 160, 48, "#2f6b5a", 7, 7.5, 2);
+
     return (
-      '<g class="peacock-idle">' +
-      '<g class="peacock-leg peacock-leg-l">' +
-      '<path d="M94 ' +
-      (bodyY + 16) +
-      " L90 " +
-      (bodyY + 34) +
-      '" stroke="#c9a24a" stroke-width="3" stroke-linecap="round"/>' +
-      '<path d="M90 ' +
-      (bodyY + 34) +
-      " L84 " +
-      (bodyY + 36) +
-      '" stroke="#c9a24a" stroke-width="2.5" stroke-linecap="round"/>' +
-      "</g>" +
-      '<g class="peacock-leg peacock-leg-r">' +
-      '<path d="M106 ' +
-      (bodyY + 16) +
-      " L110 " +
-      (bodyY + 34) +
-      '" stroke="#c9a24a" stroke-width="3" stroke-linecap="round"/>' +
-      '<path d="M110 ' +
-      (bodyY + 34) +
-      " L116 " +
-      (bodyY + 36) +
-      '" stroke="#c9a24a" stroke-width="2.5" stroke-linecap="round"/>' +
-      "</g>" +
-      '<g class="peacock-body">' +
-      '<ellipse cx="100" cy="' +
-      bodyY +
-      '" rx="' +
-      22 * s +
-      '" ry="' +
-      26 * s +
-      '" fill="#2a6f8f"/>' +
-      '<ellipse cx="100" cy="' +
-      (bodyY - 6) +
-      '" rx="' +
-      14 * s +
-      '" ry="' +
-      12 * s +
-      '" fill="#3486a8"/>' +
-      '<path d="M100 ' +
-      (bodyY - 28) +
-      " Q108 " +
-      (bodyY - 18) +
-      " 106 " +
-      (bodyY - 6) +
-      " Q100 " +
-      (bodyY - 12) +
-      " 94 " +
-      (bodyY - 6) +
-      " Q92 " +
-      (bodyY - 18) +
-      " 100 " +
-      (bodyY - 28) +
-      '" fill="#245f7a"/>' +
-      "</g>" +
-      '<g class="peacock-head">' +
-      '<ellipse cx="100" cy="' +
-      (bodyY - 34) +
-      '" rx="' +
-      11 * s +
-      '" ry="' +
-      10 * s +
-      '" fill="#245f7a"/>' +
-      '<circle cx="96" cy="' +
-      (bodyY - 35) +
-      '" r="2" fill="#f4f0e4"/>' +
-      '<circle cx="104" cy="' +
-      (bodyY - 35) +
-      '" r="2" fill="#f4f0e4"/>' +
-      '<path d="M100 ' +
-      (bodyY - 40) +
-      " L100 " +
-      (bodyY - 50) +
-      '" stroke="#c9a24a" stroke-width="2.4" stroke-linecap="round"/>' +
-      '<path d="M100 ' +
-      (bodyY - 50) +
-      " Q96 " +
-      (bodyY - 56) +
-      " 94 " +
-      (bodyY - 54) +
-      " M100 " +
-      (bodyY - 50) +
-      " Q104 " +
-      (bodyY - 56) +
-      " 106 " +
-      (bodyY - 54) +
-      '" fill="none" stroke="#3a7f6a" stroke-width="2" stroke-linecap="round"/>' +
-      "</g>" +
-      "</g>"
+      '<ellipse cx="100" cy="162" rx="30" ry="6" fill="rgba(30,50,30,0.28)"/>' +
+      fan +
+      /* legs */
+      '<path d="M94 140 L90 158 M90 158 L84 160" stroke="#c9a24a" stroke-width="2.8" stroke-linecap="round"/>' +
+      '<path d="M108 140 L112 158 M112 158 L118 160" stroke="#c9a24a" stroke-width="2.8" stroke-linecap="round"/>' +
+      /* body */
+      '<ellipse cx="102" cy="128" rx="24" ry="28" fill="url(#peacockBody)"/>' +
+      '<ellipse cx="102" cy="120" rx="14" ry="12" fill="#3486a8" opacity="0.5"/>' +
+      /* wing hint */
+      '<ellipse cx="86" cy="126" rx="10" ry="16" fill="#245f7a" opacity="0.55" transform="rotate(-18 86 126)"/>' +
+      '<ellipse cx="118" cy="126" rx="10" ry="16" fill="#245f7a" opacity="0.55" transform="rotate(18 118 126)"/>' +
+      /* neck + head */
+      '<path d="M102 108 C108 92 108 78 102 68" fill="none" stroke="url(#peacockNeck)" stroke-width="12" stroke-linecap="round"/>' +
+      '<ellipse cx="100" cy="62" rx="12" ry="11" fill="#245f7a"/>' +
+      '<circle cx="96" cy="60" r="2.2" fill="#f4f0e4"/>' +
+      '<circle cx="104" cy="60" r="2.2" fill="#f4f0e4"/>' +
+      '<path d="M100 54 L100 42" stroke="#c9a24a" stroke-width="2.4" stroke-linecap="round"/>' +
+      '<path d="M100 42 Q94 34 90 36 M100 42 Q106 34 110 36 M100 40 Q100 30 100 28" fill="none" stroke="#3a7f6a" stroke-width="2" stroke-linecap="round"/>'
     );
   }
 
   function drawPeacock() {
     return (
       '<svg viewBox="0 0 200 180" role="img" aria-label="Peacock">' +
-      eggSvg('<ellipse cx="100" cy="118" rx="34" ry="44" fill="#d6e8ef" opacity="0.25"/>') +
-      crackEggSvg() +
+      svgDefs() +
+      eggStill('<ellipse cx="100" cy="118" rx="34" ry="44" fill="#d6e8ef" opacity="0.22"/>') +
+      crackEggStill() +
       '<g class="layer layer-2">' +
-      '<g class="tail-fan">' +
-      peacockFeather(60, 78, 42, 52, "#2f6b5a", 7, 7.5) +
-      peacockFeather(100, 55, 100, 38, "#3a7f6a", 8, 8) +
-      peacockFeather(140, 78, 158, 52, "#2f6b5a", 7, 7.5) +
-      "</g>" +
-      peacockBody(false) +
+      peacockStill(false) +
       "</g>" +
       '<g class="layer layer-3">' +
-      '<g class="tail-fan">' +
-      peacockFeather(48, 82, 26, 46, "#245a4c", 6.5, 8.5) +
-      peacockFeather(70, 58, 52, 28, "#2f6b5a", 7, 7.5) +
-      peacockFeather(100, 48, 100, 18, "#3a7f6a", 8, 9.5) +
-      peacockFeather(130, 58, 148, 28, "#2f6b5a", 7, 7.5) +
-      peacockFeather(152, 82, 174, 46, "#245a4c", 6.5, 8.5) +
-      "</g>" +
-      peacockBody(true) +
+      peacockStill(true) +
       "</g>" +
       "</svg>"
     );
   }
 
-  function deerBody(fill, stageScale) {
-    var s = stageScale || 1;
-    var cy = 118;
-    var hx = 100 + 28 * s;
-    var hy = cy - 14 * s;
+  function deerStill(fill, s, antlerL, antlerR, antlerStroke, antlerW, tipExtra) {
+    var cy = 120;
+    var hx = 100 + 30 * s;
+    var hy = cy - 16 * s;
+    var dark = "#3a2a18";
     return (
-      '<g class="deer-idle">' +
-      '<g class="deer-leg deer-leg-bl">' +
+      '<ellipse cx="100" cy="162" rx="' +
+      34 * s +
+      '" ry="6" fill="rgba(30,50,30,0.28)"/>' +
+      /* legs — filled tapered */
       '<path d="M' +
-      (100 - 14 * s) +
-      " " +
-      (cy + 12 * s) +
-      " L" +
       (100 - 16 * s) +
       " " +
-      (cy + 36 * s) +
+      (cy + 10 * s) +
+      " L" +
+      (100 - 18 * s) +
+      " " +
+      (cy + 38 * s) +
       '" stroke="' +
       fill +
       '" stroke-width="' +
-      6.5 * s +
+      7 * s +
       '" stroke-linecap="round"/>' +
-      '<ellipse cx="' +
-      (100 - 16 * s) +
-      '" cy="' +
-      (cy + 38 * s) +
-      '" rx="' +
-      3.5 * s +
-      '" ry="' +
-      2 * s +
-      '" fill="#3a2a18"/>' +
-      "</g>" +
-      '<g class="deer-leg deer-leg-br">' +
       '<path d="M' +
+      (100 + 4 * s) +
+      " " +
+      (cy + 10 * s) +
+      " L" +
       (100 + 6 * s) +
       " " +
-      (cy + 12 * s) +
+      (cy + 38 * s) +
+      '" stroke="' +
+      fill +
+      '" stroke-width="' +
+      7 * s +
+      '" stroke-linecap="round"/>' +
+      '<path d="M' +
+      (100 + 2 * s) +
+      " " +
+      (cy + 8 * s) +
       " L" +
-      (100 + 8 * s) +
+      (100 + 4 * s) +
+      " " +
+      (cy + 36 * s) +
+      '" stroke="' +
+      fill +
+      '" stroke-width="' +
+      6.5 * s +
+      '" stroke-linecap="round"/>' +
+      '<path d="M' +
+      (100 + 20 * s) +
+      " " +
+      (cy + 8 * s) +
+      " L" +
+      (100 + 24 * s) +
       " " +
       (cy + 36 * s) +
       '" stroke="' +
@@ -544,94 +409,79 @@
       6.5 * s +
       '" stroke-linecap="round"/>' +
       '<ellipse cx="' +
-      (100 + 8 * s) +
+      (100 - 18 * s) +
+      '" cy="' +
+      (cy + 40 * s) +
+      '" rx="' +
+      4 * s +
+      '" ry="' +
+      2.2 * s +
+      '" fill="' +
+      dark +
+      '"/>' +
+      '<ellipse cx="' +
+      (100 + 6 * s) +
+      '" cy="' +
+      (cy + 40 * s) +
+      '" rx="' +
+      4 * s +
+      '" ry="' +
+      2.2 * s +
+      '" fill="' +
+      dark +
+      '"/>' +
+      '<ellipse cx="' +
+      (100 + 4 * s) +
       '" cy="' +
       (cy + 38 * s) +
       '" rx="' +
       3.5 * s +
       '" ry="' +
       2 * s +
-      '" fill="#3a2a18"/>' +
-      "</g>" +
-      '<g class="deer-leg deer-leg-fl">' +
-      '<path d="M' +
-      (100 - 2 * s) +
-      " " +
-      (cy + 10 * s) +
-      " L" +
-      (100 + 0 * s) +
-      " " +
-      (cy + 34 * s) +
-      '" stroke="' +
-      fill +
-      '" stroke-width="' +
-      6 * s +
-      '" stroke-linecap="round"/>' +
+      '" fill="' +
+      dark +
+      '"/>' +
       '<ellipse cx="' +
-      (100 + 0 * s) +
+      (100 + 24 * s) +
       '" cy="' +
-      (cy + 36 * s) +
+      (cy + 38 * s) +
       '" rx="' +
-      3.2 * s +
+      3.5 * s +
       '" ry="' +
       2 * s +
-      '" fill="#3a2a18"/>' +
-      "</g>" +
-      '<g class="deer-leg deer-leg-fr">' +
-      '<path d="M' +
-      (100 + 18 * s) +
-      " " +
-      (cy + 10 * s) +
-      " L" +
-      (100 + 22 * s) +
-      " " +
-      (cy + 34 * s) +
-      '" stroke="' +
-      fill +
-      '" stroke-width="' +
-      6 * s +
-      '" stroke-linecap="round"/>' +
-      '<ellipse cx="' +
-      (100 + 22 * s) +
-      '" cy="' +
-      (cy + 36 * s) +
-      '" rx="' +
-      3.2 * s +
-      '" ry="' +
-      2 * s +
-      '" fill="#3a2a18"/>' +
-      "</g>" +
-      '<g class="deer-body">' +
-      '<ellipse cx="100" cy="' +
+      '" fill="' +
+      dark +
+      '"/>' +
+      /* body + haunch */
+      '<ellipse cx="98" cy="' +
       cy +
       '" rx="' +
-      30 * s +
+      32 * s +
       '" ry="' +
       20 * s +
       '" fill="' +
       fill +
       '"/>' +
       '<ellipse cx="' +
-      (100 - 22 * s) +
+      (100 - 24 * s) +
       '" cy="' +
-      (cy + 4 * s) +
+      (cy + 2 * s) +
       '" rx="' +
-      8 * s +
+      12 * s +
       '" ry="' +
-      6 * s +
+      10 * s +
       '" fill="' +
       fill +
-      '" opacity="0.85"/>' +
-      "</g>" +
-      '<g class="deer-neck">' +
+      '"/>' +
+      /* neck */
       '<path d="M' +
-      (100 + 16 * s) +
+      (100 + 14 * s) +
       " " +
-      (cy - 6 * s) +
+      (cy - 8 * s) +
       " Q" +
-      (100 + 24 * s) +
+      (100 + 22 * s) +
       " " +
-      (cy - 18 * s) +
+      (cy - 22 * s) +
       " " +
       hx +
       " " +
@@ -639,29 +489,28 @@
       '" fill="none" stroke="' +
       fill +
       '" stroke-width="' +
-      14 * s +
+      15 * s +
       '" stroke-linecap="round"/>' +
-      "</g>" +
-      '<g class="deer-head">' +
+      /* head */
       '<ellipse cx="' +
       hx +
       '" cy="' +
       hy +
       '" rx="' +
-      15 * s +
+      16 * s +
       '" ry="' +
       12 * s +
       '" fill="' +
       fill +
       '"/>' +
       '<ellipse cx="' +
-      (hx + 10 * s) +
+      (hx + 11 * s) +
       '" cy="' +
-      (hy + 2 * s) +
+      (hy + 3 * s) +
       '" rx="' +
-      7 * s +
+      8 * s +
       '" ry="' +
-      5 * s +
+      5.5 * s +
       '" fill="' +
       fill +
       '"/>' +
@@ -670,65 +519,58 @@
       '" cy="' +
       (hy - 2 * s) +
       '" r="' +
-      2.1 * s +
-      '" fill="#1a2418"/>' +
-      '<g class="deer-ear deer-ear-l">' +
-      '<ellipse cx="' +
-      (hx - 6 * s) +
-      '" cy="' +
-      (hy - 12 * s) +
-      '" rx="' +
-      4 * s +
-      '" ry="' +
-      7 * s +
+      2.2 * s +
       '" fill="' +
-      fill +
-      '" transform="rotate(-18 ' +
-      (hx - 6 * s) +
-      " " +
-      (hy - 12 * s) +
-      ')"/>' +
-      "</g>" +
-      '<g class="deer-ear deer-ear-r">' +
+      dark +
+      '"/>' +
+      /* ears */
       '<ellipse cx="' +
-      (hx + 4 * s) +
+      (hx - 4 * s) +
       '" cy="' +
       (hy - 14 * s) +
       '" rx="' +
-      4 * s +
+      4.5 * s +
       '" ry="' +
-      7 * s +
+      8 * s +
       '" fill="' +
       fill +
-      '" transform="rotate(12 ' +
-      (hx + 4 * s) +
+      '" transform="rotate(-20 ' +
+      (hx - 4 * s) +
       " " +
       (hy - 14 * s) +
       ')"/>' +
-      "</g>" +
-      "</g>" +
-      "</g>"
-    );
-  }
-
-  function antlerPair(pathL, pathR, stroke, width) {
-    return (
-      '<g class="antler">' +
-      '<path d="' +
-      pathL +
-      '" fill="none" stroke="' +
-      stroke +
-      '" stroke-width="' +
-      (width || 3) +
-      '" stroke-linecap="round"/>' +
-      '<path d="' +
-      pathR +
-      '" fill="none" stroke="' +
-      stroke +
-      '" stroke-width="' +
-      (width || 3) +
-      '" stroke-linecap="round"/>' +
-      "</g>"
+      '<ellipse cx="' +
+      (hx + 6 * s) +
+      '" cy="' +
+      (hy - 15 * s) +
+      '" rx="' +
+      4.5 * s +
+      '" ry="' +
+      8 * s +
+      '" fill="' +
+      fill +
+      '" transform="rotate(14 ' +
+      (hx + 6 * s) +
+      " " +
+      (hy - 15 * s) +
+      ')"/>' +
+      (antlerL
+        ? '<path d="' +
+          antlerL +
+          '" fill="none" stroke="' +
+          antlerStroke +
+          '" stroke-width="' +
+          antlerW +
+          '" stroke-linecap="round" stroke-linejoin="round"/>' +
+          '<path d="' +
+          antlerR +
+          '" fill="none" stroke="' +
+          antlerStroke +
+          '" stroke-width="' +
+          antlerW +
+          '" stroke-linecap="round" stroke-linejoin="round"/>'
+        : "") +
+      (tipExtra || "")
     );
   }
 
@@ -740,27 +582,25 @@
     var antlerR = opts.antlerR;
     var tipExtra = opts.tipExtra || "";
     var label = opts.label;
+    var stubL = "M122 92 Q116 76 112 64";
+    var stubR = "M134 92 Q140 76 144 64";
 
     return (
       '<svg viewBox="0 0 200 180" role="img" aria-label="' +
       label +
       '">' +
+      svgDefs() +
       '<g class="layer layer-0">' +
-      deerBody(youngFill, 0.72) +
+      deerStill(youngFill, 0.72, "", "", antlerStroke, 2, "") +
       "</g>" +
       '<g class="layer layer-1">' +
-      deerBody(youngFill, 0.85) +
-      antlerPair("M118 95 Q112 78 108 68", "M132 95 Q138 78 142 68", antlerStroke, 2.2) +
+      deerStill(youngFill, 0.85, stubL, stubR, antlerStroke, 2.4, "") +
       "</g>" +
       '<g class="layer layer-2">' +
-      deerBody(fill, 0.95) +
-      antlerPair(antlerL, antlerR, antlerStroke, 2.8) +
-      tipExtra +
+      deerStill(fill, 0.95, antlerL, antlerR, antlerStroke, 2.9, tipExtra) +
       "</g>" +
       '<g class="layer layer-3">' +
-      deerBody(fill, 1) +
-      antlerPair(antlerL, antlerR, antlerStroke, 3.2) +
-      tipExtra +
+      deerStill(fill, 1, antlerL, antlerR, antlerStroke, 3.3, tipExtra) +
       "</g>" +
       "</svg>"
     );
@@ -775,8 +615,8 @@
         fill: "#d8e4ef",
         youngFill: "#e8eef4",
         antlerStroke: "#b8d4ea",
-        antlerL: "M118 94 Q108 70 98 52 Q104 58 110 48 Q112 62 118 70",
-        antlerR: "M132 94 Q142 70 152 52 Q146 58 140 48 Q138 62 132 70",
+        antlerL: "M122 90 Q110 68 98 48 Q104 56 112 44 Q114 60 122 66",
+        antlerR: "M136 90 Q148 68 160 48 Q154 56 146 44 Q144 60 136 66",
       });
     },
     "red-stag": function () {
@@ -785,13 +625,11 @@
         fill: "#a85a32",
         youngFill: "#c48458",
         antlerStroke: "#6b3a22",
-        antlerL: "M118 94 Q110 72 104 52 Q100 44 96 40",
-        antlerR: "M132 94 Q140 72 146 52 Q150 44 154 40",
+        antlerL: "M122 90 Q114 68 108 48 Q104 40 100 34",
+        antlerR: "M136 90 Q144 68 150 48 Q154 40 158 34",
         tipExtra:
-          '<g class="antler">' +
-          '<path d="M96 40 Q94 32 96 26" stroke="#e8a23a" stroke-width="3" stroke-linecap="round"/>' +
-          '<path d="M154 40 Q156 32 154 26" stroke="#e8a23a" stroke-width="3" stroke-linecap="round"/>' +
-          "</g>",
+          '<path d="M100 34 Q98 26 100 20" stroke="#e8a23a" stroke-width="3" stroke-linecap="round"/>' +
+          '<path d="M158 34 Q160 26 158 20" stroke="#e8a23a" stroke-width="3" stroke-linecap="round"/>',
       });
     },
     "deer-fern": function () {
@@ -799,8 +637,8 @@
         label: "Barasingha fern antlers",
         fill: "#8b6a45",
         antlerStroke: "#4f7a3e",
-        antlerL: "M118 94 Q112 76 108 60 M108 72 Q100 66 96 58 M108 66 Q102 60 98 52",
-        antlerR: "M132 94 Q138 76 142 60 M142 72 Q150 66 154 58 M142 66 Q148 60 152 52",
+        antlerL: "M122 90 Q116 72 112 56 M112 70 Q104 64 100 54 M112 62 Q106 56 102 48",
+        antlerR: "M136 90 Q142 72 146 56 M146 70 Q154 64 158 54 M146 62 Q152 56 156 48",
       });
     },
     "deer-vine": function () {
@@ -808,8 +646,8 @@
         label: "Eld’s deer vine antlers",
         fill: "#7a5a3a",
         antlerStroke: "#3f6b38",
-        antlerL: "M118 94 Q108 80 100 70 Q92 62 88 54 Q96 58 104 52",
-        antlerR: "M132 94 Q142 80 150 70 Q158 62 162 54 Q154 58 146 52",
+        antlerL: "M122 90 Q112 76 104 64 Q96 56 92 46 Q100 52 108 46",
+        antlerR: "M136 90 Q146 76 154 64 Q162 56 166 46 Q158 52 150 46",
       });
     },
     "deer-twig": function () {
@@ -817,8 +655,8 @@
         label: "Red deer twig antlers",
         fill: "#8a5a36",
         antlerStroke: "#5a3a22",
-        antlerL: "M118 94 L110 70 L104 52 M110 70 L102 64 M110 62 L116 56",
-        antlerR: "M132 94 L140 70 L146 52 M140 70 L148 64 M140 62 L134 56",
+        antlerL: "M122 90 L114 66 L108 48 M114 66 L106 60 M114 58 L120 52",
+        antlerR: "M136 90 L144 66 L150 48 M144 66 L152 60 M144 58 L138 52",
       });
     },
     "deer-coral": function () {
@@ -826,8 +664,8 @@
         label: "Barasingha coral antlers",
         fill: "#8b6a45",
         antlerStroke: "#c46b6b",
-        antlerL: "M118 94 Q112 78 106 64 Q98 58 100 50 Q108 56 112 48 Q110 60 118 66",
-        antlerR: "M132 94 Q138 78 144 64 Q152 58 150 50 Q142 56 138 48 Q140 60 132 66",
+        antlerL: "M122 90 Q116 74 110 58 Q102 52 104 44 Q112 50 116 42 Q114 56 122 62",
+        antlerR: "M136 90 Q142 74 148 58 Q156 52 154 44 Q146 50 142 42 Q144 56 136 62",
       });
     },
     "deer-seafan": function () {
@@ -836,8 +674,8 @@
         fill: "#d8e4ef",
         youngFill: "#e8eef4",
         antlerStroke: "#6aa8b8",
-        antlerL: "M118 94 Q108 78 96 66 Q90 58 84 52 M96 66 Q92 56 88 48 M100 70 Q104 58 108 50",
-        antlerR: "M132 94 Q142 78 154 66 Q160 58 166 52 M154 66 Q158 56 162 48 M150 70 Q146 58 142 50",
+        antlerL: "M122 90 Q112 74 100 60 Q94 52 88 46 M100 60 Q96 50 92 42 M104 64 Q108 52 112 44",
+        antlerR: "M136 90 Q146 74 158 60 Q164 52 170 46 M158 60 Q162 50 166 42 M154 64 Q150 52 146 44",
       });
     },
     "deer-sponge": function () {
@@ -845,8 +683,8 @@
         label: "Fallow deer sponge antlers",
         fill: "#9a7a4a",
         antlerStroke: "#c49a72",
-        antlerL: "M118 94 Q112 80 106 68 Q100 60 102 52 Q108 58 112 50 Q110 62 118 70",
-        antlerR: "M132 94 Q138 80 144 68 Q150 60 148 52 Q142 58 138 50 Q140 62 132 70",
+        antlerL: "M122 90 Q116 76 110 62 Q104 54 106 46 Q112 52 116 44 Q114 58 122 66",
+        antlerR: "M136 90 Q142 76 148 62 Q154 54 152 46 Q146 52 142 44 Q144 58 136 66",
       });
     },
     "deer-lightning": function () {
@@ -855,8 +693,8 @@
         fill: "#d8e4ef",
         youngFill: "#e8eef4",
         antlerStroke: "#6ec8ff",
-        antlerL: "M118 94 L112 78 L118 70 L108 58 L114 50 L104 40",
-        antlerR: "M132 94 L138 78 L132 70 L142 58 L136 50 L146 40",
+        antlerL: "M122 90 L116 74 L122 66 L112 54 L118 46 L108 36",
+        antlerR: "M136 90 L142 74 L136 66 L146 54 L140 46 L150 36",
       });
     },
     "deer-mineral": function () {
@@ -864,8 +702,8 @@
         label: "Deer mineral antlers",
         fill: "#8b6a45",
         antlerStroke: "#9bb0c4",
-        antlerL: "M118 94 Q110 80 104 68 Q98 56 92 48 M104 68 Q108 58 112 50 M100 62 Q94 54 90 46",
-        antlerR: "M132 94 Q140 80 146 68 Q152 56 158 48 M146 68 Q142 58 138 50 M150 62 Q156 54 160 46",
+        antlerL: "M122 90 Q114 76 108 62 Q102 50 96 42 M108 62 Q112 52 116 44 M104 58 Q98 50 94 42",
+        antlerR: "M136 90 Q144 76 150 62 Q156 50 162 42 M150 62 Q146 52 142 44 M154 58 Q160 50 164 42",
       });
     },
   };
@@ -913,10 +751,8 @@
   }
 
   function feed(habitName, btn) {
-    var prevStage = stageFromCare(state.care);
     state.care += 1;
     saveState(state);
-    var nextStage = stageFromCare(state.care);
 
     btn.classList.remove("is-pop");
     void btn.offsetWidth;
@@ -928,14 +764,10 @@
 
     renderCreature();
 
-    if (nextStage !== prevStage) {
-      sceneEl.dataset.stage = String(nextStage);
-    }
-
     window.setTimeout(function () {
       sceneEl.classList.remove("is-fed");
       btn.classList.remove("is-pop");
-    }, 700);
+    }, 550);
   }
 
   document.querySelectorAll(".habit-btn").forEach(function (btn) {
