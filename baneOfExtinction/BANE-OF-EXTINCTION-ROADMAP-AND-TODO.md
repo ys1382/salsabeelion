@@ -105,6 +105,8 @@ PoGo “new Pokédex entry” energy, for real organisms:
 
 - After a confirmed ID, reveal the stylized still on a **blueprint / codex page** background.
 - Under the art: **common name** + **Latin (scientific) name**.
+- Quiet caption under the still (same photo frame): **native range** (region / NorCal–SoCal level) + **conservation status**.
+- Status/range: **NatureServe Explorer** when the scientific name matches (CC BY; attribution in disclaimer). No IUCN site/API. Claude may refine CA to NorCal/SoCal; curated fallbacks for demos / misses. Not Wikipedia-as-sole-source.
 - That page is the permanent **wildlife codex** entry for that organism type.
 - Subtle still-image idle animation OK; not a live moving photo of the real animal.
 - Curated royalty-free reference art may fill entries when camera stylize is not used (Trail Guide–only path).
@@ -118,7 +120,7 @@ After the still “freezes” on the codex card:
 - Examples: toucan beak color/size role; belly → fruit diet; poppy petals / cream center / drought habit.
 - Not an internal anatomy scan — educational facts about the organism (or **evidence** of it: tracks, nest, seed pod, chewed plant, bloom patch).
 - **Claude API** builds / helps the facts base when the player encounters the organism or evidence (server key; never in public `www/`).
-- **No Wikipedia** (and no open-web scrape) for this facts path — Claude helper knowledge + later curated packs only.
+- **No Wikipedia-as-sole-source** and no open-web scrape for callout facts — Claude helper knowledge + curated packs. Status/range may use **NatureServe Explorer** (CC BY) by scientific name; never IUCN site/API.
 - Tone: useful learning helper, not a guaranteed field guide.
 - **Player-world facts (2026-07-20):** most callouts tie the organism to everyday life (walks, yards, shared air/food webs, what you’d notice) — not a textbook dump. **Exactly one** fact per set can be a cooler species-own wonder with less direct human impact. Goal: feel more understanding of wildlife around you, not become a field-guide expert.
 - **Small-help tip + fresh rescans (2026-07-21):** among the everyday facts, **exactly one** is a gentle, species-specific “what you can do for this organism’s world” tip (no guilt; don’t blame staple foods or systems people don’t control). Device remembers recent fact text per species (not photos) so Load / rescan can ask Claude for a fresh set.
@@ -174,6 +176,7 @@ After the still “freezes” on the codex card:
 - [x] Codex still: semi-realistic **new** portrait (not raw photo); same species + **life stage** as the scan
 - [x] Device-local learned collection (PoGo-style shelf on codex; one entry per species)
 - [x] Learned shelf syncs to Odd Trove **Google sign-in** (server + device cache; cross-device)
+- [x] Codex still caption: native range + NatureServe status (no IUCN scrape)
 - [ ] Per-species permanent art library / cloud cache (optional later)
 - [ ] Leader-lines from callouts to exact body-part anchors on stylized art
 - [ ] Platform polish (PWA optional; no GPS required)

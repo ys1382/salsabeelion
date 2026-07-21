@@ -3,13 +3,14 @@ Bane of Extinction — owner-beta API.
 
 - POST /api/wildlife-identify  — Gemini + Claude vision ID (photo not stored)
 - POST /api/codex-still        — Gemini image: field-guide still matching this ID + crop
-- POST /api/callouts           — Claude helper facts for whatever species was identified
+- POST /api/callouts           — Claude helper facts + native range / conservation status
 - GET  /api/auth/me            — Odd Trove Google SSO identity (for learned sync)
 - GET/PUT /api/learned         — wildlife learns synced to signed-in Google account
 - GET  /api/health
 
 Binds 127.0.0.1 only. Keys from env / shared kids-sites files.
-No Wikipedia / no open-web scrape for facts.
+Facts: Claude helper knowledge + curated fallbacks. Status/range: NatureServe Explorer
+(CC BY) when a scientific name matches — never IUCN site/API, never Wikipedia as sole source.
 Raw scan photos are never written to disk.
 """
 from __future__ import annotations
@@ -1329,6 +1330,362 @@ def _normalize_callouts(raw: Any) -> list[dict[str, str]]:
     return out
 
 
+# NatureServe global ranks → plain family-friendly labels (not IUCN categories).
+_NS_GRANK_LABELS = {
+    "GX": "Extinct",
+    "GH": "Possibly extinct",
+    "G1": "Critically imperiled",
+    "G2": "Imperiled",
+    "G3": "Vulnerable",
+    "G4": "Apparently secure",
+    "G5": "Secure",
+    "GNR": "Not ranked yet",
+    "GNA": "Not applicable",
+    "GU": "Unrankable",
+}
+
+_US_STATE_NAMES = {
+    "AL": "Alabama",
+    "AK": "Alaska",
+    "AZ": "Arizona",
+    "AR": "Arkansas",
+    "CA": "California",
+    "CO": "Colorado",
+    "CT": "Connecticut",
+    "DE": "Delaware",
+    "FL": "Florida",
+    "GA": "Georgia",
+    "HI": "Hawaii",
+    "ID": "Idaho",
+    "IL": "Illinois",
+    "IN": "Indiana",
+    "IA": "Iowa",
+    "KS": "Kansas",
+    "KY": "Kentucky",
+    "LA": "Louisiana",
+    "ME": "Maine",
+    "MD": "Maryland",
+    "MA": "Massachusetts",
+    "MI": "Michigan",
+    "MN": "Minnesota",
+    "MS": "Mississippi",
+    "MO": "Missouri",
+    "MT": "Montana",
+    "NE": "Nebraska",
+    "NV": "Nevada",
+    "NH": "New Hampshire",
+    "NJ": "New Jersey",
+    "NM": "New Mexico",
+    "NY": "New York",
+    "NC": "North Carolina",
+    "ND": "North Dakota",
+    "OH": "Ohio",
+    "OK": "Oklahoma",
+    "OR": "Oregon",
+    "PA": "Pennsylvania",
+    "RI": "Rhode Island",
+    "SC": "South Carolina",
+    "SD": "South Dakota",
+    "TN": "Tennessee",
+    "TX": "Texas",
+    "UT": "Utah",
+    "VT": "Vermont",
+    "VA": "Virginia",
+    "WA": "Washington",
+    "WV": "West Virginia",
+    "WI": "Wisconsin",
+    "WY": "Wyoming",
+    "DC": "Washington, D.C.",
+}
+
+_CA_PROVINCE_NAMES = {
+    "AB": "Alberta",
+    "BC": "British Columbia",
+    "MB": "Manitoba",
+    "NB": "New Brunswick",
+    "NL": "Newfoundland and Labrador",
+    "NS": "Nova Scotia",
+    "NT": "Northwest Territories",
+    "NU": "Nunavut",
+    "ON": "Ontario",
+    "PE": "Prince Edward Island",
+    "QC": "Quebec",
+    "SK": "Saskatchewan",
+    "YT": "Yukon",
+}
+
+_WEST_US = {"CA", "OR", "WA", "NV", "AZ", "NM", "UT", "ID", "CO", "WY", "MT", "TX", "OK"}
+
+
+def _grank_base(code: str) -> str:
+    raw = (code or "").strip().upper()
+    if not raw:
+        return ""
+    # Strip qualifiers like G4G5, G5T5 → take leading global rank token
+    m = re.match(r"^(GNR|GNA|GU|GX|GH|G[1-5])", raw)
+    if m:
+        return m.group(1)
+    return raw[:3]
+
+
+def _status_from_grank(grank: str) -> str:
+    base = _grank_base(grank)
+    label = _NS_GRANK_LABELS.get(base)
+    if not label:
+        return ""
+    return f"{label} (NatureServe {base})"
+
+
+def _place_label(nation: str, code: str) -> str:
+    code_u = (code or "").upper()
+    if nation == "US":
+        return _US_STATE_NAMES.get(code_u, code_u)
+    if nation == "CA":
+        return _CA_PROVINCE_NAMES.get(code_u, code_u)
+    return code_u
+
+
+def _summarize_native_places(
+    us_native: list[str],
+    ca_native: list[str],
+    *,
+    has_exotic: bool,
+) -> str:
+    us = sorted({c.upper() for c in us_native if c})
+    ca = sorted({c.upper() for c in ca_native if c})
+    parts: list[str] = []
+
+    if us:
+        names = [_place_label("US", c) for c in us]
+        if set(us) <= _WEST_US and "CA" in us and len(us) <= 8:
+            others = [n for c, n in zip(us, names) if c != "CA"]
+            if others:
+                parts.append(
+                    "Native to California and nearby West ("
+                    + ", ".join(others[:5])
+                    + ("…" if len(others) > 5 else "")
+                    + ")"
+                )
+            else:
+                parts.append("Native to California")
+        elif len(us) >= 20:
+            parts.append("Native across much of the United States")
+        elif len(us) >= 8:
+            sample = ", ".join(names[:4])
+            parts.append(f"Native in several U.S. states (incl. {sample})")
+        else:
+            parts.append("Native in " + ", ".join(names))
+
+    if ca:
+        names = [_place_label("CA", c) for c in ca]
+        if len(ca) >= 6:
+            parts.append("also native in parts of Canada")
+        else:
+            parts.append("native in " + ", ".join(names) + " (Canada)")
+
+    if not parts:
+        return ""
+    text = "; ".join(parts)
+    if has_exotic:
+        text += "; planted or escaped elsewhere"
+    return text[:180]
+
+
+def _fallback_species_meta(common: str, latin: str) -> dict[str, str]:
+    blob = (common + " " + latin).lower()
+    if "poppy" in blob or "eschscholzia" in blob:
+        return {
+            "nativeRange": "Native to California and nearby Southwest (NorCal & SoCal)",
+            "conservationStatus": "Apparently secure (NatureServe G4)",
+            "statusSource": "curated",
+            "rangeSource": "curated",
+        }
+    if "sunflower" in blob or "helianthus" in blob:
+        return {
+            "nativeRange": "Native to North America; widely planted",
+            "conservationStatus": "Secure (NatureServe G5)",
+            "statusSource": "curated",
+            "rangeSource": "curated",
+        }
+    if (
+        "philodendron" in blob
+        or "hederaceum" in blob
+        or "scandens" in blob
+        or "sweetheart" in blob
+        or "heartleaf" in blob
+    ):
+        return {
+            "nativeRange": "Native to tropical Central & South America (houseplant elsewhere)",
+            "conservationStatus": "Not tracked as a wild U.S. species",
+            "statusSource": "curated",
+            "rangeSource": "curated",
+        }
+    return {
+        "nativeRange": "",
+        "conservationStatus": "",
+        "statusSource": "",
+        "rangeSource": "",
+    }
+
+
+def _fetch_natureserve_meta(latin: str) -> dict[str, Any] | None:
+    """Look up NatureServe Explorer (CC BY). Never reads IUCN fields."""
+    name = (latin or "").strip()
+    if not name or len(name) < 3:
+        return None
+    # Prefer binomial only
+    parts = name.split()
+    if len(parts) >= 2:
+        name = f"{parts[0]} {parts[1]}"
+    payload = {
+        "criteriaType": "species",
+        "textCriteria": [
+            {
+                "paramType": "textSearch",
+                "searchToken": name,
+                "matchAgainst": "allScientificNames",
+                "operator": "equals",
+            }
+        ],
+        "statusCriteria": [],
+        "locationCriteria": [],
+        "pagingOptions": {"page": 0, "recordsPerPage": 5},
+        "recordSubtypeCriteria": [],
+        "modifiedSince": None,
+        "locationOptions": None,
+        "classificationOptions": None,
+        "speciesTaxonomyCriteria": [],
+    }
+    req = urllib.request.Request(
+        "https://explorer.natureserve.org/api/data/speciesSearch",
+        data=json.dumps(payload).encode("utf-8"),
+        headers={
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "User-Agent": "OddTrove-BaneOfExtinction/1.0 (owner-beta conservation education)",
+        },
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=8) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+    except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, json.JSONDecodeError, OSError):
+        return None
+
+    results = data.get("results") if isinstance(data, dict) else None
+    if not isinstance(results, list) or not results:
+        return None
+
+    target = name.lower()
+    hit = None
+    for row in results:
+        if not isinstance(row, dict):
+            continue
+        sci = str(row.get("scientificName") or "").strip().lower()
+        if sci == target or sci.startswith(target + " "):
+            hit = row
+            break
+    if hit is None and isinstance(results[0], dict):
+        hit = results[0]
+
+    grank = str(hit.get("roundedGRank") or hit.get("gRank") or "").strip()
+    status = _status_from_grank(grank)
+    us_native: list[str] = []
+    ca_native: list[str] = []
+    has_exotic = False
+    for nation in hit.get("nations") or []:
+        if not isinstance(nation, dict):
+            continue
+        ncode = str(nation.get("nationCode") or "").upper()
+        for sub in nation.get("subnations") or []:
+            if not isinstance(sub, dict):
+                continue
+            scode = str(sub.get("subnationCode") or "").strip().upper()
+            if not scode:
+                continue
+            if sub.get("exotic") and not sub.get("native"):
+                has_exotic = True
+            if not sub.get("native"):
+                continue
+            if ncode == "US":
+                us_native.append(scode)
+            elif ncode == "CA":
+                ca_native.append(scode)
+
+    native_range = _summarize_native_places(
+        us_native, ca_native, has_exotic=has_exotic
+    )
+    if not status and not native_range:
+        return None
+    return {
+        "nativeRange": native_range,
+        "conservationStatus": status,
+        "statusSource": "natureserve" if status else "",
+        "rangeSource": "natureserve" if native_range else "",
+        "grank": _grank_base(grank),
+        "caNative": "CA" in {c.upper() for c in us_native},
+        "scientificName": str(hit.get("scientificName") or name),
+        "attribution": (
+            f"NatureServe. {time.gmtime().tm_year}. NatureServe Explorer "
+            "(https://explorer.natureserve.org/). CC BY."
+        ),
+    }
+
+
+def _merge_species_meta(
+    ns: dict[str, Any] | None,
+    claude_meta: dict[str, Any] | None,
+    fallback: dict[str, str],
+) -> dict[str, str]:
+    ns = ns or {}
+    claude_meta = claude_meta or {}
+    native = str(ns.get("nativeRange") or "").strip()
+    status = str(ns.get("conservationStatus") or "").strip()
+    range_src = str(ns.get("rangeSource") or "")
+    status_src = str(ns.get("statusSource") or "")
+
+    # Claude may refine California to NorCal / SoCal / statewide (not counties).
+    refine = str(
+        claude_meta.get("nativeRangeRefine")
+        or claude_meta.get("nativeRange")
+        or ""
+    ).strip()
+    if refine and len(refine) <= 160:
+        low = refine.lower()
+        if ns.get("caNative") and any(
+            t in low for t in ("norcal", "socal", "northern california", "southern california", "statewide")
+        ):
+            native = refine
+            range_src = "natureserve+claude"
+        elif not native:
+            native = refine
+            range_src = "claude"
+
+    claude_status = str(claude_meta.get("conservationStatus") or "").strip()
+    if not status and claude_status and len(claude_status) <= 80:
+        # Plain helper wording only — do not ship IUCN codes as official.
+        if not re.search(r"\bIUCN\b", claude_status, re.I):
+            status = claude_status
+            status_src = "claude"
+
+    if not native:
+        native = fallback.get("nativeRange") or ""
+        if native:
+            range_src = fallback.get("rangeSource") or "curated"
+    if not status:
+        status = fallback.get("conservationStatus") or ""
+        if status:
+            status_src = fallback.get("statusSource") or "curated"
+
+    return {
+        "nativeRange": native[:180],
+        "conservationStatus": status[:100],
+        "statusSource": status_src[:40],
+        "rangeSource": range_src[:40],
+        "attribution": str(ns.get("attribution") or "")[:220],
+    }
+
+
 def build_callouts(
     *,
     common: str,
@@ -1354,6 +1711,9 @@ def build_callouts(
         if str(x).strip()
     ][:40]
 
+    ns_meta = _fetch_natureserve_meta(latin_n) if latin_n else None
+    fallback_meta = _fallback_species_meta(display, latin_n)
+
     system = (
         "You write short, family-friendly wildlife and plant education callouts for "
         "Bane of Extinction. Return ONLY valid JSON. No Wikipedia, no URLs, no scraping. "
@@ -1377,7 +1737,13 @@ def build_callouts(
         "extinction. Prefer kindness they can choose over blame for what they can’t. "
         "EXACTLY ONE callout (separate from the help tip) should be a wonder fact about "
         "the species itself (its own trick, life cycle, or ecology) with less direct "
-        "human impact. Do not invent personal medical advice."
+        "human impact. Do not invent personal medical advice. "
+        "Also fill nativeRangeRefine and conservationStatus as SHORT caption fields "
+        "(not extra callouts). Range: region/state level (NorCal, SoCal, statewide CA, "
+        "western U.S., tropical Americas) — never county-level unless status truly differs "
+        "that finely. Status: plain words like Secure, Vulnerable, Imperiled, or "
+        "'common garden plant / not tracked wild in the U.S.' Do NOT cite IUCN or invent "
+        "Red List codes. Do not paste Wikipedia lists."
     )
     scope = (
         f"Identified as: {display}"
@@ -1390,6 +1756,22 @@ def build_callouts(
         "If red/dark sunflower rays, describe those — not classic yellow-only petals. "
         "Put the help tip near the middle when possible; put the species-wonder fact last."
     )
+    if ns_meta:
+        if ns_meta.get("nativeRange"):
+            scope += (
+                f" NatureServe native summary (prefer refining CA to NorCal/SoCal/"
+                f"statewide when useful): {ns_meta['nativeRange']}."
+            )
+        if ns_meta.get("conservationStatus"):
+            scope += (
+                f" NatureServe status already known — leave conservationStatus empty "
+                f"or echo the same idea without IUCN: {ns_meta['conservationStatus']}."
+            )
+        if ns_meta.get("caNative"):
+            scope += (
+                " This species is marked native in California — nativeRangeRefine may say "
+                "NorCal, SoCal, or statewide California when that distinction matters."
+            )
     if evidence:
         scope += " Frame as evidence/clues the player noticed."
     if avoid:
@@ -1406,6 +1788,8 @@ def build_callouts(
         + json.dumps(
             {
                 "organismType": org_type or "organism",
+                "nativeRangeRefine": "short native-range caption or empty",
+                "conservationStatus": "short status caption or empty",
                 "callouts": [
                     {
                         "anchor": "part_or_clue",
@@ -1417,9 +1801,11 @@ def build_callouts(
         )
         + f"\nUse 3 to {MAX_CALLOUTS} callouts. "
         "Mix: everyday player-world facts (including EXACTLY ONE small-help tip for "
-        "this species’ world) + EXACTLY ONE species-own wonder. Fresh angles if avoid-list given."
+        "this species’ world) + EXACTLY ONE species-own wonder. Fresh angles if avoid-list given. "
+        "Keep nativeRangeRefine and conservationStatus out of the callout list."
     )
 
+    claude_meta: dict[str, Any] = {}
     try:
         raw_text = _call_claude_text(system, user)
         parsed = _extract_json_object(raw_text)
@@ -1429,6 +1815,11 @@ def build_callouts(
         source = "claude"
         if not organism_type and parsed.get("organismType"):
             org_type = str(parsed.get("organismType"))[:40]
+        claude_meta = {
+            "nativeRangeRefine": parsed.get("nativeRangeRefine")
+            or parsed.get("nativeRange"),
+            "conservationStatus": parsed.get("conservationStatus"),
+        }
     except Exception as exc:  # noqa: BLE001
         blob = (display + " " + latin_n + " " + note_n + " " + color_n).lower()
         if "poppy" in blob or "eschscholzia" in blob:
@@ -1463,9 +1854,18 @@ def build_callouts(
             ]
         source = f"fallback:{type(exc).__name__}"
 
+    meta = _merge_species_meta(ns_meta, claude_meta, fallback_meta)
+
     title = display
     if cultivar_n and cultivar_n.lower() not in display.lower():
         title = f"{display} ({cultivar_n})"
+
+    disclaimer = (
+        "Helper facts for what the game thinks it saw — useful for learning, "
+        "not a guaranteed field guide."
+    )
+    if meta.get("attribution"):
+        disclaimer += " " + meta["attribution"]
 
     return {
         "ok": True,
@@ -1476,10 +1876,11 @@ def build_callouts(
         "cultivar": cultivar_n or None,
         "displayName": title,
         "callouts": callouts,
-        "disclaimer": (
-            "Helper facts for what the game thinks it saw — useful for learning, "
-            "not a guaranteed field guide."
-        ),
+        "nativeRange": meta.get("nativeRange") or "",
+        "conservationStatus": meta.get("conservationStatus") or "",
+        "statusSource": meta.get("statusSource") or "",
+        "rangeSource": meta.get("rangeSource") or "",
+        "disclaimer": disclaimer,
     }
 
 

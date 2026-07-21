@@ -18,6 +18,7 @@
   var evidenceOn = document.getElementById("evidenceOn");
   var stillEl = document.getElementById("organismStill");
   var creditEl = document.getElementById("artCredit");
+  var metaEl = document.getElementById("organismMeta");
   var stillWrap = document.querySelector(".organism-still-wrap");
   var shelfEl = document.getElementById("codexShelf");
   var shelfGrid = document.getElementById("codexShelfGrid");
@@ -198,6 +199,10 @@
       if (state.lifeStage) latinLine += " · " + state.lifeStage;
       latinOut.textContent = latinLine;
     }
+    if (metaEl && !opts.keepMeta) {
+      metaEl.hidden = true;
+      metaEl.textContent = "";
+    }
     if (evidenceOn) evidenceOn.checked = state.evidence;
     syncCultivarToggle();
     applyStill();
@@ -227,6 +232,22 @@
       article.querySelector(".callout__fact").textContent = c.fact || "";
       listEl.appendChild(article);
     });
+  }
+
+  function renderSpeciesMeta(data) {
+    if (!metaEl) return;
+    var range = String((data && data.nativeRange) || "").trim();
+    var status = String((data && data.conservationStatus) || "").trim();
+    var bits = [];
+    if (range) bits.push(range);
+    if (status) bits.push("Status: " + status);
+    if (!bits.length) {
+      metaEl.hidden = true;
+      metaEl.textContent = "";
+      return;
+    }
+    metaEl.hidden = false;
+    metaEl.textContent = bits.join(" · ");
   }
 
   function recentFactsSpeciesKey(common, latin) {
@@ -348,6 +369,7 @@
         applyStill();
         var callouts = data.callouts || [];
         renderCallouts(callouts);
+        renderSpeciesMeta(data);
         rememberCalloutFacts(state.commonName, state.latinName, callouts);
         if (disclaimerEl) {
           disclaimerEl.hidden = false;
