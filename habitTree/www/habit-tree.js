@@ -7,6 +7,7 @@
   var STAGE_LABELS = {
     hatch: ["Egg", "Cracking", "Hatched", "Grown"],
     grow: ["Young", "Growing", "Nearly grown", "Grown"],
+    mantis: ["Egg case", "Hatching", "Hatched", "Growing", "Blooming", "Full bloom"],
   };
 
   var COMPANIONS = [
@@ -53,9 +54,15 @@
     return COMPANIONS[0];
   }
 
-  function stageFromCare(care) {
+  function maxStageFor(companion) {
+    if (companion.draw === "mantis") return 5;
+    return 3;
+  }
+
+  function stageFromCare(care, companion) {
+    var max = companion ? maxStageFor(companion) : 3;
     var s = Math.floor(care / CARE_PER_STAGE);
-    if (s > 3) s = 3;
+    if (s > max) s = max;
     if (s < 0) s = 0;
     return s;
   }
@@ -220,11 +227,11 @@
 
   function drawMantis() {
     var base = "art/orchid-mantis/";
-    var bust = "20260720d";
-    var labels = ["Egg", "Cracking", "Hatched", "Grown"];
+    var bust = "20260720e";
+    var labels = STAGE_LABELS.mantis;
     var html = "";
     var i;
-    for (i = 0; i < 4; i++) {
+    for (i = 0; i < 6; i++) {
       html +=
         '<div class="layer layer-' +
         i +
@@ -739,12 +746,14 @@
 
   function renderCreature() {
     var c = findCompanion(state.companionId);
-    var stage = stageFromCare(state.care);
+    var stage = stageFromCare(state.care, c);
     var draw = DRAW[c.draw] || drawMantis;
+    var labels = c.draw === "mantis" ? STAGE_LABELS.mantis : STAGE_LABELS[c.kind];
     creatureEl.innerHTML = draw();
     sceneEl.dataset.kind = c.kind;
     sceneEl.dataset.stage = String(stage);
-    stageLabelEl.textContent = STAGE_LABELS[c.kind][stage];
+    sceneEl.dataset.art = c.draw === "mantis" ? "paint" : "svg";
+    stageLabelEl.textContent = labels[stage];
     careMeterEl.textContent = "Care " + state.care;
   }
 

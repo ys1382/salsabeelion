@@ -219,7 +219,7 @@ Last updated: 2026-07-17
 **Can do now:**
 - Pick a companion (orchid mantis, peacock, reindeer, stag / deer variants)
 - Care advances hatch (egg → grown) or grow (young → adult) as **still flipbook frames** (no looping creature motion)
-- **Orchid mantis** uses painted PNG stills (`art/orchid-mantis/0–3.png`); other companions still use SVG stills for now
+- **Orchid mantis** uses 6 painted PNG stills (`art/orchid-mantis/0–5.png`: egg case → hatching → … → full bloom); painting fills the scene panel; other companions still use SVG stills for now
 - Quiet scene backdrop; progress in browser localStorage on this device
 - Deploy: `bash top/scripts/deploy-habit-tree.sh` (port **8087**; reloads nginx by default)
 

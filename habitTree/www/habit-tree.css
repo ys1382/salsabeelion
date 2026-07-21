@@ -106,7 +106,7 @@ body {
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  min-height: 18rem;
+  min-height: 20rem;
   border-radius: 1.25rem;
   background:
     radial-gradient(ellipse 70% 45% at 72% 12%, rgba(255, 248, 220, 0.55), transparent 55%),
@@ -115,6 +115,10 @@ body {
   box-shadow: 0 18px 40px rgba(28, 58, 36, 0.22);
   display: grid;
   place-items: center;
+  padding: 0;
+}
+
+.scene[data-art="svg"] {
   padding: 1.25rem 1rem 2.6rem;
 }
 
@@ -123,6 +127,10 @@ body {
   inset: 0;
   pointer-events: none;
   z-index: 0;
+}
+
+.scene[data-art="paint"] .scene-bg {
+  display: none;
 }
 
 .scene-ground {
@@ -218,6 +226,13 @@ body {
   place-items: center;
 }
 
+.scene[data-art="paint"] .creature {
+  position: absolute;
+  inset: 0;
+  width: auto;
+  height: auto;
+}
+
 .creature svg {
   width: 100%;
   height: 100%;
@@ -239,15 +254,22 @@ body {
   border-radius: 0.85rem;
 }
 
+.scene[data-art="paint"] .creature .frame-still img {
+  object-fit: cover;
+  border-radius: 0;
+}
+
 .stage-label,
 .care-meter {
   position: absolute;
-  z-index: 2;
+  z-index: 3;
   left: 1rem;
   margin: 0;
   font-size: 0.85rem;
   color: var(--cream);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.55),
+    0 0 12px rgba(0, 0, 0, 0.35);
 }
 
 .stage-label {
@@ -329,7 +351,9 @@ body {
 .scene[data-stage="0"] .layer-0,
 .scene[data-stage="1"] .layer-1,
 .scene[data-stage="2"] .layer-2,
-.scene[data-stage="3"] .layer-3 {
+.scene[data-stage="3"] .layer-3,
+.scene[data-stage="4"] .layer-4,
+.scene[data-stage="5"] .layer-5 {
   opacity: 1;
 }
 
