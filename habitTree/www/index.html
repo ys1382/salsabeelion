@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Habit Tree — owner beta</title>
+  <link rel="stylesheet" href="habit-tree.css?v=20260720a" />
+</head>
+<body>
+  <div class="page">
+    <header class="top">
+      <p class="eyebrow">Odd Trove · owner beta</p>
+      <h1 class="brand">Habit Tree</h1>
+      <p class="lede">Show up for a habit. Your companion hatches or grows a little.</p>
+    </header>
+
+    <section class="pick" aria-labelledby="pick-h">
+      <h2 id="pick-h" class="section-label">Companion</h2>
+      <div class="pick-row" id="companionPick" role="listbox" aria-label="Choose companion"></div>
+    </section>
+
+    <section class="stage-panel" aria-live="polite">
+      <div class="scene" id="scene" data-stage="0" data-kind="hatch">
+        <div class="flash" id="careFlash" aria-hidden="true"></div>
+        <div class="creature" id="creature"></div>
+        <p class="stage-label" id="stageLabel">Egg</p>
+        <p class="care-meter" id="careMeter">Care 0</p>
+      </div>
+    </section>
+
+    <section class="habits" aria-labelledby="habits-h">
+      <h2 id="habits-h" class="section-label">Today</h2>
+      <div class="habit-row">
+        <button type="button" class="habit-btn" data-habit="exercise">Exercise</button>
+        <button type="button" class="habit-btn" data-habit="work">Work</button>
+        <button type="button" class="habit-btn" data-habit="chores">Chores</button>
+      </div>
+      <p class="hint">Each tap feeds care. Non-mammals start as an egg and hatch; mammals grow from young to adult.</p>
+    </section>
+
+    <p class="foot">Owner-only stub. Details later. Progress stays on this device for now.</p>
+  </div>
+  <script src="habit-tree.js?v=20260720a"></script>
+</body>
+</html>

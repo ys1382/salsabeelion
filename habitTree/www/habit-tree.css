@@ -1,0 +1,643 @@
+:root {
+  --moss: #2f5d3a;
+  --moss-deep: #1c3a24;
+  --leaf: #6a9a5a;
+  --bark: #5c4030;
+  --cream: #f3ead8;
+  --mist: #d8e4d0;
+  --gold: #c9a24a;
+  --ink: #1a2418;
+  --soft: #e8f0e2;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  font-family: "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+  color: var(--ink);
+  background:
+    radial-gradient(ellipse 90% 60% at 50% -10%, #c5d9b8 0%, transparent 55%),
+    linear-gradient(165deg, #eef4e8 0%, #d5e2cb 42%, #b7c9a8 100%);
+}
+
+.page {
+  max-width: 42rem;
+  margin: 0 auto;
+  padding: 1.5rem 1.15rem 2.5rem;
+}
+
+.eyebrow {
+  margin: 0;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--moss);
+}
+
+.brand {
+  margin: 0.35rem 0 0.4rem;
+  font-size: clamp(2rem, 7vw, 2.75rem);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--moss-deep);
+  line-height: 1.05;
+}
+
+.lede {
+  margin: 0;
+  max-width: 28rem;
+  font-size: 1.05rem;
+  line-height: 1.45;
+  color: #334433;
+}
+
+.section-label {
+  margin: 1.6rem 0 0.65rem;
+  font-size: 0.85rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--bark);
+}
+
+.pick-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.pick-btn {
+  appearance: none;
+  border: 1.5px solid rgba(47, 93, 58, 0.35);
+  background: rgba(255, 255, 255, 0.45);
+  color: var(--moss-deep);
+  border-radius: 999px;
+  padding: 0.4rem 0.75rem;
+  font: inherit;
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+}
+
+.pick-btn:hover {
+  background: rgba(255, 255, 255, 0.75);
+  border-color: var(--moss);
+}
+
+.pick-btn[aria-selected="true"] {
+  background: var(--moss);
+  border-color: var(--moss-deep);
+  color: var(--cream);
+}
+
+.stage-panel {
+  margin-top: 1.25rem;
+}
+
+.scene {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  min-height: 18rem;
+  border-radius: 1.25rem;
+  background:
+    radial-gradient(circle at 70% 18%, rgba(255, 255, 255, 0.4), transparent 42%),
+    linear-gradient(180deg, #9bbf86 0%, #6f9a62 40%, #456848 100%);
+  box-shadow: 0 18px 40px rgba(28, 58, 36, 0.22);
+  display: grid;
+  place-items: center;
+  padding: 1.25rem 1rem 2.6rem;
+}
+
+.flash {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(circle at 50% 55%, rgba(255, 236, 170, 0.55), transparent 55%);
+  opacity: 0;
+}
+
+.scene.is-fed .flash {
+  animation: care-flash 0.7s ease-out;
+}
+
+@keyframes care-flash {
+  0% {
+    opacity: 0;
+  }
+  25% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.creature {
+  width: min(16rem, 78vw);
+  height: min(14rem, 58vw);
+  display: grid;
+  place-items: center;
+}
+
+.creature svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.stage-label,
+.care-meter {
+  position: absolute;
+  left: 1rem;
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--cream);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+.stage-label {
+  bottom: 1rem;
+}
+
+.care-meter {
+  right: 1rem;
+  left: auto;
+  bottom: 1rem;
+}
+
+.habit-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.55rem;
+}
+
+.habit-btn {
+  appearance: none;
+  border: none;
+  border-radius: 0.9rem;
+  padding: 0.95rem 0.5rem;
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--cream);
+  background: linear-gradient(180deg, #4a7a4f 0%, var(--moss-deep) 100%);
+  cursor: pointer;
+  box-shadow: 0 8px 18px rgba(28, 58, 36, 0.28);
+  transition: transform 0.12s ease, filter 0.12s ease;
+}
+
+.habit-btn:hover {
+  filter: brightness(1.06);
+}
+
+.habit-btn:active {
+  transform: translateY(2px) scale(0.98);
+}
+
+.habit-btn.is-pop {
+  animation: btn-pop 0.35s ease;
+}
+
+@keyframes btn-pop {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.hint,
+.foot {
+  margin: 0.85rem 0 0;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  color: #445544;
+}
+
+.foot {
+  margin-top: 1.75rem;
+  opacity: 0.85;
+}
+
+/* Shared creature motion */
+.layer {
+  opacity: 0;
+  transform-origin: 50% 70%;
+  transition: opacity 0.45s ease, transform 0.55s ease;
+  pointer-events: none;
+}
+
+.scene[data-stage="0"] .layer-0,
+.scene[data-stage="1"] .layer-1,
+.scene[data-stage="2"] .layer-2,
+.scene[data-stage="3"] .layer-3 {
+  opacity: 1;
+}
+
+.scene.is-fed .creature svg {
+  animation: creature-bob 0.65s ease;
+}
+
+@keyframes creature-bob {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  35% {
+    transform: translateY(-6px) scale(1.03);
+  }
+  60% {
+    transform: translateY(2px) scale(0.99);
+  }
+}
+
+.scene[data-kind="hatch"][data-stage="0"] .egg-sway,
+.scene[data-kind="hatch"][data-stage="1"] .egg-sway {
+  animation: egg-sway 2.4s ease-in-out infinite;
+  transform-origin: 50% 90%;
+}
+
+@keyframes egg-sway {
+  0%,
+  100% {
+    transform: rotate(-2deg);
+  }
+  50% {
+    transform: rotate(2.5deg);
+  }
+}
+
+.scene[data-kind="hatch"][data-stage="1"] .crack-line {
+  stroke-dasharray: 40;
+  stroke-dashoffset: 40;
+  animation: crack-draw 0.8s ease forwards;
+}
+
+@keyframes crack-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.bloom {
+  transform-origin: 50% 100%;
+}
+
+.scene[data-stage="2"] .bloom,
+.scene[data-stage="3"] .bloom {
+  animation: bloom-open 1.1s ease both;
+}
+
+.scene[data-stage="3"] .bloom-late {
+  animation-delay: 0.15s;
+}
+
+@keyframes bloom-open {
+  from {
+    transform: scale(0.35);
+    opacity: 0.2;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* —— Orchid mantis: ambient part motion —— */
+.scene[data-kind="hatch"][data-stage="2"] .mantis-idle,
+.scene[data-kind="hatch"][data-stage="3"] .mantis-idle {
+  animation: mantis-breathe 4.2s ease-in-out infinite;
+  transform-origin: 100px 130px;
+}
+
+.scene[data-kind="hatch"][data-stage="2"] .mantis-head,
+.scene[data-kind="hatch"][data-stage="3"] .mantis-head {
+  animation: mantis-head-tilt 5.5s ease-in-out infinite;
+  transform-origin: 100px 70px;
+}
+
+.scene[data-kind="hatch"][data-stage="2"] .forearm-l,
+.scene[data-kind="hatch"][data-stage="3"] .forearm-l {
+  animation: mantis-arm-l 3.8s ease-in-out infinite;
+  transform-origin: 86px 98px;
+}
+
+.scene[data-kind="hatch"][data-stage="2"] .forearm-r,
+.scene[data-kind="hatch"][data-stage="3"] .forearm-r {
+  animation: mantis-arm-r 3.8s ease-in-out infinite;
+  transform-origin: 114px 98px;
+}
+
+.scene[data-kind="hatch"][data-stage="2"] .antenna-l,
+.scene[data-kind="hatch"][data-stage="3"] .antenna-l {
+  animation: antenna-wave-l 2.8s ease-in-out infinite;
+  transform-origin: 90px 50px;
+}
+
+.scene[data-kind="hatch"][data-stage="2"] .antenna-r,
+.scene[data-kind="hatch"][data-stage="3"] .antenna-r {
+  animation: antenna-wave-r 2.8s ease-in-out infinite 0.2s;
+  transform-origin: 110px 50px;
+}
+
+.scene[data-kind="hatch"][data-stage="2"] .leg-mid.leg-l,
+.scene[data-kind="hatch"][data-stage="3"] .leg-mid.leg-l {
+  animation: mantis-leg-shift 4.6s ease-in-out infinite;
+  transform-origin: 88px 116px;
+}
+
+.scene[data-kind="hatch"][data-stage="2"] .leg-mid.leg-r,
+.scene[data-kind="hatch"][data-stage="3"] .leg-mid.leg-r {
+  animation: mantis-leg-shift 4.6s ease-in-out infinite 0.35s;
+  transform-origin: 112px 116px;
+}
+
+@keyframes mantis-breathe {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2.5px);
+  }
+}
+
+@keyframes mantis-head-tilt {
+  0%,
+  100% {
+    transform: rotate(-3deg);
+  }
+  50% {
+    transform: rotate(4deg);
+  }
+}
+
+@keyframes mantis-arm-l {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  45% {
+    transform: rotate(-7deg);
+  }
+  70% {
+    transform: rotate(2deg);
+  }
+}
+
+@keyframes mantis-arm-r {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  45% {
+    transform: rotate(7deg);
+  }
+  70% {
+    transform: rotate(-2deg);
+  }
+}
+
+@keyframes antenna-wave-l {
+  0%,
+  100% {
+    transform: rotate(-4deg);
+  }
+  50% {
+    transform: rotate(8deg);
+  }
+}
+
+@keyframes antenna-wave-r {
+  0%,
+  100% {
+    transform: rotate(4deg);
+  }
+  50% {
+    transform: rotate(-8deg);
+  }
+}
+
+@keyframes mantis-leg-shift {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(3deg);
+  }
+}
+
+/* —— Peacock —— */
+.tail-fan {
+  transform-origin: 50% 85%;
+}
+
+.scene[data-stage="2"] .tail-fan,
+.scene[data-stage="3"] .tail-fan {
+  animation: fan-open 0.9s ease both;
+}
+
+@keyframes fan-open {
+  from {
+    transform: scaleY(0.4) scaleX(0.7);
+  }
+  to {
+    transform: scaleY(1) scaleX(1);
+  }
+}
+
+.scene[data-kind="hatch"][data-stage="2"] .peacock-idle,
+.scene[data-kind="hatch"][data-stage="3"] .peacock-idle {
+  animation: peacock-breathe 3.6s ease-in-out infinite;
+  transform-origin: 100px 130px;
+}
+
+.scene[data-kind="hatch"][data-stage="2"] .peacock-head,
+.scene[data-kind="hatch"][data-stage="3"] .peacock-head {
+  animation: peacock-head-nod 4.8s ease-in-out infinite;
+  transform-origin: 100px 90px;
+}
+
+.scene[data-kind="hatch"][data-stage="2"] .feather:nth-child(1),
+.scene[data-kind="hatch"][data-stage="3"] .feather:nth-child(1) {
+  animation: feather-sway 5.2s ease-in-out infinite;
+  transform-origin: 100px 124px;
+}
+
+.scene[data-kind="hatch"][data-stage="2"] .feather:nth-child(2),
+.scene[data-kind="hatch"][data-stage="3"] .feather:nth-child(2) {
+  animation: feather-sway 5.6s ease-in-out infinite 0.25s;
+  transform-origin: 100px 124px;
+}
+
+.scene[data-kind="hatch"][data-stage="2"] .feather:nth-child(3),
+.scene[data-kind="hatch"][data-stage="3"] .feather:nth-child(3) {
+  animation: feather-sway 5s ease-in-out infinite 0.4s;
+  transform-origin: 100px 124px;
+}
+
+.scene[data-kind="hatch"][data-stage="2"] .feather:nth-child(4),
+.scene[data-kind="hatch"][data-stage="3"] .feather:nth-child(4) {
+  animation: feather-sway 5.4s ease-in-out infinite 0.15s;
+  transform-origin: 100px 124px;
+}
+
+.scene[data-kind="hatch"][data-stage="2"] .feather:nth-child(5),
+.scene[data-kind="hatch"][data-stage="3"] .feather:nth-child(5) {
+  animation: feather-sway 5.8s ease-in-out infinite 0.55s;
+  transform-origin: 100px 124px;
+}
+
+@keyframes peacock-breathe {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
+@keyframes peacock-head-nod {
+  0%,
+  100% {
+    transform: rotate(-2deg) translateY(0);
+  }
+  50% {
+    transform: rotate(3deg) translateY(1px);
+  }
+}
+
+@keyframes feather-sway {
+  0%,
+  100% {
+    transform: rotate(-1.5deg);
+  }
+  50% {
+    transform: rotate(2deg);
+  }
+}
+
+/* —— Deer family —— */
+.antler {
+  transform-origin: 50% 100%;
+}
+
+.scene[data-kind="grow"][data-stage="2"] .antler,
+.scene[data-kind="grow"][data-stage="3"] .antler {
+  animation: antler-grow 0.85s ease both;
+}
+
+@keyframes antler-grow {
+  from {
+    transform: scale(0.55);
+    opacity: 0.5;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.scene[data-kind="grow"] .deer-idle {
+  animation: deer-breathe 3.4s ease-in-out infinite;
+  transform-origin: 100px 130px;
+}
+
+.scene[data-kind="grow"] .deer-head {
+  animation: deer-head-tilt 6s ease-in-out infinite;
+  transform-origin: 128px 104px;
+}
+
+.scene[data-kind="grow"] .deer-ear-l {
+  animation: deer-ear-flick 3.2s ease-in-out infinite;
+  transform-origin: 122px 92px;
+}
+
+.scene[data-kind="grow"] .deer-ear-r {
+  animation: deer-ear-flick 3.2s ease-in-out infinite 0.4s;
+  transform-origin: 132px 90px;
+}
+
+@keyframes deer-breathe {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2.5px);
+  }
+}
+
+@keyframes deer-head-tilt {
+  0%,
+  100% {
+    transform: rotate(-2deg);
+  }
+  50% {
+    transform: rotate(2.5deg);
+  }
+}
+
+@keyframes deer-ear-flick {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  40% {
+    transform: rotate(-8deg);
+  }
+  55% {
+    transform: rotate(4deg);
+  }
+}
+
+.scene.is-fed[data-kind="grow"] .creature svg,
+.scene.is-fed[data-kind="hatch"] .creature svg {
+  animation: creature-bob 0.65s ease;
+}
+
+.scene.is-fed[data-kind="hatch"] .mantis-idle,
+.scene.is-fed[data-kind="hatch"] .peacock-idle,
+.scene.is-fed[data-kind="grow"] .deer-idle {
+  animation: creature-bob 0.65s ease;
+}
+
+@media (max-width: 520px) {
+  .habit-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mantis-idle,
+  .mantis-head,
+  .forearm-l,
+  .forearm-r,
+  .antenna-l,
+  .antenna-r,
+  .leg-mid,
+  .peacock-idle,
+  .peacock-head,
+  .feather,
+  .deer-idle,
+  .deer-head,
+  .deer-ear-l,
+  .deer-ear-r,
+  .egg-sway {
+    animation: none !important;
+  }
+}

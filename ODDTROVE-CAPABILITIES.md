@@ -212,6 +212,21 @@ Last updated: 2026-07-17
 
 ---
 
+### Habit Tree (`habitTree/www/` → owner-only `/habit-tree/`)
+
+**Is:** Private habit companion stub (Odd Trove owner beta). Working name Habit Tree. Not public.
+
+**Can do now:**
+- Pick a companion (orchid mantis, peacock, reindeer, stag / deer variants)
+- Tap **Exercise**, **Work**, or **Chores** — care advances hatch (egg → grown) or grow (young → adult) stages
+- Articulated SVG companions with CM-style CSS idle motion (head tilt, limb sway, feather/antler ambient — not walk loops)
+- Progress in browser localStorage on this device
+- Deploy: `bash top/scripts/deploy-habit-tree.sh` (port **8087**; reloads nginx by default)
+
+**Not built yet:** Full habit menu design, accounts/sync, real art assets, story, co-op.
+
+---
+
 ### Climatic Mysteries (`climaticMysteries/` → owner-only `/climatic-mysteries/`)
 
 **Is:** Godot web export shell (`app.html`, `godot.html`, wasm/js) + HTML/JS narrative shell.
