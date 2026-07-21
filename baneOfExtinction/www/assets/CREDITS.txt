@@ -1,33 +1,9 @@
 # Media credits — Bane of Extinction
 
-## california-poppy-subject.png
+Codex art for learned organisms comes from the camera scan path:
+a new semi-realistic field-guide still matched to the identified species
+(and life stage when known). Raw camera photos are not kept.
 
-- Source photo: Wikimedia Commons — File:Eschscholzia californica in Sedovo 001.jpg
-- Subject: California poppy (Eschscholzia californica)
-- Author: Sedovo
-- License: CC BY-SA 3.0 — https://creativecommons.org/licenses/by-sa/3.0/
-- Note: Local subject cutout for the wildlife codex still (blooms + foliage kept; soil/rock/path removed). No people in frame.
-
-## common-sunflower-subject.png
-
-- Source photo: Wikimedia Commons — File:Helianthus_annuus_sunflower.jpg
-- Subject: Common sunflower (Helianthus annuus)
-- Author: Soph556
-- License: CC BY-SA 3.0 — https://creativecommons.org/licenses/by-sa/3.0/
-- Note: Local subject cutout for the wildlife codex still (head + leaves kept; sky/background removed). No people in frame.
-
-## sweetheart-philodendron-subject.png
-
-- Source photo: Wikimedia Commons — File:Philodendron_scandens_subsp_oxycardium2.jpg
-- Subject: Sweetheart philodendron / heartleaf philodendron (Philodendron hederaceum; syn. Philodendron scandens)
-- Author: KENPEI
-- License: CC BY-SA 3.0 — https://creativecommons.org/licenses/by-sa/3.0/
-- Note: Local subject cutout for the wildlife codex still (foliage kept; background removed). No people in frame.
-
-## california-poppy-kaldari.jpg
-
-- Source: Wikimedia Commons — File:Kaldari_Eschscholzia_californica_01.jpg
-- Subject: California poppy (Eschscholzia californica)
-- Author: Kaldari
-- License: CC0 1.0 (public domain dedication) — https://creativecommons.org/publicdomain/zero/1.0/
-- Note: Earlier reference photo; not the current codex still.
+Earlier demo subject cutouts (California poppy, common sunflower,
+sweetheart philodendron) and an unused Kaldari poppy reference photo
+were removed once Demo shortcuts left the wildlife codex.
