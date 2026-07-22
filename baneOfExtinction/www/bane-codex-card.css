@@ -328,11 +328,27 @@
   border: 1px solid var(--line);
 }
 
-.scan-stage video {
+.scan-stage video,
+.scan-stage canvas.scan-stage__freeze {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
+}
+
+.scan-stage canvas.scan-stage__freeze {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.scan-stage--processing .scan-stage__guide {
+  border-color: rgba(107, 196, 138, 0.35);
+  border-style: solid;
+}
+
+.scan-stage--processing .scan-stage__hint {
+  background: linear-gradient(transparent, rgba(0, 20, 12, 0.82));
 }
 
 .scan-stage__guide {

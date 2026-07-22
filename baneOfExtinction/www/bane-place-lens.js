@@ -10,7 +10,7 @@
   var LENS_KEY = "bane_looking_at_place_v1";
   var COMPARE_KEY = "bane_compare_place_v1";
 
-  /** Curated starter places — expand with regional packs later. */
+  /** Curated starter places — expand with regional packs later. No backyard options. */
   var PLACES = [
     {
       placeId: "socal-coast",
@@ -18,14 +18,6 @@
       initials: "SC",
       region: "socal",
       habitat: "coast",
-      habitatOnly: false,
-    },
-    {
-      placeId: "socal-backyard",
-      label: "Southern California backyard",
-      initials: "SB",
-      region: "socal",
-      habitat: "garden",
       habitatOnly: false,
     },
     {
@@ -37,19 +29,27 @@
       habitatOnly: false,
     },
     {
-      placeId: "norcal-backyard",
-      label: "Northern California backyard",
-      initials: "NB",
-      region: "norcal",
-      habitat: "garden",
-      habitatOnly: false,
+      placeId: "habitat-urban",
+      label: "Urban (any region)",
+      initials: "UR",
+      region: "",
+      habitat: "urban",
+      habitatOnly: true,
     },
     {
-      placeId: "habitat-garden",
-      label: "Garden / yard (any region)",
-      initials: "GY",
+      placeId: "habitat-suburban",
+      label: "Suburban (any region)",
+      initials: "SU",
       region: "",
-      habitat: "garden",
+      habitat: "suburban",
+      habitatOnly: true,
+    },
+    {
+      placeId: "habitat-city",
+      label: "City (any region)",
+      initials: "CI",
+      region: "",
+      habitat: "city",
       habitatOnly: true,
     },
     {
@@ -68,15 +68,14 @@
       habitat: "woodland",
       habitatOnly: true,
     },
-    {
-      placeId: "habitat-city",
-      label: "City park / street (any region)",
-      initials: "CP",
-      region: "",
-      habitat: "urban",
-      habitatOnly: true,
-    },
   ];
+
+  /** Old placeIds → current (drop personal backyard lenses). */
+  var PLACE_ID_MIGRATIONS = {
+    "socal-backyard": "habitat-suburban",
+    "norcal-backyard": "habitat-suburban",
+    "habitat-garden": "habitat-suburban",
+  };
 
   /**
    * Starter browse pack: species you may see in a place, with local role.
@@ -103,32 +102,6 @@
         note: "Common shoreline bird along the SoCal coast.",
       },
     ],
-    "socal-backyard": [
-      {
-        common: "California poppy",
-        latin: "Eschscholzia californica",
-        role: "native",
-        note: "Happy in lean, sunny yard patches; skip heavy water and rich soil.",
-      },
-      {
-        common: "Common sunflower",
-        latin: "Helianthus annuus",
-        role: "planted",
-        note: "Often grown for bees and birds; native to North America broadly.",
-      },
-      {
-        common: "Sweetheart philodendron",
-        latin: "Philodendron hederaceum",
-        role: "houseplant",
-        note: "Tropical houseplant — keep indoors; don’t “free” it outside.",
-      },
-      {
-        common: "Eucalyptus",
-        latin: "Eucalyptus spp.",
-        role: "introduced",
-        note: "Widely planted in CA; not native — check local guidance before adding more.",
-      },
-    ],
     "norcal-oak": [
       {
         common: "Coast live oak",
@@ -149,33 +122,27 @@
         note: "Climbs trunks and carpets understory; remove when safe to do so.",
       },
     ],
-    "norcal-backyard": [
-      {
-        common: "California poppy",
-        latin: "Eschscholzia californica",
-        role: "native",
-        note: "Good sunny-yard native when soil stays lean and dry.",
-      },
+    "habitat-urban": [
       {
         common: "Common sunflower",
         latin: "Helianthus annuus",
         role: "planted",
-        note: "Backyard bird and bee plant; leave a spent head for snacks.",
+        note: "Planters and neighborhood beds; birds and bees still visit.",
+      },
+      {
+        common: "Eucalyptus",
+        latin: "Eucalyptus spp.",
+        role: "introduced",
+        note: "Street and park trees in many cities — not native to CA.",
       },
       {
         common: "Sweetheart philodendron",
         latin: "Philodendron hederaceum",
         role: "houseplant",
-        note: "Indoor only in NorCal — not a local wild plant.",
+        note: "Windowsill plant — keep indoors; don’t dump it outside.",
       },
     ],
-    "habitat-garden": [
-      {
-        common: "Common sunflower",
-        latin: "Helianthus annuus",
-        role: "planted",
-        note: "Garden favorite for pollinators — local native/invasive status still depends on region.",
-      },
+    "habitat-suburban": [
       {
         common: "California poppy",
         latin: "Eschscholzia californica",
@@ -183,10 +150,30 @@
         note: "Native in CA; elsewhere may be a planted ornamental. Pick a region for sharper status.",
       },
       {
+        common: "Common sunflower",
+        latin: "Helianthus annuus",
+        role: "planted",
+        note: "Common in neighborhood plantings for pollinators — status still depends on region.",
+      },
+      {
         common: "Sweetheart philodendron",
         latin: "Philodendron hederaceum",
         role: "houseplant",
-        note: "Typical windowsill plant; keep out of wild habitats.",
+        note: "Typical indoor plant; keep out of wild habitats.",
+      },
+    ],
+    "habitat-city": [
+      {
+        common: "Common sunflower",
+        latin: "Helianthus annuus",
+        role: "planted",
+        note: "Park beds and downtown planters; birds and bees still visit.",
+      },
+      {
+        common: "Eucalyptus",
+        latin: "Eucalyptus spp.",
+        role: "introduced",
+        note: "Street and park trees in many cities — not a native California oak story.",
       },
     ],
     "habitat-beach": [
@@ -217,24 +204,16 @@
         note: "Native in coastal CA oak woodland — pick a CA region for a clearer label.",
       },
     ],
-    "habitat-city": [
-      {
-        common: "Common sunflower",
-        latin: "Helianthus annuus",
-        role: "planted",
-        note: "Park and planter plantings; birds and bees still visit.",
-      },
-      {
-        common: "Eucalyptus",
-        latin: "Eucalyptus spp.",
-        role: "introduced",
-        note: "Street and park trees in many CA cities — not native.",
-      },
-    ],
   };
 
-  function findPlace(placeId) {
+  function migratePlaceId(placeId) {
     var id = String(placeId || "").trim();
+    if (!id) return "";
+    return PLACE_ID_MIGRATIONS[id] || id;
+  }
+
+  function findPlace(placeId) {
+    var id = migratePlaceId(placeId);
     if (!id) return null;
     for (var i = 0; i < PLACES.length; i++) {
       if (PLACES[i].placeId === id) return PLACES[i];
@@ -247,7 +226,7 @@
     var seen = Object.create(null);
     if (!Array.isArray(ids)) return out;
     for (var i = 0; i < ids.length; i++) {
-      var id = String(ids[i] || "").trim();
+      var id = migratePlaceId(ids[i]);
       if (!id || seen[id] || !findPlace(id)) continue;
       seen[id] = true;
       out.push(id);
@@ -285,8 +264,15 @@
 
   function loadLookingAt() {
     try {
-      var id = String(localStorage.getItem(LENS_KEY) || "").trim();
-      return findPlace(id) ? id : "";
+      var raw = String(localStorage.getItem(LENS_KEY) || "").trim();
+      var id = migratePlaceId(raw);
+      if (!findPlace(id)) return "";
+      if (id && id !== raw) {
+        try {
+          localStorage.setItem(LENS_KEY, id);
+        } catch (e2) {}
+      }
+      return id;
     } catch (e) {
       return "";
     }
@@ -304,8 +290,15 @@
 
   function loadCompare() {
     try {
-      var id = String(localStorage.getItem(COMPARE_KEY) || "").trim();
-      return findPlace(id) ? id : "";
+      var raw = String(localStorage.getItem(COMPARE_KEY) || "").trim();
+      var id = migratePlaceId(raw);
+      if (!findPlace(id)) return "";
+      if (id && id !== raw) {
+        try {
+          localStorage.setItem(COMPARE_KEY, id);
+        } catch (e2) {}
+      }
+      return id;
     } catch (e) {
       return "";
     }
@@ -354,7 +347,7 @@
   }
 
   function speciesForPlace(placeId) {
-    var id = String(placeId || "").trim();
+    var id = migratePlaceId(placeId);
     var list = SPECIES_BY_PLACE[id];
     return Array.isArray(list) ? list.slice() : [];
   }

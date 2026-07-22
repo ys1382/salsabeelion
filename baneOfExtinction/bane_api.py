@@ -30,6 +30,7 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+from concurrent.futures import ThreadPoolExecutor
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any
 
@@ -1162,15 +1163,24 @@ def identify_wildlife(
     gemini_id: dict[str, Any] | None = None
     claude_id: dict[str, Any] | None = None
 
-    try:
-        gemini_id = _norm_id(_call_gemini_vision(image_b64, mime))
-    except Exception as exc:  # noqa: BLE001
-        gemini_err = f"{type(exc).__name__}: {exc}"
+    def _gemini_job() -> tuple[dict[str, Any] | None, str]:
+        try:
+            return _norm_id(_call_gemini_vision(image_b64, mime)), ""
+        except Exception as exc:  # noqa: BLE001
+            return None, f"{type(exc).__name__}: {exc}"
 
-    try:
-        claude_id = _norm_id(_call_claude_vision(image_b64, mime))
-    except Exception as exc:  # noqa: BLE001
-        claude_err = f"{type(exc).__name__}: {exc}"
+    def _claude_job() -> tuple[dict[str, Any] | None, str]:
+        try:
+            return _norm_id(_call_claude_vision(image_b64, mime)), ""
+        except Exception as exc:  # noqa: BLE001
+            return None, f"{type(exc).__name__}: {exc}"
+
+    # Run both vision IDs at once — wall time ≈ slower model, not sum of both.
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        fut_g = pool.submit(_gemini_job)
+        fut_c = pool.submit(_claude_job)
+        gemini_id, gemini_err = fut_g.result()
+        claude_id, claude_err = fut_c.result()
 
     chosen = _prefer_id(gemini_id, claude_id)
     if _is_refusal(chosen):
@@ -1921,8 +1931,9 @@ def build_callouts(
         "how it shares neighborhoods). Warm and concrete — not lecturey. "
         "PLACE LENS — the player chose a place they are LOOKING AT (not GPS). "
         "Personalize tips to that lens: native vs introduced vs invasive THERE, "
-        "whether backyard/bee advice makes sense THERE, and what a neighbor might do "
-        "in THAT kind of place. If only a habitat was chosen (no region), keep advice "
+        "whether pollinator/plant advice makes sense THERE, and what a neighbor might do "
+        "in THAT kind of place (urban, suburban, city, coast, woodland, etc.). If only a habitat "
+        "was chosen (no region), keep advice "
         "habitat-shaped and say status may differ by region. Never claim you know where "
         "the player is standing. "
         "EXACTLY ONE of those everyday callouts must be a SMALL HELP tip: something a "
@@ -1980,7 +1991,7 @@ def build_callouts(
     else:
         scope += (
             " No place lens chosen — keep facts generally accurate; avoid claiming "
-            "a backyard tip is always good everywhere; prefer range-aware wording."
+            "a planted-bed tip is always good everywhere; prefer range-aware wording."
         )
     if compare_label_n or compare_id_n:
         scope += (
@@ -2206,7 +2217,7 @@ def _fallback_place_status(
         else:
             local = "Native range centered on California / Southwest"
     elif "helianthus" in blob or "sunflower" in blob:
-        if "backyard" in pid or habitat == "garden":
+        if habitat in ("suburban", "urban", "city") or "suburban" in pid:
             local = "Often planted for pollinators; native to North America broadly"
         else:
             local = "Native to North America; widely planted"

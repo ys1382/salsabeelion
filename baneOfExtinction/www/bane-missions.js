@@ -18,8 +18,8 @@
       id: "ant-mound",
       level: 2,
       title: "The city under the lawn",
-      placeTags: ["garden", "urban", "woodland"],
-      placeHint: "Yard · park · woodland edge",
+      placeTags: ["suburban", "urban", "city", "woodland"],
+      placeHint: "Suburban · urban · city · woodland edge",
       blurb: "A living mound — workers on a dirt door. Safe up close; don’t dig.",
       lookFor:
         "A swarm or steady trail of ants pouring into a hole or mound in bare dirt or lawn.",
@@ -32,7 +32,7 @@
       id: "signature-feather",
       level: 2,
       title: "A feather with a name",
-      placeTags: ["garden", "urban", "coast", "woodland"],
+      placeTags: ["suburban", "urban", "city", "coast", "woodland"],
       placeHint: "Any looking-at place",
       blurb: "Only bold, patterned feathers — never plain brown fluff.",
       lookFor:
@@ -46,8 +46,8 @@
       id: "woodpecker-work",
       level: 2,
       title: "The hole that keeps giving",
-      placeTags: ["garden", "urban", "woodland"],
-      placeHint: "Yard · street trees · oak woodland",
+      placeTags: ["suburban", "urban", "city", "woodland"],
+      placeHint: "Suburban · street trees · oak woodland",
       blurb: "Neat bark work visible from the path — rows or deeper chips.",
       lookFor:
         "Fresh or older holes in a trunk you can see without leaving the path. Sap wells in neat rows hint sapsucker; bigger chips hint a larger woodpecker.",
@@ -60,13 +60,13 @@
       id: "leaf-circles",
       level: 2,
       title: "Perfect circles in a leaf",
-      placeTags: ["garden", "urban"],
-      placeHint: "Garden · yard · city plantings",
+      placeTags: ["suburban", "urban", "city"],
+      placeHint: "Suburban · urban · city plantings",
       blurb: "Clean round cuts — leafcutter bee signature.",
       lookFor:
-        "Leaves with neat circular or oval bites removed — not ragged chew. Often on roses, lilacs, or soft garden leaves.",
+        "Leaves with neat circular or oval bites removed — not ragged chew. Often on roses, lilacs, or soft planted leaves.",
       story:
-        "Those circles aren’t vandalism. A leafcutter bee carries the discs home to line a nest. Your garden just funded tiny architecture.",
+        "Those circles aren’t vandalism. A leafcutter bee carries the discs home to line a nest. Those plantings just funded tiny architecture.",
       care: "Leave the plant. She’s working for blooms you’ll want later.",
       visual: "story",
     },
@@ -74,7 +74,7 @@
       id: "shrike-pantry",
       level: 2,
       title: "The butcher’s pantry",
-      placeTags: ["garden", "coast", "woodland"],
+      placeTags: ["suburban", "coast", "woodland"],
       placeHint: "Open edges · fences · scrub",
       blurb: "Prey pinned on a thorn or wire — the shrike tell.",
       lookFor:
@@ -116,13 +116,13 @@
       id: "hotspot-patch",
       level: 2,
       title: "Plant a hotspot",
-      placeTags: ["garden", "urban"],
-      placeHint: "Backyard · garden · city plantings",
+      placeTags: ["suburban", "urban", "city"],
+      placeHint: "Suburban · urban · city plantings",
       blurb: "A native patch (poppy, sunflower, milkweed where it belongs) that invites more life.",
       lookFor:
         "A sunny native or wildlife plant already in your looking-at place — California poppy, sunflower, or local milkweed — whole plant obvious from the path.",
       story:
-        "One right plant won’t save the planet. It can still turn a quiet yard into a busy little hub — bees, butterflies, birds — season after season. You’re not decorating. You’re opening a door.",
+        "One right plant won’t save the planet. It can still turn a quiet planting into a busy little hub — bees, butterflies, birds — season after season. You’re not decorating. You’re opening a door.",
       care: "Choose natives that fit your region. Milkweed only where it belongs; skip “freeing” houseplants outdoors.",
       visual: "story",
     },
@@ -130,7 +130,7 @@
       id: "leave-it-be",
       level: 2,
       title: "Leave it be",
-      placeTags: ["garden", "urban", "coast", "woodland"],
+      placeTags: ["suburban", "urban", "city", "coast", "woodland"],
       placeHint: "Any place",
       blurb: "You found a sign from the path. Log the restraint — that’s the win.",
       lookFor:
@@ -144,13 +144,13 @@
       id: "kind-act",
       level: 2,
       title: "One kind act",
-      placeTags: ["garden", "urban", "coast", "woodland"],
+      placeTags: ["suburban", "urban", "city", "coast", "woodland"],
       placeHint: "Tied to something you already learned",
       blurb: "A small real-world help for a species or place you know.",
       lookFor:
         "Something you already scanned or a mission you finished — then one gentle action that fits it.",
       story:
-        "Skip the spray on that mound. Leave a leaf-litter corner. Don’t plant ice plant. Put the right milkweed in the right garden. Tiny moves, louder yard over time.",
+        "Skip the spray on that mound. Leave a leaf-litter corner. Don’t plant ice plant. Put the right milkweed in the right place. Tiny moves, louder neighborhood over time.",
       care: "No guilt lecture — just one act you control on your block.",
       visual: "story",
     },
@@ -165,8 +165,8 @@
       id: "l3-ice-plant-meanings",
       level: 3,
       title: "Ice plant: three readings",
-      placeTags: ["coast", "garden", "urban"],
-      placeHint: "Coast vs yard vs “just planted”",
+      placeTags: ["coast", "suburban", "urban", "city"],
+      placeHint: "Coast vs planted beds vs “just planted”",
       blurb: "Same shiny carpet — healthy, meh, or a warning, depending on the place you’re looking at.",
       lookFor:
         "Ice plant (Carpobrotus-type mats) from the path — or a native dune plant that should be there instead.",
@@ -182,7 +182,7 @@
         },
         {
           tone: "meh",
-          placeLabel: "A managed yard far from wild dunes",
+          placeLabel: "A managed planting far from wild dunes",
           text: "Meh. Not a native hero, not automatically a dune crisis on a city patio — still don’t “share” cuttings onto wild coasts.",
         },
         {
@@ -196,8 +196,8 @@
       id: "l3-ivy-meanings",
       level: 3,
       title: "Ivy: curtain or cage?",
-      placeTags: ["woodland", "garden", "urban"],
-      placeHint: "Oak woodland vs garden wall",
+      placeTags: ["woodland", "suburban", "urban", "city"],
+      placeHint: "Oak woodland vs planted wall",
       blurb: "English ivy reads different on an oak trail than on a trimmed fence.",
       lookFor: "Ivy on a trunk or understory — from the path only.",
       story:
@@ -212,7 +212,7 @@
         },
         {
           tone: "meh",
-          placeLabel: "Contained garden wall or planter",
+          placeLabel: "Contained wall or planter",
           text: "Meh if truly contained — still a hitchhiker risk if birds or trimmings move it into wild edges.",
         },
         {
@@ -226,7 +226,7 @@
       id: "l3-poppy-meanings",
       level: 3,
       title: "Poppy: belonging vs décor",
-      placeTags: ["garden", "coast", "urban", "woodland"],
+      placeTags: ["suburban", "coast", "urban", "city", "woodland"],
       placeHint: "CA places vs planted-elsewhere",
       blurb: "California poppy can mean “home team” here — or just a pretty transplant elsewhere.",
       lookFor: "California poppy in sun — whole plant from the path.",
@@ -237,12 +237,12 @@
       meanings: [
         {
           tone: "healthy",
-          placeLabel: "SoCal / NorCal yard, coast edge, oak openings (CA)",
+          placeLabel: "SoCal / NorCal coast edge, oak openings, plantings (CA)",
           text: "Healthy sign. Native here — bees notice; lean dry ground is a feature, not a failure.",
         },
         {
           tone: "meh",
-          placeLabel: "Garden outside its native story (planted ornamental)",
+          placeLabel: "Planted ornamental outside its native story",
           text: "Meh. Lovely décor, not proof this landscape’s own cast is thriving.",
         },
         {
@@ -256,7 +256,7 @@
       id: "l3-eucalyptus-meanings",
       level: 3,
       title: "Eucalyptus: planted giant",
-      placeTags: ["garden", "urban", "coast", "woodland"],
+      placeTags: ["suburban", "urban", "city", "coast", "woodland"],
       placeHint: "CA plantings & parks",
       blurb: "Tall, famous, and not a native California teammate.",
       lookFor: "Eucalyptus from a path or park edge — no need to stand under shedding bark.",
@@ -286,7 +286,7 @@
       id: "l3-missing-apex",
       level: 3,
       title: "Missing pieces (under the postcard)",
-      placeTags: ["garden", "urban", "coast", "woodland"],
+      placeTags: ["suburban", "urban", "city", "coast", "woodland"],
       placeHint: "Big-picture landscape story",
       blurb: "Why a “pretty” countryside can still be running on empty — the tourist view skips this.",
       lookFor:
@@ -300,9 +300,9 @@
       id: "l3-houseplant-boundary",
       level: 3,
       title: "Houseplant vs wild",
-      placeTags: ["garden", "urban"],
+      placeTags: ["suburban", "urban", "city"],
       placeHint: "Indoor sweetheart vs outdoor world",
-      blurb: "A philodendron on a sill is fine. “Freed” into a CA yard is a different story.",
+      blurb: "A philodendron on a sill is fine. “Freed” outdoors in CA is a different story.",
       lookFor: "Sweetheart / heartleaf philodendron indoors — or someone planting tropicals outside.",
       story:
         "Gift-shop green isn’t the same as neighborhood wildlife. Level 3 is noticing the boundary tourists skip: indoor pet plant vs outdoor living web.",
@@ -596,7 +596,7 @@
       if (l2Open) {
         if (!list2.length) {
           grid2.innerHTML =
-            '<p class="mission-board__hint">No Level 2 missions for this habitat — try garden, coast, or woodland.</p>';
+            '<p class="mission-board__hint">No Level 2 missions for this habitat — try suburban, urban, city, coast, or woodland.</p>';
         } else {
           appendQuestCards(grid2, list2, done);
         }

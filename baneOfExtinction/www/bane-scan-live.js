@@ -399,7 +399,7 @@
     if (video) video.srcObject = null;
     if (captureBtn) captureBtn.disabled = true;
     if (stopCamBtn) stopCamBtn.hidden = true;
-    if (scanStage) scanStage.className = "scan-stage";
+    if (scanStage && !busy) scanStage.className = "scan-stage";
   }
 
   function startCamera() {
@@ -407,6 +407,8 @@
       setStatus("This browser cannot open the camera.");
       return;
     }
+    hideFreezeFrame();
+    clearCanvas();
     setStatus("Starting camera…");
     navigator.mediaDevices
       .getUserMedia({
@@ -461,6 +463,29 @@
     if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
     canvas.width = 1;
     canvas.height = 1;
+  }
+
+  function hideFreezeFrame() {
+    if (canvas) {
+      canvas.hidden = true;
+      canvas.classList.remove("scan-stage__freeze");
+    }
+    if (video) video.style.visibility = "";
+    if (scanStage) scanStage.classList.remove("scan-stage--processing");
+  }
+
+  function showFreezeFrame() {
+    if (!canvas) return;
+    canvas.classList.add("scan-stage__freeze");
+    canvas.hidden = false;
+    if (video) video.style.visibility = "hidden";
+    if (scanStage) {
+      scanStage.className = "scan-stage scan-stage--processing";
+    }
+    if (coachHint) {
+      coachHint.textContent =
+        "Photo captured — camera off. Identifying & making codex art…";
+    }
   }
 
   function openCodex() {
@@ -604,7 +629,7 @@
 
   function onCapture() {
     if (busy) {
-      setStatus("Still scanning… please wait (often 20–60 seconds). One tap is enough.");
+      setStatus("Still working on your photo… please wait. One tap is enough.");
       return;
     }
     var check = analyzeOrganismFrame(video);
@@ -624,18 +649,21 @@
     var tick = setInterval(function () {
       var sec = Math.round((Date.now() - started) / 1000);
       setStatus(
-        "Scanning… " +
+        "Working on your photo… " +
           sec +
-          "s (ID + matching animated codex art). One tap is enough."
+          "s (ID + matching codex art). Camera is off."
       );
     }, 500);
-    setStatus("Scanning: ID + matching codex art (can take up to a minute)…");
+    setStatus("Photo captured — camera off. Identifying & making codex art…");
     var payload;
     try {
       payload = captureFrame();
+      showFreezeFrame();
+      stopCamera();
     } catch (e) {
       clearInterval(tick);
       busy = false;
+      hideFreezeFrame();
       tickLiveCoach();
       setStatus(e && e.message ? e.message : "Capture failed");
       return;
@@ -653,7 +681,6 @@
     })
       .then(function (res) {
         payload.imageBase64 = "";
-        clearCanvas();
         return res.text().then(function (text) {
           var data = null;
           try {
@@ -679,7 +706,8 @@
           );
         }
         clearInterval(tick);
-        stopCamera();
+        hideFreezeFrame();
+        clearCanvas();
         var stillInfo = null;
         var cs = data.codexStill || null;
         if (data.stillToken || (cs && (cs.token || cs.imageBase64 || cs.url))) {
@@ -696,10 +724,10 @@
         clearInterval(tick);
         if (payload) payload.imageBase64 = "";
         clearCanvas();
+        hideFreezeFrame();
         setStatus("Scan failed: " + (err && err.message ? err.message : "error"));
         busy = false;
-        if (stream) startLiveCoach();
-        else if (captureBtn) captureBtn.disabled = true;
+        startCamera();
       })
       .then(function () {
         if (payload) payload.imageBase64 = "";
