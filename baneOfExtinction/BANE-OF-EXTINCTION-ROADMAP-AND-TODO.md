@@ -137,8 +137,9 @@ After the still “freezes” on the codex card:
 - **Claude API** builds / helps the facts base when the player encounters the organism or evidence (server key; never in public `www/`).
 - **No Wikipedia-as-sole-source** and no open-web scrape for callout facts — Claude helper knowledge + curated packs. Status/range may use **NatureServe Explorer** (CC BY) by scientific name; never IUCN site/API.
 - Tone: useful learning helper, not a guaranteed field guide.
-- **Player-world facts (2026-07-20):** most callouts tie the organism to everyday life (walks, yards, shared air/food webs, what you’d notice) — not a textbook dump. **Exactly one** fact per set can be a cooler species-own wonder with less direct human impact. Goal: feel more understanding of wildlife around you, not become a field-guide expert.
-- **Small-help tip + fresh rescans (2026-07-21):** among the everyday facts, **exactly one** is a gentle, species-specific “what you can do for this organism’s world” tip (no guilt; don’t blame staple foods or systems people don’t control). Device remembers recent fact text per species (not photos) so Load / rescan can ask Claude for a fresh set.
+- **Player-world facts (2026-07-20):** most callouts tie the organism to everyday life (walks, yards, shared air/food webs, what you’d notice) — not a textbook dump. **Exactly one** fact per set can be a cooler species-own wonder with less direct human impact. Goal: feel more understanding of wildlife around you, not become a field-guide expert. Lean toward helping the living world (**Bane of Extinction**) without making every line a chore.
+- **Garden focus (2026-07-22):** device toggle. **On** = garden-world eco facts (beds, seed dispersal, grower kindness). **Off** = walk/wild-neighbor eco facts — no gardening how-tos. Same soft eco lean; different lens.
+- **Small-help tip + fresh rescans (2026-07-21):** among the everyday facts, **exactly one** is a gentle, species-specific “what you can do for this organism’s world” tip (no guilt; don’t blame staple foods or systems people don’t control). Device remembers recent fact text per species + focus mode (not photos) so Load / rescan can ask Claude for a fresh set.
 - Desktop can browse callouts once an entry exists; phone not required for browsing.
 
 ### First stubs — California poppies + common sunflower + sweetheart philodendron
@@ -242,6 +243,7 @@ Owner pins from chat go here.
 - [x] Sweetheart philodendron stub (Philodendron hederaceum; ID hints, fallback callouts, codex still)
 - [x] Callouts: one small-help tip per set (no guilt) + remember recent facts for fresh rescans
 - [x] Place lens stack (all layers): favorites, looking-at default, compare, fact variants, habitat-only, season, browse-by-area — no GPS
+- [x] Garden focus toggle: garden-world eco facts (incl. seed dispersal) vs walk/wild eco facts — lean toward helping, not every line a chore
 
 ### 2026-07-21 — neighborhood missions
 

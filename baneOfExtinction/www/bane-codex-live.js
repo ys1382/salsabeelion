@@ -5,6 +5,7 @@
   var STORAGE_KEY = "bane_last_id";
   var STILL_KEY = "bane_last_still";
   var RECENT_FACTS_KEY = "bane_callout_recent_v1";
+  var GARDEN_FOCUS_KEY = "bane_garden_focus_v1";
   var MAX_RECENT_FACTS = 24;
   var MAX_AGE_MS = 15 * 60 * 1000;
   var statusEl = document.getElementById("status");
@@ -16,6 +17,7 @@
   var cultivarOn = document.getElementById("cultivarOn");
   var cultivarRow = document.getElementById("cultivarRow");
   var evidenceOn = document.getElementById("evidenceOn");
+  var gardenFocusOn = document.getElementById("gardenFocusOn");
   var stillEl = document.getElementById("organismStill");
   var creditEl = document.getElementById("artCredit");
   var metaEl = document.getElementById("organismMeta");
@@ -231,19 +233,44 @@
     return {};
   }
 
+  function isGardenFocus() {
+    return !!(gardenFocusOn && gardenFocusOn.checked);
+  }
+
+  function readGardenFocusPref() {
+    try {
+      return localStorage.getItem(GARDEN_FOCUS_KEY) === "1";
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function writeGardenFocusPref(on) {
+    try {
+      if (on) localStorage.setItem(GARDEN_FOCUS_KEY, "1");
+      else localStorage.removeItem(GARDEN_FOCUS_KEY);
+    } catch (e) {}
+  }
+
+  function syncGardenFocusUi() {
+    if (!gardenFocusOn) return;
+    gardenFocusOn.checked = readGardenFocusPref();
+  }
+
   function recentFactsSpeciesKey(common, latin) {
+    var focus = isGardenFocus() ? "g" : "w";
     var lat = String(latin || "")
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-+|-+$/g, "")
       .slice(0, 80);
-    if (lat) return "lat:" + lat;
+    if (lat) return focus + "|lat:" + lat;
     var com = String(common || "")
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-+|-+$/g, "")
       .slice(0, 80);
-    return com ? "com:" + com : "";
+    return com ? focus + "|com:" + com : "";
   }
 
   function readRecentFactsMap() {
@@ -312,6 +339,7 @@
     }
     var avoidFacts = getRecentFacts(state.commonName, state.latinName);
     var place = placePayload();
+    var gardenFocus = isGardenFocus();
     var body = {
       commonName: state.commonName,
       latinName: state.latinName,
@@ -329,6 +357,7 @@
       comparePlaceId: place.comparePlaceId || "",
       comparePlaceLabel: place.comparePlaceLabel || "",
       season: place.season || "",
+      gardenFocus: gardenFocus,
     };
     fetch(API_CALLOUTS, {
       method: "POST",
@@ -372,6 +401,7 @@
             ? "Showing fallback facts (Claude unavailable)."
             : "Callouts loaded for: " +
                 state.commonName +
+                (gardenFocus ? " · garden focus" : " · walk / wild focus") +
                 (place.placeLabel
                   ? " · looking at " + place.placeLabel
                   : "") +
@@ -743,6 +773,14 @@
   }
 
   if (loadBtn) loadBtn.addEventListener("click", loadFacts);
+
+  syncGardenFocusUi();
+  if (gardenFocusOn) {
+    gardenFocusOn.addEventListener("change", function () {
+      writeGardenFocusPref(!!gardenFocusOn.checked);
+      // Ready for reload; player hits Load for focus-aware facts.
+    });
+  }
 
   var placeRoot = document.getElementById("placeLensRoot");
   if (

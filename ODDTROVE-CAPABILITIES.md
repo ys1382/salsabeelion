@@ -201,7 +201,7 @@ Last updated: 2026-07-17
 - Browse **wildlife codex** on desktop or phone (owner hub cookie) — Claude callouts; demos use CC0 cutouts
 - **Learned shelf** — past scans sync to **Odd Trove Google sign-in** (server store + device cache; one entry per species; stylized still + ID; never raw camera)
 - **Phone wildlife camera scan** — `/bane-of-extinction/scan.html` (Gemini + Claude ID + life stage; then Gemini semi-realistic still matched to species/color/form/**stage**; photo not stored; facts follow the guessed organism)
-- Claude facts via `/bane-of-extinction/api/` (shared `anthropic.key` + Halalit Gemini env on server) — player-world tone, one small-help tip per set, one wonder fact; device remembers recent fact text so rescans can stay fresh (no photo retention)
+- Claude facts via `/bane-of-extinction/api/` (shared `anthropic.key` + Halalit Gemini env on server) — player-world tone, one small-help tip per set, one wonder fact; **garden focus** toggle splits garden-world eco facts (seed dispersal, grower kindness) vs walk/wild eco facts; device remembers recent fact text so rescans can stay fresh (no photo retention)
 - **Looking-at places** — Halalit-style favorite places on device; facts + browse lists follow chosen region/habitat (optional compare); season from date; **no GPS**
 - Codex still caption: **conservation status** when possible + **native range** + **elsewhere** (USGS **US-RIIS** CC0 for U.S. introduced/invasive when latin matches; else NatureServe exotic + soft caution; no compare place required; no IUCN)
 - **Neighborhood missions** — `/bane-of-extinction/missions.html`

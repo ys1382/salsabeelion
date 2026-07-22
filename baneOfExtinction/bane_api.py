@@ -4,7 +4,7 @@ Bane of Extinction — owner-beta API.
 - POST /api/wildlife-identify  — Gemini + Claude vision ID (photo not stored)
 - POST /api/codex-still        — Gemini image: field-guide still matching this ID + crop
 - POST /api/callouts           — Claude helper facts + native range / conservation status
-                                  (optional looking-at place lens; no GPS)
+                                  (optional looking-at place lens; optional garden focus; no GPS)
 - GET  /api/auth/me            — Odd Trove Google SSO identity (for learned sync)
 - GET/PUT /api/learned         — wildlife learns synced to signed-in Google account
 - GET  /api/health
@@ -98,21 +98,22 @@ POPPY_DEFAULT = {
     "anchors": ["petals", "center", "foliage", "habit", "seed_pod"],
 }
 
-FALLBACK_CALLOUTS_POPPY = [
+# Walk / wildlife eco focus (garden focus OFF)
+FALLBACK_CALLOUTS_POPPY_WALK = [
     {
         "anchor": "petals",
         "label": "Petals",
-        "fact": "Those soft, crepe-paper petals are what make a roadside or yard pop of orange catch your eye on a sunny walk.",
+        "fact": "Those soft, crepe-paper petals are what make a roadside or hillside pop of orange catch your eye on a sunny walk.",
     },
     {
         "anchor": "center",
         "label": "Flower center",
-        "fact": "A lighter center helps you tell one bloom from the next in bright sun — useful when you’re matching what you see to a garden form.",
+        "fact": "A lighter center helps you tell one bloom from the next in bright sun — useful when you’re matching what you see outdoors.",
     },
     {
         "anchor": "help",
         "label": "Small help",
-        "fact": "If they already grow in a sunny patch near you, leaving that dry, lean soil alone (skip heavy water and rich fertilizer there) helps them keep blooming without you fighting their habits.",
+        "fact": "If a sunny wild patch already holds them near a path you use, leaving that lean soil alone (skip dumping rich mulch or extra water there) helps them keep their own rhythm.",
     },
     {
         "anchor": "foliage",
@@ -121,16 +122,63 @@ FALLBACK_CALLOUTS_POPPY = [
     },
 ]
 
-FALLBACK_CALLOUTS_SUNFLOWER = [
+# Garden eco focus (garden focus ON) — includes seed dispersal / grower noticing
+FALLBACK_CALLOUTS_POPPY_GARDEN = [
+    {
+        "anchor": "petals",
+        "label": "Petals",
+        "fact": "Those soft, crepe-paper petals are what make a bed or border pop of orange catch your eye when you’re tending plants.",
+    },
+    {
+        "anchor": "seed_pod",
+        "label": "Seed pods",
+        "fact": "Dry pods can fling seeds a short way when they split — a small dispersal trick that helps seedlings show up near last year’s plants.",
+    },
+    {
+        "anchor": "help",
+        "label": "Small help",
+        "fact": "If they already self-sow in a sunny lean corner, leave that dry soil alone (skip heavy water and rich fertilizer there) so they keep blooming without you fighting their habits.",
+    },
+    {
+        "anchor": "foliage",
+        "label": "Feathery leaves",
+        "fact": "Blue-green, finely cut leaves help the plant itself handle heat and thin soil — a quiet drought trick of its own.",
+    },
+]
+
+FALLBACK_CALLOUTS_SUNFLOWER_WALK = [
     {
         "anchor": "disk",
         "label": "Center disk",
-        "fact": "That busy middle feeds bees and other pollinators that also visit the flowers you grow or pass on a walk.",
+        "fact": "That busy middle feeds bees and other pollinators you also meet on neighborhood walks and shared green edges.",
     },
     {
         "anchor": "petals",
         "label": "Ray color",
         "fact": "Ray colors range from classic yellow-gold to red, burgundy, and near-black — match the shade you actually see, not a textbook yellow.",
+    },
+    {
+        "anchor": "help",
+        "label": "Small help",
+        "fact": "Where spent heads stand along a fence or field edge you pass, leaving a few upright for a while offers birds an easy snack — a small local kindness.",
+    },
+    {
+        "anchor": "head",
+        "label": "Flower head",
+        "fact": "What looks like one big flower is really a head of many tiny florets — ray florets outside, packed disk florets in the middle.",
+    },
+]
+
+FALLBACK_CALLOUTS_SUNFLOWER_GARDEN = [
+    {
+        "anchor": "disk",
+        "label": "Center disk",
+        "fact": "That busy middle feeds bees and other pollinators that also visit the flowers you grow nearby.",
+    },
+    {
+        "anchor": "seeds",
+        "label": "Seed heads",
+        "fact": "Heavy seed heads drop and spill seeds close by, while birds carry some farther — two quiet dispersal paths from one plant.",
     },
     {
         "anchor": "help",
@@ -144,7 +192,30 @@ FALLBACK_CALLOUTS_SUNFLOWER = [
     },
 ]
 
-FALLBACK_CALLOUTS_PHILODENDRON = [
+FALLBACK_CALLOUTS_PHILODENDRON_WALK = [
+    {
+        "anchor": "leaves",
+        "label": "Heart-shaped leaves",
+        "fact": "Those glossy heart-shaped leaves are why this plant shows up on so many shelves and windowsills — easy to recognize once you know the shape.",
+    },
+    {
+        "anchor": "habit",
+        "label": "Tropical roots",
+        "fact": "Outdoors it belongs in warm, humid forest edges — not temperate wildlands — which is why a dumped houseplant can struggle or crowd the wrong neighbors.",
+    },
+    {
+        "anchor": "help",
+        "label": "Small help",
+        "fact": "If you find one left outdoors where it doesn’t belong, bagging it for trash or proper compost (not a creek edge) is a quiet kindness to local plants.",
+    },
+    {
+        "anchor": "stems",
+        "label": "Climbing habit",
+        "fact": "In the tropics those same flexible stems scramble and climb — a plant trick of its own, not only a shelf decoration.",
+    },
+]
+
+FALLBACK_CALLOUTS_PHILODENDRON_GARDEN = [
     {
         "anchor": "leaves",
         "label": "Heart-shaped leaves",
@@ -167,8 +238,63 @@ FALLBACK_CALLOUTS_PHILODENDRON = [
     },
 ]
 
-# Back-compat alias used nowhere new, but keep name for any external refs
+# Back-compat aliases (walk / non-garden defaults)
+FALLBACK_CALLOUTS_POPPY = FALLBACK_CALLOUTS_POPPY_WALK
+FALLBACK_CALLOUTS_SUNFLOWER = FALLBACK_CALLOUTS_SUNFLOWER_WALK
+FALLBACK_CALLOUTS_PHILODENDRON = FALLBACK_CALLOUTS_PHILODENDRON_WALK
 FALLBACK_CALLOUTS = FALLBACK_CALLOUTS_POPPY
+
+
+def _fallback_callouts_for(display: str, latin: str, note: str, color: str, garden_focus: bool) -> list[dict[str, str]]:
+    blob = (display + " " + latin + " " + note + " " + color).lower()
+    if "poppy" in blob or "eschscholzia" in blob:
+        callouts = list(
+            FALLBACK_CALLOUTS_POPPY_GARDEN if garden_focus else FALLBACK_CALLOUTS_POPPY_WALK
+        )
+    elif "sunflower" in blob or "helianthus" in blob:
+        callouts = list(
+            FALLBACK_CALLOUTS_SUNFLOWER_GARDEN
+            if garden_focus
+            else FALLBACK_CALLOUTS_SUNFLOWER_WALK
+        )
+        if any(c in blob for c in ("red", "burgundy", "crimson", "dark", "black")):
+            color_fact = (
+                "This form shows dark or red ray florets instead of classic yellow — "
+                "garden sunflowers come in many petal colors."
+                if garden_focus
+                else "This form shows dark or red ray florets instead of classic yellow — "
+                "match the shade you see on the walk, not a textbook yellow."
+            )
+            callouts = [
+                {
+                    "anchor": "petals",
+                    "label": "Ray color",
+                    "fact": color_fact,
+                },
+                *callouts[1:3],
+                callouts[-1],
+            ][:MAX_CALLOUTS]
+    elif (
+        "philodendron" in blob
+        or "hederaceum" in blob
+        or "scandens" in blob
+        or "sweetheart" in blob
+        or "heartleaf" in blob
+    ):
+        callouts = list(
+            FALLBACK_CALLOUTS_PHILODENDRON_GARDEN
+            if garden_focus
+            else FALLBACK_CALLOUTS_PHILODENDRON_WALK
+        )
+    else:
+        callouts = [
+            {
+                "anchor": "overview",
+                "label": "Overview",
+                "fact": f"Best guess right now: {display}. Facts service had a hiccup — try Load again.",
+            }
+        ]
+    return callouts
 
 IDENTIFY_PROMPT = (
     "You identify wildlife, plants, fungi, or clear evidence of them "
@@ -1962,6 +2088,7 @@ def build_callouts(
     compare_place_id: str = "",
     compare_place_label: str = "",
     season: str = "",
+    garden_focus: bool = False,
 ) -> dict[str, Any]:
     display = common.strip()
     if not display:
@@ -1987,6 +2114,42 @@ def build_callouts(
     ns_meta = _fetch_natureserve_meta(latin_n) if latin_n else None
     fallback_meta = _fallback_species_meta(display, latin_n)
 
+    # Shared eco lean (bane of extinction): care for the living world without making
+    # every line a chore or “work.” Wonder + noticing first; one gentle help tip.
+    eco_tone = (
+        "ECO LEAN — this game is Bane of Extinction: lean toward helping the living "
+        "world, but do NOT make every fact a save-the-planet assignment or homework. "
+        "Most callouts can be wonder, noticing, and how life works. Warm and concrete — "
+        "not lecturey, not guilt. "
+        "EXACTLY ONE everyday callout must be a SMALL HELP tip (gentle, choosable "
+        "kindness — never guilt-trip; never blame staple foods, housing, transit, or "
+        "systems people don’t control; never panic about extinction). "
+        "EXACTLY ONE callout (separate from the help tip) should be a wonder fact about "
+        "the species itself (its own trick, life cycle, or ecology) with less direct "
+        "human impact. "
+    )
+
+    if garden_focus:
+        focus_block = (
+            "GARDEN FOCUS ON — eco-minded facts for GARDEN life: beds, plantings, "
+            "seed heads, seed dispersal, grower noticing, pollinators in plantings, "
+            "houseplant care when relevant. Prefer garden-shaped angles over wild-trail "
+            "ones. For animals: how they use or help a garden (visitors, helpers, signs) "
+            "— never fake “how to plant” an animal. "
+            "Help tip must be garden-shaped kindness. Seed dispersal is welcome here "
+            "(pods that fling, birds carrying seed, self-sowing near last year’s plants). "
+            "Do NOT fill the set with only chores — keep wonder and noticing in the mix. "
+        )
+    else:
+        focus_block = (
+            "GARDEN FOCUS OFF — a DIFFERENT eco-minded focus: walks, wild neighbors, "
+            "shared air/water/food webs, seasons you meet them, place-aware noticing. "
+            "Do NOT give gardening how-tos, “if you grow one…,” bed/soil recipes, or "
+            "seed-dispersal-as-grower tips. Leave garden-world facts for garden focus. "
+            "Help tip must be walk/neighbor kindness (leave a nest alone, skip a spray "
+            "on a wild patch, keep distance, etc.) — still eco-leaning, not garden advice. "
+        )
+
     system = (
         "You write short, family-friendly wildlife and plant education callouts for "
         "Bane of Extinction. Return ONLY valid JSON. No Wikipedia, no URLs, no scraping. "
@@ -1996,28 +2159,15 @@ def build_callouts(
         "CRITICAL: match petal/ray COLOR from the identification and scan note. "
         "A red or dark sunflower must NOT get yellow-only petal facts. "
         "TONE — help a walker feel this organism belongs in THEIR world, not a textbook dump. "
-        "Most callouts must tie the organism to everyday human life in a gentle way "
-        "(what you’d notice on a walk or in a yard, shared air/water/food webs, shade, "
-        "pollinators near people, pets/kids safety when relevant, seasons you meet it, "
-        "how it shares neighborhoods). Warm and concrete — not lecturey. "
-        "PLACE LENS — the player chose a place they are LOOKING AT (not GPS). "
+        + eco_tone
+        + focus_block
+        + "PLACE LENS — the player chose a place they are LOOKING AT (not GPS). "
         "Personalize tips to that lens: native vs introduced vs invasive THERE, "
-        "whether pollinator/plant advice makes sense THERE, and what a neighbor might do "
-        "in THAT kind of place (urban, suburban, city, coast, woodland, etc.). If only a habitat "
+        "whether advice makes sense THERE, and what fits THAT kind of place "
+        "(urban, suburban, city, coast, woodland, etc.). If only a habitat "
         "was chosen (no region), keep advice "
         "habitat-shaped and say status may differ by region. Never claim you know where "
         "the player is standing. "
-        "EXACTLY ONE of those everyday callouts must be a SMALL HELP tip: something a "
-        "walker or neighbor can actually do that supports THIS species’ natural world "
-        "or nearby habitat (leave a patch alone, skip a pesticide on that plant, keep a "
-        "water dish for pollinators, don’t dig a nest, plant a native companion, etc.). "
-        "Help tip rules: practical and local to the place lens; never guilt-trip; never blame everyday "
-        "survival needs (staple foods, housing, transit they don’t control); never blame "
-        "people for industrial waste or systems they don’t get a say in; never panic about "
-        "extinction. Prefer kindness they can choose over blame for what they can’t. "
-        "EXACTLY ONE callout (separate from the help tip) should be a wonder fact about "
-        "the species itself (its own trick, life cycle, or ecology) with less direct "
-        "human impact. Do not invent personal medical advice. "
         "Also fill nativeRangeRefine, rangeElsewhere, and conservationStatus as SHORT "
         "caption fields (not extra callouts). "
         "nativeRangeRefine: where it is native (region/country/state level — e.g. "
@@ -2046,7 +2196,8 @@ def build_callouts(
         + (f"; bloom color: {color_n}" if color_n else "")
         + (f"; scan note: {note_n}" if note_n else "")
         + f"; type: {org_type}. "
-        "Write callouts accurate for THIS identification and visible color. "
+        + ("Garden focus ON. " if garden_focus else "Garden focus OFF. ")
+        + "Write callouts accurate for THIS identification and visible color. "
         "If red/dark sunflower rays, describe those — not classic yellow-only petals. "
         "Put the help tip near the middle when possible; put the species-wonder fact last."
     )
@@ -2150,8 +2301,10 @@ def build_callouts(
             }
         )
         + f"\nUse 3 to {MAX_CALLOUTS} callouts. "
-        "Mix: everyday player-world facts (including EXACTLY ONE small-help tip for "
-        "this species’ world) + EXACTLY ONE species-own wonder. Fresh angles if avoid-list given. "
+        "Mix: everyday player-world facts for the ACTIVE focus "
+        "(garden ON = garden eco; garden OFF = walk/wild eco) "
+        "including EXACTLY ONE small-help tip for this species’ world "
+        "+ EXACTLY ONE species-own wonder. Fresh angles if avoid-list given. "
         "Keep nativeRangeRefine, rangeElsewhere, conservationStatus, localStatus, and "
         "compareNote out of the callout list. "
         f"Each fact must be a complete thought under ~{MAX_FACT_CHARS} characters — "
@@ -2181,37 +2334,9 @@ def build_callouts(
         local_status = str(parsed.get("localStatus") or "").strip()[:160]
         compare_note = str(parsed.get("compareNote") or "").strip()[:200]
     except Exception as exc:  # noqa: BLE001
-        blob = (display + " " + latin_n + " " + note_n + " " + color_n).lower()
-        if "poppy" in blob or "eschscholzia" in blob:
-            callouts = list(FALLBACK_CALLOUTS_POPPY)
-        elif "sunflower" in blob or "helianthus" in blob:
-            callouts = list(FALLBACK_CALLOUTS_SUNFLOWER)
-            if any(c in blob for c in ("red", "burgundy", "crimson", "dark", "black")):
-                callouts = [
-                    {
-                        "anchor": "petals",
-                        "label": "Ray color",
-                        "fact": "This form shows dark or red ray florets instead of classic yellow — garden sunflowers come in many petal colors.",
-                    },
-                    *callouts[1:3],
-                    callouts[-1],
-                ][:MAX_CALLOUTS]
-        elif (
-            "philodendron" in blob
-            or "hederaceum" in blob
-            or "scandens" in blob
-            or "sweetheart" in blob
-            or "heartleaf" in blob
-        ):
-            callouts = list(FALLBACK_CALLOUTS_PHILODENDRON)
-        else:
-            callouts = [
-                {
-                    "anchor": "overview",
-                    "label": "Overview",
-                    "fact": f"Best guess right now: {display}. Facts service had a hiccup — try Load again.",
-                }
-            ]
+        callouts = _fallback_callouts_for(
+            display, latin_n, note_n, color_n, garden_focus
+        )
         source = f"fallback:{type(exc).__name__}"
         local_status, compare_note = _fallback_place_status(
             display,
@@ -2236,6 +2361,10 @@ def build_callouts(
         "Helper facts for what the game thinks it saw — useful for learning, "
         "not a guaranteed field guide."
     )
+    if garden_focus:
+        disclaimer += " Garden focus is on — eco-minded garden-world facts."
+    else:
+        disclaimer += " Garden focus is off — walk and wild-neighbor eco facts (not gardening how-tos)."
     if place_label_n:
         disclaimer += (
             " Place tips follow the looking-at place you chose — not GPS or where you stand."
@@ -2264,6 +2393,7 @@ def build_callouts(
         "comparePlaceLabel": compare_label_n,
         "compareNote": compare_note,
         "season": season_n,
+        "gardenFocus": bool(garden_focus),
         "disclaimer": disclaimer,
     }
 
@@ -2487,6 +2617,11 @@ class Handler(BaseHTTPRequestHandler):
             compare_place_id = str(body.get("comparePlaceId") or "").strip()
             compare_place_label = str(body.get("comparePlaceLabel") or "").strip()
             season = str(body.get("season") or "").strip()
+            garden_focus = bool(
+                body.get("gardenFocus")
+                or body.get("garden_focus")
+                or body.get("gardenMode")
+            )
             if not common:
                 _json(
                     self,
@@ -2515,6 +2650,7 @@ class Handler(BaseHTTPRequestHandler):
                 compare_place_id=compare_place_id,
                 compare_place_label=compare_place_label,
                 season=season,
+                garden_focus=garden_focus,
             )
             _json(self, 200, result)
             return
