@@ -30,7 +30,7 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeoutError
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any
 
@@ -65,6 +65,10 @@ _DEFAULT_IMAGE_MODELS = (
 )
 GEMINI_IMAGE_MODEL = os.environ.get("BANE_GEMINI_IMAGE_MODEL", "").strip()
 MAX_CALLOUTS = 5
+MAX_FACT_CHARS = 480
+MAX_SHORT_NOTE_CHARS = 240
+# Keep identify responsive: art may skip if Gemini is slow (ID still returns).
+CODEX_STILL_BUDGET_SEC = int(os.environ.get("BANE_STILL_BUDGET_SEC", "55"))
 MAX_IMAGE_B64 = 4_500_000
 MAX_LEARNED_ENTRIES = 48
 MAX_LEARNED_BODY = 3_500_000
@@ -441,7 +445,7 @@ def _sanitize_learned_entry(raw: Any) -> dict[str, Any] | None:
         "bloomColor": str(raw.get("bloomColor") or "").strip()[:40],
         "organismType": str(raw.get("organismType") or "other").strip()[:40],
         "lifeStage": str(raw.get("lifeStage") or "").strip()[:40],
-        "shortNote": str(raw.get("shortNote") or "").strip()[:240],
+        "shortNote": _clip_plain(str(raw.get("shortNote") or ""), MAX_SHORT_NOTE_CHARS),
         "evidence": bool(raw.get("evidence")),
         "stillMime": mime if still_b64 else "",
         "stillBase64": still_b64,
@@ -541,6 +545,32 @@ def merge_learned(
     out = list(by_key.values())
     out.sort(key=lambda e: int(e.get("lastSeenAt") or 0), reverse=True)
     return out[:MAX_LEARNED_ENTRIES]
+
+
+def _clip_plain(text: str, max_len: int) -> str:
+    """Hard length cap that prefers a sentence end (avoids mid-sentence chops)."""
+    s = (text or "").strip()
+    if max_len <= 0 or len(s) <= max_len:
+        return s
+    window = s[:max_len]
+    # Prefer the last complete sentence that fits (min length avoids "Ok." stubs).
+    min_keep = 8
+    best_end = -1
+    for i, ch in enumerate(window):
+        if ch in ".!?" and i + 1 >= min_keep:
+            nxt = window[i + 1] if i + 1 < len(window) else " "
+            if nxt.isspace() or nxt in "\"'”’)":
+                best_end = i
+    if best_end >= 0:
+        return window[: best_end + 1].strip()
+    # No sentence end in window — also accept end-of-window terminator.
+    if window[-1] in ".!?":
+        return window.strip()
+    # Fall back to a word boundary + ellipsis (never a silent mid-word chop).
+    sp = window.rfind(" ")
+    if sp >= min_keep:
+        return window[:sp].rstrip(",;:—- ") + "…"
+    return window.rstrip() + "…"
 
 
 def _extract_json_object(text: str) -> dict[str, Any]:
@@ -1035,7 +1065,7 @@ def _norm_id(parsed: dict[str, Any]) -> dict[str, Any]:
         "lifeStage": life_stage,
         "evidence": bool(parsed.get("evidence")),
         "confidence": conf,
-        "shortNote": str(parsed.get("shortNote") or "").strip()[:240],
+        "shortNote": _clip_plain(str(parsed.get("shortNote") or ""), MAX_SHORT_NOTE_CHARS),
         "alternatives": alts,
         "noOrganism": no_organism,
     }
@@ -1265,20 +1295,54 @@ def identify_wildlife(
     }
 
     if want_codex_still:
-        still = generate_codex_still(
-            image_b64,
-            mime,
-            common=str(result["commonName"]),
-            latin=str(result.get("latinName") or ""),
-            cultivar=str(result.get("cultivar") or ""),
-            organism_type=str(result.get("organismType") or ""),
-            life_stage=str(result.get("lifeStage") or ""),
-            short_note=str(
-                (result.get("bloomColor") or "")
-                + " "
-                + (result.get("shortNote") or "")
-            ).strip(),
-        )
+        still: dict[str, Any] = {
+            "ok": False,
+            "error": "still_skipped",
+            "message": "Codex art skipped — identification kept.",
+        }
+        try:
+            with ThreadPoolExecutor(max_workers=1) as still_pool:
+                fut_still = still_pool.submit(
+                    generate_codex_still,
+                    image_b64,
+                    mime,
+                    common=str(result["commonName"]),
+                    latin=str(result.get("latinName") or ""),
+                    cultivar=str(result.get("cultivar") or ""),
+                    organism_type=str(result.get("organismType") or ""),
+                    life_stage=str(result.get("lifeStage") or ""),
+                    short_note=str(
+                        (result.get("bloomColor") or "")
+                        + " "
+                        + (result.get("shortNote") or "")
+                    ).strip(),
+                )
+                still = fut_still.result(timeout=CODEX_STILL_BUDGET_SEC)
+        except FuturesTimeoutError:
+            still = {
+                "ok": False,
+                "error": "still_timeout",
+                "message": (
+                    "Codex art took too long — identification kept. "
+                    "Open the codex; you can rescan for art later."
+                ),
+            }
+            print(
+                f"bane_codex_still timeout common={result['commonName']!r} "
+                f"budget={CODEX_STILL_BUDGET_SEC}s",
+                flush=True,
+            )
+        except Exception as exc:  # noqa: BLE001
+            still = {
+                "ok": False,
+                "error": "still_failed",
+                "message": f"Could not build matching codex still: {exc}",
+            }
+            print(
+                f"bane_codex_still exception common={result['commonName']!r}: {exc}",
+                flush=True,
+            )
+
         if still.get("ok") and still.get("imageBase64"):
             token = save_still_token(
                 str(still.get("mimeType") or "image/jpeg"),
@@ -1287,11 +1351,12 @@ def identify_wildlife(
             if token:
                 result["stillToken"] = token
                 result["stillUrl"] = f"/bane-of-extinction/api/still/{token}"
+                # Prefer URL over embedding huge base64 in the identify JSON
+                # (smaller response → fewer phone timeouts after a slow ID).
                 result["codexStill"] = {
                     "token": token,
                     "url": result["stillUrl"],
                     "mimeType": still.get("mimeType") or "image/jpeg",
-                    "imageBase64": still["imageBase64"],
                     "matched": True,
                     "fromPhoto": still.get("fromPhoto", True),
                     "lifeStage": result.get("lifeStage") or "",
@@ -1345,7 +1410,13 @@ def _normalize_callouts(raw: Any) -> list[dict[str, str]]:
             continue
         if not anchor:
             anchor = "feature"
-        out.append({"anchor": anchor[:40], "label": label[:60], "fact": fact[:320]})
+        out.append(
+            {
+                "anchor": anchor[:40],
+                "label": label[:60],
+                "fact": _clip_plain(fact, MAX_FACT_CHARS),
+            }
+        )
         if len(out) >= MAX_CALLOUTS:
             break
     return out
@@ -1901,7 +1972,7 @@ def build_callouts(
     color_n = bloom_color.strip()
     org_type = (organism_type or ("evidence" if evidence else "organism")).strip()[:40]
     avoid = [
-        str(x).strip()[:320]
+        _clip_plain(str(x), MAX_FACT_CHARS)
         for x in (avoid_facts or [])
         if str(x).strip()
     ][:40]
@@ -2073,7 +2144,7 @@ def build_callouts(
                     {
                         "anchor": "part_or_clue",
                         "label": "Short label",
-                        "fact": "1–2 short sentences",
+                        "fact": "1–2 complete short sentences (finish every sentence)",
                     }
                 ],
             }
@@ -2082,14 +2153,17 @@ def build_callouts(
         "Mix: everyday player-world facts (including EXACTLY ONE small-help tip for "
         "this species’ world) + EXACTLY ONE species-own wonder. Fresh angles if avoid-list given. "
         "Keep nativeRangeRefine, rangeElsewhere, conservationStatus, localStatus, and "
-        "compareNote out of the callout list."
+        "compareNote out of the callout list. "
+        f"Each fact must be a complete thought under ~{MAX_FACT_CHARS} characters — "
+        "never stop mid-sentence."
     )
 
     claude_meta: dict[str, Any] = {}
     local_status = ""
     compare_note = ""
     try:
-        raw_text = _call_claude_text(system, user)
+        # Place-lens callouts need headroom so Claude does not stop mid-sentence.
+        raw_text = _call_claude_text(system, user, max_tokens=1600)
         parsed = _extract_json_object(raw_text)
         callouts = _normalize_callouts(parsed.get("callouts"))
         if len(callouts) < 2:
@@ -2403,7 +2477,7 @@ class Handler(BaseHTTPRequestHandler):
             if not isinstance(avoid_raw, list):
                 avoid_raw = []
             avoid_facts = [
-                str(x).strip()[:320] for x in avoid_raw if str(x).strip()
+                _clip_plain(str(x), MAX_FACT_CHARS) for x in avoid_raw if str(x).strip()
             ][:40]
             place_id = str(body.get("placeId") or "").strip()
             place_label = str(body.get("placeLabel") or "").strip()

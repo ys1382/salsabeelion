@@ -2,18 +2,21 @@
   "use strict";
 
   var API = "/bane-of-extinction/api/wildlife-identify";
+  var API_STILL = "/bane-of-extinction/api/codex-still";
   var STORAGE_KEY = "bane_last_id";
   var STILL_KEY = "bane_last_still";
-  var ASSET_V = "20260720live";
+  var ASSET_V = "20260722live";
   var LIVE_COACH_MS = 350;
   var BLUR_TOO_LOW = 36;
-  var BLUR_SOFT = 70;
+  var BLUR_SOFT = 55;
   var EDGE_TOO_LOW = 0.014;
-  var EDGE_SOFT = 0.028;
+  var EDGE_SOFT = 0.022;
   var FILL_TOO_LOW = 0.12;
-  var FILL_SOFT = 0.2;
+  var FILL_SOFT = 0.16;
   var VARIANCE_TOO_LOW = 180;
-  var VARIANCE_SOFT = 320;
+  var VARIANCE_SOFT = 260;
+  var IDENTIFY_TIMEOUT_MS = 90000;
+  var STILL_TIMEOUT_MS = 70000;
 
   var desktopBlock = document.getElementById("desktopBlock");
   var scanUi = document.getElementById("scanUi");
@@ -501,6 +504,47 @@
     window.location.href = codexUrl(lastRecord);
   }
 
+  function revealIdPreview(data) {
+    lastRecord = {
+      displayName: data.displayName || data.commonName || "",
+      commonName: data.commonName || "",
+      latinName: data.latinName || "",
+      cultivar: data.cultivar || "",
+      bloomColor: data.bloomColor || "",
+      evidence: !!data.evidence,
+      organismType: data.organismType || "flower",
+      lifeStage: data.lifeStage || "",
+      confidence: data.confidence || "",
+      shortNote: data.shortNote || "",
+      stillToken: "",
+      hasStill: false,
+      geminiName:
+        data.sources && data.sources.gemini
+          ? data.sources.gemini.commonName
+          : "",
+      claudeName:
+        data.sources && data.sources.claude
+          ? data.sources.claude.commonName
+          : "",
+    };
+    saveRecord(lastRecord);
+    if (resultName) {
+      resultName.textContent =
+        lastRecord.displayName || lastRecord.commonName || "Unknown";
+    }
+    if (resultLatin) resultLatin.textContent = lastRecord.latinName || "—";
+    if (resultMeta) {
+      var bits = [];
+      if (lastRecord.confidence) bits.push("confidence: " + lastRecord.confidence);
+      if (lastRecord.lifeStage) bits.push("stage: " + lastRecord.lifeStage);
+      if (lastRecord.bloomColor) bits.push("color: " + lastRecord.bloomColor);
+      bits.push("finishing matching art…");
+      if (lastRecord.shortNote) bits.push(lastRecord.shortNote);
+      resultMeta.textContent = bits.join(" · ");
+    }
+    if (resultBox) resultBox.hidden = false;
+  }
+
   function showResult(data, stillPayload) {
     lastRecord = {
       displayName: data.displayName || data.commonName || "",
@@ -627,6 +671,104 @@
     finishLearn(null);
   }
 
+  function parseJsonResponse(res, text) {
+    var data = null;
+    try {
+      data = text ? JSON.parse(text) : {};
+    } catch (parseErr) {
+      if (res.status === 413) {
+        throw new Error(
+          "Photo too large for the server. Try again a bit farther back."
+        );
+      }
+      throw new Error(
+        "Bad response from scan API (HTTP " + res.status + "). Try again."
+      );
+    }
+    return data || {};
+  }
+
+  function fetchJson(url, bodyObj, timeoutMs) {
+    var ctrl = typeof AbortController !== "undefined" ? new AbortController() : null;
+    var timer = null;
+    if (ctrl && timeoutMs > 0) {
+      timer = setTimeout(function () {
+        try {
+          ctrl.abort();
+        } catch (e) {}
+      }, timeoutMs);
+    }
+    return fetch(url, {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(bodyObj),
+      signal: ctrl ? ctrl.signal : undefined,
+    })
+      .then(function (res) {
+        return res.text().then(function (text) {
+          return { res: res, data: parseJsonResponse(res, text) };
+        });
+      })
+      .finally(function () {
+        if (timer) clearTimeout(timer);
+      });
+  }
+
+  function stillInfoFromPayload(data) {
+    if (!data) return null;
+    var cs = data.codexStill || null;
+    if (data.stillToken || (cs && (cs.token || cs.imageBase64 || cs.url))) {
+      return {
+        token: data.stillToken || (cs && cs.token) || "",
+        url: data.stillUrl || (cs && cs.url) || "",
+        mimeType: (cs && cs.mimeType) || data.mimeType || "image/jpeg",
+        imageBase64: (cs && cs.imageBase64) || data.imageBase64 || "",
+      };
+    }
+    if (data.ok && (data.imageBase64 || data.token || data.url)) {
+      return {
+        token: data.token || "",
+        url: data.url || "",
+        mimeType: data.mimeType || "image/jpeg",
+        imageBase64: data.imageBase64 || "",
+      };
+    }
+    return null;
+  }
+
+  function requestCodexStill(payload, idData) {
+    if (!payload || !payload.imageBase64 || !idData || !idData.commonName) {
+      return Promise.resolve(null);
+    }
+    return fetchJson(
+      API_STILL,
+      {
+        imageBase64: payload.imageBase64,
+        mimeType: payload.mimeType || "image/jpeg",
+        commonName: idData.commonName || "",
+        latinName: idData.latinName || "",
+        cultivar: idData.cultivar || "",
+        organismType: idData.organismType || "",
+        lifeStage: idData.lifeStage || "",
+        shortNote: (
+          (idData.bloomColor || "") +
+          " " +
+          (idData.shortNote || "")
+        ).trim(),
+      },
+      STILL_TIMEOUT_MS
+    )
+      .then(function (pack) {
+        var data = pack.data || {};
+        if (!pack.res.ok || !data.ok) return null;
+        return stillInfoFromPayload(data);
+      })
+      .catch(function () {
+        return null;
+      });
+  }
+
   function onCapture() {
     if (busy) {
       setStatus("Still working on your photo… please wait. One tap is enough.");
@@ -646,15 +788,16 @@
       redirectTimer = null;
     }
     var started = Date.now();
+    var phase = "id";
     var tick = setInterval(function () {
       var sec = Math.round((Date.now() - started) / 1000);
       setStatus(
-        "Working on your photo… " +
-          sec +
-          "s (ID + matching codex art). Camera is off."
+        phase === "art"
+          ? "ID ready — making matching codex art… " + sec + "s. Camera is off."
+          : "Working on your photo… " + sec + "s (identifying). Camera is off."
       );
     }, 500);
-    setStatus("Photo captured — camera off. Identifying & making codex art…");
+    setStatus("Photo captured — camera off. Identifying…");
     var payload;
     try {
       payload = captureFrame();
@@ -669,35 +812,16 @@
       return;
     }
 
-    fetch(API, {
-      method: "POST",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
+    // Phase 1: ID only (fast). Phase 2: matching art — never blocks a good ID.
+    fetchJson(
+      API,
+      {
         imageBase64: payload.imageBase64,
         mimeType: payload.mimeType,
-        wantCodexStill: true,
-      }),
-    })
-      .then(function (res) {
-        payload.imageBase64 = "";
-        return res.text().then(function (text) {
-          var data = null;
-          try {
-            data = text ? JSON.parse(text) : {};
-          } catch (parseErr) {
-            if (res.status === 413) {
-              throw new Error(
-                "Photo too large for the server. Try again a bit farther back."
-              );
-            }
-            throw new Error(
-              "Bad response from scan API (HTTP " + res.status + "). Try again."
-            );
-          }
-          return { res: res, data: data || {} };
-        });
-      })
+        wantCodexStill: false,
+      },
+      IDENTIFY_TIMEOUT_MS
+    )
       .then(function (pack) {
         var data = pack.data || {};
         if (!pack.res.ok || !data.ok) {
@@ -705,27 +829,38 @@
             (data && data.message) || (data && data.error) || "identify_failed"
           );
         }
-        clearInterval(tick);
+        phase = "art";
         hideFreezeFrame();
         clearCanvas();
-        var stillInfo = null;
-        var cs = data.codexStill || null;
-        if (data.stillToken || (cs && (cs.token || cs.imageBase64 || cs.url))) {
-          stillInfo = {
-            token: data.stillToken || (cs && cs.token) || "",
-            url: data.stillUrl || (cs && cs.url) || "",
-            mimeType: (cs && cs.mimeType) || "image/jpeg",
-            imageBase64: (cs && cs.imageBase64) || "",
-          };
+        revealIdPreview(data);
+        setStatus(
+          "Found: " +
+            (data.displayName || data.commonName || "organism") +
+            ". Making matching codex art…"
+        );
+        if (coachHint) {
+          coachHint.textContent =
+            "Identified — finishing matching codex art (or opening without it)…";
         }
-        showResult(data, stillInfo);
+        return requestCodexStill(payload, data).then(function (stillInfo) {
+          return { data: data, stillInfo: stillInfo };
+        });
+      })
+      .then(function (pack) {
+        payload.imageBase64 = "";
+        clearInterval(tick);
+        showResult(pack.data, pack.stillInfo || null);
       })
       .catch(function (err) {
         clearInterval(tick);
         if (payload) payload.imageBase64 = "";
         clearCanvas();
         hideFreezeFrame();
-        setStatus("Scan failed: " + (err && err.message ? err.message : "error"));
+        var msg = err && err.message ? err.message : "error";
+        if (err && err.name === "AbortError") {
+          msg = "Scan timed out — try again with a clearer frame.";
+        }
+        setStatus("Scan failed: " + msg);
         busy = false;
         startCamera();
       })
