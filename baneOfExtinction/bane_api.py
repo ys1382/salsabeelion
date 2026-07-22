@@ -12,9 +12,10 @@ Bane of Extinction — owner-beta API.
 Binds 127.0.0.1 only. Keys from env / shared kids-sites files.
 Facts: Claude helper knowledge + curated fallbacks. Status/range: NatureServe Explorer
 (CC BY) when a scientific name matches — never IUCN site/API, never Wikipedia as sole source.
-Caption fields: conservation status when possible; native range; where introduced/often
-invasive elsewhere (no compare-place required). Soft wording — NatureServe marks exotic,
-not always invasive. Raw scan photos are never written to disk.
+Introduced/invasive caption: USGS US-RIIS (CC0) when latin name matches AK/HI/L48 lists;
+else NatureServe exotic flags + Claude soft caution. Caption fields: conservation status
+when possible; native range; elsewhere (no compare-place required). Raw scan photos are
+never written to disk.
 """
 from __future__ import annotations
 
@@ -76,6 +77,13 @@ STILL_DIR = os.environ.get(
 )
 STILL_TTL_SEC = int(os.environ.get("BANE_STILL_TTL_SEC", "1200"))  # 20 min
 _STILL_META: dict[str, float] = {}  # token -> expires_at
+US_RIIS_PATH = os.environ.get(
+    "BANE_US_RIIS_PATH",
+    os.path.join(_HERE, "data", "us_riis_lookup.json"),
+)
+_US_RIIS_CACHE: dict[str, Any] | None = None
+_US_RIIS_BY: dict[str, dict[str, str]] | None = None
+_US_RIIS_ATTR = ""
 
 POPPY_DEFAULT = {
     "common": "California poppy",
@@ -1439,6 +1447,78 @@ def _status_from_grank(grank: str) -> str:
     return f"{label} (NatureServe {base})"
 
 
+def _norm_binomial(latin: str) -> str:
+    s = re.sub(r"\s+", " ", (latin or "").strip().lower())
+    parts = s.split()
+    if len(parts) >= 2:
+        return f"{parts[0]} {parts[1]}"
+    return s
+
+
+def _load_us_riis() -> None:
+    """Load USGS US-RIIS compact lookup once (CC0)."""
+    global _US_RIIS_CACHE, _US_RIIS_BY, _US_RIIS_ATTR
+    if _US_RIIS_BY is not None:
+        return
+    _US_RIIS_BY = {}
+    path = US_RIIS_PATH
+    if not path or not os.path.isfile(path):
+        return
+    try:
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+    except (OSError, json.JSONDecodeError):
+        return
+    if not isinstance(data, dict):
+        return
+    _US_RIIS_CACHE = data
+    _US_RIIS_ATTR = str(data.get("attr") or "")[:280]
+    by = data.get("by")
+    if isinstance(by, dict):
+        _US_RIIS_BY = {str(k).lower(): v for k, v in by.items() if isinstance(v, dict)}
+
+
+def _us_riis_entry(latin: str) -> dict[str, str] | None:
+    _load_us_riis()
+    if not _US_RIIS_BY:
+        return None
+    key = _norm_binomial(latin)
+    hit = _US_RIIS_BY.get(key)
+    return hit if isinstance(hit, dict) else None
+
+
+def _caption_from_us_riis(latin: str) -> tuple[str, str]:
+    """Return (rangeElsewhere caption, attribution) from US-RIIS when matched."""
+    hit = _us_riis_entry(latin)
+    if not hit:
+        return "", ""
+    labels = {
+        "L48": "the contiguous U.S.",
+        "AK": "Alaska",
+        "HI": "Hawaii",
+    }
+    inv: list[str] = []
+    intro: list[str] = []
+    for loc in ("L48", "AK", "HI"):
+        deg = str(hit.get(loc) or "").strip()
+        if not deg:
+            continue
+        place = labels[loc]
+        if deg == "widespread_invasive":
+            inv.append(f"widespread invasive in {place}")
+        elif deg == "invasive":
+            inv.append(f"invasive in {place}")
+        else:
+            intro.append(f"introduced in {place}")
+    if inv:
+        text = "Caution: US-RIIS lists this as " + "; ".join(inv)
+    elif intro:
+        text = "Caution: US-RIIS lists this as " + "; ".join(intro)
+    else:
+        return "", ""
+    return text[:180], (_US_RIIS_ATTR or "USGS US-RIIS (CC0).")
+
+
 def _place_label(nation: str, code: str) -> str:
     code_u = (code or "").upper()
     if nation == "US":
@@ -1686,6 +1766,8 @@ def _merge_species_meta(
     ns: dict[str, Any] | None,
     claude_meta: dict[str, Any] | None,
     fallback: dict[str, str],
+    *,
+    latin: str = "",
 ) -> dict[str, str]:
     ns = ns or {}
     claude_meta = claude_meta or {}
@@ -1694,6 +1776,15 @@ def _merge_species_meta(
     status = str(ns.get("conservationStatus") or "").strip()
     range_src = str(ns.get("rangeSource") or "")
     status_src = str(ns.get("statusSource") or "")
+    attribution = str(ns.get("attribution") or "").strip()
+
+    # USGS US-RIIS (CC0) wins for introduced/invasive-elsewhere when latin matches.
+    riis_caption, riis_attr = _caption_from_us_riis(latin)
+    if riis_caption:
+        elsewhere = riis_caption
+        range_src = "us-riis"
+        if riis_attr and riis_attr not in attribution:
+            attribution = (attribution + " " + riis_attr).strip() if attribution else riis_attr
 
     # Claude may refine California to NorCal / SoCal / statewide (not counties).
     refine = str(
@@ -1714,15 +1805,20 @@ def _merge_species_meta(
             )
         ):
             native = refine
-            range_src = "natureserve+claude"
+            if "claude" not in range_src:
+                range_src = (
+                    (range_src + "+claude").strip("+") if range_src else "claude"
+                )
         elif not native:
             native = refine
-            range_src = "claude"
+            if not range_src:
+                range_src = "claude"
 
     claude_elsewhere = str(
         claude_meta.get("rangeElsewhere") or claude_meta.get("invasiveElsewhere") or ""
     ).strip()
-    if claude_elsewhere and len(claude_elsewhere) <= 180:
+    # Only use Claude elsewhere when US-RIIS did not already set it.
+    if not riis_caption and claude_elsewhere and len(claude_elsewhere) <= 180:
         if not elsewhere:
             elsewhere = claude_elsewhere
             if "claude" not in range_src:
@@ -1741,7 +1837,7 @@ def _merge_species_meta(
 
     if not native:
         native = fallback.get("nativeRange") or ""
-        if native:
+        if native and not range_src:
             range_src = fallback.get("rangeSource") or "curated"
     if not elsewhere:
         elsewhere = fallback.get("rangeElsewhere") or ""
@@ -1763,7 +1859,7 @@ def _merge_species_meta(
         "conservationStatus": status[:100],
         "statusSource": status_src[:40],
         "rangeSource": range_src[:40],
-        "attribution": str(ns.get("attribution") or "")[:220],
+        "attribution": attribution[:420],
     }
 
 
@@ -1933,6 +2029,12 @@ def build_callouts(
             "conservationStatus from well-established knowledge when you can "
             "(native vs often invasive/introduced elsewhere; plain-words status)."
         )
+    riis_preview, _riis_attr = _caption_from_us_riis(latin_n)
+    if riis_preview:
+        scope += (
+            f" USGS US-RIIS already provides the elsewhere caution caption "
+            f"(do not contradict; leave rangeElsewhere empty): {riis_preview}."
+        )
     if evidence:
         scope += " Frame as evidence/clues the player noticed."
     if avoid:
@@ -2037,7 +2139,9 @@ def build_callouts(
             compare_label_n,
         )
 
-    meta = _merge_species_meta(ns_meta, claude_meta, fallback_meta)
+    meta = _merge_species_meta(
+        ns_meta, claude_meta, fallback_meta, latin=latin_n
+    )
 
     title = display
     if cultivar_n and cultivar_n.lower() not in display.lower():
@@ -2145,6 +2249,7 @@ class Handler(BaseHTTPRequestHandler):
                     "claudeKey": bool(anthropic_api_key()),
                     "geminiKey": bool(gemini_api_key()),
                     "geminiImageModels": _image_model_candidates(),
+                    "usRiis": bool(_us_riis_entry("lythrum salicaria")),
                     "sso": identity_from_cookie_header is not None,
                 },
             )
