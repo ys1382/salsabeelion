@@ -8,7 +8,7 @@
 
   if (handheld) {
     statusEl.textContent =
-      "Phone/tablet detected — use Wildlife camera scan, then open the codex for callouts.";
+      "Phone/tablet detected — use EcoLens, then open the codex for callouts.";
     var deskLink = document.getElementById("scanLinkDesktop");
     if (deskLink) deskLink.hidden = true;
     if (scanBtn) {
@@ -21,6 +21,6 @@
     }
   } else {
     statusEl.textContent =
-      "Desktop: browse the wildlife codex here. Open Bane on a phone for camera scan.";
+      "Desktop: browse the wildlife codex here. Open Bane on a phone for EcoLens.";
   }
 })();

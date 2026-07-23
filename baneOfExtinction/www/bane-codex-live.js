@@ -1103,7 +1103,7 @@
           "After a scan, art matches that species and life stage — not your photo."
         );
         setStatus(
-          "No learns yet. Use Wildlife camera scan on your phone."
+          "No learns yet. Use EcoLens on your phone."
         );
       }
     }

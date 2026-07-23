@@ -475,7 +475,7 @@
   color: rgba(160, 210, 220, 0.7);
 }
 
-/* Scan page */
+/* Scan page — EcoLens frame */
 .scan-stage {
   position: relative;
   width: 100%;
@@ -486,19 +486,26 @@
   overflow: hidden;
   background: #0a1210;
   border: 1px solid var(--line);
+  /* Pinch zooms the camera, not the browser page */
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .scan-stage video,
 .scan-stage canvas.scan-stage__freeze {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
+  max-width: 100%;
+  max-height: 100%;
   object-fit: cover;
   display: block;
+  transform-origin: center center;
 }
 
 .scan-stage canvas.scan-stage__freeze {
-  position: absolute;
-  inset: 0;
   z-index: 1;
 }
 

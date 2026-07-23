@@ -2,22 +2,22 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no" />
   <meta name="robots" content="noindex, nofollow" />
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
-  <title>Wildlife scan — Bane of Extinction</title>
+  <title>EcoLens — Bane of Extinction</title>
   <link rel="stylesheet" href="bane.css?v=live1" />
-  <link rel="stylesheet" href="bane-codex-card.css?v=live3" />
+  <link rel="stylesheet" href="bane-codex-card.css?v=live5" />
 </head>
 <body>
   <div class="wrap">
     <header class="hero hero--compact">
-      <p class="eyebrow"><a href="index.html">Bane of Extinction</a> · camera</p>
-      <h1 class="brand">Wildlife scan</h1>
+      <p class="eyebrow"><a href="index.html">Bane of Extinction</a> · EcoLens</p>
+      <h1 class="brand">EcoLens</h1>
       <p class="tagline">
-        Frame → Capture → ID + new semi-realistic codex art (same species &amp; life stage) → photo discarded.
-        Facts and art follow <em>this</em> organism — never your raw photo.
+        Pinch to zoom → optional Drive / Night vision / Camouflage assists → Capture → ID + codex art → photo discarded.
+        Facts and art follow <em>this</em> organism — never your raw photo. No flash.
       </p>
       <p class="note" role="note">
         <strong>Don’t get too close.</strong> Nothing here needs a dangerous close-up. Calm familiar yard wildlife at a few feet is fine;
@@ -26,17 +26,32 @@
     </header>
 
     <p class="note" id="desktopBlock" hidden role="note">
-      <strong>Phone or tablet needed</strong> for camera scan.
+      <strong>Phone or tablet needed</strong> for EcoLens.
       On this device, open the <a href="codex.html" style="color:#6bc48a">wildlife codex</a> instead.
     </p>
 
     <div id="scanUi" hidden>
       <div class="scan-stage">
         <video id="scanVideo" playsinline muted autoplay></video>
+        <canvas id="scanCanvas" hidden></canvas>
         <div class="scan-stage__guide" aria-hidden="true"></div>
-        <p class="scan-stage__hint" id="coachHint">Frame from a safe distance (or clear evidence). Avoid faces/hands when you can. Don’t crowd wildlife.</p>
+        <p class="scan-stage__hint" id="coachHint">Frame from a safe distance (or clear evidence). Pinch to zoom. Avoid faces/hands when you can. Don’t crowd wildlife.</p>
       </div>
-      <canvas id="scanCanvas" hidden></canvas>
+      <div class="ecolens-modes" role="group" aria-label="EcoLens assist modes">
+        <label class="ecolens-mode">
+          <input type="checkbox" id="modeDrive" />
+          <span>Drive</span>
+        </label>
+        <label class="ecolens-mode">
+          <input type="checkbox" id="modeNight" />
+          <span>Night vision</span>
+        </label>
+        <label class="ecolens-mode">
+          <input type="checkbox" id="modeCamo" />
+          <span>Camouflage</span>
+        </label>
+      </div>
+      <p class="note ecolens-mode-note" id="modeNote" hidden></p>
       <div class="scan-actions">
         <button type="button" class="btn primary" id="captureBtn" disabled>Capture &amp; scan</button>
         <button type="button" class="btn secondary" id="stopCamBtn" hidden>Stop camera</button>
@@ -62,6 +77,6 @@
   <script src="bane-handheld-live.js"></script>
   <script src="bane-codex-facts.js?v=live1"></script>
   <script src="bane-codex-collection.js?v=live4"></script>
-  <script src="bane-scan-live.js?v=live6"></script>
+  <script src="bane-scan-live.js?v=live7"></script>
 </body>
 </html>

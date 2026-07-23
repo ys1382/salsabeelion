@@ -39,6 +39,15 @@
   var redirectTimer = null;
   var coachTimer = null;
   var coachReady = false;
+  var viewZoom = 1;
+  var ZOOM_MIN = 1;
+  var ZOOM_MAX = 4;
+  var hwZoomSupported = false;
+  var hwZoomMin = 1;
+  var hwZoomMax = 1;
+  var videoTrack = null;
+  var pinchStartDist = 0;
+  var pinchStartZoom = 1;
 
   function setStatus(msg) {
     if (statusEl) statusEl.textContent = msg || "";
@@ -238,24 +247,154 @@
     return counted ? active / counted : 0;
   }
 
+  function softZoomFactor() {
+    return hwZoomSupported ? 1 : viewZoom;
+  }
+
+  function videoCropRect(vw, vh) {
+    var z = softZoomFactor();
+    if (!(z > 1.01)) {
+      return { sx: 0, sy: 0, sw: vw, sh: vh };
+    }
+    var sw = vw / z;
+    var sh = vh / z;
+    return {
+      sx: (vw - sw) / 2,
+      sy: (vh - sh) / 2,
+      sw: sw,
+      sh: sh,
+    };
+  }
+
+  function applyZoomVisual() {
+    if (!video) return;
+    if (hwZoomSupported) {
+      video.style.transform = "";
+    } else {
+      video.style.transform = "scale(" + viewZoom + ")";
+    }
+  }
+
+  function mapSoftToHardwareZoom(soft) {
+    if (!hwZoomSupported) return soft;
+    var t = (soft - ZOOM_MIN) / (ZOOM_MAX - ZOOM_MIN);
+    if (t < 0) t = 0;
+    if (t > 1) t = 1;
+    return hwZoomMin + t * (hwZoomMax - hwZoomMin);
+  }
+
+  function setZoom(z) {
+    var next = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, z));
+    viewZoom = next;
+    if (hwZoomSupported && videoTrack) {
+      var hwZ = mapSoftToHardwareZoom(next);
+      var tryHw = function (constraints) {
+        return videoTrack.applyConstraints(constraints);
+      };
+      tryHw({ advanced: [{ zoom: hwZ }] })
+        .catch(function () {
+          return tryHw({ zoom: hwZ });
+        })
+        .catch(function () {
+          hwZoomSupported = false;
+          applyZoomVisual();
+        });
+    }
+    applyZoomVisual();
+  }
+
+  function initZoomFromTrack() {
+    videoTrack = null;
+    hwZoomSupported = false;
+    hwZoomMin = 1;
+    hwZoomMax = 1;
+    viewZoom = 1;
+    if (stream) {
+      var tracks = stream.getVideoTracks();
+      videoTrack = tracks && tracks[0] ? tracks[0] : null;
+    }
+    if (videoTrack && typeof videoTrack.getCapabilities === "function") {
+      try {
+        var caps = videoTrack.getCapabilities();
+        if (caps && caps.zoom && caps.zoom.max > caps.zoom.min) {
+          hwZoomSupported = true;
+          hwZoomMin = caps.zoom.min;
+          hwZoomMax = caps.zoom.max;
+        }
+      } catch (e) {}
+    }
+    applyZoomVisual();
+  }
+
+  function touchDistance(a, b) {
+    var dx = a.clientX - b.clientX;
+    var dy = a.clientY - b.clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+
+  function bindPinchZoom() {
+    if (!scanStage) return;
+    scanStage.addEventListener(
+      "touchstart",
+      function (e) {
+        if (busy || !stream) return;
+        if (e.touches.length === 2) {
+          e.preventDefault();
+          pinchStartDist = touchDistance(e.touches[0], e.touches[1]);
+          pinchStartZoom = viewZoom;
+        }
+      },
+      { passive: false }
+    );
+    scanStage.addEventListener(
+      "touchmove",
+      function (e) {
+        if (busy || !stream) return;
+        if (e.touches.length === 2 && pinchStartDist > 0) {
+          e.preventDefault();
+          var d = touchDistance(e.touches[0], e.touches[1]);
+          if (d > 0) setZoom(pinchStartZoom * (d / pinchStartDist));
+        }
+      },
+      { passive: false }
+    );
+    scanStage.addEventListener("touchend", function (e) {
+      if (e.touches.length < 2) pinchStartDist = 0;
+    });
+    scanStage.addEventListener("touchcancel", function () {
+      pinchStartDist = 0;
+    });
+  }
+
   function analyzeOrganismFrame(vid) {
     if (!vid || !vid.videoWidth) {
       return { ok: false, hint: "Starting camera…", level: "wait" };
     }
     var vw = vid.videoWidth;
     var vh = vid.videoHeight;
+    var crop = videoCropRect(vw, vh);
     var sampleW = 320;
-    var sampleH = Math.max(1, Math.round((vh / vw) * sampleW));
+    var sampleH = Math.max(1, Math.round((crop.sh / crop.sw) * sampleW));
     var sample = document.createElement("canvas");
     sample.width = sampleW;
     sample.height = sampleH;
     var ctx = sample.getContext("2d");
-    // Match the dashed guide box (~10% / 12% inset).
-    var insetX = Math.round(vw * 0.1);
-    var insetY = Math.round(vh * 0.12);
-    var sw = Math.max(1, vw - insetX * 2);
-    var sh = Math.max(1, vh - insetY * 2);
-    ctx.drawImage(vid, insetX, insetY, sw, sh, 0, 0, sampleW, sampleH);
+    // Match the dashed guide box (~10% / 12% inset) inside the zoomed view.
+    var insetX = Math.round(crop.sw * 0.1);
+    var insetY = Math.round(crop.sh * 0.12);
+    var sw = Math.max(1, crop.sw - insetX * 2);
+    var sh = Math.max(1, crop.sh - insetY * 2);
+    ctx.drawImage(
+      vid,
+      crop.sx + insetX,
+      crop.sy + insetY,
+      sw,
+      sh,
+      0,
+      0,
+      sampleW,
+      sampleH
+    );
     var img = ctx.getImageData(0, 0, sampleW, sampleH);
     var d = img.data;
     var gray = new Float32Array(sampleW * sampleH);
@@ -339,7 +478,10 @@
     }
     return {
       ok: true,
-      hint: "Good — tap Capture & scan.",
+      hint:
+        viewZoom > 1.05
+          ? "Good — tap Capture & scan. (Pinch to adjust zoom)"
+          : "Good — tap Capture & scan. Pinch to zoom if needed.",
       level: "good",
     };
   }
@@ -391,6 +533,7 @@
 
   function stopCamera() {
     stopLiveCoach();
+    pinchStartDist = 0;
     if (stream) {
       stream.getTracks().forEach(function (t) {
         try {
@@ -399,7 +542,13 @@
       });
       stream = null;
     }
-    if (video) video.srcObject = null;
+    videoTrack = null;
+    hwZoomSupported = false;
+    viewZoom = 1;
+    if (video) {
+      video.srcObject = null;
+      video.style.transform = "";
+    }
     if (captureBtn) captureBtn.disabled = true;
     if (stopCamBtn) stopCamBtn.hidden = true;
     if (scanStage && !busy) scanStage.className = "scan-stage";
@@ -425,12 +574,15 @@
       .then(function (s) {
         stream = s;
         video.srcObject = s;
+        initZoomFromTrack();
         return video.play();
       })
       .then(function () {
         if (stopCamBtn) stopCamBtn.hidden = false;
         startLiveCoach();
-        setStatus("Camera ready. Wait for the green coach, then tap Capture & scan.");
+        setStatus(
+          "Camera ready. Pinch to zoom in the frame, wait for green, then Capture & scan."
+        );
       })
       .catch(function (err) {
         setStatus(
@@ -447,13 +599,24 @@
     var maxEdge = 1400;
     var vw = video.videoWidth;
     var vh = video.videoHeight;
-    var scale = Math.min(1, maxEdge / Math.max(vw, vh));
-    var w = Math.max(1, Math.round(vw * scale));
-    var h = Math.max(1, Math.round(vh * scale));
+    var crop = videoCropRect(vw, vh);
+    var scale = Math.min(1, maxEdge / Math.max(crop.sw, crop.sh));
+    var w = Math.max(1, Math.round(crop.sw * scale));
+    var h = Math.max(1, Math.round(crop.sh * scale));
     canvas.width = w;
     canvas.height = h;
     var ctx = canvas.getContext("2d");
-    ctx.drawImage(video, 0, 0, w, h);
+    ctx.drawImage(
+      video,
+      crop.sx,
+      crop.sy,
+      crop.sw,
+      crop.sh,
+      0,
+      0,
+      w,
+      h
+    );
     var dataUrl = canvas.toDataURL("image/jpeg", 0.85);
     var m = /^data:(image\/[a-z0-9.+-]+);base64,(.+)$/i.exec(dataUrl);
     if (!m) throw new Error("Could not encode frame");
@@ -932,6 +1095,7 @@
 
   if (desktopBlock) desktopBlock.hidden = true;
   if (scanUi) scanUi.hidden = false;
+  bindPinchZoom();
   if (captureBtn) captureBtn.addEventListener("click", onCapture);
   if (stopCamBtn) stopCamBtn.addEventListener("click", stopCamera);
   if (openCodexBtn) openCodexBtn.addEventListener("click", openCodex);
