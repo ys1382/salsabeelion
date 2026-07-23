@@ -262,23 +262,35 @@ FALLBACK_CALLOUTS_PHILODENDRON = FALLBACK_CALLOUTS_PHILODENDRON_WALK
 FALLBACK_CALLOUTS = FALLBACK_CALLOUTS_POPPY
 
 
-def _fallback_callouts_for(display: str, latin: str, note: str, color: str, garden_focus: bool) -> list[dict[str, str]]:
+def _fallback_callouts_for(
+    display: str,
+    latin: str,
+    note: str,
+    color: str,
+    garden_focus: bool = False,
+    focus_mode: str = "walk",
+) -> list[dict[str, str]]:
+    mode = _normalize_focus_mode(
+        focus_mode, garden_focus=garden_focus if focus_mode in ("", "walk") else None
+    )
+    # Curated packs today cover walk vs garden; other modes fall back to walk wording.
+    use_garden = mode == "garden"
     blob = (display + " " + latin + " " + note + " " + color).lower()
     if "poppy" in blob or "eschscholzia" in blob:
         callouts = list(
-            FALLBACK_CALLOUTS_POPPY_GARDEN if garden_focus else FALLBACK_CALLOUTS_POPPY_WALK
+            FALLBACK_CALLOUTS_POPPY_GARDEN if use_garden else FALLBACK_CALLOUTS_POPPY_WALK
         )
     elif "sunflower" in blob or "helianthus" in blob:
         callouts = list(
             FALLBACK_CALLOUTS_SUNFLOWER_GARDEN
-            if garden_focus
+            if use_garden
             else FALLBACK_CALLOUTS_SUNFLOWER_WALK
         )
         if any(c in blob for c in ("red", "burgundy", "crimson", "dark", "black")):
             color_fact = (
                 "This form shows dark or red ray florets instead of classic yellow — "
                 "garden sunflowers come in many petal colors."
-                if garden_focus
+                if use_garden
                 else "This form shows dark or red ray florets instead of classic yellow — "
                 "match the shade you see on the walk, not a textbook yellow."
             )
@@ -300,7 +312,7 @@ def _fallback_callouts_for(display: str, latin: str, note: str, color: str, gard
     ):
         callouts = list(
             FALLBACK_CALLOUTS_PHILODENDRON_GARDEN
-            if garden_focus
+            if use_garden
             else FALLBACK_CALLOUTS_PHILODENDRON_WALK
         )
     else:
@@ -311,7 +323,153 @@ def _fallback_callouts_for(display: str, latin: str, note: str, color: str, gard
                 "fact": f"Best guess right now: {display}. Facts service had a hiccup — try Load again.",
             }
         ]
+    if mode == "seashore" and callouts:
+        callouts = [
+            {
+                "anchor": "shore",
+                "label": "Seashore lens",
+                "fact": (
+                    f"Seashore focus is on for {display} — think tide lines, salt spray, "
+                    "dunes, and rocky or sandy edges (stub until more shore packs ship)."
+                ),
+                "kind": "notice",
+            },
+            *callouts[: max(0, MAX_CALLOUTS - 1)],
+        ][:MAX_CALLOUTS]
+    elif mode == "food" and callouts:
+        callouts = [
+            {
+                "anchor": "food",
+                "label": "Food story",
+                "fact": (
+                    f"Food-history focus is on for {display} — how people grew, traded, "
+                    "or cooked with it (gentle stub; not a recipe book)."
+                ),
+                "kind": "notice",
+            },
+            *callouts[: max(0, MAX_CALLOUTS - 1)],
+        ][:MAX_CALLOUTS]
     return callouts
+
+
+FOCUS_MODES = ("walk", "garden", "seashore", "food")
+
+
+def _normalize_focus_mode(
+    raw: Any, *, garden_focus: bool | None = None
+) -> str:
+    """Map API input to walk | garden | seashore | food."""
+    text = str(raw or "").strip().lower().replace("_", " ").replace("-", " ")
+    aliases = {
+        "walk": "walk",
+        "wild": "walk",
+        "wildlife": "walk",
+        "trail": "walk",
+        "neighbor": "walk",
+        "garden": "garden",
+        "gardening": "garden",
+        "grow": "garden",
+        "seashore": "seashore",
+        "shore": "seashore",
+        "beach": "seashore",
+        "coast": "seashore",
+        "tide": "seashore",
+        "food": "food",
+        "food history": "food",
+        "foodhistory": "food",
+        "kitchen": "food",
+        "crop": "food",
+        "cuisine": "food",
+    }
+    if text in aliases:
+        return aliases[text]
+    # Legacy boolean gardenFocus when focusMode omitted.
+    if garden_focus is True:
+        return "garden"
+    if garden_focus is False and not text:
+        return "walk"
+    return "walk"
+
+
+def _focus_prompt_block(focus_mode: str, *, allow_help: bool) -> str:
+    mode = _normalize_focus_mode(focus_mode)
+    if mode == "garden":
+        block = (
+            "FOCUS MODE: GARDEN — eco-minded facts for GARDEN life: beds, plantings, "
+            "seed heads, seed dispersal, grower noticing, pollinators in plantings, "
+            "houseplant care when relevant. Prefer garden-shaped angles over wild-trail "
+            "ones. For animals: how they use or help a garden (visitors, helpers, signs) "
+            "— never fake “how to plant” an animal. "
+        )
+        if allow_help:
+            block += (
+                "Help tip must be garden-shaped kindness. Seed dispersal is welcome here "
+                "(pods that fling, birds carrying seed, self-sowing near last year’s plants). "
+            )
+        block += (
+            "Do NOT fill the set with only chores — keep noticing (and wonder if allowed) in the mix. "
+            "Do NOT write seashore or food-history angles unless they truly fit a garden bed. "
+        )
+        return block
+    if mode == "seashore":
+        block = (
+            "FOCUS MODE: SEASHORE — beach / tide / dune / rocky shore lens (stub-friendly). "
+            "Prefer facts about salt spray, sand, tide pools, wrack lines, coastal plants, "
+            "shorebirds, crabs, kelp, and how this organism meets the edge of the sea. "
+            "If the organism is not coastal, say gently how it relates (or doesn’t) to "
+            "seashore life — never invent a fake beach species. "
+            "Do NOT give inland garden how-tos or kitchen/food-history essays. "
+        )
+        if allow_help:
+            block += (
+                "Help tip must be shore kindness (give tide-pool creatures space, leave "
+                "shells/wrack for habitat, stay off nesting dunes, etc.). "
+            )
+        return block
+    if mode == "food":
+        block = (
+            "FOCUS MODE: FOOD HISTORY — how people grew, traded, cooked with, or named "
+            "this organism as food (bananas, potatoes, herbs, etc.). Warm cultural and "
+            "crop story — not a cookbook, not nutrition medical advice, not “superfood” hype. "
+            "If it is not a food plant/animal people commonly eat, say so gently and share "
+            "one honest food-adjacent note (forage caution, “not edible,” historic use) "
+            "or pivot to why walkers meet it near farms/markets. "
+            "Do NOT invent unsafe foraging advice. Do NOT dump garden chore lists or "
+            "seashore ecology unless they support the food story. "
+        )
+        if allow_help:
+            block += (
+                "Help tip must be food-story kindness (waste less of edible parts you "
+                "already buy, respect farm/field edges, don’t dig wild roots without "
+                "knowing rules — gentle, choosable). "
+            )
+        return block
+    # walk (default)
+    block = (
+        "FOCUS MODE: WALK / WILD — eco-minded focus for walks and wild neighbors: "
+        "shared air/water/food webs, seasons you meet them, place-aware noticing. "
+        "Do NOT give gardening how-tos, “if you grow one…,” bed/soil recipes, "
+        "seed-dispersal-as-grower tips, seashore-only essays, or kitchen history "
+        "unless the player clearly needs a tiny bridge. Leave those for other modes. "
+    )
+    if allow_help:
+        block += (
+            "Help tip must be walk/neighbor kindness (leave a nest alone, skip a spray "
+            "on a wild patch, keep distance, etc.) — still eco-leaning, not garden advice. "
+        )
+    return block
+
+
+def _focus_disclaimer(focus_mode: str) -> str:
+    mode = _normalize_focus_mode(focus_mode)
+    if mode == "garden":
+        return " Focus mode: Garden — eco-minded garden-world facts."
+    if mode == "seashore":
+        return " Focus mode: Seashore — beach and tide-edge facts (early stub)."
+    if mode == "food":
+        return " Focus mode: Food history — crop and kitchen story (early stub)."
+    return " Focus mode: Walk / wild — neighbor eco facts (not gardening how-tos)."
+
 
 IDENTIFY_PROMPT = (
     "You identify wildlife, plants, fungi, or clear evidence of them "
@@ -2565,6 +2723,7 @@ def build_callouts(
     compare_place_label: str = "",
     season: str = "",
     garden_focus: bool = False,
+    focus_mode: str = "",
     fact_level: int | None = None,
     fact_count: int | None = None,
     pool_refill: bool = False,
@@ -2589,6 +2748,11 @@ def build_callouts(
     compare_id_n = compare_place_id.strip()[:64]
     compare_label_n = compare_place_label.strip()[:120]
     season_n = season.strip()[:20] or ""
+    focus = _normalize_focus_mode(
+        focus_mode or "",
+        garden_focus=garden_focus if not str(focus_mode or "").strip() else None,
+    )
+    garden_focus = focus == "garden"
     allowed_kinds = _allowed_kinds_for_fact_level(fact_level, fact_count)
     allow_help = "help" in allowed_kinds
     allow_wonder = "wonder" in allowed_kinds
@@ -2631,34 +2795,7 @@ def build_callouts(
         + mix_rules
     )
 
-    if garden_focus:
-        focus_block = (
-            "GARDEN FOCUS ON — eco-minded facts for GARDEN life: beds, plantings, "
-            "seed heads, seed dispersal, grower noticing, pollinators in plantings, "
-            "houseplant care when relevant. Prefer garden-shaped angles over wild-trail "
-            "ones. For animals: how they use or help a garden (visitors, helpers, signs) "
-            "— never fake “how to plant” an animal. "
-        )
-        if allow_help:
-            focus_block += (
-                "Help tip must be garden-shaped kindness. Seed dispersal is welcome here "
-                "(pods that fling, birds carrying seed, self-sowing near last year’s plants). "
-            )
-        focus_block += (
-            "Do NOT fill the set with only chores — keep noticing (and wonder if allowed) in the mix. "
-        )
-    else:
-        focus_block = (
-            "GARDEN FOCUS OFF — a DIFFERENT eco-minded focus: walks, wild neighbors, "
-            "shared air/water/food webs, seasons you meet them, place-aware noticing. "
-            "Do NOT give gardening how-tos, “if you grow one…,” bed/soil recipes, or "
-            "seed-dispersal-as-grower tips. Leave garden-world facts for garden focus. "
-        )
-        if allow_help:
-            focus_block += (
-                "Help tip must be walk/neighbor kindness (leave a nest alone, skip a spray "
-                "on a wild patch, keep distance, etc.) — still eco-leaning, not garden advice. "
-            )
+    focus_block = _focus_prompt_block(focus, allow_help=allow_help)
 
     system = (
         "You write short, family-friendly wildlife and plant education callouts for "
@@ -2706,7 +2843,7 @@ def build_callouts(
         + (f"; bloom color: {color_n}" if color_n else "")
         + (f"; scan note: {note_n}" if note_n else "")
         + f"; type: {org_type}. "
-        + ("Garden focus ON. " if garden_focus else "Garden focus OFF. ")
+        + ("Focus mode: " + focus + ". ")
         + "Write callouts accurate for THIS identification and visible color. "
         "If red/dark sunflower rays, describe those — not classic yellow-only petals. "
         "Put the help tip near the middle when possible; put the species-wonder fact last."
@@ -2864,7 +3001,12 @@ def build_callouts(
     except Exception as exc:  # noqa: BLE001
         callouts = _normalize_callouts(
             _fallback_callouts_for(
-                display, latin_n, note_n, color_n, garden_focus
+                display,
+                latin_n,
+                note_n,
+                color_n,
+                garden_focus=garden_focus,
+                focus_mode=focus,
             ),
             allowed_kinds,
             max_callouts=callout_limit,
@@ -2893,10 +3035,7 @@ def build_callouts(
         "Helper facts for what the game thinks it saw — useful for learning, "
         "not a guaranteed field guide."
     )
-    if garden_focus:
-        disclaimer += " Garden focus is on — eco-minded garden-world facts."
-    else:
-        disclaimer += " Garden focus is off — walk and wild-neighbor eco facts (not gardening how-tos)."
+    disclaimer += _focus_disclaimer(focus)
     if place_label_n:
         disclaimer += (
             " Place tips follow the looking-at place you chose — not GPS or where you stand."
@@ -2964,6 +3103,7 @@ def build_callouts(
         "compareNote": compare_note,
         "season": season_n,
         "gardenFocus": bool(garden_focus),
+        "focusMode": focus,
         "factLevel": fact_level_out,
         "allowedKinds": allowed_kinds,
         "disclaimer": disclaimer,
@@ -3212,6 +3352,12 @@ class Handler(BaseHTTPRequestHandler):
                 or body.get("garden_focus")
                 or body.get("gardenMode")
             )
+            focus_mode = str(
+                body.get("focusMode")
+                or body.get("focus")
+                or body.get("mode")
+                or ""
+            ).strip()
             fact_level_raw = body.get("factLevel")
             fact_count_raw = body.get("factCount")
             try:
@@ -3260,6 +3406,7 @@ class Handler(BaseHTTPRequestHandler):
                 compare_place_label=compare_place_label,
                 season=season,
                 garden_focus=garden_focus,
+                focus_mode=focus_mode,
                 fact_level=fact_level,
                 fact_count=fact_count,
                 pool_refill=pool_refill,

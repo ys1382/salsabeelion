@@ -6,11 +6,18 @@
   var STILL_KEY = "bane_last_still";
   var RECENT_FACTS_KEY = "bane_callout_recent_v1";
   var FACT_POOL_KEY = "bane_fact_pool_v1";
-  var GARDEN_FOCUS_KEY = "bane_garden_focus_v1";
+  var FOCUS_MODE_KEY = "bane_focus_mode_v1";
+  var GARDEN_FOCUS_KEY = "bane_garden_focus_v1"; // legacy migrate only
   var MAX_RECENT_FACTS = 24;
   var FACTS_PER_SERVE = 3;
   var POOL_MIN_BEFORE_REFILL = 3;
   var MAX_AGE_MS = 15 * 60 * 1000;
+  var FOCUS_MODES = {
+    walk: "Walk / wild",
+    garden: "Garden",
+    seashore: "Seashore",
+    food: "Food history",
+  };
   var statusEl = document.getElementById("status");
   var listEl = document.getElementById("calloutList");
   var disclaimerEl = document.getElementById("disclaimer");
@@ -20,7 +27,7 @@
   var cultivarOn = document.getElementById("cultivarOn");
   var cultivarRow = document.getElementById("cultivarRow");
   var evidenceOn = document.getElementById("evidenceOn");
-  var gardenFocusOn = document.getElementById("gardenFocusOn");
+  var focusModeEl = document.getElementById("focusMode");
   var stillEl = document.getElementById("organismStill");
   var creditEl = document.getElementById("artCredit");
   var metaEl = document.getElementById("organismMeta");
@@ -340,7 +347,7 @@
     metaEl.textContent = bits.join(" · ");
   }
 
-  function factPoolKey(common, latin, place, gardenFocus, factLevel) {
+  function factPoolKey(common, latin, place, focusMode, factLevel) {
     var sk =
       (window.BaneCodexFacts &&
         window.BaneCodexFacts.speciesKey({
@@ -353,8 +360,8 @@
       sk +
       "|" +
       placeId +
-      "|" +
-      (gardenFocus ? "g1" : "g0") +
+      "|fm:" +
+      (focusMode || "walk") +
       "|fl" +
       (factLevel || 1)
     );
@@ -441,7 +448,7 @@
 
   function applyCalloutPayload(data, opts) {
     opts = opts || {};
-    var gardenFocus = isGardenFocus();
+    var focusMode = getFocusMode();
     var place = placePayload();
     var callouts = data.callouts || [];
     if (commonOut) {
@@ -466,7 +473,7 @@
           displayName: state.commonName,
         },
         callouts,
-        { gardenFocus: gardenFocus }
+        { gardenFocus: focusMode === "garden", focusMode: focusMode }
       );
     }
     renderFactBookProgress();
@@ -491,6 +498,7 @@
     var fromPool = opts.fromPool
       ? " · from your fact pool (" + (opts.poolLeft || 0) + " left)"
       : "";
+    var focusLabel = FOCUS_MODES[focusMode] || focusMode;
     setStatus(
       data.source && String(data.source).indexOf("fallback") === 0
         ? "Showing fallback facts (Claude unavailable)." + addedBit
@@ -498,7 +506,8 @@
             ? "Different facts from your pool for: "
             : "Callouts loaded for: ") +
             state.commonName +
-            (gardenFocus ? " · garden focus" : " · walk / wild focus") +
+            " · " +
+            focusLabel +
             (place.placeLabel ? " · looking at " + place.placeLabel : "") +
             fromPool +
             addedBit +
@@ -534,7 +543,7 @@
       cultivar = state.cultivar || "Watermelon Heaven";
     }
     var place = placePayload();
-    var gardenFocus = isGardenFocus();
+    var focusMode = getFocusMode();
     var factInfo =
       window.BaneCodexFacts && window.BaneCodexFacts.factLevelInfo
         ? window.BaneCodexFacts.factLevelInfo()
@@ -544,7 +553,7 @@
       state.commonName,
       state.latinName,
       place,
-      gardenFocus,
+      focusMode,
       factLevel
     );
     var pool = getFactPool(poolKey);
@@ -589,7 +598,8 @@
         comparePlaceId: place.comparePlaceId || "",
         comparePlaceLabel: place.comparePlaceLabel || "",
         season: place.season || "",
-        gardenFocus: gardenFocus,
+        focusMode: focusMode,
+        gardenFocus: focusMode === "garden",
         factLevel: factLevel,
         factCount: factInfo ? factInfo.total : 0,
         poolRefill: true,
@@ -615,6 +625,7 @@
           compareNote: data.compareNote || "",
           disclaimer: data.disclaimer || "",
           source: data.source || "claude",
+          focusMode: data.focusMode || focusMode,
         };
         saveFactPool(poolKey, pool);
         finishWithPoolServe(pool.meta);
@@ -651,32 +662,37 @@
     return {};
   }
 
-  function isGardenFocus() {
-    return !!(gardenFocusOn && gardenFocusOn.checked);
+  function getFocusMode() {
+    var raw = focusModeEl && focusModeEl.value ? focusModeEl.value : "walk";
+    if (FOCUS_MODES[raw]) return raw;
+    return "walk";
   }
 
-  function readGardenFocusPref() {
+  function readFocusModePref() {
     try {
-      return localStorage.getItem(GARDEN_FOCUS_KEY) === "1";
-    } catch (e) {
-      return false;
-    }
+      var saved = localStorage.getItem(FOCUS_MODE_KEY);
+      if (saved && FOCUS_MODES[saved]) return saved;
+      if (localStorage.getItem(GARDEN_FOCUS_KEY) === "1") return "garden";
+    } catch (e) {}
+    return "walk";
   }
 
-  function writeGardenFocusPref(on) {
+  function writeFocusModePref(mode) {
+    var next = FOCUS_MODES[mode] ? mode : "walk";
     try {
-      if (on) localStorage.setItem(GARDEN_FOCUS_KEY, "1");
+      localStorage.setItem(FOCUS_MODE_KEY, next);
+      if (next === "garden") localStorage.setItem(GARDEN_FOCUS_KEY, "1");
       else localStorage.removeItem(GARDEN_FOCUS_KEY);
     } catch (e) {}
   }
 
-  function syncGardenFocusUi() {
-    if (!gardenFocusOn) return;
-    gardenFocusOn.checked = readGardenFocusPref();
+  function syncFocusModeUi() {
+    if (!focusModeEl) return;
+    focusModeEl.value = readFocusModePref();
   }
 
   function recentFactsSpeciesKey(common, latin) {
-    var focus = isGardenFocus() ? "g" : "w";
+    var focus = getFocusMode();
     var lat = String(latin || "")
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
@@ -1106,10 +1122,10 @@
 
   if (loadBtn) loadBtn.addEventListener("click", loadFacts);
 
-  syncGardenFocusUi();
-  if (gardenFocusOn) {
-    gardenFocusOn.addEventListener("change", function () {
-      writeGardenFocusPref(!!gardenFocusOn.checked);
+  syncFocusModeUi();
+  if (focusModeEl) {
+    focusModeEl.addEventListener("change", function () {
+      writeFocusModePref(getFocusMode());
       // Ready for reload; player hits Load for focus-aware facts.
     });
   }

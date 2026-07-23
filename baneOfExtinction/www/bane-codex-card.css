@@ -21,6 +21,27 @@
   cursor: pointer;
 }
 
+.focus-mode {
+  display: inline-flex;
+  gap: 0.45rem;
+  align-items: center;
+  cursor: pointer;
+}
+
+.focus-mode__label {
+  color: var(--muted);
+}
+
+.focus-mode select {
+  font: inherit;
+  color: var(--ink);
+  background: rgba(12, 26, 20, 0.55);
+  border: 1px solid var(--line);
+  border-radius: 0.4rem;
+  padding: 0.28rem 0.5rem;
+  max-width: 11rem;
+}
+
 .codex-card {
   min-height: 22rem;
   margin-bottom: 1rem;
