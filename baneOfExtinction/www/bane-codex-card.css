@@ -565,3 +565,72 @@
   justify-content: center;
   margin-bottom: 1rem;
 }
+
+/* EcoLens assist modes — Drive / Night vision / Camouflage */
+.ecolens-modes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  justify-content: center;
+  margin: 0 auto 0.55rem;
+  max-width: 26rem;
+}
+
+.ecolens-mode {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  border: 1px solid rgba(107, 196, 138, 0.35);
+  background: rgba(12, 28, 22, 0.72);
+  color: #d7ebe0;
+  font-family: system-ui, sans-serif;
+  font-size: 0.78rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.ecolens-mode input {
+  accent-color: #6bc48a;
+  margin: 0;
+}
+
+.ecolens-mode:has(input:checked) {
+  border-color: rgba(107, 196, 138, 0.85);
+  background: rgba(30, 70, 52, 0.85);
+  color: #eaf8ef;
+}
+
+.ecolens-mode-note {
+  max-width: 26rem;
+  margin: 0 auto 0.85rem;
+  text-align: center;
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.scan-stage--night video {
+  filter: brightness(1.75) contrast(1.45) saturate(0.35) hue-rotate(72deg);
+}
+
+.scan-stage--camo video {
+  filter: contrast(1.65) brightness(1.12) saturate(1.35);
+}
+
+.scan-stage--night.scan-stage--camo video {
+  filter: brightness(1.85) contrast(1.7) saturate(0.55) hue-rotate(55deg);
+}
+
+.scan-stage--drive .scan-stage__guide {
+  border-style: solid;
+  border-color: rgba(120, 170, 220, 0.55);
+}
+
+.scan-stage--night .scan-stage__guide {
+  border-color: rgba(90, 220, 120, 0.65);
+}
+
+.scan-stage--camo .scan-stage__guide {
+  border-color: rgba(230, 200, 110, 0.7);
+}

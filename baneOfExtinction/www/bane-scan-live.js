@@ -17,6 +17,10 @@
   var VARIANCE_SOFT = 260;
   var IDENTIFY_TIMEOUT_MS = 90000;
   var STILL_TIMEOUT_MS = 70000;
+  var DRIVE_BURST_FRAMES = 5;
+  var MODE_DRIVE_KEY = "bane_ecolens_drive_v1";
+  var MODE_NIGHT_KEY = "bane_ecolens_night_v1";
+  var MODE_CAMO_KEY = "bane_ecolens_camo_v1";
 
   var desktopBlock = document.getElementById("desktopBlock");
   var scanUi = document.getElementById("scanUi");
@@ -27,6 +31,10 @@
   var stopCamBtn = document.getElementById("stopCamBtn");
   var statusEl = document.getElementById("scanStatus");
   var coachHint = document.getElementById("coachHint");
+  var modeDriveEl = document.getElementById("modeDrive");
+  var modeNightEl = document.getElementById("modeNight");
+  var modeCamoEl = document.getElementById("modeCamo");
+  var modeNoteEl = document.getElementById("modeNote");
   var resultBox = document.getElementById("scanResult");
   var resultName = document.getElementById("resultName");
   var resultLatin = document.getElementById("resultLatin");
@@ -39,6 +47,7 @@
   var redirectTimer = null;
   var coachTimer = null;
   var coachReady = false;
+  var lastCoachLevel = "wait";
   var viewZoom = 1;
   var ZOOM_MIN = 1;
   var ZOOM_MAX = 4;
@@ -251,6 +260,124 @@
     return hwZoomSupported ? 1 : viewZoom;
   }
 
+  function modeFlags() {
+    return {
+      drive: !!(modeDriveEl && modeDriveEl.checked),
+      night: !!(modeNightEl && modeNightEl.checked),
+      camo: !!(modeCamoEl && modeCamoEl.checked),
+    };
+  }
+
+  function coachThresholds() {
+    var m = modeFlags();
+    var t = {
+      blurTooLow: BLUR_TOO_LOW,
+      blurSoft: BLUR_SOFT,
+      edgeTooLow: EDGE_TOO_LOW,
+      edgeSoft: EDGE_SOFT,
+      fillTooLow: FILL_TOO_LOW,
+      fillSoft: FILL_SOFT,
+      varianceTooLow: VARIANCE_TOO_LOW,
+      varianceSoft: VARIANCE_SOFT,
+      brightnessLow: 32,
+    };
+    if (m.drive) {
+      t.blurTooLow = 12;
+      t.blurSoft = 26;
+      t.fillTooLow = 0.08;
+      t.fillSoft = 0.12;
+      t.varianceTooLow = 110;
+      t.varianceSoft = 170;
+    }
+    if (m.night) {
+      t.brightnessLow = 8;
+      t.edgeTooLow *= 0.55;
+      t.edgeSoft *= 0.6;
+      t.varianceTooLow *= 0.65;
+      t.varianceSoft *= 0.7;
+    }
+    if (m.camo) {
+      t.fillTooLow = Math.min(t.fillTooLow, 0.05);
+      t.fillSoft = Math.min(t.fillSoft, 0.09);
+      t.varianceTooLow = Math.min(t.varianceTooLow, 70);
+      t.varianceSoft = Math.min(t.varianceSoft, 110);
+      t.edgeTooLow = Math.min(t.edgeTooLow, 0.006);
+      t.edgeSoft = Math.min(t.edgeSoft, 0.012);
+    }
+    return t;
+  }
+
+  function applyStageClass(level) {
+    if (!scanStage) return;
+    var m = modeFlags();
+    var cls = "scan-stage";
+    if (level) cls += " scan-stage--" + level;
+    if (m.drive) cls += " scan-stage--drive";
+    if (m.night) cls += " scan-stage--night";
+    if (m.camo) cls += " scan-stage--camo";
+    scanStage.className = cls;
+  }
+
+  function updateModeNote() {
+    if (!modeNoteEl) return;
+    var m = modeFlags();
+    var bits = [];
+    if (m.drive) {
+      bits.push(
+        "Drive: picks the sharpest of a short burst. Fast blur past a window can still fail."
+      );
+    }
+    if (m.night) {
+      bits.push(
+        "Night vision: digital boost only — no flash. Needs a little ambient light; pitch black stays noisy."
+      );
+    }
+    if (m.camo) {
+      bits.push(
+        "Camouflage: boosts contrast so you can spot cryptic finds. ID may still miss a well-hidden animal."
+      );
+    }
+    if (!bits.length) {
+      modeNoteEl.hidden = true;
+      modeNoteEl.textContent = "";
+      return;
+    }
+    modeNoteEl.hidden = false;
+    modeNoteEl.textContent = bits.join(" ");
+  }
+
+  function readModePref(key) {
+    try {
+      return localStorage.getItem(key) === "1";
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function writeModePref(key, on) {
+    try {
+      if (on) localStorage.setItem(key, "1");
+      else localStorage.removeItem(key);
+    } catch (e) {}
+  }
+
+  function syncModeUiFromPrefs() {
+    if (modeDriveEl) modeDriveEl.checked = readModePref(MODE_DRIVE_KEY);
+    if (modeNightEl) modeNightEl.checked = readModePref(MODE_NIGHT_KEY);
+    if (modeCamoEl) modeCamoEl.checked = readModePref(MODE_CAMO_KEY);
+    updateModeNote();
+    applyStageClass(lastCoachLevel || "wait");
+  }
+
+  function onModeChange() {
+    writeModePref(MODE_DRIVE_KEY, !!(modeDriveEl && modeDriveEl.checked));
+    writeModePref(MODE_NIGHT_KEY, !!(modeNightEl && modeNightEl.checked));
+    writeModePref(MODE_CAMO_KEY, !!(modeCamoEl && modeCamoEl.checked));
+    updateModeNote();
+    applyStageClass(lastCoachLevel || "wait");
+    if (stream && !busy) tickLiveCoach();
+  }
+
   function videoCropRect(vw, vh) {
     var z = softZoomFactor();
     if (!(z > 1.01)) {
@@ -410,11 +537,15 @@
     var pixels = sampleW * sampleH;
     brightness /= pixels;
     var variance = brightSumSq / pixels - brightness * brightness;
+    var m = modeFlags();
+    var th = coachThresholds();
 
-    if (brightness < 32) {
+    if (brightness < th.brightnessLow) {
       return {
         ok: false,
-        hint: "Too dark — add light or aim toward the organism.",
+        hint: m.night
+          ? "Still too dark for night vision — need a little ambient light (no flash)."
+          : "Too dark — try Night vision, or move toward ambient light (no flash).",
         level: "bad",
       };
     }
@@ -426,18 +557,26 @@
       };
     }
     var blur = laplacianVariance(gray, sampleW, sampleH);
-    if (blur < BLUR_TOO_LOW) {
-      return { ok: false, hint: "Too blurry — hold still a second.", level: "bad" };
-    }
-    if (variance < VARIANCE_TOO_LOW) {
+    if (blur < th.blurTooLow) {
       return {
         ok: false,
-        hint: "Looks empty — fill the dashed box with the organism or clear evidence.",
+        hint: m.drive
+          ? "Still too smeared — slow a touch or wait for a steadier moment."
+          : "Too blurry — hold still a second.",
+        level: "bad",
+      };
+    }
+    if (variance < th.varianceTooLow) {
+      return {
+        ok: false,
+        hint: m.camo
+          ? "Looks empty even with camouflage assist — fill the box with the organism or clear evidence."
+          : "Looks empty — fill the dashed box with the organism or clear evidence.",
         level: "bad",
       };
     }
     var fill = subjectFillScore(gray, sampleW, sampleH);
-    if (fill < FILL_TOO_LOW) {
+    if (fill < th.fillTooLow) {
       return {
         ok: false,
         hint: "Mostly background — move so the plant, animal, or evidence fills the box.",
@@ -445,43 +584,58 @@
       };
     }
     var edges = edgeFraction(gray, sampleW, sampleH);
-    if (edges < EDGE_TOO_LOW) {
+    if (edges < th.edgeTooLow) {
       return {
         ok: false,
-        hint: "Subject looks faint — step a little closer or add light.",
+        hint: m.camo
+          ? "Still too faint — try Camouflage framing closer, or scan clear evidence."
+          : m.night
+            ? "Subject looks faint — night vision needs a bit more ambient light or closer framing."
+            : "Subject looks faint — step a little closer or find better light.",
         level: "bad",
       };
     }
-    if (variance < VARIANCE_SOFT) {
+    if (variance < th.varianceSoft) {
       return {
         ok: false,
         hint: "Almost — put more of the organism inside the dashed box.",
         level: "soft",
       };
     }
-    if (fill < FILL_SOFT) {
+    if (fill < th.fillSoft) {
       return {
         ok: false,
         hint: "Aim so more of the organism fills the dashed box.",
         level: "soft",
       };
     }
-    if (blur < BLUR_SOFT) {
-      return { ok: false, hint: "Almost ready — hold still a moment.", level: "soft" };
-    }
-    if (edges < EDGE_SOFT) {
+    if (blur < th.blurSoft) {
       return {
         ok: false,
-        hint: "A touch closer or brighter — keep the subject in the box.",
+        hint: m.drive
+          ? "Almost — Drive will grab a burst; hold as steady as you can."
+          : "Almost ready — hold still a moment.",
         level: "soft",
       };
     }
+    if (edges < th.edgeSoft) {
+      return {
+        ok: false,
+        hint: m.camo
+          ? "A touch closer — keep the cryptic subject in the box."
+          : "A touch closer or brighter — keep the subject in the box.",
+        level: "soft",
+      };
+    }
+    var goodHint = "Good — tap Capture & scan.";
+    if (m.drive) goodHint = "Good — Drive will pick the sharpest burst frame.";
+    else if (viewZoom > 1.05) goodHint = "Good — tap Capture & scan. (Pinch to adjust zoom)";
+    else goodHint = "Good — tap Capture & scan. Pinch to zoom if needed.";
+    if (m.night) goodHint += " Night vision on.";
+    if (m.camo) goodHint += " Camouflage assist on.";
     return {
       ok: true,
-      hint:
-        viewZoom > 1.05
-          ? "Good — tap Capture & scan. (Pinch to adjust zoom)"
-          : "Good — tap Capture & scan. Pinch to zoom if needed.",
+      hint: goodHint,
       level: "good",
     };
   }
@@ -491,15 +645,15 @@
     if (!analysis) {
       coachHint.textContent =
         "Frame the organism (or clear evidence). Avoid faces/hands when you can.";
-      if (scanStage) scanStage.className = "scan-stage";
+      lastCoachLevel = "wait";
+      applyStageClass("wait");
       coachReady = false;
       if (captureBtn && stream && !busy) captureBtn.disabled = true;
       return;
     }
     coachHint.textContent = analysis.hint || "";
-    if (scanStage) {
-      scanStage.className = "scan-stage scan-stage--" + (analysis.level || "wait");
-    }
+    lastCoachLevel = analysis.level || "wait";
+    applyStageClass(lastCoachLevel);
     coachReady = !!analysis.ok;
     if (captureBtn && stream && !busy) captureBtn.disabled = !coachReady;
   }
@@ -551,7 +705,7 @@
     }
     if (captureBtn) captureBtn.disabled = true;
     if (stopCamBtn) stopCamBtn.hidden = true;
-    if (scanStage && !busy) scanStage.className = "scan-stage";
+    if (scanStage && !busy) applyStageClass("wait");
   }
 
   function startCamera() {
@@ -592,7 +746,60 @@
       });
   }
 
-  function captureFrame() {
+  function stretchLuminanceForNight(imgData) {
+    var d = imgData.data;
+    var n = d.length / 4;
+    var min = 255;
+    var max = 0;
+    var i;
+    var o;
+    var y;
+    for (i = 0; i < n; i++) {
+      o = i * 4;
+      y = 0.299 * d[o] + 0.587 * d[o + 1] + 0.114 * d[o + 2];
+      if (y < min) min = y;
+      if (y > max) max = y;
+    }
+    var range = Math.max(12, max - min);
+    var gain = Math.min(4.2, 210 / range);
+    for (i = 0; i < n; i++) {
+      o = i * 4;
+      d[o] = Math.max(0, Math.min(255, (d[o] - min) * gain));
+      d[o + 1] = Math.max(0, Math.min(255, (d[o + 1] - min) * gain));
+      d[o + 2] = Math.max(0, Math.min(255, (d[o + 2] - min) * gain));
+    }
+  }
+
+  function boostContrastForCamo(imgData) {
+    var d = imgData.data;
+    var mid = 128;
+    var factor = 1.35;
+    for (var i = 0; i < d.length; i += 4) {
+      d[i] = Math.max(0, Math.min(255, mid + (d[i] - mid) * factor));
+      d[i + 1] = Math.max(0, Math.min(255, mid + (d[i + 1] - mid) * factor));
+      d[i + 2] = Math.max(0, Math.min(255, mid + (d[i + 2] - mid) * factor));
+    }
+  }
+
+  function scoreDrawnFrameBlur(ctx, w, h) {
+    var sampleW = Math.min(320, w);
+    var sampleH = Math.max(1, Math.round((h / w) * sampleW));
+    var sample = document.createElement("canvas");
+    sample.width = sampleW;
+    sample.height = sampleH;
+    var sctx = sample.getContext("2d");
+    sctx.drawImage(ctx.canvas, 0, 0, w, h, 0, 0, sampleW, sampleH);
+    var img = sctx.getImageData(0, 0, sampleW, sampleH);
+    var d = img.data;
+    var gray = new Float32Array(sampleW * sampleH);
+    for (var i = 0; i < sampleW * sampleH; i++) {
+      var o = i * 4;
+      gray[i] = 0.299 * d[o] + 0.587 * d[o + 1] + 0.114 * d[o + 2];
+    }
+    return laplacianVariance(gray, sampleW, sampleH);
+  }
+
+  function drawCaptureToCanvas() {
     if (!video || !canvas || !video.videoWidth) {
       throw new Error("Camera not ready");
     }
@@ -617,10 +824,64 @@
       w,
       h
     );
+    var modes = modeFlags();
+    if (modes.night || modes.camo) {
+      var img = ctx.getImageData(0, 0, w, h);
+      if (modes.night) stretchLuminanceForNight(img);
+      if (modes.camo) boostContrastForCamo(img);
+      ctx.putImageData(img, 0, 0);
+    }
+    return { ctx: ctx, w: w, h: h, blur: scoreDrawnFrameBlur(ctx, w, h) };
+  }
+
+  function encodeCanvasFrame() {
     var dataUrl = canvas.toDataURL("image/jpeg", 0.85);
     var m = /^data:(image\/[a-z0-9.+-]+);base64,(.+)$/i.exec(dataUrl);
     if (!m) throw new Error("Could not encode frame");
     return { mimeType: m[1], imageBase64: m[2] };
+  }
+
+  function captureFrame() {
+    drawCaptureToCanvas();
+    return encodeCanvasFrame();
+  }
+
+  function waitTwoFrames() {
+    return new Promise(function (resolve) {
+      requestAnimationFrame(function () {
+        requestAnimationFrame(resolve);
+      });
+    });
+  }
+
+  function captureBestBurst() {
+    var modes = modeFlags();
+    var count = modes.drive ? DRIVE_BURST_FRAMES : 1;
+    var bestBlur = -1;
+    var bestPayload = null;
+    var bestImage = null;
+    var i = 0;
+
+    function takeNext() {
+      var drawn = drawCaptureToCanvas();
+      if (drawn.blur >= bestBlur) {
+        bestBlur = drawn.blur;
+        bestPayload = encodeCanvasFrame();
+        bestImage = drawn.ctx.getImageData(0, 0, drawn.w, drawn.h);
+      }
+      i += 1;
+      if (i >= count) {
+        if (bestImage && canvas) {
+          canvas.width = bestImage.width;
+          canvas.height = bestImage.height;
+          canvas.getContext("2d").putImageData(bestImage, 0, 0);
+        }
+        return Promise.resolve(bestPayload);
+      }
+      return waitTwoFrames().then(takeNext);
+    }
+
+    return takeNext();
   }
 
   function clearCanvas() {
@@ -637,7 +898,7 @@
       canvas.classList.remove("scan-stage__freeze");
     }
     if (video) video.style.visibility = "";
-    if (scanStage) scanStage.classList.remove("scan-stage--processing");
+    applyStageClass(lastCoachLevel || "wait");
   }
 
   function showFreezeFrame() {
@@ -646,7 +907,7 @@
     canvas.hidden = false;
     if (video) video.style.visibility = "hidden";
     if (scanStage) {
-      scanStage.className = "scan-stage scan-stage--processing";
+      applyStageClass("processing");
     }
     if (coachHint) {
       coachHint.textContent =
@@ -1012,33 +1273,37 @@
           : "Working on your photo… " + sec + "s (identifying). Camera is off."
       );
     }, 500);
-    setStatus("Photo captured — camera off. Identifying…");
-    var payload;
-    try {
-      payload = captureFrame();
-      showFreezeFrame();
-      stopCamera();
-    } catch (e) {
-      clearInterval(tick);
-      busy = false;
-      hideFreezeFrame();
-      tickLiveCoach();
-      setStatus(e && e.message ? e.message : "Capture failed");
-      return;
-    }
+    var modes = modeFlags();
+    setStatus(
+      modes.drive
+        ? "Grabbing a short Drive burst — picking the sharpest frame…"
+        : "Photo captured — camera off. Identifying…"
+    );
 
-    // Phase 1: ID only (fast). Phase 2: matching art — never blocks a good ID.
-    fetchJson(
-      API,
-      {
-        imageBase64: payload.imageBase64,
-        mimeType: payload.mimeType,
-        wantCodexStill: false,
-        shelfHints: shelfHintsForIdentify(),
-      },
-      IDENTIFY_TIMEOUT_MS
-    )
-      .then(function (pack) {
+    captureBestBurst()
+      .then(function (payload) {
+        if (!payload || !payload.imageBase64) {
+          throw new Error("Capture failed");
+        }
+        showFreezeFrame();
+        stopCamera();
+        setStatus("Photo captured — camera off. Identifying…");
+        return fetchJson(
+          API,
+          {
+            imageBase64: payload.imageBase64,
+            mimeType: payload.mimeType,
+            wantCodexStill: false,
+            shelfHints: shelfHintsForIdentify(),
+          },
+          IDENTIFY_TIMEOUT_MS
+        ).then(function (pack) {
+          return { pack: pack, payload: payload };
+        });
+      })
+      .then(function (bundle) {
+        var pack = bundle.pack;
+        var payload = bundle.payload;
         var data = pack.data || {};
         if (!pack.res.ok || !data.ok) {
           throw new Error(
@@ -1059,17 +1324,16 @@
             "Identified — reusing stage art if we have it, else making a new portrait…";
         }
         return requestCodexStill(payload, data).then(function (stillInfo) {
+          payload.imageBase64 = "";
           return { data: data, stillInfo: stillInfo };
         });
       })
       .then(function (pack) {
-        payload.imageBase64 = "";
         clearInterval(tick);
         showResult(pack.data, pack.stillInfo || null);
       })
       .catch(function (err) {
         clearInterval(tick);
-        if (payload) payload.imageBase64 = "";
         clearCanvas();
         hideFreezeFrame();
         var msg = err && err.message ? err.message : "error";
@@ -1081,7 +1345,6 @@
         startCamera();
       })
       .then(function () {
-        if (payload) payload.imageBase64 = "";
         busy = false;
       });
   }
@@ -1095,6 +1358,10 @@
 
   if (desktopBlock) desktopBlock.hidden = true;
   if (scanUi) scanUi.hidden = false;
+  syncModeUiFromPrefs();
+  if (modeDriveEl) modeDriveEl.addEventListener("change", onModeChange);
+  if (modeNightEl) modeNightEl.addEventListener("change", onModeChange);
+  if (modeCamoEl) modeCamoEl.addEventListener("change", onModeChange);
   bindPinchZoom();
   if (captureBtn) captureBtn.addEventListener("click", onCapture);
   if (stopCamBtn) stopCamBtn.addEventListener("click", stopCamera);
