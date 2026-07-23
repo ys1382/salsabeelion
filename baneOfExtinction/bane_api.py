@@ -2557,14 +2557,16 @@ def _normalize_callouts(
     allowed_kinds: list[str] | None = None,
     *,
     max_callouts: int | None = None,
-) -> list[dict[str, str]]:
+    require_builds_on: bool = False,
+) -> list[dict[str, Any]]:
     if not isinstance(raw, list):
         return []
     allowed = set(allowed_kinds or ("notice", "help", "wonder"))
     limit = max_callouts if max_callouts is not None else MAX_CALLOUTS
-    out: list[dict[str, str]] = []
+    out: list[dict[str, Any]] = []
     total = len([x for x in raw if isinstance(x, dict)])
     index = 0
+    builds_on_count = 0
     for item in raw:
         if not isinstance(item, dict):
             continue
@@ -2583,16 +2585,44 @@ def _normalize_callouts(
                 kind = "notice"
             else:
                 continue
-        out.append(
-            {
-                "anchor": anchor[:40],
-                "label": label[:60],
-                "fact": _clip_plain(fact, MAX_FACT_CHARS),
-                "kind": kind,
-            }
+        builds_on = bool(
+            item.get("buildsOn")
+            or item.get("builds_on")
+            or item.get("buildOn")
         )
+        entry: dict[str, Any] = {
+            "anchor": anchor[:40],
+            "label": label[:60],
+            "fact": _clip_plain(fact, MAX_FACT_CHARS),
+            "kind": kind,
+        }
+        if builds_on:
+            builds_on_count += 1
+            # Keep exactly one builds-on marker when the prompt asked for it.
+            if require_builds_on and builds_on_count == 1:
+                entry["buildsOn"] = True
+            elif not require_builds_on:
+                entry["buildsOn"] = True
+        out.append(entry)
         if len(out) >= limit:
             break
+    if require_builds_on and out and not any(c.get("buildsOn") for c in out):
+        # Model forgot the flag — mark the first notice (or first callout) so the
+        # client can still surface one deepen-line for this set.
+        for c in out:
+            if c.get("kind") == "notice":
+                c["buildsOn"] = True
+                break
+        else:
+            out[0]["buildsOn"] = True
+    elif require_builds_on:
+        seen = False
+        for c in out:
+            if c.get("buildsOn"):
+                if seen:
+                    c.pop("buildsOn", None)
+                else:
+                    seen = True
     return out
 
 
@@ -3128,6 +3158,7 @@ def build_callouts(
     short_note: str = "",
     bloom_color: str = "",
     avoid_facts: list[str] | None = None,
+    build_on_fact: str = "",
     place_id: str = "",
     place_label: str = "",
     region: str = "",
@@ -3158,6 +3189,7 @@ def build_callouts(
         for x in (avoid_facts or [])
         if str(x).strip()
     ][:40]
+    build_on = _clip_plain(str(build_on_fact or ""), MAX_FACT_CHARS)
     place_id_n = place_id.strip()[:64]
     place_label_n = place_label.strip()[:120]
     region_n = region.strip()[:40]
@@ -3453,6 +3485,19 @@ def build_callouts(
             "neighbors, help tips, or wonder: "
             + " | ".join(avoid[:24])
         )
+    if build_on:
+        scope += (
+            " BUILD-ON (required) — the player already learned this about THIS find: "
+            f"«{build_on}». "
+            "EXACTLY ONE callout in this set must deepen or focus that prior learning "
+            "(e.g. who/what depends on it, what follows from it, a neighbor link) — "
+            "true for THIS named find, not a generic lecture. "
+            "Do NOT repeat or closely paraphrase that prior fact. "
+            "Set buildsOn:true on that ONE callout only; all other callouts stay a free "
+            "mix of allowed kinds (notice / help / wonder as unlocked). "
+            "Build-on does NOT replace the help tip or wonder rules — it is one extra "
+            "focus among the set, usually as a notice unless help/wonder truly fits."
+        )
 
     caption_hints = (
         {
@@ -3469,6 +3514,7 @@ def build_callouts(
                     "anchor": "part_or_clue",
                     "label": "Short label",
                     "kind": "notice",
+                    "buildsOn": False,
                     "fact": "1–2 complete short sentences (finish every sentence)",
                 }
             ],
@@ -3488,6 +3534,7 @@ def build_callouts(
                     "anchor": "part_or_clue",
                     "label": "Short label",
                     "kind": "notice",
+                    "buildsOn": False,
                     "fact": "1–2 complete short sentences (finish every sentence)",
                 }
             ],
@@ -3527,6 +3574,14 @@ def build_callouts(
             if allow_wonder
             else "No wonder callouts in this set. "
         )
+        + (
+            (
+                "EXACTLY ONE callout must set buildsOn:true and deepen the BUILD-ON prior "
+                "fact above; every other callout must set buildsOn:false. "
+            )
+            if build_on
+            else "Do not set buildsOn:true on any callout. "
+        )
         + "Fresh angles if avoid-list given. "
         "Keep nativeRangeRefine, rangeElsewhere, conservationStatus, localStatus, and "
         "compareNote out of the callout list. "
@@ -3544,7 +3599,10 @@ def build_callouts(
         )
         parsed = _extract_json_object(raw_text)
         callouts = _normalize_callouts(
-            parsed.get("callouts"), allowed_kinds, max_callouts=callout_limit
+            parsed.get("callouts"),
+            allowed_kinds,
+            max_callouts=callout_limit,
+            require_builds_on=bool(build_on),
         )
         if len(callouts) < 2:
             raise RuntimeError("Too few callouts")
@@ -3658,6 +3716,7 @@ def build_callouts(
         "displayName": title,
         "callouts": callouts,
         "poolRefill": bool(pool_refill),
+        "buildOnFact": build_on or "",
         "nativeRange": meta.get("nativeRange") or "",
         "rangeElsewhere": meta.get("rangeElsewhere") or "",
         "conservationStatus": meta.get("conservationStatus") or "",
@@ -3915,6 +3974,15 @@ class Handler(BaseHTTPRequestHandler):
             avoid_facts = [
                 _clip_plain(str(x), MAX_FACT_CHARS) for x in avoid_raw if str(x).strip()
             ][:40]
+            build_on_fact = _clip_plain(
+                str(
+                    body.get("buildOnFact")
+                    or body.get("build_on_fact")
+                    or body.get("buildOn")
+                    or ""
+                ),
+                MAX_FACT_CHARS,
+            )
             place_id = str(body.get("placeId") or "").strip()
             place_label = str(body.get("placeLabel") or "").strip()
             region = str(body.get("region") or "").strip()
@@ -3973,6 +4041,7 @@ class Handler(BaseHTTPRequestHandler):
                 short_note=short_note,
                 bloom_color=bloom_color,
                 avoid_facts=avoid_facts,
+                build_on_fact=build_on_fact,
                 place_id=place_id,
                 place_label=place_label,
                 region=region,

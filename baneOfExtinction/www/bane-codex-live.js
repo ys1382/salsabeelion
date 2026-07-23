@@ -5,10 +5,12 @@
   var STORAGE_KEY = "bane_last_id";
   var STILL_KEY = "bane_last_still";
   var RECENT_FACTS_KEY = "bane_callout_recent_v1";
+  var FACT_SETS_KEY = "bane_callout_sets_v1";
   var FACT_POOL_KEY = "bane_fact_pool_v1";
   var FOCUS_MODE_KEY = "bane_focus_mode_v1";
   var GARDEN_FOCUS_KEY = "bane_garden_focus_v1"; // legacy migrate only
   var MAX_RECENT_FACTS = 24;
+  var MAX_PRIOR_SETS = 12;
   var FACTS_PER_SERVE = 3;
   var POOL_MIN_BEFORE_REFILL = 3;
   var MAX_AGE_MS = 15 * 60 * 1000;
@@ -208,9 +210,11 @@
           ? window.BaneCodexFacts.guessKind(c, index, callouts.length)
           : "notice");
       var article = document.createElement("article");
-      article.className = "callout callout--" + kind;
+      article.className =
+        "callout callout--" + kind + (c && c.buildsOn ? " callout--builds-on" : "");
       article.dataset.anchor = c.anchor || "";
       article.dataset.kind = kind;
+      if (c && c.buildsOn) article.dataset.buildsOn = "1";
       article.innerHTML =
         '<div class="callout__tick" aria-hidden="true"></div>' +
         '<div class="callout__body">' +
@@ -218,8 +222,9 @@
         '<p class="callout__label"></p>' +
         '<p class="callout__fact"></p>' +
         "</div>";
-      article.querySelector(".callout__kind").textContent =
-        Labels[kind] || kind;
+      article.querySelector(".callout__kind").textContent = c && c.buildsOn
+        ? (Labels[kind] || kind) + " · builds on what you learned"
+        : Labels[kind] || kind;
       article.querySelector(".callout__label").textContent =
         c.label || c.anchor || "Note";
       article.querySelector(".callout__fact").textContent = c.fact || "";
@@ -431,6 +436,20 @@
 
   function takeFromPool(pool, n) {
     var taken = [];
+    var buildIdx = -1;
+    for (var i = 0; i < pool.unused.length; i++) {
+      if (pool.unused[i] && pool.unused[i].buildsOn) {
+        buildIdx = i;
+        break;
+      }
+    }
+    if (buildIdx >= 0) {
+      var buildOne = pool.unused.splice(buildIdx, 1)[0];
+      if (calloutFactText(buildOne)) {
+        taken.push(buildOne);
+        pool.used.push(buildOne);
+      }
+    }
     while (taken.length < n && pool.unused.length) {
       var next = pool.unused.shift();
       if (!calloutFactText(next)) continue;
@@ -464,6 +483,12 @@
     renderCallouts(callouts);
     renderSpeciesMeta(data);
     rememberCalloutFacts(state.commonName, state.latinName, callouts);
+    rememberFactSetAndBuildOn(
+      state.commonName,
+      state.latinName,
+      callouts,
+      opts.buildOnPick || null
+    );
     var collected = null;
     if (window.BaneCodexFacts && window.BaneCodexFacts.collectCallouts) {
       collected = window.BaneCodexFacts.collectCallouts(
@@ -559,7 +584,7 @@
     );
     var pool = getFactPool(poolKey);
 
-    function finishWithPoolServe(metaSource) {
+    function finishWithPoolServe(metaSource, buildOnPick) {
       var served = takeFromPool(pool, FACTS_PER_SERVE);
       saveFactPool(poolKey, pool);
       if (!served.length) {
@@ -574,11 +599,16 @@
       applyCalloutPayload(payload, {
         fromPool: true,
         poolLeft: pool.unused.length,
+        buildOnPick: buildOnPick || null,
       });
     }
 
-    function refillThenServe() {
-      setStatus("Refilling your fact pool with fresh callouts…");
+    function refillThenServe(buildOnPick) {
+      setStatus(
+        buildOnPick
+          ? "Refilling your fact pool — one fact will build on what you already learned…"
+          : "Refilling your fact pool with fresh callouts…"
+      );
       var avoidFacts = allPoolFactTexts(pool).concat(
         getRecentFacts(state.commonName, state.latinName)
       );
@@ -591,6 +621,7 @@
         shortNote: state.shortNote || "",
         bloomColor: state.bloomColor || "",
         avoidFacts: avoidFacts.slice(0, 40),
+        buildOnFact: buildOnPick && buildOnPick.fact ? buildOnPick.fact : "",
         placeId: place.placeId || "",
         placeLabel: place.placeLabel || "",
         region: place.region || "",
@@ -627,20 +658,24 @@
           disclaimer: data.disclaimer || "",
           source: data.source || "claude",
           focusMode: data.focusMode || focusMode,
+          buildOnFact: data.buildOnFact || "",
         };
         saveFactPool(poolKey, pool);
-        finishWithPoolServe(pool.meta);
+        finishWithPoolServe(pool.meta, buildOnPick || null);
       });
     }
 
+    var buildOnPick = pickNextBuildOnFact(state.commonName, state.latinName);
     var servePromise;
-    if (pool.unused.length >= POOL_MIN_BEFORE_REFILL) {
+    // Later Loads for the same find: always ask Claude so one fact can deepen a
+    // prior set. First encounter (no prior sets) keeps the local pool path.
+    if (buildOnPick || pool.unused.length < POOL_MIN_BEFORE_REFILL) {
+      servePromise = refillThenServe(buildOnPick);
+    } else {
       setStatus("Pulling different facts from your pool…");
       servePromise = Promise.resolve().then(function () {
-        finishWithPoolServe(pool.meta);
+        finishWithPoolServe(pool.meta, null);
       });
-    } else {
-      servePromise = refillThenServe();
     }
 
     servePromise
@@ -755,6 +790,129 @@
     try {
       localStorage.setItem(RECENT_FACTS_KEY, JSON.stringify(map));
     } catch (e) {}
+  }
+
+  function readFactSetsMap() {
+    try {
+      var raw = localStorage.getItem(FACT_SETS_KEY);
+      if (!raw) return {};
+      var map = JSON.parse(raw);
+      return map && typeof map === "object" ? map : {};
+    } catch (e) {
+      return {};
+    }
+  }
+
+  function writeFactSetsMap(map) {
+    try {
+      localStorage.setItem(FACT_SETS_KEY, JSON.stringify(map));
+    } catch (e) {}
+  }
+
+  function getFactSetsState(common, latin) {
+    var key = recentFactsSpeciesKey(common, latin);
+    if (!key) return null;
+    var map = readFactSetsMap();
+    var st = map[key];
+    if (!st || typeof st !== "object") {
+      return { key: key, sets: [], nextSet: 0, hooked: [] };
+    }
+    return {
+      key: key,
+      sets: Array.isArray(st.sets) ? st.sets : [],
+      nextSet: typeof st.nextSet === "number" ? st.nextSet : 0,
+      hooked: Array.isArray(st.hooked) ? st.hooked : [],
+    };
+  }
+
+  function saveFactSetsState(st) {
+    if (!st || !st.key) return;
+    var map = readFactSetsMap();
+    map[st.key] = {
+      sets: (st.sets || []).slice(-MAX_PRIOR_SETS),
+      nextSet: st.nextSet || 0,
+      hooked: (st.hooked || []).slice(-80),
+    };
+    writeFactSetsMap(map);
+  }
+
+  /** Pick one prior fact from the next unused prior set (rotate sets; wrap facts). */
+  function pickNextBuildOnFact(common, latin) {
+    var st = getFactSetsState(common, latin);
+    if (!st || !st.sets.length) return null;
+    var hooked = {};
+    (st.hooked || []).forEach(function (f) {
+      var t = String(f || "")
+        .trim()
+        .toLowerCase();
+      if (t) hooked[t] = true;
+    });
+    var start =
+      ((st.nextSet % st.sets.length) + st.sets.length) % st.sets.length;
+    var step;
+    for (step = 0; step < st.sets.length; step++) {
+      var si = (start + step) % st.sets.length;
+      var set = st.sets[si];
+      if (!Array.isArray(set)) continue;
+      for (var j = 0; j < set.length; j++) {
+        var fact = String(set[j] || "").trim();
+        if (!fact) continue;
+        if (hooked[fact.toLowerCase()]) continue;
+        return {
+          key: st.key,
+          fact: fact,
+          setIndex: si,
+          wrap: false,
+        };
+      }
+    }
+    // All prior facts already used as hooks — wrap and reuse from the next set.
+    var wrapSet = st.sets[start];
+    if (!Array.isArray(wrapSet) || !wrapSet.length) return null;
+    var wrapFact = "";
+    for (var k = 0; k < wrapSet.length; k++) {
+      wrapFact = String(wrapSet[k] || "").trim();
+      if (wrapFact) break;
+    }
+    if (!wrapFact) return null;
+    return {
+      key: st.key,
+      fact: wrapFact,
+      setIndex: start,
+      wrap: true,
+    };
+  }
+
+  function rememberFactSetAndBuildOn(common, latin, callouts, buildOnPick) {
+    var st = getFactSetsState(common, latin);
+    if (!st) return;
+    var oldLen = st.sets.length;
+    if (buildOnPick && buildOnPick.fact) {
+      if (buildOnPick.wrap) st.hooked = [];
+      var hookLow = String(buildOnPick.fact).trim().toLowerCase();
+      var already = false;
+      st.hooked.forEach(function (h) {
+        if (String(h || "").trim().toLowerCase() === hookLow) already = true;
+      });
+      if (!already) st.hooked.push(String(buildOnPick.fact).trim());
+      if (oldLen > 0) {
+        // Next Load should pull from a different prior set when possible.
+        st.nextSet = Number(buildOnPick.setIndex) + 1;
+      }
+    }
+    var facts = (callouts || [])
+      .map(function (c) {
+        return String((c && c.fact) || "").trim();
+      })
+      .filter(Boolean);
+    if (facts.length) {
+      st.sets.push(facts);
+      if (st.sets.length > MAX_PRIOR_SETS) {
+        st.sets = st.sets.slice(-MAX_PRIOR_SETS);
+      }
+      if (st.nextSet >= st.sets.length) st.nextSet = 0;
+    }
+    saveFactSetsState(st);
   }
 
   function clearStored() {

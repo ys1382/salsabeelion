@@ -467,6 +467,10 @@
   background: #e0b56a;
 }
 
+.callout--builds-on .callout__kind {
+  color: rgba(190, 220, 180, 0.9);
+}
+
 .callout__kind {
   margin: 0 0 0.15rem;
   font-size: 0.62rem;

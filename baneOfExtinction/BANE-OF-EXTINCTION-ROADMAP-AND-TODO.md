@@ -142,6 +142,7 @@ After the still “freezes” on the codex card:
 - **Hiking + Seashore focuses (2026-07-23):** engaged stances (not GPS). Hiking = trail/forest-walker relationship facts; Seashore = beachgoer relationship facts — how people act in that kind of place and how that touches the organism (not fun-trivia-only). Other modes may still mention people–nature links; these lean into it for players who want more. Aquarium/shelf finds still get the chosen stance.
 - **Crops & Domestic Animals focus (2026-07-23):** renamed from Food history stub. Crops, farm animals, and companions (cats/dogs OK). Claude: domestication eras, plain crop discovery dates (not settler/Indigenous conflict), husbandry noticing, light everyday kindness (reuse bottles / durable goods), and **not-your-fault** system/company pollution notes. **Claude banned** from human-injustice history and from inventing **deeper environmental practices** (regen ag is one example — also complex farm systems, soil-carbon doctrine, specialized protocols) until owner notes. Pigs: ancestry/litter/husbandry OK; never encourage eating; “pork unhealthy” = later pin.
 - **Small-help tip + fresh rescans (2026-07-21):** among the everyday facts, **exactly one** is a gentle, species-specific “what you can do for this organism’s world” tip (no guilt; don’t blame staple foods or systems people don’t control). Device remembers recent fact text per species + focus mode (not photos) so Load / rescan can ask Claude for a fresh set.
+- **Build-on prior facts (2026-07-23):** on later Loads for the same find, **exactly one** callout deepens something already learned. Hooks rotate across prior fact sets (and unused facts within a set) — e.g. first set teaches water vapor; a later set may name who depends on that vapor; the next Load picks a different prior set/fact. Does not lock the whole set to one theme.
 - Desktop can browse callouts once an entry exists; phone not required for browsing.
 
 ### First stubs — California poppies + common sunflower + sweetheart philodendron
@@ -245,6 +246,7 @@ Owner pins from chat go here.
 - [x] Common sunflower stub (species-aimed ID hints, fallback callouts, codex still cutout)
 - [x] Sweetheart philodendron stub (Philodendron hederaceum; ID hints, fallback callouts, codex still)
 - [x] Callouts: one small-help tip per set (no guilt) + remember recent facts for fresh rescans
+- [x] Later Loads: exactly one fact can deepen a prior fact, rotating which prior set the hook comes from
 - [x] Place lens stack (all layers): favorites, looking-at default, compare, fact variants, habitat-only, season, browse-by-area — no GPS
 - [x] Garden focus toggle: garden-world eco facts (incl. seed dispersal) vs walk/wild eco facts — lean toward helping, not every line a chore
 - [x] Hiking + Seashore focuses: engaged beachgoer / trail-walker relationship lens (not GPS; not trivia-only)
