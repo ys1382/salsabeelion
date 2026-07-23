@@ -537,6 +537,8 @@
       var bits = [];
       if (lastRecord.confidence) bits.push("confidence: " + lastRecord.confidence);
       if (lastRecord.lifeStage) bits.push("stage: " + lastRecord.lifeStage);
+      if (data.alreadyLearned) bits.push("already on your shelf");
+      if (data.claudeSkipped) bits.push("verified with Gemini");
       if (lastRecord.bloomColor) bits.push("color: " + lastRecord.bloomColor);
       bits.push("finishing matching art…");
       if (lastRecord.shortNote) bits.push(lastRecord.shortNote);
@@ -798,6 +800,27 @@
       });
   }
 
+  function shelfHintsForIdentify() {
+    if (!window.BaneCodexCollection || !window.BaneCodexCollection.readAll) {
+      return [];
+    }
+    try {
+      return window.BaneCodexCollection.readAll()
+        .map(function (e) {
+          return {
+            commonName: e.commonName || e.displayName || "",
+            latinName: e.latinName || "",
+          };
+        })
+        .filter(function (e) {
+          return e.commonName || e.latinName;
+        })
+        .slice(0, 48);
+    } catch (err) {
+      return [];
+    }
+  }
+
   function onCapture() {
     if (busy) {
       setStatus("Still working on your photo… please wait. One tap is enough.");
@@ -848,6 +871,7 @@
         imageBase64: payload.imageBase64,
         mimeType: payload.mimeType,
         wantCodexStill: false,
+        shelfHints: shelfHintsForIdentify(),
       },
       IDENTIFY_TIMEOUT_MS
     )

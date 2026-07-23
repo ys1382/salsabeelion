@@ -5,8 +5,11 @@
   var STORAGE_KEY = "bane_last_id";
   var STILL_KEY = "bane_last_still";
   var RECENT_FACTS_KEY = "bane_callout_recent_v1";
+  var FACT_POOL_KEY = "bane_fact_pool_v1";
   var GARDEN_FOCUS_KEY = "bane_garden_focus_v1";
   var MAX_RECENT_FACTS = 24;
+  var FACTS_PER_SERVE = 3;
+  var POOL_MIN_BEFORE_REFILL = 3;
   var MAX_AGE_MS = 15 * 60 * 1000;
   var statusEl = document.getElementById("status");
   var listEl = document.getElementById("calloutList");
@@ -309,6 +312,12 @@
     var local = String((data && data.localStatus) || "").trim();
     var lens = String((data && data.placeLabel) || "").trim();
     var compare = String((data && data.compareNote) || "").trim();
+    var credits = Array.isArray(data && data.openCredits)
+      ? data.openCredits.filter(Boolean)
+      : [];
+    if (!credits.length && data && data.attribution) {
+      credits = [String(data.attribution)];
+    }
     var bits = [];
     if (status) bits.push("Status: " + status);
     if (range) bits.push(range);
@@ -321,6 +330,7 @@
     else if (local) bits.push(local);
     else if (lens) bits.push("Looking at " + lens);
     if (compare) bits.push(compare);
+    if (credits.length) bits.push("Credit: " + credits.join(" · "));
     if (!bits.length) {
       metaEl.hidden = true;
       metaEl.textContent = "";
@@ -328,6 +338,309 @@
     }
     metaEl.hidden = false;
     metaEl.textContent = bits.join(" · ");
+  }
+
+  function factPoolKey(common, latin, place, gardenFocus, factLevel) {
+    var sk =
+      (window.BaneCodexFacts &&
+        window.BaneCodexFacts.speciesKey({
+          commonName: common,
+          latinName: latin,
+        })) ||
+      String(common || "").toLowerCase();
+    var placeId = (place && (place.placeId || place.placeLabel)) || "none";
+    return (
+      sk +
+      "|" +
+      placeId +
+      "|" +
+      (gardenFocus ? "g1" : "g0") +
+      "|fl" +
+      (factLevel || 1)
+    );
+  }
+
+  function readFactPools() {
+    try {
+      var raw = localStorage.getItem(FACT_POOL_KEY);
+      if (!raw) return {};
+      var map = JSON.parse(raw);
+      return map && typeof map === "object" ? map : {};
+    } catch (e) {
+      return {};
+    }
+  }
+
+  function writeFactPools(map) {
+    try {
+      localStorage.setItem(FACT_POOL_KEY, JSON.stringify(map));
+    } catch (e) {}
+  }
+
+  function getFactPool(key) {
+    var map = readFactPools();
+    var pool = map[key];
+    if (!pool || typeof pool !== "object") {
+      return { unused: [], used: [], meta: null };
+    }
+    return {
+      unused: Array.isArray(pool.unused) ? pool.unused.slice() : [],
+      used: Array.isArray(pool.used) ? pool.used.slice() : [],
+      meta: pool.meta || null,
+    };
+  }
+
+  function saveFactPool(key, pool) {
+    var map = readFactPools();
+    map[key] = {
+      unused: (pool.unused || []).slice(0, 40),
+      used: (pool.used || []).slice(-80),
+      meta: pool.meta || null,
+    };
+    writeFactPools(map);
+  }
+
+  function calloutFactText(c) {
+    return String((c && c.fact) || "").trim();
+  }
+
+  function mergeCalloutsIntoPool(pool, callouts) {
+    var seen = {};
+    (pool.unused || [])
+      .concat(pool.used || [])
+      .forEach(function (c) {
+        var t = calloutFactText(c).toLowerCase();
+        if (t) seen[t] = true;
+      });
+    (callouts || []).forEach(function (c) {
+      var t = calloutFactText(c).toLowerCase();
+      if (!t || seen[t]) return;
+      seen[t] = true;
+      pool.unused.push(c);
+    });
+    return pool;
+  }
+
+  function takeFromPool(pool, n) {
+    var taken = [];
+    while (taken.length < n && pool.unused.length) {
+      var next = pool.unused.shift();
+      if (!calloutFactText(next)) continue;
+      taken.push(next);
+      pool.used.push(next);
+    }
+    return taken;
+  }
+
+  function allPoolFactTexts(pool) {
+    return (pool.unused || [])
+      .concat(pool.used || [])
+      .map(calloutFactText)
+      .filter(Boolean);
+  }
+
+  function applyCalloutPayload(data, opts) {
+    opts = opts || {};
+    var gardenFocus = isGardenFocus();
+    var place = placePayload();
+    var callouts = data.callouts || [];
+    if (commonOut) {
+      commonOut.textContent =
+        state.commonName +
+        (state.cultivar && isPoppy(state.commonName, state.latinName)
+          ? " (" + state.cultivar + ")"
+          : "");
+    }
+    if (latinOut) latinOut.textContent = state.latinName || "—";
+    applyStill();
+    renderCallouts(callouts);
+    renderSpeciesMeta(data);
+    rememberCalloutFacts(state.commonName, state.latinName, callouts);
+    var collected = null;
+    if (window.BaneCodexFacts && window.BaneCodexFacts.collectCallouts) {
+      collected = window.BaneCodexFacts.collectCallouts(
+        {
+          key: state.collectionKey,
+          commonName: state.commonName,
+          latinName: state.latinName,
+          displayName: state.commonName,
+        },
+        callouts,
+        { gardenFocus: gardenFocus }
+      );
+    }
+    renderFactBookProgress();
+    renderShelf();
+    if (disclaimerEl) {
+      disclaimerEl.hidden = false;
+      var creditBit =
+        Array.isArray(data.openCredits) && data.openCredits.length
+          ? " · " + data.openCredits.join(" · ")
+          : data.attribution
+            ? " · " + data.attribution
+            : "";
+      disclaimerEl.textContent =
+        (data.disclaimer || "") +
+        (data.source ? " · source: " + data.source : "") +
+        creditBit;
+    }
+    var addedBit =
+      collected && collected.added
+        ? " · +" + collected.added + " new in your fact book"
+        : " · fact book updated";
+    var fromPool = opts.fromPool
+      ? " · from your fact pool (" + (opts.poolLeft || 0) + " left)"
+      : "";
+    setStatus(
+      data.source && String(data.source).indexOf("fallback") === 0
+        ? "Showing fallback facts (Claude unavailable)." + addedBit
+        : (opts.fromPool
+            ? "Different facts from your pool for: "
+            : "Callouts loaded for: ") +
+            state.commonName +
+            (gardenFocus ? " · garden focus" : " · walk / wild focus") +
+            (place.placeLabel ? " · looking at " + place.placeLabel : "") +
+            fromPool +
+            addedBit +
+            "."
+    );
+  }
+
+  function fetchCalloutsFromServer(body) {
+    return fetch(API_CALLOUTS, {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    }).then(function (res) {
+      return res.json().then(function (data) {
+        return { res: res, data: data || {} };
+      });
+    });
+  }
+
+  function loadFacts() {
+    if (!state.commonName) {
+      setStatus("Scan a plant first (or open a learned entry). Nothing is selected yet.");
+      return;
+    }
+    if (loadBtn) loadBtn.disabled = true;
+    var cultivar = "";
+    if (
+      isPoppy(state.commonName, state.latinName) &&
+      cultivarOn &&
+      cultivarOn.checked
+    ) {
+      cultivar = state.cultivar || "Watermelon Heaven";
+    }
+    var place = placePayload();
+    var gardenFocus = isGardenFocus();
+    var factInfo =
+      window.BaneCodexFacts && window.BaneCodexFacts.factLevelInfo
+        ? window.BaneCodexFacts.factLevelInfo()
+        : null;
+    var factLevel = factInfo ? factInfo.level : 1;
+    var poolKey = factPoolKey(
+      state.commonName,
+      state.latinName,
+      place,
+      gardenFocus,
+      factLevel
+    );
+    var pool = getFactPool(poolKey);
+
+    function finishWithPoolServe(metaSource) {
+      var served = takeFromPool(pool, FACTS_PER_SERVE);
+      saveFactPool(poolKey, pool);
+      if (!served.length) {
+        setStatus("No facts ready yet — try Load again.");
+        return;
+      }
+      var payload = Object.assign({}, metaSource || pool.meta || {}, {
+        ok: true,
+        callouts: served,
+        source: (metaSource && metaSource.source) || "fact-pool",
+      });
+      applyCalloutPayload(payload, {
+        fromPool: true,
+        poolLeft: pool.unused.length,
+      });
+    }
+
+    function refillThenServe() {
+      setStatus("Refilling your fact pool with fresh callouts…");
+      var avoidFacts = allPoolFactTexts(pool).concat(
+        getRecentFacts(state.commonName, state.latinName)
+      );
+      var body = {
+        commonName: state.commonName,
+        latinName: state.latinName,
+        cultivar: cultivar,
+        evidence: !!(evidenceOn && evidenceOn.checked),
+        organismType: state.organismType,
+        shortNote: state.shortNote || "",
+        bloomColor: state.bloomColor || "",
+        avoidFacts: avoidFacts.slice(0, 40),
+        placeId: place.placeId || "",
+        placeLabel: place.placeLabel || "",
+        region: place.region || "",
+        habitat: place.habitat || "",
+        habitatOnly: !!place.habitatOnly,
+        comparePlaceId: place.comparePlaceId || "",
+        comparePlaceLabel: place.comparePlaceLabel || "",
+        season: place.season || "",
+        gardenFocus: gardenFocus,
+        factLevel: factLevel,
+        factCount: factInfo ? factInfo.total : 0,
+        poolRefill: true,
+      };
+      return fetchCalloutsFromServer(body).then(function (pack) {
+        var data = pack.data || {};
+        if (!pack.res.ok || !data.ok) {
+          throw new Error(
+            (data && data.message) || (data && data.error) || "request_failed"
+          );
+        }
+        pool = mergeCalloutsIntoPool(pool, data.callouts || []);
+        pool.meta = {
+          nativeRange: data.nativeRange || "",
+          rangeElsewhere: data.rangeElsewhere || "",
+          conservationStatus: data.conservationStatus || "",
+          statusSource: data.statusSource || "",
+          rangeSource: data.rangeSource || "",
+          attribution: data.attribution || "",
+          openCredits: data.openCredits || [],
+          localStatus: data.localStatus || "",
+          placeLabel: data.placeLabel || place.placeLabel || "",
+          compareNote: data.compareNote || "",
+          disclaimer: data.disclaimer || "",
+          source: data.source || "claude",
+        };
+        saveFactPool(poolKey, pool);
+        finishWithPoolServe(pool.meta);
+      });
+    }
+
+    var servePromise;
+    if (pool.unused.length >= POOL_MIN_BEFORE_REFILL) {
+      setStatus("Pulling different facts from your pool…");
+      servePromise = Promise.resolve().then(function () {
+        finishWithPoolServe(pool.meta);
+      });
+    } else {
+      servePromise = refillThenServe();
+    }
+
+    servePromise
+      .catch(function (err) {
+        setStatus(
+          "Could not load callouts: " +
+            (err && err.message ? err.message : "error")
+        );
+      })
+      .then(function () {
+        if (loadBtn) loadBtn.disabled = false;
+      });
   }
 
   function placePayload() {
@@ -425,132 +738,6 @@
     try {
       localStorage.setItem(RECENT_FACTS_KEY, JSON.stringify(map));
     } catch (e) {}
-  }
-
-  function loadFacts() {
-    if (!state.commonName) {
-      setStatus("Scan a plant first (or open a learned entry). Nothing is selected yet.");
-      return;
-    }
-    setStatus("Asking Claude for callouts that match this identification…");
-    if (loadBtn) loadBtn.disabled = true;
-    var cultivar = "";
-    if (
-      isPoppy(state.commonName, state.latinName) &&
-      cultivarOn &&
-      cultivarOn.checked
-    ) {
-      cultivar = state.cultivar || "Watermelon Heaven";
-    }
-    var avoidFacts = getRecentFacts(state.commonName, state.latinName);
-    var place = placePayload();
-    var gardenFocus = isGardenFocus();
-    var factInfo =
-      window.BaneCodexFacts && window.BaneCodexFacts.factLevelInfo
-        ? window.BaneCodexFacts.factLevelInfo()
-        : null;
-    var body = {
-      commonName: state.commonName,
-      latinName: state.latinName,
-      cultivar: cultivar,
-      evidence: !!(evidenceOn && evidenceOn.checked),
-      organismType: state.organismType,
-      shortNote: state.shortNote || "",
-      bloomColor: state.bloomColor || "",
-      avoidFacts: avoidFacts,
-      placeId: place.placeId || "",
-      placeLabel: place.placeLabel || "",
-      region: place.region || "",
-      habitat: place.habitat || "",
-      habitatOnly: !!place.habitatOnly,
-      comparePlaceId: place.comparePlaceId || "",
-      comparePlaceLabel: place.comparePlaceLabel || "",
-      season: place.season || "",
-      gardenFocus: gardenFocus,
-      factLevel: factInfo ? factInfo.level : 1,
-      factCount: factInfo ? factInfo.total : 0,
-    };
-    fetch(API_CALLOUTS, {
-      method: "POST",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    })
-      .then(function (res) {
-        return res.json().then(function (data) {
-          return { res: res, data: data };
-        });
-      })
-      .then(function (pack) {
-        var data = pack.data || {};
-        if (!pack.res.ok || !data.ok) {
-          throw new Error(
-            (data && data.message) || (data && data.error) || "request_failed"
-          );
-        }
-        if (commonOut) {
-          commonOut.textContent =
-            state.commonName +
-            (state.cultivar && isPoppy(state.commonName, state.latinName)
-              ? " (" + state.cultivar + ")"
-              : "");
-        }
-        if (latinOut) latinOut.textContent = state.latinName || "—";
-        applyStill();
-        var callouts = data.callouts || [];
-        renderCallouts(callouts);
-        renderSpeciesMeta(data);
-        rememberCalloutFacts(state.commonName, state.latinName, callouts);
-        var collected = null;
-        if (window.BaneCodexFacts && window.BaneCodexFacts.collectCallouts) {
-          collected = window.BaneCodexFacts.collectCallouts(
-            {
-              key: state.collectionKey,
-              commonName: state.commonName,
-              latinName: state.latinName,
-              displayName: state.commonName,
-            },
-            callouts,
-            { gardenFocus: gardenFocus }
-          );
-        }
-        renderFactBookProgress();
-        renderShelf();
-        if (disclaimerEl) {
-          disclaimerEl.hidden = false;
-          disclaimerEl.textContent =
-            (data.disclaimer || "") +
-            (data.source ? " · source: " + data.source : "");
-        }
-        var addedBit =
-          collected && collected.added
-            ? " · +" + collected.added + " new in your fact book"
-            : " · fact book updated";
-        setStatus(
-          data.source && String(data.source).indexOf("fallback") === 0
-            ? "Showing fallback facts (Claude unavailable)." + addedBit
-            : "Callouts loaded for: " +
-                state.commonName +
-                (gardenFocus ? " · garden focus" : " · walk / wild focus") +
-                (place.placeLabel
-                  ? " · looking at " + place.placeLabel
-                  : "") +
-                (avoidFacts.length
-                  ? " (fresh set — skipping recent repeats)"
-                  : "") +
-                addedBit +
-                "."
-        );
-      })
-      .catch(function (err) {
-        setStatus(
-          "Could not load callouts: " +
-            (err && err.message ? err.message : "error")
-        );
-      })
-      .then(function () {
-        if (loadBtn) loadBtn.disabled = false;
-      });
   }
 
   function clearStored() {

@@ -66,6 +66,7 @@ _DEFAULT_IMAGE_MODELS = (
 )
 GEMINI_IMAGE_MODEL = os.environ.get("BANE_GEMINI_IMAGE_MODEL", "").strip()
 MAX_CALLOUTS = 5
+POOL_REFILL_CALLOUTS = 8
 MAX_FACT_CHARS = 480
 MAX_SHORT_NOTE_CHARS = 240
 # Keep identify responsive: art may skip if Gemini is slow (ID still returns).
@@ -74,6 +75,7 @@ MAX_IMAGE_B64 = 4_500_000
 MAX_LEARNED_ENTRIES = 48
 MAX_LEARNED_FACTS = 400
 MAX_LEARNED_BODY = 3_500_000
+MAX_SHELF_HINTS = 48
 
 # Fact levels (separate from mission L1/L2/L3). Commitment unlocks fact kinds.
 FACT_LEVEL_THRESHOLDS = (
@@ -1635,6 +1637,89 @@ def _merge_id_details(
     return out
 
 
+def _slug_compare(s: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "", (s or "").lower())
+
+
+def _parse_shelf_hints(raw: Any) -> list[dict[str, str]]:
+    if not isinstance(raw, list):
+        return []
+    out: list[dict[str, str]] = []
+    for item in raw[:MAX_SHELF_HINTS]:
+        if not isinstance(item, dict):
+            continue
+        common = str(item.get("commonName") or item.get("common") or "").strip()[:120]
+        latin = str(item.get("latinName") or item.get("latin") or "").strip()[:160]
+        if not common and not latin:
+            continue
+        out.append({"commonName": common, "latinName": latin})
+    return out
+
+
+def _id_matches_hint(parsed: dict[str, Any], hint: dict[str, str]) -> bool:
+    p_latin = _slug_compare(str(parsed.get("latinName") or ""))
+    h_latin = _slug_compare(hint.get("latinName") or "")
+    if p_latin and h_latin and p_latin == h_latin:
+        return True
+    p_common = _slug_compare(str(parsed.get("commonName") or ""))
+    h_common = _slug_compare(hint.get("commonName") or "")
+    if p_common and h_common and p_common == h_common:
+        return True
+    return False
+
+
+def _id_matches_any_shelf(
+    parsed: dict[str, Any] | None, shelf_hints: list[dict[str, str]]
+) -> bool:
+    if not parsed or not shelf_hints:
+        return False
+    for hint in shelf_hints:
+        if _id_matches_hint(parsed, hint):
+            return True
+    return False
+
+
+def _alternatives_overlap_shelf(
+    parsed: dict[str, Any] | None, shelf_hints: list[dict[str, str]]
+) -> bool:
+    """True when Gemini's runner-up names collide with the player's shelf (lookalike risk)."""
+    if not parsed or not shelf_hints:
+        return False
+    alts = parsed.get("alternatives") or []
+    if not isinstance(alts, list):
+        return False
+    for alt in alts[:5]:
+        if not isinstance(alt, dict):
+            continue
+        if _id_matches_any_shelf(alt, shelf_hints):
+            # Chosen name may differ from shelf alt — verify with second model.
+            if not _id_matches_any_shelf(parsed, shelf_hints):
+                return True
+    return False
+
+
+def _should_run_claude_vision(
+    gemini_id: dict[str, Any] | None,
+    shelf_hints: list[dict[str, str]],
+) -> tuple[bool, str]:
+    """
+    Gemini-first: skip Claude when Gemini is high-confidence and safe.
+    Always verify with Claude when confidence is not high, Gemini failed,
+    shelf lookalike risk, or high-conf ID conflicts with a known shelf entry
+    without matching it via alternatives.
+    """
+    if not gemini_id or _is_refusal(gemini_id):
+        return True, "gemini_weak"
+    conf = str(gemini_id.get("confidence") or "low").lower()
+    if conf != "high":
+        return True, "confidence_not_high"
+    if _id_matches_any_shelf(gemini_id, shelf_hints):
+        return False, "shelf_match_high"
+    if _alternatives_overlap_shelf(gemini_id, shelf_hints):
+        return True, "shelf_lookalike_risk"
+    return False, "gemini_high_alone"
+
+
 def _prefer_id(a: dict[str, Any] | None, b: dict[str, Any] | None) -> dict[str, Any]:
     """Prefer higher confidence; if tie, prefer richer color/cultivar naming."""
     rank = {"high": 3, "medium": 2, "low": 1}
@@ -1660,15 +1745,22 @@ def _prefer_id(a: dict[str, Any] | None, b: dict[str, Any] | None) -> dict[str, 
 
 
 def identify_wildlife(
-    image_b64: str, mime: str, *, want_codex_still: bool = False
+    image_b64: str,
+    mime: str,
+    *,
+    want_codex_still: bool = False,
+    shelf_hints: list[dict[str, str]] | None = None,
 ) -> dict[str, Any]:
     if not image_b64 or len(image_b64) > MAX_IMAGE_B64:
         return {"ok": False, "error": "image_invalid", "message": "Image missing or too large."}
 
+    hints = shelf_hints or []
     gemini_err = ""
     claude_err = ""
     gemini_id: dict[str, Any] | None = None
     claude_id: dict[str, Any] | None = None
+    claude_skipped = False
+    claude_skip_reason = ""
 
     def _gemini_job() -> tuple[dict[str, Any] | None, str]:
         try:
@@ -1682,12 +1774,18 @@ def identify_wildlife(
         except Exception as exc:  # noqa: BLE001
             return None, f"{type(exc).__name__}: {exc}"
 
-    # Run both vision IDs at once — wall time ≈ slower model, not sum of both.
-    with ThreadPoolExecutor(max_workers=2) as pool:
-        fut_g = pool.submit(_gemini_job)
-        fut_c = pool.submit(_claude_job)
-        gemini_id, gemini_err = fut_g.result()
-        claude_id, claude_err = fut_c.result()
+    # Gemini first — Claude only when needed (cost + lookalike safety).
+    gemini_id, gemini_err = _gemini_job()
+    need_claude, claude_skip_reason = _should_run_claude_vision(gemini_id, hints)
+    if need_claude:
+        claude_id, claude_err = _claude_job()
+    else:
+        claude_skipped = True
+        print(
+            f"bane_identify skip_claude reason={claude_skip_reason!r} "
+            f"gemini={(gemini_id or {}).get('commonName')!r}",
+            flush=True,
+        )
 
     chosen = _prefer_id(gemini_id, claude_id)
     if _is_refusal(chosen):
@@ -1709,6 +1807,8 @@ def identify_wildlife(
             ),
             "geminiError": gemini_err or None,
             "claudeError": claude_err or None,
+            "claudeSkipped": claude_skipped,
+            "claudeSkipReason": claude_skip_reason or None,
             "geminiConfigured": bool(gemini_api_key()),
             "claudeConfigured": bool(anthropic_api_key()),
             "sources": {
@@ -1728,6 +1828,8 @@ def identify_wildlife(
             "message": "Could not identify the organism from this photo.",
             "geminiError": gemini_err or None,
             "claudeError": claude_err or None,
+            "claudeSkipped": claude_skipped,
+            "claudeSkipReason": claude_skip_reason or None,
             "geminiConfigured": bool(gemini_api_key()),
             "claudeConfigured": bool(anthropic_api_key()),
         }
@@ -1736,12 +1838,14 @@ def identify_wildlife(
     if chosen.get("cultivar"):
         display = f"{chosen['commonName']} ({chosen['cultivar']})"
 
+    shelf_matched = _id_matches_any_shelf(chosen, hints)
     print(
         "bane_identify ok "
         f"chosen={chosen.get('commonName')!r} "
         f"latin={chosen.get('latinName')!r} "
         f"gemini={(gemini_id or {}).get('commonName')!r} "
-        f"claude={(claude_id or {}).get('commonName')!r}",
+        f"claude={(claude_id or {}).get('commonName')!r} "
+        f"skip_claude={claude_skipped} shelf_match={shelf_matched}",
         flush=True,
     )
 
@@ -1759,6 +1863,9 @@ def identify_wildlife(
         "confidence": chosen.get("confidence") or "low",
         "shortNote": chosen.get("shortNote") or "",
         "alternatives": chosen.get("alternatives") or [],
+        "alreadyLearned": shelf_matched,
+        "claudeSkipped": claude_skipped,
+        "claudeSkipReason": claude_skip_reason or None,
         "sources": {
             "gemini": gemini_id,
             "claude": claude_id,
@@ -1874,11 +1981,15 @@ def identify_wildlife(
 
 
 def _normalize_callouts(
-    raw: Any, allowed_kinds: list[str] | None = None
+    raw: Any,
+    allowed_kinds: list[str] | None = None,
+    *,
+    max_callouts: int | None = None,
 ) -> list[dict[str, str]]:
     if not isinstance(raw, list):
         return []
     allowed = set(allowed_kinds or ("notice", "help", "wonder"))
+    limit = max_callouts if max_callouts is not None else MAX_CALLOUTS
     out: list[dict[str, str]] = []
     total = len([x for x in raw if isinstance(x, dict)])
     index = 0
@@ -1908,7 +2019,7 @@ def _normalize_callouts(
                 "kind": kind,
             }
         )
-        if len(out) >= MAX_CALLOUTS:
+        if len(out) >= limit:
             break
     return out
 
@@ -2456,6 +2567,7 @@ def build_callouts(
     garden_focus: bool = False,
     fact_level: int | None = None,
     fact_count: int | None = None,
+    pool_refill: bool = False,
 ) -> dict[str, Any]:
     display = common.strip()
     if not display:
@@ -2480,6 +2592,7 @@ def build_callouts(
     allowed_kinds = _allowed_kinds_for_fact_level(fact_level, fact_count)
     allow_help = "help" in allowed_kinds
     allow_wonder = "wonder" in allowed_kinds
+    callout_limit = POOL_REFILL_CALLOUTS if pool_refill else MAX_CALLOUTS
 
     ns_meta = _fetch_natureserve_meta(latin_n) if latin_n else None
     fallback_meta = _fallback_species_meta(display, latin_n)
@@ -2698,7 +2811,9 @@ def build_callouts(
                 ],
             }
         )
-        + f"\nUse 3 to {MAX_CALLOUTS} callouts. "
+        + f"\nUse 3 to {callout_limit} callouts"
+        + (" (pool refill — more fresh angles)" if pool_refill else "")
+        + ". "
         "Tag each callout with kind: notice, help, or wonder. "
         f"Allowed kinds for this player right now: {', '.join(allowed_kinds)}. "
         "Mix: everyday player-world facts for the ACTIVE focus "
@@ -2725,9 +2840,13 @@ def build_callouts(
     compare_note = ""
     try:
         # Place-lens callouts need headroom so Claude does not stop mid-sentence.
-        raw_text = _call_claude_text(system, user, max_tokens=1600)
+        raw_text = _call_claude_text(
+            system, user, max_tokens=2000 if pool_refill else 1600
+        )
         parsed = _extract_json_object(raw_text)
-        callouts = _normalize_callouts(parsed.get("callouts"), allowed_kinds)
+        callouts = _normalize_callouts(
+            parsed.get("callouts"), allowed_kinds, max_callouts=callout_limit
+        )
         if len(callouts) < 2:
             raise RuntimeError("Too few callouts")
         source = "claude"
@@ -2748,6 +2867,7 @@ def build_callouts(
                 display, latin_n, note_n, color_n, garden_focus
             ),
             allowed_kinds,
+            max_callouts=callout_limit,
         )
         source = f"fallback:{type(exc).__name__}"
         local_status, compare_note = _fallback_place_status(
@@ -2784,6 +2904,25 @@ def build_callouts(
     if meta.get("attribution"):
         disclaimer += " " + meta["attribution"]
 
+    open_credits: list[str] = []
+    status_src = str(meta.get("statusSource") or "")
+    range_src = str(meta.get("rangeSource") or "")
+    if "natureserve" in status_src or "natureserve" in range_src or (
+        meta.get("attribution") and "NatureServe" in str(meta.get("attribution"))
+    ):
+        open_credits.append(
+            "NatureServe Explorer (https://explorer.natureserve.org/) — CC BY"
+        )
+    if "us-riis" in range_src or (
+        meta.get("attribution") and "US-RIIS" in str(meta.get("attribution"))
+    ):
+        open_credits.append("USGS US-RIIS — CC0 public domain")
+    if not open_credits and latin_n:
+        open_credits.append(
+            "Range/status when available: NatureServe Explorer (CC BY); "
+            "U.S. introduced/invasive captions: USGS US-RIIS (CC0)"
+        )
+
     fact_level_out = 1
     for lvl, need, _kinds in FACT_LEVEL_THRESHOLDS:
         if fact_level is not None:
@@ -2809,11 +2948,14 @@ def build_callouts(
         "cultivar": cultivar_n or None,
         "displayName": title,
         "callouts": callouts,
+        "poolRefill": bool(pool_refill),
         "nativeRange": meta.get("nativeRange") or "",
         "rangeElsewhere": meta.get("rangeElsewhere") or "",
         "conservationStatus": meta.get("conservationStatus") or "",
         "statusSource": meta.get("statusSource") or "",
         "rangeSource": meta.get("rangeSource") or "",
+        "attribution": meta.get("attribution") or "",
+        "openCredits": open_credits,
         "placeId": place_id_n,
         "placeLabel": place_label_n,
         "localStatus": local_status,
@@ -2990,8 +3132,16 @@ class Handler(BaseHTTPRequestHandler):
                 or body.get("wantStill")
                 or body.get("includeCodexStill")
             )
+            shelf_hints = _parse_shelf_hints(
+                body.get("shelfHints")
+                or body.get("learnedHints")
+                or body.get("learnedShelf")
+            )
             result = identify_wildlife(
-                image_b64, mime, want_codex_still=want_still
+                image_b64,
+                mime,
+                want_codex_still=want_still,
+                shelf_hints=shelf_hints,
             )
             code = 200 if result.get("ok") else (
                 503
@@ -3076,6 +3226,11 @@ class Handler(BaseHTTPRequestHandler):
                 )
             except (TypeError, ValueError):
                 fact_count = None
+            pool_refill = bool(
+                body.get("poolRefill")
+                or body.get("refillPool")
+                or body.get("fillFactPool")
+            )
             if not common:
                 _json(
                     self,
@@ -3107,6 +3262,7 @@ class Handler(BaseHTTPRequestHandler):
                 garden_focus=garden_focus,
                 fact_level=fact_level,
                 fact_count=fact_count,
+                pool_refill=pool_refill,
             )
             _json(self, 200, result)
             return
