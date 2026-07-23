@@ -5,7 +5,7 @@ Bane of Extinction — owner-beta API.
 - POST /api/codex-still        — Gemini image: field-guide still matching this ID + crop
                                   (one shared still per species+life-stage; rescans reuse)
 - POST /api/callouts           — Claude helper facts + native range / conservation status
-                                  (optional looking-at place lens; optional garden focus; no GPS)
+                                  (optional looking-at place lens; focus modes; no GPS)
 - GET  /api/auth/me            — Odd Trove Google SSO identity (for learned sync)
 - GET/PUT /api/learned         — wildlife learns + fact book synced to signed-in Google account
 - GET  /api/health
@@ -329,8 +329,23 @@ def _fallback_callouts_for(
                 "anchor": "shore",
                 "label": "Seashore lens",
                 "fact": (
-                    f"Seashore focus is on for {display} — think tide lines, salt spray, "
-                    "dunes, and rocky or sandy edges (stub until more shore packs ship)."
+                    f"Seashore focus is on for {display} — beachgoer-shaped noticing: "
+                    "how people meet shores, and how that touches this organism "
+                    "(not a claim you are standing on sand)."
+                ),
+                "kind": "notice",
+            },
+            *callouts[: max(0, MAX_CALLOUTS - 1)],
+        ][:MAX_CALLOUTS]
+    elif mode == "hiking" and callouts:
+        callouts = [
+            {
+                "anchor": "trail",
+                "label": "Hiking lens",
+                "fact": (
+                    f"Hiking focus is on for {display} — trail/forest-walker noticing: "
+                    "how hikers and forest edges relate to this organism "
+                    "(not a claim you are on a trail right now)."
                 ),
                 "kind": "notice",
             },
@@ -340,10 +355,10 @@ def _fallback_callouts_for(
         callouts = [
             {
                 "anchor": "food",
-                "label": "Food story",
+                "label": "Crops & domestics",
                 "fact": (
-                    f"Food-history focus is on for {display} — how people grew, traded, "
-                    "or cooked with it (gentle stub; not a recipe book)."
+                    f"Crops & Domestic Animals focus is on for {display} — crop story, "
+                    "domestication, or farm/companion history (gentle stub; not a cookbook)."
                 ),
                 "kind": "notice",
             },
@@ -352,14 +367,15 @@ def _fallback_callouts_for(
     return callouts
 
 
-FOCUS_MODES = ("walk", "garden", "seashore", "food")
+FOCUS_MODES = ("walk", "garden", "hiking", "seashore", "food")
 
 
 def _normalize_focus_mode(
     raw: Any, *, garden_focus: bool | None = None
 ) -> str:
-    """Map API input to walk | garden | seashore | food."""
+    """Map API input to walk | garden | hiking | seashore | food (crops & domestic animals)."""
     text = str(raw or "").strip().lower().replace("_", " ").replace("-", " ")
+    text = re.sub(r"\s+", " ", text).strip()
     aliases = {
         "walk": "walk",
         "wild": "walk",
@@ -369,6 +385,13 @@ def _normalize_focus_mode(
         "garden": "garden",
         "gardening": "garden",
         "grow": "garden",
+        "hiking": "hiking",
+        "hike": "hiking",
+        "forest": "hiking",
+        "forests": "hiking",
+        "woods": "hiking",
+        "woodland": "hiking",
+        "trail hike": "hiking",
         "seashore": "seashore",
         "shore": "seashore",
         "beach": "seashore",
@@ -379,7 +402,19 @@ def _normalize_focus_mode(
         "foodhistory": "food",
         "kitchen": "food",
         "crop": "food",
+        "crops": "food",
         "cuisine": "food",
+        "domestic": "food",
+        "domestics": "food",
+        "domestic animals": "food",
+        "crops domestic": "food",
+        "crops and domestic": "food",
+        "crops and domestic animals": "food",
+        "crops & domestic animals": "food",
+        "herd": "food",
+        "farm": "food",
+        "agriculture": "food",
+        "ag": "food",
     }
     if text in aliases:
         return aliases[text]
@@ -391,7 +426,63 @@ def _normalize_focus_mode(
     return "walk"
 
 
-def _focus_prompt_block(focus_mode: str, *, allow_help: bool) -> str:
+def _food_depth_block(fact_level: int | None) -> str:
+    """Richer crop/domestication noticing unlocks with fact level — never injustice history via Claude."""
+    level = 1
+    if fact_level is not None:
+        try:
+            level = max(1, min(4, int(fact_level)))
+        except (TypeError, ValueError):
+            level = 1
+    # Shared hard ban for every level (Claude is not the source for injustice history).
+    ban = (
+        "HARD BAN — NEVER write history of human injustices, famines as political "
+        "weapons, colonial oppression, slavery, genocide, or Native American / "
+        "Indigenous vs settler conflict. Those stories are owner-curated from real "
+        "sources later — not Claude. If tempted, pivot to traits, husbandry, or a "
+        "plain domestication/crop timeline instead. "
+    )
+    if level <= 1:
+        return (
+            "DEPTH (fact level 1 — Curious notice): keep it light — noticing traits, "
+            "litter size / herd size / bloom season, simple “about when dogs (or this "
+            "crop) were domesticated” style timelines when well-established. "
+            "OK: “poppies were noted in North America around …” when it is a plain "
+            "discovery/introduction date — NOT settlement conflict narratives. "
+            + ban
+        )
+    if level == 2:
+        return (
+            "DEPTH (fact level 2 — Neighbor kindness): warm noticing plus gentle "
+            "farm/companion kindness. Short trade routes or planting timelines OK if "
+            "neutral (where a crop spread, roughly when). Still no injustice history. "
+            + ban
+        )
+    if level == 3:
+        return (
+            "DEPTH (fact level 3 — Species wonder): richer domestication or crop "
+            "timelines and one species-own quirk are welcome. Environmental "
+            "complications may appear once, gently, when they are mainly ecological "
+            "(monoculture disease risk, invasive escape, feral pets and wildlife, "
+            "soil exhaustion) — without panic or blame-the-player. "
+            "If the complication is really a human-injustice story (who starved whom, "
+            "stolen land, forced labor), do NOT write it — that is curated later. "
+            "Still NO human-injustice history from you. "
+            + ban
+        )
+    return (
+        "DEPTH (fact level 4 — Field learner): prefer richer crop/domestication "
+        "timelines and calm ecological complication facts when true "
+        "(overgrazing, soil exhaustion, monocultures) — not doom lectures. "
+        "Still NO human-injustice / famine-politics / settler–Indigenous conflict "
+        "essays from Claude (including “environment” framed as injustice history). "
+        + ban
+    )
+
+
+def _focus_prompt_block(
+    focus_mode: str, *, allow_help: bool, fact_level: int | None = None
+) -> str:
     mode = _normalize_focus_mode(focus_mode)
     if mode == "garden":
         block = (
@@ -408,49 +499,115 @@ def _focus_prompt_block(focus_mode: str, *, allow_help: bool) -> str:
             )
         block += (
             "Do NOT fill the set with only chores — keep noticing (and wonder if allowed) in the mix. "
-            "Do NOT write seashore or food-history angles unless they truly fit a garden bed. "
+            "Do NOT write seashore, hiking/forest, or crops/domestication essays unless they "
+            "truly fit a garden bed. "
         )
         return block
-    if mode == "seashore":
+    if mode == "hiking":
         block = (
-            "FOCUS MODE: SEASHORE — beach / tide / dune / rocky shore lens (stub-friendly). "
-            "Prefer facts about salt spray, sand, tide pools, wrack lines, coastal plants, "
-            "shorebirds, crabs, kelp, and how this organism meets the edge of the sea. "
-            "If the organism is not coastal, say gently how it relates (or doesn’t) to "
-            "seashore life — never invent a fake beach species. "
-            "Do NOT give inland garden how-tos or kitchen/food-history essays. "
+            "FOCUS MODE: HIKING — engaged forest / trail-walker stance (not GPS). "
+            "The player chose Hiking because they want how forest/trail life RELATES TO "
+            "PEOPLE who hike and spend time in woods — what hikers do in that kind of "
+            "place, habits that help or harm the living neighborhood, why a species is "
+            "pressured or thriving near trails — not a stack of fun trivia alone. "
+            "Other focus modes may also mention people–nature links; THIS mode leans into "
+            "that on purpose for more engaged players. "
+            "Prefer: trail/forest human relationship (wasp/yellowjacket traps that harm "
+            "the woods you’re walking through; leaving snags for cavity nesters; packing "
+            "out trash; quiet near nests; why a forest neighbor is scarce). "
+            "Cool biology is OK when it supports that stance — not the whole set. "
+            "Do NOT claim the player is on a trail right now. Do NOT invent fake forest "
+            "species. If the organism is mainly a houseplant, crop, or aquarium/shore "
+            "animal, say gently how a hiker might still meet it (or not) and give one "
+            "honest adjacent note. "
+            "Do NOT dump garden how-tos, seashore essays, or crop/domestication history. "
+            "No guilt lectures; no doom sermons; family-friendly. "
         )
         if allow_help:
             block += (
-                "Help tip must be shore kindness (give tide-pool creatures space, leave "
-                "shells/wrack for habitat, stay off nesting dunes, etc.). "
+                "Help tip must be trail/forest kindness a hiker can choose (skip a spray "
+                "trap that kills non-target insects, stay on path through sensitive habitat, "
+                "leave a nest alone, pack out litter) — gentle, choosable. "
+            )
+        return block
+    if mode == "seashore":
+        block = (
+            "FOCUS MODE: SEASHORE — engaged beachgoer stance (not GPS). "
+            "The player chose Seashore because they want how shore life RELATES TO PEOPLE "
+            "who visit beaches, dunes, tide pools, and rocky edges — what beachgoers and "
+            "coastal communities do in that kind of place, habits that help or harm, why "
+            "a species is at risk or recovering — not a stack of fun trivia alone. "
+            "Other focus modes may also mention people–nature links; THIS mode leans into "
+            "that on purpose for more engaged players. "
+            "Prefer: beachgoer-shaped relationship facts (egg collecting as a major "
+            "pressure on leatherbacks; leaving wrack for habitat; giving nesting dunes "
+            "space; why a shorebird fails when dogs run free on nesting beaches). "
+            "Cool biology (shells, salt spray, tide pools) is OK when it supports that "
+            "stance — not the whole set. "
+            "Do NOT claim the player is standing on a beach. An aquarium turtle, a museum "
+            "shell, or a coastal plant in a pot still gets beachgoer-shaped interest — "
+            "frame facts the way a shore-minded person would care. "
+            "Never invent a fake beach species; if it is not coastal, say gently how it "
+            "relates (or doesn’t) to seashore life. "
+            "Do NOT give inland garden how-tos, hiking/forest essays, or kitchen/crop "
+            "history essays. No guilt lectures; no doom sermons; family-friendly. "
+        )
+        if allow_help:
+            block += (
+                "Help tip must be shore kindness a beachgoer can choose (give tide-pool "
+                "creatures space, leave shells/wrack for habitat, stay off nesting dunes, "
+                "keep dogs leashed near nesting birds) — gentle, choosable. "
             )
         return block
     if mode == "food":
         block = (
-            "FOCUS MODE: FOOD HISTORY — how people grew, traded, cooked with, or named "
-            "this organism as food (bananas, potatoes, herbs, etc.). Warm cultural and "
-            "crop story — not a cookbook, not nutrition medical advice, not “superfood” hype. "
-            "If it is not a food plant/animal people commonly eat, say so gently and share "
-            "one honest food-adjacent note (forage caution, “not edible,” historic use) "
-            "or pivot to why walkers meet it near farms/markets. "
-            "Do NOT invent unsafe foraging advice. Do NOT dump garden chore lists or "
-            "seashore ecology unless they support the food story. "
+            "FOCUS MODE: CROPS & DOMESTIC ANIMALS — agriculture, crop story, "
+            "domestication timelines, and companion-animal noticing for edible plants "
+            "and domestic animals (cows, sheep, goats, chickens, horses, cats, dogs, "
+            "pigs, etc.). Warm farm/companion story — not a cookbook, not nutrition "
+            "medical advice, not “superfood” hype. "
+            "CLAUDE MAY: well-established domestication eras (“dogs domesticated "
+            "roughly …”), litter/herd facts, plain crop discovery or introduction "
+            "dates when they are not framed as Native American / Indigenous vs "
+            "settler conflict. "
+            "CLAUDE MUST NOT: history of human injustices (famines as policy, "
+            "colonial oppression, slavery, genocide, settler–Indigenous conflict). "
+            "Those come later from owner-curated real sources — never invent them. "
+            "Cats and dogs: domestication eras, breed origins, roles with people; "
+            "environmental complications only when depth rules allow — never guilt "
+            "the player for loving a pet. "
+            "PIGS — NEVER encourage eating pigs or “pork as dinner” framing. Prefer "
+            "ancestry (wild boar / Sus), litter size, social behavior, farm husbandry "
+            "noticing. Do NOT write health/disease “why pork is unhealthy” claims yet "
+            "(reserved for a later update). "
+            "Other food animals/crops: grow/trade/cook noticing is fine; never push "
+            "the player to eat anything. "
+            "If it is not a crop or domestic/companion animal, say so gently and share "
+            "one honest adjacent note (forage caution, “not edible,” wild relative of "
+            "a crop) or why walkers meet it near farms/markets. "
+            "Do NOT invent unsafe foraging advice. Do NOT dump garden chore lists, "
+            "hiking/forest essays, or seashore ecology unless they support the "
+            "crop/domestication story. "
         )
+        block += _food_depth_block(fact_level)
         if allow_help:
             block += (
-                "Help tip must be food-story kindness (waste less of edible parts you "
-                "already buy, respect farm/field edges, don’t dig wild roots without "
-                "knowing rules — gentle, choosable). "
+                "Help tip must be crop/domestication kindness (waste less of edible "
+                "parts you already buy, respect farm/field edges, don’t dig wild roots "
+                "without knowing rules, give companion animals space/enrichment — "
+                "gentle, choosable). Never “eat more of X” or “eat less pig” lectures. "
             )
         return block
     # walk (default)
     block = (
         "FOCUS MODE: WALK / WILD — eco-minded focus for walks and wild neighbors: "
         "shared air/water/food webs, seasons you meet them, place-aware noticing. "
+        "People–nature links are fine when they fit; leave deep beachgoer or "
+        "trail-hiker relationship essays for Seashore / Hiking modes. "
         "Do NOT give gardening how-tos, “if you grow one…,” bed/soil recipes, "
-        "seed-dispersal-as-grower tips, seashore-only essays, or kitchen history "
-        "unless the player clearly needs a tiny bridge. Leave those for other modes. "
+        "seed-dispersal-as-grower tips, seashore-only essays, hiking/forest-only "
+        "essays, or crop/domestication history essays unless the player clearly "
+        "needs a tiny bridge. Leave those for other modes. "
     )
     if allow_help:
         block += (
@@ -464,10 +621,21 @@ def _focus_disclaimer(focus_mode: str) -> str:
     mode = _normalize_focus_mode(focus_mode)
     if mode == "garden":
         return " Focus mode: Garden — eco-minded garden-world facts."
+    if mode == "hiking":
+        return (
+            " Focus mode: Hiking — trail/forest-walker relationship facts "
+            "(engaged stance, not GPS)."
+        )
     if mode == "seashore":
-        return " Focus mode: Seashore — beach and tide-edge facts (early stub)."
+        return (
+            " Focus mode: Seashore — beachgoer relationship facts "
+            "(engaged stance, not GPS)."
+        )
     if mode == "food":
-        return " Focus mode: Food history — crop and kitchen story (early stub)."
+        return (
+            " Focus mode: Crops & Domestic Animals — crop, farm, and "
+            "domestication noticing (Claude skips human-injustice history)."
+        )
     return " Focus mode: Walk / wild — neighbor eco facts (not gardening how-tos)."
 
 
@@ -2795,7 +2963,9 @@ def build_callouts(
         + mix_rules
     )
 
-    focus_block = _focus_prompt_block(focus, allow_help=allow_help)
+    focus_block = _focus_prompt_block(
+        focus, allow_help=allow_help, fact_level=fact_level
+    )
 
     system = (
         "You write short, family-friendly wildlife and plant education callouts for "
@@ -2954,7 +3124,9 @@ def build_callouts(
         "Tag each callout with kind: notice, help, or wonder. "
         f"Allowed kinds for this player right now: {', '.join(allowed_kinds)}. "
         "Mix: everyday player-world facts for the ACTIVE focus "
-        "(garden ON = garden eco; garden OFF = walk/wild eco). "
+        "(walk / garden / hiking / seashore / crops&domestics). "
+        "Hiking and Seashore lean into people–place relationship for engaged players; "
+        "other modes may still mention relationship when it fits. "
         + (
             "Include EXACTLY ONE small-help tip (kind=help). "
             if allow_help

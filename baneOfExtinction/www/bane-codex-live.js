@@ -15,8 +15,9 @@
   var FOCUS_MODES = {
     walk: "Walk / wild",
     garden: "Garden",
+    hiking: "Hiking",
     seashore: "Seashore",
-    food: "Food history",
+    food: "Crops & Domestic Animals",
   };
   var statusEl = document.getElementById("status");
   var listEl = document.getElementById("calloutList");
