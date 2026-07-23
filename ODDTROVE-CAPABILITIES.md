@@ -202,6 +202,7 @@ Last updated: 2026-07-17
 - **Learned shelf** — past scans sync to **Odd Trove Google sign-in** (server store + device cache; **one entry per species + life stage**; stylized still + ID; never raw camera)
 - **Shared stage still library** — first successful generate for a species/cultivar + life stage is saved server-side; later scans reuse that picture (no new Gemini image)
 - **Gemini-first ID** — Claude vision only when confidence isn’t high, shelf lookalike risk, or Gemini fails; camera always runs Gemini
+- **Focus mode picker** — Walk / wild, Garden, Seashore, Food history (latter two early stubs); separate fact pools per mode
 - **Fact pools** — different callouts each Load from a local pool; Claude refills when the pool runs low (NatureServe CC BY + USGS US-RIIS CC0 credited for range/status)
 - **Fact book** — callout facts collected into an account-synced book (Splash Aquapedia–style progress). Soft `n / ~x` totals until curated packs. **Fact levels** (Curious notice → Neighbor kindness → Species wonder → Field learner) are **separate from mission levels**; kinds unlock with learning commitment (notice → help → wonder)
 - **Phone wildlife camera scan** — `/bane-of-extinction/scan.html` (Gemini + Claude ID + life stage; then Gemini semi-realistic still matched to species/color/form/**stage**; photo not stored; facts follow the guessed organism)
