@@ -43,7 +43,7 @@ if [[ ! -f "$ROOT/baneOfExtinction/bane_api.py" ]]; then
 fi
 
 echo "Syncing Bane of Extinction to $HOST:~/$REMOTE_BASE/ ..."
-ssh_cmd "$HOST" "mkdir -p ~/$REMOTE_BASE/ssl ~/$REMOTE_BASE/bane-of-extinction ~/$REMOTE_BASE/bane-server/learned ~/$REMOTE_BASE/hub ~/$REMOTE_BASE/_shared"
+ssh_cmd "$HOST" "mkdir -p ~/$REMOTE_BASE/ssl ~/$REMOTE_BASE/bane-of-extinction ~/$REMOTE_BASE/bane-server/learned ~/$REMOTE_BASE/bane-server/stage-stills ~/$REMOTE_BASE/hub ~/$REMOTE_BASE/_shared"
 
 rsync_cmd "$ROOT/top/_shared/serve_static_https.py" "$ROOT/top/_shared/kids-watchdog.sh" "$HOST:~/$REMOTE_BASE/"
 rsync_cmd "$ROOT/top/_shared/oddtrove_sso.py" "$HOST:~/$REMOTE_BASE/_shared/oddtrove_sso.py"

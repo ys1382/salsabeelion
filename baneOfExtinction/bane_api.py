@@ -3,6 +3,7 @@ Bane of Extinction — owner-beta API.
 
 - POST /api/wildlife-identify  — Gemini + Claude vision ID (photo not stored)
 - POST /api/codex-still        — Gemini image: field-guide still matching this ID + crop
+                                  (one shared still per species+life-stage; rescans reuse)
 - POST /api/callouts           — Claude helper facts + native range / conservation status
                                   (optional looking-at place lens; optional garden focus; no GPS)
 - GET  /api/auth/me            — Odd Trove Google SSO identity (for learned sync)
@@ -91,6 +92,11 @@ STILL_DIR = os.environ.get(
 )
 STILL_TTL_SEC = int(os.environ.get("BANE_STILL_TTL_SEC", "1200"))  # 20 min
 _STILL_META: dict[str, float] = {}  # token -> expires_at
+# Permanent shared library: one field-guide still per species (+ cultivar) + life stage.
+STAGE_STILL_DIR = os.environ.get(
+    "BANE_STAGE_STILL_DIR",
+    os.path.join(os.path.expanduser("~"), "kids-sites", "bane-server", "stage-stills"),
+)
 US_RIIS_PATH = os.environ.get(
     "BANE_US_RIIS_PATH",
     os.path.join(_HERE, "data", "us_riis_lookup.json"),
@@ -548,7 +554,7 @@ def _ensure_learned_dir() -> None:
 def _sanitize_learned_entry(raw: Any) -> dict[str, Any] | None:
     if not isinstance(raw, dict):
         return None
-    key = str(raw.get("key") or "").strip()[:100]
+    key = str(raw.get("key") or "").strip()[:120]
     common = str(raw.get("commonName") or "").strip()[:120]
     display = str(raw.get("displayName") or common).strip()[:160]
     if not key or not (common or display):
@@ -1254,6 +1260,159 @@ def _call_gemini_codex_still(
     raise RuntimeError("; ".join(errors) or "image_generation_failed")
 
 
+def _slug_part(s: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "-", (s or "").lower()).strip("-")[:80]
+
+
+def stage_still_cache_key(
+    common: str,
+    latin: str = "",
+    cultivar: str = "",
+    life_stage: str = "",
+) -> str:
+    """Stable key: one shared still per species (+ cultivar) + life stage."""
+    latin_s = _slug_part(latin)
+    common_s = _slug_part(common)
+    if latin_s:
+        base = f"lat:{latin_s}"
+    elif common_s:
+        base = f"com:{common_s}"
+    else:
+        return ""
+    cult = _slug_part(cultivar)
+    if cult:
+        base = f"{base}|cult:{cult}"
+    stage = _slug_part(life_stage) or "unspecified"
+    return f"{base}|st:{stage}"
+
+
+def _stage_still_paths(cache_key: str) -> tuple[str, str]:
+    digest = hashlib.sha256(cache_key.encode("utf-8")).hexdigest()[:40]
+    folder = STAGE_STILL_DIR
+    return (
+        os.path.join(folder, f"{digest}.jpg"),
+        os.path.join(folder, f"{digest}.json"),
+    )
+
+
+def _ensure_stage_still_dir() -> str:
+    os.makedirs(STAGE_STILL_DIR, exist_ok=True)
+    return STAGE_STILL_DIR
+
+
+def load_stage_still(
+    common: str,
+    latin: str = "",
+    cultivar: str = "",
+    life_stage: str = "",
+) -> dict[str, Any] | None:
+    """Return a shared library still if this species+stage was generated before."""
+    import base64
+
+    cache_key = stage_still_cache_key(common, latin, cultivar, life_stage)
+    if not cache_key:
+        return None
+    jpg_path, meta_path = _stage_still_paths(cache_key)
+    if not os.path.isfile(jpg_path):
+        return None
+    try:
+        with open(jpg_path, "rb") as f:
+            raw = f.read()
+        if not raw:
+            return None
+        meta: dict[str, Any] = {}
+        if os.path.isfile(meta_path):
+            with open(meta_path, encoding="utf-8") as mf:
+                loaded = json.load(mf)
+            if isinstance(loaded, dict):
+                meta = loaded
+        b64 = base64.b64encode(raw).decode("ascii")
+        print(
+            f"bane_stage_still hit key={cache_key!r} bytes={len(raw)}",
+            flush=True,
+        )
+        return {
+            "ok": True,
+            "mimeType": "image/jpeg",
+            "imageBase64": b64,
+            "matched": True,
+            "fromPhoto": False,
+            "fromCache": True,
+            "cacheKey": cache_key,
+            "commonName": (common or "").strip() or meta.get("commonName"),
+            "latinName": (latin or "").strip() or meta.get("latinName") or "",
+            "cultivar": (cultivar or "").strip() or meta.get("cultivar") or None,
+            "lifeStage": (life_stage or "").strip() or meta.get("lifeStage") or None,
+            "model": meta.get("model") or "stage-library",
+            "disclaimer": (
+                "Codex art from the shared stage library — one portrait per "
+                "species and life stage (not your raw photo)."
+            ),
+        }
+    except Exception as exc:  # noqa: BLE001
+        print(f"bane_stage_still load_fail key={cache_key!r}: {exc}", flush=True)
+        return None
+
+
+def save_stage_still(
+    *,
+    common: str,
+    latin: str,
+    cultivar: str,
+    life_stage: str,
+    mime: str,
+    data_b64: str,
+    model: str | None = None,
+) -> str | None:
+    """Persist a newly generated still into the shared species+stage library."""
+    import base64
+    from io import BytesIO
+
+    cache_key = stage_still_cache_key(common, latin, cultivar, life_stage)
+    if not cache_key or not data_b64:
+        return None
+    jpg_path, meta_path = _stage_still_paths(cache_key)
+    if os.path.isfile(jpg_path):
+        return cache_key
+    try:
+        _ensure_stage_still_dir()
+        raw = base64.b64decode(data_b64, validate=False)
+        out = raw
+        if not (mime or "").lower().startswith("image/jpeg"):
+            try:
+                from PIL import Image  # type: ignore
+
+                img = Image.open(BytesIO(raw)).convert("RGB")
+                buf = BytesIO()
+                img.save(buf, format="JPEG", quality=82, optimize=True)
+                out = buf.getvalue()
+            except Exception:
+                out = raw
+        tmp = jpg_path + ".tmp"
+        with open(tmp, "wb") as f:
+            f.write(out)
+        os.replace(tmp, jpg_path)
+        meta = {
+            "cacheKey": cache_key,
+            "commonName": (common or "").strip(),
+            "latinName": (latin or "").strip(),
+            "cultivar": (cultivar or "").strip(),
+            "lifeStage": (life_stage or "").strip() or "unspecified",
+            "model": model or "",
+            "savedAt": int(time.time()),
+        }
+        with open(meta_path, "w", encoding="utf-8") as mf:
+            json.dump(meta, mf, indent=0)
+        print(
+            f"bane_stage_still save key={cache_key!r} bytes={len(out)}",
+            flush=True,
+        )
+        return cache_key
+    except Exception as exc:  # noqa: BLE001
+        print(f"bane_stage_still save_fail key={cache_key!r}: {exc}", flush=True)
+        return None
+
+
 def generate_codex_still(
     image_b64: str | None,
     mime: str,
@@ -1264,18 +1423,38 @@ def generate_codex_still(
     organism_type: str = "",
     short_note: str = "",
     life_stage: str = "",
+    lookup_only: bool = False,
 ) -> dict[str, Any]:
+    if not (common or "").strip():
+        return {
+            "ok": False,
+            "error": "missing_organism",
+            "message": "commonName is required so the still matches the ID.",
+        }
+
+    cached = load_stage_still(common, latin, cultivar, life_stage)
+    if cached:
+        return cached
+
+    if lookup_only:
+        return {
+            "ok": False,
+            "error": "cache_miss",
+            "message": "No shared stage still yet — need a photo to generate one.",
+            "fromCache": False,
+        }
+
     if image_b64 is not None and (not image_b64 or len(image_b64) > MAX_IMAGE_B64):
         return {
             "ok": False,
             "error": "image_invalid",
             "message": "Image missing or too large.",
         }
-    if not (common or "").strip():
+    if not image_b64:
         return {
             "ok": False,
-            "error": "missing_organism",
-            "message": "commonName is required so the still matches the ID.",
+            "error": "image_required",
+            "message": "Photo needed to generate the first still for this stage.",
         }
     try:
         result = _call_gemini_codex_still(
@@ -1292,10 +1471,25 @@ def generate_codex_still(
         result["latinName"] = (latin or "").strip()
         result["cultivar"] = (cultivar or "").strip() or None
         result["lifeStage"] = (life_stage or "").strip() or None
+        result["fromCache"] = False
         result["disclaimer"] = (
             "Codex art is a new semi-realistic portrait of this species at the "
-            "same life stage — not your raw photo, and not a mismatched stage."
+            "same life stage — not your raw photo, and not a mismatched stage. "
+            "This stage is saved so later scans reuse the same picture."
         )
+        if result.get("ok") and result.get("imageBase64"):
+            save_stage_still(
+                common=common.strip(),
+                latin=(latin or "").strip(),
+                cultivar=(cultivar or "").strip(),
+                life_stage=(life_stage or "").strip(),
+                mime=str(result.get("mimeType") or "image/jpeg"),
+                data_b64=str(result["imageBase64"]),
+                model=str(result.get("model") or "") or None,
+            )
+            result["cacheKey"] = stage_still_cache_key(
+                common, latin, cultivar, life_stage
+            )
         return result
     except Exception as exc:  # noqa: BLE001
         __import__("sys").stderr.write(
@@ -2816,6 +3010,11 @@ class Handler(BaseHTTPRequestHandler):
             organism_type = str(body.get("organismType") or "").strip()
             short_note = str(body.get("shortNote") or "").strip()
             life_stage = str(body.get("lifeStage") or "").strip()
+            lookup_only = bool(
+                body.get("lookupOnly")
+                or body.get("cacheOnly")
+                or body.get("reuseOnly")
+            )
             result = generate_codex_still(
                 image_b64 or None,
                 mime,
@@ -2825,10 +3024,14 @@ class Handler(BaseHTTPRequestHandler):
                 organism_type=organism_type,
                 short_note=short_note,
                 life_stage=life_stage,
+                lookup_only=lookup_only,
             )
-            code = 200 if result.get("ok") else (
-                503 if not gemini_api_key() else 502
-            )
+            if result.get("ok"):
+                code = 200
+            elif result.get("error") == "cache_miss":
+                code = 404
+            else:
+                code = 503 if not gemini_api_key() else 502
             _json(self, code, result)
             return
 

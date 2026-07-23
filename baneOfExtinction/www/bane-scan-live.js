@@ -738,34 +738,63 @@
   }
 
   function requestCodexStill(payload, idData) {
-    if (!payload || !payload.imageBase64 || !idData || !idData.commonName) {
+    if (!idData || !idData.commonName) {
       return Promise.resolve(null);
+    }
+    var Col = window.BaneCodexCollection;
+    if (Col && Col.existingStillFor) {
+      var local = Col.existingStillFor(idData);
+      if (local && local.imageBase64) {
+        return Promise.resolve(local);
+      }
+    }
+    var meta = {
+      commonName: idData.commonName || "",
+      latinName: idData.latinName || "",
+      cultivar: idData.cultivar || "",
+      organismType: idData.organismType || "",
+      lifeStage: idData.lifeStage || "",
+      shortNote: (
+        (idData.bloomColor || "") +
+        " " +
+        (idData.shortNote || "")
+      ).trim(),
+    };
+    // Shared stage library first (no photo) — one still per species+stage for everyone.
+    function generateFresh() {
+      if (!payload || !payload.imageBase64) return Promise.resolve(null);
+      return fetchJson(
+        API_STILL,
+        Object.assign({}, meta, {
+          imageBase64: payload.imageBase64,
+          mimeType: payload.mimeType || "image/jpeg",
+        }),
+        STILL_TIMEOUT_MS
+      )
+        .then(function (genPack) {
+          var gen = genPack.data || {};
+          if (!genPack.res.ok || !gen.ok) return null;
+          return stillInfoFromPayload(gen);
+        })
+        .catch(function () {
+          return null;
+        });
     }
     return fetchJson(
       API_STILL,
-      {
-        imageBase64: payload.imageBase64,
-        mimeType: payload.mimeType || "image/jpeg",
-        commonName: idData.commonName || "",
-        latinName: idData.latinName || "",
-        cultivar: idData.cultivar || "",
-        organismType: idData.organismType || "",
-        lifeStage: idData.lifeStage || "",
-        shortNote: (
-          (idData.bloomColor || "") +
-          " " +
-          (idData.shortNote || "")
-        ).trim(),
-      },
-      STILL_TIMEOUT_MS
+      Object.assign({}, meta, { lookupOnly: true }),
+      Math.min(12000, STILL_TIMEOUT_MS)
     )
       .then(function (pack) {
         var data = pack.data || {};
-        if (!pack.res.ok || !data.ok) return null;
-        return stillInfoFromPayload(data);
+        if (pack.res.ok && data.ok) {
+          var hit = stillInfoFromPayload(data);
+          if (hit && (hit.imageBase64 || hit.token || hit.url)) return hit;
+        }
+        return generateFresh();
       })
       .catch(function () {
-        return null;
+        return generateFresh();
       });
   }
 
@@ -836,11 +865,11 @@
         setStatus(
           "Found: " +
             (data.displayName || data.commonName || "organism") +
-            ". Making matching codex art…"
+            ". Checking stage art…"
         );
         if (coachHint) {
           coachHint.textContent =
-            "Identified — finishing matching codex art (or opening without it)…";
+            "Identified — reusing stage art if we have it, else making a new portrait…";
         }
         return requestCodexStill(payload, data).then(function (stillInfo) {
           return { data: data, stillInfo: stillInfo };

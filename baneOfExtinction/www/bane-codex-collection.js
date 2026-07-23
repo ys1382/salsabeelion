@@ -1,6 +1,6 @@
 /**
  * Wildlife codex learns — device cache + Odd Trove Google account sync.
- * One entry per species key; stills are stylized field-guide art only (never raw camera).
+ * One entry per species + life stage; stills are stylized field-guide art only (never raw camera).
  * Fact book entries sync in the same account blob (see BaneCodexFacts).
  */
 (function (global) {
@@ -48,10 +48,31 @@
 
   function entryKey(record) {
     var latin = slugPart(record && record.latinName);
+    var base = "";
+    if (latin) base = "lat:" + latin;
+    else {
+      var common = slugPart(record && (record.commonName || record.displayName));
+      if (common) base = "com:" + common;
+    }
+    if (!base) return "";
+    var stage = slugPart(record && record.lifeStage) || "unspecified";
+    return (base + "|st:" + stage).slice(0, 120);
+  }
+
+  function speciesOnlyKey(record) {
+    var latin = slugPart(record && record.latinName);
     if (latin) return "lat:" + latin;
     var common = slugPart(record && (record.commonName || record.displayName));
     if (common) return "com:" + common;
     return "";
+  }
+
+  function migrateEntryKey(entry) {
+    if (!entry || typeof entry !== "object") return entry;
+    if (entry.key && String(entry.key).indexOf("|st:") >= 0) return entry;
+    var next = entryKey(entry);
+    if (next) entry.key = next;
+    return entry;
   }
 
   function readAll() {
@@ -60,9 +81,11 @@
       if (!raw) return [];
       var list = JSON.parse(raw);
       if (!Array.isArray(list)) return [];
-      return list.filter(function (e) {
-        return e && e.key && (e.commonName || e.displayName);
-      });
+      return list
+        .map(migrateEntryKey)
+        .filter(function (e) {
+          return e && e.key && (e.commonName || e.displayName);
+        });
     } catch (e) {
       return [];
     }
@@ -204,6 +227,31 @@
       if (list[i].key === key) return list[i];
     }
     return null;
+  }
+
+  /** Still for this species + life stage (local library), if any. */
+  function existingStillFor(record) {
+    if (!record) return null;
+    var key = entryKey(record);
+    var entry = key ? getByKey(key) : null;
+    if ((!entry || !entry.stillBase64) && speciesOnlyKey(record)) {
+      var legacy = getByKey(speciesOnlyKey(record));
+      if (
+        legacy &&
+        legacy.stillBase64 &&
+        slugPart(legacy.lifeStage || "unspecified") ===
+          slugPart((record && record.lifeStage) || "unspecified")
+      ) {
+        entry = legacy;
+      }
+    }
+    if (!entry || !entry.stillBase64) return null;
+    return {
+      mimeType: (entry.stillMime || "image/jpeg").split(";")[0] || "image/jpeg",
+      imageBase64: entry.stillBase64,
+      fromCache: true,
+      cacheKey: entry.key || key,
+    };
   }
 
   function stillDataUrl(entry) {
@@ -400,10 +448,12 @@
   global.BaneCodexCollection = {
     STORAGE_KEY: STORAGE_KEY,
     entryKey: entryKey,
+    speciesOnlyKey: speciesOnlyKey,
     readAll: readAll,
     writeAll: writeAll,
     upsert: upsert,
     getByKey: getByKey,
+    existingStillFor: existingStillFor,
     stillDataUrl: stillDataUrl,
     syncNow: syncNow,
     pushToServer: pushToServer,
