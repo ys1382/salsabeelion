@@ -269,12 +269,25 @@ def _fallback_callouts_for(
     color: str,
     garden_focus: bool = False,
     focus_mode: str = "walk",
+    organism_type: str = "",
 ) -> list[dict[str, str]]:
     mode = _normalize_focus_mode(
         focus_mode, garden_focus=garden_focus if focus_mode in ("", "walk") else None
     )
     # Curated packs today cover walk vs garden; other modes fall back to walk wording.
     use_garden = mode == "garden"
+    if _is_natural_nonliving(organism_type):
+        callouts = list(FALLBACK_CALLOUTS_GEOLOGY)
+        callouts[0] = {
+            "anchor": "overview",
+            "label": "Overview",
+            "fact": (
+                f"Best geology guess right now: {display}. "
+                "Facts service had a hiccup — try Load again for fresher earth-science notes."
+            ),
+            "kind": "notice",
+        }
+        return callouts[:MAX_CALLOUTS]
     blob = (display + " " + latin + " " + note + " " + color).lower()
     if "poppy" in blob or "eschscholzia" in blob:
         callouts = list(
@@ -655,19 +668,64 @@ def _focus_disclaimer(focus_mode: str) -> str:
     return " Focus mode: Walk / wild — neighbor eco facts (not gardening how-tos)."
 
 
+# Natural nonliving finds EcoLens may ID (not furniture, plastic, cars, etc.).
+NATURAL_NONLIVING_TYPES = frozenset(
+    {"rock", "mineral", "shell", "fossil", "stone", "geology"}
+)
+
+
+def _is_natural_nonliving(organism_type: str) -> bool:
+    t = (organism_type or "").strip().lower()
+    if not t:
+        return False
+    if t in NATURAL_NONLIVING_TYPES:
+        return True
+    return t.startswith("rock") or t.startswith("mineral") or t.startswith("fossil")
+
+
+def _normalize_organism_type(raw: str) -> str:
+    t = (raw or "").strip().lower()[:40]
+    if t in ("stone", "pebble", "cobble", "boulder"):
+        return "rock"
+    if t in ("empty_shell", "seashell", "shell_empty"):
+        return "shell"
+    if t in ("geology", "geologic", "geological"):
+        return "rock"
+    return t or "other"
+
+
 IDENTIFY_PROMPT = (
-    "You identify wildlife, plants, fungi, or clear evidence of them "
-    "(tracks, nests, seed pods, chewed plants, bloom patches) for a family-friendly "
-    "conservation learning game. Return ONLY JSON.\n"
-    "Focus on the organism (or evidence), not people, hands, faces, or private property details.\n"
-    "REFUSAL — if there is no clear organism and no clear evidence "
-    "(empty ground, wall, sky, furniture, shelf wood, blur with nothing identifiable, "
-    "mostly hands/faces, or a frame that is only background), do NOT invent a species. Return:\n"
+    "You identify nature finds for a family-friendly conservation learning game: "
+    "wildlife, plants, fungi, clear evidence of them "
+    "(tracks, nests, seed pods, chewed plants, bloom patches), AND natural nonliving "
+    "matter found outdoors (rocks, minerals, empty shells with no living creature inside, "
+    "fossils). Return ONLY JSON.\n"
+    "Focus on the nature subject (living or natural nonliving), not people, hands, faces, "
+    "or private property details.\n"
+    "NATURAL NONLIVING — when the clear subject is a rock, mineral, empty shell, or fossil "
+    "(not a living plant/animal/fungus), identify it. Set organismType to rock, mineral, "
+    "shell, or fossil. Prefer a real common name (e.g. Quartz, Granite, Obsidian, "
+    "Empty mussel shell). Put mineral/rock scientific name in latinName when known "
+    "(e.g. SiO2 for quartz, or the mineral species name); else empty. "
+    "lifeStage should be specimen (or empty). bloomColor empty. evidence false. "
+    "EMPTY SHELL RULE — if a shell has NO living animal inside (no snail, clam flesh, "
+    "hermit crab, etc.), use organismType shell and name it as an empty shell of that "
+    "kind when you can. If a living mollusk or hermit crab is clearly present, treat it "
+    "as a living organism (not shell). "
+    "Do NOT invent fake mineral names; if unsure, give the best rock/mineral class "
+    "(e.g. \"Igneous rock\", \"Sedimentary rock\", \"Beach sand\") and list alternatives.\n"
+    "REFUSAL — if there is no clear living organism, no clear evidence, AND no clear "
+    "natural nonliving find "
+    "(empty ground with nothing identifiable, wall, sky, furniture, shelf wood, plastic, "
+    "metal tools, cars, pavement alone, blur, mostly hands/faces, or only background), "
+    "do NOT invent a species or mineral. Return:\n"
     '{"commonName":"","latinName":"","cultivar":"","bloomColor":"","organismType":"none",'
     '"lifeStage":"","evidence":false,"confidence":"low",'
-    '"shortNote":"No clear organism or evidence in frame.",'
+    '"shortNote":"No clear nature find in frame.",'
     '"alternatives":[],"noOrganism":true}\n'
-    "Be as accurate as you reasonably can. Prefer the species (or best clear taxon) you think it is.\n"
+    "Refuse manufactured / indoor-only objects that are not nature finds. "
+    "Be as accurate as you reasonably can. Prefer the species, mineral, or best clear "
+    "taxon you think it is.\n"
     "COLOR MATTERS — for flowers, set bloomColor to the dominant petal/ray color you see "
     "(e.g. red, yellow, orange, burgundy, bicolor, near-black). "
     "If rays are clearly red/burgundy/dark, do NOT describe a generic yellow sunflower in shortNote. "
@@ -687,18 +745,19 @@ IDENTIFY_PROMPT = (
     "Other plants: name the best real match. If unsure between species, pick the best guess and "
     "list alternatives; never fall back to California poppy just because this game also uses that stub.\n"
     "Do not invent sunflower or philodendron cultivar names unless clearly labeled in the photo.\n"
-    "LIFE STAGE — set lifeStage to what is actually visible (not a different stage of the "
-    "same species). Examples: seed, seedling, sprout, bud, flowering, fruiting, adult, "
-    "juvenile, egg, larva, nestling, fledgling, evidence. If the photo is a blossom/bloom, "
-    "use flowering (not seed). If only a seed pod or seed, say so.\n"
+    "LIFE STAGE — for living organisms, set lifeStage to what is actually visible "
+    "(not a different stage of the same species). Examples: seed, seedling, sprout, bud, "
+    "flowering, fruiting, adult, juvenile, egg, larva, nestling, fledgling, evidence. "
+    "If the photo is a blossom/bloom, use flowering (not seed). If only a seed pod or "
+    "seed, say so. For natural nonliving (rock/mineral/shell/fossil), use specimen.\n"
     "JSON shape (success):\n"
     "{"
     '"commonName":"...",'
     '"latinName":"...",'
     '"cultivar":"" ,'
     '"bloomColor":"red|yellow|orange|burgundy|bicolor|other|",'
-    '"organismType":"bird|mammal|flower|plant|fungus|insect|reptile|evidence|other",'
-    '"lifeStage":"flowering|fruiting|seedling|adult|juvenile|evidence|...",'
+    '"organismType":"bird|mammal|flower|plant|fungus|insect|reptile|evidence|rock|mineral|shell|fossil|other",'
+    '"lifeStage":"flowering|fruiting|seedling|adult|juvenile|evidence|specimen|...",'
     '"evidence":false,'
     '"confidence":"high|medium|low",'
     '"shortNote":"one short plain sentence naming a visible trait that supports the ID (include color)",'
@@ -706,6 +765,33 @@ IDENTIFY_PROMPT = (
     '"noOrganism":false'
     "}"
 )
+
+FALLBACK_CALLOUTS_GEOLOGY = [
+    {
+        "anchor": "texture",
+        "label": "What you see",
+        "fact": "Color, grain, and texture are the first clues walkers use to tell one rock or mineral from another.",
+        "kind": "notice",
+    },
+    {
+        "anchor": "form",
+        "label": "How it forms",
+        "fact": "Rocks and minerals form through heat, pressure, water, or time — each leave different fingerprints in the stone.",
+        "kind": "notice",
+    },
+    {
+        "anchor": "help",
+        "label": "Small help",
+        "fact": "On trails and shores, leave interesting rocks and empty shells where you found them when you can — other walkers and tiny shore life often need that scatter.",
+        "kind": "help",
+    },
+    {
+        "anchor": "wonder",
+        "label": "Earth story",
+        "fact": "Every pebble is a tiny chapter of Earth history you can hold without needing a lab.",
+        "kind": "wonder",
+    },
+]
 
 
 def _load_dotenv_file(path: str) -> None:
@@ -1460,7 +1546,7 @@ def _codex_still_prompt(
     short_note: str,
     life_stage: str = "",
 ) -> str:
-    bits = [common.strip() or "this organism"]
+    bits = [common.strip() or "this nature find"]
     if latin.strip():
         bits.append(f"({latin.strip()})")
     if cultivar.strip():
@@ -1472,6 +1558,25 @@ def _codex_still_prompt(
     if short_note.strip():
         bits.append(f"scan note: {short_note.strip()[:180]}")
     subject = "; ".join(bits)
+    if _is_natural_nonliving(organism_type):
+        return (
+            "Create ONE brand-new nature-codex portrait for a family-friendly nature game.\n"
+            f"Identified subject: {subject}.\n"
+            "PRIVACY — the attached photo is a private reference for traits only. "
+            "Invent a fresh semi-realistic field-guide portrait of the SAME rock, mineral, "
+            "empty shell, or fossil. "
+            "Do NOT copy, redraw, or recreate that photo’s pixels, background, angle, "
+            "crop, lighting, or scene. Different angle and plain soft background.\n"
+            "Match color, texture, crystal form, grain, banding, and shell shape traits.\n"
+            "Show a clear specimen portrait (not a landscape quarry scene). "
+            "Empty shells must stay empty — no living animal inside.\n"
+            "Do NOT invent a different mineral or shell. Do NOT substitute a stock generic look.\n"
+            "Style: calm semi-realistic field-guide art — believable nature illustration. "
+            "Avoid heavy cartoon, anime, chibi, glossy CGI, or uncanny hyper-detail. "
+            "Soft plain muted background. Specimen only — no people, no hands, no phone, "
+            "no text, no watermark, no logo.\n"
+            "Square composition, subject filling most of the frame. Return an image."
+        )
     stage_line = (
         f"Show the complete organism at THIS life stage only: {life_stage.strip()}. "
         if life_stage.strip()
@@ -1958,7 +2063,9 @@ def _norm_id(parsed: dict[str, Any]) -> dict[str, Any]:
                 "latinName": str(item.get("latinName") or "").strip()[:160],
             }
         )
-    organism_type = str(parsed.get("organismType") or "other").strip()[:40].lower()
+    organism_type = _normalize_organism_type(
+        str(parsed.get("organismType") or "other")
+    )
     no_organism = bool(parsed.get("noOrganism")) or organism_type in (
         "none",
         "empty",
@@ -1971,6 +2078,8 @@ def _norm_id(parsed: dict[str, Any]) -> dict[str, Any]:
         organism_type = "none"
     life_stage = str(parsed.get("lifeStage") or "").strip()[:40].lower()
     life_stage = re.sub(r"[^a-z0-9_\- ]+", "", life_stage).strip()[:40]
+    if _is_natural_nonliving(organism_type) and not life_stage:
+        life_stage = "specimen"
     return {
         "commonName": common,
         "latinName": str(parsed.get("latinName") or "").strip()[:160],
@@ -2264,7 +2373,8 @@ def identify_wildlife(
             "ok": False,
             "error": "no_organism",
             "message": (
-                "No clear organism or evidence in this photo. "
+                "No clear nature find in this photo (living neighbor, evidence, "
+                "or natural rock / mineral / empty shell). "
                 "Fill the dashed box and try again."
             ),
             "geminiError": gemini_err or None,
@@ -3039,7 +3149,10 @@ def build_callouts(
     cultivar_n = cultivar.strip()
     note_n = short_note.strip()
     color_n = bloom_color.strip()
-    org_type = (organism_type or ("evidence" if evidence else "organism")).strip()[:40]
+    org_type = _normalize_organism_type(
+        organism_type or ("evidence" if evidence else "organism")
+    )
+    is_geology = _is_natural_nonliving(org_type)
     avoid = [
         _clip_plain(str(x), MAX_FACT_CHARS)
         for x in (avoid_facts or [])
@@ -3062,86 +3175,169 @@ def build_callouts(
     allow_wonder = "wonder" in allowed_kinds
     callout_limit = POOL_REFILL_CALLOUTS if pool_refill else MAX_CALLOUTS
 
-    ns_meta = _fetch_natureserve_meta(latin_n) if latin_n else None
-    fallback_meta = _fallback_species_meta(display, latin_n)
+    ns_meta = (
+        None
+        if is_geology
+        else (_fetch_natureserve_meta(latin_n) if latin_n else None)
+    )
+    fallback_meta = (
+        {
+            "nativeRange": "",
+            "rangeElsewhere": "",
+            "conservationStatus": "Geological specimen — not a living species",
+            "statusSource": "geology",
+            "rangeSource": "",
+        }
+        if is_geology
+        else _fallback_species_meta(display, latin_n)
+    )
 
     # Shared eco lean (bane of extinction): care for the living world without making
     # every line a chore or “work.” Fact kinds unlock with fact-level commitment.
-    if allow_help and allow_wonder:
-        mix_rules = (
-            "Most callouts are noticing (kind=notice). "
-            "EXACTLY ONE callout must be a SMALL HELP tip (kind=help) — gentle, choosable "
-            "kindness — never guilt-trip; never blame staple foods, housing, transit, or "
-            "systems people don’t control; never panic about extinction. "
-            "EXACTLY ONE callout (separate from the help tip) should be a wonder fact "
-            "(kind=wonder) about the species itself with less direct human impact. "
+    if is_geology:
+        if allow_help and allow_wonder:
+            mix_rules = (
+                "Most callouts are noticing (kind=notice) about texture, formation, "
+                "hardness, crystal habit, or where walkers meet this find. "
+                "EXACTLY ONE callout must be a SMALL HELP tip (kind=help) — gentle "
+                "leave-it / trail-or-shore kindness for rocks, minerals, or empty shells "
+                "(never guilt; never tell kids to smash or pocket protected sites). "
+                "EXACTLY ONE callout (separate from the help tip) should be a wonder fact "
+                "(kind=wonder) about Earth history or how this material forms — less "
+                "direct human impact. "
+            )
+        elif allow_help:
+            mix_rules = (
+                "Most callouts are noticing (kind=notice). "
+                "EXACTLY ONE callout must be a SMALL HELP tip (kind=help) — gentle "
+                "leave-it / trail-or-shore kindness. "
+                "Do NOT include wonder callouts yet (kind=wonder locked). "
+            )
+        else:
+            mix_rules = (
+                "ALL callouts are everyday noticing (kind=notice) — color, grain, "
+                "crystal shape, shell form, where it shows up outdoors. "
+                "Do NOT include help tips (kind=help) or wonder (kind=wonder) yet. "
+            )
+        eco_tone = (
+            "GEOLOGY LANE — this find is natural nonliving matter (rock, mineral, "
+            "empty shell, or fossil), not a living wildlife species. "
+            "Write calm earth-science facts for walkers: how it forms, hardness clues, "
+            "texture, crystal habit, beach/trail noticing. "
+            "Do NOT invent wildlife ecology, pollinators, diet, or IUCN status. "
+            "Do NOT treat empty shells as living animals. "
+            "Warm and concrete — not lecturey, not guilt. "
+            + mix_rules
         )
-    elif allow_help:
-        mix_rules = (
-            "Most callouts are noticing (kind=notice). "
-            "EXACTLY ONE callout must be a SMALL HELP tip (kind=help) — gentle, choosable "
-            "kindness — never guilt-trip; never blame staple foods, housing, transit, or "
-            "systems people don’t control; never panic about extinction. "
-            "Do NOT include species-wonder callouts yet (kind=wonder locked). "
+        focus_block = (
+            "FOCUS for geology finds: keep tips place-aware when a looking-at place is "
+            "set (coast pebbles, trail outcrops, garden gravel) but stay geology-shaped. "
+            "Hiking/Seashore modes may mention trail or beach etiquette for collecting. "
+            "Garden mode may note decorative rock vs wild outcrop. "
+            "Crops mode: say gently this is not a crop and share one honest adjacent note. "
+        )
+        system = (
+            "You write short, family-friendly geology and earth-science callouts for "
+            "Bane of Extinction nature finds (rocks, minerals, empty shells, fossils). "
+            "Return ONLY valid JSON. No Wikipedia, no URLs, no scraping. "
+            "Use well-established general knowledge about the NAMED find below. "
+            "If unsure, say so gently. No medical claims. No treasure-hunting hype. "
+            "Visible traits / formation / hardness / occurrence — not lab chemistry dumps. "
+            "TONE — help a walker feel this earth find belongs in THEIR world. "
+            + eco_tone
+            + focus_block
+            + "PLACE LENS — the player chose a place they are LOOKING AT (not GPS). "
+            "Personalize tips to that lens when helpful. Never claim you know where "
+            "the player is standing. "
+            "Also fill nativeRangeRefine, rangeElsewhere, and conservationStatus as SHORT "
+            "caption fields (not extra callouts). "
+            "nativeRangeRefine: where this rock/mineral/shell commonly occurs or forms "
+            "(e.g. 'Common in granite outcrops', 'Beach shell of cool temperate coasts'). "
+            "rangeElsewhere: other places it is often found, or empty if not useful. "
+            "Do NOT use invasive-species wording for minerals. "
+            "conservationStatus: ALWAYS fill — e.g. 'Geological specimen — not a living "
+            "species', 'Common rock type', 'Empty shell — leave wrack for habitat when "
+            "you can'. Do NOT cite IUCN. "
+            "Also fill localStatus for the LOOKING-AT place when useful "
+            "(e.g. 'Common beach pebble here'), else empty. "
+            "If a compare place is given, fill compareNote with one short contrast — else empty."
         )
     else:
-        mix_rules = (
-            "ALL callouts are everyday noticing (kind=notice) — what you’d spot on a walk "
-            "or in a bed. Warm and concrete. "
-            "Do NOT include help tips (kind=help) or species-wonder (kind=wonder) yet — "
-            "those unlock as the player’s fact level grows. "
+        if allow_help and allow_wonder:
+            mix_rules = (
+                "Most callouts are noticing (kind=notice). "
+                "EXACTLY ONE callout must be a SMALL HELP tip (kind=help) — gentle, choosable "
+                "kindness — never guilt-trip; never blame staple foods, housing, transit, or "
+                "systems people don’t control; never panic about extinction. "
+                "EXACTLY ONE callout (separate from the help tip) should be a wonder fact "
+                "(kind=wonder) about the species itself with less direct human impact. "
+            )
+        elif allow_help:
+            mix_rules = (
+                "Most callouts are noticing (kind=notice). "
+                "EXACTLY ONE callout must be a SMALL HELP tip (kind=help) — gentle, choosable "
+                "kindness — never guilt-trip; never blame staple foods, housing, transit, or "
+                "systems people don’t control; never panic about extinction. "
+                "Do NOT include species-wonder callouts yet (kind=wonder locked). "
+            )
+        else:
+            mix_rules = (
+                "ALL callouts are everyday noticing (kind=notice) — what you’d spot on a walk "
+                "or in a bed. Warm and concrete. "
+                "Do NOT include help tips (kind=help) or species-wonder (kind=wonder) yet — "
+                "those unlock as the player’s fact level grows. "
+            )
+
+        eco_tone = (
+            "ECO LEAN — this game is Bane of Extinction: lean toward helping the living "
+            "world, but do NOT make every fact a save-the-planet assignment or homework. "
+            "Warm and concrete — not lecturey, not guilt. "
+            + mix_rules
         )
 
-    eco_tone = (
-        "ECO LEAN — this game is Bane of Extinction: lean toward helping the living "
-        "world, but do NOT make every fact a save-the-planet assignment or homework. "
-        "Warm and concrete — not lecturey, not guilt. "
-        + mix_rules
-    )
+        focus_block = _focus_prompt_block(
+            focus, allow_help=allow_help, fact_level=fact_level
+        )
 
-    focus_block = _focus_prompt_block(
-        focus, allow_help=allow_help, fact_level=fact_level
-    )
-
-    system = (
-        "You write short, family-friendly wildlife and plant education callouts for "
-        "Bane of Extinction. Return ONLY valid JSON. No Wikipedia, no URLs, no scraping. "
-        "Use well-established general knowledge about the NAMED organism below "
-        "(the game's best guess). If unsure, say so gently. No medical claims. "
-        "Visible traits / ecology / diet / habitat / pollinators — not internal anatomy. "
-        "CRITICAL: match petal/ray COLOR from the identification and scan note. "
-        "A red or dark sunflower must NOT get yellow-only petal facts. "
-        "TONE — help a walker feel this organism belongs in THEIR world, not a textbook dump. "
-        + eco_tone
-        + focus_block
-        + "PLACE LENS — the player chose a place they are LOOKING AT (not GPS). "
-        "Personalize tips to that lens: native vs introduced vs invasive THERE, "
-        "whether advice makes sense THERE, and what fits THAT kind of place "
-        "(urban, suburban, city, coast, woodland, etc.). If only a habitat "
-        "was chosen (no region), keep advice "
-        "habitat-shaped and say status may differ by region. Never claim you know where "
-        "the player is standing. "
-        "Also fill nativeRangeRefine, rangeElsewhere, and conservationStatus as SHORT "
-        "caption fields (not extra callouts). "
-        "nativeRangeRefine: where it is native (region/country/state level — e.g. "
-        "'Native in Mexico', 'Native to California and nearby Southwest'). Never "
-        "county-level unless status truly differs that finely. "
-        "rangeElsewhere: where it is introduced or often invasive OUTSIDE that native "
-        "range (e.g. 'Caution: often invasive in U.S. states such as Oklahoma, California'). "
-        "Do NOT require a compare place for this — always fill when known. Start with "
-        "'Caution:' when invasive/introduced — this is a learning heads-up, NOT an official "
-        "invasive-species registry. Soft wording ('often invasive', 'introduced') when "
-        "unsure of legal lists. Empty only if it is not meaningfully invasive/introduced "
-        "elsewhere, or truly unknown. "
-        "conservationStatus: ALWAYS fill when possible — plain words like Secure, "
-        "Apparently secure, Vulnerable, Imperiled, or 'common garden plant / not tracked "
-        "wild in the U.S.' Do NOT cite IUCN or invent Red List codes. Do not paste "
-        "Wikipedia lists. "
-        "Also fill localStatus (short: e.g. 'Native in SoCal yards', 'Invasive on CA coast', "
-        "'Houseplant only — not wild here') for the LOOKING-AT place, or empty if place skipped. "
-        "If a compare place is given, fill compareNote with one short contrast "
-        "(e.g. 'Native in CA; often invasive on Southeastern dunes') — else empty."
-    )
+        system = (
+            "You write short, family-friendly wildlife and plant education callouts for "
+            "Bane of Extinction. Return ONLY valid JSON. No Wikipedia, no URLs, no scraping. "
+            "Use well-established general knowledge about the NAMED organism below "
+            "(the game's best guess). If unsure, say so gently. No medical claims. "
+            "Visible traits / ecology / diet / habitat / pollinators — not internal anatomy. "
+            "CRITICAL: match petal/ray COLOR from the identification and scan note. "
+            "A red or dark sunflower must NOT get yellow-only petal facts. "
+            "TONE — help a walker feel this organism belongs in THEIR world, not a textbook dump. "
+            + eco_tone
+            + focus_block
+            + "PLACE LENS — the player chose a place they are LOOKING AT (not GPS). "
+            "Personalize tips to that lens: native vs introduced vs invasive THERE, "
+            "whether advice makes sense THERE, and what fits THAT kind of place "
+            "(urban, suburban, city, coast, woodland, etc.). If only a habitat "
+            "was chosen (no region), keep advice "
+            "habitat-shaped and say status may differ by region. Never claim you know where "
+            "the player is standing. "
+            "Also fill nativeRangeRefine, rangeElsewhere, and conservationStatus as SHORT "
+            "caption fields (not extra callouts). "
+            "nativeRangeRefine: where it is native (region/country/state level — e.g. "
+            "'Native in Mexico', 'Native to California and nearby Southwest'). Never "
+            "county-level unless status truly differs that finely. "
+            "rangeElsewhere: where it is introduced or often invasive OUTSIDE that native "
+            "range (e.g. 'Caution: often invasive in U.S. states such as Oklahoma, California'). "
+            "Do NOT require a compare place for this — always fill when known. Start with "
+            "'Caution:' when invasive/introduced — this is a learning heads-up, NOT an official "
+            "invasive-species registry. Soft wording ('often invasive', 'introduced') when "
+            "unsure of legal lists. Empty only if it is not meaningfully invasive/introduced "
+            "elsewhere, or truly unknown. "
+            "conservationStatus: ALWAYS fill when possible — plain words like Secure, "
+            "Apparently secure, Vulnerable, Imperiled, or 'common garden plant / not tracked "
+            "wild in the U.S.' Do NOT cite IUCN or invent Red List codes. Do not paste "
+            "Wikipedia lists. "
+            "Also fill localStatus (short: e.g. 'Native in SoCal yards', 'Invasive on CA coast', "
+            "'Houseplant only — not wild here') for the LOOKING-AT place, or empty if place skipped. "
+            "If a compare place is given, fill compareNote with one short contrast "
+            "(e.g. 'Native in CA; often invasive on Southeastern dunes') — else empty."
+        )
     scope = (
         f"Identified as: {display}"
         + (f" ({latin_n})" if latin_n else "")
@@ -3150,9 +3346,17 @@ def build_callouts(
         + (f"; scan note: {note_n}" if note_n else "")
         + f"; type: {org_type}. "
         + ("Focus mode: " + focus + ". ")
-        + "Write callouts accurate for THIS identification and visible color. "
-        "If red/dark sunflower rays, describe those — not classic yellow-only petals. "
-        "Put the help tip near the middle when possible; put the species-wonder fact last."
+        + (
+            "Write geology-style callouts accurate for THIS natural nonliving find. "
+            if is_geology
+            else "Write callouts accurate for THIS identification and visible color. "
+            "If red/dark sunflower rays, describe those — not classic yellow-only petals. "
+        )
+        + (
+            "Put the help tip near the middle when possible; put the wonder fact last."
+            if is_geology
+            else "Put the help tip near the middle when possible; put the species-wonder fact last."
+        )
     )
     if place_label_n or place_id_n:
         scope += (
@@ -3161,12 +3365,23 @@ def build_callouts(
             + (f"; region={region_n}" if region_n else "")
             + (f"; habitat={habitat_n}" if habitat_n else "")
             + ("; habitat-only lens (no named region)" if habitat_only else "")
-            + ". Personalize native/invasive/help tips for THIS lens."
+            + (
+                ". Personalize occurrence / leave-it tips for THIS lens."
+                if is_geology
+                else ". Personalize native/invasive/help tips for THIS lens."
+            )
         )
     else:
         scope += (
-            " No place lens chosen — keep facts generally accurate; avoid claiming "
-            "a planted-bed tip is always good everywhere; prefer range-aware wording."
+            " No place lens chosen — keep facts generally accurate; "
+            + (
+                "prefer occurrence-aware geology wording."
+                if is_geology
+                else (
+                    "avoid claiming a planted-bed tip is always good everywhere; "
+                    "prefer range-aware wording."
+                )
+            )
         )
     if compare_label_n or compare_id_n:
         scope += (
@@ -3176,7 +3391,12 @@ def build_callouts(
         )
     if season_n:
         scope += f" Season cue from device date: {season_n}."
-    if ns_meta:
+    if is_geology:
+        scope += (
+            " Skip NatureServe / invasive-species framing. "
+            "Fill occurrence captions and a geology-shaped status line."
+        )
+    elif ns_meta:
         if ns_meta.get("nativeRange"):
             scope += (
                 f" NatureServe native summary (prefer refining CA to NorCal/SoCal/"
@@ -3215,61 +3435,95 @@ def build_callouts(
             "conservationStatus from well-established knowledge when you can "
             "(native vs often invasive/introduced elsewhere; plain-words status)."
         )
-    riis_preview, _riis_attr = _caption_from_us_riis(latin_n)
+    riis_preview = ""
+    _riis_attr = ""
+    if not is_geology and latin_n:
+        riis_preview, _riis_attr = _caption_from_us_riis(latin_n)
     if riis_preview:
         scope += (
             f" USGS US-RIIS already provides the elsewhere caution caption "
             f"(do not contradict; leave rangeElsewhere empty): {riis_preview}."
         )
-    if evidence:
+    if evidence and not is_geology:
         scope += " Frame as evidence/clues the player noticed."
     if avoid:
         scope += (
-            " FRESHNESS — the player already saw these facts for this species recently. "
+            " FRESHNESS — the player already saw these facts for this find recently. "
             "Do NOT repeat or closely paraphrase them. Pick new angles, parts, seasons, "
             "neighbors, help tips, or wonder: "
             + " | ".join(avoid[:24])
         )
 
+    caption_hints = (
+        {
+            "organismType": org_type or "rock",
+            "nativeRangeRefine": "short occurrence / where it forms caption or empty",
+            "rangeElsewhere": "other places it is often found, or empty",
+            "conservationStatus": (
+                "short geology status (e.g. Geological specimen — not a living species)"
+            ),
+            "localStatus": "short status for looking-at place or empty",
+            "compareNote": "short contrast vs compare place or empty",
+            "callouts": [
+                {
+                    "anchor": "part_or_clue",
+                    "label": "Short label",
+                    "kind": "notice",
+                    "fact": "1–2 complete short sentences (finish every sentence)",
+                }
+            ],
+        }
+        if is_geology
+        else {
+            "organismType": org_type or "organism",
+            "nativeRangeRefine": "short native-range caption or empty",
+            "rangeElsewhere": (
+                "short introduced/often-invasive-elsewhere caption or empty"
+            ),
+            "conservationStatus": "short status caption (prefer always fill)",
+            "localStatus": "short status for looking-at place or empty",
+            "compareNote": "short contrast vs compare place or empty",
+            "callouts": [
+                {
+                    "anchor": "part_or_clue",
+                    "label": "Short label",
+                    "kind": "notice",
+                    "fact": "1–2 complete short sentences (finish every sentence)",
+                }
+            ],
+        }
+    )
+
     user = (
         scope
         + "\n\nReturn JSON:\n"
-        + json.dumps(
-            {
-                "organismType": org_type or "organism",
-                "nativeRangeRefine": "short native-range caption or empty",
-                "rangeElsewhere": (
-                    "short introduced/often-invasive-elsewhere caption or empty"
-                ),
-                "conservationStatus": "short status caption (prefer always fill)",
-                "localStatus": "short status for looking-at place or empty",
-                "compareNote": "short contrast vs compare place or empty",
-                "callouts": [
-                    {
-                        "anchor": "part_or_clue",
-                        "label": "Short label",
-                        "kind": "notice",
-                        "fact": "1–2 complete short sentences (finish every sentence)",
-                    }
-                ],
-            }
-        )
+        + json.dumps(caption_hints)
         + f"\nUse 3 to {callout_limit} callouts"
         + (" (pool refill — more fresh angles)" if pool_refill else "")
         + ". "
         "Tag each callout with kind: notice, help, or wonder. "
         f"Allowed kinds for this player right now: {', '.join(allowed_kinds)}. "
-        "Mix: everyday player-world facts for the ACTIVE focus "
-        "(walk / garden / hiking / seashore / crops&domestics). "
-        "Hiking and Seashore lean into people–place relationship for engaged players; "
-        "other modes may still mention relationship when it fits. "
+        + (
+            "Mix: geology noticing for rocks, minerals, empty shells, and fossils. "
+            if is_geology
+            else (
+                "Mix: everyday player-world facts for the ACTIVE focus "
+                "(walk / garden / hiking / seashore / crops&domestics). "
+                "Hiking and Seashore lean into people–place relationship for engaged players; "
+                "other modes may still mention relationship when it fits. "
+            )
+        )
         + (
             "Include EXACTLY ONE small-help tip (kind=help). "
             if allow_help
             else "No help tips in this set. "
         )
         + (
-            "Include EXACTLY ONE species-own wonder (kind=wonder). "
+            (
+                "Include EXACTLY ONE earth-story wonder (kind=wonder). "
+                if is_geology
+                else "Include EXACTLY ONE species-own wonder (kind=wonder). "
+            )
             if allow_wonder
             else "No wonder callouts in this set. "
         )
@@ -3296,7 +3550,7 @@ def build_callouts(
             raise RuntimeError("Too few callouts")
         source = "claude"
         if not organism_type and parsed.get("organismType"):
-            org_type = str(parsed.get("organismType"))[:40]
+            org_type = _normalize_organism_type(str(parsed.get("organismType")))
         claude_meta = {
             "nativeRangeRefine": parsed.get("nativeRangeRefine")
             or parsed.get("nativeRange"),
@@ -3315,6 +3569,7 @@ def build_callouts(
                 color_n,
                 garden_focus=garden_focus,
                 focus_mode=focus,
+                organism_type=org_type,
             ),
             allowed_kinds,
             max_callouts=callout_limit,
@@ -3344,6 +3599,8 @@ def build_callouts(
         "not a guaranteed field guide."
     )
     disclaimer += _focus_disclaimer(focus)
+    if is_geology:
+        disclaimer += " Geology-style facts for a natural nonliving find."
     if place_label_n:
         disclaimer += (
             " Place tips follow the looking-at place you chose — not GPS or where you stand."
@@ -3354,17 +3611,22 @@ def build_callouts(
     open_credits: list[str] = []
     status_src = str(meta.get("statusSource") or "")
     range_src = str(meta.get("rangeSource") or "")
-    if "natureserve" in status_src or "natureserve" in range_src or (
-        meta.get("attribution") and "NatureServe" in str(meta.get("attribution"))
+    if not is_geology and (
+        "natureserve" in status_src
+        or "natureserve" in range_src
+        or (
+            meta.get("attribution") and "NatureServe" in str(meta.get("attribution"))
+        )
     ):
         open_credits.append(
             "NatureServe Explorer (https://explorer.natureserve.org/) — CC BY"
         )
-    if "us-riis" in range_src or (
-        meta.get("attribution") and "US-RIIS" in str(meta.get("attribution"))
+    if not is_geology and (
+        "us-riis" in range_src
+        or (meta.get("attribution") and "US-RIIS" in str(meta.get("attribution")))
     ):
         open_credits.append("USGS US-RIIS — CC0 public domain")
-    if not open_credits and latin_n:
+    if not is_geology and not open_credits and latin_n:
         open_credits.append(
             "Range/status when available: NatureServe Explorer (CC BY); "
             "U.S. introduced/invasive captions: USGS US-RIIS (CC0)"

@@ -264,6 +264,7 @@ Owner pins from chat go here.
 - [x] **Not this** cycles alternatives then re-ID with rejected names
 - [x] **Google this** link-out to check the name against the web
 - [x] EcoLens wait-screen rotating wisdom (justice / small daily help / systems+agency; short; not species facts)
+- [x] EcoLens natural nonliving finds (rocks, minerals, empty shells, fossils) + geology-style facts (not furniture/plastic/cars)
 
 ### 2026-07-22 — fact book
 

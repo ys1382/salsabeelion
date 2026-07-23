@@ -728,8 +728,8 @@
       return {
         ok: false,
         hint: m.camo
-          ? "Looks empty even with camouflage assist — fill the box with the organism or clear evidence."
-          : "Looks empty — fill the dashed box with the organism or clear evidence.",
+          ? "Looks empty even with camouflage assist — fill the box with a nature find (living, evidence, rock, mineral, or empty shell)."
+          : "Looks empty — fill the dashed box with a nature find (living, evidence, rock, mineral, or empty shell).",
         level: "bad",
       };
     }
@@ -737,7 +737,7 @@
     if (fill < th.fillTooLow) {
       return {
         ok: false,
-        hint: "Mostly background — move so the plant, animal, or evidence fills the box.",
+        hint: "Mostly background — move so the plant, animal, evidence, rock, or empty shell fills the box.",
         level: "bad",
       };
     }
@@ -756,14 +756,14 @@
     if (variance < th.varianceSoft) {
       return {
         ok: false,
-        hint: "Almost — put more of the organism inside the dashed box.",
+        hint: "Almost — put more of the nature find inside the dashed box.",
         level: "soft",
       };
     }
     if (fill < th.fillSoft) {
       return {
         ok: false,
-        hint: "Aim so more of the organism fills the dashed box.",
+        hint: "Aim so more of the nature find fills the dashed box.",
         level: "soft",
       };
     }
@@ -802,7 +802,7 @@
     if (!coachHint) return;
     if (!analysis) {
       coachHint.textContent =
-        "Frame the organism (or clear evidence). Avoid faces/hands when you can.";
+        "Frame a nature find (living neighbor, evidence, rock, mineral, or empty shell). Avoid faces/hands when you can.";
       lastCoachLevel = "wait";
       applyStageClass("wait");
       coachReady = false;
@@ -831,7 +831,7 @@
     } catch (e) {
       setLiveCoach({
         ok: false,
-        hint: "Point the camera at the organism or clear evidence.",
+        hint: "Point the camera at a nature find (living, evidence, rock, mineral, or empty shell).",
         level: "wait",
       });
     }
@@ -1636,7 +1636,7 @@
     var check = analyzeOrganismFrame(video);
     setLiveCoach(check);
     if (!check.ok) {
-      setStatus(check.hint || "Frame the organism first, then scan.");
+      setStatus(check.hint || "Frame a nature find first, then scan.");
       return;
     }
     busy = true;
