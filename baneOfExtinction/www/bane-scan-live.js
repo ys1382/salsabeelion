@@ -30,21 +30,53 @@
   var captureBtn = document.getElementById("captureBtn");
   var stopCamBtn = document.getElementById("stopCamBtn");
   var statusEl = document.getElementById("scanStatus");
+  var waitWisdomEl = document.getElementById("waitWisdom");
+  var waitWisdomText = document.getElementById("waitWisdomText");
   var coachHint = document.getElementById("coachHint");
   var modeDriveEl = document.getElementById("modeDrive");
   var modeNightEl = document.getElementById("modeNight");
   var modeCamoEl = document.getElementById("modeCamo");
   var modeNoteEl = document.getElementById("modeNote");
   var resultBox = document.getElementById("scanResult");
+  var resultHeading = document.getElementById("resultHeading");
   var resultName = document.getElementById("resultName");
   var resultLatin = document.getElementById("resultLatin");
   var resultMeta = document.getElementById("resultMeta");
+  var confirmActions = document.getElementById("confirmActions");
+  var learnedActions = document.getElementById("learnedActions");
+  var confirmRightBtn = document.getElementById("confirmRightBtn");
+  var notThisBtn = document.getElementById("notThisBtn");
+  var googleThisBtn = document.getElementById("googleThisBtn");
   var openCodexBtn = document.getElementById("openCodexBtn");
   var rescanBtn = document.getElementById("rescanBtn");
+  var rescanAfterBtn = document.getElementById("rescanAfterBtn");
   var stream = null;
   var busy = false;
   var lastRecord = null;
   var redirectTimer = null;
+  /** Raw capture kept in memory only until confirm / dry / leave — never disk. */
+  var pendingPhoto = null;
+  var altQueue = [];
+  var rejectedNames = [];
+  var idRounds = 0;
+  var MAX_ID_ROUNDS = 3;
+  var PHOTO_IDLE_MS = 10 * 60 * 1000;
+  var photoIdleTimer = null;
+  var awaitingConfirm = false;
+  var waitWisdomTimer = null;
+  var waitWisdomQueue = [];
+  var WAIT_WISDOM_MS = 7500;
+  /** Generic wait-screen wisdom — not species facts. Three vibes: justice, small help, systems+agency. */
+  var WAIT_WISDOM = [
+    "If an “eco-friendly” product ignores human rights, it isn’t environmentally friendly. Oppression won’t build a sustainable world.",
+    "Green labels mean little when workers or communities are harmed to make the product.",
+    "A little help every day still counts — even when the big systems feel stuck.",
+    "Tiny steady habits add up. They don’t replace systemic change; they sit beside it.",
+    "Needing staples in plastic isn’t your fault. Refuse the extras when you can.",
+    "Companies choose the wrap. You can still cut waste where a real choice exists.",
+    "If they won’t change the packaging, boycott is the louder step after everyday refuse.",
+    "The onus is on companies to offer unpackaged options. Your refuse and boycott still push them.",
+  ];
   var coachTimer = null;
   var coachReady = false;
   var lastCoachLevel = "wait";
@@ -60,6 +92,86 @@
 
   function setStatus(msg) {
     if (statusEl) statusEl.textContent = msg || "";
+  }
+
+  function shuffleCopy(list) {
+    var out = list.slice();
+    var i;
+    for (i = out.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = out[i];
+      out[i] = out[j];
+      out[j] = tmp;
+    }
+    return out;
+  }
+
+  function showNextWaitWisdom() {
+    if (!waitWisdomText) return;
+    if (!waitWisdomQueue.length) {
+      waitWisdomQueue = shuffleCopy(WAIT_WISDOM);
+    }
+    waitWisdomText.textContent = waitWisdomQueue.shift() || "";
+  }
+
+  function startWaitWisdom() {
+    if (!waitWisdomEl || !waitWisdomText) return;
+    if (waitWisdomTimer) return;
+    waitWisdomEl.hidden = false;
+    showNextWaitWisdom();
+    waitWisdomTimer = setInterval(showNextWaitWisdom, WAIT_WISDOM_MS);
+  }
+
+  function stopWaitWisdom() {
+    if (waitWisdomTimer) {
+      clearInterval(waitWisdomTimer);
+      waitWisdomTimer = null;
+    }
+    if (waitWisdomEl) waitWisdomEl.hidden = true;
+    if (waitWisdomText) waitWisdomText.textContent = "";
+  }
+
+  function nameKey(name) {
+    return String(name || "")
+      .toLowerCase()
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  function wipePendingPhoto(reason) {
+    if (pendingPhoto) {
+      pendingPhoto.imageBase64 = "";
+      pendingPhoto = null;
+    }
+    if (photoIdleTimer) {
+      clearTimeout(photoIdleTimer);
+      photoIdleTimer = null;
+    }
+    clearCanvas();
+    hideFreezeFrame();
+    if (reason) {
+      try {
+        console.info("bane_scan wipe_photo", reason);
+      } catch (e) {}
+    }
+  }
+
+  function armPhotoIdleWipe() {
+    if (photoIdleTimer) clearTimeout(photoIdleTimer);
+    photoIdleTimer = setTimeout(function () {
+      if (!pendingPhoto) return;
+      wipePendingPhoto("idle_timeout");
+      awaitingConfirm = false;
+      altQueue = [];
+      rejectedNames = [];
+      idRounds = 0;
+      if (resultBox) resultBox.hidden = true;
+      setStatus(
+        "Photo cleared after sitting too long (not stored). Scan again when ready."
+      );
+      stopWaitWisdom();
+      startCamera();
+    }, PHOTO_IDLE_MS);
   }
 
   function isHandheld() {
@@ -917,19 +1029,34 @@
 
   function openCodex() {
     if (!lastRecord || !lastRecord.commonName) {
-      setStatus("Scan first, then open the codex.");
+      setStatus("Confirm a guess first, then open the codex.");
       return;
     }
     if (redirectTimer) {
       clearTimeout(redirectTimer);
       redirectTimer = null;
     }
+    wipePendingPhoto("open_codex");
     saveRecord(lastRecord);
     window.location.href = codexUrl(lastRecord);
   }
 
-  function revealIdPreview(data) {
-    lastRecord = {
+  function googleThisGuess() {
+    var common =
+      (lastRecord && (lastRecord.displayName || lastRecord.commonName)) || "";
+    var latin = (lastRecord && lastRecord.latinName) || "";
+    var q = (common + " " + latin).trim();
+    if (!q) {
+      setStatus("No name to search yet.");
+      return;
+    }
+    var url =
+      "https://www.google.com/search?q=" + encodeURIComponent(q);
+    window.open(url, "_blank", "noopener,noreferrer");
+  }
+
+  function recordFromIdData(data) {
+    return {
       displayName: data.displayName || data.commonName || "",
       commonName: data.commonName || "",
       latinName: data.latinName || "",
@@ -940,7 +1067,7 @@
       lifeStage: data.lifeStage || "",
       confidence: data.confidence || "",
       shortNote: data.shortNote || "",
-      stillToken: "",
+      stillToken: data.stillToken || "",
       hasStill: false,
       geminiName:
         data.sources && data.sources.gemini
@@ -951,7 +1078,57 @@
           ? data.sources.claude.commonName
           : "",
     };
-    saveRecord(lastRecord);
+  }
+
+  function buildAltQueue(data, currentCommon) {
+    var cur = nameKey(currentCommon);
+    var seen = {};
+    if (cur) seen[cur] = true;
+    rejectedNames.forEach(function (n) {
+      var k = nameKey(n);
+      if (k) seen[k] = true;
+    });
+    var out = [];
+    (data.alternatives || []).forEach(function (item) {
+      if (!item || typeof item !== "object") return;
+      var c = String(item.commonName || "").trim();
+      if (!c) return;
+      var k = nameKey(c);
+      if (seen[k]) return;
+      seen[k] = true;
+      out.push({
+        commonName: c,
+        latinName: String(item.latinName || "").trim(),
+        displayName: c,
+        cultivar: "",
+        bloomColor: data.bloomColor || "",
+        evidence: !!data.evidence,
+        organismType: data.organismType || "other",
+        lifeStage: data.lifeStage || "",
+        confidence: "low",
+        shortNote: "Another possible match.",
+        alternatives: [],
+      });
+    });
+    return out;
+  }
+
+  function setConfirmUi(mode) {
+    // mode: "confirm" | "learned"
+    if (confirmActions) confirmActions.hidden = mode !== "confirm";
+    if (learnedActions) learnedActions.hidden = mode !== "learned";
+    if (resultHeading) {
+      resultHeading.textContent =
+        mode === "learned" ? "Learned" : "Is this your find?";
+    }
+  }
+
+  function showConfirmGuess(data) {
+    lastRecord = recordFromIdData(data);
+    altQueue = buildAltQueue(data, lastRecord.commonName);
+    awaitingConfirm = true;
+    armPhotoIdleWipe();
+    setConfirmUi("confirm");
     if (resultName) {
       resultName.textContent =
         lastRecord.displayName || lastRecord.commonName || "Unknown";
@@ -962,43 +1139,32 @@
       if (lastRecord.confidence) bits.push("confidence: " + lastRecord.confidence);
       if (lastRecord.lifeStage) bits.push("stage: " + lastRecord.lifeStage);
       if (data.alreadyLearned) bits.push("already on your shelf");
-      if (data.claudeSkipped) bits.push("verified with Gemini");
       if (lastRecord.bloomColor) bits.push("color: " + lastRecord.bloomColor);
-      bits.push("finishing matching art…");
+      if (altQueue.length) {
+        bits.push(altQueue.length + " other guess" + (altQueue.length === 1 ? "" : "es") + " ready");
+      }
+      bits.push("photo held until you confirm (not saved)");
       if (lastRecord.shortNote) bits.push(lastRecord.shortNote);
       resultMeta.textContent = bits.join(" · ");
     }
     if (resultBox) resultBox.hidden = false;
+    setStatus(
+      "Is this " +
+        (lastRecord.displayName || lastRecord.commonName) +
+        "? Confirm, try another guess, or Google it."
+    );
+    if (coachHint) {
+      coachHint.textContent =
+        "Check the name. This looks right keeps it; Not this tries another guess. Photo clears when you leave.";
+    }
+    if (confirmRightBtn) confirmRightBtn.disabled = false;
+    if (notThisBtn) notThisBtn.disabled = false;
+    if (googleThisBtn) googleThisBtn.disabled = false;
   }
 
-  function showResult(data, stillPayload) {
-    lastRecord = {
-      displayName: data.displayName || data.commonName || "",
-      commonName: data.commonName || "",
-      latinName: data.latinName || "",
-      cultivar: data.cultivar || "",
-      bloomColor: data.bloomColor || "",
-      evidence: !!data.evidence,
-      organismType: data.organismType || "flower",
-      lifeStage: data.lifeStage || "",
-      confidence: data.confidence || "",
-      shortNote: data.shortNote || "",
-      stillToken: (stillPayload && stillPayload.token) || data.stillToken || "",
-      hasStill: !!(
-        stillPayload &&
-        (stillPayload.token || stillPayload.imageBase64 || stillPayload.url)
-      ),
-      geminiName:
-        data.sources && data.sources.gemini
-          ? data.sources.gemini.commonName
-          : "",
-      claudeName:
-        data.sources && data.sources.claude
-          ? data.sources.claude.commonName
-          : "",
-    };
-    clearStill();
-    saveRecord(lastRecord);
+  function learnAndFinish(stillPayload) {
+    awaitingConfirm = false;
+    setConfirmUi("learned");
 
     function finishLearn(stillToSave) {
       if (window.BaneCodexCollection && lastRecord.commonName) {
@@ -1015,6 +1181,8 @@
           window.BaneCodexCollection.syncNow().catch(function () {});
         }
       }
+      wipePendingPhoto("confirmed");
+      saveRecord(lastRecord);
       if (resultName) {
         resultName.textContent =
           lastRecord.displayName || lastRecord.commonName || "Unknown";
@@ -1035,7 +1203,7 @@
         "Learned: " +
           (lastRecord.displayName || lastRecord.commonName) +
           (lastRecord.hasStill ? " + matching art" : "") +
-          ". Opening wildlife codex…"
+          ". Photo wiped. Opening wildlife codex…"
       );
       redirectTimer = setTimeout(openCodex, 700);
     }
@@ -1095,6 +1263,175 @@
       return;
     }
     finishLearn(null);
+  }
+
+  function onConfirmRight() {
+    if (busy || !lastRecord || !lastRecord.commonName) return;
+    if (!awaitingConfirm) return;
+    busy = true;
+    if (confirmRightBtn) confirmRightBtn.disabled = true;
+    if (notThisBtn) notThisBtn.disabled = true;
+    startWaitWisdom();
+    setStatus("Looks right — making matching codex art, then wiping the photo…");
+    var photo = pendingPhoto;
+    requestCodexStill(photo, lastRecord)
+      .then(function (stillInfo) {
+        if (stillInfo) {
+          lastRecord.stillToken = stillInfo.token || lastRecord.stillToken || "";
+          lastRecord.hasStill = !!(
+            stillInfo.token ||
+            stillInfo.imageBase64 ||
+            stillInfo.url
+          );
+        }
+        learnAndFinish(stillInfo || null);
+      })
+      .catch(function () {
+        learnAndFinish(null);
+      })
+      .then(function () {
+        stopWaitWisdom();
+        busy = false;
+      });
+  }
+
+  function giveUpGuesses(message) {
+    wipePendingPhoto("guesses_exhausted");
+    awaitingConfirm = false;
+    altQueue = [];
+    rejectedNames = [];
+    idRounds = 0;
+    lastRecord = null;
+    if (resultBox) resultBox.hidden = true;
+    setStatus(
+      message ||
+        "Ran out of guesses for this photo — photo wiped (never stored). Try a clearer scan."
+    );
+    stopWaitWisdom();
+    if (coachHint) {
+      coachHint.textContent =
+        "Frame the organism again when ready. Nothing from that photo was kept.";
+    }
+    busy = false;
+    startCamera();
+  }
+
+  function applyNextGuess(data) {
+    showConfirmGuess(data);
+    busy = false;
+  }
+
+  function onNotThis() {
+    if (busy || !awaitingConfirm || !lastRecord) return;
+    var wrong =
+      lastRecord.displayName || lastRecord.commonName || "";
+    if (wrong) {
+      var k = nameKey(wrong);
+      var already = rejectedNames.some(function (n) {
+        return nameKey(n) === k;
+      });
+      if (!already) rejectedNames.push(wrong);
+    }
+
+    while (altQueue.length) {
+      var next = altQueue.shift();
+      if (!next || !next.commonName) continue;
+      if (
+        rejectedNames.some(function (n) {
+          return nameKey(n) === nameKey(next.commonName);
+        })
+      ) {
+        continue;
+      }
+      applyNextGuess(next);
+      setStatus(
+        "Trying another guess: " +
+          (next.displayName || next.commonName) +
+          ". Still holding the photo until you confirm."
+      );
+      return;
+    }
+
+    if (!pendingPhoto || !pendingPhoto.imageBase64) {
+      giveUpGuesses(
+        "No photo left to retry — wiped. Scan again when ready."
+      );
+      return;
+    }
+    if (idRounds >= MAX_ID_ROUNDS) {
+      giveUpGuesses();
+      return;
+    }
+
+    busy = true;
+    if (notThisBtn) notThisBtn.disabled = true;
+    if (confirmRightBtn) confirmRightBtn.disabled = true;
+    startWaitWisdom();
+    setStatus("Asking for a different guess (photo still in memory only)…");
+    identifyWithPending()
+      .then(function (data) {
+        idRounds += 1;
+        stopWaitWisdom();
+        applyNextGuess(data);
+      })
+      .catch(function (err) {
+        var msg = err && err.message ? err.message : "";
+        if (
+          (err && err.code === "guesses_exhausted") ||
+          msg.indexOf("guesses_exhausted") >= 0 ||
+          msg.indexOf("Ran out") >= 0
+        ) {
+          giveUpGuesses();
+          return;
+        }
+        giveUpGuesses(
+          "Could not find another guess — photo wiped. " + (msg || "Scan again.")
+        );
+      });
+  }
+
+  function identifyWithPending() {
+    if (!pendingPhoto || !pendingPhoto.imageBase64) {
+      return Promise.reject(new Error("photo_cleared"));
+    }
+    return fetchJson(
+      API,
+      {
+        imageBase64: pendingPhoto.imageBase64,
+        mimeType: pendingPhoto.mimeType || "image/jpeg",
+        wantCodexStill: false,
+        shelfHints: shelfHintsForIdentify(),
+        rejectedNames: rejectedNames.slice(),
+      },
+      IDENTIFY_TIMEOUT_MS
+    ).then(function (pack) {
+      var data = pack.data || {};
+      if (!pack.res.ok || !data.ok) {
+        var err = new Error(
+          (data && data.message) || (data && data.error) || "identify_failed"
+        );
+        err.code = data && data.error;
+        throw err;
+      }
+      return data;
+    });
+  }
+
+  function resetScanSession() {
+    if (redirectTimer) {
+      clearTimeout(redirectTimer);
+      redirectTimer = null;
+    }
+    stopWaitWisdom();
+    wipePendingPhoto("rescan");
+    awaitingConfirm = false;
+    altQueue = [];
+    rejectedNames = [];
+    idRounds = 0;
+    lastRecord = null;
+    if (resultBox) resultBox.hidden = true;
+    setConfirmUi("confirm");
+    startCamera();
   }
 
   function parseJsonResponse(res, text) {
@@ -1263,14 +1600,18 @@
       clearTimeout(redirectTimer);
       redirectTimer = null;
     }
+    wipePendingPhoto("new_capture");
+    awaitingConfirm = false;
+    altQueue = [];
+    rejectedNames = [];
+    idRounds = 0;
+    lastRecord = null;
     var started = Date.now();
-    var phase = "id";
+    startWaitWisdom();
     var tick = setInterval(function () {
       var sec = Math.round((Date.now() - started) / 1000);
       setStatus(
-        phase === "art"
-          ? "ID ready — making matching codex art… " + sec + "s. Camera is off."
-          : "Working on your photo… " + sec + "s (identifying). Camera is off."
+        "Working on your photo… " + sec + "s (identifying). Camera is off."
       );
     }, 500);
     var modes = modeFlags();
@@ -1287,65 +1628,38 @@
         }
         showFreezeFrame();
         stopCamera();
-        setStatus("Photo captured — camera off. Identifying…");
-        return fetchJson(
-          API,
-          {
-            imageBase64: payload.imageBase64,
-            mimeType: payload.mimeType,
-            wantCodexStill: false,
-            shelfHints: shelfHintsForIdentify(),
-          },
-          IDENTIFY_TIMEOUT_MS
-        ).then(function (pack) {
-          return { pack: pack, payload: payload };
-        });
+        // Hold raw bytes in memory only — never session/local storage.
+        pendingPhoto = {
+          imageBase64: payload.imageBase64,
+          mimeType: payload.mimeType || "image/jpeg",
+        };
+        armPhotoIdleWipe();
+        setStatus("Photo captured — held in memory. Identifying…");
+        return identifyWithPending();
       })
-      .then(function (bundle) {
-        var pack = bundle.pack;
-        var payload = bundle.payload;
-        var data = pack.data || {};
-        if (!pack.res.ok || !data.ok) {
-          throw new Error(
-            (data && data.message) || (data && data.error) || "identify_failed"
-          );
-        }
-        phase = "art";
+      .then(function (data) {
+        clearInterval(tick);
+        stopWaitWisdom();
         hideFreezeFrame();
         clearCanvas();
-        revealIdPreview(data);
-        setStatus(
-          "Found: " +
-            (data.displayName || data.commonName || "organism") +
-            ". Checking stage art…"
-        );
-        if (coachHint) {
-          coachHint.textContent =
-            "Identified — reusing stage art if we have it, else making a new portrait…";
-        }
-        return requestCodexStill(payload, data).then(function (stillInfo) {
-          payload.imageBase64 = "";
-          return { data: data, stillInfo: stillInfo };
-        });
-      })
-      .then(function (pack) {
-        clearInterval(tick);
-        showResult(pack.data, pack.stillInfo || null);
+        idRounds = 1;
+        showConfirmGuess(data);
+        busy = false;
+        if (captureBtn) captureBtn.disabled = false;
       })
       .catch(function (err) {
         clearInterval(tick);
-        clearCanvas();
+        stopWaitWisdom();
+        wipePendingPhoto("identify_failed");
         hideFreezeFrame();
         var msg = err && err.message ? err.message : "error";
         if (err && err.name === "AbortError") {
           msg = "Scan timed out — try again with a clearer frame.";
         }
-        setStatus("Scan failed: " + msg);
+        setStatus("Scan failed: " + msg + " Photo wiped.");
         busy = false;
+        if (captureBtn) captureBtn.disabled = false;
         startCamera();
-      })
-      .then(function () {
-        busy = false;
       });
   }
 
@@ -1365,18 +1679,18 @@
   bindPinchZoom();
   if (captureBtn) captureBtn.addEventListener("click", onCapture);
   if (stopCamBtn) stopCamBtn.addEventListener("click", stopCamera);
+  if (confirmRightBtn) confirmRightBtn.addEventListener("click", onConfirmRight);
+  if (notThisBtn) notThisBtn.addEventListener("click", onNotThis);
+  if (googleThisBtn) googleThisBtn.addEventListener("click", googleThisGuess);
   if (openCodexBtn) openCodexBtn.addEventListener("click", openCodex);
-  if (rescanBtn) {
-    rescanBtn.addEventListener("click", function () {
-      if (redirectTimer) {
-        clearTimeout(redirectTimer);
-        redirectTimer = null;
-      }
-      if (resultBox) resultBox.hidden = true;
-      lastRecord = null;
-      startCamera();
-    });
-  }
+  if (rescanBtn) rescanBtn.addEventListener("click", resetScanSession);
+  if (rescanAfterBtn) rescanAfterBtn.addEventListener("click", resetScanSession);
   startCamera();
-  window.addEventListener("pagehide", stopCamera);
+  window.addEventListener("pagehide", function () {
+    wipePendingPhoto("pagehide");
+    stopCamera();
+  });
+  window.addEventListener("beforeunload", function () {
+    wipePendingPhoto("beforeunload");
+  });
 })();

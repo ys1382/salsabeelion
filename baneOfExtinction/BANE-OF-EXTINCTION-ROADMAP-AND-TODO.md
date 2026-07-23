@@ -38,7 +38,7 @@
 
 - Camera is **optional** (see ID paths).
 - Scan identifies the **organism only**. If it is perched on a hand (or shoe, face, etc.), do **not** keep or treat the person/body part as part of the find — crop/mask to organism.
-- After recording the wildlife (species → codex), **delete the raw photo** (and usually the crop). Do not store personal or unrelated image data.
+- After the player confirms the wildlife ID (**This looks right** → species → codex), **delete the raw photo** (and usually the crop). Also wipe if guesses run dry, they leave the page, or the confirm sits idle too long. Do not store personal or unrelated image data.
 - Result / codex art is **never** the player’s raw camera frame.
 
 ### Location (no GPS)
@@ -107,7 +107,7 @@ Inspired by **iNaturalist Seek**, with Halalit photo privacy:
 1. Player photographs the organism.
 2. App isolates **organism only** (not hand/person/background clutter meant as PII).
 3. ID runs on that crop (plus optional region/habitat pool).
-4. Photo deleted after wildlife is recorded.
+4. Player confirms (**This looks right**) or rejects (**Not this** → alternatives / re-ID). Photo deleted on confirm, when guesses run dry, on leave, or idle timeout — never kept for later.
 5. Player gets a **natural field-guide still** of the organism (generated from the crop + ID — not a Live Photo / moving raw video). Matches color and form of *this* scan (e.g. red sunflower stays red). Subtle idle (bob/sway) on the still is OK; full “animate the photo into video” stays out of scope.
 
 **v1 note:** Trail Guide can ship first; camera + stylize may be v2 if needed — but privacy + codex rules above stay locked either way.
@@ -257,6 +257,13 @@ Owner pins from chat go here.
     - Indigenous foodways & land (curated only, never Claude freeform): tribal nation cultural pages the author publishes; museum exhibits with clear provenance; avoid scraping or inventing.
 - [ ] Later: deeper environmental practice facts (regen ag and similar) — only after owner notes / line check
 - [ ] Later: pig health / “why pork can be unhealthy” facts (only after owner asks — not in current prompts)
+
+### 2026-07-23 — camera confirm loop
+
+- [x] Hold raw photo in memory until **This looks right**; wipe on leave / dry guesses / idle; never store for later
+- [x] **Not this** cycles alternatives then re-ID with rejected names
+- [x] **Google this** link-out to check the name against the web
+- [x] EcoLens wait-screen rotating wisdom (justice / small daily help / systems+agency; short; not species facts)
 
 ### 2026-07-22 — fact book
 

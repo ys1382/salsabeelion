@@ -7,7 +7,7 @@
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <title>EcoLens — Bane of Extinction</title>
-  <link rel="stylesheet" href="bane.css?v=live1" />
+  <link rel="stylesheet" href="bane.css?v=live2" />
   <link rel="stylesheet" href="bane-codex-card.css?v=live5" />
 </head>
 <body>
@@ -16,8 +16,8 @@
       <p class="eyebrow"><a href="index.html">Bane of Extinction</a> · EcoLens</p>
       <h1 class="brand">EcoLens</h1>
       <p class="tagline">
-        Pinch to zoom → optional Drive / Night vision / Camouflage assists → Capture → ID + codex art → photo discarded.
-        Facts and art follow <em>this</em> organism — never your raw photo. No flash.
+        Pinch to zoom → Capture → guess → <em>This looks right</em> (or <em>Not this</em>) → matching codex art → photo wiped.
+        Raw photo stays only in this session until you confirm, run out of guesses, or leave — never saved for later. No flash.
       </p>
       <p class="note" role="note">
         <strong>Don’t get too close.</strong> Nothing here needs a dangerous close-up. Calm familiar yard wildlife at a few feet is fine;
@@ -57,14 +57,24 @@
         <button type="button" class="btn secondary" id="stopCamBtn" hidden>Stop camera</button>
       </div>
       <p class="status" id="scanStatus" aria-live="polite"></p>
+      <aside class="wait-wisdom" id="waitWisdom" hidden aria-live="polite">
+        <p class="wait-wisdom__label">While you wait</p>
+        <p class="wait-wisdom__text" id="waitWisdomText"></p>
+      </aside>
       <div class="panel" id="scanResult" hidden>
-        <h2 style="margin:0 0 0.4rem;font-size:1.1rem">Scan result</h2>
+        <h2 style="margin:0 0 0.4rem;font-size:1.1rem" id="resultHeading">Is this your find?</h2>
         <p style="margin:0"><strong id="resultName">—</strong></p>
         <p style="margin:0.2rem 0 0.6rem;opacity:0.85" id="resultLatin">—</p>
         <p class="note" id="resultMeta" style="margin:0 0 0.8rem"></p>
-        <div class="scan-actions">
-          <button type="button" class="btn primary" id="openCodexBtn">Open in wildlife codex</button>
+        <div class="scan-actions" id="confirmActions">
+          <button type="button" class="btn primary" id="confirmRightBtn">This looks right</button>
+          <button type="button" class="btn secondary" id="notThisBtn">Not this</button>
+          <button type="button" class="btn secondary" id="googleThisBtn">Google this</button>
           <button type="button" class="btn secondary" id="rescanBtn">Scan again</button>
+        </div>
+        <div class="scan-actions" id="learnedActions" hidden>
+          <button type="button" class="btn primary" id="openCodexBtn">Open in wildlife codex</button>
+          <button type="button" class="btn secondary" id="rescanAfterBtn">Scan again</button>
         </div>
       </div>
     </div>
@@ -77,6 +87,6 @@
   <script src="bane-handheld-live.js"></script>
   <script src="bane-codex-facts.js?v=live1"></script>
   <script src="bane-codex-collection.js?v=live4"></script>
-  <script src="bane-scan-live.js?v=live8"></script>
+  <script src="bane-scan-live.js?v=live10"></script>
 </body>
 </html>

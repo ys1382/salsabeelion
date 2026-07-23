@@ -1259,11 +1259,102 @@ def _call_claude_text(system: str, user: str, max_tokens: int = 900) -> str:
     return text
 
 
-def _call_claude_vision(image_b64: str, mime: str) -> dict[str, Any]:
+def _parse_rejected_names(raw: Any) -> list[str]:
+    """Player said these guesses were wrong — never reuse as the primary ID."""
+    out: list[str] = []
+    seen: set[str] = set()
+    if not isinstance(raw, list):
+        return out
+    for item in raw[:16]:
+        if isinstance(item, dict):
+            text = str(item.get("commonName") or item.get("name") or "").strip()
+        else:
+            text = str(item or "").strip()
+        text = text[:120]
+        key = re.sub(r"\s+", " ", text.lower()).strip()
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        out.append(text)
+    return out
+
+
+def _reject_prompt_suffix(rejected: list[str]) -> str:
+    if not rejected:
+        return ""
+    names = "; ".join(rejected[:12])
+    return (
+        "\nREJECTED BY PLAYER — these guesses were WRONG for this photo. "
+        "Do NOT return them (or near-duplicates) as commonName. "
+        "Pick a different best match and list fresh alternatives that are also "
+        f"not on this list: {names}\n"
+    )
+
+
+def _norm_name_key(name: str) -> str:
+    return re.sub(r"\s+", " ", str(name or "").lower()).strip()
+
+
+def _id_is_rejected(parsed: dict[str, Any] | None, rejected: list[str]) -> bool:
+    if not parsed or not rejected:
+        return False
+    keys = {_norm_name_key(x) for x in rejected if _norm_name_key(x)}
+    if not keys:
+        return False
+    for field in ("commonName", "displayName"):
+        k = _norm_name_key(str(parsed.get(field) or ""))
+        if k and k in keys:
+            return True
+    return False
+
+
+def _pick_non_rejected(
+    chosen: dict[str, Any] | None, rejected: list[str]
+) -> dict[str, Any] | None:
+    """Prefer chosen; else first alternative not on the reject list."""
+    if not chosen:
+        return None
+    if not _id_is_rejected(chosen, rejected):
+        return chosen
+    for item in chosen.get("alternatives") or []:
+        if not isinstance(item, dict):
+            continue
+        alt = {
+            "commonName": str(item.get("commonName") or "").strip()[:120],
+            "latinName": str(item.get("latinName") or "").strip()[:160],
+            "cultivar": "",
+            "bloomColor": chosen.get("bloomColor") or "",
+            "organismType": chosen.get("organismType") or "other",
+            "lifeStage": chosen.get("lifeStage") or "",
+            "evidence": bool(chosen.get("evidence")),
+            "confidence": "low",
+            "shortNote": "Another possible match after the player rejected prior guesses.",
+            "alternatives": [],
+            "noOrganism": False,
+        }
+        if alt["commonName"] and not _id_is_rejected(alt, rejected):
+            # Keep remaining siblings as further alternatives.
+            rest = [
+                a
+                for a in (chosen.get("alternatives") or [])
+                if isinstance(a, dict)
+                and _norm_name_key(str(a.get("commonName") or ""))
+                != _norm_name_key(alt["commonName"])
+                and not _id_is_rejected(a, rejected)
+            ]
+            alt["alternatives"] = rest[:3]
+            return alt
+    return None
+
+
+def _call_claude_vision(
+    image_b64: str, mime: str, *, rejected: list[str] | None = None
+) -> dict[str, Any]:
     api_key = anthropic_api_key()
     if not api_key:
         raise RuntimeError("ANTHROPIC_API_KEY not set")
     mime = (mime or "image/jpeg").split(";")[0].strip() or "image/jpeg"
+    prompt = IDENTIFY_PROMPT + _reject_prompt_suffix(rejected or [])
     payload = {
         "model": CLAUDE_MODEL,
         "max_tokens": 700,
@@ -1271,7 +1362,7 @@ def _call_claude_vision(image_b64: str, mime: str) -> dict[str, Any]:
             {
                 "role": "user",
                 "content": [
-                    {"type": "text", "text": IDENTIFY_PROMPT},
+                    {"type": "text", "text": prompt},
                     {
                         "type": "image",
                         "source": {
@@ -1305,7 +1396,9 @@ def _call_claude_vision(image_b64: str, mime: str) -> dict[str, Any]:
     return _extract_json_object(text)
 
 
-def _call_gemini_vision(image_b64: str, mime: str) -> dict[str, Any]:
+def _call_gemini_vision(
+    image_b64: str, mime: str, *, rejected: list[str] | None = None
+) -> dict[str, Any]:
     key = gemini_api_key()
     if not key:
         raise RuntimeError("GEMINI_API_KEY not set")
@@ -1317,11 +1410,12 @@ def _call_gemini_vision(image_b64: str, mime: str) -> dict[str, Any]:
         f"{urllib.parse.quote(GEMINI_MODEL, safe='')}:generateContent"
         f"?key={urllib.parse.quote(key, safe='')}"
     )
+    prompt = IDENTIFY_PROMPT + _reject_prompt_suffix(rejected or [])
     payload = {
         "contents": [
             {
                 "parts": [
-                    {"text": IDENTIFY_PROMPT},
+                    {"text": prompt},
                     {"inline_data": {"mime_type": mime, "data": image_b64}},
                 ]
             }
@@ -2092,11 +2186,13 @@ def identify_wildlife(
     *,
     want_codex_still: bool = False,
     shelf_hints: list[dict[str, str]] | None = None,
+    rejected_names: list[str] | None = None,
 ) -> dict[str, Any]:
     if not image_b64 or len(image_b64) > MAX_IMAGE_B64:
         return {"ok": False, "error": "image_invalid", "message": "Image missing or too large."}
 
     hints = shelf_hints or []
+    rejected = rejected_names or []
     gemini_err = ""
     claude_err = ""
     gemini_id: dict[str, Any] | None = None
@@ -2106,13 +2202,13 @@ def identify_wildlife(
 
     def _gemini_job() -> tuple[dict[str, Any] | None, str]:
         try:
-            return _norm_id(_call_gemini_vision(image_b64, mime)), ""
+            return _norm_id(_call_gemini_vision(image_b64, mime, rejected=rejected)), ""
         except Exception as exc:  # noqa: BLE001
             return None, f"{type(exc).__name__}: {exc}"
 
     def _claude_job() -> tuple[dict[str, Any] | None, str]:
         try:
-            return _norm_id(_call_claude_vision(image_b64, mime)), ""
+            return _norm_id(_call_claude_vision(image_b64, mime, rejected=rejected)), ""
         except Exception as exc:  # noqa: BLE001
             return None, f"{type(exc).__name__}: {exc}"
 
@@ -2130,6 +2226,30 @@ def identify_wildlife(
         )
 
     chosen = _prefer_id(gemini_id, claude_id)
+    chosen = _pick_non_rejected(chosen, rejected)
+    if rejected and chosen is None and (gemini_id or claude_id):
+        print(
+            "bane_identify exhausted_rejects "
+            f"rejected={rejected!r} "
+            f"gemini={(gemini_id or {}).get('commonName')!r} "
+            f"claude={(claude_id or {}).get('commonName')!r}",
+            flush=True,
+        )
+        return {
+            "ok": False,
+            "error": "guesses_exhausted",
+            "message": (
+                "Ran out of different guesses for this photo. "
+                "Try a clearer frame, or Scan again."
+            ),
+            "rejectedNames": rejected,
+            "geminiConfigured": bool(gemini_api_key()),
+            "claudeConfigured": bool(anthropic_api_key()),
+            "sources": {
+                "gemini": gemini_id,
+                "claude": claude_id,
+            },
+        }
     if _is_refusal(chosen):
         print(
             "bane_identify refuse "
@@ -3465,11 +3585,17 @@ class Handler(BaseHTTPRequestHandler):
                 or body.get("learnedHints")
                 or body.get("learnedShelf")
             )
+            rejected_names = _parse_rejected_names(
+                body.get("rejectedNames")
+                or body.get("excludeNames")
+                or body.get("wrongGuesses")
+            )
             result = identify_wildlife(
                 image_b64,
                 mime,
                 want_codex_still=want_still,
                 shelf_hints=shelf_hints,
+                rejected_names=rejected_names,
             )
             code = 200 if result.get("ok") else (
                 503
