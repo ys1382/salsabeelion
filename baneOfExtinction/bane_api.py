@@ -427,20 +427,30 @@ def _normalize_focus_mode(
 
 
 def _food_depth_block(fact_level: int | None) -> str:
-    """Richer crop/domestication noticing unlocks with fact level — never injustice history via Claude."""
+    """Richer crop/domestication noticing unlocks with fact level — split env vs injustice vs deep practices."""
     level = 1
     if fact_level is not None:
         try:
             level = max(1, min(4, int(fact_level)))
         except (TypeError, ValueError):
             level = 1
-    # Shared hard ban for every level (Claude is not the source for injustice history).
-    ban = (
-        "HARD BAN — NEVER write history of human injustices, famines as political "
-        "weapons, colonial oppression, slavery, genocide, or Native American / "
-        "Indigenous vs settler conflict. Those stories are owner-curated from real "
-        "sources later — not Claude. If tempted, pivot to traits, husbandry, or a "
-        "plain domestication/crop timeline instead. "
+    # Shared bans / lanes for every level.
+    lanes = (
+        "LANES — "
+        "(A) CLAUDE OK: light noticing + small everyday kindness the player can choose "
+        "(reuse a bottle, buy durable goods, waste less of food already bought, give "
+        "a pet space). Also OK: “not your fault” notes about big systems/companies "
+        "(plastic packaging waste, chemical dumping by firms with money and influence) "
+        "without turning into a practice manual. "
+        "(B) OWNER-CURATED LATER (do NOT invent): human-injustice history — famines "
+        "as policy, colonial oppression, slavery, genocide, Native American / "
+        "Indigenous vs settler conflict, land theft framed as justice history. "
+        "(C) OWNER MUST CHECK (do NOT invent): deeper environmental practices beyond "
+        "simple reuse/durable-goods tips — regenerative agriculture, soil-carbon "
+        "doctrine, complex farm systems, specialized conservation protocols, "
+        "“how to redesign agriculture” essays, miracle numbers. Regenerative ag is "
+        "one example of this lane, not the only one. "
+        "If tempted by B or C, pivot to traits, domestication timeline, or lane A. "
     )
     if level <= 1:
         return (
@@ -449,34 +459,32 @@ def _food_depth_block(fact_level: int | None) -> str:
             "crop) were domesticated” style timelines when well-established. "
             "OK: “poppies were noted in North America around …” when it is a plain "
             "discovery/introduction date — NOT settlement conflict narratives. "
-            + ban
+            "Skip heavy environmental essays at this level. "
+            + lanes
         )
     if level == 2:
         return (
             "DEPTH (fact level 2 — Neighbor kindness): warm noticing plus gentle "
             "farm/companion kindness. Short trade routes or planting timelines OK if "
-            "neutral (where a crop spread, roughly when). Still no injustice history. "
-            + ban
+            "neutral (where a crop spread, roughly when). Light lane-A system notes "
+            "OK once (plastic/packaging/company pollution — not player guilt). "
+            + lanes
         )
     if level == 3:
         return (
             "DEPTH (fact level 3 — Species wonder): richer domestication or crop "
-            "timelines and one species-own quirk are welcome. Environmental "
-            "complications may appear once, gently, when they are mainly ecological "
-            "(monoculture disease risk, invasive escape, feral pets and wildlife, "
-            "soil exhaustion) — without panic or blame-the-player. "
-            "If the complication is really a human-injustice story (who starved whom, "
-            "stolen land, forced labor), do NOT write it — that is curated later. "
-            "Still NO human-injustice history from you. "
-            + ban
+            "timelines and one species-own quirk are welcome. Lane-A environmental "
+            "complications OK (corporate pollution, monoculture risk, invasive escape, "
+            "feral pets and wildlife) — calm, not panic, not blame-the-player. "
+            "Still no lane B (injustice history) or lane C (deeper environmental practices). "
+            + lanes
         )
     return (
         "DEPTH (fact level 4 — Field learner): prefer richer crop/domestication "
-        "timelines and calm ecological complication facts when true "
-        "(overgrazing, soil exhaustion, monocultures) — not doom lectures. "
-        "Still NO human-injustice / famine-politics / settler–Indigenous conflict "
-        "essays from Claude (including “environment” framed as injustice history). "
-        + ban
+        "timelines plus calm lane-A environmental facts when true (overgrazing, "
+        "soil exhaustion from industrial patterns, packaging waste, company "
+        "pollution). Not doom lectures; not player guilt. Still no lane B or C. "
+        + lanes
     )
 
 
@@ -569,12 +577,18 @@ def _focus_prompt_block(
             "CLAUDE MAY: well-established domestication eras (“dogs domesticated "
             "roughly …”), litter/herd facts, plain crop discovery or introduction "
             "dates when they are not framed as Native American / Indigenous vs "
-            "settler conflict. "
+            "settler conflict; light everyday kindness (reuse bottles, durable goods); "
+            "and “not your fault” system/company pollution notes when depth allows. "
             "CLAUDE MUST NOT: history of human injustices (famines as policy, "
-            "colonial oppression, slavery, genocide, settler–Indigenous conflict). "
-            "Those come later from owner-curated real sources — never invent them. "
+            "colonial oppression, slavery, genocide, settler–Indigenous conflict) — "
+            "owner-curated real sources later. "
+            "CLAUDE MUST NOT invent deeper environmental practices beyond simple "
+            "reuse/durable-goods tips — regenerative agriculture is one example; "
+            "also skip soil-carbon doctrine, complex farm-system redesign, "
+            "specialized conservation protocols, miracle numbers. Those need owner "
+            "notes before they ship. "
             "Cats and dogs: domestication eras, breed origins, roles with people; "
-            "environmental complications only when depth rules allow — never guilt "
+            "simple environmental noticing only when depth rules allow — never guilt "
             "the player for loving a pet. "
             "PIGS — NEVER encourage eating pigs or “pork as dinner” framing. Prefer "
             "ancestry (wild boar / Sus), litter size, social behavior, farm husbandry "
@@ -592,10 +606,12 @@ def _focus_prompt_block(
         block += _food_depth_block(fact_level)
         if allow_help:
             block += (
-                "Help tip must be crop/domestication kindness (waste less of edible "
-                "parts you already buy, respect farm/field edges, don’t dig wild roots "
-                "without knowing rules, give companion animals space/enrichment — "
-                "gentle, choosable). Never “eat more of X” or “eat less pig” lectures. "
+                "Help tip must stay in the light everyday lane (waste less of edible "
+                "parts you already buy, reuse/durable goods, respect farm/field edges, "
+                "don’t dig wild roots without knowing rules, give companion animals "
+                "space/enrichment — gentle, choosable). Never “eat more of X” or "
+                "“eat less pig” lectures. Never invent deeper farm/conservation "
+                "practice manuals. "
             )
         return block
     # walk (default)
