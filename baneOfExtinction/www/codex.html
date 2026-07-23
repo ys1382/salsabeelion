@@ -7,7 +7,7 @@
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate" />
   <title>Wildlife codex — Bane of Extinction</title>
   <link rel="stylesheet" href="bane.css?v=live7" />
-  <link rel="stylesheet" href="bane-codex-card.css?v=live5" />
+  <link rel="stylesheet" href="bane-codex-card.css?v=live6" />
 </head>
 <body>
   <div class="wrap wrap--wide">
@@ -15,20 +15,34 @@
       <p class="eyebrow"><a href="index.html">Bane of Extinction</a> · owner beta</p>
       <h1 class="brand">Wildlife codex</h1>
       <p class="tagline">
-        Past learns sync to your Odd Trove Google sign-in (and stay cached on this device).
-        Art is a new semi-realistic portrait — same species and life stage, never your raw photo.
+        Your fact book grows with what you learn — separate from mission levels.
+        Past learns sync to Odd Trove Google sign-in. Art is never your raw photo.
         Phone: <a href="wildlife-scan.html" style="color:#7ec8d8">wildlife camera scan</a>.
       </p>
     </header>
 
     <p class="codex-sync" id="codexSync" aria-live="polite">Checking Google sign-in…</p>
 
+    <section class="fact-book" id="factBook" aria-label="Fact book progress">
+      <div class="fact-book__cover">
+        <p class="fact-book__eyebrow">Fact book</p>
+        <p class="fact-book__progress" id="factBookProgress">0 / ~8</p>
+        <p class="fact-book__level" id="factBookLevel">Fact level 1 · Curious notice</p>
+        <p class="fact-book__next" id="factBookNext">8 more to unlock Neighbor kindness</p>
+        <p class="fact-book__kinds" id="factBookKinds"></p>
+        <p class="fact-book__note">
+          Soft totals for now — more fun facts keep coming. Mission levels stay on
+          <a href="missions.html">Missions</a>.
+        </p>
+      </div>
+    </section>
+
     <section class="panel place-lens-panel" id="placeLensRoot" aria-label="Looking-at places">
       <!-- Filled by bane-place-lens.js -->
     </section>
 
-    <section class="codex-shelf" id="codexShelf" aria-label="Learned organisms" hidden>
-      <h2 class="codex-shelf__title">Learned on this device</h2>
+    <section class="codex-shelf fact-book__pages" id="codexShelf" aria-label="Learned organisms" hidden>
+      <h2 class="codex-shelf__title">Book pages · learned neighbors</h2>
       <div class="codex-shelf__grid" id="codexShelfGrid"></div>
     </section>
 
@@ -48,6 +62,7 @@
       <button type="button" class="btn primary" id="loadFacts">Load Claude callouts</button>
     </div>
     <p class="status" id="status" aria-live="polite">Scan on a phone, or open a learned entry below.</p>
+    <p class="fact-book__page-progress" id="pageFactProgress" hidden></p>
 
     <div class="codex-card blueprint" id="codexCard">
       <div class="blueprint__grid" aria-hidden="true"></div>
@@ -78,6 +93,11 @@
       </div>
     </div>
 
+    <section class="fact-book__collected" id="collectedFacts" aria-label="Collected facts for this page" hidden>
+      <h2 class="codex-shelf__title">Collected on this page</h2>
+      <ul class="fact-book__list" id="collectedFactsList"></ul>
+    </section>
+
     <p class="disclaimer" id="disclaimer" hidden></p>
 
     <p class="foot">
@@ -88,7 +108,8 @@
     </p>
   </div>
   <script src="bane-place-lens.js?v=live1"></script>
-  <script src="bane-codex-collection.js?v=live2"></script>
-  <script src="bane-codex-live.js?v=live10"></script>
+  <script src="bane-codex-facts.js?v=live1"></script>
+  <script src="bane-codex-collection.js?v=live3"></script>
+  <script src="bane-codex-live.js?v=live11"></script>
 </body>
 </html>

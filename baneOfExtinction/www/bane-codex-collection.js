@@ -1,6 +1,7 @@
 /**
  * Wildlife codex learns — device cache + Odd Trove Google account sync.
  * One entry per species key; stills are stylized field-guide art only (never raw camera).
+ * Fact book entries sync in the same account blob (see BaneCodexFacts).
  */
 (function (global) {
   "use strict";
@@ -19,6 +20,23 @@
     syncing: false,
     lastError: "",
   };
+
+  function factsApi() {
+    return global.BaneCodexFacts || null;
+  }
+
+  function readFactsLocal() {
+    var F = factsApi();
+    return F && F.readAll ? F.readAll() : [];
+  }
+
+  function writeFactsMerged(remoteFacts) {
+    var F = factsApi();
+    if (!F || !F.mergeLists || !F.writeAll) return readFactsLocal();
+    var merged = F.mergeLists(F.readAll(), remoteFacts || []);
+    F.writeAll(merged);
+    return merged;
+  }
 
   function slugPart(s) {
     return String(s || "")
@@ -237,9 +255,32 @@
       });
   }
 
+  function applySavedBlob(data, fallbackEntries, fallbackFacts) {
+    var saved = (data && data.entries) || fallbackEntries || [];
+    writeAll(saved);
+    if (factsApi() && factsApi().writeAll) {
+      if (data && Array.isArray(data.facts)) {
+        // Server already merged; trust its list.
+        factsApi().writeAll(data.facts);
+      } else if (fallbackFacts && fallbackFacts.length) {
+        writeFactsMerged(fallbackFacts);
+      }
+    }
+    return {
+      signedIn: true,
+      email: syncState.email,
+      entries: readAll(),
+      facts: readFactsLocal(),
+    };
+  }
+
   function pullAndMerge() {
     if (!syncState.signedIn) {
-      return Promise.resolve({ signedIn: false, entries: readAll() });
+      return Promise.resolve({
+        signedIn: false,
+        entries: readAll(),
+        facts: readFactsLocal(),
+      });
     }
     syncState.syncing = true;
     return fetchJson(API_LEARNED)
@@ -248,26 +289,34 @@
         if (pack.res.status === 401) {
           syncState.signedIn = false;
           syncState.email = "";
-          return { signedIn: false, entries: readAll() };
+          return {
+            signedIn: false,
+            entries: readAll(),
+            facts: readFactsLocal(),
+          };
         }
         if (!pack.res.ok || !data.ok) {
           throw new Error((data && data.message) || "pull_failed");
         }
         var merged = mergeLists(readAll(), data.entries || []);
         writeAll(merged);
+        var mergedFacts = writeFactsMerged(data.facts || []);
         return fetchJson(API_LEARNED, {
           method: "POST",
-          body: { mode: "merge", entries: merged },
+          body: { mode: "merge", entries: merged, facts: mergedFacts },
         }).then(function (savePack) {
-          var saved = (savePack.data && savePack.data.entries) || merged;
-          writeAll(saved);
           syncState.lastError = "";
-          return { signedIn: true, email: syncState.email, entries: saved };
+          return applySavedBlob(savePack.data, merged, mergedFacts);
         });
       })
       .catch(function (err) {
         syncState.lastError = (err && err.message) || "sync_failed";
-        return { signedIn: syncState.signedIn, entries: readAll(), error: syncState.lastError };
+        return {
+          signedIn: syncState.signedIn,
+          entries: readAll(),
+          facts: readFactsLocal(),
+          error: syncState.lastError,
+        };
       })
       .then(function (result) {
         syncState.syncing = false;
@@ -277,31 +326,43 @@
 
   function pushToServer() {
     if (!syncState.signedIn) {
-      return Promise.resolve({ signedIn: false, entries: readAll() });
+      return Promise.resolve({
+        signedIn: false,
+        entries: readAll(),
+        facts: readFactsLocal(),
+      });
     }
     syncState.syncing = true;
+    var localFacts = readFactsLocal();
     return fetchJson(API_LEARNED, {
       method: "POST",
-      body: { mode: "merge", entries: readAll() },
+      body: { mode: "merge", entries: readAll(), facts: localFacts },
     })
       .then(function (pack) {
         var data = pack.data || {};
         if (pack.res.status === 401) {
           syncState.signedIn = false;
           syncState.email = "";
-          return { signedIn: false, entries: readAll() };
+          return {
+            signedIn: false,
+            entries: readAll(),
+            facts: readFactsLocal(),
+          };
         }
         if (!pack.res.ok || !data.ok) {
           throw new Error((data && data.message) || "push_failed");
         }
-        var saved = data.entries || readAll();
-        writeAll(saved);
         syncState.lastError = "";
-        return { signedIn: true, email: syncState.email, entries: saved };
+        return applySavedBlob(data, readAll(), localFacts);
       })
       .catch(function (err) {
         syncState.lastError = (err && err.message) || "push_failed";
-        return { signedIn: syncState.signedIn, entries: readAll(), error: syncState.lastError };
+        return {
+          signedIn: syncState.signedIn,
+          entries: readAll(),
+          facts: readFactsLocal(),
+          error: syncState.lastError,
+        };
       })
       .then(function (result) {
         syncState.syncing = false;
@@ -313,7 +374,11 @@
   function syncNow() {
     return refreshAuth().then(function () {
       if (!syncState.signedIn) {
-        return { signedIn: false, entries: readAll() };
+        return {
+          signedIn: false,
+          entries: readAll(),
+          facts: readFactsLocal(),
+        };
       }
       return pullAndMerge();
     });
@@ -342,6 +407,7 @@
     stillDataUrl: stillDataUrl,
     syncNow: syncNow,
     pushToServer: pushToServer,
+    schedulePush: schedulePush,
     refreshAuth: refreshAuth,
     googleSignInUrl: googleSignInUrl,
     getSyncState: getSyncState,

@@ -25,6 +25,13 @@
   var shelfEl = document.getElementById("codexShelf");
   var shelfGrid = document.getElementById("codexShelfGrid");
   var syncEl = document.getElementById("codexSync");
+  var factBookProgress = document.getElementById("factBookProgress");
+  var factBookLevel = document.getElementById("factBookLevel");
+  var factBookNext = document.getElementById("factBookNext");
+  var factBookKinds = document.getElementById("factBookKinds");
+  var pageFactProgress = document.getElementById("pageFactProgress");
+  var collectedFactsEl = document.getElementById("collectedFacts");
+  var collectedFactsList = document.getElementById("collectedFactsList");
 
   var state = {
     commonName: "",
@@ -169,6 +176,8 @@
     syncCultivarToggle();
     applyStill();
     markShelfActive();
+    renderPageFactProgress();
+    renderCollectedFacts();
   }
 
   function renderCallouts(callouts) {
@@ -179,20 +188,116 @@
         '<p class="callout-empty">No callouts returned. Try Load again.</p>';
       return;
     }
-    callouts.forEach(function (c) {
+    var Labels =
+      (window.BaneCodexFacts && window.BaneCodexFacts.KIND_LABELS) || {};
+    callouts.forEach(function (c, index) {
+      var kind =
+        (c && c.kind) ||
+        (window.BaneCodexFacts && window.BaneCodexFacts.guessKind
+          ? window.BaneCodexFacts.guessKind(c, index, callouts.length)
+          : "notice");
       var article = document.createElement("article");
-      article.className = "callout";
+      article.className = "callout callout--" + kind;
       article.dataset.anchor = c.anchor || "";
+      article.dataset.kind = kind;
       article.innerHTML =
         '<div class="callout__tick" aria-hidden="true"></div>' +
         '<div class="callout__body">' +
+        '<p class="callout__kind"></p>' +
         '<p class="callout__label"></p>' +
         '<p class="callout__fact"></p>' +
         "</div>";
+      article.querySelector(".callout__kind").textContent =
+        Labels[kind] || kind;
       article.querySelector(".callout__label").textContent =
         c.label || c.anchor || "Note";
       article.querySelector(".callout__fact").textContent = c.fact || "";
       listEl.appendChild(article);
+    });
+  }
+
+  function renderFactBookProgress() {
+    if (!window.BaneCodexFacts) return;
+    var info = window.BaneCodexFacts.factLevelInfo();
+    if (factBookProgress) {
+      factBookProgress.textContent = window.BaneCodexFacts.progressLabel(info);
+    }
+    if (factBookLevel) {
+      factBookLevel.textContent =
+        "Fact level " + info.level + " · " + info.name;
+    }
+    if (factBookNext) {
+      factBookNext.textContent = window.BaneCodexFacts.nextLevelLabel(info);
+    }
+    if (factBookKinds) {
+      var kc = info.kindCounts || {};
+      var unlocked = (info.kinds || [])
+        .map(function (k) {
+          return (
+            (window.BaneCodexFacts.KIND_LABELS[k] || k) +
+            " " +
+            (kc[k] || 0)
+          );
+        })
+        .join(" · ");
+      factBookKinds.textContent =
+        "Collected by kind: " +
+        (unlocked || "Noticing 0") +
+        (info.blurb ? " — " + info.blurb : "");
+    }
+    renderPageFactProgress();
+    renderCollectedFacts();
+  }
+
+  function renderPageFactProgress() {
+    if (!pageFactProgress || !window.BaneCodexFacts) return;
+    var key =
+      state.collectionKey ||
+      window.BaneCodexFacts.speciesKey({
+        commonName: state.commonName,
+        latinName: state.latinName,
+      });
+    if (!key || !state.commonName) {
+      pageFactProgress.hidden = true;
+      pageFactProgress.textContent = "";
+      return;
+    }
+    pageFactProgress.hidden = false;
+    pageFactProgress.textContent =
+      "This page: " +
+      window.BaneCodexFacts.speciesProgressLabel(key) +
+      " facts learned (soft goal while packs grow).";
+  }
+
+  function renderCollectedFacts() {
+    if (!collectedFactsEl || !collectedFactsList || !window.BaneCodexFacts) {
+      return;
+    }
+    var key =
+      state.collectionKey ||
+      window.BaneCodexFacts.speciesKey({
+        commonName: state.commonName,
+        latinName: state.latinName,
+      });
+    var list = key ? window.BaneCodexFacts.factsForSpecies(key) : [];
+    collectedFactsList.innerHTML = "";
+    if (!list.length) {
+      collectedFactsEl.hidden = true;
+      return;
+    }
+    collectedFactsEl.hidden = false;
+    var Labels = window.BaneCodexFacts.KIND_LABELS || {};
+    list.slice(0, 24).forEach(function (f) {
+      var li = document.createElement("li");
+      li.className = "fact-book__item";
+      li.innerHTML =
+        '<p class="fact-book__item-meta"></p>' +
+        '<p class="fact-book__item-fact"></p>';
+      li.querySelector(".fact-book__item-meta").textContent =
+        (Labels[f.kind] || f.kind || "Noticing") +
+        (f.label ? " · " + f.label : "");
+      li.querySelector(".fact-book__item-fact").textContent = f.fact || "";
+      collectedFactsList.appendChild(li);
     });
   }
 
@@ -340,6 +445,10 @@
     var avoidFacts = getRecentFacts(state.commonName, state.latinName);
     var place = placePayload();
     var gardenFocus = isGardenFocus();
+    var factInfo =
+      window.BaneCodexFacts && window.BaneCodexFacts.factLevelInfo
+        ? window.BaneCodexFacts.factLevelInfo()
+        : null;
     var body = {
       commonName: state.commonName,
       latinName: state.latinName,
@@ -358,6 +467,8 @@
       comparePlaceLabel: place.comparePlaceLabel || "",
       season: place.season || "",
       gardenFocus: gardenFocus,
+      factLevel: factInfo ? factInfo.level : 1,
+      factCount: factInfo ? factInfo.total : 0,
     };
     fetch(API_CALLOUTS, {
       method: "POST",
@@ -390,15 +501,34 @@
         renderCallouts(callouts);
         renderSpeciesMeta(data);
         rememberCalloutFacts(state.commonName, state.latinName, callouts);
+        var collected = null;
+        if (window.BaneCodexFacts && window.BaneCodexFacts.collectCallouts) {
+          collected = window.BaneCodexFacts.collectCallouts(
+            {
+              key: state.collectionKey,
+              commonName: state.commonName,
+              latinName: state.latinName,
+              displayName: state.commonName,
+            },
+            callouts,
+            { gardenFocus: gardenFocus }
+          );
+        }
+        renderFactBookProgress();
+        renderShelf();
         if (disclaimerEl) {
           disclaimerEl.hidden = false;
           disclaimerEl.textContent =
             (data.disclaimer || "") +
             (data.source ? " · source: " + data.source : "");
         }
+        var addedBit =
+          collected && collected.added
+            ? " · +" + collected.added + " new in your fact book"
+            : " · fact book updated";
         setStatus(
           data.source && String(data.source).indexOf("fallback") === 0
-            ? "Showing fallback facts (Claude unavailable)."
+            ? "Showing fallback facts (Claude unavailable)." + addedBit
             : "Callouts loaded for: " +
                 state.commonName +
                 (gardenFocus ? " · garden focus" : " · walk / wild focus") +
@@ -406,8 +536,10 @@
                   ? " · looking at " + place.placeLabel
                   : "") +
                 (avoidFacts.length
-                  ? " (fresh set — skipping recent repeats)."
-                  : ".")
+                  ? " (fresh set — skipping recent repeats)"
+                  : "") +
+                addedBit +
+                "."
         );
       })
       .catch(function (err) {
@@ -491,7 +623,7 @@
     if (!st) return;
     if (st.signedIn && st.email) {
       syncEl.innerHTML =
-        "Synced to Google: <strong></strong> — learns follow this sign-in on other devices.";
+        "Synced to Google: <strong></strong> — learns and fact book follow this sign-in on other devices.";
       syncEl.querySelector("strong").textContent = st.email;
       return;
     }
@@ -502,7 +634,7 @@
     syncEl.innerHTML =
       'Not synced yet. <a href="' +
       url +
-      '">Sign in with Google</a> so learns follow your account (not just this phone).';
+      '">Sign in with Google</a> so learns and facts follow your account (not just this phone).';
   }
 
   function markShelfActive() {
@@ -569,11 +701,23 @@
       } else {
         thumbHtml = '<div class="codex-shelf__thumb codex-shelf__thumb--empty">?</div>';
       }
+      var factBit = "";
+      if (window.BaneCodexFacts && window.BaneCodexFacts.speciesProgressLabel) {
+        factBit =
+          '<p class="codex-shelf__facts"></p>';
+      }
       btn.innerHTML =
         thumbHtml +
-        '<p class="codex-shelf__name"></p>';
+        '<p class="codex-shelf__name"></p>' +
+        factBit;
       btn.querySelector(".codex-shelf__name").textContent =
         entry.displayName || entry.commonName || "Organism";
+      var factsEl = btn.querySelector(".codex-shelf__facts");
+      if (factsEl) {
+        factsEl.textContent = window.BaneCodexFacts.speciesProgressLabel(
+          entry.key
+        );
+      }
       btn.addEventListener("click", function () {
         openLearnedEntry(entry, { fromScan: false });
       });
@@ -656,6 +800,7 @@
   }
 
   function bootCodex() {
+    renderFactBookProgress();
     renderShelf();
     updateSyncStatus();
 

@@ -6,7 +6,7 @@ Bane of Extinction — owner-beta API.
 - POST /api/callouts           — Claude helper facts + native range / conservation status
                                   (optional looking-at place lens; optional garden focus; no GPS)
 - GET  /api/auth/me            — Odd Trove Google SSO identity (for learned sync)
-- GET/PUT /api/learned         — wildlife learns synced to signed-in Google account
+- GET/PUT /api/learned         — wildlife learns + fact book synced to signed-in Google account
 - GET  /api/health
 
 Binds 127.0.0.1 only. Keys from env / shared kids-sites files.
@@ -15,7 +15,7 @@ Facts: Claude helper knowledge + curated fallbacks. Status/range: NatureServe Ex
 Introduced/invasive caption: USGS US-RIIS (CC0) when latin name matches AK/HI/L48 lists;
 else NatureServe exotic flags + Claude soft caution. Caption fields: conservation status
 when possible; native range; elsewhere (no compare-place required). Raw scan photos are
-never written to disk.
+never written to disk. Fact levels (notice → help → wonder) are separate from mission levels.
 """
 from __future__ import annotations
 
@@ -71,7 +71,16 @@ MAX_SHORT_NOTE_CHARS = 240
 CODEX_STILL_BUDGET_SEC = int(os.environ.get("BANE_STILL_BUDGET_SEC", "55"))
 MAX_IMAGE_B64 = 4_500_000
 MAX_LEARNED_ENTRIES = 48
+MAX_LEARNED_FACTS = 400
 MAX_LEARNED_BODY = 3_500_000
+
+# Fact levels (separate from mission L1/L2/L3). Commitment unlocks fact kinds.
+FACT_LEVEL_THRESHOLDS = (
+    (1, 0, ("notice",)),
+    (2, 8, ("notice", "help")),
+    (3, 20, ("notice", "help", "wonder")),
+    (4, 40, ("notice", "help", "wonder")),
+)
 LEARNED_DIR = os.environ.get(
     "BANE_LEARNED_DIR",
     os.path.join(os.path.expanduser("~"), "kids-sites", "bane-server", "learned"),
@@ -598,35 +607,103 @@ def _normalize_learned_list(raw: Any) -> list[dict[str, Any]]:
     return out[:MAX_LEARNED_ENTRIES]
 
 
-def load_learned(email: str) -> list[dict[str, Any]]:
+def _fact_id(fact: str) -> str:
+    digest = hashlib.sha256(fact.strip().lower().encode("utf-8")).hexdigest()[:16]
+    return f"f:{digest}"
+
+
+def _sanitize_learned_fact(raw: Any) -> dict[str, Any] | None:
+    if not isinstance(raw, dict):
+        return None
+    fact = _clip_plain(str(raw.get("fact") or ""), MAX_FACT_CHARS)
+    if not fact:
+        return None
+    fid = str(raw.get("id") or "").strip()[:48] or _fact_id(fact)
+    kind = str(raw.get("kind") or "notice").strip().lower()
+    if kind not in ("notice", "help", "wonder"):
+        kind = "notice"
+    try:
+        learned_at = int(raw.get("learnedAt") or 0)
+    except (TypeError, ValueError):
+        learned_at = 0
+    return {
+        "id": fid,
+        "fact": fact,
+        "label": str(raw.get("label") or "").strip()[:60],
+        "kind": kind,
+        "speciesKey": str(raw.get("speciesKey") or "").strip()[:100],
+        "commonName": str(raw.get("commonName") or "").strip()[:120],
+        "latinName": str(raw.get("latinName") or "").strip()[:160],
+        "gardenFocus": bool(raw.get("gardenFocus")),
+        "learnedAt": learned_at or int(time.time() * 1000),
+    }
+
+
+def _normalize_learned_facts(raw: Any) -> list[dict[str, Any]]:
+    if not isinstance(raw, list):
+        return []
+    out: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for item in raw:
+        entry = _sanitize_learned_fact(item)
+        if not entry or entry["id"] in seen:
+            continue
+        seen.add(entry["id"])
+        out.append(entry)
+        if len(out) >= MAX_LEARNED_FACTS:
+            break
+    out.sort(key=lambda e: int(e.get("learnedAt") or 0), reverse=True)
+    return out[:MAX_LEARNED_FACTS]
+
+
+def _read_learned_blob(email: str) -> dict[str, Any]:
     path = _learned_path(email)
     if not os.path.isfile(path):
-        return []
+        return {"entries": [], "facts": []}
     try:
         with open(path, encoding="utf-8") as f:
             raw = json.load(f)
     except (OSError, json.JSONDecodeError, TypeError):
-        return []
-    if isinstance(raw, dict) and isinstance(raw.get("entries"), list):
-        return _normalize_learned_list(raw["entries"])
-    return _normalize_learned_list(raw)
+        return {"entries": [], "facts": []}
+    if isinstance(raw, dict):
+        return {
+            "entries": _normalize_learned_list(raw.get("entries")),
+            "facts": _normalize_learned_facts(raw.get("facts")),
+        }
+    return {"entries": _normalize_learned_list(raw), "facts": []}
 
 
-def save_learned(email: str, entries: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def load_learned(email: str) -> list[dict[str, Any]]:
+    return _read_learned_blob(email)["entries"]
+
+
+def load_learned_facts(email: str) -> list[dict[str, Any]]:
+    return _read_learned_blob(email)["facts"]
+
+
+def save_learned(
+    email: str,
+    entries: list[dict[str, Any]],
+    facts: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
     cleaned = _normalize_learned_list(entries)
+    if facts is None:
+        facts = load_learned_facts(email)
+    cleaned_facts = _normalize_learned_facts(facts)
     _ensure_learned_dir()
     path = _learned_path(email)
     tmp = path + ".tmp"
     payload = {
-        "version": 1,
+        "version": 2,
         "email": email.strip().lower(),
         "updatedAt": int(time.time() * 1000),
         "entries": cleaned,
+        "facts": cleaned_facts,
     }
     with open(tmp, "w", encoding="utf-8") as f:
         json.dump(payload, f, ensure_ascii=False, separators=(",", ":"))
     os.replace(tmp, path)
-    return cleaned
+    return {"entries": cleaned, "facts": cleaned_facts}
 
 
 def merge_learned(
@@ -671,6 +748,86 @@ def merge_learned(
     out = list(by_key.values())
     out.sort(key=lambda e: int(e.get("lastSeenAt") or 0), reverse=True)
     return out[:MAX_LEARNED_ENTRIES]
+
+
+def merge_learned_facts(
+    local: list[dict[str, Any]], remote: list[dict[str, Any]]
+) -> list[dict[str, Any]]:
+    by_id: dict[str, dict[str, Any]] = {}
+    for src in (remote or []) + (local or []):
+        entry = _sanitize_learned_fact(src)
+        if not entry:
+            continue
+        fid = entry["id"]
+        prev = by_id.get(fid)
+        if not prev:
+            by_id[fid] = entry
+            continue
+        newer = (
+            entry if int(entry["learnedAt"]) <= int(prev["learnedAt"]) else prev
+        )
+        older = prev if newer is entry else entry
+        merged = dict(newer)
+        for field in ("label", "speciesKey", "commonName", "latinName"):
+            if not merged.get(field) and older.get(field):
+                merged[field] = older[field]
+        merged["learnedAt"] = min(
+            int(merged.get("learnedAt") or 0) or int(time.time() * 1000),
+            int(older.get("learnedAt") or 0) or int(time.time() * 1000),
+        )
+        by_id[fid] = merged
+    out = list(by_id.values())
+    out.sort(key=lambda e: int(e.get("learnedAt") or 0), reverse=True)
+    return out[:MAX_LEARNED_FACTS]
+
+
+def _allowed_kinds_for_fact_level(fact_level: int | None, fact_count: int | None) -> list[str]:
+    level = 1
+    if fact_level is not None:
+        try:
+            level = max(1, min(4, int(fact_level)))
+        except (TypeError, ValueError):
+            level = 1
+    elif fact_count is not None:
+        try:
+            count = max(0, int(fact_count))
+        except (TypeError, ValueError):
+            count = 0
+        for lvl, need, _kinds in FACT_LEVEL_THRESHOLDS:
+            if count >= need:
+                level = lvl
+    for lvl, _need, kinds in FACT_LEVEL_THRESHOLDS:
+        if lvl == level:
+            return list(kinds)
+    return ["notice"]
+
+
+def _guess_callout_kind(item: dict[str, Any], index: int, total: int) -> str:
+    raw = str(item.get("kind") or "").strip().lower()
+    if raw in ("help", "kindness", "tip"):
+        return "help"
+    if raw in ("wonder", "species"):
+        return "wonder"
+    if raw in ("notice", "everyday", "noticing"):
+        return "notice"
+    blob = (
+        str(item.get("label") or "") + " " + str(item.get("fact") or "")
+    ).lower()
+    if re.search(
+        r"\b(kindness|leave (it|them|a)|skip |bagging|don.?t spray|small help)\b",
+        blob,
+    ):
+        return "help"
+    if re.search(
+        r"\b(trick of its own|species.?own|wonder|on its own)\b",
+        blob,
+    ):
+        return "wonder"
+    if total > 1 and index == total - 1:
+        return "wonder"
+    if total >= 3 and index == total // 2:
+        return "help"
+    return "notice"
 
 
 def _clip_plain(text: str, max_len: int) -> str:
@@ -1522,10 +1679,15 @@ def identify_wildlife(
     return result
 
 
-def _normalize_callouts(raw: Any) -> list[dict[str, str]]:
+def _normalize_callouts(
+    raw: Any, allowed_kinds: list[str] | None = None
+) -> list[dict[str, str]]:
     if not isinstance(raw, list):
         return []
+    allowed = set(allowed_kinds or ("notice", "help", "wonder"))
     out: list[dict[str, str]] = []
+    total = len([x for x in raw if isinstance(x, dict)])
+    index = 0
     for item in raw:
         if not isinstance(item, dict):
             continue
@@ -1536,11 +1698,20 @@ def _normalize_callouts(raw: Any) -> list[dict[str, str]]:
             continue
         if not anchor:
             anchor = "feature"
+        kind = _guess_callout_kind(item, index, total)
+        index += 1
+        if kind not in allowed:
+            # Downgrade locked kinds to noticing so early levels stay useful.
+            if "notice" in allowed:
+                kind = "notice"
+            else:
+                continue
         out.append(
             {
                 "anchor": anchor[:40],
                 "label": label[:60],
                 "fact": _clip_plain(fact, MAX_FACT_CHARS),
+                "kind": kind,
             }
         )
         if len(out) >= MAX_CALLOUTS:
@@ -2089,6 +2260,8 @@ def build_callouts(
     compare_place_label: str = "",
     season: str = "",
     garden_focus: bool = False,
+    fact_level: int | None = None,
+    fact_count: int | None = None,
 ) -> dict[str, Any]:
     display = common.strip()
     if not display:
@@ -2110,23 +2283,45 @@ def build_callouts(
     compare_id_n = compare_place_id.strip()[:64]
     compare_label_n = compare_place_label.strip()[:120]
     season_n = season.strip()[:20] or ""
+    allowed_kinds = _allowed_kinds_for_fact_level(fact_level, fact_count)
+    allow_help = "help" in allowed_kinds
+    allow_wonder = "wonder" in allowed_kinds
 
     ns_meta = _fetch_natureserve_meta(latin_n) if latin_n else None
     fallback_meta = _fallback_species_meta(display, latin_n)
 
     # Shared eco lean (bane of extinction): care for the living world without making
-    # every line a chore or “work.” Wonder + noticing first; one gentle help tip.
+    # every line a chore or “work.” Fact kinds unlock with fact-level commitment.
+    if allow_help and allow_wonder:
+        mix_rules = (
+            "Most callouts are noticing (kind=notice). "
+            "EXACTLY ONE callout must be a SMALL HELP tip (kind=help) — gentle, choosable "
+            "kindness — never guilt-trip; never blame staple foods, housing, transit, or "
+            "systems people don’t control; never panic about extinction. "
+            "EXACTLY ONE callout (separate from the help tip) should be a wonder fact "
+            "(kind=wonder) about the species itself with less direct human impact. "
+        )
+    elif allow_help:
+        mix_rules = (
+            "Most callouts are noticing (kind=notice). "
+            "EXACTLY ONE callout must be a SMALL HELP tip (kind=help) — gentle, choosable "
+            "kindness — never guilt-trip; never blame staple foods, housing, transit, or "
+            "systems people don’t control; never panic about extinction. "
+            "Do NOT include species-wonder callouts yet (kind=wonder locked). "
+        )
+    else:
+        mix_rules = (
+            "ALL callouts are everyday noticing (kind=notice) — what you’d spot on a walk "
+            "or in a bed. Warm and concrete. "
+            "Do NOT include help tips (kind=help) or species-wonder (kind=wonder) yet — "
+            "those unlock as the player’s fact level grows. "
+        )
+
     eco_tone = (
         "ECO LEAN — this game is Bane of Extinction: lean toward helping the living "
         "world, but do NOT make every fact a save-the-planet assignment or homework. "
-        "Most callouts can be wonder, noticing, and how life works. Warm and concrete — "
-        "not lecturey, not guilt. "
-        "EXACTLY ONE everyday callout must be a SMALL HELP tip (gentle, choosable "
-        "kindness — never guilt-trip; never blame staple foods, housing, transit, or "
-        "systems people don’t control; never panic about extinction). "
-        "EXACTLY ONE callout (separate from the help tip) should be a wonder fact about "
-        "the species itself (its own trick, life cycle, or ecology) with less direct "
-        "human impact. "
+        "Warm and concrete — not lecturey, not guilt. "
+        + mix_rules
     )
 
     if garden_focus:
@@ -2136,9 +2331,14 @@ def build_callouts(
             "houseplant care when relevant. Prefer garden-shaped angles over wild-trail "
             "ones. For animals: how they use or help a garden (visitors, helpers, signs) "
             "— never fake “how to plant” an animal. "
-            "Help tip must be garden-shaped kindness. Seed dispersal is welcome here "
-            "(pods that fling, birds carrying seed, self-sowing near last year’s plants). "
-            "Do NOT fill the set with only chores — keep wonder and noticing in the mix. "
+        )
+        if allow_help:
+            focus_block += (
+                "Help tip must be garden-shaped kindness. Seed dispersal is welcome here "
+                "(pods that fling, birds carrying seed, self-sowing near last year’s plants). "
+            )
+        focus_block += (
+            "Do NOT fill the set with only chores — keep noticing (and wonder if allowed) in the mix. "
         )
     else:
         focus_block = (
@@ -2146,9 +2346,12 @@ def build_callouts(
             "shared air/water/food webs, seasons you meet them, place-aware noticing. "
             "Do NOT give gardening how-tos, “if you grow one…,” bed/soil recipes, or "
             "seed-dispersal-as-grower tips. Leave garden-world facts for garden focus. "
-            "Help tip must be walk/neighbor kindness (leave a nest alone, skip a spray "
-            "on a wild patch, keep distance, etc.) — still eco-leaning, not garden advice. "
         )
+        if allow_help:
+            focus_block += (
+                "Help tip must be walk/neighbor kindness (leave a nest alone, skip a spray "
+                "on a wild patch, keep distance, etc.) — still eco-leaning, not garden advice. "
+            )
 
     system = (
         "You write short, family-friendly wildlife and plant education callouts for "
@@ -2295,16 +2498,28 @@ def build_callouts(
                     {
                         "anchor": "part_or_clue",
                         "label": "Short label",
+                        "kind": "notice",
                         "fact": "1–2 complete short sentences (finish every sentence)",
                     }
                 ],
             }
         )
         + f"\nUse 3 to {MAX_CALLOUTS} callouts. "
+        "Tag each callout with kind: notice, help, or wonder. "
+        f"Allowed kinds for this player right now: {', '.join(allowed_kinds)}. "
         "Mix: everyday player-world facts for the ACTIVE focus "
-        "(garden ON = garden eco; garden OFF = walk/wild eco) "
-        "including EXACTLY ONE small-help tip for this species’ world "
-        "+ EXACTLY ONE species-own wonder. Fresh angles if avoid-list given. "
+        "(garden ON = garden eco; garden OFF = walk/wild eco). "
+        + (
+            "Include EXACTLY ONE small-help tip (kind=help). "
+            if allow_help
+            else "No help tips in this set. "
+        )
+        + (
+            "Include EXACTLY ONE species-own wonder (kind=wonder). "
+            if allow_wonder
+            else "No wonder callouts in this set. "
+        )
+        + "Fresh angles if avoid-list given. "
         "Keep nativeRangeRefine, rangeElsewhere, conservationStatus, localStatus, and "
         "compareNote out of the callout list. "
         f"Each fact must be a complete thought under ~{MAX_FACT_CHARS} characters — "
@@ -2318,7 +2533,7 @@ def build_callouts(
         # Place-lens callouts need headroom so Claude does not stop mid-sentence.
         raw_text = _call_claude_text(system, user, max_tokens=1600)
         parsed = _extract_json_object(raw_text)
-        callouts = _normalize_callouts(parsed.get("callouts"))
+        callouts = _normalize_callouts(parsed.get("callouts"), allowed_kinds)
         if len(callouts) < 2:
             raise RuntimeError("Too few callouts")
         source = "claude"
@@ -2334,8 +2549,11 @@ def build_callouts(
         local_status = str(parsed.get("localStatus") or "").strip()[:160]
         compare_note = str(parsed.get("compareNote") or "").strip()[:200]
     except Exception as exc:  # noqa: BLE001
-        callouts = _fallback_callouts_for(
-            display, latin_n, note_n, color_n, garden_focus
+        callouts = _normalize_callouts(
+            _fallback_callouts_for(
+                display, latin_n, note_n, color_n, garden_focus
+            ),
+            allowed_kinds,
         )
         source = f"fallback:{type(exc).__name__}"
         local_status, compare_note = _fallback_place_status(
@@ -2372,6 +2590,22 @@ def build_callouts(
     if meta.get("attribution"):
         disclaimer += " " + meta["attribution"]
 
+    fact_level_out = 1
+    for lvl, need, _kinds in FACT_LEVEL_THRESHOLDS:
+        if fact_level is not None:
+            try:
+                if int(fact_level) == lvl:
+                    fact_level_out = lvl
+                    break
+            except (TypeError, ValueError):
+                pass
+        elif fact_count is not None:
+            try:
+                if int(fact_count) >= need:
+                    fact_level_out = lvl
+            except (TypeError, ValueError):
+                pass
+
     return {
         "ok": True,
         "source": source,
@@ -2394,6 +2628,8 @@ def build_callouts(
         "compareNote": compare_note,
         "season": season_n,
         "gardenFocus": bool(garden_focus),
+        "factLevel": fact_level_out,
+        "allowedKinds": allowed_kinds,
         "disclaimer": disclaimer,
     }
 
@@ -2506,7 +2742,7 @@ class Handler(BaseHTTPRequestHandler):
                     },
                 )
                 return
-            entries = load_learned(str(identity["email"]))
+            blob = _read_learned_blob(str(identity["email"]))
             _json(
                 self,
                 200,
@@ -2514,7 +2750,8 @@ class Handler(BaseHTTPRequestHandler):
                     "ok": True,
                     "signedIn": True,
                     "email": identity["email"],
-                    "entries": entries,
+                    "entries": blob["entries"],
+                    "facts": blob["facts"],
                 },
             )
             return
@@ -2622,6 +2859,20 @@ class Handler(BaseHTTPRequestHandler):
                 or body.get("garden_focus")
                 or body.get("gardenMode")
             )
+            fact_level_raw = body.get("factLevel")
+            fact_count_raw = body.get("factCount")
+            try:
+                fact_level = (
+                    int(fact_level_raw) if fact_level_raw is not None else None
+                )
+            except (TypeError, ValueError):
+                fact_level = None
+            try:
+                fact_count = (
+                    int(fact_count_raw) if fact_count_raw is not None else None
+                )
+            except (TypeError, ValueError):
+                fact_count = None
             if not common:
                 _json(
                     self,
@@ -2651,6 +2902,8 @@ class Handler(BaseHTTPRequestHandler):
                 compare_place_label=compare_place_label,
                 season=season,
                 garden_focus=garden_focus,
+                fact_level=fact_level,
+                fact_count=fact_count,
             )
             _json(self, 200, result)
             return
@@ -2669,16 +2922,33 @@ class Handler(BaseHTTPRequestHandler):
                 )
                 return
             email = str(identity["email"])
-            remote = load_learned(email)
+            remote_blob = _read_learned_blob(email)
+            remote = remote_blob["entries"]
+            remote_facts = remote_blob["facts"]
             incoming = body.get("entries")
             if incoming is None and isinstance(body.get("entry"), dict):
                 incoming = [body["entry"]]
             local = _normalize_learned_list(incoming if incoming is not None else [])
+            incoming_facts = body.get("facts")
+            local_facts = (
+                _normalize_learned_facts(incoming_facts)
+                if incoming_facts is not None
+                else None
+            )
             mode = str(body.get("mode") or "merge").strip().lower()
             if mode == "replace":
-                saved = save_learned(email, local)
+                saved = save_learned(
+                    email,
+                    local,
+                    local_facts if local_facts is not None else [],
+                )
             else:
-                saved = save_learned(email, merge_learned(local, remote))
+                merged_entries = merge_learned(local, remote)
+                merged_facts = merge_learned_facts(
+                    local_facts if local_facts is not None else [],
+                    remote_facts,
+                )
+                saved = save_learned(email, merged_entries, merged_facts)
             _json(
                 self,
                 200,
@@ -2686,7 +2956,8 @@ class Handler(BaseHTTPRequestHandler):
                     "ok": True,
                     "signedIn": True,
                     "email": email,
-                    "entries": saved,
+                    "entries": saved["entries"],
+                    "facts": saved["facts"],
                     "mode": mode if mode in ("merge", "replace") else "merge",
                 },
             )

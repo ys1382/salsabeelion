@@ -197,6 +197,7 @@ After the still “freezes” on the codex card:
 - [x] Callouts API accepts place lens (localStatus / compareNote; place-aware help tips)
 - [x] Neighborhood missions v1 — unlock after ~15 finds; signature-sign quests; ant mound full visual (with/without + cutaway); other quests story cards
 - [x] Level ladder labeled: L1 scans → L2 beginning missions → L3 place meanings / under-the-hood (after a handful of L2 missions — **5**, not 2 and not 15)
+- [x] Fact book on account — collected callout facts sync with Google; soft `n / ~x` progress; **fact levels separate from mission levels** (notice → help → wonder unlock with commitment); book-style codex cover + pages
 - [ ] Per-species permanent art library / cloud cache (optional later)
 - [ ] Leader-lines from callouts to exact body-part anchors on stylized art
 - [ ] Platform polish (PWA optional; no GPS required)
@@ -244,6 +245,13 @@ Owner pins from chat go here.
 - [x] Callouts: one small-help tip per set (no guilt) + remember recent facts for fresh rescans
 - [x] Place lens stack (all layers): favorites, looking-at default, compare, fact variants, habitat-only, season, browse-by-area — no GPS
 - [x] Garden focus toggle: garden-world eco facts (incl. seed dispersal) vs walk/wild eco facts — lean toward helping, not every line a chore
+
+### 2026-07-22 — fact book
+
+- [x] Store learned callout facts on account (device cache + Google sync with learned blob)
+- [x] Soft progress `n / ~x` + facts-to-next-fact-level (separate from mission levels)
+- [x] Fact levels unlock kinds: Curious notice → Neighbor kindness (help) → Species wonder → Field learner
+- [x] Book-style codex cover + pages (Splash Aquapedia–feel reference)
 
 ### 2026-07-21 — neighborhood missions
 

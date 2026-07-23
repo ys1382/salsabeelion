@@ -200,6 +200,7 @@ Last updated: 2026-07-17
 **Can do now:**
 - Browse **wildlife codex** on desktop or phone (owner hub cookie) — Claude callouts; demos use CC0 cutouts
 - **Learned shelf** — past scans sync to **Odd Trove Google sign-in** (server store + device cache; one entry per species; stylized still + ID; never raw camera)
+- **Fact book** — callout facts collected into an account-synced book (Splash Aquapedia–style progress). Soft `n / ~x` totals until curated packs. **Fact levels** (Curious notice → Neighbor kindness → Species wonder → Field learner) are **separate from mission levels**; kinds unlock with learning commitment (notice → help → wonder)
 - **Phone wildlife camera scan** — `/bane-of-extinction/scan.html` (Gemini + Claude ID + life stage; then Gemini semi-realistic still matched to species/color/form/**stage**; photo not stored; facts follow the guessed organism)
 - Claude facts via `/bane-of-extinction/api/` (shared `anthropic.key` + Halalit Gemini env on server) — player-world tone, one small-help tip per set, one wonder fact; **garden focus** toggle splits garden-world eco facts (seed dispersal, grower kindness) vs walk/wild eco facts; device remembers recent fact text so rescans can stay fresh (no photo retention)
 - **Looking-at places** — Halalit-style favorite places on device; facts + browse lists follow chosen region/habitat (optional compare); season from date; **no GPS**
