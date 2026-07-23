@@ -8,7 +8,7 @@
   <meta http-equiv="Pragma" content="no-cache" />
   <title>EcoLens — Bane of Extinction</title>
   <link rel="stylesheet" href="bane.css?v=live2" />
-  <link rel="stylesheet" href="bane-codex-card.css?v=live5" />
+  <link rel="stylesheet" href="bane-codex-card.css?v=live6" />
 </head>
 <body>
   <div class="wrap">
@@ -37,21 +37,36 @@
         <div class="scan-stage__guide" aria-hidden="true"></div>
         <p class="scan-stage__hint" id="coachHint">Frame from a safe distance (or clear evidence). Pinch to zoom. Avoid faces/hands when you can. Don’t crowd wildlife.</p>
       </div>
-      <div class="ecolens-modes" role="group" aria-label="EcoLens assist modes">
-        <label class="ecolens-mode">
-          <input type="checkbox" id="modeDrive" />
-          <span>Drive</span>
-        </label>
-        <label class="ecolens-mode">
-          <input type="checkbox" id="modeNight" />
-          <span>Night vision</span>
-        </label>
-        <label class="ecolens-mode">
-          <input type="checkbox" id="modeCamo" />
-          <span>Camouflage</span>
-        </label>
+      <div class="ecolens-assists" id="ecolensAssists">
+        <button
+          type="button"
+          class="ecolens-assists__toggle"
+          id="assistsToggle"
+          aria-expanded="false"
+          aria-controls="assistsPanel"
+        >
+          <span class="ecolens-assists__chev" aria-hidden="true"></span>
+          <span class="ecolens-assists__title">Assists</span>
+          <span class="ecolens-assists__summary" id="assistsSummary">Off</span>
+        </button>
+        <div class="ecolens-assists__panel" id="assistsPanel" hidden>
+          <div class="ecolens-modes" role="group" aria-label="EcoLens assist modes">
+            <label class="ecolens-mode">
+              <input type="checkbox" id="modeDrive" />
+              <span>Drive</span>
+            </label>
+            <label class="ecolens-mode">
+              <input type="checkbox" id="modeNight" />
+              <span>Night vision</span>
+            </label>
+            <label class="ecolens-mode">
+              <input type="checkbox" id="modeCamo" />
+              <span>Camouflage</span>
+            </label>
+          </div>
+          <p class="note ecolens-mode-note" id="modeNote" hidden></p>
+        </div>
       </div>
-      <p class="note ecolens-mode-note" id="modeNote" hidden></p>
       <div class="scan-actions">
         <button type="button" class="btn primary" id="captureBtn" disabled>Capture &amp; scan</button>
         <button type="button" class="btn secondary" id="stopCamBtn" hidden>Stop camera</button>
@@ -87,6 +102,6 @@
   <script src="bane-handheld-live.js"></script>
   <script src="bane-codex-facts.js?v=live1"></script>
   <script src="bane-codex-collection.js?v=live4"></script>
-  <script src="bane-scan-live.js?v=live10"></script>
+  <script src="bane-scan-live.js?v=live11"></script>
 </body>
 </html>

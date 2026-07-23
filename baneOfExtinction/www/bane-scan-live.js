@@ -21,6 +21,7 @@
   var MODE_DRIVE_KEY = "bane_ecolens_drive_v1";
   var MODE_NIGHT_KEY = "bane_ecolens_night_v1";
   var MODE_CAMO_KEY = "bane_ecolens_camo_v1";
+  var ASSISTS_OPEN_KEY = "bane_ecolens_assists_open_v1";
 
   var desktopBlock = document.getElementById("desktopBlock");
   var scanUi = document.getElementById("scanUi");
@@ -33,6 +34,10 @@
   var waitWisdomEl = document.getElementById("waitWisdom");
   var waitWisdomText = document.getElementById("waitWisdomText");
   var coachHint = document.getElementById("coachHint");
+  var ecolensAssists = document.getElementById("ecolensAssists");
+  var assistsToggle = document.getElementById("assistsToggle");
+  var assistsPanel = document.getElementById("assistsPanel");
+  var assistsSummary = document.getElementById("assistsSummary");
   var modeDriveEl = document.getElementById("modeDrive");
   var modeNightEl = document.getElementById("modeNight");
   var modeCamoEl = document.getElementById("modeCamo");
@@ -458,6 +463,45 @@
     modeNoteEl.textContent = bits.join(" ");
   }
 
+  function updateAssistsSummary() {
+    var m = modeFlags();
+    var labels = [];
+    if (m.drive) labels.push("Drive");
+    if (m.night) labels.push("Night");
+    if (m.camo) labels.push("Camo");
+    if (assistsSummary) {
+      assistsSummary.textContent = labels.length ? labels.join(" · ") : "Off";
+    }
+    if (ecolensAssists) {
+      ecolensAssists.classList.toggle("ecolens-assists--active", labels.length > 0);
+    }
+  }
+
+  function setAssistsOpen(open) {
+    var next = !!open;
+    if (ecolensAssists) {
+      ecolensAssists.classList.toggle("ecolens-assists--open", next);
+    }
+    if (assistsToggle) {
+      assistsToggle.setAttribute("aria-expanded", next ? "true" : "false");
+    }
+    if (assistsPanel) {
+      assistsPanel.hidden = !next;
+    }
+    try {
+      if (next) localStorage.setItem(ASSISTS_OPEN_KEY, "1");
+      else localStorage.removeItem(ASSISTS_OPEN_KEY);
+    } catch (e) {}
+  }
+
+  function syncAssistsOpenFromPref() {
+    var open = false;
+    try {
+      open = localStorage.getItem(ASSISTS_OPEN_KEY) === "1";
+    } catch (e) {}
+    setAssistsOpen(open);
+  }
+
   function readModePref(key) {
     try {
       return localStorage.getItem(key) === "1";
@@ -478,6 +522,7 @@
     if (modeNightEl) modeNightEl.checked = readModePref(MODE_NIGHT_KEY);
     if (modeCamoEl) modeCamoEl.checked = readModePref(MODE_CAMO_KEY);
     updateModeNote();
+    updateAssistsSummary();
     applyStageClass(lastCoachLevel || "wait");
   }
 
@@ -486,6 +531,7 @@
     writeModePref(MODE_NIGHT_KEY, !!(modeNightEl && modeNightEl.checked));
     writeModePref(MODE_CAMO_KEY, !!(modeCamoEl && modeCamoEl.checked));
     updateModeNote();
+    updateAssistsSummary();
     applyStageClass(lastCoachLevel || "wait");
     if (stream && !busy) tickLiveCoach();
   }
@@ -1673,6 +1719,14 @@
   if (desktopBlock) desktopBlock.hidden = true;
   if (scanUi) scanUi.hidden = false;
   syncModeUiFromPrefs();
+  syncAssistsOpenFromPref();
+  if (assistsToggle) {
+    assistsToggle.addEventListener("click", function () {
+      var open =
+        assistsToggle.getAttribute("aria-expanded") === "true";
+      setAssistsOpen(!open);
+    });
+  }
   if (modeDriveEl) modeDriveEl.addEventListener("change", onModeChange);
   if (modeNightEl) modeNightEl.addEventListener("change", onModeChange);
   if (modeCamoEl) modeCamoEl.addEventListener("change", onModeChange);
