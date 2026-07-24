@@ -7,6 +7,7 @@
   "use strict";
 
   var STORAGE_KEY = "bane_codex_learned_v1";
+  var MISSION_KEY = "bane_missions_done_v1";
   var MAX_ENTRIES = 48;
   var API_LEARNED = "/bane-of-extinction/api/learned";
   var API_ME = "/bane-of-extinction/api/auth/me";
@@ -19,6 +20,8 @@
     email: "",
     syncing: false,
     lastError: "",
+    entryCount: 0,
+    factCount: 0,
   };
 
   function factsApi() {
@@ -97,29 +100,81 @@
       localStorage.setItem(STORAGE_KEY, packed);
       return true;
     } catch (e) {
-      var trimmed = list.slice();
-      var i;
-      for (i = trimmed.length - 1; i >= 0 && trimmed.length > 1; i--) {
-        if (trimmed[i].stillBase64) {
-          trimmed[i] = Object.assign({}, trimmed[i], {
-            stillBase64: "",
-            stillMime: "",
-          });
+      // Prefer keeping names/keys over dropping learns when stills are too big.
+      var trimmed = list.map(function (entry) {
+        if (!entry || !entry.stillBase64) return entry;
+        return Object.assign({}, entry, { stillBase64: "", stillMime: "" });
+      });
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(trimmed));
+        return true;
+      } catch (e2) {
+        var shorter = trimmed.slice();
+        while (shorter.length > 1) {
+          shorter.pop();
           try {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(trimmed));
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(shorter));
             return true;
-          } catch (e2) {}
+          } catch (e3) {}
         }
-      }
-      while (trimmed.length > 1) {
-        trimmed.pop();
-        try {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(trimmed));
-          return true;
-        } catch (e3) {}
       }
       return false;
     }
+  }
+
+  function readMissionDone() {
+    try {
+      var raw = localStorage.getItem(MISSION_KEY);
+      if (!raw) return {};
+      var obj = JSON.parse(raw);
+      return obj && typeof obj === "object" ? obj : {};
+    } catch (e) {
+      return {};
+    }
+  }
+
+  function writeMissionDone(map) {
+    try {
+      localStorage.setItem(MISSION_KEY, JSON.stringify(map || {}));
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function mergeMissionDone(localMap, remoteMap) {
+    var out = {};
+    var key;
+    var remote = remoteMap && typeof remoteMap === "object" ? remoteMap : {};
+    var local = localMap && typeof localMap === "object" ? localMap : {};
+    for (key in remote) {
+      if (Object.prototype.hasOwnProperty.call(remote, key)) {
+        out[key] = remote[key];
+      }
+    }
+    for (key in local) {
+      if (!Object.prototype.hasOwnProperty.call(local, key)) continue;
+      if (!(key in out)) {
+        out[key] = local[key];
+      } else {
+        var a = Number(out[key]) || 0;
+        var b = Number(local[key]) || 0;
+        out[key] = a && b ? Math.min(a, b) : a || b;
+      }
+    }
+    return out;
+  }
+
+  function markMissionDone(questId) {
+    var id = String(questId || "").trim();
+    if (!id) return readMissionDone();
+    var map = readMissionDone();
+    if (!map[id]) {
+      map[id] = Date.now();
+      writeMissionDone(map);
+      schedulePush();
+    }
+    return map;
   }
 
   function mergeLists(local, remote) {
@@ -303,7 +358,7 @@
       });
   }
 
-  function applySavedBlob(data, fallbackEntries, fallbackFacts) {
+  function applySavedBlob(data, fallbackEntries, fallbackFacts, fallbackMissions) {
     var saved = (data && data.entries) || fallbackEntries || [];
     writeAll(saved);
     if (factsApi() && factsApi().writeAll) {
@@ -314,11 +369,19 @@
         writeFactsMerged(fallbackFacts);
       }
     }
+    var missions =
+      (data && data.missionDone) ||
+      fallbackMissions ||
+      readMissionDone();
+    writeMissionDone(mergeMissionDone(readMissionDone(), missions));
+    syncState.entryCount = readAll().length;
+    syncState.factCount = readFactsLocal().length;
     return {
       signedIn: true,
       email: syncState.email,
       entries: readAll(),
       facts: readFactsLocal(),
+      missionDone: readMissionDone(),
     };
   }
 
@@ -328,6 +391,7 @@
         signedIn: false,
         entries: readAll(),
         facts: readFactsLocal(),
+        missionDone: readMissionDone(),
       });
     }
     syncState.syncing = true;
@@ -341,6 +405,7 @@
             signedIn: false,
             entries: readAll(),
             facts: readFactsLocal(),
+            missionDone: readMissionDone(),
           };
         }
         if (!pack.res.ok || !data.ok) {
@@ -349,12 +414,27 @@
         var merged = mergeLists(readAll(), data.entries || []);
         writeAll(merged);
         var mergedFacts = writeFactsMerged(data.facts || []);
+        var mergedMissions = mergeMissionDone(
+          readMissionDone(),
+          data.missionDone || {}
+        );
+        writeMissionDone(mergedMissions);
         return fetchJson(API_LEARNED, {
           method: "POST",
-          body: { mode: "merge", entries: merged, facts: mergedFacts },
+          body: {
+            mode: "merge",
+            entries: merged,
+            facts: mergedFacts,
+            missionDone: mergedMissions,
+          },
         }).then(function (savePack) {
           syncState.lastError = "";
-          return applySavedBlob(savePack.data, merged, mergedFacts);
+          return applySavedBlob(
+            savePack.data,
+            merged,
+            mergedFacts,
+            mergedMissions
+          );
         });
       })
       .catch(function (err) {
@@ -363,11 +443,14 @@
           signedIn: syncState.signedIn,
           entries: readAll(),
           facts: readFactsLocal(),
+          missionDone: readMissionDone(),
           error: syncState.lastError,
         };
       })
       .then(function (result) {
         syncState.syncing = false;
+        syncState.entryCount = (result.entries || readAll()).length;
+        syncState.factCount = (result.facts || readFactsLocal()).length;
         return result;
       });
   }
@@ -378,13 +461,20 @@
         signedIn: false,
         entries: readAll(),
         facts: readFactsLocal(),
+        missionDone: readMissionDone(),
       });
     }
     syncState.syncing = true;
     var localFacts = readFactsLocal();
+    var localMissions = readMissionDone();
     return fetchJson(API_LEARNED, {
       method: "POST",
-      body: { mode: "merge", entries: readAll(), facts: localFacts },
+      body: {
+        mode: "merge",
+        entries: readAll(),
+        facts: localFacts,
+        missionDone: localMissions,
+      },
     })
       .then(function (pack) {
         var data = pack.data || {};
@@ -395,20 +485,22 @@
             signedIn: false,
             entries: readAll(),
             facts: readFactsLocal(),
+            missionDone: readMissionDone(),
           };
         }
         if (!pack.res.ok || !data.ok) {
           throw new Error((data && data.message) || "push_failed");
         }
         syncState.lastError = "";
-        return applySavedBlob(data, readAll(), localFacts);
+        return applySavedBlob(data, readAll(), localFacts, localMissions);
       })
       .catch(function (err) {
-        syncState.lastError = (err && err.message) || "push_failed";
+        syncState.lastError = (err && err.message) || "sync_failed";
         return {
           signedIn: syncState.signedIn,
           entries: readAll(),
           facts: readFactsLocal(),
+          missionDone: readMissionDone(),
           error: syncState.lastError,
         };
       })
@@ -426,6 +518,7 @@
           signedIn: false,
           entries: readAll(),
           facts: readFactsLocal(),
+          missionDone: readMissionDone(),
         };
       }
       return pullAndMerge();
@@ -442,11 +535,14 @@
       email: syncState.email,
       syncing: syncState.syncing,
       lastError: syncState.lastError,
+      entryCount: syncState.entryCount || readAll().length,
+      factCount: syncState.factCount || readFactsLocal().length,
     };
   }
 
   global.BaneCodexCollection = {
     STORAGE_KEY: STORAGE_KEY,
+    MISSION_KEY: MISSION_KEY,
     entryKey: entryKey,
     speciesOnlyKey: speciesOnlyKey,
     readAll: readAll,
@@ -461,5 +557,8 @@
     refreshAuth: refreshAuth,
     googleSignInUrl: googleSignInUrl,
     getSyncState: getSyncState,
+    readMissionDone: readMissionDone,
+    writeMissionDone: writeMissionDone,
+    markMissionDone: markMissionDone,
   };
 })(typeof window !== "undefined" ? window : this);

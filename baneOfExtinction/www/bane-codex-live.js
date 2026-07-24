@@ -985,8 +985,18 @@
       window.BaneCodexCollection.getSyncState();
     if (!st) return;
     if (st.signedIn && st.email) {
+      var n = Number(st.entryCount) || 0;
+      var f = Number(st.factCount) || 0;
       syncEl.innerHTML =
-        "Synced to Google: <strong></strong> — learns and fact book follow this sign-in on other devices.";
+        "Synced to Google: <strong></strong> — " +
+        n +
+        " learn" +
+        (n === 1 ? "" : "s") +
+        ", " +
+        f +
+        " fact" +
+        (f === 1 ? "" : "s") +
+        " on this account (same on phone & desktop).";
       syncEl.querySelector("strong").textContent = st.email;
       return;
     }

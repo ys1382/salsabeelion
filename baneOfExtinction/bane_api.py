@@ -1413,21 +1413,62 @@ def _normalize_learned_facts(raw: Any) -> list[dict[str, Any]]:
     return out[:MAX_LEARNED_FACTS]
 
 
+def _normalize_mission_done(raw: Any) -> dict[str, int]:
+    if not isinstance(raw, dict):
+        return {}
+    out: dict[str, int] = {}
+    for key, val in list(raw.items())[:200]:
+        kid = str(key or "").strip()[:80]
+        if not kid:
+            continue
+        try:
+            ts = int(val) if val not in (True, False, None, "") else 0
+        except (TypeError, ValueError):
+            ts = 0
+        if ts <= 0:
+            ts = int(time.time() * 1000)
+        out[kid] = ts
+        if len(out) >= 120:
+            break
+    return out
+
+
+def merge_mission_done(
+    local: dict[str, int] | None, remote: dict[str, int] | None
+) -> dict[str, int]:
+    out = dict(_normalize_mission_done(remote or {}))
+    for key, ts in _normalize_mission_done(local or {}).items():
+        if key not in out:
+            out[key] = ts
+        else:
+            a = int(out[key] or 0)
+            b = int(ts or 0)
+            out[key] = min(a, b) if a and b else (a or b)
+    return out
+
+
 def _read_learned_blob(email: str) -> dict[str, Any]:
     path = _learned_path(email)
     if not os.path.isfile(path):
-        return {"entries": [], "facts": []}
+        return {"entries": [], "facts": [], "missionDone": {}}
     try:
         with open(path, encoding="utf-8") as f:
             raw = json.load(f)
     except (OSError, json.JSONDecodeError, TypeError):
-        return {"entries": [], "facts": []}
+        return {"entries": [], "facts": [], "missionDone": {}}
     if isinstance(raw, dict):
         return {
             "entries": _normalize_learned_list(raw.get("entries")),
             "facts": _normalize_learned_facts(raw.get("facts")),
+            "missionDone": _normalize_mission_done(
+                raw.get("missionDone") or raw.get("missionsDone") or {}
+            ),
         }
-    return {"entries": _normalize_learned_list(raw), "facts": []}
+    return {
+        "entries": _normalize_learned_list(raw),
+        "facts": [],
+        "missionDone": {},
+    }
 
 
 def load_learned(email: str) -> list[dict[str, Any]]:
@@ -1442,25 +1483,35 @@ def save_learned(
     email: str,
     entries: list[dict[str, Any]],
     facts: list[dict[str, Any]] | None = None,
+    mission_done: dict[str, int] | None = None,
 ) -> dict[str, Any]:
     cleaned = _normalize_learned_list(entries)
+    blob = _read_learned_blob(email)
     if facts is None:
-        facts = load_learned_facts(email)
+        facts = blob["facts"]
     cleaned_facts = _normalize_learned_facts(facts)
+    if mission_done is None:
+        mission_done = blob.get("missionDone") or {}
+    cleaned_missions = _normalize_mission_done(mission_done)
     _ensure_learned_dir()
     path = _learned_path(email)
     tmp = path + ".tmp"
     payload = {
-        "version": 2,
+        "version": 3,
         "email": email.strip().lower(),
         "updatedAt": int(time.time() * 1000),
         "entries": cleaned,
         "facts": cleaned_facts,
+        "missionDone": cleaned_missions,
     }
     with open(tmp, "w", encoding="utf-8") as f:
         json.dump(payload, f, ensure_ascii=False, separators=(",", ":"))
     os.replace(tmp, path)
-    return {"entries": cleaned, "facts": cleaned_facts}
+    return {
+        "entries": cleaned,
+        "facts": cleaned_facts,
+        "missionDone": cleaned_missions,
+    }
 
 
 def merge_learned(
@@ -4381,6 +4432,7 @@ class Handler(BaseHTTPRequestHandler):
                     "isOwner": bool(payload.get("isOwner")),
                     "entries": blob["entries"],
                     "facts": blob["facts"],
+                    "missionDone": blob.get("missionDone") or {},
                 },
             )
             return
@@ -4705,6 +4757,7 @@ class Handler(BaseHTTPRequestHandler):
             remote_blob = _read_learned_blob(email)
             remote = remote_blob["entries"]
             remote_facts = remote_blob["facts"]
+            remote_missions = remote_blob.get("missionDone") or {}
             incoming = body.get("entries")
             if incoming is None and isinstance(body.get("entry"), dict):
                 incoming = [body["entry"]]
@@ -4715,12 +4768,21 @@ class Handler(BaseHTTPRequestHandler):
                 if incoming_facts is not None
                 else None
             )
+            incoming_missions = body.get("missionDone")
+            if incoming_missions is None:
+                incoming_missions = body.get("missionsDone")
+            local_missions = (
+                _normalize_mission_done(incoming_missions)
+                if incoming_missions is not None
+                else None
+            )
             mode = str(body.get("mode") or "merge").strip().lower()
             if mode == "replace":
                 saved = save_learned(
                     email,
                     local,
                     local_facts if local_facts is not None else [],
+                    local_missions if local_missions is not None else {},
                 )
             else:
                 merged_entries = merge_learned(local, remote)
@@ -4728,7 +4790,13 @@ class Handler(BaseHTTPRequestHandler):
                     local_facts if local_facts is not None else [],
                     remote_facts,
                 )
-                saved = save_learned(email, merged_entries, merged_facts)
+                merged_missions = merge_mission_done(
+                    local_missions if local_missions is not None else {},
+                    remote_missions,
+                )
+                saved = save_learned(
+                    email, merged_entries, merged_facts, merged_missions
+                )
             _json(
                 self,
                 200,
@@ -4738,6 +4806,7 @@ class Handler(BaseHTTPRequestHandler):
                     "email": email,
                     "entries": saved["entries"],
                     "facts": saved["facts"],
+                    "missionDone": saved.get("missionDone") or {},
                     "mode": mode if mode in ("merge", "replace") else "merge",
                 },
             )

@@ -337,6 +337,12 @@
   }
 
   function readDone() {
+    if (
+      window.BaneCodexCollection &&
+      typeof window.BaneCodexCollection.readMissionDone === "function"
+    ) {
+      return window.BaneCodexCollection.readMissionDone() || {};
+    }
     try {
       var raw = localStorage.getItem(PROGRESS_KEY);
       if (!raw) return {};
@@ -348,6 +354,16 @@
   }
 
   function writeDone(map) {
+    if (
+      window.BaneCodexCollection &&
+      typeof window.BaneCodexCollection.writeMissionDone === "function"
+    ) {
+      window.BaneCodexCollection.writeMissionDone(map || {});
+      if (window.BaneCodexCollection.schedulePush) {
+        window.BaneCodexCollection.schedulePush();
+      }
+      return;
+    }
     try {
       localStorage.setItem(PROGRESS_KEY, JSON.stringify(map || {}));
     } catch (e) {}
