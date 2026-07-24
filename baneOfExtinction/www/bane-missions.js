@@ -12,14 +12,19 @@
   var PROGRESS_KEY = "bane_missions_done_v1";
   var PEEK_KEY = "bane_missions_peek_v1";
 
-  /** Level 2 — signature signs. Dropped: squirrel fruit, slug trails, paper nests, oak galls. */
+  /**
+   * Level 2 — signature signs anyone can meet (gardens, streets, beaches).
+   * No GPS — skip world-geography locks (deserts, mountain ranges, regional specialists).
+   * Dropped earlier: squirrel fruit, slug trails, paper nests, oak galls.
+   * Swapped off: leafcutter circles, shrike pantry, ice plant, oak-ivy, “plant a native.”
+   */
   var QUESTS_L2 = [
     {
       id: "ant-mound",
       level: 2,
       title: "The city under the lawn",
       placeTags: ["suburban", "urban", "city", "woodland"],
-      placeHint: "Suburban · urban · city · woodland edge",
+      placeHint: "Garden · lawn · park edge",
       blurb: "A living mound — workers on a dirt door. Safe up close; don’t dig.",
       lookFor:
         "A swarm or steady trail of ants pouring into a hole or mound in bare dirt or lawn.",
@@ -47,7 +52,7 @@
       level: 2,
       title: "The hole that keeps giving",
       placeTags: ["suburban", "urban", "city", "woodland"],
-      placeHint: "Suburban · street trees · oak woodland",
+      placeHint: "Street trees · park · garden edge",
       blurb: "Neat bark work visible from the path — rows or deeper chips.",
       lookFor:
         "Fresh or older holes in a trunk you can see without leaving the path. Sap wells in neat rows hint sapsucker; bigger chips hint a larger woodpecker.",
@@ -57,73 +62,73 @@
       visual: "story",
     },
     {
-      id: "leaf-circles",
+      id: "leaf-chew",
       level: 2,
-      title: "Perfect circles in a leaf",
-      placeTags: ["suburban", "urban", "city"],
-      placeHint: "Suburban · urban · city plantings",
-      blurb: "Clean round cuts — leafcutter bee signature.",
+      title: "Someone’s been eating here",
+      placeTags: ["suburban", "urban", "city", "woodland"],
+      placeHint: "Garden · planter · park planting",
+      blurb: "Ragged chew edges on a leaf — not neat scissors cuts.",
       lookFor:
-        "Leaves with neat circular or oval bites removed — not ragged chew. Often on roses, lilacs, or soft planted leaves.",
+        "Leaves with irregular bites or skeletonized patches — caterpillars, beetles, or other small diners, obvious from the path.",
       story:
-        "Those circles aren’t vandalism. A leafcutter bee carries the discs home to line a nest. Those plantings just funded tiny architecture.",
-      care: "Leave the plant. She’s working for blooms you’ll want later.",
+        "A tidy garden isn’t an empty one. Those ragged edges mean something is turning leaf into energy — the quiet start of a food web right next to the sidewalk.",
+      care: "Leave the plant. The chew is the lesson; don’t spray the first hole you see.",
       visual: "story",
     },
     {
-      id: "shrike-pantry",
+      id: "working-web",
       level: 2,
-      title: "The butcher’s pantry",
-      placeTags: ["suburban", "coast", "woodland"],
-      placeHint: "Open edges · fences · scrub",
-      blurb: "Prey pinned on a thorn or wire — the shrike tell.",
+      title: "A web still on the job",
+      placeTags: ["suburban", "urban", "city", "coast", "woodland"],
+      placeHint: "Garden corners · fences · porch rails · dune grass",
+      blurb: "A spider web with dew, prey, or a resident — not yesterday’s shreds only.",
       lookFor:
-        "An insect, lizard, or small prey stuck on a fence barb, thorn, or wire — visible from the path.",
+        "A complete web in a corner, hedge, fence, or grass — dew beads, wrapped prey, or the builder waiting — visible without poking it.",
       story:
-        "Shrikes hunt like falcons and store like butchers. That fence isn’t random; it’s a pantry. A true neighborhood drama — no museum wolves required.",
-      care: "Stay back. The pantry is the lesson; the bird doesn’t need an audience.",
+        "That silk isn’t decoration. It’s a trap line in the neighborhood economy — insects pause here so birds and lizards have a buffet later.",
+      care: "Look, don’t swipe. A working web is a living tool, not clutter.",
       visual: "story",
     },
     {
-      id: "ice-plant-carpet",
+      id: "wrack-line",
       level: 2,
-      title: "The carpet that crowds the shore",
+      title: "The tide’s leftover line",
       placeTags: ["coast"],
-      placeHint: "Beach · coast (SoCal coast / shore)",
-      blurb: "A thick mat of ice plant you can see from the path.",
+      placeHint: "Beach · shore (any coast)",
+      blurb: "A strand of seaweed, shells, or drift along the high-water mark.",
       lookFor:
-        "A sprawling succulent carpet on dunes or bluffs — often Carpobrotus — obvious without stepping into fragile habitat.",
+        "A clear wrack line on sand or pebbles — kelp ribbons, shells, wood, or foam — obvious from the dry path without walking fragile dunes.",
       story:
-        "Ice plant looks soft and finished. Under that shine it can choke out the plants that belong on this coast. One mat today can mean a quieter dune tomorrow.",
-      care: "Don’t plant it on wild shorelines. Native dune plants keep more life in the long run.",
+        "The ocean writes a grocery list twice a day. That line feeds shorebirds, crabs, and the tiny lives that start the beach food web — if we leave the buffet where it landed.",
+      care: "Stay on firm sand or the path. Don’t rake the wrack “clean” for a postcard beach.",
       visual: "story",
     },
     {
-      id: "ivy-trunk",
+      id: "vine-curtain",
       level: 2,
-      title: "The curtain on the oak",
-      placeTags: ["woodland"],
-      placeHint: "Oak woodland · forest",
-      blurb: "English ivy climbing a trunk — clear from the trail.",
+      title: "The curtain on the trunk",
+      placeTags: ["suburban", "urban", "city", "woodland"],
+      placeHint: "Garden wall · park tree · fence line",
+      blurb: "A climbing vine sleeve on a trunk or fence — clear from the path.",
       lookFor:
-        "A curtain or sleeve of ivy on a tree trunk or blanketing the understory, visible without leaving the path.",
+        "Ivy, creeper, or other vine blanketing a trunk, wall, or understory — thick enough to notice without leaving the path.",
       story:
-        "Ivy doesn’t ask permission. It climbs, carpets, and steals light from the oak’s own understory. The woodland keeps its shape only if something pushes back.",
-      care: "Remove when it’s safe and allowed where you are — never yank wildlife nests with it.",
+        "Vines can shade a wall into a soft habitat — or steal light until the host tree’s own understory thins. Same curtain, different ending, depending how far it runs.",
+      care: "Watch from the path. If you manage vines at home, never yank through active nests.",
       visual: "story",
     },
     {
-      id: "hotspot-patch",
+      id: "busy-bloom",
       level: 2,
-      title: "Plant a hotspot",
-      placeTags: ["suburban", "urban", "city"],
-      placeHint: "Suburban · urban · city plantings",
-      blurb: "A native patch (poppy, sunflower, milkweed where it belongs) that invites more life.",
+      title: "A bloom with visitors",
+      placeTags: ["suburban", "urban", "city", "coast", "woodland"],
+      placeHint: "Garden · park bed · beach path flowers",
+      blurb: "A flower already hosting bees, butterflies, or hoverflies — you notice, you don’t plant.",
       lookFor:
-        "A sunny native or wildlife plant already in your looking-at place — California poppy, sunflower, or local milkweed — whole plant obvious from the path.",
+        "Any open bloom with a visitor landing or feeding — sidewalk planter, yard, park bed, or path-side flowers — whole scene obvious from where you stand.",
       story:
-        "One right plant won’t save the planet. It can still turn a quiet planting into a busy little hub — bees, butterflies, birds — season after season. You’re not decorating. You’re opening a door.",
-      care: "Choose natives that fit your region. Milkweed only where it belongs; skip “freeing” houseplants outdoors.",
+        "One busy flower won’t save the planet. It still proves the neighborhood has a door open — nectar in, pollinators out, season after season. You’re reading a hub that already exists.",
+      care: "Don’t chase or trap the visitor. The win is noticing the traffic, not rearranging someone’s yard.",
       visual: "story",
     },
     {
@@ -134,7 +139,7 @@
       placeHint: "Any place",
       blurb: "You found a sign from the path. Log the restraint — that’s the win.",
       lookFor:
-        "Any mission sign you already know how to spot — mound, pantry, feather, holes — seen from a safe distance.",
+        "Any mission sign you already know how to spot — mound, feather, holes, web, wrack, chew — seen from a safe distance.",
       story:
         "The adventure isn’t getting closer. It’s knowing enough to walk on. Quiet wins count.",
       care: "No flash, no dig, no chase. Your reward is still knowing the neighborhood.",
@@ -150,7 +155,7 @@
       lookFor:
         "Something you already scanned or a mission you finished — then one gentle action that fits it.",
       story:
-        "Skip the spray on that mound. Leave a leaf-litter corner. Don’t plant ice plant. Put the right milkweed in the right place. Tiny moves, louder neighborhood over time.",
+        "Skip the spray on that mound. Leave a leaf-litter corner. Leave the wrack line. Don’t swipe the working web. Tiny moves, louder neighborhood over time.",
       care: "No guilt lecture — just one act you control on your block.",
       visual: "story",
     },
@@ -158,127 +163,127 @@
 
   /**
    * Level 3 — same face, different meaning by place; under-the-hood landscape stories.
-   * Not generic tips. Not vacation-postcard facts.
+   * Beach + garden scale only — not desert / mountain / regional flora checklists.
    */
   var QUESTS_L3 = [
     {
-      id: "l3-ice-plant-meanings",
+      id: "l3-wrack-meanings",
       level: 3,
-      title: "Ice plant: three readings",
+      title: "Wrack: three readings",
       placeTags: ["coast", "suburban", "urban", "city"],
-      placeHint: "Coast vs planted beds vs “just planted”",
-      blurb: "Same shiny carpet — healthy, meh, or a warning, depending on the place you’re looking at.",
+      placeHint: "Wild shore vs “cleaned” beach vs inland décor",
+      blurb: "Same seaweed strand — healthy buffet, meh tidy-up, or a warning when the line is gone.",
       lookFor:
-        "Ice plant (Carpobrotus-type mats) from the path — or a native dune plant that should be there instead.",
+        "A wrack line of seaweed, shells, or drift — or a beach scraped bare where that line should sit.",
       story:
-        "Tourists see a soft green blanket. The under-the-hood story is whether this place can still host what belongs here.",
-      care: "Don’t plant ice plant on wild shorelines. Prefer natives that keep the dune’s own cast employed.",
+        "Tourists see mess. The under-the-hood story is whether shore life still gets a twice-daily grocery delivery.",
+      care: "Leave wrack where it lands on wild shores. A postcard-smooth beach can be a quieter food web.",
       visual: "meanings",
       meanings: [
         {
-          tone: "warning",
-          placeLabel: "SoCal / West Coast dunes & bluffs",
-          text: "Bad sign. Invasive here — it crowds natives. A thick mat often means the shoreline’s own plants already lost ground.",
+          tone: "healthy",
+          placeLabel: "Natural high-water line on a working beach",
+          text: "Healthy sign. Kelp, shells, and foam feed birds, crabs, and the tiny starters of the shore food web.",
         },
         {
           tone: "meh",
-          placeLabel: "A managed planting far from wild dunes",
-          text: "Meh. Not a native hero, not automatically a dune crisis on a city patio — still don’t “share” cuttings onto wild coasts.",
+          placeLabel: "A managed swimming beach after light grooming",
+          text: "Meh. Some cleanup for people is normal — still leave a strip of wrack if you can; bare sand isn’t automatically “better.”",
         },
         {
-          tone: "healthy",
-          placeLabel: "Native dune / bluff plant cover (looking at healthy shore)",
-          text: "Healthy sign when natives hold the ground instead — more room for the insects and birds that evolved with this coast.",
+          tone: "warning",
+          placeLabel: "Shore scraped bare or wrack hauled inland as trash",
+          text: "Warning when the buffet is erased daily — shorebirds and beach insects lose the line that kept them fed.",
         },
       ],
     },
     {
-      id: "l3-ivy-meanings",
+      id: "l3-vine-meanings",
       level: 3,
-      title: "Ivy: curtain or cage?",
+      title: "Vine: curtain or cage?",
       placeTags: ["woodland", "suburban", "urban", "city"],
-      placeHint: "Oak woodland vs planted wall",
-      blurb: "English ivy reads different on an oak trail than on a trimmed fence.",
-      lookFor: "Ivy on a trunk or understory — from the path only.",
+      placeHint: "Garden wall vs smothered tree",
+      blurb: "A climbing vine reads different on a fence than as a sleeve sealing a trunk.",
+      lookFor: "Ivy or creeper on a wall, fence, or trunk — from the path only.",
       story:
-        "Postcard England loves ivy on stone. California oak woodland tells a harder story when that curtain seals the understory shut.",
-      care: "Remove when safe and allowed in wild or semi-wild woods; never rip through active nests.",
+        "Postcard gardens love a green curtain. Park and garden trees tell a harder story when that curtain seals out light and air.",
+      care: "Trim when safe and allowed; never rip through active nests.",
       visual: "meanings",
       meanings: [
         {
-          tone: "warning",
-          placeLabel: "NorCal oak woodland / forest understory",
-          text: "Warning. Invasive climber — steals light, carpets the floor, and can mean the woodland’s own plants are already losing.",
+          tone: "healthy",
+          placeLabel: "Contained on a fence or wall, host tree still open",
+          text: "Healthy-enough when the vine is a border, not a full-body sleeve — birds still get cover without choking the trunk.",
         },
         {
           tone: "meh",
-          placeLabel: "Contained wall or planter",
-          text: "Meh if truly contained — still a hitchhiker risk if birds or trimmings move it into wild edges.",
+          placeLabel: "Decorative climber, watched and cut back",
+          text: "Meh if truly managed — still watch for seedlings escaping into hedges and park edges.",
         },
         {
-          tone: "healthy",
-          placeLabel: "Oak woodland without an ivy sleeve",
-          text: "Healthy sign: open understory, room for the plants and insects that belong with coast live oak.",
+          tone: "warning",
+          placeLabel: "Thick sleeve blanketing trunk and understory",
+          text: "Warning. Steals light, carpets the floor, and can mean the tree’s own plants are already losing.",
         },
       ],
     },
     {
-      id: "l3-poppy-meanings",
+      id: "l3-bloom-meanings",
       level: 3,
-      title: "Poppy: belonging vs décor",
+      title: "Bloom: buffet vs décor",
       placeTags: ["suburban", "coast", "urban", "city", "woodland"],
-      placeHint: "CA places vs planted-elsewhere",
-      blurb: "California poppy can mean “home team” here — or just a pretty transplant elsewhere.",
-      lookFor: "California poppy in sun — whole plant from the path.",
+      placeHint: "Busy flower vs pretty-only planting",
+      blurb: "An open flower can mean “food for visitors” — or just a pretty costume with no traffic.",
+      lookFor: "Any open bloom in sun — with or without insect visitors — from the path.",
       story:
-        "Vacation photos love the orange splash. The deeper read is whether this flower is a neighbor or a costume.",
-      care: "In its range, lean soil and sun beat heavy water. Don’t treat every orange bloom as interchangeable with rare local endemics.",
+        "Vacation photos love the splash of color. The deeper read is whether anyone is actually eating here.",
+      care: "Notice visitors before you judge a bed. Pretty alone isn’t a food-web score.",
       visual: "meanings",
       meanings: [
         {
           tone: "healthy",
-          placeLabel: "SoCal / NorCal coast edge, oak openings, plantings (CA)",
-          text: "Healthy sign. Native here — bees notice; lean dry ground is a feature, not a failure.",
+          placeLabel: "Bloom with bees, butterflies, or hoverflies landing",
+          text: "Healthy sign. Nectar and pollen are moving — the neighborhood door is open.",
         },
         {
           tone: "meh",
-          placeLabel: "Planted ornamental outside its native story",
-          text: "Meh. Lovely décor, not proof this landscape’s own cast is thriving.",
+          placeLabel: "Showy flower, no visitors in a fair watch",
+          text: "Meh. Lovely décor; not proof the local cast can feed here (season, scent, and shape all matter).",
         },
         {
           tone: "warning",
-          placeLabel: "If it’s replacing a rarer local native community",
-          text: "Warning only when plantings erase what was rarer and local — pretty can still be a quiet takeover.",
+          placeLabel: "Sterile doubles / sprayed beds where nothing lands",
+          text: "Warning when beauty is all surface — heavy spray or closed blooms can mean a quiet buffet for pollinators.",
         },
       ],
     },
     {
-      id: "l3-eucalyptus-meanings",
+      id: "l3-street-tree-meanings",
       level: 3,
-      title: "Eucalyptus: planted giant",
+      title: "Street tree: neighbor or leftover",
       placeTags: ["suburban", "urban", "city", "coast", "woodland"],
-      placeHint: "CA plantings & parks",
-      blurb: "Tall, famous, and not a native California teammate.",
-      lookFor: "Eucalyptus from a path or park edge — no need to stand under shedding bark.",
+      placeHint: "Park · sidewalk · garden edge",
+      blurb: "A planted tree can host life — or stand alone with bare ground and no visitors.",
+      lookFor: "A street or park tree from the sidewalk — bark, shade, and what’s under it.",
       story:
-        "Tourists remember the smell and the height. The everyday truth is introduced trees reshaping shade, litter, and what can live underneath.",
-      care: "Check local guidance before planting more; don’t pretend it’s a stand-in for oak woodland.",
+        "Tourists remember height and shade. The everyday truth is what’s living in the bark, litter, and understory — or what’s missing.",
+      care: "Don’t carve bark or dig roots. Read the tree as a small neighborhood, not a lamppost.",
       visual: "meanings",
       meanings: [
         {
+          tone: "healthy",
+          placeLabel: "Birds, holes, litter life, or underplanting sharing the shade",
+          text: "Healthy sign. The tree is hosting someone — apartments in the bark, food in the canopy, or green underfoot.",
+        },
+        {
           tone: "meh",
-          placeLabel: "City park / street / older CA planting",
-          text: "Meh-to-complicated. Introduced — wildlife may use it, but it isn’t the oak’s story.",
+          placeLabel: "Lone ornamental over bare mulch or gravel",
+          text: "Meh. Shade for people; thin credit for the food web until something else moves in.",
         },
         {
           tone: "warning",
-          placeLabel: "Where it crowds out native woodland structure",
-          text: "Warning when it dominates: different litter, different understory, fewer of the partnerships natives built over time.",
-        },
-        {
-          tone: "healthy",
-          placeLabel: "Looking at native oak / chaparral instead",
-          text: "Healthy contrast: coast live oak and local shrubs keep the cast that evolved here.",
+          placeLabel: "Dying, girdled, or sprayed sterile with nothing allowed under it",
+          text: "Warning when the tree is only furniture — no litter layer, no visitors, no room for the small lives that stitch a block together.",
         },
       ],
     },
@@ -288,12 +293,12 @@
       title: "Missing pieces (under the postcard)",
       placeTags: ["suburban", "urban", "city", "coast", "woodland"],
       placeHint: "Big-picture landscape story",
-      blurb: "Why a “pretty” countryside can still be running on empty — the tourist view skips this.",
+      blurb: "Why a “pretty” park or shore can still feel empty — the tourist view skips this.",
       lookFor:
-        "No close-up needed. Notice a quiet wood, heavy deer browse, or a landscape that feels full of plants but thin on balance — then open this card.",
+        "No close-up needed. Notice a quiet wood, heavy browse, a tidy lawn desert, or a beach with birds but no wrack — then open this card.",
       story:
-        "England’s green hills photograph like a vacation dream. Under that polish, wildlife has been doing poorly in places where certain apex predators were wiped out — the top of the food web removed, and everything downstream gone weird: too many browsers, quieter woods, species hanging on in a system already off-kilter. You don’t see that on the tour bus. Same idea anywhere: what’s missing matters as much as what’s cute in the frame.",
-      care: "Don’t chase predators or stage encounters. The mission is understanding the system — then supporting the living neighborhood you can actually help (habitat, natives, not harassing wildlife).",
+        "Green hills and clean sand photograph like a vacation dream. Under that polish, a place can be running on empty when the top of the food web — or the daily buffet — was removed. Too many browsers, quieter woods, shorebirds with nowhere to feed. You don’t see that on the tour bus. Same idea anywhere: what’s missing matters as much as what’s cute in the frame.",
+      care: "Don’t chase predators or stage encounters. The mission is understanding the system — then supporting the living neighborhood you can actually help (habitat, restraint, not harassing wildlife).",
       visual: "story",
     },
     {
@@ -302,7 +307,7 @@
       title: "Houseplant vs wild",
       placeTags: ["suburban", "urban", "city"],
       placeHint: "Indoor sweetheart vs outdoor world",
-      blurb: "A philodendron on a sill is fine. “Freed” outdoors in CA is a different story.",
+      blurb: "A philodendron on a sill is fine. “Freed” outdoors is a different story.",
       lookFor: "Sweetheart / heartleaf philodendron indoors — or someone planting tropicals outside.",
       story:
         "Gift-shop green isn’t the same as neighborhood wildlife. Level 3 is noticing the boundary tourists skip: indoor pet plant vs outdoor living web.",
@@ -317,12 +322,12 @@
         {
           tone: "meh",
           placeLabel: "Patio décor, still contained",
-          text: "Meh if it never escapes — still zero native food-web credit.",
+          text: "Meh if it never escapes — still zero neighborhood food-web credit.",
         },
         {
           tone: "warning",
-          placeLabel: "Dumped or planted into CA wild / creek edges",
-          text: "Warning. Wrong climate story outdoors; dumping houseplants can seed problems natives didn’t ask for.",
+          placeLabel: "Dumped or planted into parks / creek edges",
+          text: "Warning. Wrong place outdoors; dumping houseplants can seed problems local wild plants didn’t ask for.",
         },
       ],
     },

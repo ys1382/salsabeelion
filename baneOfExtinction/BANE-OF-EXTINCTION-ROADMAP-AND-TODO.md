@@ -327,12 +327,12 @@ Owner pins from chat go here.
 
 - [x] Unlock after ~15 learned finds (device shelf encounter total); owner-beta peek while learning
 - [x] Signature-sign missions only (easy tells → real species); filtered by looking-at habitat
-- [x] Quests live: ant mound (full visual), signature feather, woodpecker work, leafcutter circles, shrike pantry, ice plant carpet, ivy on trunk, hotspot patch, leave it be, one kind act
+- [x] Quests live (universal beach/garden signs): ant mound (full visual), signature feather, woodpecker work, leaf chew, working web, wrack line, vine curtain, busy bloom (notice — not “go plant”), leave it be, one kind act — swapped off geography locks (leafcutter, shrike, ice plant, oak-ivy, plant-a-native)
 - [x] Explicitly not shipping: squirrel fruit, slug trails, paper nests, oak galls, outside checkbox, photo-vs-screen detection
 - [x] Beginner scans = meet the neighbor; missions = homes / signs / care + adventure reveals (dramatic without melodrama)
 - [x] Ant mission: animated with/without garden compare + underground cross-section
 - [x] Don’t-get-too-close rule of thumb on home, scan, missions (and each mission card) — no risky close-ups; signs OK for biting/surprising animals
-- [x] Level 3 starter pack: ice plant / ivy / poppy / eucalyptus place meanings; missing-apex under-the-postcard story; houseplant boundary
+- [x] Level 3 starter pack (universal): wrack / vine / bloom / street-tree place meanings; missing-apex under-the-postcard story; houseplant boundary — no SoCal/CA-only flora cards
 
 ### 2026-07-10 — original design chat
 
