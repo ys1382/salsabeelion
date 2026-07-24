@@ -431,13 +431,6 @@
     } catch (e) {}
   }
 
-  function currentHabitat() {
-    var lens = globalPlaceLens();
-    if (!lens || !lens.activePlace) return "";
-    var place = lens.activePlace();
-    return (place && place.habitat) || "";
-  }
-
   function globalPlaceLens() {
     return typeof window !== "undefined" ? window.BanePlaceLens : null;
   }
