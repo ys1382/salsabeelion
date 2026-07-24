@@ -12,6 +12,19 @@
   var PROGRESS_KEY = "bane_missions_done_v1";
   var PEEK_KEY = "bane_missions_peek_v1";
 
+  /** Retired geography-locked ids → universal replacements (keep Done + L3 unlock). */
+  var MISSION_ID_MIGRATIONS = {
+    "leaf-circles": "leaf-chew",
+    "shrike-pantry": "working-web",
+    "ice-plant-carpet": "wrack-line",
+    "ivy-trunk": "vine-curtain",
+    "hotspot-patch": "busy-bloom",
+    "l3-ice-plant-meanings": "l3-wrack-meanings",
+    "l3-ivy-meanings": "l3-vine-meanings",
+    "l3-poppy-meanings": "l3-bloom-meanings",
+    "l3-eucalyptus-meanings": "l3-street-tree-meanings",
+  };
+
   /**
    * Level 2 — signature signs anyone can meet (gardens, streets, beaches).
    * No GPS — skip world-geography locks (deserts, mountain ranges, regional specialists).
@@ -341,7 +354,21 @@
     return n;
   }
 
-  function readDone() {
+  function migrateDoneMap(raw) {
+    var map = raw && typeof raw === "object" ? raw : {};
+    var out = {};
+    var changed = false;
+    Object.keys(map).forEach(function (key) {
+      var ts = Number(map[key]) || 0;
+      if (!ts) return;
+      var next = MISSION_ID_MIGRATIONS[key] || key;
+      if (next !== key) changed = true;
+      if (!out[next] || ts > out[next]) out[next] = ts;
+    });
+    return { map: out, changed: changed };
+  }
+
+  function readDoneRaw() {
     if (
       window.BaneCodexCollection &&
       typeof window.BaneCodexCollection.readMissionDone === "function"
@@ -356,6 +383,12 @@
     } catch (e) {
       return {};
     }
+  }
+
+  function readDone() {
+    var migrated = migrateDoneMap(readDoneRaw());
+    if (migrated.changed) writeDone(migrated.map);
+    return migrated.map;
   }
 
   function writeDone(map) {
@@ -409,11 +442,9 @@
     return typeof window !== "undefined" ? window.BanePlaceLens : null;
   }
 
-  function questsForHabitat(list, habitat) {
-    if (!habitat) return list.slice();
-    return list.filter(function (q) {
-      return q.placeTags.indexOf(habitat) >= 0;
-    });
+  /** Universal board: show every quest. Place lens no longer hides cards. */
+  function questsForHabitat(list) {
+    return (list || []).slice();
   }
 
   function antAliveSvg() {
@@ -585,7 +616,6 @@
   }
 
   function renderBoard(l2Open, l3Open) {
-    var habitat = currentHabitat();
     var done = readDone();
     var board2 = document.getElementById("missionBoard");
     var board3 = document.getElementById("missionBoardL3");
@@ -593,20 +623,16 @@
     var grid3 = document.getElementById("missionGridL3");
     var hint2 = document.getElementById("boardHint");
     var hint3 = document.getElementById("boardHintL3");
-    var list2 = questsForHabitat(QUESTS_L2, habitat);
-    var list3 = questsForHabitat(QUESTS_L3, habitat);
+    var list2 = questsForHabitat(QUESTS_L2);
+    var list3 = questsForHabitat(QUESTS_L3);
 
     if (hint2) {
-      hint2.textContent = habitat
-        ? "Level 2 · habitat " + habitat + " · signature signs only · no dangerous close-ups."
-        : "Level 2 · beginning missions · signature signs · pick a looking-at place or browse all.";
+      hint2.textContent =
+        "Level 2 · beginning missions · garden & beach signs anyone can meet · no GPS · no dangerous close-ups.";
     }
     if (hint3) {
-      hint3.textContent = habitat
-        ? "Level 3 · habitat " +
-          habitat +
-          " · same face, different meaning · under-the-hood (not tourist postcard)."
-        : "Level 3 · place meanings + landscape stories tourists usually miss.";
+      hint3.textContent =
+        "Level 3 · place meanings + landscape stories · same full board for every looking-at place.";
     }
 
     if (board2) board2.hidden = !l2Open;
@@ -614,26 +640,12 @@
 
     if (grid2) {
       grid2.innerHTML = "";
-      if (l2Open) {
-        if (!list2.length) {
-          grid2.innerHTML =
-            '<p class="mission-board__hint">No Level 2 missions for this habitat — try suburban, urban, city, coast, or woodland.</p>';
-        } else {
-          appendQuestCards(grid2, list2, done);
-        }
-      }
+      if (l2Open) appendQuestCards(grid2, list2, done);
     }
 
     if (grid3) {
       grid3.innerHTML = "";
-      if (l3Open) {
-        if (!list3.length) {
-          grid3.innerHTML =
-            '<p class="mission-board__hint">No Level 3 missions for this habitat — try another looking-at place.</p>';
-        } else {
-          appendQuestCards(grid3, list3, done);
-        }
-      }
+      if (l3Open) appendQuestCards(grid3, list3, done);
     }
   }
 
@@ -815,11 +827,10 @@
       });
     }
 
+    refresh();
     var coll = window.BaneCodexCollection;
     if (coll && coll.syncNow) {
       coll.syncNow().then(refresh).catch(refresh);
-    } else {
-      refresh();
     }
   }
 
