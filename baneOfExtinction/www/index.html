@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
   <meta name="robots" content="noindex, nofollow" />
   <title>Bane of Extinction</title>
-  <link rel="stylesheet" href="bane.css?v=public1" />
-  <script src="bane-auth-gate.js"></script>
+  <link rel="stylesheet" href="bane.css?v=public2" />
+  <script src="bane-auth-gate.js?v=public2"></script>
   <style>html.auth-checking body { visibility: hidden; }</style>
 </head>
 <body>
@@ -17,9 +17,8 @@
       <p class="tagline">
         Walk, notice, and learn real wildlife into a codex — without bothering the living neighborhood.
       </p>
-      <p class="note" role="note">
-        <strong>Sign in with Google</strong> so your learns and fact book sync.
-        EcoLens works on phone or tablet. Desktop is great for the wildlife codex.
+      <p class="note" id="signInNote" role="note">
+        Checking Odd Trove sign-in…
       </p>
     </header>
 
@@ -60,9 +59,22 @@
     fetch("/bane-of-extinction/api/auth/me", { credentials: "include" })
       .then(function (r) { return r.json(); })
       .then(function (data) {
-        if (data && data.isOwner) {
-          var el = document.getElementById("officeFootLink");
-          if (el) el.hidden = false;
+        var note = document.getElementById("signInNote");
+        if (data && data.signedIn) {
+          if (note) {
+            note.innerHTML =
+              "Signed in as <strong></strong> (Odd Trove Google) — learns sync to this account. " +
+              "EcoLens on phone or tablet; desktop is great for the wildlife codex.";
+            note.querySelector("strong").textContent = data.email || "you";
+          }
+          if (data.isOwner) {
+            var el = document.getElementById("officeFootLink");
+            if (el) el.hidden = false;
+          }
+        } else if (note) {
+          note.innerHTML =
+            "<strong>Odd Trove Google</strong> opens Bane — same sign-in as the hub. " +
+            "EcoLens on phone or tablet; desktop is great for the wildlife codex.";
         }
       })
       .catch(function () {});

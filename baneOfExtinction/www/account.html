@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
   <meta name="robots" content="noindex, nofollow" />
   <title>Sign in — Bane of Extinction</title>
-  <link rel="stylesheet" href="bane.css?v=public1" />
+  <link rel="stylesheet" href="bane.css?v=public2" />
   <style>
     .account-panel {
       margin: 1.25rem 0;
@@ -44,7 +44,8 @@
       font-size: 0.92rem;
       resize: vertical;
     }
-    html.auth-checking body { visibility: hidden; }
+    /* Hide panels until we know Odd Trove session state */
+    #authView[hidden], #signedInView[hidden], #checkingView[hidden] { display: none !important; }
   </style>
 </head>
 <body>
@@ -53,17 +54,21 @@
       <p class="eyebrow"><a href="https://oddtrove.art/">← Odd Trove</a> · <a href="index.html">Bane of Extinction</a></p>
       <h1 class="brand">Your account</h1>
       <p class="tagline">
-        Sign in with Google so your wildlife learns and fact book stay with you across devices.
+        Same Odd Trove Google sign-in as HalaLit, Crocheter, and LoreKeeper — not a separate Bane login.
         A spare Google account is fine.
       </p>
     </header>
 
     <div id="pausedNote" class="note" hidden role="status">
-      <strong>New sign-ups are paused.</strong> Existing players can still sign in. Try again later.
+      <strong>New sign-ups are paused.</strong> Existing Odd Trove players can still open Bane. Try again later.
+    </div>
+
+    <div id="checkingView" class="account-panel" role="status">
+      <p class="status">Checking your Odd Trove Google sign-in…</p>
     </div>
 
     <div id="signedInView" class="account-panel" hidden>
-      <p>You’re signed in as <strong id="signedInEmail"></strong>.</p>
+      <p>You’re signed in as <strong id="signedInEmail"></strong> (Odd Trove Google).</p>
       <p class="note" style="margin-top:0.75rem" id="ownerOfficeHint" hidden>
         You’re the site owner — open <a href="office.html" style="color:var(--accent)">Owner’s Office</a>
         for accounts and private feedback.
@@ -84,9 +89,10 @@
       </div>
     </div>
 
-    <div id="authView" class="account-panel">
+    <div id="authView" class="account-panel" hidden>
       <p class="note" style="margin-bottom:1rem">
-        EcoLens, the wildlife codex, and missions need an Odd Trove Google sign-in so progress can sync.
+        If you already used <strong>Continue with Google</strong> on the Odd Trove hub (or another Odd Trove site),
+        refresh this page — that same sign-in opens Bane. Otherwise tap below once.
       </p>
       <a class="google-btn" id="googleContinueBtn" href="#">Continue with Google</a>
       <p class="status" id="authError" role="alert"></p>
@@ -106,7 +112,10 @@
       }
 
       function googleStartUrl() {
-        var ret = location.origin + "/bane-of-extinction/account.html?return=" + encodeURIComponent(returnTo);
+        var ret =
+          location.origin +
+          "/bane-of-extinction/account.html?return=" +
+          encodeURIComponent(returnTo);
         return (
           "https://oddtrove.art/hub/api/auth/google/start?return=" +
           encodeURIComponent(ret)
@@ -117,6 +126,23 @@
         if (returnTo.indexOf("/bane-of-extinction/") === 0) return returnTo;
         if (returnTo.indexOf("./") === 0 || /^[a-z0-9._-]+\.html/i.test(returnTo)) return returnTo;
         return "./index.html";
+      }
+
+      function showSignedIn(data) {
+        document.getElementById("checkingView").hidden = true;
+        document.getElementById("authView").hidden = true;
+        document.getElementById("signedInView").hidden = false;
+        document.getElementById("signedInEmail").textContent = data.email || "";
+        if (data.isOwner) {
+          document.getElementById("ownerOfficeHint").hidden = false;
+        }
+      }
+
+      function showAuth(msg) {
+        document.getElementById("checkingView").hidden = true;
+        document.getElementById("signedInView").hidden = true;
+        document.getElementById("authView").hidden = false;
+        if (msg) document.getElementById("authError").textContent = msg;
       }
 
       document.getElementById("googleContinueBtn").href = googleStartUrl();
@@ -163,37 +189,68 @@
           });
       });
 
-      fetch("/bane-of-extinction/api/auth/me", { credentials: "include" })
-        .then(function (res) {
+      function finishSignedIn(data) {
+        // Coming from the play gate (or Google return): go straight into Bane.
+        if (params.get("return") || params.get("signup") === "1" || params.get("sso") === "1") {
+          location.replace(safeReturnHref());
+          return;
+        }
+        showSignedIn(data);
+      }
+
+      function checkBane() {
+        return fetch("/bane-of-extinction/api/auth/me", { credentials: "include" }).then(function (res) {
           return res.json().then(function (data) {
-            return { status: res.status, data: data };
+            return { status: res.status, data: data || {} };
           });
-        })
+        });
+      }
+
+      function checkHub() {
+        return fetch("/hub/api/auth/me", { credentials: "include" })
+          .then(function (res) {
+            return res.json();
+          })
+          .catch(function () {
+            return {};
+          });
+      }
+
+      checkBane()
         .then(function (pack) {
           var data = pack.data || {};
-          var err = document.getElementById("authError");
           if (pack.status === 403 || data.error === "signups_disabled") {
             document.getElementById("pausedNote").hidden = false;
-            err.textContent = data.message || "New sign-ups are paused.";
+            showAuth(data.message || "New sign-ups are paused.");
             return;
           }
-          if (data && data.ok && data.signedIn) {
-            document.getElementById("authView").hidden = true;
-            document.getElementById("signedInView").hidden = false;
-            document.getElementById("signedInEmail").textContent = data.email || "";
-            if (data.isOwner) {
-              document.getElementById("ownerOfficeHint").hidden = false;
-            }
-            if (params.get("signup") === "1" && params.get("return")) {
-              // Fresh return from Google — go play
-              location.replace(safeReturnHref());
-            }
+          if (data.ok && data.signedIn) {
+            finishSignedIn(data);
             return;
           }
+          return checkHub().then(function (hub) {
+            if (hub && hub.ok && hub.signedIn) {
+              // Odd Trove session exists — retry BoE (creates player row).
+              return checkBane().then(function (pack2) {
+                if (pack2.data && pack2.data.ok && pack2.data.signedIn) {
+                  finishSignedIn(pack2.data);
+                  return;
+                }
+                if (pack2.status === 403 || (pack2.data && pack2.data.error === "signups_disabled")) {
+                  document.getElementById("pausedNote").hidden = false;
+                  showAuth(pack2.data.message || "New sign-ups are paused.");
+                  return;
+                }
+                showAuth(
+                  "You’re signed into Odd Trove, but Bane couldn’t open the session. Try Continue with Google once, or refresh."
+                );
+              });
+            }
+            showAuth("");
+          });
         })
         .catch(function () {
-          document.getElementById("authError").textContent =
-            "Could not check sign-in. Try Continue with Google.";
+          showAuth("Could not check sign-in. Try Continue with Google.");
         });
     })();
   </script>
