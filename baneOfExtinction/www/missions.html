@@ -5,13 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
   <meta name="robots" content="noindex, nofollow" />
   <title>Neighborhood missions — Bane of Extinction</title>
-  <link rel="stylesheet" href="bane.css?v=live7" />
+  <link rel="stylesheet" href="bane.css?v=public1" />
   <link rel="stylesheet" href="bane-missions.css?v=live3" />
+  <script src="bane-auth-gate.js"></script>
+  <style>html.auth-checking body { visibility: hidden; }</style>
 </head>
 <body>
   <div class="wrap wrap--wide">
     <header class="hero hero--compact">
-      <p class="eyebrow"><a href="index.html">Bane of Extinction</a> · owner beta</p>
+      <p class="eyebrow"><a href="index.html">Bane of Extinction</a> · quiet beta · <a href="account.html">Account</a></p>
       <h1 class="brand">Neighborhood missions</h1>
       <p class="tagline">
         <strong>Level 1</strong> = scans (meet the neighbor).
@@ -38,7 +40,7 @@
       </div>
       <p class="mission-unlock__meta" id="unlockMeta"></p>
       <p class="mission-unlock__meta" id="unlockL3Meta"></p>
-      <button type="button" class="btn secondary" id="peekBtn" hidden>Peek the boards (owner beta)</button>
+      <button type="button" class="btn secondary" id="peekBtn" hidden>Peek the boards (signed-in beta)</button>
     </section>
 
     <section class="mission-board" id="missionBoard" aria-label="Level 2 mission board" hidden>

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Deploy Bane of Extinction owner-beta — static 8085 + API 8086.
+# Deploy Bane of Extinction public quiet beta — static 8085 + API 8086.
 # Also syncs hub index.html. Reloads nginx unless BANE_SKIP_NGINX=1.
 # Uses shared ~/kids-sites/anthropic.key for Claude callouts (same as LoreKeeper).
 # Does NOT restart Halalit or other kids sites.
@@ -156,7 +156,7 @@ REMOTE
 
 echo ""
 echo "Done. Bane of Extinction only — other sites were not restarted."
-echo "After nginx reload: https://oddtrove.art/bane-of-extinction/poppy.html (owner gate)"
+echo "After nginx reload: https://oddtrove.art/bane-of-extinction/ (public quiet beta; Google sign-in)"
 
 if [[ "${BANE_SKIP_NGINX:-0}" != "1" ]]; then
   echo "Syncing nginx config for /bane-of-extinction/ ..."

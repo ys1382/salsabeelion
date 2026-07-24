@@ -193,12 +193,12 @@ Last updated: 2026-07-17
 
 ---
 
-### Bane of Extinction (`baneOfExtinction/` → owner-only `/bane-of-extinction/`)
+### Bane of Extinction (`baneOfExtinction/` → public quiet beta `/bane-of-extinction/`)
 
-**Is:** Family walk / wildlife-learning game (Pokémon Go–style motivation, real organisms). Owner-only beta shell on Odd Trove. Roadmap: [`baneOfExtinction/BANE-OF-EXTINCTION-ROADMAP-AND-TODO.md`](baneOfExtinction/BANE-OF-EXTINCTION-ROADMAP-AND-TODO.md).
+**Is:** Family walk / wildlife-learning game (Pokémon Go–style motivation, real organisms). **Public quiet beta** on Odd Trove — **Odd Trove Google sign-in required** (app gate). Roadmap: [`baneOfExtinction/BANE-OF-EXTINCTION-ROADMAP-AND-TODO.md`](baneOfExtinction/BANE-OF-EXTINCTION-ROADMAP-AND-TODO.md).
 
 **Can do now:**
-- Browse **wildlife codex** on desktop or phone (owner hub cookie) — Claude callouts; demos use CC0 cutouts
+- Browse **wildlife codex** on desktop or phone after Google sign-in — Claude callouts; demos use CC0 cutouts
 - **Learned shelf** — past scans sync to **Odd Trove Google sign-in** (server store + device cache; **one entry per species + life stage**; stylized still + ID; never raw camera)
 - **Shared stage still library** — first successful generate for a species/cultivar + life stage is saved server-side; later scans reuse that picture (no new Gemini image)
 - **Gemini-first ID** — Claude vision only when confidence isn’t high, shelf lookalike risk, or Gemini fails; camera always runs Gemini
@@ -213,14 +213,17 @@ Last updated: 2026-07-17
   - **Level 1** = scans (codex faces)
   - **Level 2** after ~15 finds — signature-sign quests; ant mound with/without + cutaway
   - **Level 3** after a handful of Level 2 missions (**5**) — same organism healthy/meh/warning by place + under-the-hood landscape stories (not tourist postcard facts)
+- **Owner’s Office** — `/bane-of-extinction/office.html` (owner email): player accounts (email + joined), private feedback, **new sign-ups** on/off. Never other players’ learns / scan photos / fact text.
 - Deploy: `bash top/scripts/deploy-bane-of-extinction.sh` (ports **8085** static + **8086** API; reloads nginx by default)
 
 **Cannot do without new work:**
 - Permanent curated art library beyond per-account learned stills
-- Trail Guide, walk timer, buddy
+- Walk timer, buddy
 - Full visual packs for non-ant missions (story cards only until art catches up)
 - Perfect organism-only segmentation (best-effort framing coach for now)
 - Full video / Live Photo of the raw camera frame (out of scope; subtle idle on the generated still only)
+
+**Parked / not building:** Trail Guide (Akinator yes/no ID) — EcoLens is the ID path (roadmap 2026-07-23).
 
 **Not:** Climatic Mysteries. Path **`/bane/`** still redirects to Climatic Mysteries — do not reuse it.
 

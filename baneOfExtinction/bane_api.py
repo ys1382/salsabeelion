@@ -1,13 +1,16 @@
 """
-Bane of Extinction — owner-beta API.
+Bane of Extinction — public quiet beta API (Google sign-in required for play).
 
-- POST /api/wildlife-identify  — Gemini + Claude vision ID (photo not stored)
+- POST /api/wildlife-identify  — Gemini + Claude vision ID (photo not stored; signed-in)
 - POST /api/codex-still        — Gemini image: field-guide still matching this ID + crop
                                   (one shared still per species+life-stage; rescans reuse)
 - POST /api/callouts           — Claude helper facts + native range / conservation status
                                   (optional looking-at place lens; focus modes; no GPS)
-- GET  /api/auth/me            — Odd Trove Google SSO identity (for learned sync)
+- GET  /api/auth/me            — Odd Trove Google SSO + BoE account row (isOwner)
 - GET/PUT /api/learned         — wildlife learns + fact book synced to signed-in Google account
+- POST /api/feedback/submit    — private tip to owner (signed-in)
+- GET  /api/owner/office       — accounts + feedback + settings (owner only)
+- POST /api/owner/settings     — e.g. signupsEnabled (owner only)
 - GET  /api/health
 
 Binds 127.0.0.1 only. Keys from env / shared kids-sites files.
@@ -27,6 +30,7 @@ import re
 import secrets
 import ssl
 import sys
+import threading
 import time
 import urllib.error
 import urllib.parse
@@ -88,6 +92,20 @@ LEARNED_DIR = os.environ.get(
     "BANE_LEARNED_DIR",
     os.path.join(os.path.expanduser("~"), "kids-sites", "bane-server", "learned"),
 )
+ACCOUNTS_PATH = os.environ.get(
+    "BANE_ACCOUNTS_PATH",
+    os.path.join(os.path.expanduser("~"), "kids-sites", "bane-server", "bane-accounts.json"),
+)
+OWNER_EMAIL = (
+    os.environ.get("ODDTROVE_BANE_OWNER_EMAIL")
+    or os.environ.get("ODDTROVE_OWNER_EMAIL")
+    or os.environ.get("HALALIT_OWNER_EMAIL")
+    or "nightofhonour@gmail.com"
+).strip().lower()
+_DEFAULT_SETTINGS = {"signupsEnabled": True}
+_accounts_lock = threading.Lock()
+MAX_FEEDBACK_CHARS = 2000
+MAX_FEEDBACK_KEEP = 200
 STILL_DIR = os.environ.get(
     "BANE_STILL_DIR",
     os.path.join(os.path.expanduser("~"), "kids-sites", "bane-still-cache"),
@@ -1134,6 +1152,145 @@ def _sso_identity(handler: BaseHTTPRequestHandler) -> dict[str, str] | None:
         return identity_from_cookie_header(handler.headers.get("Cookie"))
     except Exception:  # noqa: BLE001
         return None
+
+
+def _is_owner_email(email: str) -> bool:
+    return bool(OWNER_EMAIL) and email.strip().lower() == OWNER_EMAIL
+
+
+def _empty_accounts_store() -> dict[str, Any]:
+    return {
+        "users": {},
+        "feedback": [],
+        "settings": dict(_DEFAULT_SETTINGS),
+    }
+
+
+def _load_accounts_store() -> dict[str, Any]:
+    path = ACCOUNTS_PATH
+    try:
+        with open(path, "r", encoding="utf-8") as fh:
+            raw = json.load(fh)
+    except FileNotFoundError:
+        return _empty_accounts_store()
+    except (OSError, json.JSONDecodeError):
+        return _empty_accounts_store()
+    if not isinstance(raw, dict):
+        return _empty_accounts_store()
+    users = raw.get("users")
+    if not isinstance(users, dict):
+        users = {}
+    feedback = raw.get("feedback")
+    if not isinstance(feedback, list):
+        feedback = []
+    settings = raw.get("settings")
+    if not isinstance(settings, dict):
+        settings = {}
+    merged_settings = dict(_DEFAULT_SETTINGS)
+    merged_settings.update(
+        {k: settings[k] for k in _DEFAULT_SETTINGS if k in settings}
+    )
+    return {"users": users, "feedback": feedback, "settings": merged_settings}
+
+
+def _save_accounts_store(store: dict[str, Any]) -> None:
+    path = ACCOUNTS_PATH
+    parent = os.path.dirname(path)
+    if parent:
+        os.makedirs(parent, exist_ok=True)
+    tmp = path + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as fh:
+        json.dump(store, fh, ensure_ascii=False, indent=2)
+        fh.write("\n")
+    os.replace(tmp, path)
+
+
+def _ensure_account_from_sso(
+    email: str, google_sub: str = ""
+) -> tuple[int, dict[str, Any]]:
+    """Register or refresh a BoE account from hub Google SSO. Returns (http, payload)."""
+    email_n = (email or "").strip().lower()
+    if not email_n or "@" not in email_n:
+        return 401, {
+            "ok": False,
+            "signedIn": False,
+            "error": "sign_in_required",
+        }
+    sub = str(google_sub or "").strip()
+    with _accounts_lock:
+        store = _load_accounts_store()
+        users = store.setdefault("users", {})
+        settings = store.setdefault("settings", dict(_DEFAULT_SETTINGS))
+        existing = users.get(email_n)
+        if isinstance(existing, dict):
+            if sub and not (existing.get("google_sub") or "").strip():
+                existing["google_sub"] = sub
+            if _is_owner_email(email_n):
+                existing["is_owner"] = True
+            _save_accounts_store(store)
+            return 200, {
+                "ok": True,
+                "signedIn": True,
+                "email": email_n,
+                "isOwner": _is_owner_email(email_n),
+                "googleSub": existing.get("google_sub") or sub,
+            }
+        for u in users.values():
+            if isinstance(u, dict) and sub and (u.get("google_sub") or "") == sub:
+                other = str(u.get("email") or "").strip().lower()
+                if other and other != email_n:
+                    return 409, {
+                        "ok": False,
+                        "signedIn": False,
+                        "error": "google_email_conflict",
+                    }
+        signups_on = bool(settings.get("signupsEnabled", True))
+        if not signups_on and len(users) > 0 and not _is_owner_email(email_n):
+            return 403, {
+                "ok": False,
+                "signedIn": False,
+                "error": "signups_disabled",
+                "message": "New Bane of Extinction accounts are paused. Try again later.",
+            }
+        users[email_n] = {
+            "email": email_n,
+            "google_sub": sub,
+            "created_at": int(time.time()),
+            "is_owner": _is_owner_email(email_n),
+        }
+        _save_accounts_store(store)
+        return 200, {
+            "ok": True,
+            "signedIn": True,
+            "email": email_n,
+            "isOwner": _is_owner_email(email_n),
+            "googleSub": sub,
+        }
+
+
+def _session_player(handler: BaseHTTPRequestHandler) -> tuple[int, dict[str, Any]]:
+    identity = _sso_identity(handler)
+    if not identity or not identity.get("email"):
+        return 401, {
+            "ok": False,
+            "signedIn": False,
+            "error": "sign_in_required",
+            "message": "Sign in with Google to use Bane of Extinction.",
+            "ssoAvailable": identity_from_cookie_header is not None,
+        }
+    return _ensure_account_from_sso(
+        str(identity.get("email") or ""),
+        str(identity.get("google_sub") or ""),
+    )
+
+
+def _require_owner(handler: BaseHTTPRequestHandler) -> tuple[int, dict[str, Any]]:
+    code, payload = _session_player(handler)
+    if code != 200 or not payload.get("signedIn"):
+        return code, payload
+    if not payload.get("isOwner"):
+        return 403, {"ok": False, "error": "owner_only"}
+    return 200, payload
 
 
 def _learned_path(email: str) -> str:
@@ -4134,50 +4291,94 @@ class Handler(BaseHTTPRequestHandler):
             )
             return
         if path in ("/api/auth/me", "/auth/me"):
+            code, payload = _session_player(self)
+            if code == 200:
+                _json(self, 200, payload)
+                return
+            # Not signed in, or signups paused for this Google identity
+            if code == 403:
+                _json(self, 403, payload)
+                return
             identity = _sso_identity(self)
-            if identity:
-                _json(
-                    self,
-                    200,
-                    {
-                        "ok": True,
-                        "signedIn": True,
-                        "email": identity.get("email") or "",
-                        "googleSub": identity.get("google_sub") or "",
+            if identity and identity.get("email"):
+                _json(self, code, payload)
+                return
+            _json(
+                self,
+                200,
+                {
+                    "ok": True,
+                    "signedIn": False,
+                    "ssoAvailable": identity_from_cookie_header is not None,
+                },
+            )
+            return
+        if path in ("/api/owner/office", "/owner/office"):
+            code, payload = _require_owner(self)
+            if code != 200:
+                _json(self, code, payload)
+                return
+            with _accounts_lock:
+                store = _load_accounts_store()
+                accounts = []
+                for email_n, row in (store.get("users") or {}).items():
+                    if not isinstance(row, dict):
+                        continue
+                    accounts.append(
+                        {
+                            "email": row.get("email") or email_n,
+                            "createdAt": int(row.get("created_at") or 0),
+                            "isOwner": _is_owner_email(str(row.get("email") or email_n)),
+                        }
+                    )
+                accounts.sort(key=lambda r: r.get("createdAt") or 0)
+                all_feedback = [
+                    m for m in (store.get("feedback") or []) if isinstance(m, dict)
+                ]
+                messages = list(reversed(all_feedback[-50:]))
+                settings = store.get("settings") or dict(_DEFAULT_SETTINGS)
+                feedback_total = len(all_feedback)
+            _json(
+                self,
+                200,
+                {
+                    "ok": True,
+                    "stats": {
+                        "playerAccounts": len(accounts),
+                        "readerMessages": feedback_total,
                     },
-                )
-            else:
-                _json(
-                    self,
-                    200,
-                    {
-                        "ok": True,
-                        "signedIn": False,
-                        "ssoAvailable": identity_from_cookie_header is not None,
+                    "accounts": accounts,
+                    "readerMessages": messages,
+                    "settings": {
+                        "signupsEnabled": bool(settings.get("signupsEnabled", True))
                     },
-                )
+                },
+            )
             return
         if path == "/api/learned":
-            identity = _sso_identity(self)
-            if not identity or not identity.get("email"):
+            code, payload = _session_player(self)
+            if code != 200 or not payload.get("email"):
                 _json(
                     self,
-                    401,
+                    401 if code == 401 else code,
                     {
                         "ok": False,
-                        "error": "sign_in_required",
-                        "message": "Sign in with Google to sync learns across devices.",
+                        "error": payload.get("error") or "sign_in_required",
+                        "message": payload.get("message")
+                        or "Sign in with Google to sync learns across devices.",
                     },
                 )
                 return
-            blob = _read_learned_blob(str(identity["email"]))
+            email = str(payload["email"])
+            blob = _read_learned_blob(email)
             _json(
                 self,
                 200,
                 {
                     "ok": True,
                     "signedIn": True,
-                    "email": identity["email"],
+                    "email": email,
+                    "isOwner": bool(payload.get("isOwner")),
                     "entries": blob["entries"],
                     "facts": blob["facts"],
                 },
@@ -4216,7 +4417,85 @@ class Handler(BaseHTTPRequestHandler):
             _json(self, 400, {"ok": False, "error": "invalid_json"})
             return
 
+        if path in ("/api/owner/settings", "/owner/settings"):
+            code, payload = _require_owner(self)
+            if code != 200:
+                _json(self, code, payload)
+                return
+            flags = body.get("flags") if isinstance(body.get("flags"), dict) else body
+            if not isinstance(flags, dict):
+                _json(self, 400, {"ok": False, "error": "invalid_flags"})
+                return
+            with _accounts_lock:
+                store = _load_accounts_store()
+                settings = store.setdefault("settings", dict(_DEFAULT_SETTINGS))
+                if "signupsEnabled" in flags:
+                    settings["signupsEnabled"] = bool(flags.get("signupsEnabled"))
+                _save_accounts_store(store)
+                out_settings = {
+                    "signupsEnabled": bool(settings.get("signupsEnabled", True))
+                }
+            _json(self, 200, {"ok": True, "settings": out_settings})
+            return
+
+        if path in ("/api/feedback/submit", "/feedback/submit"):
+            code, payload = _session_player(self)
+            if code != 200 or not payload.get("email"):
+                _json(
+                    self,
+                    401 if code == 401 else code,
+                    {
+                        "ok": False,
+                        "error": payload.get("error") or "sign_in_required",
+                        "message": payload.get("message")
+                        or "Sign in with Google to send feedback.",
+                    },
+                )
+                return
+            message = _clip_plain(str(body.get("message") or ""), MAX_FEEDBACK_CHARS)
+            if not message:
+                _json(self, 400, {"ok": False, "error": "empty_message"})
+                return
+            source = _clip_plain(str(body.get("source") or "tips_box"), 64) or "tips_box"
+            meta = body.get("meta") if isinstance(body.get("meta"), dict) else {}
+            safe_meta = {
+                k: _clip_plain(str(v), 120)
+                for k, v in list(meta.items())[:8]
+            }
+            row = {
+                "email": str(payload["email"]),
+                "source": source,
+                "message": message,
+                "meta": safe_meta,
+                "createdAt": int(time.time()),
+            }
+            with _accounts_lock:
+                store = _load_accounts_store()
+                feedback = store.setdefault("feedback", [])
+                if not isinstance(feedback, list):
+                    feedback = []
+                    store["feedback"] = feedback
+                feedback.append(row)
+                if len(feedback) > MAX_FEEDBACK_KEEP:
+                    store["feedback"] = feedback[-MAX_FEEDBACK_KEEP:]
+                _save_accounts_store(store)
+            _json(self, 200, {"ok": True})
+            return
+
         if path == "/api/wildlife-identify":
+            auth_code, auth_payload = _session_player(self)
+            if auth_code != 200:
+                _json(
+                    self,
+                    401 if auth_code == 401 else auth_code,
+                    {
+                        "ok": False,
+                        "error": auth_payload.get("error") or "sign_in_required",
+                        "message": auth_payload.get("message")
+                        or "Sign in with Google to use EcoLens.",
+                    },
+                )
+                return
             image_b64 = str(body.get("imageBase64") or "").strip()
             mime = str(body.get("mimeType") or "image/jpeg").strip()
             want_still = bool(
@@ -4250,6 +4529,19 @@ class Handler(BaseHTTPRequestHandler):
             return
 
         if path == "/api/codex-still":
+            auth_code, auth_payload = _session_player(self)
+            if auth_code != 200:
+                _json(
+                    self,
+                    401 if auth_code == 401 else auth_code,
+                    {
+                        "ok": False,
+                        "error": auth_payload.get("error") or "sign_in_required",
+                        "message": auth_payload.get("message")
+                        or "Sign in with Google to generate codex art.",
+                    },
+                )
+                return
             image_b64 = str(body.get("imageBase64") or "").strip()
             mime = str(body.get("mimeType") or "image/jpeg").strip()
             common = str(body.get("commonName") or body.get("common") or "").strip()
@@ -4284,6 +4576,19 @@ class Handler(BaseHTTPRequestHandler):
             return
 
         if path == "/api/callouts":
+            auth_code, auth_payload = _session_player(self)
+            if auth_code != 200:
+                _json(
+                    self,
+                    401 if auth_code == 401 else auth_code,
+                    {
+                        "ok": False,
+                        "error": auth_payload.get("error") or "sign_in_required",
+                        "message": auth_payload.get("message")
+                        or "Sign in with Google to load callouts.",
+                    },
+                )
+                return
             common = str(body.get("commonName") or body.get("common") or "").strip()
             latin = str(body.get("latinName") or body.get("latin") or "").strip()
             cultivar = str(body.get("cultivar") or "").strip()
@@ -4383,19 +4688,20 @@ class Handler(BaseHTTPRequestHandler):
             return
 
         if path in ("/api/learned", "/api/learned/sync"):
-            identity = _sso_identity(self)
-            if not identity or not identity.get("email"):
+            code, payload = _session_player(self)
+            if code != 200 or not payload.get("email"):
                 _json(
                     self,
-                    401,
+                    401 if code == 401 else code,
                     {
                         "ok": False,
-                        "error": "sign_in_required",
-                        "message": "Sign in with Google to sync learns across devices.",
+                        "error": payload.get("error") or "sign_in_required",
+                        "message": payload.get("message")
+                        or "Sign in with Google to sync learns across devices.",
                     },
                 )
                 return
-            email = str(identity["email"])
+            email = str(payload["email"])
             remote_blob = _read_learned_blob(email)
             remote = remote_blob["entries"]
             remote_facts = remote_blob["facts"]

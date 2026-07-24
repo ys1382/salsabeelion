@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Owner’s Office — Bane of Extinction</title>
+  <link rel="stylesheet" href="bane.css?v=public1" />
+  <script src="bane-auth-gate.js"></script>
+  <style>
+    html.auth-checking body { visibility: hidden; }
+    .office-wrap { max-width: 48rem; }
+    .office-section {
+      margin: 0 0 0.75rem;
+      padding: 1rem 1.1rem;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: rgba(0, 0, 0, 0.22);
+    }
+    .office-section summary {
+      list-style: none;
+      cursor: pointer;
+      font-family: system-ui, sans-serif;
+      color: var(--accent);
+      font-weight: 600;
+    }
+    .office-section summary::-webkit-details-marker { display: none; }
+    .office-section__body { margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--line); }
+    .hint { font-family: system-ui, sans-serif; font-size: 0.86rem; color: var(--muted); margin: 0 0 0.75rem; }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+      gap: 0.65rem;
+      margin-bottom: 1rem;
+    }
+    .stat {
+      text-align: center;
+      padding: 0.75rem;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: rgba(0, 0, 0, 0.18);
+    }
+    .stat strong { display: block; font-size: 1.45rem; color: var(--accent); }
+    .stat span { font-family: system-ui, sans-serif; font-size: 0.78rem; color: var(--muted); }
+    table { width: 100%; border-collapse: collapse; font-family: system-ui, sans-serif; font-size: 0.86rem; }
+    th, td { text-align: left; padding: 0.4rem 0.45rem; border-bottom: 1px solid var(--line); }
+    th { color: var(--muted); font-weight: 600; }
+    .feedback-item {
+      font-family: system-ui, sans-serif;
+      font-size: 0.86rem;
+      padding: 0.55rem 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .switch {
+      display: flex;
+      gap: 0.55rem;
+      align-items: flex-start;
+      font-family: system-ui, sans-serif;
+      font-size: 0.9rem;
+      margin: 0.45rem 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap office-wrap">
+    <header class="hero hero--compact">
+      <p class="eyebrow"><a href="index.html">← Bane of Extinction</a> · <a href="account.html">Account</a></p>
+      <h1 class="brand">Owner’s Office</h1>
+      <p class="tagline">Private to you. Player emails and tips only — never their scans or codex text.</p>
+    </header>
+
+    <div id="denied" class="note" hidden role="alert">
+      This page is only for the site owner.
+    </div>
+
+    <div id="office" hidden>
+      <div class="stats" id="statsRow" aria-label="Summary counts"></div>
+
+      <details class="office-section" open>
+        <summary>Private feedback</summary>
+        <div class="office-section__body">
+          <p class="hint">One-way tips from signed-in players — not a public wall.</p>
+          <div id="readerMessagesList"></div>
+        </div>
+      </details>
+
+      <details class="office-section" open>
+        <summary>Player accounts</summary>
+        <div class="office-section__body">
+          <p class="hint">Emails and join dates only.</p>
+          <table>
+            <thead><tr><th>Email</th><th>Joined</th></tr></thead>
+            <tbody id="accountsList"></tbody>
+          </table>
+        </div>
+      </details>
+
+      <details class="office-section">
+        <summary>Site switches</summary>
+        <div class="office-section__body">
+          <p class="hint">Pause new Google accounts without blocking people who already play.</p>
+          <label class="switch">
+            <input type="checkbox" id="flagSignups" checked />
+            <span><strong>New sign-ups</strong> — allow creating accounts (sign-in still works)</span>
+          </label>
+          <button type="button" class="btn primary" id="saveSettingsBtn" style="margin-top:0.75rem">Save switches</button>
+          <p class="status" id="settingsStatus" aria-live="polite"></p>
+        </div>
+      </details>
+    </div>
+  </div>
+  <script>
+    (function () {
+      function fmtDate(ts) {
+        if (!ts) return "—";
+        try {
+          return new Date(ts * 1000).toLocaleDateString(undefined, {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+          });
+        } catch (e) {
+          return "—";
+        }
+      }
+
+      function renderStats(stats) {
+        var row = document.getElementById("statsRow");
+        row.innerHTML = "";
+        [
+          ["Player accounts", stats.playerAccounts || 0],
+          ["Private tips", stats.readerMessages || 0],
+        ].forEach(function (pair) {
+          var div = document.createElement("div");
+          div.className = "stat";
+          div.innerHTML = "<strong>" + pair[1] + "</strong><span>" + pair[0] + "</span>";
+          row.appendChild(div);
+        });
+      }
+
+      function renderMessages(list) {
+        var root = document.getElementById("readerMessagesList");
+        root.innerHTML = "";
+        if (!list || !list.length) {
+          root.textContent = "No feedback yet.";
+          return;
+        }
+        list.forEach(function (row) {
+          var div = document.createElement("div");
+          div.className = "feedback-item";
+          div.textContent =
+            (row.email || "?") +
+            " — “" +
+            String(row.message || "").slice(0, 220) +
+            "” · " +
+            fmtDate(row.createdAt);
+          root.appendChild(div);
+        });
+      }
+
+      function loadOffice() {
+        return fetch("/bane-of-extinction/api/owner/office", { credentials: "include" })
+          .then(function (res) {
+            return res.json().then(function (data) {
+              return { status: res.status, data: data };
+            });
+          })
+          .then(function (pack) {
+            if (pack.status === 403 || !(pack.data && pack.data.ok)) {
+              document.getElementById("denied").hidden = false;
+              return;
+            }
+            var res = pack.data;
+            document.getElementById("office").hidden = false;
+            renderStats(res.stats || {});
+            renderMessages(res.readerMessages || []);
+            var acc = document.getElementById("accountsList");
+            acc.innerHTML = "";
+            (res.accounts || []).forEach(function (row) {
+              var tr = document.createElement("tr");
+              var tdE = document.createElement("td");
+              tdE.textContent = row.email + (row.isOwner ? " (you)" : "");
+              var tdD = document.createElement("td");
+              tdD.textContent = fmtDate(row.createdAt);
+              tr.appendChild(tdE);
+              tr.appendChild(tdD);
+              acc.appendChild(tr);
+            });
+            document.getElementById("flagSignups").checked = !!(
+              res.settings && res.settings.signupsEnabled
+            );
+          });
+      }
+
+      document.getElementById("saveSettingsBtn").addEventListener("click", function () {
+        var st = document.getElementById("settingsStatus");
+        st.textContent = "Saving…";
+        fetch("/bane-of-extinction/api/owner/settings", {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            flags: { signupsEnabled: document.getElementById("flagSignups").checked },
+          }),
+        })
+          .then(function (res) {
+            return res.json();
+          })
+          .then(function (data) {
+            st.textContent = data && data.ok ? "Saved." : "Could not save.";
+          })
+          .catch(function () {
+            st.textContent = "Could not save.";
+          });
+      });
+
+      fetch("/bane-of-extinction/api/auth/me", { credentials: "include" })
+        .then(function (res) {
+          return res.json();
+        })
+        .then(function (data) {
+          if (!(data && data.signedIn && data.isOwner)) {
+            document.getElementById("denied").hidden = false;
+            return;
+          }
+          return loadOffice();
+        })
+        .catch(function () {
+          document.getElementById("denied").hidden = false;
+        });
+    })();
+  </script>
+</body>
+</html>

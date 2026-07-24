@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Sign in — Bane of Extinction</title>
+  <link rel="stylesheet" href="bane.css?v=public1" />
+  <style>
+    .account-panel {
+      margin: 1.25rem 0;
+      padding: 1.1rem 1.2rem;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: rgba(0, 0, 0, 0.22);
+    }
+    .google-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      max-width: 22rem;
+      padding: 0.7rem 1rem;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: var(--accent-dim);
+      color: var(--accent);
+      font-family: system-ui, sans-serif;
+      font-weight: 600;
+      text-decoration: none;
+    }
+    .google-btn:hover { filter: brightness(1.08); }
+    .account-actions { display: flex; flex-wrap: wrap; gap: 0.65rem; margin-top: 0.85rem; }
+    .feedback-box {
+      width: 100%;
+      min-height: 5.5rem;
+      margin: 0.5rem 0 0.75rem;
+      padding: 0.65rem 0.75rem;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: rgba(0, 0, 0, 0.28);
+      color: var(--ink);
+      font-family: system-ui, sans-serif;
+      font-size: 0.92rem;
+      resize: vertical;
+    }
+    html.auth-checking body { visibility: hidden; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="hero hero--compact">
+      <p class="eyebrow"><a href="https://oddtrove.art/">← Odd Trove</a> · <a href="index.html">Bane of Extinction</a></p>
+      <h1 class="brand">Your account</h1>
+      <p class="tagline">
+        Sign in with Google so your wildlife learns and fact book stay with you across devices.
+        A spare Google account is fine.
+      </p>
+    </header>
+
+    <div id="pausedNote" class="note" hidden role="status">
+      <strong>New sign-ups are paused.</strong> Existing players can still sign in. Try again later.
+    </div>
+
+    <div id="signedInView" class="account-panel" hidden>
+      <p>You’re signed in as <strong id="signedInEmail"></strong>.</p>
+      <p class="note" style="margin-top:0.75rem" id="ownerOfficeHint" hidden>
+        You’re the site owner — open <a href="office.html" style="color:var(--accent)">Owner’s Office</a>
+        for accounts and private feedback.
+      </p>
+      <div class="account-actions">
+        <a class="btn primary" id="backPlayBtn" href="index.html">Back to Bane</a>
+        <button type="button" class="btn secondary" id="signOutBtn">Sign out</button>
+      </div>
+
+      <div style="margin-top:1.35rem">
+        <h2 class="brand" style="font-size:1.15rem;margin:0 0 0.35rem">Private feedback</h2>
+        <p class="tagline" style="font-size:0.92rem;margin:0">
+          One-way tip to the owner — not a public wall. Optional.
+        </p>
+        <textarea id="feedbackText" class="feedback-box" maxlength="2000" placeholder="What would make walks or EcoLens better?"></textarea>
+        <button type="button" class="btn secondary" id="feedbackSend">Send feedback</button>
+        <p class="status" id="feedbackStatus" aria-live="polite"></p>
+      </div>
+    </div>
+
+    <div id="authView" class="account-panel">
+      <p class="note" style="margin-bottom:1rem">
+        EcoLens, the wildlife codex, and missions need an Odd Trove Google sign-in so progress can sync.
+      </p>
+      <a class="google-btn" id="googleContinueBtn" href="#">Continue with Google</a>
+      <p class="status" id="authError" role="alert"></p>
+    </div>
+  </div>
+  <script>
+    (function () {
+      var params = new URLSearchParams(location.search || "");
+      var returnTo = params.get("return") || "./index.html";
+      if (returnTo.indexOf("http://") === 0 || returnTo.indexOf("https://") === 0) {
+        if (returnTo.indexOf("https://oddtrove.art/bane-of-extinction/") !== 0) {
+          returnTo = "./index.html";
+        }
+      }
+      if (params.get("paused") === "1") {
+        document.getElementById("pausedNote").hidden = false;
+      }
+
+      function googleStartUrl() {
+        var ret = location.origin + "/bane-of-extinction/account.html?return=" + encodeURIComponent(returnTo);
+        return (
+          "https://oddtrove.art/hub/api/auth/google/start?return=" +
+          encodeURIComponent(ret)
+        );
+      }
+
+      function safeReturnHref() {
+        if (returnTo.indexOf("/bane-of-extinction/") === 0) return returnTo;
+        if (returnTo.indexOf("./") === 0 || /^[a-z0-9._-]+\.html/i.test(returnTo)) return returnTo;
+        return "./index.html";
+      }
+
+      document.getElementById("googleContinueBtn").href = googleStartUrl();
+      document.getElementById("backPlayBtn").href = safeReturnHref();
+
+      document.getElementById("signOutBtn").addEventListener("click", function () {
+        fetch("https://oddtrove.art/hub/api/auth/logout", {
+          method: "POST",
+          credentials: "include",
+        })
+          .catch(function () {})
+          .then(function () {
+            location.replace("./account.html?signup=1");
+          });
+      });
+
+      document.getElementById("feedbackSend").addEventListener("click", function () {
+        var text = (document.getElementById("feedbackText").value || "").trim();
+        var st = document.getElementById("feedbackStatus");
+        if (!text) {
+          st.textContent = "Write a short note first.";
+          return;
+        }
+        st.textContent = "Sending…";
+        fetch("/bane-of-extinction/api/feedback/submit", {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ source: "tips_box", message: text, meta: { page: "account" } }),
+        })
+          .then(function (res) {
+            return res.json();
+          })
+          .then(function (data) {
+            if (data && data.ok) {
+              document.getElementById("feedbackText").value = "";
+              st.textContent = "Sent — thank you.";
+            } else {
+              st.textContent = (data && data.message) || "Could not send.";
+            }
+          })
+          .catch(function () {
+            st.textContent = "Could not send.";
+          });
+      });
+
+      fetch("/bane-of-extinction/api/auth/me", { credentials: "include" })
+        .then(function (res) {
+          return res.json().then(function (data) {
+            return { status: res.status, data: data };
+          });
+        })
+        .then(function (pack) {
+          var data = pack.data || {};
+          var err = document.getElementById("authError");
+          if (pack.status === 403 || data.error === "signups_disabled") {
+            document.getElementById("pausedNote").hidden = false;
+            err.textContent = data.message || "New sign-ups are paused.";
+            return;
+          }
+          if (data && data.ok && data.signedIn) {
+            document.getElementById("authView").hidden = true;
+            document.getElementById("signedInView").hidden = false;
+            document.getElementById("signedInEmail").textContent = data.email || "";
+            if (data.isOwner) {
+              document.getElementById("ownerOfficeHint").hidden = false;
+            }
+            if (params.get("signup") === "1" && params.get("return")) {
+              // Fresh return from Google — go play
+              location.replace(safeReturnHref());
+            }
+            return;
+          }
+        })
+        .catch(function () {
+          document.getElementById("authError").textContent =
+            "Could not check sign-in. Try Continue with Google.";
+        });
+    })();
+  </script>
+</body>
+</html>

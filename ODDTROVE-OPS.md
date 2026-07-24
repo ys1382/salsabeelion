@@ -47,8 +47,8 @@ Nginx config (`top/nginx/oddtrove.art.conf`) is **not** applied by deploy script
 | `/halalyrics/api/` | 8084 | HalaLyrics Songcheck API |
 | `/cleanscreen/` | 8081 | Owner hub cookie |
 | `/cleanscreen/api/` | 8082 | CleanScreen search API |
-| `/bane-of-extinction/` | 8085 | Owner hub cookie; wildlife walk / codex beta |
-| `/bane-of-extinction/api/` | 8086 | Claude callout facts (uses shared `anthropic.key`) |
+| `/bane-of-extinction/` | 8085 | Public quiet beta; Google sign-in required (app); wildlife walk / codex |
+| `/bane-of-extinction/api/` | 8086 | Claude callouts + EcoLens + learned sync + Owner’s Office (uses shared `anthropic.key`) |
 | `/habit-tree/` | 8087 | Owner hub cookie; Habit Tree companion stub |
 | `/hub/api/` | 8077 | Hub owner sign-in |
 | `/climatic-mysteries/` | 8060 | Owner hub cookie; separate deploy |

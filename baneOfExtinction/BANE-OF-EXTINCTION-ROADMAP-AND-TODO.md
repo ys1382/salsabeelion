@@ -1,8 +1,9 @@
 # Bane of Extinction — roadmap & todo
 
 **Working title:** Bane of Extinction (for now).  
-**Status:** Owner-only beta shell on Odd Trove (live stub). Walk / camera / Trail Guide not built yet.  
-**Live URL:** https://oddtrove.art/bane-of-extinction/ (hub owner cookie — same gate as Maestro’s / CleanScreen)  
+**Status:** Public quiet beta on Odd Trove. **Google sign-in required** (app gate). EcoLens + wildlife codex shipped; walk timer / buddy not built yet. **Trail Guide (Akinator yes/no) is parked — not building** (pre-EcoLens idea).  
+**Live URL:** https://oddtrove.art/bane-of-extinction/ (hub public card; Odd Trove Google SSO)  
+**Owner’s Office:** `/bane-of-extinction/office.html` — player accounts, private feedback, new sign-ups switch (never other players’ learns).  
 **Related Cursor plan:** `.cursor/plans/wildlife_walk_game_17209669.plan.md` (keep in sync when possible).
 
 **What it is:** A family-friendly, conservation-minded walk game with Pokémon Go–style motivation (walk, buddy, streaks, collection) aimed at **real wildlife** — without bothering animals. Players **learn** organisms into a **wildlife codex** — never “catch” them.
@@ -11,15 +12,16 @@
 
 ---
 
-## Hosting (locked 2026-07-18)
+## Hosting (locked 2026-07-23 — public quiet beta)
 
 | Item | Decision |
 |------|----------|
-| Visibility | **Owner-only beta** on Odd Trove (not public) |
+| Visibility | **Public quiet beta** on Odd Trove (Google sign-in required in the app) |
 | Path | **`/bane-of-extinction/`** (port **8085**) |
 | Do not use | **`/bane/`** — still Climatic Mysteries redirect |
-| Desktop | **Wildlife codex** browse OK |
-| Camera / scan | **Phone or tablet only** when built (Halalit scanner–style handheld gate). Desktop shows copy to open on phone. |
+| Desktop | **Wildlife codex** browse OK (after sign-in) |
+| Camera / scan | **Phone or tablet** (Halalit scanner–style handheld gate). Desktop shows copy to open on phone. |
+| Accounts | Odd Trove **Google** SSO; learns + fact book sync; Owner’s Office for accounts / feedback / sign-ups switch |
 | Deploy | `bash top/scripts/deploy-bane-of-extinction.sh` |
 
 ---
@@ -45,7 +47,7 @@
 
 - **No GPS**, no map pins on wildlife, no step tracker required.
 - Optional **region + habitat** at walk start (e.g. SoCal beach vs NorCal beach) to shrink the species pool.
-- If place is **skipped**, Trail Guide still works — a few extra place-like questions first, hard-capped so it does not drag.
+- If place is **skipped**, EcoLens / browse still work — species pool stays broader; no yes/no question tree.
 - Season can come from the date.
 
 ### Place lens stack (locked 2026-07-21 — personalized facts, no tracking)
@@ -65,8 +67,7 @@ Privacy copy: for all the game knows, they’re reading about somewhere they kno
 ### Size as a first-class ID clue
 
 - When species differ mainly by size (e.g. **raven bigger than crow**), the game must use size — do not flatten them into one “black bird.”
-- Trail Guide: early size questions (“bigger than a crow?” / “about crow-sized?”).
-- Camera path: size is harder without scale — use proportions + one follow-up size question when crow vs raven (or similar) is ambiguous.
+- EcoLens: size is harder without scale — use proportions + one follow-up size question when crow vs raven (or similar) is ambiguous.
 - Result copy may say “likely raven — larger” / “likely crow — smaller” when unsure.
 
 ---
@@ -76,33 +77,14 @@ Privacy copy: for all the game knows, they’re reading about somewhere they kno
 1. **Start walk** — timer; optional quiet/curious mood.
 2. **Set place (optional)** — region + habitat; or skip.
 3. **Walk prompts** — listen, look up, notice habitat clues.
-4. **Identify** — Trail Guide and/or optional Seek-style camera (below).
+4. **Identify** — **EcoLens** (Seek-style camera; below).
 5. **Codex reveal + buddy/streak** — stylized still on blueprint-style page; rewards from walk time and IDs.
 
 ---
 
-## Two ways to identify
+## How to identify — EcoLens (locked)
 
-### A. Trail Guide (primary — Akinator-style)
-
-Yes/no or either/or questions until a species (or short shortlist):
-
-- Habitat / place cues when needed.
-- Size cues when they matter (crow vs raven, etc.).
-- Features: webbed feet, colors, posture, etc.
-
-**Speeds:**
-
-| Place | Rough question count |
-|-------|----------------------|
-| Region + habitat set | ~3–4 |
-| Place skipped | ~5–6 max (hard cap), then top match or 2–3 guesses + “maybe” |
-
-**Confirm:** “Is this your [bird / mammal / fungus / …]?” with common + Latin name. Yes / close (next guess) / not sure (“maybe”).
-
-### B. Camera (Seek-like — optional)
-
-Inspired by **iNaturalist Seek**, with Halalit photo privacy:
+**Primary ID path:** phone camera (Seek-like), with Halalit photo privacy. **Not building:** Trail Guide / Akinator yes-no question tree (parked 2026-07-23 — that was the plan before EcoLens).
 
 1. Player photographs the organism.
 2. App isolates **organism only** (not hand/person/background clutter meant as PII).
@@ -110,7 +92,7 @@ Inspired by **iNaturalist Seek**, with Halalit photo privacy:
 4. Player confirms (**This looks right**) or rejects (**Not this** → alternatives / re-ID). Photo deleted on confirm, when guesses run dry, on leave, or idle timeout — never kept for later.
 5. Player gets a **natural field-guide still** of the organism (generated from the crop + ID — not a Live Photo / moving raw video). Matches color and form of *this* scan (e.g. red sunflower stays red). Subtle idle (bob/sway) on the still is OK; full “animate the photo into video” stays out of scope.
 
-**v1 note:** Trail Guide can ship first; camera + stylize may be v2 if needed — but privacy + codex rules above stay locked either way.
+Privacy + codex rules above stay locked.
 
 ---
 
@@ -124,7 +106,7 @@ PoGo “new Pokédex entry” energy, for real organisms:
 - Status/range: **NatureServe Explorer** when the scientific name matches (CC BY; attribution in disclaimer). No IUCN site/API. Claude may refine CA to NorCal/SoCal; curated fallbacks for demos / misses. Not Wikipedia-as-sole-source.
 - That page is the permanent **wildlife codex** entry for that organism type.
 - Subtle still-image idle animation OK; not a live moving photo of the real animal.
-- Curated royalty-free reference art may fill entries when camera stylize is not used (Trail Guide–only path).
+- Curated royalty-free reference art may fill entries when camera stylize is not used (browse / demo stubs).
 
 ### Callout labels (locked direction 2026-07-18)
 
@@ -179,13 +161,14 @@ After the still “freezes” on the codex card:
 ## Active tasks
 
 - [x] Owner-only beta shell on Odd Trove (`/bane-of-extinction/`, hub link, nginx + deploy script)
+- [x] Public quiet beta + Google sign-in gate + Owner’s Office (accounts, feedback, sign-ups switch) — 2026-07-23
 - [x] Wildlife codex stub page (desktop + phone browse)
 - [x] Handheld gate messaging (camera later; desktop = codex)
 - [x] Codex callout panel direction (Claude facts; organism + evidence; no Wikipedia)
 - [x] California poppy stub (`poppy.html` + Claude `/api/callouts`; Watermelon Heaven optional)
-- [ ] Core loop: walk → optional place → ID → codex → buddy/streak
-- [ ] Trail Guide engine (fast path + skip-place path with hard cap)
-- [ ] Size-first disambiguation (crow vs raven as test case)
+- [ ] Core loop: walk → optional place → EcoLens ID → codex → buddy/streak
+- [x] ~~Trail Guide engine~~ — **parked / not building** (pre-EcoLens; EcoLens is the ID path)
+- [ ] Size-first disambiguation on EcoLens (crow vs raven as test case)
 - [ ] Ethics / non-invasive onboarding copy
 - [ ] First regional content pack (species, questions, reference art + common + Latin)
 - [x] Wildlife codex UI — blueprint reveal + permanent entries (device-local learned shelf; real IDs beyond demos)
@@ -210,16 +193,17 @@ After the still “freezes” on the codex card:
 
 1. ~~Owner-only shell + empty codex~~ **shipped**
 2. ~~California poppy Claude callout stub~~ **shipped** (`poppy.html`)
-3. Walk + buddy + streak  
-4. Trail Guide for one region, 2–3 habitats  
-5. Codex from IDs (blueprint reveal; curated stills OK)  
+3. ~~EcoLens camera + stylize + confirm~~ **shipped**
+4. Walk + buddy + streak  
+5. Codex from IDs (blueprint reveal; curated stills OK) — largely shipped; keep polishing  
 6. Ethics onboarding  
 7. Optional: a few test QR trail stops  
-8. Phone Seek-style camera + stylize (after Trail Guide)
+8. ~~Trail Guide~~ — **parked / not building**
 
 ## Later / parked
 
-- [ ] Camera + stylize as full Seek-like path (if not in v1)
+- [x] ~~Camera + stylize as full Seek-like path~~ **shipped** (EcoLens)
+- [x] **Trail Guide / Akinator yes-no** — **parked / not building** (2026-07-23). Do not rebuild unless owner reopens it.
 - [ ] Remember last region/habitat on device
 - [x] Favorite / looking-at places on device (Halalit favorite-library pattern); compare + browse packs
 - [ ] Odd Trove hosting vs standalone brand
@@ -230,6 +214,43 @@ After the still “freezes” on the codex card:
 ## Your additions
 
 Owner pins from chat go here.
+
+### 2026-07-21 — status / native / invasive captions (call this up in a new agent)
+
+**Intent (owner):** After a scan, always see **conservation status** when possible, plus **native where** and **invasive/introduced elsewhere** — without needing compare places. Soft **Caution:** wording when it’s a learning heads-up, not a legal noxious list.
+
+**Already shipped (do not rebuild):**
+- Codex caption: Status + native range + elsewhere (no compare place required)
+- NatureServe CC BY for status / native / exotic flags
+- USGS **US-RIIS** CC0 for U.S. introduced/invasive (AK / Hawaii / contiguous L48) when latin matches
+- Caption leads with **Caution:** on elsewhere lines; US-RIIS wins over NatureServe exotic soft text
+
+**Not yet — pull this section when owner says “BoE status captions,” “scan-page status,” “state-level invasive,” or “call up invasive captions from roadmap”:**
+
+- [ ] **Show status + native + elsewhere on the scan result screen** — today the immediate scan page mostly shows confidence / stage / color; status & range appear after codex callouts. Surface the same caption (or a short version) right on the scan result before / without waiting for a full Load.
+- [ ] **State-level invasive elsewhere** — US-RIIS is only AK / HI / lower-48 buckets (e.g. “invasive in the contiguous U.S.”), not “often invasive in OK, CA.” Owner wants captions like *Native in Mexico; Caution: often invasive in U.S. states such as Oklahoma, California* when reliable data exists. Options later: NatureServe exotic-state lists refined into captions; owner-curated packs for favorite species; other open lists with attribution — not IUCN, not anti-bot scrapes.
+- [ ] **Owner-curated invasive packs (favorites)** — optional hand list for species where US-RIIS/NatureServe are too coarse or missing; curated wins over soft Claude guesses.
+
+**Do NOT:** treat captions as a legal invasive registry; cite IUCN / Red List; scrape park or anti-bot sites for invasive data.
+
+### 2026-07-23 — public launch, cost shields, other sources (call this up in a new agent)
+
+**Intent (owner):** Public quiet beta with Google sign-in so progress syncs. Cost shields (daily caps) deferred — owner said cost is fine for now. Prefer open/permissioned sources over silent scrapes. **Not** Trail Guide — that path is parked.
+
+**Already shipped (do not rebuild):** Shared stage-still library (one portrait per species+stage); Gemini-first ID + safe shelf match; fact pools; Focus mode picker; NatureServe CC BY + USGS US-RIIS CC0 with credit; **public quiet beta** (nginx owner gate off; hub public card); **Google sign-in gate**; **Owner’s Office** (accounts + private feedback + new sign-ups switch).
+
+**Not yet — pull this section when owner says “BoE daily quests,” “Pl@ntNet,” “park facts permission,” or “call up cost shields from roadmap”:**
+
+- [x] **Public quiet beta** — drop nginx owner gate on `/bane-of-extinction/`; hub card with public sites + beta tag. Keep `/bane/` → Climatic Mysteries redirect. Update capabilities + ops. **Shipped 2026-07-23** with Google sign-in required (not open anonymous play).
+- [x] **Accounts required for play** — browse/scan/callouts after Odd Trove Google sign-in; Owner’s Office for accounts + feedback.
+- [ ] **Daily quest / scan budget + healthy break copy** — optional later if bills spike; hard daily cap on expensive play; warm “come back tomorrow.” Still allow browsing past learns.
+- [ ] **Pl@ntNet plant ID** — optional later (official API + attribution + owner account). Not Seek / not iNat CV (no public CV API for us).
+- [x] ~~Trail Guide engine~~ — **parked / not building** (2026-07-23). Was listed here as zero-photo cost shield; owner chose EcoLens-only ID instead.
+- [ ] **Park / zoo / museum facts the honest way** — no silent bot scrape. Options: link-out; owner rewrites after reading; ask written permission; or open-license collections (Smithsonian Open Access, Commons, etc.) with credit. Example inspiration (not free to copy wholesale): Santa Clara Valley Open Space Authority salamander pages; Sanborn-area species lists via iNat checklists for *learning*, not scraping.
+- [ ] **Deepen Seashore + Food history focus packs** — replace early stubs with richer curated / prompt packs (food history injustice lines stay owner-curated only — see crops section below).
+- [ ] **Rate limits / soft kill switch** — Owner Office or env toggle to pause scans if bill/quota spikes.
+
+**Do NOT:** scrape park/zoo sites; wire unofficial iNaturalist Seek CV; rebuild Trail Guide unless owner reopens it.
 
 ### 2026-07-18 — this agent session
 
@@ -267,7 +288,24 @@ Owner pins from chat go here.
 - [x] Claude safe lane: categories + material noticing + not-your-fault systems + hope/agency ≥ half; practice *kinds* OK
 - [x] Claude banned until hand-vet: named brands, specific green buildings / places of worship examples, justice stories, photo-proof material claims
 - [x] EcoLens scan lane for everyday outdoor manufactured categories (plastic, asphalt, pavement, glass, metal can, curb, packaging — no brands; still refuse cars/phones/furniture)
-- [ ] Later: owner-curated packs — named green buildings / places with vetted practices; brand stories only when owner-approved
+
+### 2026-07-23 — Objects later (needs owner hand-vet — call this up in a new agent)
+
+**Intent (owner):** Everyday built things help people see how the built world meets nature. Not a doom lecture — players may conclude systems often weren’t built with enough care for living systems, but **≥ half of facts** stay hope/agency (what you can do, what people already do, learning itself counts). Optional set shape: calm problem lines, then a stronger “people rising” landing.
+
+**Already shipped (do not rebuild):** Objects focus mode; EcoLens category IDs (plastic/asphalt/etc.); Claude safe lane (no brands / no named green places / no justice inventing).
+
+**Not yet — owner hand-vet packs only (Claude must not invent these):**
+
+- [ ] **Named green buildings** — curated cards: “Did you know? *This place* was built with water-conscious design / recycled steel / …?” Owner vets name + practice + source before shipping. Camera cannot prove recycled beams from a photo alone — unlock via plaque/confirm or curated match.
+- [ ] **Named places of worship with green practices** — same pattern as green buildings. Not “every masjid/church.” Only specific owner-approved examples of environmentally friendly building practices. Never faith critique; places of worship are not framed as anti-environmental.
+- [ ] **Named brand stories** — praise or dig only after owner personally vets the line. Default Claude stays on packaging/material *patterns*, not “Brand X is evil/good.”
+- [ ] **Environmental justice stories** — who was harmed, which community, lawsuits, policy fights — owner-curated from real sources only (same spirit as crops injustice packs). Not Claude freeform.
+- [ ] **Photo-proof material claims** — “this beam is recycled steel,” “this brand’s packaging is #1 ocean plastic,” etc. — blocked until owner has a vetted claim path (label/plaque/curated ID).
+- [ ] **Wire curated packs into EcoLens / callouts** — when a scan or lookup matches an owner pack, prefer pack facts over Claude inventing; keep safe-lane Claude for unmatched categories.
+- [ ] **Optional wider object categories** — only if owner asks (e.g. more street furniture types); still category names, still refuse cars/phones/indoor furniture unless owner expands that list.
+
+**Agent cue:** Owner says “Objects hand-vet packs” / “BoE named green buildings” / “call up Objects later from roadmap” → read this section; do not unlock Claude freeform for brands/justice/named places.
 
 ### 2026-07-23 — camera confirm loop
 
@@ -275,7 +313,8 @@ Owner pins from chat go here.
 - [x] **Not this** cycles alternatives then re-ID with rejected names
 - [x] **Google this** link-out to check the name against the web
 - [x] EcoLens wait-screen rotating wisdom (justice / small daily help / systems+agency; short; not species facts)
-- [x] EcoLens natural nonliving finds (rocks, minerals, empty shells, fossils) + geology-style facts (not furniture/plastic/cars)
+- [x] EcoLens natural nonliving finds (rocks, minerals, empty shells, fossils) + geology-style facts
+- [x] EcoLens everyday outdoor manufactured categories (plastic/asphalt/etc.) — see Objects sections above
 
 ### 2026-07-22 — fact book
 
@@ -298,7 +337,7 @@ Owner pins from chat go here.
 ### 2026-07-10 — original design chat
 
 - [x] PoGo-style motivation + real wildlife + non-invasive
-- [x] Trail Guide (Akinator) primary; camera optional
-- [x] Region/habitat without GPS; skip place still works (capped extra questions)
+- [x] Early design had Trail Guide (Akinator) primary — **superseded 2026-07-23:** EcoLens is the ID path; Trail Guide parked
+- [x] Region/habitat without GPS; skip place still works (broader pool, no question tree)
 - [x] Result: “Is this your [type]?” + common + Latin; royalty-free reference (not user’s photo)
 - [x] Working title: **Bane of Extinction**

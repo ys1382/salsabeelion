@@ -1,5 +1,5 @@
 ---
-description: oddtrove.art — Halalit, Crocheter, and LoreKeeper public; other kids paths owner-only
+description: oddtrove.art — Halalit, Crocheter, LoreKeeper, HalaLyrics, BoE public; other kids paths owner-only
 alwaysApply: true
 ---
 
@@ -7,15 +7,16 @@ alwaysApply: true
 
 ## Public (no nginx owner gate)
 
-- https://oddtrove.art/ → site hub (HalaLit + Crocheter + LoreKeeper + HalaLyrics links)
+- https://oddtrove.art/ → site hub (HalaLit + Crocheter + LoreKeeper + HalaLyrics + Bane of Extinction links)
 - https://oddtrove.art/halalit/
 - https://oddtrove.art/crocheter/ → **account signup/sign-in required** (app gate; hub links to signup)
 - https://oddtrove.art/lorekeeper/ → **LoreKeeper account sign-in required** (app gate; quiet beta; Google for new accounts)
 - https://oddtrove.art/halalyrics/ → Songcheck lyrics red-flag screener (no account required)
+- https://oddtrove.art/bane-of-extinction/ → **Odd Trove Google sign-in required** (app gate; quiet beta; EcoLens + wildlife codex)
 
 ## Owner-only (hub cookie / owner gate on nginx)
 
-- `/maestros/`, `/envdyst/`, `/climatic-mysteries/`, `/cleanscreen/`, `/bane-of-extinction/`, `/habit-tree/`
+- `/maestros/`, `/envdyst/`, `/climatic-mysteries/`, `/cleanscreen/`, `/habit-tree/`
 - Directory hub at `/` is **not** served (404 except root redirect to Halalit)
 - Note: `/bane/` still redirects to Climatic Mysteries — Bane of Extinction is **`/bane-of-extinction/`** only
 

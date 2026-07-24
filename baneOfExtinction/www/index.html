@@ -4,19 +4,22 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
   <meta name="robots" content="noindex, nofollow" />
-  <title>Bane of Extinction — owner beta</title>
-  <link rel="stylesheet" href="bane.css?v=live7" />
+  <title>Bane of Extinction</title>
+  <link rel="stylesheet" href="bane.css?v=public1" />
+  <script src="bane-auth-gate.js"></script>
+  <style>html.auth-checking body { visibility: hidden; }</style>
 </head>
 <body>
   <div class="wrap">
     <header class="hero">
-      <p class="eyebrow">Odd Trove · owner beta</p>
+      <p class="eyebrow">Odd Trove · quiet beta</p>
       <h1 class="brand">Bane of Extinction</h1>
       <p class="tagline">
         Walk, notice, and learn real wildlife into a codex — without bothering the living neighborhood.
       </p>
       <p class="note" role="note">
-        <strong>Owner-only beta.</strong> Not public. EcoLens works on phone or tablet (same idea as Halalit scanners). Desktop is for the wildlife codex.
+        <strong>Sign in with Google</strong> so your learns and fact book sync.
+        EcoLens works on phone or tablet. Desktop is great for the wildlife codex.
       </p>
     </header>
 
@@ -25,6 +28,7 @@
       <a class="btn secondary" href="missions.html">Neighborhood missions</a>
       <button type="button" class="btn secondary" id="scanBtn" hidden>EcoLens</button>
       <a class="btn secondary" href="wildlife-scan.html" id="scanLinkDesktop">EcoLens (phone)</a>
+      <a class="btn secondary" href="account.html">Account</a>
     </nav>
 
     <p class="status" id="deviceStatus" aria-live="polite"></p>
@@ -38,7 +42,7 @@
         <li><strong>Level 2</strong> — beginning missions after ~15 finds (signature signs; ant mound full visual)</li>
         <li><strong>Level 3</strong> — after a few Level 2 missions: same organism, different place meaning (healthy / meh / warning) + under-the-hood landscape stories</li>
         <li><strong>Don’t get too close</strong> — no scan or quest needs a risky close-up; use path distance or signs for animals that can bite or surprise you</li>
-        <li>Coming later: walk sessions, buddy, Trail Guide</li>
+        <li>Coming later: walk sessions and buddy</li>
       </ul>
     </section>
 
@@ -46,9 +50,22 @@
       <a href="/">← Odd Trove hub</a>
       · Path: <code>/bane-of-extinction/</code>
       · Old <code>/bane/</code> still redirects to Climatic Mysteries
+      · <a href="account.html">Account</a>
+      <span id="officeFootLink" hidden> · <a href="office.html">Owner’s Office</a></span>
     </p>
   </div>
   <script src="bane-handheld.js"></script>
   <script src="bane-home.js"></script>
+  <script>
+    fetch("/bane-of-extinction/api/auth/me", { credentials: "include" })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (data && data.isOwner) {
+          var el = document.getElementById("officeFootLink");
+          if (el) el.hidden = false;
+        }
+      })
+      .catch(function () {});
+  </script>
 </body>
 </html>
