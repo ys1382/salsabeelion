@@ -728,8 +728,8 @@
       return {
         ok: false,
         hint: m.camo
-          ? "Looks empty even with camouflage assist — fill the box with a nature find (living, evidence, rock, mineral, or empty shell)."
-          : "Looks empty — fill the dashed box with a nature find (living, evidence, rock, mineral, or empty shell).",
+          ? "Looks empty even with camouflage assist — fill the box with a find (living, evidence, rock, mineral, empty shell, or outdoor object like plastic/asphalt)."
+          : "Looks empty — fill the dashed box with a find (living, evidence, rock, mineral, empty shell, or outdoor object like plastic/asphalt).",
         level: "bad",
       };
     }
@@ -737,7 +737,7 @@
     if (fill < th.fillTooLow) {
       return {
         ok: false,
-        hint: "Mostly background — move so the plant, animal, evidence, rock, or empty shell fills the box.",
+        hint: "Mostly background — move so the plant, animal, evidence, rock, empty shell, or outdoor object fills the box.",
         level: "bad",
       };
     }
@@ -802,7 +802,7 @@
     if (!coachHint) return;
     if (!analysis) {
       coachHint.textContent =
-        "Frame a nature find (living neighbor, evidence, rock, mineral, or empty shell). Avoid faces/hands when you can.";
+        "Frame a find (living neighbor, evidence, rock, mineral, empty shell, or outdoor object like plastic/asphalt). Avoid faces/hands when you can.";
       lastCoachLevel = "wait";
       applyStageClass("wait");
       coachReady = false;
@@ -831,7 +831,7 @@
     } catch (e) {
       setLiveCoach({
         ok: false,
-        hint: "Point the camera at a nature find (living, evidence, rock, mineral, or empty shell).",
+        hint: "Point the camera at a find (living, evidence, rock, mineral, empty shell, or outdoor object like plastic/asphalt).",
         level: "wait",
       });
     }

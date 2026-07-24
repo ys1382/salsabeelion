@@ -288,6 +288,18 @@ def _fallback_callouts_for(
             "kind": "notice",
         }
         return callouts[:MAX_CALLOUTS]
+    if _is_manufactured_object(organism_type):
+        callouts = list(FALLBACK_CALLOUTS_OBJECTS)
+        callouts[0] = {
+            "anchor": "overview",
+            "label": "Overview",
+            "fact": (
+                f"Best everyday-object guess right now: {display}. "
+                "Facts service had a hiccup — try Load again for fresher built-world notes."
+            ),
+            "kind": "notice",
+        }
+        return callouts[:MAX_CALLOUTS]
     blob = (display + " " + latin + " " + note + " " + color).lower()
     if "poppy" in blob or "eschscholzia" in blob:
         callouts = list(
@@ -674,8 +686,8 @@ def _focus_prompt_block(
             "a specific green house-of-worship example. "
             "Do NOT dump garden how-tos, hiking/forest essays, seashore essays, or "
             "crop/domestication history. No guilt lectures; family-friendly. "
-            "EcoLens still does not ID manufactured objects as finds — this mode is "
-            "a fact lens on nature finds that meet the built world. "
+            "When EcoLens IDs an everyday outdoor object (plastic, asphalt, etc.), "
+            "facts stay in this safe lane — categories only, never brand names. "
         )
         if allow_help:
             block += (
@@ -732,9 +744,25 @@ def _focus_disclaimer(focus_mode: str) -> str:
     return " Focus mode: Walk / wild — neighbor eco facts (not gardening how-tos)."
 
 
-# Natural nonliving finds EcoLens may ID (not furniture, plastic, cars, etc.).
+# Natural nonliving finds EcoLens may ID.
 NATURAL_NONLIVING_TYPES = frozenset(
     {"rock", "mineral", "shell", "fossil", "stone", "geology"}
+)
+
+# Everyday outdoor manufactured finds (safe lane — categories, not brands).
+MANUFACTURED_OBJECT_TYPES = frozenset(
+    {
+        "plastic",
+        "asphalt",
+        "pavement",
+        "concrete",
+        "glass",
+        "metal",
+        "curb",
+        "packaging",
+        "object",
+        "built",
+    }
 )
 
 
@@ -747,6 +775,15 @@ def _is_natural_nonliving(organism_type: str) -> bool:
     return t.startswith("rock") or t.startswith("mineral") or t.startswith("fossil")
 
 
+def _is_manufactured_object(organism_type: str) -> bool:
+    t = (organism_type or "").strip().lower()
+    if not t:
+        return False
+    if t in MANUFACTURED_OBJECT_TYPES:
+        return True
+    return t.startswith("plastic") or t.startswith("asphalt") or t.startswith("pavement")
+
+
 def _normalize_organism_type(raw: str) -> str:
     t = (raw or "").strip().lower()[:40]
     if t in ("stone", "pebble", "cobble", "boulder"):
@@ -755,17 +792,43 @@ def _normalize_organism_type(raw: str) -> str:
         return "shell"
     if t in ("geology", "geologic", "geological"):
         return "rock"
+    if t in (
+        "bottle",
+        "water bottle",
+        "plastic bottle",
+        "plastic bag",
+        "bag",
+        "wrapper",
+        "litter plastic",
+    ):
+        return "plastic"
+    if t in ("road", "roadway", "tarmac", "blacktop", "asphalt road"):
+        return "asphalt"
+    if t in ("sidewalk", "footpath", "paving", "paved"):
+        return "pavement"
+    if t in ("can", "tin", "aluminum can", "aluminium can", "metal can"):
+        return "metal"
+    if t in ("glass bottle", "bottle glass"):
+        return "glass"
+    if t in ("kerb", "road curb", "street curb"):
+        return "curb"
+    if t in ("package", "packaging waste", "single use packaging"):
+        return "packaging"
+    if t in ("built object", "manufactured", "human made", "human-made"):
+        return "object"
     return t or "other"
 
 
 IDENTIFY_PROMPT = (
-    "You identify nature finds for a family-friendly conservation learning game: "
+    "You identify finds for a family-friendly conservation learning game: "
     "wildlife, plants, fungi, clear evidence of them "
-    "(tracks, nests, seed pods, chewed plants, bloom patches), AND natural nonliving "
+    "(tracks, nests, seed pods, chewed plants, bloom patches), natural nonliving "
     "matter found outdoors (rocks, minerals, empty shells with no living creature inside, "
-    "fossils). Return ONLY JSON.\n"
-    "Focus on the nature subject (living or natural nonliving), not people, hands, faces, "
-    "or private property details.\n"
+    "fossils), AND everyday outdoor manufactured objects that meet the living world "
+    "(plastic bottles/bags/packaging litter, asphalt roads, pavement/sidewalks, concrete, "
+    "glass bottles, metal cans, curbs — as CATEGORIES). Return ONLY JSON.\n"
+    "Focus on the subject (living, natural nonliving, or everyday outdoor object), "
+    "not people, hands, faces, or private property details.\n"
     "NATURAL NONLIVING — when the clear subject is a rock, mineral, empty shell, or fossil "
     "(not a living plant/animal/fungus), identify it. Set organismType to rock, mineral, "
     "shell, or fossil. Prefer a real common name (e.g. Quartz, Granite, Obsidian, "
@@ -778,18 +841,28 @@ IDENTIFY_PROMPT = (
     "as a living organism (not shell). "
     "Do NOT invent fake mineral names; if unsure, give the best rock/mineral class "
     "(e.g. \"Igneous rock\", \"Sedimentary rock\", \"Beach sand\") and list alternatives.\n"
-    "REFUSAL — if there is no clear living organism, no clear evidence, AND no clear "
-    "natural nonliving find "
-    "(empty ground with nothing identifiable, wall, sky, furniture, shelf wood, plastic, "
-    "metal tools, cars, pavement alone, blur, mostly hands/faces, or only background), "
-    "do NOT invent a species or mineral. Return:\n"
+    "EVERYDAY OBJECTS (safe lane) — when the clear subject is an outdoor manufactured "
+    "thing like a plastic water bottle, plastic bag, packaging litter, asphalt road "
+    "surface, pavement/sidewalk, concrete curb, glass bottle, or metal can, identify "
+    "the CATEGORY. Set organismType to plastic, asphalt, pavement, concrete, glass, "
+    "metal, curb, packaging, or object. commonName must be a plain category name "
+    "(e.g. \"Plastic water bottle\", \"Asphalt road\", \"Glass bottle\") — NEVER a brand "
+    "or logo name (not Dasani, Coke, Nike, Shell Oil, etc.). latinName empty. "
+    "lifeStage specimen. bloomColor empty. evidence false. "
+    "Prefer outdoor finds that touch nature (litter near plants, road heat, curb weeds). "
+    "Do NOT ID cars/vehicles, phones, furniture, indoor shelves, or people as the find. "
+    "Do NOT invent a fake green-building claim for a specific named place.\n"
+    "REFUSAL — if there is no clear living organism, no clear evidence, no clear "
+    "natural nonliving find, AND no clear everyday outdoor object "
+    "(empty ground with nothing identifiable, blank sky, blur, mostly hands/faces, "
+    "cars/vehicles as the subject, indoor furniture, phones, or only background), "
+    "do NOT invent a species or object. Return:\n"
     '{"commonName":"","latinName":"","cultivar":"","bloomColor":"","organismType":"none",'
     '"lifeStage":"","evidence":false,"confidence":"low",'
-    '"shortNote":"No clear nature find in frame.",'
+    '"shortNote":"No clear nature or everyday outdoor find in frame.",'
     '"alternatives":[],"noOrganism":true}\n'
-    "Refuse manufactured / indoor-only objects that are not nature finds. "
-    "Be as accurate as you reasonably can. Prefer the species, mineral, or best clear "
-    "taxon you think it is.\n"
+    "Be as accurate as you reasonably can. Prefer the species, mineral, object category, "
+    "or best clear taxon you think it is.\n"
     "COLOR MATTERS — for flowers, set bloomColor to the dominant petal/ray color you see "
     "(e.g. red, yellow, orange, burgundy, bicolor, near-black). "
     "If rays are clearly red/burgundy/dark, do NOT describe a generic yellow sunflower in shortNote. "
@@ -813,14 +886,14 @@ IDENTIFY_PROMPT = (
     "(not a different stage of the same species). Examples: seed, seedling, sprout, bud, "
     "flowering, fruiting, adult, juvenile, egg, larva, nestling, fledgling, evidence. "
     "If the photo is a blossom/bloom, use flowering (not seed). If only a seed pod or "
-    "seed, say so. For natural nonliving (rock/mineral/shell/fossil), use specimen.\n"
+    "seed, say so. For natural nonliving or everyday objects, use specimen.\n"
     "JSON shape (success):\n"
     "{"
     '"commonName":"...",'
     '"latinName":"...",'
     '"cultivar":"" ,'
     '"bloomColor":"red|yellow|orange|burgundy|bicolor|other|",'
-    '"organismType":"bird|mammal|flower|plant|fungus|insect|reptile|evidence|rock|mineral|shell|fossil|other",'
+    '"organismType":"bird|mammal|flower|plant|fungus|insect|reptile|evidence|rock|mineral|shell|fossil|plastic|asphalt|pavement|concrete|glass|metal|curb|packaging|object|other",'
     '"lifeStage":"flowering|fruiting|seedling|adult|juvenile|evidence|specimen|...",'
     '"evidence":false,'
     '"confidence":"high|medium|low",'
@@ -853,6 +926,33 @@ FALLBACK_CALLOUTS_GEOLOGY = [
         "anchor": "wonder",
         "label": "Earth story",
         "fact": "Every pebble is a tiny chapter of Earth history you can hold without needing a lab.",
+        "kind": "wonder",
+    },
+]
+
+FALLBACK_CALLOUTS_OBJECTS = [
+    {
+        "anchor": "material",
+        "label": "What you see",
+        "fact": "Everyday built things — plastic bottles, asphalt, curbs — sit right next to plants and animals, even when they feel separate from nature.",
+        "kind": "notice",
+    },
+    {
+        "anchor": "system",
+        "label": "Not your fault",
+        "fact": "Needing staples that come in packaging or walking on paved streets is how daily life is built — that pattern is bigger than one shopper’s choice.",
+        "kind": "notice",
+    },
+    {
+        "anchor": "help",
+        "label": "Small help",
+        "fact": "Reuse a bottle you already have, refuse an extra bag when you can, and keep learning how the built world touches living neighbors — curiosity itself is a step.",
+        "kind": "help",
+    },
+    {
+        "anchor": "hope",
+        "label": "People rising",
+        "fact": "Plenty of people already design with water care, recycled materials, and less waste in mind — the picture is not only “everything is broken.”",
         "kind": "wonder",
     },
 ]
@@ -1641,6 +1741,26 @@ def _codex_still_prompt(
             "no text, no watermark, no logo.\n"
             "Square composition, subject filling most of the frame. Return an image."
         )
+    if _is_manufactured_object(organism_type):
+        return (
+            "Create ONE brand-new everyday-object codex portrait for a family-friendly "
+            "conservation game.\n"
+            f"Identified subject: {subject}.\n"
+            "PRIVACY — the attached photo is a private reference for traits only. "
+            "Invent a fresh semi-realistic field-guide portrait of the SAME object CATEGORY "
+            "(plastic bottle, asphalt surface, pavement, glass bottle, metal can, curb, etc.). "
+            "Do NOT copy, redraw, or recreate that photo’s pixels, background, angle, "
+            "crop, lighting, or scene. Different angle and plain soft background.\n"
+            "Match material, shape, and color of the category — generic, not a brand. "
+            "NEVER include logos, brand names, barcodes, or readable labels.\n"
+            "Show a clear object portrait (not a cityscape dump of many items).\n"
+            "Do NOT invent a different object type. Do NOT show cars, phones, or people.\n"
+            "Style: calm semi-realistic field-guide art — believable illustration. "
+            "Avoid heavy cartoon, anime, chibi, glossy CGI, or uncanny hyper-detail. "
+            "Soft plain muted background. Object only — no people, no hands, no phone, "
+            "no text, no watermark, no logo.\n"
+            "Square composition, subject filling most of the frame. Return an image."
+        )
     stage_line = (
         f"Show the complete organism at THIS life stage only: {life_stage.strip()}. "
         if life_stage.strip()
@@ -2143,6 +2263,8 @@ def _norm_id(parsed: dict[str, Any]) -> dict[str, Any]:
     life_stage = str(parsed.get("lifeStage") or "").strip()[:40].lower()
     life_stage = re.sub(r"[^a-z0-9_\- ]+", "", life_stage).strip()[:40]
     if _is_natural_nonliving(organism_type) and not life_stage:
+        life_stage = "specimen"
+    if _is_manufactured_object(organism_type) and not life_stage:
         life_stage = "specimen"
     return {
         "commonName": common,
@@ -3248,6 +3370,7 @@ def build_callouts(
         organism_type or ("evidence" if evidence else "organism")
     )
     is_geology = _is_natural_nonliving(org_type)
+    is_object = _is_manufactured_object(org_type)
     avoid = [
         _clip_plain(str(x), MAX_FACT_CHARS)
         for x in (avoid_facts or [])
@@ -3273,7 +3396,7 @@ def build_callouts(
 
     ns_meta = (
         None
-        if is_geology
+        if (is_geology or is_object)
         else (_fetch_natureserve_meta(latin_n) if latin_n else None)
     )
     fallback_meta = (
@@ -3285,7 +3408,17 @@ def build_callouts(
             "rangeSource": "",
         }
         if is_geology
-        else _fallback_species_meta(display, latin_n)
+        else (
+            {
+                "nativeRange": "",
+                "rangeElsewhere": "",
+                "conservationStatus": "Everyday built object — not a living species",
+                "statusSource": "objects",
+                "rangeSource": "",
+            }
+            if is_object
+            else _fallback_species_meta(display, latin_n)
+        )
     )
 
     # Shared eco lean (bane of extinction): care for the living world without making
@@ -3356,6 +3489,73 @@ def build_callouts(
             "you can'. Do NOT cite IUCN. "
             "Also fill localStatus for the LOOKING-AT place when useful "
             "(e.g. 'Common beach pebble here'), else empty. "
+            "If a compare place is given, fill compareNote with one short contrast — else empty."
+        )
+    elif is_object:
+        if allow_help and allow_wonder:
+            mix_rules = (
+                "AT LEAST HALF of callouts must be hope / agency (kind=help or kind=wonder "
+                "or noticing that still names positive change): what the player can choose, "
+                "what people are already doing, practice kinds (water-conscious buildings, "
+                "recycled materials as a type), or that learning itself is a step. "
+                "Honest built-world noticing is OK — do NOT force-feed doom. "
+                "EXACTLY ONE callout must be a SMALL HELP tip (kind=help). "
+                "EXACTLY ONE callout (separate) should be wonder/hope (kind=wonder) about "
+                "rising care or how this object category meets living systems — not doom. "
+            )
+        elif allow_help:
+            mix_rules = (
+                "AT LEAST HALF of callouts must be hope / agency. "
+                "EXACTLY ONE callout must be a SMALL HELP tip (kind=help). "
+                "Do NOT include wonder callouts yet (kind=wonder locked). "
+                "Honest noticing OK — no doom force-feed. "
+            )
+        else:
+            mix_rules = (
+                "ALL callouts are everyday noticing (kind=notice) about how this object "
+                "category sits next to living neighbors — warm, concrete, not doom lectures. "
+                "Prefer hopeful angles when you can (people redesigning, learning counts). "
+                "Do NOT include help tips (kind=help) or wonder (kind=wonder) yet. "
+            )
+        eco_tone = (
+            "OBJECTS LANE — this find is an everyday outdoor manufactured CATEGORY "
+            "(plastic bottle, asphalt, pavement, glass bottle, metal can, curb, etc.), "
+            "not a living species and not a brand. "
+            "Help people see the built world and nature are not separate. "
+            "Not-your-fault system notes OK (packaging and roads are how daily life is built). "
+            "NEVER name brands (praise or dig). NEVER invent a specific named building or "
+            "place of worship as a green example. NEVER invent environmental justice stories. "
+            "NEVER claim a photo proves recycled steel or a brand’s pollution rank. "
+            "Warm and concrete — not lecturey, not guilt. "
+            + mix_rules
+        )
+        focus_block = (
+            "FOCUS for object finds: stay category-shaped. Looking-at place may color tips "
+            "(urban heat, coast litter edges) but never invent local brand campaigns. "
+            "If player also chose Hiking/Seashore/Garden/Crops, a light bridge is OK — "
+            "still stay in the Objects safe lane. "
+        )
+        system = (
+            "You write short, family-friendly everyday-object callouts for "
+            "Bane of Extinction (plastic, asphalt, pavement, packaging categories). "
+            "Return ONLY valid JSON. No Wikipedia, no URLs, no scraping. "
+            "Use well-established general knowledge about the NAMED object CATEGORY below. "
+            "If unsure, say so gently. No medical claims. No brand names. "
+            "TONE — noticing + hope/agency; the world already frustrates people enough. "
+            + eco_tone
+            + focus_block
+            + "PLACE LENS — the player chose a place they are LOOKING AT (not GPS). "
+            "Personalize tips to that lens when helpful. Never claim you know where "
+            "the player is standing. "
+            "Also fill nativeRangeRefine, rangeElsewhere, and conservationStatus as SHORT "
+            "caption fields (not extra callouts). "
+            "nativeRangeRefine: where this kind of object shows up in daily life "
+            "(e.g. 'Common roadside pavement', 'Single-use plastic in everyday shopping'). "
+            "rangeElsewhere: empty or a short contrast if useful — never invasive-species wording. "
+            "conservationStatus: ALWAYS fill — e.g. 'Everyday built object — not a living "
+            "species', 'Common pavement material', 'Reusable habits help living neighbors'. "
+            "Do NOT cite IUCN. "
+            "Also fill localStatus for the LOOKING-AT place when useful, else empty. "
             "If a compare place is given, fill compareNote with one short contrast — else empty."
         )
     else:
@@ -3445,12 +3645,19 @@ def build_callouts(
         + (
             "Write geology-style callouts accurate for THIS natural nonliving find. "
             if is_geology
-            else "Write callouts accurate for THIS identification and visible color. "
-            "If red/dark sunflower rays, describe those — not classic yellow-only petals. "
+            else (
+                "Write Objects-lane callouts for THIS everyday outdoor object CATEGORY "
+                "(no brands). At least half hope/agency when help/wonder allowed. "
+                if is_object
+                else (
+                    "Write callouts accurate for THIS identification and visible color. "
+                    "If red/dark sunflower rays, describe those — not classic yellow-only petals. "
+                )
+            )
         )
         + (
-            "Put the help tip near the middle when possible; put the wonder fact last."
-            if is_geology
+            "Put the help tip near the middle when possible; put the wonder/hope fact last."
+            if (is_geology or is_object)
             else "Put the help tip near the middle when possible; put the species-wonder fact last."
         )
     )
@@ -3464,7 +3671,11 @@ def build_callouts(
             + (
                 ". Personalize occurrence / leave-it tips for THIS lens."
                 if is_geology
-                else ". Personalize native/invasive/help tips for THIS lens."
+                else (
+                    ". Personalize built-world noticing for THIS lens (still no brands)."
+                    if is_object
+                    else ". Personalize native/invasive/help tips for THIS lens."
+                )
             )
         )
     else:
@@ -3474,8 +3685,12 @@ def build_callouts(
                 "prefer occurrence-aware geology wording."
                 if is_geology
                 else (
-                    "avoid claiming a planted-bed tip is always good everywhere; "
-                    "prefer range-aware wording."
+                    "prefer built-world category wording (no brands)."
+                    if is_object
+                    else (
+                        "avoid claiming a planted-bed tip is always good everywhere; "
+                        "prefer range-aware wording."
+                    )
                 )
             )
         )
@@ -3491,6 +3706,11 @@ def build_callouts(
         scope += (
             " Skip NatureServe / invasive-species framing. "
             "Fill occurrence captions and a geology-shaped status line."
+        )
+    elif is_object:
+        scope += (
+            " Skip NatureServe / invasive-species framing. "
+            "Fill everyday-object captions and a built-object status line. No brand names."
         )
     elif ns_meta:
         if ns_meta.get("nativeRange"):
@@ -3533,14 +3753,14 @@ def build_callouts(
         )
     riis_preview = ""
     _riis_attr = ""
-    if not is_geology and latin_n:
+    if not is_geology and not is_object and latin_n:
         riis_preview, _riis_attr = _caption_from_us_riis(latin_n)
     if riis_preview:
         scope += (
             f" USGS US-RIIS already provides the elsewhere caution caption "
             f"(do not contradict; leave rangeElsewhere empty): {riis_preview}."
         )
-    if evidence and not is_geology:
+    if evidence and not is_geology and not is_object:
         scope += " Frame as evidence/clues the player noticed."
     if avoid:
         scope += (
@@ -3584,25 +3804,48 @@ def build_callouts(
             ],
         }
         if is_geology
-        else {
-            "organismType": org_type or "organism",
-            "nativeRangeRefine": "short native-range caption or empty",
-            "rangeElsewhere": (
-                "short introduced/often-invasive-elsewhere caption or empty"
-            ),
-            "conservationStatus": "short status caption (prefer always fill)",
-            "localStatus": "short status for looking-at place or empty",
-            "compareNote": "short contrast vs compare place or empty",
-            "callouts": [
-                {
-                    "anchor": "part_or_clue",
-                    "label": "Short label",
-                    "kind": "notice",
-                    "buildsOn": False,
-                    "fact": "1–2 complete short sentences (finish every sentence)",
-                }
-            ],
-        }
+        else (
+            {
+                "organismType": org_type or "plastic",
+                "nativeRangeRefine": "short everyday-occurrence caption or empty",
+                "rangeElsewhere": "empty or short contrast (never invasive-species wording)",
+                "conservationStatus": (
+                    "short built-object status "
+                    "(e.g. Everyday built object — not a living species)"
+                ),
+                "localStatus": "short status for looking-at place or empty",
+                "compareNote": "short contrast vs compare place or empty",
+                "callouts": [
+                    {
+                        "anchor": "part_or_clue",
+                        "label": "Short label",
+                        "kind": "notice",
+                        "buildsOn": False,
+                        "fact": "1–2 complete short sentences (finish every sentence)",
+                    }
+                ],
+            }
+            if is_object
+            else {
+                "organismType": org_type or "organism",
+                "nativeRangeRefine": "short native-range caption or empty",
+                "rangeElsewhere": (
+                    "short introduced/often-invasive-elsewhere caption or empty"
+                ),
+                "conservationStatus": "short status caption (prefer always fill)",
+                "localStatus": "short status for looking-at place or empty",
+                "compareNote": "short contrast vs compare place or empty",
+                "callouts": [
+                    {
+                        "anchor": "part_or_clue",
+                        "label": "Short label",
+                        "kind": "notice",
+                        "buildsOn": False,
+                        "fact": "1–2 complete short sentences (finish every sentence)",
+                    }
+                ],
+            }
+        )
     )
 
     user = (
@@ -3618,11 +3861,17 @@ def build_callouts(
             "Mix: geology noticing for rocks, minerals, empty shells, and fossils. "
             if is_geology
             else (
-                "Mix: everyday player-world facts for the ACTIVE focus "
-                "(walk / garden / hiking / seashore / crops&domestics / objects). "
-                "Hiking and Seashore lean into people–place relationship for engaged players; "
-                "Objects leans into built-world noticing with hope/agency ≥ half of the set; "
-                "other modes may still mention relationship when it fits. "
+                "Mix: Objects-lane facts for everyday outdoor categories "
+                "(plastic, asphalt, pavement, etc.) — hope/agency ≥ half when allowed; "
+                "never brand names. "
+                if is_object
+                else (
+                    "Mix: everyday player-world facts for the ACTIVE focus "
+                    "(walk / garden / hiking / seashore / crops&domestics / objects). "
+                    "Hiking and Seashore lean into people–place relationship for engaged players; "
+                    "Objects leans into built-world noticing with hope/agency ≥ half of the set; "
+                    "other modes may still mention relationship when it fits. "
+                )
             )
         )
         + (
@@ -3634,7 +3883,11 @@ def build_callouts(
             (
                 "Include EXACTLY ONE earth-story wonder (kind=wonder). "
                 if is_geology
-                else "Include EXACTLY ONE species-own wonder (kind=wonder). "
+                else (
+                    "Include EXACTLY ONE hope / rising-care wonder (kind=wonder). "
+                    if is_object
+                    else "Include EXACTLY ONE species-own wonder (kind=wonder). "
+                )
             )
             if allow_wonder
             else "No wonder callouts in this set. "
@@ -3724,6 +3977,11 @@ def build_callouts(
     disclaimer += _focus_disclaimer(focus)
     if is_geology:
         disclaimer += " Geology-style facts for a natural nonliving find."
+    if is_object:
+        disclaimer += (
+            " Objects-lane facts for an everyday built find "
+            "(categories only; hope/agency lean)."
+        )
     if place_label_n:
         disclaimer += (
             " Place tips follow the looking-at place you chose — not GPS or where you stand."
@@ -3734,7 +3992,7 @@ def build_callouts(
     open_credits: list[str] = []
     status_src = str(meta.get("statusSource") or "")
     range_src = str(meta.get("rangeSource") or "")
-    if not is_geology and (
+    if not is_geology and not is_object and (
         "natureserve" in status_src
         or "natureserve" in range_src
         or (
@@ -3744,12 +4002,12 @@ def build_callouts(
         open_credits.append(
             "NatureServe Explorer (https://explorer.natureserve.org/) — CC BY"
         )
-    if not is_geology and (
+    if not is_geology and not is_object and (
         "us-riis" in range_src
         or (meta.get("attribution") and "US-RIIS" in str(meta.get("attribution")))
     ):
         open_credits.append("USGS US-RIIS — CC0 public domain")
-    if not is_geology and not open_credits and latin_n:
+    if not is_geology and not is_object and not open_credits and latin_n:
         open_credits.append(
             "Range/status when available: NatureServe Explorer (CC BY); "
             "U.S. introduced/invasive captions: USGS US-RIIS (CC0)"
