@@ -111,7 +111,7 @@ Last updated: 2026-07-17
 
 **Is:** Single-page **concept pitch** — perception/aliveness meter, not a full game.
 
-**Planning:** `envDyst/MCOC-ROADMAP-AND-TODO.md` (plot + phases; not deployed). **Live scope (owner):** **drift + story** = main spine; **keepsake/bingo** ships (environmental themes); **domestic filler** (chores, basket pack, etc.) cut.
+**Planning:** `envDyst/MCOC-ROADMAP-AND-TODO.md` (current; not deployed). **Archived detail:** `envDyst/MCOC-ARCHIVED-PLANS.md` (jobs, multi-day retreats, bingo/keepsake — parked, not deleted). **Archive rule:** owner discards → archive file; **never delete** discarded MCOC ideas. **Live scope (owner):** brief enclosed prologue → short nature reveal → return soft-horror **alarm** (background → foreground); picture-first; determination after alarm; **no** job campaign / multi-day vacation / animal bingo. Domestic filler stays cut.
 
 **Can do now:** Copy, styling, light client-side interaction on one page.
 
@@ -206,6 +206,7 @@ Last updated: 2026-07-17
 - **Fact pools** — different callouts each Load from a local pool; Claude refills when the pool runs low (NatureServe CC BY + USGS US-RIIS CC0 credited for range/status)
 - **Fact book** — callout facts collected into an account-synced book (Splash Aquapedia–style progress). Soft `n / ~x` totals until curated packs. **Fact levels** (Curious notice → Neighbor kindness → Species wonder → Field learner) are **separate from mission levels**; kinds unlock with learning commitment (notice → help → wonder)
 - **Phone wildlife camera scan** — `/bane-of-extinction/wildlife-scan.html` (EcoLens: Gemini + Claude ID + life stage; **living neighbors, natural nonliving** — rocks, minerals, empty shells, fossils — **and everyday outdoor manufactured categories** — plastic bottles/bags/packaging, asphalt, pavement, concrete, glass bottles, metal cans, curbs — category names only, never brands; still refuse cars/vehicles, phones, indoor furniture; confirm **This looks right** / **Not this** / **Google this**; photo held in memory only until confirm, dry guesses, leave, or idle wipe; then Gemini semi-realistic still; facts follow the confirmed find — **geology-style** for rocks/minerals/empty shells; **Objects-lane** for manufactured categories (hope/agency lean); **while-you-wait** rotating generic eco wisdom — justice / small daily help / systems+agency — not species trivia)
+- **Wildlife Walk** — `/bane-of-extinction/walk.html` (separate top tab; **on/off setting**; timer + soft notice prompts; buddy pick/feed with real-species foods; care streak; fact-book progress unlocks buddy motions; on-screen walker + buddy; **learned stills** placed on the trail — not moving crowd AI; **no camera / no GPS** on this page — EcoLens stays separate)
 - Claude facts via `/bane-of-extinction/api/` (shared `anthropic.key` + Halalit Gemini env on server) — player-world tone, one small-help tip per set, one wonder fact; geology lane for natural nonliving; **garden focus** toggle splits garden-world eco facts (seed dispersal, grower kindness) vs walk/wild eco facts; device remembers recent fact text so rescans can stay fresh (no photo retention); **later Loads** deepen exactly one prior fact, rotating which prior set the hook comes from
 - **Looking-at places** — Halalit-style favorite places on device; facts + browse lists follow chosen region/habitat (optional compare); season from date; **no GPS**
 - Codex still caption: **conservation status** when possible + **native range** + **elsewhere** (USGS **US-RIIS** CC0 for U.S. introduced/invasive when latin matches; else NatureServe exotic + soft caution; no compare place required; no IUCN)
@@ -218,10 +219,11 @@ Last updated: 2026-07-17
 
 **Cannot do without new work:**
 - Permanent curated art library beyond per-account learned stills
-- Walk timer, buddy
+- Richer Wildlife Walk buddy art / skeletal animation (v1 is CSS bob + still trail critters)
 - Full visual packs for non-ant missions (story cards only until art catches up)
 - Perfect organism-only segmentation (best-effort framing coach for now)
 - Full video / Live Photo of the raw camera frame (out of scope; subtle idle on the generated still only)
+- PoGo-quality 3D / skeletal buddy animation — web CSS/JS can do simple idle, slide-walk, state swaps from stills/sprites; not rich game-engine locomotion
 
 **Parked / not building:** Trail Guide (Akinator yes/no ID) — EcoLens is the ID path (roadmap 2026-07-23).
 

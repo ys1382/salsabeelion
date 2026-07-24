@@ -35,8 +35,6 @@
   var waitWisdomText = document.getElementById("waitWisdomText");
   var coachHint = document.getElementById("coachHint");
   var ecolensAssists = document.getElementById("ecolensAssists");
-  var assistsToggle = document.getElementById("assistsToggle");
-  var assistsPanel = document.getElementById("assistsPanel");
   var assistsSummary = document.getElementById("assistsSummary");
   var modeDriveEl = document.getElementById("modeDrive");
   var modeNightEl = document.getElementById("modeNight");
@@ -478,16 +476,11 @@
   }
 
   function setAssistsOpen(open) {
+    if (!ecolensAssists) return;
     var next = !!open;
-    if (ecolensAssists) {
-      ecolensAssists.classList.toggle("ecolens-assists--open", next);
-    }
-    if (assistsToggle) {
-      assistsToggle.setAttribute("aria-expanded", next ? "true" : "false");
-    }
-    if (assistsPanel) {
-      assistsPanel.hidden = !next;
-    }
+    // Native <details> — browser handles show/hide; we only sync open + memory.
+    if (next) ecolensAssists.setAttribute("open", "");
+    else ecolensAssists.removeAttribute("open");
     try {
       if (next) localStorage.setItem(ASSISTS_OPEN_KEY, "1");
       else localStorage.removeItem(ASSISTS_OPEN_KEY);
@@ -495,11 +488,22 @@
   }
 
   function syncAssistsOpenFromPref() {
+    // Default closed so Drive / Night / Camo start collapsed.
     var open = false;
     try {
       open = localStorage.getItem(ASSISTS_OPEN_KEY) === "1";
     } catch (e) {}
     setAssistsOpen(open);
+  }
+
+  function bindAssistsToggle() {
+    if (!ecolensAssists) return;
+    ecolensAssists.addEventListener("toggle", function () {
+      try {
+        if (ecolensAssists.open) localStorage.setItem(ASSISTS_OPEN_KEY, "1");
+        else localStorage.removeItem(ASSISTS_OPEN_KEY);
+      } catch (e) {}
+    });
   }
 
   function readModePref(key) {
@@ -1720,13 +1724,7 @@
   if (scanUi) scanUi.hidden = false;
   syncModeUiFromPrefs();
   syncAssistsOpenFromPref();
-  if (assistsToggle) {
-    assistsToggle.addEventListener("click", function () {
-      var open =
-        assistsToggle.getAttribute("aria-expanded") === "true";
-      setAssistsOpen(!open);
-    });
-  }
+  bindAssistsToggle();
   if (modeDriveEl) modeDriveEl.addEventListener("change", onModeChange);
   if (modeNightEl) modeNightEl.addEventListener("change", onModeChange);
   if (modeCamoEl) modeCamoEl.addEventListener("change", onModeChange);

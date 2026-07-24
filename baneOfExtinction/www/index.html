@@ -5,12 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
   <meta name="robots" content="noindex, nofollow" />
   <title>Bane of Extinction</title>
-  <link rel="stylesheet" href="bane.css?v=public2" />
+  <link rel="stylesheet" href="bane.css?v=walk1" />
   <script src="bane-auth-gate.js?v=public2"></script>
   <style>html.auth-checking body { visibility: hidden; }</style>
 </head>
 <body>
   <div class="wrap">
+    <nav class="site-tabs" aria-label="Bane pages">
+      <a href="index.html" aria-current="page">Home</a>
+      <a href="walk.html">Wildlife Walk</a>
+      <a href="codex.html">Wildlife codex</a>
+      <a href="missions.html">Missions</a>
+      <a href="wildlife-scan.html">EcoLens</a>
+      <a href="account.html">Account</a>
+    </nav>
+
     <header class="hero">
       <p class="eyebrow">Odd Trove · quiet beta</p>
       <h1 class="brand">Bane of Extinction</h1>
@@ -23,7 +32,8 @@
     </header>
 
     <nav class="actions" aria-label="Main">
-      <a class="btn primary" href="codex.html">Open wildlife codex</a>
+      <a class="btn primary" href="walk.html">Wildlife Walk</a>
+      <a class="btn secondary" href="codex.html">Open wildlife codex</a>
       <a class="btn secondary" href="missions.html">Neighborhood missions</a>
       <button type="button" class="btn secondary" id="scanBtn" hidden>EcoLens</button>
       <a class="btn secondary" href="wildlife-scan.html" id="scanLinkDesktop">EcoLens (phone)</a>
@@ -35,13 +45,13 @@
     <section class="panel" aria-labelledby="soon-h">
       <h2 id="soon-h">What’s ready</h2>
       <ul class="plain">
+        <li><strong>Wildlife Walk</strong> — timer, notice prompts, buddy feed, learned stills on the trail (no camera on that tab)</li>
         <li><strong>Level 1</strong> — EcoLens on phone → species guess + codex art</li>
         <li>Wildlife codex fact book (learned facts on your account; fact levels separate from missions)</li>
         <li>Looking-at places (favorites on this device) — no GPS; facts follow the place you choose</li>
         <li><strong>Level 2</strong> — beginning missions after ~15 finds (signature signs; ant mound full visual)</li>
         <li><strong>Level 3</strong> — after a few Level 2 missions: same organism, different place meaning (healthy / meh / warning) + under-the-hood landscape stories</li>
         <li><strong>Don’t get too close</strong> — no scan or quest needs a risky close-up; use path distance or signs for animals that can bite or surprise you</li>
-        <li>Coming later: walk sessions and buddy</li>
       </ul>
     </section>
 

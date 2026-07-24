@@ -570,7 +570,7 @@
   margin-bottom: 1rem;
 }
 
-/* EcoLens assists — collapsible Drive / Night / Camouflage */
+/* EcoLens assists — native <details> collapse for Drive / Night / Camo */
 .ecolens-assists {
   margin: 0 auto 0.85rem;
   max-width: 22rem;
@@ -594,10 +594,22 @@
   line-height: 1.2;
   cursor: pointer;
   text-align: left;
+  list-style: none;
+  -webkit-user-select: none;
+  user-select: none;
   transition:
     border-color 0.18s ease,
     background 0.18s ease,
     box-shadow 0.18s ease;
+}
+
+.ecolens-assists__toggle::-webkit-details-marker {
+  display: none;
+}
+
+.ecolens-assists__toggle::marker {
+  content: "";
+  display: none;
 }
 
 .ecolens-assists__toggle:hover {
@@ -609,7 +621,7 @@
   outline-offset: 2px;
 }
 
-.ecolens-assists--open .ecolens-assists__toggle,
+.ecolens-assists[open] .ecolens-assists__toggle,
 .ecolens-assists--active .ecolens-assists__toggle {
   border-color: rgba(107, 196, 138, 0.62);
   background:
@@ -627,7 +639,7 @@
   margin: 0 0.15rem 0 0.2rem;
 }
 
-.ecolens-assists--open .ecolens-assists__chev {
+.ecolens-assists[open] .ecolens-assists__chev {
   transform: rotate(45deg);
   margin-top: -0.12rem;
 }
@@ -655,11 +667,16 @@
 }
 
 .ecolens-assists__panel {
+  display: none;
   margin-top: 0.4rem;
   padding: 0.55rem 0.55rem 0.45rem;
   border-radius: 0.9rem;
   border: 1px solid rgba(107, 196, 138, 0.22);
   background: rgba(8, 20, 16, 0.55);
+}
+
+.ecolens-assists[open] .ecolens-assists__panel {
+  display: block;
   animation: ecolensAssistsIn 0.18s ease;
 }
 
@@ -675,7 +692,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ecolens-assists__panel {
+  .ecolens-assists[open] .ecolens-assists__panel {
     animation: none;
   }
   .ecolens-assists__chev {

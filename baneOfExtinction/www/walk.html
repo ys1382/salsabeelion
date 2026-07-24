@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Wildlife Walk — Bane of Extinction</title>
+  <link rel="stylesheet" href="bane.css?v=walk1" />
+  <link rel="stylesheet" href="bane-walk.css?v=walk1" />
+  <script src="bane-auth-gate.js?v=public2"></script>
+  <style>html.auth-checking body { visibility: hidden; }</style>
+</head>
+<body>
+  <div class="wrap wrap--walk">
+    <nav class="site-tabs" aria-label="Bane pages">
+      <a href="index.html">Home</a>
+      <a href="walk.html" aria-current="page">Wildlife Walk</a>
+      <a href="codex.html">Wildlife codex</a>
+      <a href="missions.html">Missions</a>
+      <a href="wildlife-scan.html">EcoLens</a>
+      <a href="account.html">Account</a>
+    </nav>
+
+    <header class="hero hero--compact">
+      <p class="eyebrow"><a href="index.html">Bane of Extinction</a> · quiet beta</p>
+      <h1 class="brand">Wildlife Walk</h1>
+      <p class="tagline">
+        Notice the world at your pace. On screen, you and your buddy keep walking —
+        learned neighbors appear as stills on the trail. No GPS. No camera on this page.
+      </p>
+    </header>
+
+    <div class="walk-setting">
+      <p class="walk-setting__copy">
+        <strong>Wildlife Walk setting</strong> —
+        turn this off anytime. This tab never opens the camera; EcoLens is a separate page.
+      </p>
+      <label class="walk-toggle">
+        <input type="checkbox" id="walkEnabled" />
+        <span class="walk-toggle__track" aria-hidden="true"></span>
+        <span id="walkToggleLabel">Off</span>
+      </label>
+    </div>
+
+    <p class="status" id="walkStatus" aria-live="polite"></p>
+
+    <section class="panel walk-off-panel" id="walkOffPanel" aria-labelledby="walk-off-h">
+      <h2 id="walk-off-h">Walk is off</h2>
+      <p class="plain" style="padding-left:0;list-style:none">
+        Flip the setting above when you want timer, notice prompts, buddy care, and your learned trail.
+        Nothing films you here — even when Walk is on.
+      </p>
+    </section>
+
+    <div class="walk-on-panel" id="walkOnPanel" hidden>
+      <div class="walk-stats" aria-label="Walk stats">
+        <div class="walk-stat">
+          <span class="walk-stat__label">Walk time</span>
+          <span class="walk-stat__value" id="walkStatTime">0 min</span>
+        </div>
+        <div class="walk-stat">
+          <span class="walk-stat__label">Care streak</span>
+          <span class="walk-stat__value" id="walkStatStreak">0</span>
+        </div>
+        <div class="walk-stat">
+          <span class="walk-stat__label">Notices today</span>
+          <span class="walk-stat__value" id="walkStatNotices">0</span>
+        </div>
+        <div class="walk-stat">
+          <span class="walk-stat__label">Fact book</span>
+          <span class="walk-stat__value" id="walkStatFacts">0 · L1</span>
+        </div>
+      </div>
+
+      <div class="trail-stage" id="trailStage" aria-label="On-screen walk">
+        <div class="trail-stage__sky" aria-hidden="true"></div>
+        <div class="trail-stage__ground" aria-hidden="true"></div>
+        <div class="trail-stage__path" aria-hidden="true"></div>
+        <p class="trail-empty" id="trailEmpty">Learn neighbors with EcoLens — their stills show up here.</p>
+        <div class="trail-critters" id="trailCritters" aria-hidden="true"></div>
+        <div class="trail-party" id="trailParty">
+          <div class="walker" aria-hidden="true">
+            <div class="walker__head"></div>
+            <div class="walker__body"></div>
+            <div class="walker__legs"></div>
+          </div>
+          <div class="buddy-figure is-walk" id="buddyFigure" title="Buddy">
+            <span class="buddy-figure__label">Buddy</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="walk-controls">
+        <button type="button" class="btn primary" id="walkStart">Start walk</button>
+        <button type="button" class="btn secondary" id="walkStop" hidden>Stop walk</button>
+        <label class="chk" style="margin:0;align-self:center">
+          <input type="checkbox" id="walkQuiet" />
+          Quiet prompts (every ~5 min)
+        </label>
+      </div>
+
+      <div class="notice-card" id="noticeCard" hidden>
+        <p class="notice-card__label">Notice the place</p>
+        <p class="notice-card__prompt" id="noticePrompt"></p>
+        <div class="notice-card__choices" id="noticeChoices"></div>
+      </div>
+
+      <section class="panel" aria-labelledby="buddy-h">
+        <h2 id="buddy-h">Buddy</h2>
+        <p class="place-lens__hint" style="margin-top:0">
+          Feed foods that species actually eat. Fact-book learning unlocks buddy motions
+          (walk, run, eat, stand, rest). You can also use art from a learned codex neighbor.
+        </p>
+        <div class="buddy-panel__grid" id="buddyGrid"></div>
+        <p class="place-lens__sub">Feed</p>
+        <div class="feed-row" id="feedRow"></div>
+        <div class="motion-chips" id="motionChips" aria-label="Unlocked buddy motions"></div>
+        <p class="walk-fact-link" id="walkFactLine"></p>
+      </section>
+    </div>
+
+    <p class="foot">
+      <a href="/">← Odd Trove hub</a>
+      · <a href="codex.html">Wildlife codex</a>
+      · <a href="wildlife-scan.html">EcoLens</a> (camera lives only there)
+      · <a href="account.html">Account</a>
+    </p>
+  </div>
+  <script src="bane-codex-facts.js?v=walk1"></script>
+  <script src="bane-codex-collection.js?v=sync1"></script>
+  <script src="bane-walk.js?v=walk1"></script>
+  <script>
+    (function () {
+      var toggle = document.getElementById("walkEnabled");
+      var label = document.getElementById("walkToggleLabel");
+      function syncLabel() {
+        if (label && toggle) label.textContent = toggle.checked ? "On" : "Off";
+      }
+      if (toggle) {
+        toggle.addEventListener("change", syncLabel);
+        syncLabel();
+      }
+    })();
+  </script>
+</body>
+</html>

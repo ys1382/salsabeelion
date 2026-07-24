@@ -7,13 +7,22 @@
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <title>EcoLens — Bane of Extinction</title>
-  <link rel="stylesheet" href="bane.css?v=public1" />
-  <link rel="stylesheet" href="bane-codex-card.css?v=live6" />
+  <link rel="stylesheet" href="bane.css?v=walk1" />
+  <link rel="stylesheet" href="bane-codex-card.css?v=live8" />
   <script src="bane-auth-gate.js?v=public2"></script>
   <style>html.auth-checking body { visibility: hidden; }</style>
 </head>
 <body>
   <div class="wrap">
+    <nav class="site-tabs" aria-label="Bane pages">
+      <a href="index.html">Home</a>
+      <a href="walk.html">Wildlife Walk</a>
+      <a href="codex.html">Wildlife codex</a>
+      <a href="missions.html">Missions</a>
+      <a href="wildlife-scan.html" aria-current="page">EcoLens</a>
+      <a href="account.html">Account</a>
+    </nav>
+
     <header class="hero hero--compact">
       <p class="eyebrow"><a href="index.html">Bane of Extinction</a> · EcoLens</p>
       <h1 class="brand">EcoLens</h1>
@@ -39,19 +48,13 @@
         <div class="scan-stage__guide" aria-hidden="true"></div>
         <p class="scan-stage__hint" id="coachHint">Frame a find from a safe distance — living neighbor, evidence, rock / mineral / empty shell, or everyday outdoor object (plastic bottle, asphalt, curb). Pinch to zoom. Avoid faces/hands when you can. Don’t crowd wildlife.</p>
       </div>
-      <div class="ecolens-assists" id="ecolensAssists">
-        <button
-          type="button"
-          class="ecolens-assists__toggle"
-          id="assistsToggle"
-          aria-expanded="false"
-          aria-controls="assistsPanel"
-        >
+      <details class="ecolens-assists" id="ecolensAssists">
+        <summary class="ecolens-assists__toggle" id="assistsToggle">
           <span class="ecolens-assists__chev" aria-hidden="true"></span>
           <span class="ecolens-assists__title">Assists</span>
           <span class="ecolens-assists__summary" id="assistsSummary">Off</span>
-        </button>
-        <div class="ecolens-assists__panel" id="assistsPanel" hidden>
+        </summary>
+        <div class="ecolens-assists__panel" id="assistsPanel">
           <div class="ecolens-modes" role="group" aria-label="EcoLens assist modes">
             <label class="ecolens-mode">
               <input type="checkbox" id="modeDrive" />
@@ -68,7 +71,7 @@
           </div>
           <p class="note ecolens-mode-note" id="modeNote" hidden></p>
         </div>
-      </div>
+      </details>
       <div class="scan-actions">
         <button type="button" class="btn primary" id="captureBtn" disabled>Capture &amp; scan</button>
         <button type="button" class="btn secondary" id="stopCamBtn" hidden>Stop camera</button>
@@ -104,6 +107,6 @@
   <script src="bane-handheld-live.js"></script>
   <script src="bane-codex-facts.js?v=live1"></script>
   <script src="bane-codex-collection.js?v=sync1"></script>
-  <script src="bane-scan-live.js?v=live12"></script>
+  <script src="bane-scan-live.js?v=live13"></script>
 </body>
 </html>

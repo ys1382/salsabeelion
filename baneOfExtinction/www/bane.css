@@ -94,6 +94,34 @@ body {
   margin: 0 0 1rem;
 }
 
+.site-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.55rem;
+  margin: 0 0 1.15rem;
+  padding: 0.35rem 0;
+  font-family: system-ui, sans-serif;
+  font-size: 0.82rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.site-tabs a {
+  color: var(--muted);
+  text-decoration: none;
+  padding: 0.25rem 0.45rem;
+  border-radius: 6px;
+}
+
+.site-tabs a:hover {
+  color: var(--accent);
+}
+
+.site-tabs a[aria-current="page"] {
+  color: var(--accent);
+  background: var(--accent-dim);
+  font-weight: 600;
+}
+
 .btn {
   display: inline-flex;
   align-items: center;
