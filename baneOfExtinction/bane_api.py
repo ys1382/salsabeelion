@@ -380,13 +380,13 @@ def _fallback_callouts_for(
     return callouts
 
 
-FOCUS_MODES = ("walk", "garden", "hiking", "seashore", "food")
+FOCUS_MODES = ("walk", "garden", "hiking", "seashore", "food", "objects")
 
 
 def _normalize_focus_mode(
     raw: Any, *, garden_focus: bool | None = None
 ) -> str:
-    """Map API input to walk | garden | hiking | seashore | food (crops & domestic animals)."""
+    """Map API input to walk | garden | hiking | seashore | food | objects."""
     text = str(raw or "").strip().lower().replace("_", " ").replace("-", " ")
     text = re.sub(r"\s+", " ", text).strip()
     aliases = {
@@ -428,6 +428,18 @@ def _normalize_focus_mode(
         "farm": "food",
         "agriculture": "food",
         "ag": "food",
+        "objects": "objects",
+        "object": "objects",
+        "built": "objects",
+        "built world": "objects",
+        "everyday objects": "objects",
+        "everyday built": "objects",
+        "plastic": "objects",
+        "asphalt": "objects",
+        "buildings": "objects",
+        "human made": "objects",
+        "human-made": "objects",
+        "manufactured": "objects",
     }
     if text in aliases:
         return aliases[text]
@@ -520,8 +532,8 @@ def _focus_prompt_block(
             )
         block += (
             "Do NOT fill the set with only chores — keep noticing (and wonder if allowed) in the mix. "
-            "Do NOT write seashore, hiking/forest, or crops/domestication essays unless they "
-            "truly fit a garden bed. "
+            "Do NOT write seashore, hiking/forest, crops/domestication, or Objects/built-world "
+            "essays unless they truly fit a garden bed. "
         )
         return block
     if mode == "hiking":
@@ -541,7 +553,8 @@ def _focus_prompt_block(
             "species. If the organism is mainly a houseplant, crop, or aquarium/shore "
             "animal, say gently how a hiker might still meet it (or not) and give one "
             "honest adjacent note. "
-            "Do NOT dump garden how-tos, seashore essays, or crop/domestication history. "
+            "Do NOT dump garden how-tos, seashore essays, Objects/built-world essays, or "
+            "crop/domestication history. "
             "No guilt lectures; no doom sermons; family-friendly. "
         )
         if allow_help:
@@ -570,8 +583,9 @@ def _focus_prompt_block(
             "frame facts the way a shore-minded person would care. "
             "Never invent a fake beach species; if it is not coastal, say gently how it "
             "relates (or doesn’t) to seashore life. "
-            "Do NOT give inland garden how-tos, hiking/forest essays, or kitchen/crop "
-            "history essays. No guilt lectures; no doom sermons; family-friendly. "
+            "Do NOT give inland garden how-tos, hiking/forest essays, Objects/built-world "
+            "essays, or kitchen/crop history essays. No guilt lectures; no doom sermons; "
+            "family-friendly. "
         )
         if allow_help:
             block += (
@@ -613,8 +627,8 @@ def _focus_prompt_block(
             "one honest adjacent note (forage caution, “not edible,” wild relative of "
             "a crop) or why walkers meet it near farms/markets. "
             "Do NOT invent unsafe foraging advice. Do NOT dump garden chore lists, "
-            "hiking/forest essays, or seashore ecology unless they support the "
-            "crop/domestication story. "
+            "hiking/forest essays, seashore ecology, or Objects/built-world essays "
+            "unless they support the crop/domestication story. "
         )
         block += _food_depth_block(fact_level)
         if allow_help:
@@ -627,16 +641,61 @@ def _focus_prompt_block(
                 "practice manuals. "
             )
         return block
+    if mode == "objects":
+        block = (
+            "FOCUS MODE: OBJECTS / EVERYDAY BUILT WORLD — how human-made things "
+            "(plastic bottles, asphalt roads, buildings, curbs, drains, roofs, "
+            "packaging as CATEGORIES) sit next to living neighbors. The find is still "
+            "this organism or natural nonliving — use built-world angles that honestly "
+            "touch its life (heat from pavement, litter edges, shade of a wall, runoff). "
+            "GOAL: help people notice that the built world and nature are not separate. "
+            "Do NOT force-feed doom. The world already frustrates people about the "
+            "environment. Honest noticing of how systems are often built without enough "
+            "care for living systems is OK — but AT LEAST HALF of the callouts in each "
+            "set must be hope / agency: what the player can still choose, what people "
+            "are already doing that helps, feature KINDS (water-conscious buildings, "
+            "recycled-steel practice as a type), or that learning itself (using this "
+            "app with care) is already a step in the right direction. "
+            "Optional structure: a few calm problem-noticing lines, then a later "
+            "callout that lands harder on rising care / positive change so the set "
+            "does not leave the player stuck in frustration. "
+            "CLAUDE MAY (safe lane): plain object categories; material noticing "
+            "(plastic lasts; asphalt holds heat); not-your-fault system notes "
+            "(needing staples in packaging is not personal failure); generic "
+            "“buildings designed with water care / recycled materials in mind” as "
+            "kinds of practice — never invent a named address or brand as the example. "
+            "CLAUDE MUST NOT (owner hand-vet later — do NOT invent): named brands "
+            "(praise or dig); specific named buildings or places of worship as "
+            "“this place used recycled steel / water-smart design”; environmental "
+            "justice stories (who was harmed, lawsuits, policy fights); hard claims "
+            "that a photo proves recycled beams or a brand’s exact pollution rank. "
+            "Places of worship: only if relevant as ordinary place noticing "
+            "(birds on a roof, courtyard shade) — never faith critique, never invent "
+            "a specific green house-of-worship example. "
+            "Do NOT dump garden how-tos, hiking/forest essays, seashore essays, or "
+            "crop/domestication history. No guilt lectures; family-friendly. "
+            "EcoLens still does not ID manufactured objects as finds — this mode is "
+            "a fact lens on nature finds that meet the built world. "
+        )
+        if allow_help:
+            block += (
+                "Help tip must be choosable everyday kindness in the built world "
+                "(reuse a bottle you already have, refuse an extra bag, notice a "
+                "drain edge for wildlife, support care without blaming staples) — "
+                "gentle, not a doom lecture. Honoring curiosity / learning is OK. "
+            )
+        return block
     # walk (default)
     block = (
         "FOCUS MODE: WALK / WILD — eco-minded focus for walks and wild neighbors: "
         "shared air/water/food webs, seasons you meet them, place-aware noticing. "
         "People–nature links are fine when they fit; leave deep beachgoer or "
-        "trail-hiker relationship essays for Seashore / Hiking modes. "
+        "trail-hiker relationship essays for Seashore / Hiking modes, and leave "
+        "built-world / plastic / asphalt essays for Objects mode. "
         "Do NOT give gardening how-tos, “if you grow one…,” bed/soil recipes, "
         "seed-dispersal-as-grower tips, seashore-only essays, hiking/forest-only "
-        "essays, or crop/domestication history essays unless the player clearly "
-        "needs a tiny bridge. Leave those for other modes. "
+        "essays, Objects/built-world essays, or crop/domestication history essays "
+        "unless the player clearly needs a tiny bridge. Leave those for other modes. "
     )
     if allow_help:
         block += (
@@ -664,6 +723,11 @@ def _focus_disclaimer(focus_mode: str) -> str:
         return (
             " Focus mode: Crops & Domestic Animals — crop, farm, and "
             "domestication noticing (Claude skips human-injustice history)."
+        )
+    if mode == "objects":
+        return (
+            " Focus mode: Objects — everyday built-world noticing "
+            "(hope/agency ≥ half; no named brands or justice stories)."
         )
     return " Focus mode: Walk / wild — neighbor eco facts (not gardening how-tos)."
 
@@ -3555,8 +3619,9 @@ def build_callouts(
             if is_geology
             else (
                 "Mix: everyday player-world facts for the ACTIVE focus "
-                "(walk / garden / hiking / seashore / crops&domestics). "
+                "(walk / garden / hiking / seashore / crops&domestics / objects). "
                 "Hiking and Seashore lean into people–place relationship for engaged players; "
+                "Objects leans into built-world noticing with hope/agency ≥ half of the set; "
                 "other modes may still mention relationship when it fits. "
             )
         )

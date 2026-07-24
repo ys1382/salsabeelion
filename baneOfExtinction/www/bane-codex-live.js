@@ -20,6 +20,7 @@
     hiking: "Hiking",
     seashore: "Seashore",
     food: "Crops & Domestic Animals",
+    objects: "Objects / built world",
   };
   var statusEl = document.getElementById("status");
   var listEl = document.getElementById("calloutList");
