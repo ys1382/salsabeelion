@@ -90,6 +90,15 @@ _CAST_CARD_HEADER = re.compile(
     r"^#+\s*.+?\s*(?:cast card|— cast card)\s*$",
     re.I | re.M,
 )
+# "X is a/an … species" claims — used to drop invented hybrids vs sources.
+_IDENTITY_CLAIM = re.compile(
+    r"\b([A-Z][\w'-]*(?:\s+[A-Z][\w'-]*){0,3})\s+"
+    r"(?:is|was|are|were)\s+(?:a|an)\s+"
+    r"((?:[\w'-]+\s+){0,4}"
+    r"(?:lynx|rabbit|wolf|fox|cat|dog|bear|eagle|hawk|owl|raven|crow|"
+    r"mouse|rat|deer|bird|feline|canine|sentinel|creature|beast)s?)\b",
+    re.I,
+)
 
 
 def wants_broad_answer(question: str, *, question_kind: str = "") -> bool:
@@ -478,6 +487,65 @@ def scrub_rag_artifacts(question: str, answer: str, *, allow_broad: bool) -> str
     return body
 
 
+def scrub_unsupported_identity_claims(
+    answer: str, sources: list[Any] | None
+) -> str:
+    """
+    Drop 'Name is a Species' sentences when sources never place that name
+    near that species — blocks invented hybrids (e.g. sentinel bird).
+    """
+    if not answer or not sources:
+        return answer
+    corpus_parts: list[str] = []
+    for row in sources:
+        if not isinstance(row, dict):
+            continue
+        corpus_parts.append(str(row.get("excerpt") or ""))
+        corpus_parts.append(str(row.get("title") or ""))
+        corpus_parts.append(str(row.get("body") or ""))
+    corpus = " ".join(corpus_parts).lower()
+    if len(corpus.strip()) < 20:
+        return answer
+
+    def _supported(name: str, species: str) -> bool:
+        sp = species.split()[-1]
+        for art in ("a", "an"):
+            if (
+                f"{name} is {art} {species}" in corpus
+                or f"{name} was {art} {species}" in corpus
+                or f"{name} is {art} {sp}" in corpus
+                or f"{name} was {art} {sp}" in corpus
+            ):
+                return True
+        for m in re.finditer(rf"\b{re.escape(name)}\b", corpus):
+            window = corpus[max(0, m.start() - 40) : m.end() + 90]
+            if re.search(rf"\b{re.escape(sp)}\b", window):
+                return True
+        return False
+
+    body, footer = _split_footer(answer)
+    sentences = re.split(r"(?<=[.!?])\s+", body)
+    kept: list[str] = []
+    for sentence in sentences:
+        s = sentence.strip()
+        if not s:
+            continue
+        m = _IDENTITY_CLAIM.search(s)
+        if not m:
+            kept.append(s)
+            continue
+        name = m.group(1).strip().lower()
+        species = m.group(2).strip().lower()
+        if _supported(name, species):
+            kept.append(s)
+    if not kept:
+        return answer
+    rebuilt = " ".join(kept)
+    if footer:
+        return rebuilt.rstrip() + "\n\n" + footer
+    return rebuilt
+
+
 def focus_ask_response(
     question: str, result: dict[str, Any], *, spot_check: bool = False
 ) -> dict[str, Any]:
@@ -521,13 +589,16 @@ def focus_ask_response(
         allow_broad = is_story_arc_relationship_question(question)
     if kind == "resume":
         allow_broad = True
+    sources = result.get("sources")
     answer = focus_topic_gather_answer(question, answer, allow_broad=allow_broad)
     answer = scrub_rag_artifacts(question, answer, allow_broad=allow_broad)
+    answer = scrub_unsupported_identity_claims(
+        answer, sources if isinstance(sources, list) else None
+    )
     answer = trim_off_topic_sentences(question, answer, allow_broad=allow_broad)
     answer = apply_length_policy(
         question, answer, question_kind=kind, allow_broad=allow_broad
     )
-    sources = result.get("sources")
     if isinstance(sources, list):
         sources = filter_sources_for_answer(sources, answer, question)
     out = dict(result)

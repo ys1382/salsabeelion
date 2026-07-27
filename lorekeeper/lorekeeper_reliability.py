@@ -52,9 +52,10 @@ _MY_WORK_TAIL = re.compile(
 
 
 def _normalize_work_key(text: str) -> str:
-    """Fold trailing possessive 's so near-duplicate tags compare alike."""
-    cleaned = re.sub(r"\s+", " ", (text or "").strip().lower())
-    return re.sub(r"['']s\b", "", cleaned).replace("'", "").replace("’", "")
+    """Fold possessives and &/and so near-duplicate tags compare alike."""
+    from lorekeeper_work_membership import normalize_work_key
+
+    return normalize_work_key(text)
 
 
 def _is_junk_work_hint(hint: str) -> bool:

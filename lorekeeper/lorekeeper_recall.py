@@ -288,6 +288,26 @@ def _strip_html(html: str) -> str:
     return normalize_corpus_text(text)
 
 
+_DOC_WORK_SUFFIX = re.compile(
+    r"\s+(?:storywriting\s+)?(?:draft|manuscript|document|doc)\s*$",
+    re.I,
+)
+
+
+def _document_work_tag(doc: dict[str, Any]) -> str:
+    """Prefer explicit work field; else title with draft/document suffix stripped."""
+    explicit = str(
+        doc.get("workTag") or doc.get("workTitle") or doc.get("work") or ""
+    ).strip()
+    if explicit:
+        return explicit
+    title = str(doc.get("title") or "").strip()
+    if not title:
+        return "Untitled document"
+    stripped = _DOC_WORK_SUFFIX.sub("", title).strip()
+    return stripped or title
+
+
 def _paragraph_chunks(body: str, min_len: int = 40) -> list[str]:
     text = (body or "").strip()
     if not text:
@@ -313,7 +333,7 @@ def _entries_from_documents(raw: str | None) -> list[dict[str, Any]]:
             continue
         doc_id = str(doc.get("id") or "")
         doc_title = str(doc.get("title") or "Untitled document")
-        work_tag = str(doc.get("workTag") or doc_title)
+        work_tag = _document_work_tag(doc)
         tags = [work_tag] if work_tag else []
         if doc.get("bodyFormat") == "html":
             body = _strip_html(str(doc.get("bodyHtml") or ""))

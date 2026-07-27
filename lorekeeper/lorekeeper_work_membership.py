@@ -52,8 +52,13 @@ _EXCLUDE_PHRASE = re.compile(
 
 
 def normalize_work_key(text: str) -> str:
+    """Fold possessives and &/and so near-duplicate work tags match."""
     cleaned = re.sub(r"\s+", " ", (text or "").strip().lower())
-    return re.sub(r"['']s\b", "", cleaned).replace("'", "").replace("’", "")
+    cleaned = re.sub(r"['']s\b", "", cleaned).replace("'", "").replace("’", "")
+    # "Smoke & Mirrors" == "Smoke and Mirrors"
+    cleaned = re.sub(r"\s*&\s*", " and ", cleaned)
+    cleaned = re.sub(r"\s+", " ", cleaned).strip()
+    return cleaned
 
 
 def _entry_blob(entry: dict[str, Any]) -> str:

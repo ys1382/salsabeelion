@@ -165,13 +165,16 @@ Surface gaps, discrepancies, contradictions, planning notes, and things the writ
 _COVERAGE_META = """
 This is a COVERAGE question — meta voice is OK ("You have…", "You haven't…").
 
-Summarize what is saved vs missing for the subject. Planning notes and gaps are OK here."""
+Summarize what is saved vs missing for the subject. Planning notes and gaps are OK here.
+When the question asks what happens after a named beat, prioritize notes and draft lines about that later stretch — do not stop at the beat itself.
+Never invent hybrid creatures or roles (e.g. do not fuse a named sentinel with a separate birds note into a "sentinel bird"). Restate only identities the sources actually state."""
 
 _TOPIC_DEFAULT = """
 Answer the question directly from the sources in reference voice.
 Lead with the sentence that answers what was asked — do not bury it under cast cards, backstory, or profile sections.
 Include only facts needed for this question — not the full plot, every character, or every scene beat.
-Stay focused on what was asked. One short paragraph unless the question explicitly asks for a summary."""
+Stay focused on what was asked. One short paragraph unless the question explicitly asks for a summary.
+Never invent identities, species, or hybrid roles that sources do not state. If one note names a sentinel and another discusses birds, do not invent a sentinel bird."""
 
 _AWARENESS = """
 This asks how aware or informed someone is about a specific topic — NOT a full character profile.

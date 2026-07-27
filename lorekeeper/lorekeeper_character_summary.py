@@ -98,7 +98,17 @@ _AUTHOR_META_RE = re.compile(
 
 _TRAIT_HINT = re.compile(
     r"\b(grey|gray|skin|tall|short|eyes|hair|arcanist|elf|spirit|guardian|"
-    r"species|wears|dressed|voice|accent|scar|cloak|armor)\b",
+    r"species|wears|dressed|voice|accent|scar|cloak|armor|"
+    r"lynx|rabbit|wolf|fox|cat|dog|bear|eagle|hawk|owl|raven|crow|"
+    r"mouse|rat|deer|stag|boar|feline|canine|eurasian|creature|beast)\b",
+    re.I,
+)
+
+_SPECIES_IDENTITY = re.compile(
+    r"\b(?:is|was|are|were)\s+(?:a|an)\s+(?:[\w'-]+\s+){0,4}"
+    r"(?:lynx|rabbit|wolf|fox|cat|dog|bear|eagle|hawk|owl|raven|crow|"
+    r"mouse|rat|deer|stag|boar|serpent|dragon|bird|feline|canine|"
+    r"species|creature|animal|beast)\b",
     re.I,
 )
 
@@ -583,6 +593,9 @@ def _has_profile_copula(sentence: str, names: list[str]) -> bool:
         if re.search(rf"\b{n}\s*[—–\-:,]\s*", sentence, re.I):
             return True
         if _TRAIT_HINT.search(sentence) and re.search(rf"\b{n}\b", s_low):
+            return True
+        # "Duke Dijon is a Eurasian Lynx" / "Dijon is a lynx"
+        if re.search(rf"\b{n}\b", s_low) and _SPECIES_IDENTITY.search(sentence):
             return True
     if re.search(r"\b(son|daughter|child|brother|sister)\s+of\b", s_low):
         return True
@@ -1284,6 +1297,29 @@ def _explicit_profile_lines_from_drafts(
     label: str, scope: list[dict[str, Any]], names: list[str]
 ) -> list[str]:
     """Last resort: pull only explicit cast/profile sentences from drafts — never scene beats."""
+    # Also try bare name without duke/lord so draft "Dijon is a lynx" hits.
+    query_names = list(names)
+    for name in list(names):
+        parts = str(name or "").split()
+        if len(parts) >= 2 and parts[0].lower() in {
+            "duke",
+            "duchess",
+            "lord",
+            "lady",
+            "sir",
+            "dame",
+            "king",
+            "queen",
+            "prince",
+            "princess",
+            "baron",
+            "baroness",
+            "count",
+            "countess",
+        }:
+            bare = " ".join(parts[1:])
+            if bare and bare not in query_names:
+                query_names.append(bare)
     lines: list[str] = []
     seen: set[str] = set()
     for entry in scope:
@@ -1291,15 +1327,15 @@ def _explicit_profile_lines_from_drafts(
             continue
         body = normalize_corpus_text(str(entry.get("body") or ""))
         for sentence in _split_sentences(body):
-            if _is_author_meta_sentence(sentence, names):
+            if _is_author_meta_sentence(sentence, query_names):
                 continue
-            if not any(_name_in_text(name, sentence) for name in names):
+            if not any(_name_in_text(name, sentence) for name in query_names):
                 continue
-            if not _has_profile_copula(sentence, names) and not _name_led_identity(
-                sentence, names
+            if not _has_profile_copula(sentence, query_names) and not _name_led_identity(
+                sentence, query_names
             ):
                 continue
-            if _classify_sentence(sentence, names) in ("scene", "dialogue"):
+            if _classify_sentence(sentence, query_names) in ("scene", "dialogue"):
                 continue
             key = re.sub(r"\s+", " ", sentence.lower())[:100]
             if key in seen:
@@ -1439,6 +1475,36 @@ def _synthesize_from_notes_first(
     if note_hits:
         answer, ids = synthesize(note_hits)
         if answer and answer_good_enough(answer):
+            # Portrait / what-is: fold clear draft identity (species, role) into notes.
+            if portrait or is_who_is_question(question):
+                draft_roles = _explicit_profile_lines_from_drafts(
+                    label, scope, [label]
+                )
+                if draft_roles:
+                    ans_low = answer.lower()
+                    missing = [
+                        line
+                        for line in draft_roles
+                        if _SPECIES_IDENTITY.search(line)
+                        and not any(
+                            tok in ans_low
+                            for tok in re.findall(
+                                r"\b(?:lynx|rabbit|wolf|fox|cat|dog|bear|"
+                                r"eagle|hawk|owl|species|creature)\b",
+                                line.lower(),
+                            )
+                        )
+                    ]
+                    if missing:
+                        combined = _merge_hits(
+                            note_hits,
+                            [("draft-profile", "Draft", missing, True)],
+                        )
+                        merged_ans, merged_ids = synthesize(
+                            combined, use_draft_cast=True
+                        )
+                        if merged_ans and answer_good_enough(merged_ans):
+                            return merged_ans, merged_ids
             return answer, ids
 
     if doc_hits or note_hits:

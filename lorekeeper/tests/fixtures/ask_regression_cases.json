@@ -382,6 +382,116 @@
           "half-brother"
         ]
       }
+    },
+    {
+      "id": "ampersand_work_tag_same_project",
+      "label": "Smoke & Mirrors tag matches Smoke and Mirrors ask",
+      "entries": [
+        {
+          "id": "n1",
+          "title": "Birds",
+          "body": "planned: write the flock council scene with the cliff roost.",
+          "tags": ["Smoke & Mirrors"],
+          "kind": "note"
+        },
+        {
+          "id": "d1",
+          "title": "Main draft",
+          "body": "Character M walked the market before dawn.",
+          "tags": ["Smoke and Mirrors"],
+          "kind": "document"
+        }
+      ],
+      "question": "Smoke and Mirrors: Remind me of everything in notes that haven't made it into the main draft",
+      "assert": {
+        "questionKind": "notes_not_in_draft",
+        "materialState": "summarizable",
+        "answerContains": ["flock", "cliff"],
+        "answerNotContains": ["nothing clear stood out"]
+      }
+    },
+    {
+      "id": "what_is_species_from_draft",
+      "label": "What is X pulls species from draft when notes omit it",
+      "entries": [
+        {
+          "id": "n1",
+          "title": "Duke Marrow",
+          "body": "Duke Marrow is the second cousin of Lord Ashen. He hosts Ashen after the injury.",
+          "tags": ["Ashford Saga"],
+          "kind": "character"
+        },
+        {
+          "id": "d1",
+          "title": "Ashford draft",
+          "body": "Duke Marrow is a Eurasian Lynx. He keeps a quiet court in the north wing.",
+          "tags": ["Ashford Saga"],
+          "kind": "document"
+        }
+      ],
+      "question": "In Ashford Saga, what is Duke Marrow?",
+      "assert": {
+        "answerContains": ["Lynx"],
+        "answerNotContains": ["Nothing saved"]
+      }
+    },
+    {
+      "id": "notes_not_in_draft_after_anchor",
+      "label": "Unused notes after a named beat keep later planned threads",
+      "entries": [
+        {
+          "id": "n_early",
+          "title": "Market setup",
+          "body": "The glass market only opens at dusk — not yet in the draft.",
+          "tags": ["Ashford Saga"],
+          "kind": "note"
+        },
+        {
+          "id": "n_capture",
+          "title": "After the bridge chase",
+          "body": "planned: Character M is captured in the manor cellar and later escapes through the servant stair.",
+          "tags": ["Ashford Saga"],
+          "kind": "note"
+        },
+        {
+          "id": "d1",
+          "title": "Draft",
+          "body": "Character M fled across the bridge. The chase ended at the gate.",
+          "tags": ["Ashford Saga"],
+          "kind": "document"
+        }
+      ],
+      "question": "Ashford Saga: show me everything that's not yet in the main draft after the bridge chase",
+      "assert": {
+        "questionKind": "notes_not_in_draft",
+        "answerContains": ["captured", "escapes"],
+        "answerNotContains": ["Nothing saved"]
+      }
+    },
+    {
+      "id": "no_invented_sentinel_bird",
+      "label": "Do not invent sentinel bird when sentinel and birds are separate",
+      "entries": [
+        {
+          "id": "n_sentinel",
+          "title": "Sentinel Oakfern",
+          "body": "Sentinel Oakfern is a rabbit who guards the burrow gate.",
+          "tags": ["Ashford Saga"],
+          "kind": "character"
+        },
+        {
+          "id": "n_birds",
+          "title": "Birds",
+          "body": "Preyfolk birds roost on the cliff and refuse Predator banners.",
+          "tags": ["Ashford Saga"],
+          "kind": "note"
+        }
+      ],
+      "question": "In Ashford Saga, remind me of everything regarding the birds",
+      "assert": {
+        "answerContains": ["birds"],
+        "answerNotContains": ["Oakfern is a bird", "sentinel bird", "Sentinel bird"]
+      }
     }
   ]
 }

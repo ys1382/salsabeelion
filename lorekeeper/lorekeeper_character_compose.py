@@ -49,8 +49,9 @@ def is_coverage_question(question: str) -> bool:
         return True
     if re.search(
         r"\b("
-        r"tell me everything|everything i (?:have )?(?:written|saved)|"
-        r"all i (?:have )?(?:written|saved)|show me everything i"
+        r"tell me everything|remind me of everything|"
+        r"everything i (?:have )?(?:written|saved)|"
+        r"all i (?:have )?(?:written|saved)|show me everything(?:\s+i)?"
         r")\b",
         q,
         re.I,

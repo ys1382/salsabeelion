@@ -9,7 +9,7 @@ from lorekeeper_loose_ends import entry_is_planned, is_planned_gap_question
 _NOTES_NOT_IN_DRAFT_Q = re.compile(
     r"\b("
     r"notes?\s+that\s+(?:haven'?t|have\s+not|hasn'?t|has\s+not)\s+"
-    r"(?:been\s+)?(?:touched|used|covered|reflected|included|drafted)|"
+    r"(?:been\s+)?(?:touched|used|covered|reflected|included|drafted|made\s+it)|"
     r"(?:written|saved)\s+in\s+(?:my\s+|the\s+)?notes?\s+that\s+"
     r"(?:haven'?t|have\s+not|hasn'?t|has\s+not)|"
     r"notes?\s+(?:only|material)?\s*(?:not|never)\s+(?:in|in\s+the)\s+"
@@ -23,7 +23,15 @@ _NOTES_NOT_IN_DRAFT_Q = re.compile(
     r"what(?:'s|\s+is)\s+in\s+(?:my\s+)?notes?\s+(?:but|that)\s+(?:is\s+)?"
     r"not\s+(?:in|yet\s+in)\s+(?:the\s+)?(?:main\s+)?(?:document|draft)|"
     r"notes?\s+(?:I\s+)?haven'?t\s+(?:used|put)\s+(?:in|into)\s+(?:the\s+)?"
-    r"(?:draft|document)"
+    r"(?:draft|document)|"
+    r"(?:remind|show|tell)\s+me\s+(?:of\s+)?everything\s+(?:in\s+)?"
+    r"(?:(?:my\s+|the\s+)?notes?\s+)?(?:that\s+)?"
+    r"(?:haven'?t|have\s+not|hasn'?t|has\s+not|not\s+yet)\s+"
+    r"(?:(?:been\s+)?(?:made\s+it\s+into|touched|used|included)\s+)?"
+    r"(?:in\s+)?(?:the\s+)?(?:main\s+)?(?:document|draft)|"
+    r"everything\s+(?:that(?:'s|\s+is)\s+)?"
+    r"(?:not\s+yet\s+in|haven'?t\s+made\s+it\s+into)\s+"
+    r"(?:the\s+)?(?:main\s+)?(?:document|draft)"
     r")\b",
     re.I,
 )
@@ -137,7 +145,7 @@ _FOOTER = (
     "— From your notes vs draft only. Nothing invented. "
     "Not a full literary read of whether something was 'touched upon.'"
 )
-MAX_UNUSED_LINES = 40
+MAX_UNUSED_LINES = 80
 
 # Subject focus: "…relating to Dijon", "notes about Dijon that haven't…"
 _SUBJECT_AFTER_SCOPE = re.compile(
@@ -156,6 +164,20 @@ _SUBJECT_NOTES_ABOUT = re.compile(
 _SUBJECT_RELATING = re.compile(
     r"\b(?:relating\s+to|related\s+to|regarding|concerning)\s+"
     r"(.+?)\s*[?.!]?\s*$",
+    re.I,
+)
+# "…after the rat flashback… including after Etherei is captured"
+_AFTER_ANCHOR = re.compile(
+    r"\bafter\s+(?:the\s+)?(.+?)(?="
+    r"\s+including\b|"
+    r"\s+that\s+(?:haven|hasn|have\s+not|has\s+not)\b|"
+    r"\s+that\s+(?:i(?:'?ve| have)\s+)?(?:written|saved)\b|"
+    r"\s*[?.!]?\s*$"
+    r")",
+    re.I,
+)
+_INCLUDING_AFTER = re.compile(
+    r"\bincluding\s+(?:whatever\s+happens\s+)?after\s+(?:the\s+)?(.+?)(?=\s*[?.!]?\s*$)",
     re.I,
 )
 _SUBJECT_JUNK = frozenset(
@@ -221,6 +243,74 @@ def extract_notes_not_in_draft_subject(question: str) -> str:
             continue
         return cleaned[:80]
     return ""
+
+
+def extract_after_anchors(question: str) -> list[str]:
+    """Story-beat anchors from 'after X' / 'including after Y' phrasing."""
+    q = (question or "").strip()
+    if not q:
+        return []
+    out: list[str] = []
+    seen: set[str] = set()
+    for pattern in (_AFTER_ANCHOR, _INCLUDING_AFTER):
+        for m in pattern.finditer(q):
+            raw = re.sub(r"\s+", " ", m.group(1).strip()).strip(" \t\"'“”‘’?.!,")
+            if not raw or len(raw) > 120:
+                continue
+            # Drop trailing "that obsidian has" style clauses lightly
+            raw = re.sub(
+                r"\s+that\s+\w+\s+has\b.*$",
+                "",
+                raw,
+                flags=re.I,
+            ).strip()
+            key = raw.lower()
+            if key in seen or key in _SUBJECT_JUNK:
+                continue
+            toks = _content_tokens(raw)
+            if not toks:
+                continue
+            seen.add(key)
+            out.append(raw[:100])
+    return out
+
+
+def _item_matches_after_anchors(
+    row: dict[str, str], anchors: list[str]
+) -> bool:
+    """True when a unused claim is about an after-anchor beat."""
+    if not anchors:
+        return True
+    hay = _normalize(
+        f"{row.get('noteTitle') or ''} {row.get('line') or ''}"
+    )
+    if not hay:
+        return False
+    for anchor in anchors:
+        toks = _content_tokens(anchor)
+        if not toks:
+            continue
+        # Enough distinctive tokens from the beat phrase.
+        hits = sum(1 for t in toks if t in hay)
+        need = 1 if len(toks) <= 2 else max(2, (len(toks) + 1) // 2)
+        if hits >= need:
+            return True
+        if _normalize(anchor) in hay:
+            return True
+    return False
+
+
+def filter_unused_by_after_anchors(
+    items: list[dict[str, str]], anchors: list[str]
+) -> list[dict[str, str]]:
+    """
+    When the writer said 'after X', prefer claims about those beats.
+    If nothing matches, keep the full list (honest fallback).
+    """
+    if not anchors or not items:
+        return items
+    filtered = [row for row in items if _item_matches_after_anchors(row, anchors)]
+    return filtered if filtered else items
 
 
 def _subject_hits_text(subject: str, text: str) -> bool:
@@ -501,13 +591,11 @@ def collect_notes_not_in_draft(
     """
     Return (unused claim rows, has_notes, has_draft).
     Rows: entryId, noteTitle, line.
+    Planned notes are included — they are unused by definition.
     """
     notes: list[dict[str, Any]] = []
     for entry in entries:
         if not isinstance(entry, dict):
-            continue
-        if entry_is_planned(entry):
-            # Intentional gaps stay on the planned route; skip here.
             continue
         if _is_draft_entry(entry):
             continue
@@ -528,6 +616,7 @@ def collect_notes_not_in_draft(
         eid = str(entry.get("id") or "")
         title = str(entry.get("title") or "Untitled").strip() or "Untitled"
         body = str(entry.get("body") or "").strip()
+        planned = entry_is_planned(entry)
         claims = _split_claims(body) if body else []
         if not claims and title.lower() not in ("untitled", "untitled note", "note"):
             claims = [title]
@@ -538,7 +627,8 @@ def collect_notes_not_in_draft(
             cleaned = re.sub(r"\s+[(\[]+$", "", cleaned)
             if not _claim_is_usable(cleaned):
                 continue
-            if _claim_touched_in_draft(cleaned, draft_norm):
+            # Planned markers are unused even if a phrase also appears in draft.
+            if not planned and _claim_touched_in_draft(cleaned, draft_norm):
                 continue
             key = _dedupe_key(cleaned)
             if key in seen:
@@ -846,6 +936,9 @@ def answer_notes_not_in_draft(
     subject = extract_notes_not_in_draft_subject(question)
     if subject:
         items = filter_unused_by_subject(items, subject)
+    anchors = extract_after_anchors(question)
+    if anchors:
+        items = filter_unused_by_after_anchors(items, anchors)
     local = compose_notes_not_in_draft_local(
         work_hints,
         items,
@@ -866,7 +959,7 @@ def answer_notes_not_in_draft(
         if eid and eid not in seen_ids:
             seen_ids.add(eid)
             source_ids.append(eid)
-        if len(source_ids) >= 12:
+        if len(source_ids) >= 20:
             break
     # Unfocused empty: still point at a few notes so sources aren't blank.
     # Subject focus with no hits: leave sources empty (honest "nothing for X").
@@ -875,10 +968,9 @@ def answer_notes_not_in_draft(
             if (
                 isinstance(entry, dict)
                 and not _is_draft_entry(entry)
-                and not entry_is_planned(entry)
                 and entry.get("id")
             ):
                 source_ids.append(str(entry["id"]))
-                if len(source_ids) >= 3:
+                if len(source_ids) >= 6:
                     break
     return answer, source_ids

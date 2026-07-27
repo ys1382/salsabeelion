@@ -16,7 +16,10 @@
       .trim()
       .toLowerCase()
       .replace(/\s+/g, " ");
-    return cleaned.replace(/['']s\b/g, "").replace(/['']/g, "");
+    cleaned = cleaned.replace(/['']s\b/g, "").replace(/['']/g, "");
+    // "Smoke & Mirrors" == "Smoke and Mirrors"
+    cleaned = cleaned.replace(/\s*&\s*/g, " and ").replace(/\s+/g, " ").trim();
+    return cleaned;
   }
 
   function entryBlob(entry) {
