@@ -1,15 +1,14 @@
 #!/usr/bin/env python3
 """
 Halalit Bookcheck — theme detection API (server-side only).
-Gemini + Claude dual scan on /api/theme-scan (merged results). Successful scans are
+Gemini theme scan on /api/theme-scan (Claude dual-scan retired). Successful scans are
 shared via disk cache so later readers of the same book skip AI.
 Optional web review snippets via DuckDuckGo lite (default) or Brave when BRAVE_SEARCH_API_KEY is set.
 Reads HALALIT_GEMINI_API_KEY / GEMINI_API_KEY and ANTHROPIC_API_KEY (or anthropic.key).
 
 POST /api/theme-scan       JSON: { "title": "...", "author": "...", "isGraphicFormat": bool }
-POST /api/cover-identify   JSON: { "imageBase64": "...", "mimeType": "image/jpeg" }
-POST /api/owner/shelf-identify  JSON: { "imageBase64": "...", "mimeType": "image/jpeg" }
-                               → owner-only multi-title shelf photo read (Gemini); image discarded
+POST /api/cover-identify   removed (410) — barcode / type title instead
+POST /api/owner/shelf-identify  removed (410) — parked on Halalit roadmap; not live
 POST /api/library/check    JSON: { "title": "...", "author": "...", "isbn?": "...", "placeId?": "..." }
                                → library branch borrowable check (Central Park / Cupertino practice)
 GET  /health  and  /api/health
@@ -26,7 +25,6 @@ import sys
 import urllib.error
 import urllib.parse
 import urllib.request
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any
 
@@ -833,12 +831,9 @@ def call_claude(title: str, author: str, is_graphic: bool, review_snippets: str 
 
 
 def call_theme_scan(title: str, author: str, is_graphic: bool) -> dict[str, Any]:
-    """Run web review lookup, then Gemini and Claude in parallel; merge theme flags and briefs.
-
-    Shared disk cache: later lookups of the same book reuse a prior successful scan (no AI).
-    """
-    if not KEY and not ANTHROPIC_KEY:
-        return {"ok": False, "error": "ai_unconfigured", "message": "No AI theme scan keys configured on the server."}
+    """Run web review lookup, then Gemini theme scan. Shared disk cache skips AI on repeats."""
+    if not KEY:
+        return {"ok": False, "error": "ai_unconfigured", "message": "No Gemini theme scan key configured on the server."}
 
     cached = get_cached_theme_scan(title, author, is_graphic)
     if cached is not None:
@@ -849,52 +844,32 @@ def call_theme_scan(title: str, author: str, is_graphic: bool) -> dict[str, Any]
     if review.get("ok"):
         review_block = format_review_snippets_for_prompt(review.get("snippets") or [])
 
-    futures = {}
-    with ThreadPoolExecutor(max_workers=2) as pool:
-        if KEY:
-            futures[pool.submit(call_gemini, title, author, is_graphic, review_block)] = "gemini"
-        if ANTHROPIC_KEY:
-            futures[pool.submit(call_claude, title, author, is_graphic, review_block)] = "claude"
-        results: dict[str, dict[str, Any]] = {}
-        for fut in as_completed(futures):
-            label = futures[fut]
-            try:
-                results[label] = fut.result()
-            except Exception as e:
-                results[label] = {"ok": False, "error": f"{label}_failed", "message": str(e)}
-
-    gemini = results.get("gemini") or {"ok": False}
-    claude = results.get("claude") or {"ok": False}
-    ok_scans = [s for s in (gemini, claude) if s.get("ok")]
-    if not ok_scans:
-        err = claude if claude.get("error") else gemini
+    gemini = call_gemini(title, author, is_graphic, review_block)
+    if not gemini.get("ok"):
         return {
             "ok": False,
-            "error": err.get("error") or "ai_failed",
-            "message": err.get("message") or "Theme scan failed.",
+            "error": gemini.get("error") or "ai_failed",
+            "message": gemini.get("message") or "Theme scan failed.",
         }
 
-    themes_out, series_note = merge_theme_scans(*ok_scans)
     out: dict[str, Any] = {
         "ok": True,
-        "themes": themes_out,
-        "seriesNote": series_note,
+        "themes": gemini.get("themes") or [],
+        "seriesNote": gemini.get("seriesNote") or "",
         "fanserviceSkipped": True,
-        "dualScan": True,
-        "model": MODEL if gemini.get("ok") else CLAUDE_MODEL,
-        "geminiModel": MODEL if gemini.get("ok") else None,
-        "claudeModel": CLAUDE_MODEL if claude.get("ok") else None,
-        "geminiOk": bool(gemini.get("ok")),
-        "claudeOk": bool(claude.get("ok")),
+        "dualScan": False,
+        "model": MODEL,
+        "geminiModel": MODEL,
+        "claudeModel": None,
+        "geminiOk": True,
+        "claudeOk": False,
+        "claudeSkipped": True,
+        "claudeSkipReason": "gemini_only_policy",
         "reviewSearchUsed": bool(review.get("ok")),
         "reviewSearchProvider": review.get("provider"),
         "reviewSnippetCount": len(review.get("snippets") or []),
         "reviewSearchError": review.get("error") if not review.get("ok") else None,
     }
-    if not claude.get("ok") and ANTHROPIC_KEY:
-        out["claudeError"] = claude.get("error") or "claude_failed"
-    if not gemini.get("ok") and KEY:
-        out["geminiError"] = gemini.get("error") or "gemini_failed"
     put_cached_theme_scan(title, author, is_graphic, out)
     return out
 
@@ -1203,11 +1178,12 @@ class Handler(BaseHTTPRequestHandler):
                     "ok": True,
                     "aiConfigured": bool(KEY),
                     "claudeConfigured": bool(ANTHROPIC_KEY),
-                    "dualScan": bool(KEY and ANTHROPIC_KEY),
+                    "dualScan": False,
+                    "themeScanProvider": "gemini",
                     "model": MODEL,
                     "claudeModel": CLAUDE_MODEL,
-                    "coverIdentify": True,
-                    "shelfIdentify": True,
+                    "coverIdentify": False,
+                    "shelfIdentify": False,
                     "accounts": True,
                     "reviewSearchConfigured": True,
                     "braveConfigured": bool(os.environ.get("BRAVE_SEARCH_API_KEY", "").strip()),
@@ -1223,23 +1199,15 @@ class Handler(BaseHTTPRequestHandler):
         length = int(self.headers.get("Content-Length") or 0)
 
         if path == "/api/owner/shelf-identify":
-            if length > 6_500_000:
-                json_response(self, 413, {"ok": False, "error": "payload_too_large"})
-                return
-            try:
-                body = json.loads(self.rfile.read(length).decode("utf-8")) if length else {}
-            except (json.JSONDecodeError, UnicodeDecodeError):
-                json_response(self, 400, {"ok": False, "error": "invalid_json"})
-                return
-            user = session_user(self)
-            if not user or not user.get("is_owner"):
-                json_response(self, 403, {"ok": False, "error": "owner_only"})
-                return
-            image_b64 = str(body.get("imageBase64") or "").strip()
-            mime = str(body.get("mimeType") or "image/jpeg").strip()
-            result = call_gemini_shelf(image_b64, mime)
-            status = 200 if result.get("ok") else (503 if result.get("error") == "ai_unconfigured" else 502)
-            json_response(self, status, result)
+            json_response(
+                self,
+                410,
+                {
+                    "ok": False,
+                    "error": "removed",
+                    "message": "Owner shelf photo scan was removed from Halalit (parked on the roadmap).",
+                },
+            )
             return
 
         if (
@@ -1303,20 +1271,15 @@ class Handler(BaseHTTPRequestHandler):
             return
 
         if path == "/api/cover-identify":
-            if length > 6_500_000:
-                json_response(self, 413, {"ok": False, "error": "payload_too_large"})
-                return
-            try:
-                body = json.loads(self.rfile.read(length).decode("utf-8"))
-            except (json.JSONDecodeError, UnicodeDecodeError):
-                json_response(self, 400, {"ok": False, "error": "invalid_json"})
-                return
-
-            image_b64 = str(body.get("imageBase64") or "").strip()
-            mime = str(body.get("mimeType") or "image/jpeg").strip()
-            result = call_gemini_cover(image_b64, mime)
-            status = 200 if result.get("ok") else (503 if result.get("error") == "ai_unconfigured" else 502)
-            json_response(self, status, result)
+            json_response(
+                self,
+                410,
+                {
+                    "ok": False,
+                    "error": "removed",
+                    "message": "Cover photo identify was removed from Halalit (barcode or type the title).",
+                },
+            )
             return
 
         if path == "/api/library/check":
@@ -1369,7 +1332,7 @@ def main() -> None:
     server = ThreadingHTTPServer((BIND, PORT), Handler)
     print(
         f"Halalit Bookcheck theme API on http://{BIND}:{PORT} "
-        f"(gemini={'yes' if KEY else 'no'}, claude={'yes' if ANTHROPIC_KEY else 'no'})"
+        f"(theme-scan=gemini-only, gemini={'yes' if KEY else 'no'})"
     )
     try:
         server.serve_forever()

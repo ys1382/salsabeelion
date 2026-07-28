@@ -1876,6 +1876,7 @@
         reviewSearchUsed: !!aiResult.reviewSearchUsed,
         geminiOk: !!aiResult.geminiOk,
         claudeOk: !!aiResult.claudeOk,
+        claudeSkipped: !!aiResult.claudeSkipped,
         reviewSearchError: aiResult.reviewSearchError || "",
       };
       var aiText = AI.buildAiSupplementText(aiResult);
@@ -2244,7 +2245,9 @@
       var sm = meta.aiScanMeta;
       var parts = ["Scan: " + (sm.reviewSnippetCount || 0) + " review snippets"];
       parts.push("Gemini " + (sm.geminiOk ? "✓" : "✗"));
-      parts.push("Claude " + (sm.claudeOk ? "✓" : "✗"));
+      if (!sm.claudeSkipped) {
+        parts.push("Claude " + (sm.claudeOk ? "✓" : "✗"));
+      }
       if (!sm.reviewSearchUsed && sm.reviewSearchError) {
         parts.push("web search unavailable");
       }

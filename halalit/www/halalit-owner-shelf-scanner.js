@@ -1,6 +1,7 @@
 /**
- * Owner’s Office — shelf photo → multi-title list → owner-scanned TBR.
- * Never writes reader lookup logs. Photos are not kept after scan.
+ * Owner scanned TBR helpers (+ legacy shelf-photo UI code unused).
+ * Multi-title shelf photo scan removed from live Halalit (Jul 2026) — parked on roadmap.
+ * Photos are not kept. addScannedTbr still used from owner barcode Scroll Scanner.
  */
 (function (global) {
   var SHELF_CAPTURE_MAX_EDGE = 3000;
@@ -816,8 +817,17 @@
   }
 
   global.HalalitOwnerShelfScanner = {
-    init: initShelfPanel,
-    fetchShelfIdentify: fetchShelfIdentify,
+    init: function () {
+      /* Shelf photo UI removed from live Halalit — TBR helpers below still work. */
+      return null;
+    },
+    fetchShelfIdentify: function () {
+      return Promise.resolve({
+        ok: false,
+        error: "removed",
+        message: "Owner shelf photo scan was removed from Halalit.",
+      });
+    },
     addScannedTbr: addScannedTbr,
     deleteScannedTbr: deleteScannedTbr,
     filterUnnoted: filterUnnoted,

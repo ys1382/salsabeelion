@@ -202,8 +202,11 @@ Bring these into planning and design so they are not dropped across sessions.
 
 ### Eco / lighter Bookcheck (Jul 2026)
 
-- [x] **Scroll Scanner barcode-only (Jul 2026)** — Removed front-cover photo / lettering vision; ISBN barcode or type the title → Bookcheck. Owner shelf-photo tool unchanged.
+- [x] **Scroll Scanner barcode-only (Jul 2026)** — Removed front-cover photo / lettering vision; ISBN barcode or type the title → Bookcheck.
 - [x] **Shared theme-scan cache (Jul 2026)** — Server stores successful AI theme-scan answers by book; later lookups of the same title reuse the save (hand-vet still wins). No new extensions required.
+- [x] **Gemini-only theme scan (Jul 2026)** — Bookcheck red-flag scan no longer runs Claude in parallel; Gemini only (hand-vet still wins).
+- [x] **Owner shelf photo scan removed from live (Jul 2026)** — Multi-title shelf camera + `/api/owner/shelf-identify` taken off Owner’s Office / API (410). **Parked:** may restore later from git; Owner scanned TBR + barcode owner scanner remain.
+- [x] **Cover-identify API removed (Jul 2026)** — `/api/cover-identify` returns 410; Scroll Scanner is barcode/type only. **Parked on roadmap** if ever reconsidered.
 
 <!-- Add new tasks or roadmap notes below -->
 
@@ -290,7 +293,7 @@ Bookcheck should know **which kind of vet** powered the result and say so plainl
 - [x] **Vet-source — AI staging list (Jun 2026)** — `halalit-ai-vet-staging.js` from `HALALIT-AI-VET-STAGING.md`.
 - [ ] **Vet-source — secondhand** — `vet_in_progress` when secondhand list ships on site.
 - [x] **Owner Office — Bookchecks vs My TBR + dismiss (Jul 2026)** — Auto-reject–style scan signals go under Bookchecks (with short summary), thin/indie under My TBR; dismiss → trash / dismiss forever on notification lists (not site settings). Existing lookups backfill on Office open.
-- [x] **Owner scanner — shelf photo + Owner scanned TBR (Jul 2026)** — Owner’s Office: multi-title shelf photo (Gemini), skips already vetted/rejected; separate **Owner scanned TBR** (not reader lookups). Owner Scroll Scanner also feeds that list when signed in as owner.
+- [x] **Owner scanner — shelf photo + Owner scanned TBR (Jul 2026)** — Shipped then **shelf photo removed from live (Jul 2026)**; see Eco / lighter Bookcheck. Owner scanned TBR + owner barcode Scroll Scanner remain.
 - [x] **Owner shelf scanner — coach-only + honest reads (Jul 2026)** — One capture path (camera coach → Capture & scan); coach rejects mostly-empty frames without nose-to-shelf; Gemini requires title+author, flags obstruction / unclear author, avoids invented lookalikes.
 
   **Where pings could show (pick when building; default suggestion: owner-only page + optional email):**

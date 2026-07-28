@@ -346,7 +346,7 @@ start_halalit_api() {
   ' </dev/null >/dev/null 2>&1 &
   echo "Started Halalit Bookcheck API on port ${HALALIT_BOOKCHECK_API_PORT:-8075} ($BIND)"
   if [[ -n "${ANTHROPIC_API_KEY:-}" ]] || [[ -f "$ANTHROPIC_KEY_FILE" ]]; then
-    echo "Halalit Bookcheck: Claude + Gemini dual theme scan (Anthropic key loaded)"
+    echo "Halalit Bookcheck: Gemini-only theme scan"
   else
     echo "Note: Halalit Bookcheck Claude disabled — Gemini only until anthropic.key is on server"
   fi

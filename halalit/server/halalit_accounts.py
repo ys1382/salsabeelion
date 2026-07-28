@@ -1917,7 +1917,7 @@ def handle_post(
             return True
 
         def _scan_missing_item(item: dict[str, Any]) -> tuple[str, dict[str, Any], Any]:
-            """Run full dual theme scan only; DB writes stay on the main thread."""
+            """Run theme scan only; DB writes stay on the main thread."""
             try:
                 result = call_theme_scan(item["title"], item.get("author") or "", False)
                 if result.get("ok"):
