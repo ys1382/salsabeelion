@@ -306,18 +306,18 @@
           </div>
 
           <div class="scroll-scanner-panel" id="ownerTestScannerPanel">
-            <p class="scroll-scanner-lead">Same single-book camera flow as the public Scroll Scanner. For cover preview, fill the dashed box with the jacket. For Bookcheck, use <strong>Did you mean?</strong> when OCR swaps title and author.</p>
+            <p class="scroll-scanner-lead">Barcode-only — same as the public Scroll Scanner. Fill the dashed band with the ISBN strip, or type a title for Bookcheck.</p>
             <div class="scroll-scanner-controls">
-              <div class="scroll-scanner-mode" role="group" aria-label="Scan mode">
-                <button type="button" class="import-btn scroll-scanner-mode-btn scroll-scanner-mode-btn--active" data-scanner="modeCover">Front cover</button>
-                <button type="button" class="import-btn scroll-scanner-mode-btn" data-scanner="modeBarcode">Barcode</button>
+              <div class="scroll-scanner-mode" role="group" aria-label="Scan mode" hidden>
+                <button type="button" class="import-btn scroll-scanner-mode-btn" data-scanner="modeCover" hidden>Front cover</button>
+                <button type="button" class="import-btn scroll-scanner-mode-btn scroll-scanner-mode-btn--active" data-scanner="modeBarcode" hidden>Barcode</button>
               </div>
-              <div class="scroll-scanner-camera-wrap" data-scanner="cameraWrap">
-                <video data-scanner="video" class="scroll-scanner-video" playsinline muted aria-label="Testing lab camera"></video>
+              <div class="scroll-scanner-camera-wrap scroll-scanner-camera-wrap--barcode" data-scanner="cameraWrap">
+                <video data-scanner="video" class="scroll-scanner-video" playsinline muted aria-label="Testing lab barcode camera"></video>
                 <button type="button" class="import-btn scroll-scanner-torch" data-scanner="torch" hidden aria-pressed="false" aria-label="Scanner light off">Light off</button>
                 <div class="scroll-scanner-frame-guide" aria-hidden="true"></div>
                 <div class="scroll-scanner-live" data-scanner="live" hidden aria-live="polite">
-                  <p class="scroll-scanner-live__hint" data-scanner="liveHint">Reading cover</p>
+                  <p class="scroll-scanner-live__hint" data-scanner="liveHint">Barcode mode</p>
                   <p class="scroll-scanner-live__title" data-scanner="liveTitle"></p>
                   <p class="scroll-scanner-live__author" data-scanner="liveAuthor"></p>
                 </div>
@@ -663,7 +663,7 @@
   <script src="./halalit-wikidata-shelf-hint.js?v=20260529b"></script>
   <script src="./halalit-bookcheck-ai.js?v=20260711a"></script>
   <script src="./halalit-lookup-quality.js?v=20260610c"></script>
-  <script src="./halalit-scroll-scanner.js?v=20260701a"></script>
+  <script src="./halalit-scroll-scanner.js?v=20260728a"></script>
   <script src="./halalit-owner-cover-preview.js?v=20260611f"></script>
   <script src="./halalit-owner-shelf-scanner.js?v=20260717a"></script>
   <script src="./halalit-bookcheck.js?v=20260716a"></script>

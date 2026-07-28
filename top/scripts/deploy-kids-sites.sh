@@ -143,6 +143,7 @@ if site_enabled halalit; then
     rsync -avz \
       --exclude '.env' \
       --exclude 'halalit_accounts.sqlite' \
+      --exclude 'halalit_theme_scan_cache.sqlite' \
       --exclude '*.local.sqlite' \
       --exclude 'lookup-log.jsonl' \
       --exclude '__pycache__' \

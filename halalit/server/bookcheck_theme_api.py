@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
 Halalit Bookcheck — theme detection API (server-side only).
-Gemini + Claude dual scan on every /api/theme-scan (merged results).
+Gemini + Claude dual scan on /api/theme-scan (merged results). Successful scans are
+shared via disk cache so later readers of the same book skip AI.
 Optional web review snippets via DuckDuckGo lite (default) or Brave when BRAVE_SEARCH_API_KEY is set.
 Reads HALALIT_GEMINI_API_KEY / GEMINI_API_KEY and ANTHROPIC_API_KEY (or anthropic.key).
 
@@ -37,6 +38,7 @@ from halalit_lookup_log import record_bookcheck_lookup
 from halalit_lookup_quality import is_garbage_lookup
 from bookcheck_web_search import fetch_review_snippets, format_review_snippets_for_prompt
 from library_catalog_check import check_title as library_check_title
+from theme_scan_cache import get_cached_theme_scan, put_cached_theme_scan
 
 try:
     ThreadingHTTPServer  # noqa: F401
@@ -831,9 +833,16 @@ def call_claude(title: str, author: str, is_graphic: bool, review_snippets: str 
 
 
 def call_theme_scan(title: str, author: str, is_graphic: bool) -> dict[str, Any]:
-    """Run web review lookup, then Gemini and Claude in parallel; merge theme flags and briefs."""
+    """Run web review lookup, then Gemini and Claude in parallel; merge theme flags and briefs.
+
+    Shared disk cache: later lookups of the same book reuse a prior successful scan (no AI).
+    """
     if not KEY and not ANTHROPIC_KEY:
         return {"ok": False, "error": "ai_unconfigured", "message": "No AI theme scan keys configured on the server."}
+
+    cached = get_cached_theme_scan(title, author, is_graphic)
+    if cached is not None:
+        return cached
 
     review = fetch_review_snippets(title, author)
     review_block = ""
@@ -886,6 +895,7 @@ def call_theme_scan(title: str, author: str, is_graphic: bool) -> dict[str, Any]
         out["claudeError"] = claude.get("error") or "claude_failed"
     if not gemini.get("ok") and KEY:
         out["geminiError"] = gemini.get("error") or "gemini_failed"
+    put_cached_theme_scan(title, author, is_graphic, out)
     return out
 
 

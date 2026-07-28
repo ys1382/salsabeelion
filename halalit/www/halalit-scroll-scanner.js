@@ -1,5 +1,6 @@
 /**
- * Halalit Scroll Scanner — cover vision + barcode + lettering fallback → Bookcheck.
+ * Halalit Scroll Scanner — ISBN barcode → Bookcheck (type title if no barcode).
+ * Cover photo / lettering vision removed — barcode or manual title only.
  */
 (function (global) {
   var VISION_INTERVAL_MS = 2600;
@@ -737,7 +738,7 @@
     var authorStableKey = "";
     var authorStableCount = 0;
     var authorLocked = false;
-    var scanMode = "cover";
+    var scanMode = "barcode";
     var catalogTimer = null;
     var catalogFetchId = 0;
     var ocrFailCount = 0;
@@ -845,7 +846,7 @@
         return;
       }
       liveOverlay.hidden = false;
-      if (liveHint) liveHint.textContent = opts.hint || "Reading cover";
+      if (liveHint) liveHint.textContent = opts.hint || "Barcode mode";
       if (liveTitle) liveTitle.textContent = opts.title || "";
       if (liveAuthor) liveAuthor.textContent = opts.author ? "by " + opts.author : "";
       if (opts.found) liveOverlay.classList.add("scroll-scanner-live--found");
@@ -1144,17 +1145,10 @@
     }
 
     function scanningOverlayForMode() {
-      if (scanMode === "barcode") {
-        return {
-          hint: "Barcode mode",
-          title: "ISBN strip in the band",
-          author: "",
-        };
-      }
       return {
-        hint: "Reading cover",
-        title: "Title in the upper half",
-        author: "Author in the lower half",
+        hint: "Barcode mode",
+        title: "ISBN strip in the band",
+        author: "",
       };
     }
 
@@ -1272,7 +1266,7 @@
     function noteBarcodeUnavailable() {
       if (scanMode !== "barcode") return;
       setStatus(
-        "Barcode scan is not available in this browser yet. Use Front cover mode and Did you mean?, or type the title."
+        "Barcode scan is not available in this browser yet. Type the title below and run Bookcheck."
       );
     }
 
@@ -1338,35 +1332,29 @@
     }
 
     function applyScanMode(nextMode) {
-      scanMode = nextMode === "barcode" ? "barcode" : "cover";
+      scanMode = "barcode";
       if (cameraWrap) {
-        if (scanMode === "barcode") cameraWrap.classList.add("scroll-scanner-camera-wrap--barcode");
-        else cameraWrap.classList.remove("scroll-scanner-camera-wrap--barcode");
+        cameraWrap.classList.add("scroll-scanner-camera-wrap--barcode");
       }
       if (modeCoverBtn) {
-        modeCoverBtn.classList.toggle("scroll-scanner-mode-btn--active", scanMode === "cover");
+        modeCoverBtn.hidden = true;
+        modeCoverBtn.classList.remove("scroll-scanner-mode-btn--active");
       }
       if (modeBarcodeBtn) {
-        modeBarcodeBtn.classList.toggle("scroll-scanner-mode-btn--active", scanMode === "barcode");
+        modeBarcodeBtn.hidden = true;
+        modeBarcodeBtn.classList.add("scroll-scanner-mode-btn--active");
       }
-      if (scanMode === "barcode") {
-        getBarcodeDetector().then(function (det) {
-          if (!det) noteBarcodeUnavailable();
-        });
-        if (stream) {
-          setStatus("Fill the wide band with the ISBN barcode. Hold steady a few inches away.");
-          setLiveOverlay({
-            hint: "Barcode mode",
-            title: "ISBN strip in the band",
-            author: "",
-          });
-        }
-      } else if (stream) {
-        setStatus("Keep the title in the upper half of the box.");
+      var modeGroup = panel.querySelector(".scroll-scanner-mode");
+      if (modeGroup) modeGroup.hidden = true;
+      getBarcodeDetector().then(function (det) {
+        if (!det) noteBarcodeUnavailable();
+      });
+      if (stream) {
+        setStatus("Fill the wide band with the ISBN barcode. Hold steady a few inches away.");
         setLiveOverlay({
-          hint: "Reading cover",
-          title: "Title in the upper half",
-          author: "Author in the lower half",
+          hint: "Barcode mode",
+          title: "ISBN strip in the band",
+          author: "",
         });
       }
     }
@@ -1424,7 +1412,7 @@
         finishBarcode();
         resumeScanning(
           reason ||
-            "Could not look up that barcode — try again, use Front cover mode, or type the title."
+            "Could not look up that barcode — try again, or type the title below."
         );
       }
       getBarcodeDetector()
@@ -1456,7 +1444,7 @@
                 if (lookupGen !== barcodeLookupGen) return;
                 if (!match || !match.title || paused) {
                   barcodeLookupFailed(
-                    "No book found for that barcode — try Front cover mode or type the title."
+                    "No book found for that barcode — type the title below and run Bookcheck."
                   );
                   return;
                 }
@@ -1784,22 +1772,7 @@
 
     function sendFrame() {
       if (!tabActive || paused) return;
-      if (scanMode === "barcode") {
-        tryBarcode();
-        return;
-      }
       tryBarcode();
-      if (paused) return;
-
-      var now = Date.now();
-      if (!authorLocked && !ocrBusy && now - lastOcrAt >= OCR_INTERVAL_MS) {
-        tryOcrFallback();
-      }
-      if (!visionUnavailable && !visionBusy && now - lastVisionAt >= VISION_INTERVAL_MS) {
-        lastVisionAt = now;
-        tryVision();
-      }
-      maybeUpdateOwnerCoverPreview();
     }
 
     function waitForVideoReady(thenStart) {
@@ -1833,7 +1806,7 @@
       }
       setStatus("Starting camera…");
       if (permissionNote) permissionNote.hidden = true;
-      loadTesseract().catch(function () {});
+      applyScanMode("barcode");
       global.navigator.mediaDevices
         .getUserMedia({
           video: {
@@ -1855,30 +1828,16 @@
           paused = false;
           lastVisionAt = Date.now();
           lastOcrAt = 0;
-          probeVisionAvailability();
           getBarcodeDetector().catch(function () {});
-          if (scanMode === "barcode") {
-            setStatus("Fill the wide band with the ISBN barcode. Hold steady a few inches away.");
-            setLiveOverlay({
-              hint: "Barcode mode",
-              title: "ISBN strip in the band",
-              author: "",
-            });
-          } else {
-            setStatus("Keep the title in the upper half of the box. Or switch to Barcode mode for the back.");
-            setLiveOverlay({
-              hint: "Reading cover",
-              title: "Title in the upper half",
-              author: "Author in the lower half",
-            });
-          }
+          setStatus("Fill the wide band with the ISBN barcode. Hold steady a few inches away.");
+          setLiveOverlay({
+            hint: "Barcode mode",
+            title: "ISBN strip in the band",
+            author: "",
+          });
           waitForVideoReady(function () {
             refreshTorchAvailability();
             startScanLoop();
-            if (ownerTesting && scanMode === "cover") {
-              startOwnerCoverPreviewLoop();
-              pushOwnerCoverPreview();
-            }
           });
           if (startBtn) startBtn.hidden = true;
         })
@@ -1982,25 +1941,11 @@
 
     function wireModeButton(btn, mode) {
       if (!btn) return;
-      var lastTap = 0;
-      function pickMode() {
-        var now = Date.now();
-        if (now - lastTap < 350) return;
-        lastTap = now;
-        applyScanMode(mode);
-      }
-      btn.addEventListener("click", pickMode);
-      btn.addEventListener(
-        "touchend",
-        function (e) {
-          e.preventDefault();
-          pickMode();
-        },
-        { passive: false }
-      );
+      btn.hidden = true;
     }
     wireModeButton(modeCoverBtn, "cover");
     wireModeButton(modeBarcodeBtn, "barcode");
+    applyScanMode("barcode");
     if (torchBtn) {
       torchBtn.addEventListener("click", function () {
         if (!stream || !torchAvailable) return;
@@ -2052,8 +1997,8 @@
             if (startBtn) startBtn.hidden = false;
             setStatus(
               ownerTesting
-                ? "Testing lab — tap Start camera. Cover preview animates below; not logged as a reader lookup."
-                : "Tap Start camera to try Scroll Scanner."
+                ? "Testing lab — tap Start camera for barcode, or type a title. Not logged as a reader lookup."
+                : "Tap Start camera to scan a barcode, or type the title below."
             );
           } else {
             resumeScanning();

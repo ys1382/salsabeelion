@@ -2755,7 +2755,7 @@
           <span class="bookcheck-guidelines-toggle" aria-hidden="true"></span>
         </summary>
         <div class="bookcheck-guidelines-body">
-          <p class="muted" style="margin:0;font-size:0.88rem;line-height:1.45">Scroll Scanner uses a <strong>handheld device camera</strong> (phone or tablet) to read a book cover or barcode, then run Bookcheck. Open Halalit on your phone or iPad to use it—it isn’t offered on computers or laptops here.</p>
+          <p class="muted" style="margin:0;font-size:0.88rem;line-height:1.45">Scroll Scanner uses a <strong>handheld device camera</strong> (phone or tablet) to read an ISBN barcode, then run Bookcheck — or type the title. Open Halalit on your phone or iPad to use it—it isn’t offered on computers or laptops here.</p>
         </div>
       </details>
       <p class="library-lead">Look up a title before you buy or borrow. You get librarian tags, Wikipedia plot, Wikidata, and—when a title is not hand-vetted yet—an <strong>AI theme scan</strong> (Google) for Halalit’s theme list. <strong>Hand-checked notes always win.</strong> That’s how HalaLit warns you about fanservice in panels, harsh family-bashing, and other moral fit issues AI does <strong>not</strong> reliably catch. A children’s tag alone is <strong>not</strong> a yes.</p>
@@ -2913,18 +2913,18 @@
   <section id="panel-scroll-scanner" class="tab-panel" role="tabpanel" aria-labelledby="tab-btn-scroll-scanner" hidden>
     <div class="already-panel panel scroll-scanner-panel" style="border-radius:14px;border:1px solid rgba(255,255,255,0.05);background:var(--panel);padding:1.25rem 1.5rem">
       <h2>Scroll Scanner</h2>
-      <p class="scroll-scanner-lead">Choose <strong>Front cover</strong> or <strong>Barcode</strong> below. For the cover, put the <strong>title in the upper half</strong> of the box and the <strong>author in the lower half</strong>. For the barcode, fill the <strong>wide dashed band</strong> with the ISBN strip — not the whole back cover. Lettering stays on your phone.</p>
+      <p class="scroll-scanner-lead">Fill the <strong>wide dashed band</strong> with the ISBN barcode strip — not the whole back cover. No barcode? Type the title below and run Bookcheck.</p>
       <div class="scroll-scanner-controls">
-        <div class="scroll-scanner-mode" role="group" aria-label="Scan mode">
-          <button type="button" class="import-btn scroll-scanner-mode-btn scroll-scanner-mode-btn--active" id="scrollScannerModeCover">Front cover</button>
-          <button type="button" class="import-btn scroll-scanner-mode-btn" id="scrollScannerModeBarcode">Barcode</button>
+        <div class="scroll-scanner-mode" role="group" aria-label="Scan mode" hidden>
+          <button type="button" class="import-btn scroll-scanner-mode-btn" id="scrollScannerModeCover" hidden>Front cover</button>
+          <button type="button" class="import-btn scroll-scanner-mode-btn scroll-scanner-mode-btn--active" id="scrollScannerModeBarcode" hidden>Barcode</button>
         </div>
-        <div class="scroll-scanner-camera-wrap" id="scrollScannerCameraWrap">
-          <video id="scrollScannerVideo" class="scroll-scanner-video" playsinline muted aria-label="Live book cover camera"></video>
+        <div class="scroll-scanner-camera-wrap scroll-scanner-camera-wrap--barcode" id="scrollScannerCameraWrap">
+          <video id="scrollScannerVideo" class="scroll-scanner-video" playsinline muted aria-label="Live ISBN barcode camera"></video>
           <button type="button" class="import-btn scroll-scanner-torch" id="scrollScannerTorch" hidden aria-pressed="false" aria-label="Scanner light off">Light off</button>
           <div class="scroll-scanner-frame-guide" aria-hidden="true"></div>
           <div class="scroll-scanner-live" id="scrollScannerLive" hidden aria-live="polite">
-            <p class="scroll-scanner-live__hint" id="scrollScannerLiveHint">Reading cover</p>
+            <p class="scroll-scanner-live__hint" id="scrollScannerLiveHint">Barcode mode</p>
             <p class="scroll-scanner-live__title" id="scrollScannerLiveTitle"></p>
             <p class="scroll-scanner-live__author" id="scrollScannerLiveAuthor"></p>
           </div>
@@ -2939,9 +2939,9 @@
         <button type="button" class="import-btn" id="scrollScannerRescan">Scan again</button>
       </div>
       <div class="scroll-scanner-edit" id="scrollScannerEdit">
-        <p class="scroll-scanner-edit-lead muted">Fancy cover? The author may read first — pick the title under Did you mean?, or type it here.</p>
+        <p class="scroll-scanner-edit-lead muted">No barcode handy? Type the title here, or pick a match under Did you mean?</p>
         <label class="scroll-scanner-field" for="scrollScannerTitleEdit">Title</label>
-        <input type="text" id="scrollScannerTitleEdit" autocomplete="off" placeholder="What the cover says" />
+        <input type="text" id="scrollScannerTitleEdit" autocomplete="off" placeholder="Book title" />
         <label class="scroll-scanner-field" for="scrollScannerAuthorEdit">Author <span class="muted">(optional)</span></label>
         <input type="text" id="scrollScannerAuthorEdit" autocomplete="off" placeholder="e.g. Peter S. Beagle" />
       </div>
@@ -2993,7 +2993,7 @@
   <script src="./halalit-bookcheck-vet-source.js?v=20260711a"></script>
   <script src="./halalit-bookcheck-ai.js?v=20260712a"></script>
   <script src="./halalit-lookup-quality.js?v=20260610c"></script>
-  <script src="./halalit-scroll-scanner.js?v=20260701a"></script>
+  <script src="./halalit-scroll-scanner.js?v=20260728a"></script>
   <script src="./halalit-owner-shelf-scanner.js?v=20260717a"></script>
   <script src="./halalit-cover-thumb.js?v=20260623b"></script>
   <script src="./halalit-occasion-week-home.js?v=20260626e"></script>

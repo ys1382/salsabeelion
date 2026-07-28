@@ -200,6 +200,11 @@ Bring these into planning and design so they are not dropped across sessions.
 
 - [ ] **Book animations + occasion-week recommendation page(s)** (owner name) — During **Father’s Week**, **Mother’s Week**, **Parents Week**, **Grandparents Week**, and (later) other themed weeks: a dedicated page with **Book animations** (animated / cover-forward presentation—exact motion TBD) plus a **warm, celebratory** message (tone: cozy Halalit voice, not preachy). Curated picks from the [family candidate pool](#family-occasion-weeks--candidate-pool-owner-draft--jun-2026) once owner splits by week. **Grid of real book cover images** (owner still deciding source: Open Library covers API, hand-hosted assets, or mix — must respect rights/size/alt text). Each title: family figure **integral** to the story, hand-vetted for Halalit shelf rules. Link from occasion banner or Home during that week only (Pacific Time, same window as banners). No public comments or reader-submitted lists — owner-curated only.
 
+### Eco / lighter Bookcheck (Jul 2026)
+
+- [x] **Scroll Scanner barcode-only (Jul 2026)** — Removed front-cover photo / lettering vision; ISBN barcode or type the title → Bookcheck. Owner shelf-photo tool unchanged.
+- [x] **Shared theme-scan cache (Jul 2026)** — Server stores successful AI theme-scan answers by book; later lookups of the same title reuse the save (hand-vet still wins). No new extensions required.
+
 <!-- Add new tasks or roadmap notes below -->
 
 ### Nancy Drew — AI unless readers ask (owner Jun 2026)
