@@ -484,13 +484,67 @@
           "title": "Birds",
           "body": "Preyfolk birds roost on the cliff and refuse Predator banners.",
           "tags": ["Ashford Saga"],
-          "kind": "note"
+          "kind": "species"
+        }
+      ],
+      "documents": [
+        {
+          "id": "d1",
+          "title": "Ashford draft",
+          "workTag": "Ashford Saga",
+          "bodyHtml": "<p>The cliff race of birds forms flocks at dawn. Oakfern the sentinel watches from below.</p>",
+          "bodyFormat": "html"
         }
       ],
       "question": "In Ashford Saga, remind me of everything regarding the birds",
       "assert": {
-        "answerContains": ["birds"],
-        "answerNotContains": ["Oakfern is a bird", "sentinel bird", "Sentinel bird"]
+        "answerContains": ["birds", "roost"],
+        "answerNotContains": [
+          "Oakfern is a bird",
+          "sentinel bird",
+          "Sentinel bird",
+          "Oakfern the sentinel",
+          "sentinel watches"
+        ]
+      }
+    },
+    {
+      "id": "bird_race_from_draft_not_sentinel",
+      "label": "Bird race Ask pulls draft bird line, not nearby sentinel cast",
+      "entries": [
+        {
+          "id": "n_sentinel",
+          "title": "Sentinel Oakfern",
+          "body": "Sentinel Oakfern is a rabbit who guards the burrow gate.",
+          "tags": ["Ashford Saga"],
+          "kind": "character"
+        },
+        {
+          "id": "n_birds",
+          "title": "Birds",
+          "body": "Preyfolk birds roost on the cliff and refuse Predator banners.",
+          "tags": ["Ashford Saga"],
+          "kind": "species"
+        }
+      ],
+      "documents": [
+        {
+          "id": "d1",
+          "title": "Ashford draft",
+          "workTag": "Ashford Saga",
+          "bodyHtml": "<p>The cliff race of birds forms flocks at dawn. Oakfern the sentinel watches from below.</p>",
+          "bodyFormat": "html"
+        }
+      ],
+      "question": "In Ashford Saga, what do I have about the bird race?",
+      "assert": {
+        "answerContains": ["flocks", "birds"],
+        "answerNotContains": [
+          "Oakfern the sentinel",
+          "sentinel watches",
+          "sentinel bird",
+          "rabbit"
+        ]
       }
     }
   ]

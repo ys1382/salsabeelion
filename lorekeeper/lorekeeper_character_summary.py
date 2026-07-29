@@ -52,6 +52,16 @@ FOCUS_STOP = frozenset(
     in on at for the a an and or but with from who what when where how about into
     summary summarize tell remind everything written have know character my your
     that this those these there here some any all just also only very much many
+    regarding across info saved notes me do
+    """.split()
+)
+
+# When the question names a creature / race / species topic, only keep sentences
+# that actually mention that topic — not nearby cast lines sharing a work title.
+_TOPIC_CONTENT_TERMS = frozenset(
+    """
+    bird birds species race races creature creatures beast beasts animal animals
+    folk faction factions prey predator preyfolk clan clans tribe tribes
     """.split()
 )
 
@@ -529,17 +539,49 @@ def _split_sentences(text: str) -> list[str]:
     return [p.strip() for p in parts if p.strip()]
 
 
-def _focus_terms(question: str) -> list[str]:
+def _work_tokens_for_focus(
+    question: str, entries: list[dict[str, Any]] | None = None
+) -> set[str]:
+    """Work-title words are scope, not topic — strip them from focus terms."""
+    from lorekeeper_reliability import primary_work_hints
+
+    out: set[str] = set()
+    for hint in primary_work_hints(question):
+        out.update(re.findall(r"[a-z0-9']+", str(hint).lower()))
+    if entries:
+        for hint in extract_work_hints(question, entries):
+            out.update(re.findall(r"[a-z0-9']+", str(hint).lower()))
+    return out
+
+
+def _focus_terms(
+    question: str, entries: list[dict[str, Any]] | None = None
+) -> list[str]:
     q = question.lower()
     terms: list[str] = []
+    work_tokens = _work_tokens_for_focus(question, entries)
     for bigram in ("political intrigue", "dramatic moment", "illustrated scene"):
         if bigram in q:
             terms.append(bigram)
     tokens = re.findall(r"[a-z0-9']+", q)
     for token in tokens:
-        if len(token) > 2 and token not in FOCUS_STOP and token not in terms:
+        if len(token) <= 2 or token in FOCUS_STOP or token in work_tokens:
+            continue
+        if token not in terms:
             terms.append(token)
     return terms[:12]
+
+
+def _content_topic_terms(terms: list[str]) -> list[str]:
+    """Creature / race / species words the question actually asked about."""
+    out: list[str] = []
+    for term in terms:
+        t = (term or "").strip().lower()
+        if not t:
+            continue
+        if t in _TOPIC_CONTENT_TERMS or t.endswith("folk"):
+            out.append(t)
+    return out
 
 
 def _kind_matches_terms(kind: str, terms: list[str]) -> bool:
@@ -752,27 +794,81 @@ def _bits_for_character(entry: dict[str, Any], names: list[str]) -> list[str]:
     return bits[:12]
 
 
-def _bits_for_terms(entry: dict[str, Any], terms: list[str]) -> list[str]:
+def _term_variants(term: str) -> list[str]:
+    t = (term or "").strip().lower()
+    if not t:
+        return []
+    out = [t]
+    if " " in t:
+        return out
+    if t.endswith("s") and len(t) > 3:
+        out.append(t[:-1])
+    else:
+        out.append(t + "s")
+    # de-dupe preserve order
+    seen: set[str] = set()
+    uniq: list[str] = []
+    for v in out:
+        if v not in seen:
+            seen.add(v)
+            uniq.append(v)
+    return uniq
+
+
+def _term_in_text(term: str, text: str) -> bool:
+    """Match whole topic words, including simple plural (bird ↔ birds)."""
+    t = (term or "").strip().lower()
+    if not t or not text:
+        return False
+    if " " in t:
+        return t in text
+    return any(
+        re.search(rf"\b{re.escape(v)}\b", text) for v in _term_variants(t)
+    )
+
+
+def _bits_for_terms(
+    entry: dict[str, Any],
+    terms: list[str],
+    *,
+    require_content: list[str] | None = None,
+) -> list[str]:
     title = str(entry.get("title") or "Untitled")
     body = str(entry.get("body") or "").strip()
     kind = str(entry.get("kind") or "note")
+    eid = str(entry.get("id") or "")
     bits: list[str] = []
     title_low = title.lower()
     body_low = body.lower()
+    # Prefer creature/race topic words when present — never pull on work-title alone.
+    match_terms = list(require_content) if require_content else list(terms)
+    if not match_terms:
+        return []
 
-    kind_hit = _kind_matches_terms(kind, terms)
-    if kind_hit and body:
+    kind_hit = _kind_matches_terms(kind, match_terms)
+    if kind_hit and body and not require_content:
         return _split_sentences(body)[:8]
 
     for sentence in _split_sentences(body):
         s_low = sentence.lower()
-        if any(term in s_low for term in terms):
+        if any(_term_in_text(term, s_low) for term in match_terms):
             bits.append(sentence)
-    if not bits and any(term in title_low or term in body_low for term in terms):
+    if bits:
+        return bits[:6]
+
+    # Title fallback: only when the title itself carries the topic (e.g. note
+    # titled "Birds"). Never for draft paragraph slices whose titles are the
+    # work/doc name — that mixed sentinel cast lines into bird Asks.
+    if "#p" in eid or kind == "document":
+        return []
+    if any(_term_in_text(term, title_low) for term in match_terms):
         if body:
             bits.append(body[:420] + ("…" if len(body) > 420 else ""))
         else:
             bits.append(f"(Entry titled “{title}” — no body text yet.)")
+    elif any(_term_in_text(term, body_low) for term in match_terms):
+        if body:
+            bits.append(body[:420] + ("…" if len(body) > 420 else ""))
     return bits[:6]
 
 
@@ -1555,6 +1651,31 @@ def _synthesize_from_notes_first(
     )
 
 
+def _topic_scope_entries(entries: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Prefer draft paragraph slices over the full-doc clone (avoids dup + bleed)."""
+    ids = {str(e.get("id") or "") for e in entries if isinstance(e, dict)}
+    parents_with_slices = {
+        eid.split("#", 1)[0]
+        for eid in ids
+        if "#p" in eid
+    }
+    out: list[dict[str, Any]] = []
+    for entry in entries:
+        if not isinstance(entry, dict):
+            continue
+        eid = str(entry.get("id") or "")
+        kind = str(entry.get("kind") or "")
+        if (
+            kind == "document"
+            and eid
+            and "#p" not in eid
+            and eid in parents_with_slices
+        ):
+            continue
+        out.append(entry)
+    return out
+
+
 def _build_topic_summary(question: str, entries: list[dict[str, Any]]) -> tuple[str | None, list[str]]:
     from lorekeeper_allusion import build_allusion_answer, is_allusion_question
     from lorekeeper_situation import build_situation_answer, is_situation_question
@@ -1569,18 +1690,35 @@ def _build_topic_summary(question: str, entries: list[dict[str, Any]]) -> tuple[
         if answer:
             return answer, ids
 
-    terms = _focus_terms(question)
+    terms = _focus_terms(question, entries)
     if not terms:
         return None, []
+    content_terms = _content_topic_terms(terms)
+    bit_terms = content_terms or terms
 
-    scope = _entries_for_work(entries, question)
+    scope = _topic_scope_entries(_entries_for_work(entries, question))
     hits: list[tuple[str, str, list[str]]] = []
     for entry in scope:
         if not isinstance(entry, dict):
             continue
-        bits = _bits_for_terms(entry, terms)
+        bits = _bits_for_terms(
+            entry,
+            bit_terms,
+            require_content=content_terms or None,
+        )
         if not bits:
             continue
+        # Species asks: skip cast notes that never mention the topic words.
+        kind = str(entry.get("kind") or "")
+        if content_terms and kind == "character":
+            blob = " ".join(
+                [
+                    str(entry.get("title") or ""),
+                    str(entry.get("body") or ""),
+                ]
+            ).lower()
+            if not any(_term_in_text(t, blob) for t in content_terms):
+                continue
         hits.append(
             (
                 str(entry.get("id") or ""),
@@ -1592,35 +1730,52 @@ def _build_topic_summary(question: str, entries: list[dict[str, Any]]) -> tuple[
     if not hits:
         return None, []
 
-    label = ", ".join(terms[:4])
+    # Species notes before draft scraps when both match.
+    def _hit_rank(item: tuple[str, str, list[str]]) -> tuple[int, int]:
+        eid = item[0]
+        kind = "note"
+        for entry in scope:
+            if str(entry.get("id") or "") == eid:
+                kind = str(entry.get("kind") or "note")
+                break
+        kind_rank = 0 if kind in ("species", "world", "worldbuilding", "note") else 1
+        return (kind_rank, 0 if "#p" in eid else 1)
+
+    hits.sort(key=_hit_rank)
+
+    label = ", ".join((content_terms or terms)[:4])
     lines: list[str] = []
     ids: list[str] = []
-    lead_bits: list[str] = []
-    for eid, entry_title, bits in hits[:6]:
+
+    def _bit_key(bit: str) -> str:
+        return re.sub(r"\s+", " ", bit.strip().lower())[:120]
+
+    # Flatten unique bits with source titles (species first via hits sort).
+    flat: list[tuple[str, str, str]] = []
+    seen_bits: set[str] = set()
+    for eid, entry_title, bits in hits[:8]:
         if eid:
-            ids.append(eid)
-        for bit in bits[:2]:
-            if bit and bit not in lead_bits:
-                lead_bits.append(bit)
-            if len(lead_bits) >= 1:
-                break
-        if len(lead_bits) >= 1:
-            break
-    if lead_bits:
-        lines.append(lead_bits[0])
-        lines.append("")
+            parent = eid.split("#", 1)[0] if "#p" in eid else eid
+            if parent and parent not in ids:
+                ids.append(parent)
+        for bit in bits:
+            key = _bit_key(bit)
+            if not key or key in seen_bits:
+                continue
+            seen_bits.add(key)
+            flat.append((eid, entry_title, bit))
+
+    if not flat:
+        return None, []
+
+    lead = flat[0][2]
+    lines.append(lead)
+    lines.append("")
     lines.append(f"What you've written about {label} (across your notes):\n")
-    bullet_count = 0
-    for eid, entry_title, bits in hits[:6]:
-        if eid and eid not in ids:
-            ids.append(eid)
-        for bit in bits[:2]:
-            if bullet_count >= 4:
-                break
-            lines.append(f"• From “{entry_title}”: {bit}")
-            bullet_count += 1
-        if bullet_count >= 4:
-            break
+    # Prefer other distinct bits as bullets; if only one bit, list it once.
+    bullet_rows = flat[1:5] if len(flat) > 1 else flat[:1]
+    for _eid, entry_title, bit in bullet_rows:
+        lines.append(f"• From “{entry_title}”: {bit}")
     lines.append("\n— Combined from your notes only. Nothing invented.")
     return "\n".join(lines), ids
 
