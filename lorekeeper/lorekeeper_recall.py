@@ -242,6 +242,12 @@ def _score_entry(
                 and len(body) > 2000
             ):
                 score -= 6
+    try:
+        from lorekeeper_plot_span import score_boost_for_plot_span
+
+        score += score_boost_for_plot_span(question, entry)
+    except Exception:
+        pass
     return score
 
 
@@ -445,13 +451,6 @@ def _all_entries(user_data: dict[str, Any]) -> list[dict[str, Any]]:
     return result
 
 
-def _rank_entries(question: str, entries: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    question_tokens = _tokenize(question)
-    ranked: list[dict[str, Any]] = []
-    # Large corpora: score a capped slice so Ask stays responsive on nginx timeouts.
-    scan = entries
-    if len(scan) > 1200:
-        scan = scan[:1200]
 def _prefer_chunks_over_long_parents(
     ranked: list[dict[str, Any]], *, max_parent_chars: int = 1800
 ) -> list[dict[str, Any]]:
@@ -1283,6 +1282,20 @@ def recall_from_user_data(
                     best_excerpt=_best_excerpt,
                     tokenize=_tokenize,
                 )
+                try:
+                    from lorekeeper_plot_span import augment_ranked_for_plot_span
+
+                    boosted = augment_ranked_for_plot_span(
+                        q,
+                        sc,
+                        boosted,
+                        rank_entry=_score_entry,
+                        kind_label=_kind_label,
+                        best_excerpt=_best_excerpt,
+                        tokenize=_tokenize,
+                    )
+                except Exception:
+                    pass
                 return _merge_ranked_for_plan(q, sc, boosted, ask_plan)
 
             rag_result = answer_with_rag(
@@ -1516,6 +1529,20 @@ def recall_from_user_data(
         best_excerpt=_best_excerpt,
         tokenize=_tokenize,
     )
+    try:
+        from lorekeeper_plot_span import augment_ranked_for_plot_span
+
+        ranked = augment_ranked_for_plot_span(
+            question,
+            scoped,
+            ranked,
+            rank_entry=_score_entry,
+            kind_label=_kind_label,
+            best_excerpt=_best_excerpt,
+            tokenize=_tokenize,
+        )
+    except Exception:
+        pass
     summary_ids = character_summary_sources(question, scoped)
     if summary_ids:
         id_set = set(summary_ids)

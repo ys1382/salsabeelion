@@ -504,6 +504,14 @@ def _build_user_prompt(
                 kind_hint += "; answer family/kinship ties only.\n"
     elif plan and plan.pipeline == "rag_summarize":
         kind_hint = _SUMMARIZE + "\n"
+        try:
+            from lorekeeper_plot_span import plot_span_prompt_hint
+
+            span_hint = plot_span_prompt_hint(question)
+            if span_hint:
+                kind_hint += span_hint
+        except Exception:
+            pass
     elif (plan and plan.pipeline == "rag_resume") or is_story_position_question(question) or question_kind == "resume":
         kind_hint = _STORY_POSITION + "\n"
         if scoped_entries:
