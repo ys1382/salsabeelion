@@ -1606,8 +1606,29 @@
       clearTimeout(saveMaxTimer);
       saveMaxTimer = null;
     }
+    doc = null;
     LoreKeeperDocuments.delete(idToDelete);
-    global.location.href = "./index.html";
+    function goHome() {
+      global.location.href = "./index.html";
+    }
+    var flush = LoreKeeperAccountStorage.flush({ keepalive: true });
+    if (flush && flush.then) {
+      var navigated = false;
+      function leaveOnce() {
+        if (navigated) return;
+        navigated = true;
+        goHome();
+      }
+      // Second flush covers an older in-flight save that finished after delete.
+      flush
+        .then(function () {
+          return LoreKeeperAccountStorage.flush({ keepalive: true });
+        })
+        .then(leaveOnce, leaveOnce);
+      global.setTimeout(leaveOnce, 2500);
+    } else {
+      goHome();
+    }
   });
   document.getElementById("restoreBackupBtn").addEventListener("click", restoreFromBackup);
   var retrySyncBtn = document.getElementById("retrySyncBtn");
