@@ -16,6 +16,8 @@
   var syncingGaps = false;
   var saveMaxTimer = null;
   var resumeCaptureTimer = null;
+  /** After Delete document — block park/flush from re-saving that one doc. */
+  var discardOnLeave = false;
 
   function docTextLength() {
     if (!quill) return 0;
@@ -405,7 +407,7 @@
   }
 
   function parkSave() {
-    if (!doc || !quill || loading) return Promise.resolve();
+    if (discardOnLeave || !doc || !quill || loading) return Promise.resolve();
     captureResumePosition();
     syncDocBodyFromEditor();
     syncPageSetup();
@@ -423,7 +425,7 @@
   }
 
   function flushSave(force) {
-    if (!doc) return;
+    if (discardOnLeave || !doc) return;
     if (!force && !dirty) return;
     if (saveTimer) {
       clearTimeout(saveTimer);
@@ -1591,8 +1593,20 @@
   }
 
   document.getElementById("deleteDocBtn").addEventListener("click", function () {
+    if (!doc || !doc.id) return;
     if (!confirm("Delete this whole document?")) return;
-    LoreKeeperDocuments.delete(doc.id);
+    var idToDelete = doc.id;
+    discardOnLeave = true;
+    dirty = false;
+    if (saveTimer) {
+      clearTimeout(saveTimer);
+      saveTimer = null;
+    }
+    if (saveMaxTimer) {
+      clearTimeout(saveMaxTimer);
+      saveMaxTimer = null;
+    }
+    LoreKeeperDocuments.delete(idToDelete);
     global.location.href = "./index.html";
   });
   document.getElementById("restoreBackupBtn").addEventListener("click", restoreFromBackup);
