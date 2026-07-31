@@ -4,7 +4,10 @@
  */
 (function (global) {
   var MIGRATE_FLAG = "lorekeeper_silos_migrate_v1";
+  var MIGRATE_TEST_DOC_FLAG = "lorekeeper_silos_migrate_v2_test_work_title";
   var RANDOM_KEY = "__random_ideas__";
+  // One-shot owner clarification — this exact test doc only, not a lasting rule.
+  var ONE_SHOT_RANDOM_DOC_TITLE = "smoke and mirrors work title";
 
   function membership() {
     return global.LoreKeeperWorkMembership || null;
@@ -24,8 +27,13 @@
       .replace(/\s+/g, " ");
   }
 
+  function isRandomIdeasDoc(doc) {
+    return !!(doc && doc.randomIdeas);
+  }
+
   function workTitleForDoc(doc) {
     if (!doc) return "";
+    if (isRandomIdeasDoc(doc)) return "";
     var work = String(doc.workTag || "").trim();
     if (work) return work;
     return String(doc.title || "").trim();
@@ -39,9 +47,22 @@
     return (b.updatedAt || 0) - (a.updatedAt || 0);
   }
 
+  /** Prefer a real storywriting draft over other docs in the same silo. */
+  function sortDocsMainFirst(a, b) {
+    function score(doc) {
+      var t = normalizeKey(doc && doc.title);
+      if (/storywriting\s+draft/.test(t)) return 3;
+      if (/\bdraft\b/.test(t) && !/work\s+title/.test(t)) return 2;
+      return 1;
+    }
+    var d = score(b) - score(a);
+    if (d) return d;
+    return sortByUpdatedDesc(a, b);
+  }
+
   /**
    * Build silo cards from current docs + notes.
-   * Returns { silos: [...], randomIdeas: { notes, label } }
+   * Returns { silos: [...], randomIdeas: { notes, docs, label } }
    */
   function buildSilos(docs, notes) {
     var m = membership();
@@ -49,6 +70,7 @@
     var noteList = Array.isArray(notes) ? notes.slice() : [];
     var byKey = {};
     var order = [];
+    var randomDocs = [];
 
     function ensureSilo(title) {
       var key = normalizeKey(title);
@@ -70,6 +92,10 @@
     }
 
     docList.forEach(function (doc) {
+      if (isRandomIdeasDoc(doc)) {
+        randomDocs.push(doc);
+        return;
+      }
       var title = displayTitleForDoc(doc);
       var silo = ensureSilo(title);
       if (silo) silo.docs.push(doc);
@@ -83,11 +109,12 @@
       var matchedKey = null;
       var matchedTitle = "";
 
-      // Prefer linked document's silo.
+      // Prefer linked document's silo (skip links into Random ideas docs).
       var linked = String(note.linkedDocId || "").trim();
       if (linked) {
         for (var i = 0; i < docList.length; i++) {
           if (String(docList[i].id || "") === linked) {
+            if (isRandomIdeasDoc(docList[i])) break;
             matchedTitle = displayTitleForDoc(docList[i]);
             matchedKey = normalizeKey(matchedTitle);
             break;
@@ -126,7 +153,7 @@
     });
 
     Object.keys(byKey).forEach(function (key) {
-      byKey[key].docs.sort(sortByUpdatedDesc);
+      byKey[key].docs.sort(sortDocsMainFirst);
       byKey[key].notes.sort(sortByUpdatedDesc);
     });
 
@@ -147,6 +174,8 @@
       })
       .sort(sortByUpdatedDesc);
 
+    randomDocs.sort(sortByUpdatedDesc);
+
     return {
       silos: order.map(function (key) {
         return byKey[key];
@@ -154,36 +183,42 @@
       randomIdeas: {
         key: RANDOM_KEY,
         title: randomLabel(),
-        docs: [],
+        docs: randomDocs,
         notes: randomNotes,
         isRandom: true,
       },
     };
   }
 
-  function alreadyMigrated() {
+  function flagGet(key) {
     try {
       var Store = global.LoreKeeperAccountStorage;
-      if (Store && Store.getItem) {
-        return Store.getItem(MIGRATE_FLAG) === "1";
-      }
-      return localStorage.getItem(MIGRATE_FLAG) === "1";
+      if (Store && Store.getItem) return Store.getItem(key) === "1";
+      return localStorage.getItem(key) === "1";
     } catch (e) {
       return false;
     }
   }
 
-  function markMigrated() {
+  function flagSet(key) {
     try {
       var Store = global.LoreKeeperAccountStorage;
       if (Store && Store.setItem) {
-        Store.setItem(MIGRATE_FLAG, "1");
+        Store.setItem(key, "1");
         return;
       }
-      localStorage.setItem(MIGRATE_FLAG, "1");
+      localStorage.setItem(key, "1");
     } catch (e) {
       /* ignore */
     }
+  }
+
+  function alreadyMigrated() {
+    return flagGet(MIGRATE_FLAG);
+  }
+
+  function markMigrated() {
+    flagSet(MIGRATE_FLAG);
   }
 
   /**
@@ -208,6 +243,7 @@
 
     var knownWorks = [];
     docs.forEach(function (doc) {
+      if (isRandomIdeasDoc(doc)) return;
       var title = displayTitleForDoc(doc);
       if (title) knownWorks.push(title);
       if (!String(doc.workTag || "").trim() && String(doc.title || "").trim()) {
@@ -235,6 +271,7 @@
       if (linked) {
         for (var i = 0; i < docs.length; i++) {
           if (String(docs[i].id || "") === linked) {
+            if (isRandomIdeasDoc(docs[i])) return;
             var wt = workTitleForDoc(docs[i]);
             if (wt) {
               note.tags = (note.tags || []).concat([wt]);
@@ -268,12 +305,54 @@
     return { changedDocs: changedDocs, changedNotes: changedNotes, skipped: false };
   }
 
+  /**
+   * One-shot owner clarification: move only the test doc titled
+   * "smoke and mirrors work title" into Random ideas. Not a lasting product rule.
+   */
+  function migrateTestWorkTitleDoc() {
+    if (flagGet(MIGRATE_TEST_DOC_FLAG)) {
+      return { changedDocs: 0, skipped: true };
+    }
+    if (!global.LoreKeeperDocuments) {
+      return { changedDocs: 0, skipped: true };
+    }
+    var docs = global.LoreKeeperDocuments.load() || [];
+    var target = normalizeKey(ONE_SHOT_RANDOM_DOC_TITLE);
+    var changed = 0;
+    docs.forEach(function (doc) {
+      if (!doc) return;
+      if (normalizeKey(doc.title) !== target) return;
+      if (doc.randomIdeas && !String(doc.workTag || "").trim()) return;
+      doc.randomIdeas = true;
+      doc.workTag = "";
+      doc.updatedAt = Date.now();
+      global.LoreKeeperDocuments.save(doc);
+      changed += 1;
+    });
+    flagSet(MIGRATE_TEST_DOC_FLAG);
+    return { changedDocs: changed, skipped: false };
+  }
+
+  /** Run all home silo migrations (v1 + one-shot test-doc move). */
+  function migrateAll() {
+    var a = migrateToSilos();
+    var b = migrateTestWorkTitleDoc();
+    return {
+      changedDocs: (a.changedDocs || 0) + (b.changedDocs || 0),
+      changedNotes: a.changedNotes || 0,
+      skipped: !!(a.skipped && b.skipped),
+    };
+  }
+
   global.LoreKeeperSilos = {
     RANDOM_KEY: RANDOM_KEY,
     randomLabel: randomLabel,
     workTitleForDoc: workTitleForDoc,
+    isRandomIdeasDoc: isRandomIdeasDoc,
     buildSilos: buildSilos,
     migrateToSilos: migrateToSilos,
+    migrateTestWorkTitleDoc: migrateTestWorkTitleDoc,
+    migrateAll: migrateAll,
     alreadyMigrated: alreadyMigrated,
   };
 })(typeof window !== "undefined" ? window : globalThis);

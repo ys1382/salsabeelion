@@ -40,7 +40,7 @@
     list.innerHTML = "";
     var storyCount = built.silos.length;
     var noteCount = notes.length;
-    if (!storyCount && !built.randomIdeas.notes.length && !docs.length) {
+    if (!storyCount && !built.randomIdeas.notes.length && !built.randomIdeas.docs.length && !docs.length) {
       status.textContent = "No stories yet — create a document to start a silo.";
       refreshAskSiloOptions(built);
       return;
@@ -49,8 +49,10 @@
       storyCount +
       " stor" +
       (storyCount === 1 ? "y" : "ies") +
-      (built.randomIdeas.notes.length
-        ? " · " + built.randomIdeas.notes.length + " in Random ideas"
+      (built.randomIdeas.notes.length || built.randomIdeas.docs.length
+        ? " · " +
+          (built.randomIdeas.notes.length + built.randomIdeas.docs.length) +
+          " in Random ideas"
         : "") +
       (noteCount ? " · " + noteCount + " note" + (noteCount === 1 ? "" : "s") : "");
 
@@ -58,9 +60,14 @@
       var filteredNotes = (silo.notes || []).filter(function (n) {
         return noteMatchesFilter(n, kind, q);
       });
+      var filteredDocs = (silo.docs || []).filter(function (d) {
+        if (!q) return true;
+        return String(d.title || "")
+          .toLowerCase()
+          .indexOf(q) !== -1;
+      });
       if (kind || q) {
-        if (!silo.docs.length && !filteredNotes.length) return;
-        if (silo.isRandom && !filteredNotes.length) return;
+        if (!filteredDocs.length && !filteredNotes.length) return;
       }
 
       var section = document.createElement("section");
@@ -81,18 +88,22 @@
 
       var docList = document.createElement("ul");
       docList.className = "lk-doc-list lk-silo-docs";
-      if (!silo.docs.length && !silo.isRandom) {
+      if (!filteredDocs.length && !silo.isRandom) {
         var emptyDoc = document.createElement("li");
         emptyDoc.className = "muted lk-silo-empty";
         emptyDoc.textContent = "No main draft yet for this story.";
         docList.appendChild(emptyDoc);
       }
-      silo.docs.forEach(function (doc, idx) {
+      filteredDocs.forEach(function (doc, idx) {
         var li = document.createElement("li");
         var btn = document.createElement("button");
         btn.type = "button";
         btn.className = "lk-doc-open";
-        var label = idx === 0 ? "Main draft" : "Document";
+        var label = silo.isRandom
+          ? "Document"
+          : idx === 0
+            ? "Main draft"
+            : "Document";
         btn.innerHTML =
           "<span class='lk-silo-doc-label'>" +
           escapeHtml(label) +
@@ -107,7 +118,9 @@
         li.appendChild(btn);
         docList.appendChild(li);
       });
-      section.appendChild(docList);
+      if (filteredDocs.length || !silo.isRandom) {
+        section.appendChild(docList);
+      }
 
       var notesWrap = document.createElement("div");
       notesWrap.className = "lk-silo-notes";
@@ -124,7 +137,9 @@
         var emptyNote = document.createElement("li");
         emptyNote.className = "muted lk-silo-empty";
         emptyNote.textContent = silo.isRandom
-          ? "No Random ideas yet — leave the story title blank on a new note."
+          ? filteredDocs.length
+            ? "No unassigned notes in Random ideas."
+            : "No Random ideas yet — leave the story title blank on a new note."
           : "No notes in this silo yet.";
         noteList.appendChild(emptyNote);
       } else {
@@ -249,8 +264,8 @@
     refreshSilosRef = renderSilos;
     renderSilos();
     global.addEventListener("lorekeeper-data-hydrated", function () {
-      if (global.LoreKeeperSilos && global.LoreKeeperSilos.migrateToSilos) {
-        var mig = global.LoreKeeperSilos.migrateToSilos();
+      if (global.LoreKeeperSilos && global.LoreKeeperSilos.migrateAll) {
+        var mig = global.LoreKeeperSilos.migrateAll();
         if (mig && (mig.changedDocs || mig.changedNotes) && LoreKeeperAccountStorage.flush) {
           LoreKeeperAccountStorage.flush();
         }
@@ -764,8 +779,8 @@
       LoreKeeperAccountStorage.ensureSignedIn();
       return;
     }
-    if (global.LoreKeeperSilos && global.LoreKeeperSilos.migrateToSilos) {
-      var mig = global.LoreKeeperSilos.migrateToSilos();
+    if (global.LoreKeeperSilos && global.LoreKeeperSilos.migrateAll) {
+      var mig = global.LoreKeeperSilos.migrateAll();
       if (mig && (mig.changedDocs || mig.changedNotes) && LoreKeeperAccountStorage.flush) {
         LoreKeeperAccountStorage.flush();
       }

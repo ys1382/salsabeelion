@@ -291,6 +291,7 @@ Run **one row at a time** in Cursor. Don’t skip Phase 0 — it costs nothing a
 - [x] **Home story silos** — each story shows main draft on top, that story’s notes underneath; undecided notes in **Random ideas**
 - [x] **Ask one silo only** — home Ask requires choosing a story or Random ideas; LLM prompts stay inside that silo
 - [x] **Migrate jumble** — clear linked/title matches attach to a story; undecided stay in Random ideas (non-destructive)
+- [x] **One-shot** — move test doc “smoke and mirrors work title” into Random ideas; Smoke and Mirrors main draft stays “storywriting draft” (2026-07-31)
 
 ### Floaters-only Ask (shipped 2026-07-17)
 
