@@ -4,10 +4,12 @@
  */
 (function (global) {
   var MIGRATE_FLAG = "lorekeeper_silos_migrate_v1";
-  var MIGRATE_TEST_DOC_FLAG = "lorekeeper_silos_migrate_v2_test_work_title";
+  var MIGRATE_TEST_DOC_FLAG = "lorekeeper_silos_migrate_v3_test_work_title";
   var RANDOM_KEY = "__random_ideas__";
-  // One-shot owner clarification — this exact test doc only, not a lasting rule.
+  var STORY_SMOKE = "Smoke and Mirrors";
+  // One-shot owner clarification — these exact test/main titles only.
   var ONE_SHOT_RANDOM_DOC_TITLE = "smoke and mirrors work title";
+  var ONE_SHOT_MAIN_DOC_TITLE = "smoke and mirrors storywriting draft";
 
   function membership() {
     return global.LoreKeeperWorkMembership || null;
@@ -27,15 +29,40 @@
       .replace(/\s+/g, " ");
   }
 
+  function isOneShotTestWorkTitleDoc(doc) {
+    var t = normalizeKey(doc && doc.title);
+    if (!t) return false;
+    if (t === ONE_SHOT_RANDOM_DOC_TITLE) return true;
+    // Loose match: smoke and mirrors + work title, not the storywriting draft.
+    return (
+      t.indexOf("smoke and mirrors") >= 0 &&
+      t.indexOf("work title") >= 0 &&
+      t.indexOf("storywriting") < 0
+    );
+  }
+
+  function isOneShotStorywritingDraft(doc) {
+    var t = normalizeKey(doc && doc.title);
+    return t === ONE_SHOT_MAIN_DOC_TITLE || t.indexOf(ONE_SHOT_MAIN_DOC_TITLE) >= 0;
+  }
+
   function isRandomIdeasDoc(doc) {
-    return !!(doc && doc.randomIdeas);
+    return !!(doc && doc.randomIdeas) || isOneShotTestWorkTitleDoc(doc);
   }
 
   function workTitleForDoc(doc) {
     if (!doc) return "";
     if (isRandomIdeasDoc(doc)) return "";
+    if (isOneShotStorywritingDraft(doc)) return STORY_SMOKE;
     var work = String(doc.workTag || "").trim();
-    if (work) return work;
+    if (work) {
+      var nw = normalizeKey(work);
+      if (nw.indexOf(ONE_SHOT_MAIN_DOC_TITLE) >= 0) return STORY_SMOKE;
+      if (nw === ONE_SHOT_RANDOM_DOC_TITLE || (nw.indexOf("smoke and mirrors") >= 0 && nw.indexOf("work title") >= 0)) {
+        return "";
+      }
+      return work;
+    }
     return String(doc.title || "").trim();
   }
 
@@ -306,8 +333,10 @@
   }
 
   /**
-   * One-shot owner clarification: move only the test doc titled
-   * "smoke and mirrors work title" into Random ideas. Not a lasting product rule.
+   * One-shot owner clarification:
+   * - "smoke and mirrors work title" → Random ideas
+   * - "Smoke and Mirrors storywriting draft" → workTag Smoke and Mirrors (main draft)
+   * Only marks done after the test doc is actually in Random ideas (or already was).
    */
   function migrateTestWorkTitleDoc() {
     if (flagGet(MIGRATE_TEST_DOC_FLAG)) {
@@ -317,19 +346,48 @@
       return { changedDocs: 0, skipped: true };
     }
     var docs = global.LoreKeeperDocuments.load() || [];
-    var target = normalizeKey(ONE_SHOT_RANDOM_DOC_TITLE);
+    if (!docs.length) {
+      // Docs not hydrated yet — do not burn the flag.
+      return { changedDocs: 0, skipped: true };
+    }
+
     var changed = 0;
+    var testSeen = false;
+    var testDone = false;
+
     docs.forEach(function (doc) {
       if (!doc) return;
-      if (normalizeKey(doc.title) !== target) return;
-      if (doc.randomIdeas && !String(doc.workTag || "").trim()) return;
-      doc.randomIdeas = true;
-      doc.workTag = "";
-      doc.updatedAt = Date.now();
-      global.LoreKeeperDocuments.save(doc);
-      changed += 1;
+
+      if (isOneShotTestWorkTitleDoc(doc)) {
+        testSeen = true;
+        if (doc.randomIdeas && !String(doc.workTag || "").trim()) {
+          testDone = true;
+          return;
+        }
+        doc.randomIdeas = true;
+        doc.workTag = "";
+        doc.updatedAt = Date.now();
+        global.LoreKeeperDocuments.save(doc);
+        changed += 1;
+        testDone = true;
+        return;
+      }
+
+      if (isOneShotStorywritingDraft(doc)) {
+        if (String(doc.workTag || "").trim() === STORY_SMOKE && !doc.randomIdeas) return;
+        doc.randomIdeas = false;
+        doc.workTag = STORY_SMOKE;
+        doc.updatedAt = Date.now();
+        global.LoreKeeperDocuments.save(doc);
+        changed += 1;
+      }
     });
-    flagSet(MIGRATE_TEST_DOC_FLAG);
+
+    // Only burn the flag when we found the test doc and it's in Random ideas,
+    // or when that title simply isn't in the account (nothing to move).
+    if (testDone || !testSeen) {
+      flagSet(MIGRATE_TEST_DOC_FLAG);
+    }
     return { changedDocs: changed, skipped: false };
   }
 
