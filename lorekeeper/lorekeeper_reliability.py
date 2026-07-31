@@ -440,7 +440,7 @@ def filter_entries_by_work(
     strict: bool,
     document_id: str = "",
 ) -> list[dict[str, Any]]:
-    """Work scope: this work + unassigned/idk notes (unless ruled out), never other works."""
+    """Work scope: this story's notes/draft only — never other works or Random ideas."""
     if not work_hints:
         return entries
     work_title = max(work_hints, key=len)

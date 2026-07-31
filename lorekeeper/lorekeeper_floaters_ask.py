@@ -35,14 +35,14 @@ _EVERYTHING_Q = re.compile(
 
 _TOPIC_STRIP = re.compile(
     r"\b("
-    r"floating(?:\s+ideas?)?|floaters?|unspecified(?:\s+(?:ideas?|notes?))?|"
+    r"random\s+ideas?|floating(?:\s+ideas?)?|floaters?|unspecified(?:\s+(?:ideas?|notes?))?|"
     r"unassigned(?:\s+(?:ideas?|notes?))?|jumbled(?:\s+(?:ideas?|notes?))?|"
     r"idk(?:\s+(?:which\s+work|notes?|ideas?))?|inbox(?:\s+(?:ideas?|notes?))?|"
     r"notes?|ideas?|give\s+me|show\s+me|list|summarize|summary|dump|rundown|"
     r"digest|overview|what\s+are|i\s+want|regarding|about|concerning|"
     r"everything|all|my|the|a|an|and|or|of|in|on|for|with|from|to|please|"
     r"clear(?:ly)?|concise(?:ly)?|manner|stuff|things|that|which|don'?t|"
-    r"belong|anywhere|without|a\s+work|work\s+yet"
+    r"belong|anywhere|without|a\s+work|work\s+yet|here"
     r")\b",
     re.I,
 )

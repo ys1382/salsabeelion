@@ -32,7 +32,7 @@ from lorekeeper_reliability import (
 
 from lorekeeper_ask_plan import AskPlan
 
-RAG_VERSION = "20.0.0-rag"
+RAG_VERSION = "21.0.0-rag"
 
 # Override with LOREKEEPER_ANTHROPIC_MODEL on the server if needed.
 DEFAULT_MODEL = os.environ.get(
@@ -47,6 +47,8 @@ _SYSTEM_BASE = """You are LoreKeeper — a librarian for one writer's private no
 
 Rules (non-negotiable):
 - Answer ONLY from the numbered SOURCE blocks provided. Never use outside knowledge.
+- When a Work scope or story silo is named, stay inside that ONE story's draft and notes. Do not mix in other stories or the Random ideas pile.
+- When the scope is Random ideas (floating / unassigned notes), answer ONLY from those unassigned notes — never from story-tagged drafts.
 - Answer ONLY what the question asks — omit unrelated characters, plot, and lore not needed for this answer.
 - Prefer the names and time window the writer asked about (e.g. a later name + pre/post war). Do not replace them with earlier personas or a different era unless the question asks for that.
 - Never invent story, lore, motives, relationships, or facts not supported by the sources.
@@ -449,7 +451,11 @@ def _build_user_prompt(
 ) -> str:
     work_line = ""
     if work_hints:
-        work_line = f"Work scope: {', '.join(sorted(work_hints))}\n"
+        work_line = (
+            "Story silo / work scope (answer ONLY from this story): "
+            + ", ".join(sorted(work_hints))
+            + "\n"
+        )
     sources = _format_sources_block(ranked)
     if not sources:
         sources = "(No matching sources retrieved.)"

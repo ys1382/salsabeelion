@@ -283,12 +283,18 @@ Run **one row at a time** in Cursor. Don’t skip Phase 0 — it costs nothing a
 
 ### Doc-scoped notes sidebar (shipped 2026-07-17)
 
-- [x] **Notes tab on document** — while writing, list only this work’s notes (+ floating/idk ideas); hide other works (e.g. Ice and Fire while on Ice and Isolation); hide floating notes that rule out this work (`not:Title` or “doesn’t belong in …”)
+- [x] **Notes tab on document** — while writing, list only this story’s notes; Random ideas stay on Home; hide other works
 - [x] **Same membership for work-scoped Ask**
+
+### Story silos (shipped 2026-07-31)
+
+- [x] **Home story silos** — each story shows main draft on top, that story’s notes underneath; undecided notes in **Random ideas**
+- [x] **Ask one silo only** — home Ask requires choosing a story or Random ideas; LLM prompts stay inside that silo
+- [x] **Migrate jumble** — clear linked/title matches attach to a story; undecided stay in Random ideas (non-destructive)
 
 ### Floaters-only Ask (shipped 2026-07-17)
 
-- [x] **Ask floating / unspecified pile** — phrasing like “floating ideas,” “unspecified notes,” “jumbled ideas”; lists only unassigned notes; never mixes in work-tagged notes; character Ask inside floaters stays in that pile
+- [x] **Ask floating / unspecified / Random ideas pile** — phrasing like “floating ideas,” “random ideas,” “unspecified notes”; lists only unassigned notes; never mixes in work-tagged notes; character Ask inside floaters stays in that pile
 - [x] **Clarify + narrow** — large vague floater Ask asks what to gather (topic / everything / no-clash piles); follow-up gathers notes only (no “what you meant” narration); boy-vs-girl protagonist scraps shown as separate piles
 
 ### Draft vs notes — dual Ask + doc cadence (shipped 2026-07-13)

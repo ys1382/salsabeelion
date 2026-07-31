@@ -41,7 +41,8 @@ class WorkMembershipTests(unittest.TestCase):
         ]
         visible = filter_entries_visible_for_work(notes, isolation, document_id="d_iso")
         ids = {n["id"] for n in visible}
-        self.assertEqual(ids, {"a", "c", "f"})
+        # Strict silos: belonging notes only — floaters stay in Random ideas.
+        self.assertEqual(ids, {"a", "f"})
 
     def test_unassigned_empty_tags(self):
         self.assertTrue(note_is_unassigned(_note("1", "Idea")))
@@ -76,6 +77,7 @@ class FloatersAskTests(unittest.TestCase):
 
         self.assertTrue(is_floaters_question("give me all my floating ideas"))
         self.assertTrue(is_floaters_question("summarize my unspecified notes"))
+        self.assertTrue(is_floaters_question("what's in my random ideas"))
         self.assertTrue(is_floaters_inventory_question("list my jumbled ideas"))
         self.assertFalse(is_floaters_question("who is Character A in Ice and Fire"))
 
@@ -141,6 +143,55 @@ class FloatersAskTests(unittest.TestCase):
         self.assertIn("secret identity", res.get("answer") or "")
         self.assertNotIn("Tagged work beat", res.get("answer") or "")
         self.assertNotIn("Isolation plot", res.get("answer") or "")
+
+    def test_recall_random_ideas_scope_mode(self):
+        from lorekeeper_recall import recall_from_user_data
+
+        user_data = {
+            "lorekeeper_entries_v1": json.dumps(
+                [
+                    {
+                        "id": "f1",
+                        "title": "Loose spark",
+                        "body": "A cactus with eyes.",
+                        "tags": [],
+                        "kind": "note",
+                    },
+                    {
+                        "id": "w1",
+                        "title": "Saga beat",
+                        "body": "Tagged only.",
+                        "tags": ["Smoke and Mirrors"],
+                        "kind": "note",
+                    },
+                ]
+            )
+        }
+        res = recall_from_user_data(
+            "list everything here",
+            user_data,
+            mode="full",
+            scope={"mode": "random_ideas"},
+        )
+        self.assertTrue(res.get("ok"))
+        self.assertEqual(res.get("recallScope"), "floaters")
+        self.assertIn("Loose spark", res.get("answer") or "")
+        self.assertNotIn("Tagged only", res.get("answer") or "")
+
+    def test_work_scope_excludes_unassigned(self):
+        from lorekeeper_reliability import filter_entries_by_recall_scope
+
+        entries = [
+            _note("a", "Belong", tags=["Smoke and Mirrors"]),
+            _note("b", "Loose", tags=[]),
+            _note("c", "Other", tags=["Cities of Rust"]),
+        ]
+        scoped, _, strict = filter_entries_by_recall_scope(
+            entries, work_title="Smoke and Mirrors", scope_mode="work"
+        )
+        ids = {e["id"] for e in scoped}
+        self.assertEqual(ids, {"a"})
+        self.assertTrue(strict)
 
     def test_document_body_names_work_when_work_field_blank(self):
         from lorekeeper_work_membership import note_belongs_to_work, note_visible_for_work

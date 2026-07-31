@@ -1,6 +1,8 @@
 /**
  * LoreKeeper — which notes belong on a document / work view.
  * Mirrors lorekeeper_work_membership.py (keep rules in sync).
+ *
+ * Story silos are strict: unassigned notes stay in Random ideas only.
  */
 (function (global) {
   var IDK_TAG =
@@ -10,6 +12,8 @@
   var NOT_TAG = /^not\s*:\s*(.+)$/i;
   var EXCLUDE_PHRASE =
     /(?:doesn'?t\s+(?:belong|fit)\s+(?:in|to)|does\s+not\s+(?:belong|fit)\s+(?:in|to)|won'?t\s+be\s+in|will\s+not\s+be\s+in|not\s+for|not\s+in|exclude(?:d)?\s+from|rules?\s+out)\s+(.+?)(?:[.!?\n]|$)/gi;
+
+  var RANDOM_IDEAS_LABEL = "Random ideas";
 
   function normalizeWorkKey(text) {
     var cleaned = String(text || "")
@@ -71,6 +75,17 @@
     return false;
   }
 
+  function tagsSoftMatch(tag, work) {
+    var nt = normalizeWorkKey(tag);
+    var nw = normalizeWorkKey(work);
+    if (!nt || !nw) return false;
+    if (nt === nw) return true;
+    var shorter = nt.length <= nw.length ? nt : nw;
+    var longer = nt.length <= nw.length ? nw : nt;
+    if (shorter.length >= 8 && longer.indexOf(shorter) >= 0) return true;
+    return false;
+  }
+
   function noteBelongsToWork(entry, workTitle, documentId) {
     if (!entry) return false;
     var docId = String(documentId || "").trim();
@@ -81,12 +96,13 @@
 
     var tags = concreteWorkTags(entry);
     for (var i = 0; i < tags.length; i++) {
-      if (normalizeWorkKey(tags[i]) === work) return true;
+      if (tagsSoftMatch(tags[i], work)) return true;
     }
 
     var title = normalizeWorkKey(entry.title || "");
     var titleBase = title.split(" / ")[0].trim();
     if (title.indexOf(work) >= 0 || titleBase.indexOf(work) >= 0) return true;
+    if (titleBase.length >= 8 && work.indexOf(titleBase) >= 0) return true;
     return false;
   }
 
@@ -97,17 +113,13 @@
     if (!tags.length) return false;
     if (!work) return true;
     for (var i = 0; i < tags.length; i++) {
-      if (normalizeWorkKey(tags[i]) === work) return false;
+      if (tagsSoftMatch(tags[i], work)) return false;
     }
     return true;
   }
 
   function noteVisibleForWork(entry, workTitle, documentId) {
-    if (!entry) return false;
-    if (noteBelongsToWork(entry, workTitle, documentId)) return true;
-    if (noteBelongsToOtherWork(entry, workTitle)) return false;
-    if (noteIsUnassigned(entry)) return !noteExcludesWork(entry, workTitle);
-    return false;
+    return noteBelongsToWork(entry, workTitle, documentId);
   }
 
   function filterEntriesVisibleForWork(entries, workTitle, documentId) {
@@ -121,7 +133,7 @@
   }
 
   var FLOATERS_SCOPE_Q =
-    /\b(?:floating(?:\s+ideas?)?|floaters?|unspecified(?:\s+(?:ideas?|notes?))?|unassigned(?:\s+(?:ideas?|notes?))?|jumbled(?:\s+(?:ideas?|notes?))?|idk(?:\s+(?:which\s+work|notes?|ideas?))?|notes?\s+without\s+(?:a\s+)?work|(?:ideas?|notes?)\s+(?:that\s+)?(?:don'?t|do\s+not)\s+belong\s+anywhere|no\s+(?:specific\s+)?work(?:\s+yet|\s+assigned)?|inbox(?:\s+(?:ideas?|notes))?)\b/i;
+    /\b(?:random\s+ideas?|floating(?:\s+ideas?)?|floaters?|unspecified(?:\s+(?:ideas?|notes?))?|unassigned(?:\s+(?:ideas?|notes?))?|jumbled(?:\s+(?:ideas?|notes?))?|idk(?:\s+(?:which\s+work|notes?|ideas?))?|notes?\s+without\s+(?:a\s+)?work|(?:ideas?|notes?)\s+(?:that\s+)?(?:don'?t|do\s+not)\s+belong\s+anywhere|no\s+(?:specific\s+)?work(?:\s+yet|\s+assigned)?|inbox(?:\s+(?:ideas?|notes))?)\b/i;
 
   function isFloatersQuestion(question) {
     return FLOATERS_SCOPE_Q.test(String(question || ""));
@@ -134,6 +146,7 @@
   }
 
   global.LoreKeeperWorkMembership = {
+    RANDOM_IDEAS_LABEL: RANDOM_IDEAS_LABEL,
     normalizeWorkKey: normalizeWorkKey,
     noteIsUnassigned: noteIsUnassigned,
     noteExcludesWork: noteExcludesWork,

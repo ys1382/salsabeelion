@@ -1,9 +1,8 @@
 """LoreKeeper — which notes belong on a document / work view.
 
-Visible when working on work W:
-- notes tagged or linked to W
-- unassigned / idk notes, unless they rule out W
-Hidden: notes that belong to a different work.
+Story silos (strict): a note is visible for work W only when it belongs to W
+(tagged, linked, or soft title/body match). Unassigned / idk notes live in the
+separate Random ideas pile — never mixed into a story silo or story-scoped Ask.
 """
 from __future__ import annotations
 
@@ -212,16 +211,10 @@ def note_visible_for_work(
     *,
     document_id: str = "",
 ) -> bool:
-    """Sidebar / work-scoped Ask membership."""
+    """Story silo / work-scoped Ask membership — belongs only, no Random ideas bleed."""
     if not isinstance(entry, dict):
         return False
-    if note_belongs_to_work(entry, work_title, document_id=document_id):
-        return True
-    if note_belongs_to_other_work(entry, work_title):
-        return False
-    if note_is_unassigned(entry):
-        return not note_excludes_work(entry, work_title)
-    return False
+    return note_belongs_to_work(entry, work_title, document_id=document_id)
 
 
 def filter_entries_visible_for_work(
@@ -241,10 +234,13 @@ def filter_entries_visible_for_work(
     ]
 
 
-# --- Floaters-only Ask (unassigned notes; never mix in tagged works) ---
+# --- Random ideas / floaters-only Ask (unassigned notes; never mix in tagged works) ---
+
+RANDOM_IDEAS_LABEL = "Random ideas"
 
 _FLOATERS_SCOPE_Q = re.compile(
     r"\b("
+    r"random\s+ideas?|"
     r"floating(?:\s+ideas?)?|floaters?|"
     r"unspecified(?:\s+(?:ideas?|notes?))?|"
     r"unassigned(?:\s+(?:ideas?|notes?))?|"
@@ -270,7 +266,7 @@ FLOATERS_DIGEST_CAP = 40
 
 
 def is_floaters_question(question: str) -> bool:
-    """Writer asked about floating / unspecified / no-work notes."""
+    """Writer asked about Random ideas / floating / unspecified / no-work notes."""
     return bool(_FLOATERS_SCOPE_Q.search(question or ""))
 
 
@@ -310,8 +306,8 @@ def compose_floaters_digest(
     floaters = filter_entries_floaters_only(entries)
     if not floaters:
         return (
-            "You don't have any floating / unspecified notes yet — "
-            "notes with no work title (or tagged idk / unassigned) will show up here.\n\n"
+            "You don't have any Random ideas notes yet — "
+            "notes with no story title (or tagged idk / unassigned) will show up here.\n\n"
             "— From your notes only. Nothing invented.",
             [],
         )
@@ -326,9 +322,9 @@ def compose_floaters_digest(
     source_ids = [str(e.get("id") or "") for e in shown if e.get("id")]
 
     lines = [
-        f"Your floating / unspecified ideas ({total} note"
+        f"Your Random ideas pile ({total} note"
         + ("s" if total != 1 else "")
-        + " — none tagged to a specific work):\n"
+        + " — none tagged to a specific story):\n"
     ]
     for entry in shown:
         title = str(entry.get("title") or "Untitled").strip() or "Untitled"
@@ -341,14 +337,14 @@ def compose_floaters_digest(
     if total > len(shown):
         rest = total - len(shown)
         lines.append(
-            f"\n…and {rest} more floating note"
+            f"\n…and {rest} more Random ideas note"
             + ("s" if rest != 1 else "")
-            + ". Ask about a character or topic in your floaters to narrow, "
-            "or assign work titles when you know where an idea belongs."
+            + ". Ask about a character or topic in Random ideas to narrow, "
+            "or assign a story title when you know where an idea belongs."
         )
     else:
         lines.append(
-            "\nThat's the full floater pile from what you've saved. "
+            "\nThat's the full Random ideas pile from what you've saved. "
             "Thin scraps are listed as-is — nothing filled in."
         )
     lines.append("\n— From your notes only. Nothing invented.")

@@ -4,26 +4,40 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
   <title>LoreKeeper</title>
-  <link rel="stylesheet" href="./lk-shared.css?v=93" />
+  <link rel="stylesheet" href="./lk-shared.css?v=94" />
 </head>
 <body class="lk-page-home">
   <div class="lk-wrap">
     <p class="header-nav"><a href="https://oddtrove.art/">← Odd Trove</a></p>
     <h1>LoreKeeper <span class="muted" style="font-size:0.5em;font-weight:500;vertical-align:0.18em">beta</span></h1>
-    <p class="lk-lead"><strong>Documents</strong> are for full project writing — one flowing doc with formatting, like picking up where you left off on a computer. <strong>Notes</strong> are scattered scraps — relationships, intrigue, fonts, visual beats, anything jumbled. Same work title on both so Ask can search the whole project. Use <strong>Find</strong> below to look up a word or phrase in everything you saved.</p>
+    <p class="lk-lead"><strong>Stories</strong> keep their main draft and notes together — one silo per project. Undecided scraps land in <strong>Random ideas</strong>. When you Ask, pick one silo so LoreKeeper only reads that story (or Random ideas). Use <strong>Find</strong> below to look up a word or phrase in everything you saved.</p>
     <p class="lk-auth-bar" id="lkAuthBar"></p>
     <p class="lk-privacy">Private to your account. Not shared with other writers. Your drafts live on the server — not in the public website code.</p>
 
     <div class="lk-panel">
-      <h2 class="lk-panel-title">Documents</h2>
-      <p class="muted lk-section-lead">Long-form writing for a project. Open a doc, keep typing, auto-save.</p>
+      <h2 class="lk-panel-title">Your stories</h2>
+      <p class="muted lk-section-lead">Main draft on top, that story’s notes underneath. Random ideas stay in their own pile.</p>
       <div class="lk-toolbar">
         <button type="button" class="lk-btn" id="newDocBtn">New document</button>
         <button type="button" class="lk-btn secondary" id="continueBtn" hidden>Continue writing</button>
+        <button type="button" class="lk-btn lk-quick-jot-btn" id="quickJotBtn">Quick jot</button>
+        <button type="button" class="lk-btn secondary" id="newNoteBtn">New note</button>
         <button type="button" class="lk-btn secondary" id="exportDocsBtn">Export documents</button>
+        <button type="button" class="lk-btn secondary" id="exportNotesBtn">Export notes</button>
+      </div>
+      <p class="muted lk-spell-hint">Local spelling in notes &amp; documents — <a href="./account.html">My spelling words</a> on your account page.</p>
+      <p class="lk-status err" id="noteSyncBanner" hidden>
+        Saved on this device — not synced to account yet.
+        <button type="button" class="lk-btn secondary lk-sync-retry" id="noteSyncRetryBtn">Retry sync</button>
+      </p>
+      <div class="lk-toolbar lk-silo-filter-toolbar">
+        <select id="filterKind" aria-label="Filter notes by type">
+          <option value="">All note types</option>
+        </select>
+        <input type="search" id="searchBox" placeholder="Filter notes in these lists…" autocomplete="off" />
       </div>
       <p class="lk-status" id="libraryStatus"></p>
-      <ul class="lk-doc-list" id="docList" aria-live="polite"></ul>
+      <div id="siloList" class="lk-silo-list" aria-live="polite"></div>
     </div>
 
     <div class="lk-panel lk-new-doc-panel" id="newDocPanel" hidden>
@@ -33,7 +47,7 @@
         <input type="text" id="newDocTitle" autocomplete="off" placeholder="Smoke and Mirrors — first draft" />
       </div>
       <div class="lk-field">
-        <label for="newDocWork">Work title <span class="muted">(for Ask)</span></label>
+        <label for="newDocWork">Story title <span class="muted">(silo name for Ask)</span></label>
         <input type="text" id="newDocWork" autocomplete="off" placeholder="Smoke and Mirrors" />
       </div>
       <div class="lk-toolbar">
@@ -41,48 +55,6 @@
         <button type="button" class="lk-btn secondary" id="cancelNewDocBtn">Cancel</button>
       </div>
       <p class="lk-status" id="newDocStatus"></p>
-    </div>
-
-    <div class="lk-panel">
-      <h2 class="lk-panel-title">Notes</h2>
-      <p class="muted lk-section-lead">Scattered bits — not full docs. One scrap per note, typed and tagged.</p>
-      <div class="lk-toolbar lk-notes-primary-toolbar">
-        <button type="button" class="lk-btn lk-quick-jot-btn" id="quickJotBtn">Quick jot</button>
-        <button type="button" class="lk-btn secondary" id="newNoteBtn">New note</button>
-        <button type="button" class="lk-btn secondary" id="exportNotesBtn">Export notes</button>
-      </div>
-      <p class="muted lk-spell-hint">Local spelling in notes &amp; documents — <a href="./account.html">My spelling words</a> on your account page.</p>
-      <p class="lk-status err" id="noteSyncBanner" hidden>
-        Saved on this device — not synced to account yet.
-        <button type="button" class="lk-btn secondary lk-sync-retry" id="noteSyncRetryBtn">Retry sync</button>
-      </p>
-      <div class="lk-notes-more" id="notesMorePanel">
-        <button
-          type="button"
-          class="lk-notes-more-summary"
-          id="notesMoreToggle"
-          aria-expanded="false"
-          aria-controls="notesMoreBody"
-        >
-          <span class="lk-notes-more-label" id="notesMoreLabel">Your notes</span>
-          <span class="lk-notes-more-toggle" aria-hidden="true"></span>
-        </button>
-        <div class="lk-notes-more-body" id="notesMoreBody">
-          <div class="lk-toolbar">
-            <select id="filterKind" aria-label="Filter by type">
-              <option value="">All types</option>
-            </select>
-            <input type="search" id="searchBox" placeholder="Filter this list…" autocomplete="off" />
-          </div>
-          <ul class="lk-entry-list" id="noteList" aria-live="polite"></ul>
-          <div class="lk-note-pager" id="noteListPager" hidden>
-            <button type="button" class="lk-btn secondary" id="noteListPrev">↑ Newer</button>
-            <span class="lk-note-pager-status" id="noteListPagerStatus"></span>
-            <button type="button" class="lk-btn secondary" id="noteListNext">↓ Older</button>
-          </div>
-          <p class="lk-status" id="noteListStatus"></p>
-        </div>
-      </div>
     </div>
 
     <div class="lk-panel" id="noteEditorPanel" hidden>
@@ -106,9 +78,9 @@
           <input type="text" id="noteTitle" autocomplete="off" placeholder="Character beat, font idea, intrigue thread…" />
         </div>
         <div class="lk-field">
-          <label for="noteTags">Work title <span class="muted">(tag — same name as the project)</span></label>
+          <label for="noteTags">Story title <span class="muted">(puts this note in that silo)</span></label>
           <input type="text" id="noteTags" autocomplete="off" placeholder="Smoke and Mirrors" />
-          <p class="muted lk-field-hint">Leave blank if you’re not sure which work yet. To exclude a work: “doesn’t belong in …” in the note, or <code>not:Title</code> in tags.</p>
+          <p class="muted lk-field-hint">Leave blank to keep it in Random ideas. To exclude a story: “doesn’t belong in …” in the note, or <code>not:Title</code> in tags.</p>
         </div>
       </details>
       <div class="lk-toolbar">
@@ -151,15 +123,20 @@
 
       <div id="panel-ask" class="lk-tools-panel-body" role="tabpanel" aria-labelledby="tab-btn-ask">
         <p class="muted lk-ask-lead">
-          Searches <strong>documents and notes</strong> you saved on LoreKeeper. Name the work in your question
-          (e.g. “In Smoke and Mirrors, who is…?”). Answers come straight from what you saved.
+          Pick <strong>one story</strong> (or Random ideas). Ask only reads that silo’s draft and notes — not the rest of your account.
         </p>
         <p class="lk-privacy lk-ask-privacy">
           <strong>Your drafts stay on LoreKeeper.</strong> Ask runs on the server from your saved writing — it does not use Word help’s language model and does not read what you type in other tabs.
         </p>
         <div class="lk-field">
+          <label for="askSilo">Search in</label>
+          <select id="askSilo" aria-label="Story silo for Ask">
+            <option value="">Choose a story…</option>
+          </select>
+        </div>
+        <div class="lk-field">
           <label for="askQuestion">Your question</label>
-          <textarea id="askQuestion" rows="3" placeholder="e.g. In Smoke and Mirrors, who is Character B?"></textarea>
+          <textarea id="askQuestion" rows="3" placeholder="e.g. Who is Character B?"></textarea>
           <p class="muted lk-field-hint">Enter asks · Shift+Enter for a new line</p>
         </div>
         <div class="lk-toolbar lk-ask-toolbar">
@@ -241,6 +218,8 @@
   <script src="./lk-auth-gate.js?v=3"></script>
   <script src="./lk-documents.js?v=52"></script>
   <script src="./lk-entries.js?v=4"></script>
+  <script src="./lk-work-membership.js?v=2"></script>
+  <script src="./lk-silos.js?v=1"></script>
   <script src="./lk-find.js?v=1"></script>
   <script src="./lk-recall.js?v=10"></script>
   <script src="./lk-auth.js?v=3"></script>
@@ -258,6 +237,6 @@
   <script src="./lk-mobile-jot.js?v=1"></script>
   <script src="./lk-bt-keyboard.js?v=1"></script>
   <script src="./lk-mobile-handoff.js?v=1"></script>
-  <script src="./lk-home.js?v=55"></script>
+  <script src="./lk-home.js?v=56"></script>
 </body>
 </html>

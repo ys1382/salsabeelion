@@ -887,7 +887,7 @@ def recall_from_user_data(
     # Notes-vs-draft needs every note for the work, not only notes linked to the open doc.
     if is_notes_not_in_draft_question(question):
         scope_mode = "work"
-    if scope_work:
+    if scope_work and scope_mode not in ("random_ideas", "floaters"):
         question = augment_question_with_scope_work(question, scope_work)
 
     data = merge_recall_user_data(
@@ -918,9 +918,16 @@ def recall_from_user_data(
         raw_cont = scope.get("askContinue")
         if isinstance(raw_cont, dict):
             continue_ctx = raw_cont
-    floaters_only = is_floaters_question(question) or is_floaters_followup_context(
-        continue_ctx
+    floaters_only = (
+        scope_mode in ("random_ideas", "floaters")
+        or is_floaters_question(question)
+        or is_floaters_followup_context(continue_ctx)
     )
+    # Home silo already chose Random ideas — stamp the question so floaters
+    # inventory/clarify routes fire even without saying "floaters" again.
+    if scope_mode in ("random_ideas", "floaters") and not is_floaters_question(question):
+        question = f"In my random ideas: {question}"
+        floaters_only = True
 
     section_hints = extract_section_hints(question)
     if section_hints and not floaters_only:

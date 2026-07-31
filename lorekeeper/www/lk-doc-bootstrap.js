@@ -13,7 +13,7 @@
     "./lk-documents.js?v=53",
     "./lk-doc-collab.js?v=1",
     "./lk-entries.js?v=4",
-    "./lk-work-membership.js?v=1",
+    "./lk-work-membership.js?v=2",
     "./lk-font-loader.js?v=1",
     "./lk-font-catalog.js?v=56",
     "./lk-recall.js?v=10",

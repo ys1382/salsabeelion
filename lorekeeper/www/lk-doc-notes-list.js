@@ -43,8 +43,8 @@
     listEl.innerHTML = "";
     if (metaEl) {
       metaEl.textContent = ctx.work
-        ? "Showing notes for “" + ctx.work + "” (+ floating ideas)."
-        : "Set a work title in Settings to filter notes.";
+        ? "Showing notes for “" + ctx.work + "” only (Random ideas stay on Home)."
+        : "Set a story title in Settings to filter notes.";
     }
 
     if (!visible.length) {
@@ -63,7 +63,7 @@
       var floating =
         global.LoreKeeperWorkMembership.noteIsUnassigned(entry) &&
         !global.LoreKeeperWorkMembership.noteBelongsToWork(entry, ctx.work, ctx.docId);
-      var badge = floating ? '<span class="lk-doc-notes-badge">floating</span>' : "";
+      var badge = floating ? '<span class="lk-doc-notes-badge">random</span>' : "";
       var href = "./index.html#note-" + encodeURIComponent(entry.id);
       li.innerHTML =
         '<a class="lk-doc-notes-link" href="' +
