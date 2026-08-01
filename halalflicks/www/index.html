@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+  <title>HalalFlicks</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="halalflicks.css?v=20260801a" />
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <p class="eyebrow">Odd Trove · owner beta</p>
+      <h1 class="brand">HalalFlicks <span class="beta-tag">beta</span></h1>
+      <p class="tagline">Flickcheck and curated movie ideas — not a streaming player</p>
+      <p class="disclaimer" role="note">
+        <strong>Owner beta — work in progress.</strong> Flickcheck and recommendations can miss flags or get a title wrong.
+        Always preview yourself before you watch (or let a child watch). HalalFlicks is a helper, not a guarantee.
+        Hand-vetted notes always win over the automated scan. Paste a synopsis when you can — Wikipedia is a fallback only.
+        Recommendations come only from an owner-curated list and link out — nothing streams here.
+      </p>
+    </header>
+
+    <nav class="tabs" role="tablist" aria-label="HalalFlicks sections">
+      <button type="button" class="tab active" role="tab" id="tab-flickcheck" aria-selected="true" aria-controls="panel-flickcheck">Flickcheck</button>
+      <button type="button" class="tab" role="tab" id="tab-recommend" aria-selected="false" aria-controls="panel-recommend">Recommend</button>
+      <button type="button" class="tab" role="tab" id="tab-shelf" aria-selected="false" aria-controls="panel-shelf">My shelf</button>
+    </nav>
+
+    <section id="panel-flickcheck" class="panel" role="tabpanel" aria-labelledby="tab-flickcheck">
+      <form id="flickcheckForm" class="lookup-form">
+        <label for="movieTitle">Movie title</label>
+        <input id="movieTitle" name="title" type="text" required maxlength="200" placeholder="Finding Nemo" autocomplete="off" />
+        <label for="movieYear">Year <span class="optional">(optional)</span></label>
+        <input id="movieYear" name="year" type="text" maxlength="10" placeholder="2003" inputmode="numeric" autocomplete="off" />
+        <label for="movieSynopsis">Synopsis / trailer notes <span class="optional">(optional — paste what you know)</span></label>
+        <textarea id="movieSynopsis" name="synopsis" rows="4" maxlength="12000" placeholder="Paste a short plot summary, Common Sense notes, or what you saw in the trailer…"></textarea>
+        <button type="submit" id="flickcheckBtn">Run Flickcheck</button>
+      </form>
+      <p id="flickcheckStatus" class="status" aria-live="polite"></p>
+      <div id="flickcheckResult" class="result" hidden></div>
+    </section>
+
+    <section id="panel-recommend" class="panel" role="tabpanel" aria-labelledby="tab-recommend" hidden>
+      <p class="muted">
+        Owner-curated family-leaning picks only. Type a theme (e.g. ocean adventure) or browse the list.
+        Still check the movie yourself — this list starts empty and grows as you vet.
+      </p>
+      <form id="recommendForm" class="lookup-form">
+        <label for="recommendTheme">Theme or mood</label>
+        <input id="recommendTheme" type="text" maxlength="200" placeholder="ocean adventure" autocomplete="off" />
+        <button type="submit" id="recommendBtn">Find movies</button>
+      </form>
+      <p id="recommendStatus" class="status" aria-live="polite"></p>
+      <ul id="recommendList" class="rec-list" aria-label="Recommended movies"></ul>
+
+      <div class="prefs-box">
+        <h2 class="prefs-heading">Your preferences</h2>
+        <p class="muted">Saved on this browser only. Used to rank curated picks — never invents movies outside the list.</p>
+        <form id="prefsForm" class="lookup-form">
+          <label for="prefsLikes">Themes I like (in my own words)</label>
+          <textarea id="prefsLikes" rows="2" maxlength="800" placeholder="ocean, friendship, gentle adventure"></textarea>
+          <label for="prefsDislikes">Themes I want to avoid</label>
+          <textarea id="prefsDislikes" rows="2" maxlength="800" placeholder="jump scares, teen dating"></textarea>
+          <label class="check-row">
+            <input type="checkbox" id="prefsAnimation" checked />
+            Animated family films are OK
+          </label>
+          <div class="prefs-actions">
+            <button type="submit">Save preferences</button>
+            <button type="button" id="prefsClear" class="btn-secondary">Clear</button>
+          </div>
+        </form>
+        <p id="prefsStatus" class="status" aria-live="polite"></p>
+      </div>
+    </section>
+
+    <section id="panel-shelf" class="panel" role="tabpanel" aria-labelledby="tab-shelf" hidden>
+      <p class="muted">Movies you save here stay on this browser only for now.</p>
+      <form id="shelfAddForm" class="lookup-form shelf-add">
+        <label for="shelfTitle">Title</label>
+        <input id="shelfTitle" type="text" required maxlength="200" placeholder="Movie title" autocomplete="off" />
+        <label for="shelfYear">Year <span class="optional">(optional)</span></label>
+        <input id="shelfYear" type="text" maxlength="10" placeholder="2003" autocomplete="off" />
+        <label for="shelfTag">Tag</label>
+        <select id="shelfTag">
+          <option value="want">Want to watch</option>
+          <option value="watched">Already watched</option>
+          <option value="favorite">Favorite</option>
+        </select>
+        <button type="submit">Add to shelf</button>
+      </form>
+      <ul id="shelfList" class="shelf-list" aria-label="Saved movies"></ul>
+    </section>
+
+    <p class="foot"><a href="/">Odd Trove hub</a></p>
+  </div>
+
+  <script src="halalflicks-policy.js?v=20260801a"></script>
+  <script src="halalflicks-shelf.js?v=20260801a"></script>
+  <script src="halalflicks-prefs.js?v=20260801a"></script>
+  <script src="halalflicks.js?v=20260801a"></script>
+</body>
+</html>

@@ -140,6 +140,7 @@ def safe_return_url(raw: str | None, default: str | None = None) -> str:
             "/halalyrics/",
             "/bane-of-extinction/",
             "/habit-tree/",
+            "/halalflicks/",
             "/maestros/",
             "/envdyst/",
             "/climatic-mysteries/",

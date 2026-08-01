@@ -15,6 +15,7 @@ From **repo root**:
 | **LoreKeeper only** (`lorekeeper/`) | `bash top/scripts/deploy-lorekeeper.sh` | LoreKeeper static (8079) + API (8080) only |
 | **CleanScreen only** (`cleanscreen/`) | `bash top/scripts/deploy-cleanscreen.sh` | CleanScreen static (8081) + API (8082) only |
 | **Bane of Extinction only** (`baneOfExtinction/`) | `bash top/scripts/deploy-bane-of-extinction.sh` | Bane static (8085) + API (8086) + hub index; reloads nginx by default |
+| **HalalFlicks only** (`halalflicks/`) | `bash top/scripts/deploy-halalflicks.sh` | HalalFlicks static (8088) + API (8089) + hub index; reloads nginx by default (owner gate) |
 | **LoreKeeper code/API only** | `bash top/scripts/deploy-lorekeeper.sh --lk-code-only` | Same; skips `fonts/` rsync |
 | **Halalit** (`halalit/www/`) | `bash top/scripts/deploy-kids-sites.sh --site=halalit` | Halalit static (8074) + Bookcheck API (8075) |
 | **Maestro's** | `bash top/scripts/deploy-kids-sites.sh --site=maestros` | Maestro's (8071) only |
@@ -50,6 +51,8 @@ Nginx config (`top/nginx/oddtrove.art.conf`) is **not** applied by deploy script
 | `/bane-of-extinction/` | 8085 | Public quiet beta; Google sign-in required (app); wildlife walk / codex |
 | `/bane-of-extinction/api/` | 8086 | Claude callouts + EcoLens + learned sync + Owner’s Office (uses shared `anthropic.key`) |
 | `/habit-tree/` | 8087 | Owner hub cookie; Habit Tree companion stub |
+| `/halalflicks/` | 8088 | Owner hub cookie; movie Flickcheck screener |
+| `/halalflicks/api/` | 8089 | HalalFlicks Flickcheck API |
 | `/hub/api/` | 8077 | Hub owner sign-in |
 | `/climatic-mysteries/` | 8060 | Owner hub cookie; separate deploy |
 

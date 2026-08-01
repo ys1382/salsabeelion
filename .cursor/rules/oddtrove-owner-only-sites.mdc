@@ -16,7 +16,7 @@ alwaysApply: true
 
 ## Owner-only (hub cookie / owner gate on nginx)
 
-- `/maestros/`, `/envdyst/`, `/climatic-mysteries/`, `/cleanscreen/`, `/habit-tree/`
+- `/maestros/`, `/envdyst/`, `/climatic-mysteries/`, `/cleanscreen/`, `/habit-tree/`, `/halalflicks/`
 - Directory hub at `/` is **not** served (404 except root redirect to Halalit)
 - Note: `/bane/` still redirects to Climatic Mysteries — Bane of Extinction is **`/bane-of-extinction/`** only
 

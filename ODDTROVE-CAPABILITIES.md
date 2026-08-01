@@ -138,6 +138,27 @@ Last updated: 2026-07-17
 
 ---
 
+### HalalFlicks (`halalflicks/www/` → owner-only `/halalflicks/`)
+
+**Is:** Movie red-flag screener (**Flickcheck**) plus owner-curated movie recommendations and a device shelf. Between HalaLit and HalaLyrics, for films — **not** a streaming player. Working title may change. **Owner-only** until you say otherwise. Separate from ForeWarner (click-warn extension, not built yet).
+
+**Can do now:**
+- Flickcheck via optional pasted synopsis + Wikipedia plot fallback + Gemini theme scan; hand-vetted overrides win
+- My shelf in localStorage
+- **Recommend** — theme search over owner `config/rec_catalog.json` only; link-out search; prefs on device for ranking
+- Deploy: `bash top/scripts/deploy-halalflicks.sh` (ports 8088/8089; nginx owner gate)
+
+**Cannot do without new work:**
+- Public access (nginx owner gate on until you ask)
+- Accounts / shelf sync
+- In-app playback or streaming filters
+- Auto-growing the rec catalog (owner hand-adds only)
+- OMDb/TMDB metadata (optional later if you add keys)
+
+**Needs owner:** Hand-vet list growth; rec catalog titles; rename if desired.
+
+---
+
 ### HalaLyrics (`halalyrics/www/` → public `/halalyrics/`)
 
 **Is:** Lyrics red-flag screener (Songcheck) plus owner-curated song recommendations. Separate from HalaLit. Shelf and prefs are device-local. Quiet **beta** on hub and site — helper, not a guarantee; listeners should still preview.
