@@ -191,6 +191,48 @@ header {
   font-size: 1.2rem;
 }
 
+.poster-block {
+  margin: 0 0 0.85rem;
+}
+
+.poster {
+  display: block;
+  width: min(180px, 42vw);
+  height: auto;
+  border-radius: 10px;
+  box-shadow: 0 8px 22px rgba(28, 42, 51, 0.14);
+  background: var(--accent-soft);
+}
+
+.poster-thumb {
+  width: 52px;
+  height: 78px;
+  object-fit: cover;
+  border-radius: 6px;
+  flex-shrink: 0;
+  background: var(--accent-soft);
+}
+
+.rec-head {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+}
+
+.shelf-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.55rem 0;
+  border-top: 1px solid var(--line);
+}
+
+.shelf-label {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
 .badge {
   display: inline-block;
   padding: 0.2rem 0.55rem;

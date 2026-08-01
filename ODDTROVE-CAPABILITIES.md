@@ -144,6 +144,8 @@ Last updated: 2026-07-17
 
 **Can do now:**
 - Flickcheck via optional pasted synopsis + Wikipedia plot fallback + Gemini theme scan; hand-vetted overrides win
+- Same content lines as Halalit / HalaLyrics (modesty, no LGBTQ, non-married romance, etc.)
+- Wikipedia posters when not flagged for fanservice / adult-sexual (hand `poster_ok` can override)
 - My shelf in localStorage
 - **Recommend** — theme search over owner `config/rec_catalog.json` only; link-out search; prefs on device for ranking
 - Deploy: `bash top/scripts/deploy-halalflicks.sh` (ports 8088/8089; nginx owner gate)
@@ -153,7 +155,7 @@ Last updated: 2026-07-17
 - Accounts / shelf sync
 - In-app playback or streaming filters
 - Auto-growing the rec catalog (owner hand-adds only)
-- OMDb/TMDB metadata (optional later if you add keys)
+- OMDb/TMDB metadata keys (not needed — Wikipedia posters/plot)
 
 **Needs owner:** Hand-vet list growth; rec catalog titles; rename if desired.
 

@@ -42,6 +42,7 @@
       title: String(entry.title || "").trim(),
       year: String(entry.year || "").trim(),
       tag: entry.tag || "want",
+      posterUrl: String(entry.posterUrl || "").trim(),
       addedAt: Date.now(),
     });
     save(next);

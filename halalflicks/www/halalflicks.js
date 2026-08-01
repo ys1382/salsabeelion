@@ -46,8 +46,18 @@
     }
     list.forEach(function (row) {
       var li = document.createElement("li");
+      if (row.posterUrl) {
+        var img = document.createElement("img");
+        img.className = "poster-thumb";
+        img.src = row.posterUrl;
+        img.alt = "";
+        img.loading = "lazy";
+        img.referrerPolicy = "no-referrer";
+        li.appendChild(img);
+      }
       var label = document.createElement("span");
       var year = row.year ? " (" + row.year + ")" : "";
+      label.className = "shelf-label";
       label.innerHTML =
         "<strong>" +
         esc(row.title) +
@@ -143,13 +153,27 @@
       var li = document.createElement("li");
       var year = movie.year ? " (" + movie.year + ")" : "";
       var themes = (movie.themes || []).join(", ");
-      li.innerHTML =
+      var head = document.createElement("div");
+      head.className = "rec-head";
+      if (movie.posterUrl) {
+        var img = document.createElement("img");
+        img.className = "poster-thumb";
+        img.src = movie.posterUrl;
+        img.alt = "";
+        img.loading = "lazy";
+        img.referrerPolicy = "no-referrer";
+        head.appendChild(img);
+      }
+      var text = document.createElement("div");
+      text.innerHTML =
         "<strong>" +
         esc(movie.title) +
         "</strong>" +
         esc(year) +
         (movie.note ? '<p class="rec-meta">' + esc(movie.note) + "</p>" : "") +
         (themes ? '<p class="rec-themes">Themes: ' + esc(themes) + "</p>" : "");
+      head.appendChild(text);
+      li.appendChild(head);
       var actions = document.createElement("div");
       actions.className = "rec-actions";
 
@@ -157,7 +181,12 @@
       shelfBtn.type = "button";
       shelfBtn.textContent = "Add to shelf";
       shelfBtn.addEventListener("click", function () {
-        Shelf.add({ title: movie.title, year: movie.year || "", tag: "want" });
+        Shelf.add({
+          title: movie.title,
+          year: movie.year || "",
+          tag: "want",
+          posterUrl: movie.posterUrl || "",
+        });
         shelfBtn.textContent = "On shelf";
       });
 
@@ -291,7 +320,19 @@
     var box = document.getElementById("flickcheckResult");
     box.hidden = false;
     var year = data.year ? " (" + data.year + ")" : "";
-    var html = "<h2>" + esc(data.title) + esc(year) + "</h2>";
+    var html = "";
+
+    if (Policy.posterAllowed(data)) {
+      html +=
+        '<div class="poster-block"><img class="poster" src="' +
+        esc(data.posterUrl) +
+        '" alt="" loading="lazy" referrerpolicy="no-referrer" /></div>';
+    } else if (data.posterHiddenReason === "fanservice_or_adult") {
+      html +=
+        '<p class="muted">Poster hidden — scan flagged fanservice / adult-sexual content (Halalit / HalaLyrics modesty line).</p>';
+    }
+
+    html += "<h2>" + esc(data.title) + esc(year) + "</h2>";
 
     if (data.wikipedia && data.wikipedia.title) {
       html += '<p class="muted">Matched: ' + esc(data.wikipedia.title);
@@ -345,7 +386,12 @@
     shelfBtn.type = "button";
     shelfBtn.textContent = "Add to shelf";
     shelfBtn.addEventListener("click", function () {
-      Shelf.add({ title: data.title, year: data.year || "", tag: "want" });
+      Shelf.add({
+        title: data.title,
+        year: data.year || "",
+        tag: "want",
+        posterUrl: Policy.posterAllowed(data) ? data.posterUrl : "",
+      });
       shelfBtn.textContent = "On shelf";
     });
     actions.appendChild(shelfBtn);

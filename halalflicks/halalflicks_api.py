@@ -27,6 +27,7 @@ FLICKCHECK_CACHE_DIR = Path(
     os.environ.get("HALALFLICKS_CACHE_DIR", _SCRIPT_DIR / "cache" / "flickcheck")
 )
 WIKI_UA = "HalalFlicks/0.1 (Odd Trove; https://oddtrove.art/halalflicks/; owner-beta)"
+CACHE_VERSION = "20260801poster"
 _CACHE: dict[str, tuple[float, dict[str, Any]]] = {}
 _CACHE_LOCK = Lock()
 _CACHE_TTL = int(os.environ.get("HALALFLICKS_CACHE_TTL", "3600"))
@@ -240,13 +241,59 @@ def _wikipedia_summary(title: str, year: str) -> dict[str, Any] | None:
             extract = str(summary.get("extract") or "").strip()
             if len(extract) < 40:
                 continue
+            thumb = summary.get("thumbnail") if isinstance(summary.get("thumbnail"), dict) else {}
+            original = (
+                summary.get("originalimage") if isinstance(summary.get("originalimage"), dict) else {}
+            )
+            poster_url = str(original.get("source") or thumb.get("source") or "").strip()
             return {
                 "title": str(summary.get("title") or page_title),
                 "extract": extract[:6000],
-                "url": str(summary.get("content_urls", {}).get("desktop", {}).get("page") or ""),
+                "url": str(
+                    ((summary.get("content_urls") or {}).get("desktop") or {}).get("page") or ""
+                ),
                 "description": str(summary.get("description") or ""),
+                "posterUrl": poster_url,
             }
     return None
+
+
+def _theme_present(scan: dict[str, Any] | None, theme_id: str) -> bool:
+    if not scan or not isinstance(scan.get("themes"), list):
+        return False
+    for row in scan["themes"]:
+        if isinstance(row, dict) and row.get("id") == theme_id and row.get("present"):
+            return True
+    return False
+
+
+def _poster_allowed(hand: dict[str, Any] | None, scan: dict[str, Any] | None) -> bool:
+    """Show Wikipedia posters unless fanservice/adult_sexual is flagged (or hand says no)."""
+    if hand is not None and "poster_ok" in hand:
+        return bool(hand.get("poster_ok"))
+    if _theme_present(scan, "adult_sexual"):
+        return False
+    return True
+
+
+def _attach_poster(
+    payload: dict[str, Any],
+    wiki: dict[str, Any] | None,
+    hand: dict[str, Any] | None,
+    scan: dict[str, Any] | None,
+) -> dict[str, Any]:
+    poster_url = ""
+    if wiki and wiki.get("posterUrl"):
+        poster_url = str(wiki.get("posterUrl") or "")
+    allowed = _poster_allowed(hand, scan)
+    payload["posterUrl"] = poster_url if allowed and poster_url else ""
+    payload["posterShown"] = bool(payload["posterUrl"])
+    payload["posterHiddenReason"] = (
+        ""
+        if payload["posterShown"]
+        else ("fanservice_or_adult" if poster_url and not allowed else "no_wikipedia_image")
+    )
+    return payload
 
 
 def flickcheck(title: str, year: str = "", synopsis: str = "") -> dict[str, Any]:
@@ -256,21 +303,19 @@ def flickcheck(title: str, year: str = "", synopsis: str = "") -> dict[str, Any]
     if not title:
         return {"ok": False, "error": "title_required"}
 
-    cache_key = _normalize_key(title, year) + "|" + str(hash(synopsis[:500]))
+    cache_key = CACHE_VERSION + "|" + _normalize_key(title, year) + "|" + str(hash(synopsis[:500]))
     cached = _cache_get(cache_key) or _disk_get(cache_key)
     if cached:
         return cached
 
     vetted = _load_vetted()
     hand = vetted.get(_normalize_key(title, year)) or vetted.get(_normalize_key(title, ""))
-    wiki = None
+    wiki = _wikipedia_summary(title, year)
     synopsis_source = "user"
     text = synopsis
-    if not text:
-        wiki = _wikipedia_summary(title, year)
-        if wiki and wiki.get("extract"):
-            text = str(wiki["extract"])
-            synopsis_source = "wikipedia"
+    if not text and wiki and wiki.get("extract"):
+        text = str(wiki["extract"])
+        synopsis_source = "wikipedia"
 
     if hand:
         payload = {
@@ -281,7 +326,7 @@ def flickcheck(title: str, year: str = "", synopsis: str = "") -> dict[str, Any]
             "handNote": str(hand.get("note") or ""),
             "recOk": bool(hand.get("rec_ok")),
             "recStatus": "hand_vetted",
-            "synopsisSource": synopsis_source,
+            "synopsisSource": synopsis_source if text else "none",
             "synopsisText": text[:4000] if text else "",
             "wikipedia": wiki,
             "aiScan": {
@@ -293,12 +338,13 @@ def flickcheck(title: str, year: str = "", synopsis: str = "") -> dict[str, Any]
                 "rec_hint": "likely_ok" if hand.get("rec_ok") else "likely_no_recommend",
             },
         }
+        _attach_poster(payload, wiki, hand, None)
         _cache_put(cache_key, payload)
         _disk_put(cache_key, payload)
         return payload
 
     if not text:
-        return {
+        payload = {
             "ok": True,
             "title": title,
             "year": year,
@@ -307,9 +353,11 @@ def flickcheck(title: str, year: str = "", synopsis: str = "") -> dict[str, Any]
             "recStatus": "unknown",
             "synopsisSource": "none",
             "synopsisText": "",
-            "wikipedia": None,
+            "wikipedia": wiki,
             "aiScan": {"ok": False, "error": "no_synopsis"},
         }
+        _attach_poster(payload, wiki, None, None)
+        return payload
 
     scan = scan_synopsis(title, year, text)
     rec_hint = str(scan.get("rec_hint") or "caution") if scan.get("ok") else "caution"
@@ -327,6 +375,7 @@ def flickcheck(title: str, year: str = "", synopsis: str = "") -> dict[str, Any]
         "wikipedia": wiki,
         "aiScan": scan,
     }
+    _attach_poster(payload, wiki, None, scan if scan.get("ok") else None)
     if scan.get("ok"):
         _cache_put(cache_key, payload)
         _disk_put(cache_key, payload)

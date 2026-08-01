@@ -11,14 +11,15 @@ from typing import Any
 
 THEME_IDS = (
     "non_married_romance",
+    "lgbtq",
     "violence_fright",
     "profanity_substance",
     "adult_sexual",
     "sacred_or_other_faith",
 )
 
-SCAN_PROMPT = """Conservative family movie vet for HalalFlicks. Analyze ONLY the plot/synopsis/notes provided. Strict JSON only:
-{"ok":true,"themes":[{"id":"non_married_romance","present":false,"confidence":"low|medium|high","brief":""}, ...all 5 ids...],
+SCAN_PROMPT = """Conservative family movie vet for HalalFlicks. Same content lines as Halalit / HalaLyrics: modesty, no LGBTQ, no non-married romance push, no profanity/substance promo. Analyze ONLY the plot/synopsis/notes provided. Strict JSON only:
+{"ok":true,"themes":[{"id":"non_married_romance","present":false,"confidence":"low|medium|high","brief":""}, ...all 6 ids...],
 "summary":"one short parent paragraph","problem_notes":["plain problems"],
 "rec_hint":"likely_ok|caution|likely_no_recommend"}
 
@@ -26,14 +27,15 @@ Do not invent plot details not in the text. If the synopsis is thin, say so and 
 
 Themes (ids must match exactly):
 - non_married_romance: dating/crush/breakup/kissing/partner intimacy for non-spouses; teen romance as a plot driver. OK: married couples, brief family affection, platonic friendship.
+- lgbtq: FLAG any LGBTQ identity, romance, pairing, pride framing, or dialogue that affirms LGBTQ as normal/celebrated. Same bar as Halalit Bookcheck. Not excused by "brief" or "background character."
 - violence_fright: graphic gore, prolonged torture, intense horror scare aimed at kids, or heavy combat bloodshed as a focus. OK: mild cartoon scuffles, peril without gore, adventure stakes.
 - profanity_substance: strong language/slurs; drug or alcohol promotion as cool/central. OK: brief educational "don't do drugs" framing.
-- adult_sexual: sexual content, fanservice, private-parts focus, adult romance heat. OK: fade-to-black marriage context without detail.
+- adult_sexual: sexual content, fanservice, immodesty/private-parts focus, suggestive body display, adult romance heat. Includes poster-relevant fanservice in the described film marketing/tone when the text mentions it. OK: fade-to-black marriage context without detail; modest clothed characters.
 - sacred_or_other_faith: Christian/gospel worship as central, or casual/mocking use of God/hell/devil in a secular story. Muslim faith content is NOT automatically a flag.
 
 Kids/family films: wedding or "true love" wording alone is OK if not dating-focused; still flag clear teen romance plots.
 
-rec_hint: likely_ok = no flags; caution = thin synopsis or borderline only; likely_no_recommend = any clear theme flag above.
+rec_hint: likely_ok = no flags; caution = thin synopsis or borderline only; likely_no_recommend = ANY clear theme flag above (including lgbtq or adult_sexual/fanservice).
 """
 
 

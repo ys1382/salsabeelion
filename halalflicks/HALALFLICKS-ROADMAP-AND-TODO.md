@@ -26,7 +26,8 @@
 ## Shipped (v0)
 
 - [x] Owner-only on Odd Trove (`/halalflicks/` + hub owner list)
-- [x] **Flickcheck** — title + optional year + optional synopsis/trailer notes; Wikipedia plot fallback; Gemini theme scan
+- [x] **Flickcheck** — title + optional year + optional synopsis/trailer notes; Wikipedia plot fallback; Gemini theme scan (Halalit / HalaLyrics lines: modesty, LGBTQ, romance, etc.)
+- [x] Wikipedia posters when not fanservice / adult-sexual flagged (`poster_ok` hand override)
 - [x] Hand-vetted overrides (`config/hand_vetted.json`)
 - [x] **Recommend** — owner-curated catalog (`config/rec_catalog.json`), theme search, device prefs, link-out only
 - [x] **My shelf** — localStorage only (want / watched / favorite)
