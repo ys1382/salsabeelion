@@ -27,7 +27,7 @@ FLICKCHECK_CACHE_DIR = Path(
     os.environ.get("HALALFLICKS_CACHE_DIR", _SCRIPT_DIR / "cache" / "flickcheck")
 )
 WIKI_UA = "HalalFlicks/0.1 (Odd Trove; https://oddtrove.art/halalflicks/; owner-beta)"
-CACHE_VERSION = "20260801poster"
+CACHE_VERSION = "20260803trailer"
 _CACHE: dict[str, tuple[float, dict[str, Any]]] = {}
 _CACHE_LOCK = Lock()
 _CACHE_TTL = int(os.environ.get("HALALFLICKS_CACHE_TTL", "3600"))
@@ -120,6 +120,48 @@ def _movie_search_blob(movie: dict[str, Any]) -> str:
     ).lower()
 
 
+def _hand_for_title(title: str, year: str = "") -> dict[str, Any] | None:
+    vetted = _load_vetted()
+    return vetted.get(_normalize_key(title, year)) or vetted.get(_normalize_key(title, ""))
+
+
+def _trailer_url_from_hand(hand: dict[str, Any] | None) -> str:
+    if not hand:
+        return ""
+    raw = str(hand.get("trailer_url") or hand.get("trailerUrl") or "").strip()
+    if not raw:
+        return ""
+    if not (raw.startswith("https://www.youtube.com/") or raw.startswith("https://youtu.be/")):
+        return ""
+    return raw[:500]
+
+
+def _enrich_catalog_movie(movie: dict[str, Any]) -> dict[str, Any]:
+    """Attach hand-vetted trailer + stored Wikipedia poster for Recommend cards."""
+    out = dict(movie)
+    title = str(out.get("title") or "")
+    year = str(out.get("year") or "")
+    hand = _hand_for_title(title, year)
+    trailer = _trailer_url_from_hand(hand)
+    if trailer:
+        out["trailerUrl"] = trailer
+    elif hand is None:
+        # Catalog row may carry its own trailer_url
+        own = _trailer_url_from_hand(out)
+        if own:
+            out["trailerUrl"] = own
+    stored_poster = ""
+    if hand:
+        stored_poster = str(hand.get("poster_url") or hand.get("posterUrl") or "").strip()
+    if not stored_poster:
+        stored_poster = str(out.get("poster_url") or out.get("posterUrl") or "").strip()
+    if stored_poster.startswith("http") and _poster_allowed(hand, None):
+        out["posterUrl"] = stored_poster[:800]
+    elif "posterUrl" not in out:
+        out["posterUrl"] = ""
+    return out
+
+
 def recommend_catalog(theme: str = "") -> dict[str, Any]:
     movies = _load_rec_catalog()
     tokens = _theme_query_tokens(theme)
@@ -130,7 +172,8 @@ def recommend_catalog(theme: str = "") -> dict[str, Any]:
             if all(tok in blob for tok in tokens) or any(tok in blob for tok in tokens):
                 filtered.append(movie)
         movies = filtered
-    return {"ok": True, "movies": movies, "count": len(movies)}
+    enriched = [_enrich_catalog_movie(m) for m in movies]
+    return {"ok": True, "movies": enriched, "count": len(enriched)}
 
 
 def _cache_get(key: str) -> dict[str, Any] | None:
@@ -328,6 +371,7 @@ def flickcheck(title: str, year: str = "", synopsis: str = "") -> dict[str, Any]
             "recStatus": "hand_vetted",
             "synopsisSource": synopsis_source if text else "none",
             "synopsisText": text[:4000] if text else "",
+            "trailerUrl": _trailer_url_from_hand(hand),
             "wikipedia": wiki,
             "aiScan": {
                 "ok": True,
@@ -339,6 +383,13 @@ def flickcheck(title: str, year: str = "", synopsis: str = "") -> dict[str, Any]
             },
         }
         _attach_poster(payload, wiki, hand, None)
+        # Prefer stored hand poster when Wikipedia miss
+        if not payload.get("posterUrl"):
+            stored = str(hand.get("poster_url") or hand.get("posterUrl") or "").strip()
+            if stored.startswith("http") and _poster_allowed(hand, None):
+                payload["posterUrl"] = stored[:800]
+                payload["posterShown"] = True
+                payload["posterHiddenReason"] = ""
         _cache_put(cache_key, payload)
         _disk_put(cache_key, payload)
         return payload
@@ -353,6 +404,7 @@ def flickcheck(title: str, year: str = "", synopsis: str = "") -> dict[str, Any]
             "recStatus": "unknown",
             "synopsisSource": "none",
             "synopsisText": "",
+            "trailerUrl": "",
             "wikipedia": wiki,
             "aiScan": {"ok": False, "error": "no_synopsis"},
         }
@@ -372,6 +424,7 @@ def flickcheck(title: str, year: str = "", synopsis: str = "") -> dict[str, Any]
         "recStatus": rec_hint if scan.get("ok") else "unknown",
         "synopsisSource": synopsis_source,
         "synopsisText": text[:4000],
+        "trailerUrl": "",
         "wikipedia": wiki,
         "aiScan": scan,
     }

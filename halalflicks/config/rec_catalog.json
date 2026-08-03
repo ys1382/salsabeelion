@@ -1,5 +1,1137 @@
 {
   "version": 1,
-  "note": "Owner-curated recommendation pool only. Do not auto-add Flickcheck fine results. Link out only — nothing streams here.",
-  "movies": []
+  "note": "Owner-curated recommendation pool only. Do not auto-add Flickcheck fine results. Link out only — nothing streams here. Parent-flag notes stay visible; discretion/reject titles stay out. Holiday rule: titles centered on Christmas or other non-Muslim religious holidays are off this list (Christmas-in-the-title usually out; stories that merely include a holiday scene may differ).",
+  "movies": [
+    {
+      "title": "The Many Adventures of Winnie the Pooh",
+      "year": "1977",
+      "note": "Owner OK — clean; prioritize near top of recommend list.",
+      "themes": [
+        "disney",
+        "kids_movie",
+        "pooh",
+        "friendship",
+        "comfort",
+        "classic"
+      ],
+      "priority": 10
+    },
+    {
+      "title": "Pooh's Grand Adventure: The Search for Christopher Robin",
+      "year": "1997",
+      "note": "Owner OK — clean; prioritize near top of recommend list.",
+      "themes": [
+        "disney",
+        "kids_movie",
+        "pooh",
+        "friendship",
+        "adventure",
+        "comfort"
+      ],
+      "priority": 10
+    },
+    {
+      "title": "The Tigger Movie",
+      "year": "2000",
+      "note": "Owner OK — clean; prioritize near top of recommend list.",
+      "themes": [
+        "disney",
+        "kids_movie",
+        "pooh",
+        "friendship",
+        "family",
+        "comfort"
+      ],
+      "priority": 10
+    },
+    {
+      "title": "Toy Story",
+      "year": "1995",
+      "note": "Owner OK — Toy Story 1–4.",
+      "themes": [
+        "pixar",
+        "kids_movie",
+        "friendship",
+        "adventure",
+        "toys"
+      ]
+    },
+    {
+      "title": "Toy Story 2",
+      "year": "1999",
+      "note": "Owner OK — Toy Story 1–4.",
+      "themes": [
+        "pixar",
+        "kids_movie",
+        "friendship",
+        "adventure",
+        "toys"
+      ]
+    },
+    {
+      "title": "Toy Story 3",
+      "year": "2010",
+      "note": "Owner OK — Toy Story 1–4.",
+      "themes": [
+        "pixar",
+        "kids_movie",
+        "friendship",
+        "adventure",
+        "toys"
+      ]
+    },
+    {
+      "title": "Toy Story 4",
+      "year": "2019",
+      "note": "Owner OK — Toy Story 1–4.",
+      "themes": [
+        "pixar",
+        "kids_movie",
+        "friendship",
+        "adventure",
+        "toys"
+      ]
+    },
+    {
+      "title": "Finding Nemo",
+      "year": "2003",
+      "note": "Owner OK — Finding Nemo films.",
+      "themes": [
+        "pixar",
+        "kids_movie",
+        "ocean",
+        "family",
+        "adventure"
+      ]
+    },
+    {
+      "title": "Finding Dory",
+      "year": "2016",
+      "note": "Owner OK — Finding Nemo films.",
+      "themes": [
+        "pixar",
+        "kids_movie",
+        "ocean",
+        "family",
+        "adventure"
+      ]
+    },
+    {
+      "title": "Monsters, Inc.",
+      "year": "2001",
+      "note": "Owner OK.",
+      "themes": [
+        "pixar",
+        "kids_movie",
+        "friendship",
+        "comedy",
+        "monsters"
+      ]
+    },
+    {
+      "title": "Monsters University",
+      "year": "2013",
+      "note": "Owner OK.",
+      "themes": [
+        "pixar",
+        "kids_movie",
+        "friendship",
+        "comedy",
+        "monsters",
+        "school"
+      ]
+    },
+    {
+      "title": "Up",
+      "year": "2009",
+      "note": "Owner OK — film only (TV not vetted).",
+      "themes": [
+        "pixar",
+        "kids_movie",
+        "adventure",
+        "friendship",
+        "grief"
+      ]
+    },
+    {
+      "title": "WALL-E",
+      "year": "2008",
+      "note": "Owner OK.",
+      "themes": [
+        "pixar",
+        "kids_movie",
+        "robots",
+        "adventure",
+        "environment"
+      ]
+    },
+    {
+      "title": "How to Train Your Dragon",
+      "year": "2010",
+      "note": "Owner OK — animated films (live-action/TV not vetted).",
+      "themes": [
+        "dreamworks",
+        "kids_movie",
+        "dragons",
+        "friendship",
+        "adventure"
+      ]
+    },
+    {
+      "title": "How to Train Your Dragon 2",
+      "year": "2014",
+      "note": "Owner OK — animated films (live-action/TV not vetted).",
+      "themes": [
+        "dreamworks",
+        "kids_movie",
+        "dragons",
+        "friendship",
+        "adventure"
+      ]
+    },
+    {
+      "title": "How to Train Your Dragon: The Hidden World",
+      "year": "2019",
+      "note": "Owner OK — animated films (live-action/TV not vetted).",
+      "themes": [
+        "dreamworks",
+        "kids_movie",
+        "dragons",
+        "friendship",
+        "adventure"
+      ]
+    },
+    {
+      "title": "Kung Fu Panda",
+      "year": "2008",
+      "note": "Owner OK with parent flag — some gross humor. Films 1–3 only.",
+      "themes": [
+        "dreamworks",
+        "kids_movie",
+        "martial_arts",
+        "comedy",
+        "friendship"
+      ]
+    },
+    {
+      "title": "Kung Fu Panda 2",
+      "year": "2011",
+      "note": "Owner OK with parent flag — some gross humor. Films 1–3 only.",
+      "themes": [
+        "dreamworks",
+        "kids_movie",
+        "martial_arts",
+        "comedy",
+        "friendship"
+      ]
+    },
+    {
+      "title": "Kung Fu Panda 3",
+      "year": "2016",
+      "note": "Owner OK with parent flag — some gross humor. Films 1–3 only.",
+      "themes": [
+        "dreamworks",
+        "kids_movie",
+        "martial_arts",
+        "comedy",
+        "friendship"
+      ]
+    },
+    {
+      "title": "Paddington",
+      "year": "2014",
+      "note": "Owner OK with parent flag — some body humor.",
+      "themes": [
+        "kids_movie",
+        "family",
+        "comedy",
+        "london",
+        "friendship"
+      ]
+    },
+    {
+      "title": "Paddington 2",
+      "year": "2017",
+      "note": "Owner OK with parent flag — some body humor.",
+      "themes": [
+        "kids_movie",
+        "family",
+        "comedy",
+        "london",
+        "friendship"
+      ]
+    },
+    {
+      "title": "My Neighbor Totoro",
+      "year": "1988",
+      "note": "Owner OK — clean.",
+      "themes": [
+        "ghibli",
+        "kids_movie",
+        "family",
+        "nature",
+        "comfort"
+      ]
+    },
+    {
+      "title": "The Iron Giant",
+      "year": "1999",
+      "note": "Owner OK — clean.",
+      "themes": [
+        "kids_movie",
+        "robots",
+        "friendship",
+        "adventure"
+      ]
+    },
+    {
+      "title": "The Lego Movie",
+      "year": "2014",
+      "note": "Owner OK with parent flag — some gross non-adult humor.",
+      "themes": [
+        "kids_movie",
+        "comedy",
+        "adventure",
+        "friendship",
+        "lego"
+      ]
+    },
+    {
+      "title": "The Lego Movie 2: The Second Part",
+      "year": "2019",
+      "note": "Owner OK with parent flag — some gross non-adult humor.",
+      "themes": [
+        "kids_movie",
+        "comedy",
+        "adventure",
+        "friendship",
+        "lego"
+      ]
+    },
+    {
+      "title": "Inside Out",
+      "year": "2015",
+      "note": "Owner OK — film 1 only (sequel not vetted).",
+      "themes": [
+        "pixar",
+        "kids_movie",
+        "emotions",
+        "family",
+        "friendship"
+      ]
+    },
+    {
+      "title": "A Bug's Life",
+      "year": "1998",
+      "note": "Owner OK; parental flag — villain scary death.",
+      "themes": [
+        "pixar",
+        "kids_movie",
+        "insects",
+        "friendship",
+        "adventure"
+      ]
+    },
+    {
+      "title": "Big Hero 6",
+      "year": "2014",
+      "note": "Owner OK — film only (series idk; Baymax! TV rejected).",
+      "themes": [
+        "disney",
+        "kids_movie",
+        "robots",
+        "friendship",
+        "adventure",
+        "superheroes"
+      ]
+    },
+    {
+      "title": "Cars",
+      "year": "2006",
+      "note": "Owner OK — Cars 1–3.",
+      "themes": [
+        "pixar",
+        "kids_movie",
+        "racing",
+        "friendship",
+        "comedy"
+      ]
+    },
+    {
+      "title": "Cars 2",
+      "year": "2011",
+      "note": "Owner OK — Cars 1–3.",
+      "themes": [
+        "pixar",
+        "kids_movie",
+        "racing",
+        "friendship",
+        "comedy",
+        "spies"
+      ]
+    },
+    {
+      "title": "Cars 3",
+      "year": "2017",
+      "note": "Owner OK — Cars 1–3.",
+      "themes": [
+        "pixar",
+        "kids_movie",
+        "racing",
+        "friendship",
+        "mentorship"
+      ]
+    },
+    {
+      "title": "Encanto",
+      "year": "2021",
+      "note": "Owner OK; flag — family negativity.",
+      "themes": [
+        "disney",
+        "kids_movie",
+        "family",
+        "music",
+        "magic"
+      ]
+    },
+    {
+      "title": "Wreck-It Ralph",
+      "year": "2012",
+      "note": "Owner OK with flag — some physical immodesty for women's clothing.",
+      "themes": [
+        "disney",
+        "kids_movie",
+        "video_games",
+        "friendship",
+        "adventure"
+      ]
+    },
+    {
+      "title": "Ralph Breaks the Internet",
+      "year": "2018",
+      "note": "Owner OK with flag — some physical immodesty for women's clothing.",
+      "themes": [
+        "disney",
+        "kids_movie",
+        "video_games",
+        "friendship",
+        "internet"
+      ]
+    },
+    {
+      "title": "Zootopia",
+      "year": "2016",
+      "note": "Owner OK — film 1 only (rest of franchise not vetted).",
+      "themes": [
+        "disney",
+        "kids_movie",
+        "animals",
+        "mystery",
+        "friendship"
+      ]
+    },
+    {
+      "title": "Ice Age",
+      "year": "2002",
+      "note": "Owner OK — earlier Ice Age films (last film still idk).",
+      "themes": [
+        "kids_movie",
+        "animals",
+        "comedy",
+        "adventure",
+        "friendship"
+      ]
+    },
+    {
+      "title": "Ice Age: The Meltdown",
+      "year": "2006",
+      "note": "Owner OK — earlier Ice Age films (last film still idk).",
+      "themes": [
+        "kids_movie",
+        "animals",
+        "comedy",
+        "adventure",
+        "friendship"
+      ]
+    },
+    {
+      "title": "Ice Age: Dawn of the Dinosaurs",
+      "year": "2009",
+      "note": "Owner OK — earlier Ice Age films (last film still idk).",
+      "themes": [
+        "kids_movie",
+        "animals",
+        "comedy",
+        "adventure",
+        "dinosaurs"
+      ]
+    },
+    {
+      "title": "Ice Age: Continental Drift",
+      "year": "2012",
+      "note": "Owner OK — earlier Ice Age films (last film still idk).",
+      "themes": [
+        "kids_movie",
+        "animals",
+        "comedy",
+        "adventure",
+        "ocean"
+      ]
+    },
+    {
+      "title": "Horton Hears a Who!",
+      "year": "2008",
+      "note": "Owner OK with parent flag — some gross humor.",
+      "themes": [
+        "kids_movie",
+        "dr_seuss",
+        "friendship",
+        "comedy"
+      ]
+    },
+    {
+      "title": "The Lorax",
+      "year": "2012",
+      "note": "Owner OK with parent flag — some family negativity.",
+      "themes": [
+        "kids_movie",
+        "dr_seuss",
+        "environment",
+        "comedy"
+      ]
+    },
+    {
+      "title": "Shaun the Sheep Movie",
+      "year": "2015",
+      "note": "Owner OK with parent flag — some gross humor.",
+      "themes": [
+        "aardman",
+        "kids_movie",
+        "comedy",
+        "animals",
+        "adventure"
+      ]
+    },
+    {
+      "title": "The Wizard of Oz",
+      "year": "1939",
+      "note": "Owner OK — clean.",
+      "themes": [
+        "classic",
+        "kids_movie",
+        "adventure",
+        "music",
+        "fantasy"
+      ]
+    },
+    {
+      "title": "Mary Poppins",
+      "year": "1964",
+      "note": "Owner OK with parent flag — some family negativity.",
+      "themes": [
+        "classic",
+        "kids_movie",
+        "music",
+        "family",
+        "magic"
+      ]
+    },
+    {
+      "title": "The Jungle Book",
+      "year": "1967",
+      "note": "Owner OK with parent flag — some gross humor.",
+      "themes": [
+        "disney",
+        "kids_movie",
+        "animals",
+        "adventure",
+        "music"
+      ]
+    },
+    {
+      "title": "Spirited Away",
+      "year": "2001",
+      "note": "Owner OK with parent flag — some family negativity.",
+      "themes": [
+        "ghibli",
+        "kids_movie",
+        "adventure",
+        "spirits",
+        "coming_of_age"
+      ]
+    },
+    {
+      "title": "The Lion King",
+      "year": "1994",
+      "note": "Owner OK — clean.",
+      "themes": [
+        "disney",
+        "kids_movie",
+        "animals",
+        "family",
+        "adventure",
+        "music"
+      ]
+    },
+    {
+      "title": "The Princess and the Frog",
+      "year": "2009",
+      "note": "Owner OK with parent flag — gross jokes; some female immodest outfits.",
+      "themes": [
+        "disney",
+        "kids_movie",
+        "music",
+        "adventure",
+        "fantasy"
+      ]
+    },
+    {
+      "title": "Cinderella",
+      "year": "1950",
+      "note": "Owner OK with flag — stepfamily negativity.",
+      "themes": [
+        "disney",
+        "kids_movie",
+        "classic",
+        "fairy_tale",
+        "music"
+      ]
+    },
+    {
+      "title": "Sleeping Beauty",
+      "year": "1959",
+      "note": "Owner OK with flag — immodest princess outfit.",
+      "themes": [
+        "disney",
+        "kids_movie",
+        "classic",
+        "fairy_tale",
+        "music"
+      ]
+    },
+    {
+      "title": "Pinocchio",
+      "year": "1940",
+      "note": "Owner OK — clean.",
+      "themes": [
+        "disney",
+        "kids_movie",
+        "classic",
+        "adventure",
+        "moral"
+      ]
+    },
+    {
+      "title": "Bambi",
+      "year": "1942",
+      "note": "Owner OK — clean.",
+      "themes": [
+        "disney",
+        "kids_movie",
+        "classic",
+        "animals",
+        "nature"
+      ]
+    },
+    {
+      "title": "One Hundred and One Dalmatians",
+      "year": "1961",
+      "note": "Owner OK — clean.",
+      "themes": [
+        "disney",
+        "kids_movie",
+        "classic",
+        "animals",
+        "adventure"
+      ]
+    },
+    {
+      "title": "Lady and the Tramp",
+      "year": "1955",
+      "note": "Owner OK — clean.",
+      "themes": [
+        "disney",
+        "kids_movie",
+        "classic",
+        "animals",
+        "friendship"
+      ]
+    },
+    {
+      "title": "The Aristocats",
+      "year": "1970",
+      "note": "Owner OK — clean.",
+      "themes": [
+        "disney",
+        "kids_movie",
+        "classic",
+        "animals",
+        "music",
+        "comedy"
+      ]
+    },
+    {
+      "title": "Alice in Wonderland",
+      "year": "1951",
+      "note": "Owner OK — clean.",
+      "themes": [
+        "disney",
+        "kids_movie",
+        "classic",
+        "fantasy",
+        "adventure"
+      ]
+    },
+    {
+      "title": "Bolt",
+      "year": "2008",
+      "note": "Owner OK — clean.",
+      "themes": [
+        "disney",
+        "kids_movie",
+        "dogs",
+        "friendship",
+        "adventure"
+      ]
+    },
+    {
+      "title": "Chicken Little",
+      "year": "2005",
+      "note": "Owner OK — clean.",
+      "themes": [
+        "disney",
+        "kids_movie",
+        "comedy",
+        "friendship",
+        "adventure"
+      ]
+    },
+    {
+      "title": "Kiki's Delivery Service",
+      "year": "1989",
+      "note": "Owner OK with flag — short pants.",
+      "themes": [
+        "ghibli",
+        "kids_movie",
+        "witch",
+        "independence",
+        "friendship",
+        "comfort"
+      ]
+    },
+    {
+      "title": "Howl's Moving Castle",
+      "year": "2004",
+      "note": "Owner OK with flag — protagonist’s early sexist attitude improves by the end.",
+      "themes": [
+        "ghibli",
+        "kids_movie",
+        "adventure",
+        "fantasy",
+        "war",
+        "kindness"
+      ]
+    },
+    {
+      "title": "Whisper of the Heart",
+      "year": "1995",
+      "note": "Owner OK with flag — high school-esque romance.",
+      "themes": [
+        "ghibli",
+        "kids_movie",
+        "coming_of_age",
+        "creativity",
+        "romance_light"
+      ]
+    },
+    {
+      "title": "The Land Before Time",
+      "year": "1988",
+      "note": "Owner OK — clean.",
+      "themes": [
+        "kids_movie",
+        "dinosaurs",
+        "adventure",
+        "friendship",
+        "family"
+      ]
+    },
+    {
+      "title": "The Secret of NIMH",
+      "year": "1982",
+      "note": "Owner OK — clean.",
+      "themes": [
+        "kids_movie",
+        "animals",
+        "adventure",
+        "family"
+      ]
+    },
+    {
+      "title": "Kubo and the Two Strings",
+      "year": "2016",
+      "note": "Owner OK with flag — family negativity.",
+      "themes": [
+        "kids_movie",
+        "adventure",
+        "family",
+        "fantasy",
+        "stop_motion"
+      ]
+    },
+    {
+      "title": "ParaNorman",
+      "year": "2012",
+      "note": "Owner OK with parental flag — afterlife themes.",
+      "themes": [
+        "kids_movie",
+        "adventure",
+        "afterlife",
+        "friendship",
+        "stop_motion"
+      ]
+    },
+    {
+      "title": "Onward",
+      "year": "2020",
+      "note": "Owner OK — clean.",
+      "themes": [
+        "pixar",
+        "kids_movie",
+        "family",
+        "adventure",
+        "fantasy"
+      ]
+    },
+    {
+      "title": "Soul",
+      "year": "2020",
+      "note": "Owner OK with flag — mental-health content.",
+      "themes": [
+        "pixar",
+        "kids_movie",
+        "music",
+        "purpose",
+        "afterlife"
+      ]
+    },
+    {
+      "title": "Luca",
+      "year": "2021",
+      "note": "Owner OK with flags — bad-word joke; heavy family negativity.",
+      "themes": [
+        "pixar",
+        "kids_movie",
+        "friendship",
+        "ocean",
+        "summer"
+      ]
+    },
+    {
+      "title": "Rio 2",
+      "year": "2014",
+      "note": "Owner OK with flag — warn about Rio 1 immodesty scene (film 1 rejected).",
+      "themes": [
+        "kids_movie",
+        "birds",
+        "adventure",
+        "brazil",
+        "family"
+      ]
+    },
+    {
+      "title": "Rise of the Guardians",
+      "year": "2012",
+      "note": "Owner OK with parental flag — worship-like belief content.",
+      "themes": [
+        "dreamworks",
+        "kids_movie",
+        "adventure",
+        "friendship",
+        "mythology"
+      ]
+    },
+    {
+      "title": "Megamind",
+      "year": "2010",
+      "note": "Owner OK with flag — romantic focus on Roxanne.",
+      "themes": [
+        "dreamworks",
+        "kids_movie",
+        "superheroes",
+        "comedy",
+        "redemption"
+      ]
+    },
+    {
+      "title": "Over the Hedge",
+      "year": "2006",
+      "note": "Owner OK with flag — gross ‘naked’ turtle-without-shell joke.",
+      "themes": [
+        "dreamworks",
+        "kids_movie",
+        "animals",
+        "comedy",
+        "friendship"
+      ]
+    },
+    {
+      "title": "Raya and the Last Dragon",
+      "year": "2021",
+      "note": "Owner OK — recommend.",
+      "themes": [
+        "disney",
+        "kids_movie",
+        "adventure",
+        "dragons",
+        "friendship",
+        "trust"
+      ]
+    },
+    {
+      "title": "Planes",
+      "year": "2013",
+      "note": "Owner OK — clean.",
+      "themes": [
+        "disney",
+        "kids_movie",
+        "planes",
+        "racing",
+        "friendship"
+      ]
+    },
+    {
+      "title": "Planes: Fire & Rescue",
+      "year": "2014",
+      "note": "Owner OK — clean.",
+      "themes": [
+        "disney",
+        "kids_movie",
+        "planes",
+        "rescue",
+        "friendship"
+      ]
+    },
+    {
+      "title": "Open Season",
+      "year": "2006",
+      "note": "Owner OK with flag — gross humor.",
+      "themes": [
+        "kids_movie",
+        "animals",
+        "comedy",
+        "friendship"
+      ]
+    },
+    {
+      "title": "Cloudy with a Chance of Meatballs 2",
+      "year": "2013",
+      "note": "Owner OK — clean.",
+      "themes": [
+        "kids_movie",
+        "comedy",
+        "adventure",
+        "food",
+        "friendship"
+      ]
+    },
+    {
+      "title": "Hotel Transylvania",
+      "year": "2012",
+      "note": "Owner OK with flag — parent negativity.",
+      "themes": [
+        "kids_movie",
+        "monsters",
+        "comedy",
+        "family",
+        "friendship"
+      ]
+    },
+    {
+      "title": "Cloudy with a Chance of Meatballs",
+      "year": "2009",
+      "note": "Owner OK — mostly clean.",
+      "themes": [
+        "kids_movie",
+        "comedy",
+        "food",
+        "friendship",
+        "adventure"
+      ]
+    },
+    {
+      "title": "Hotel Transylvania 2",
+      "year": "2015",
+      "note": "Owner OK with flag — some immodesty.",
+      "themes": [
+        "kids_movie",
+        "monsters",
+        "comedy",
+        "family"
+      ]
+    },
+    {
+      "title": "Hotel Transylvania 3: Summer Vacation",
+      "year": "2018",
+      "note": "Owner OK with flag — some immodesty.",
+      "themes": [
+        "kids_movie",
+        "monsters",
+        "comedy",
+        "family",
+        "vacation"
+      ]
+    },
+    {
+      "title": "Abominable",
+      "year": "2019",
+      "note": "Owner OK with flags — Buddhist religion focus; family negativity.",
+      "themes": [
+        "dreamworks",
+        "kids_movie",
+        "adventure",
+        "yeti",
+        "friendship"
+      ]
+    },
+    {
+      "title": "Vivo",
+      "year": "2021",
+      "note": "Owner OK with flag — immodest female outfit toward end.",
+      "themes": [
+        "kids_movie",
+        "music",
+        "adventure",
+        "friendship"
+      ]
+    },
+    {
+      "title": "Sing",
+      "year": "2016",
+      "note": "Owner OK with flag — some gross humor.",
+      "themes": [
+        "illumination",
+        "kids_movie",
+        "music",
+        "comedy",
+        "friendship"
+      ]
+    },
+    {
+      "title": "Sing 2",
+      "year": "2021",
+      "note": "Owner OK with flag — some gross humor.",
+      "themes": [
+        "illumination",
+        "kids_movie",
+        "music",
+        "comedy",
+        "friendship"
+      ]
+    },
+    {
+      "title": "Trolls",
+      "year": "2016",
+      "note": "Owner OK with flag — some gross humor.",
+      "themes": [
+        "dreamworks",
+        "kids_movie",
+        "music",
+        "friendship",
+        "comedy"
+      ]
+    },
+    {
+      "title": "Trolls World Tour",
+      "year": "2020",
+      "note": "Owner OK with flag — some gross humor.",
+      "themes": [
+        "dreamworks",
+        "kids_movie",
+        "music",
+        "friendship",
+        "comedy"
+      ]
+    },
+    {
+      "title": "Mr. Peabody & Sherman",
+      "year": "2014",
+      "note": "Owner OK with flag — some gross humor.",
+      "themes": [
+        "dreamworks",
+        "kids_movie",
+        "adventure",
+        "history",
+        "comedy"
+      ]
+    },
+    {
+      "title": "Home",
+      "year": "2015",
+      "note": "Owner OK with flag — some gross humor.",
+      "themes": [
+        "dreamworks",
+        "kids_movie",
+        "aliens",
+        "friendship",
+        "comedy"
+      ]
+    },
+    {
+      "title": "The Emoji Movie",
+      "year": "2017",
+      "note": "Owner OK with flag — some gross humor.",
+      "themes": [
+        "kids_movie",
+        "comedy",
+        "friendship",
+        "tech"
+      ]
+    },
+    {
+      "title": "The Lego Batman Movie",
+      "year": "2017",
+      "note": "Owner OK with flags — gross humor; physically immodest Lego women figures.",
+      "themes": [
+        "lego",
+        "kids_movie",
+        "superheroes",
+        "comedy"
+      ]
+    },
+    {
+      "title": "The Lego Ninjago Movie",
+      "year": "2017",
+      "note": "Owner OK with flags — gross humor; physically immodest Lego women figures.",
+      "themes": [
+        "lego",
+        "kids_movie",
+        "ninjas",
+        "comedy",
+        "adventure"
+      ]
+    },
+    {
+      "title": "Spider-Man: Into the Spider-Verse",
+      "year": "2018",
+      "note": "Owner OK with flag — physical immodesty (superhero outfits).",
+      "themes": [
+        "kids_movie",
+        "superheroes",
+        "adventure",
+        "friendship"
+      ]
+    },
+    {
+      "title": "Spider-Man: Across the Spider-Verse",
+      "year": "2023",
+      "note": "Owner OK with flag — physical immodesty (superhero outfits).",
+      "themes": [
+        "kids_movie",
+        "superheroes",
+        "adventure",
+        "family"
+      ]
+    }
+  ]
 }

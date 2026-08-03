@@ -1,3 +1,1271 @@
 {
-  "movies": []
+  "movies": [
+    {
+      "title": "Toy Story",
+      "year": "1995",
+      "rec_ok": true,
+      "note": "Owner hand-vet: fine. Franchise 1–4 OK.",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/1/13/Toy_Story.jpg",
+      "trailer_url": "https://www.youtube.com/watch?v=v-PjgYDrg70"
+    },
+    {
+      "title": "Toy Story 2",
+      "year": "1999",
+      "rec_ok": true,
+      "note": "Owner hand-vet: fine. Franchise 1–4 OK.",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/c/c0/Toy_Story_2.jpg",
+      "trailer_url": "https://www.youtube.com/watch?v=xNWSGRD5CzU"
+    },
+    {
+      "title": "Toy Story 3",
+      "year": "2010",
+      "rec_ok": true,
+      "note": "Owner hand-vet: fine. Franchise 1–4 OK.",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/6/69/Toy_Story_3_poster.jpg",
+      "trailer_url": "https://www.youtube.com/watch?v=GQ_qOU6--40"
+    },
+    {
+      "title": "Toy Story 4",
+      "year": "2019",
+      "rec_ok": true,
+      "note": "Owner hand-vet: fine. Franchise 1–4 OK.",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/4/4c/Toy_Story_4_poster.jpg",
+      "trailer_url": "https://www.youtube.com/watch?v=G9T_f7DjYho"
+    },
+    {
+      "title": "Finding Nemo",
+      "year": "2003",
+      "rec_ok": true,
+      "note": "Owner hand-vet: fine. Finding Nemo films OK.",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/Finding_Nemo_logo.svg/330px-Finding_Nemo_logo.svg.png",
+      "trailer_url": "https://www.youtube.com/watch?v=9oQ628Seb9w"
+    },
+    {
+      "title": "Finding Dory",
+      "year": "2016",
+      "rec_ok": true,
+      "note": "Owner hand-vet: fine. Finding Nemo films OK.",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/3/3e/Finding_Dory.jpg",
+      "trailer_url": "https://www.youtube.com/watch?v=pSf-5vbVpAU"
+    },
+    {
+      "title": "Monsters, Inc.",
+      "year": "2001",
+      "rec_ok": true,
+      "note": "Owner hand-vet: fine.",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/6/63/Monsters_Inc.JPG",
+      "trailer_url": "https://www.youtube.com/watch?v=CGbgaHoapFM"
+    },
+    {
+      "title": "Monsters University",
+      "year": "2013",
+      "rec_ok": true,
+      "note": "Owner hand-vet: fine.",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/2/2a/Monsters_University_poster_3.jpg",
+      "trailer_url": "https://www.youtube.com/watch?v=QxrQ6BaijAY"
+    },
+    {
+      "title": "The Incredibles",
+      "year": "2004",
+      "rec_ok": false,
+      "note": "Owner: plot mostly clean; brief mental-health beat in film 1. Parent discretion — outfits and some gross humor. No auto-recommend.",
+      "trailer_url": "https://www.youtube.com/watch?v=-UaGUdNJdRQ",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/2/27/The_Incredibles_%282004_animated_feature_film%29.jpg"
+    },
+    {
+      "title": "Incredibles 2",
+      "year": "2018",
+      "rec_ok": false,
+      "note": "Owner: parent discretion — outfits and some gross humor. No auto-recommend.",
+      "trailer_url": "https://www.youtube.com/watch?v=Pun0oYyFh2M",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/1/1f/Incredibles_2_%282018_animated_film%29.jpg"
+    },
+    {
+      "title": "Ratatouille",
+      "year": "2007",
+      "rec_ok": false,
+      "note": "Owner: mostly clean; main character is an illegitimate child as an important plot point — no graphic content, but parental flag. No auto-recommend.",
+      "trailer_url": "https://www.youtube.com/watch?v=NgsQ8mVkN8w",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/5/50/RatatouillePoster.jpg"
+    },
+    {
+      "title": "Up",
+      "year": "2009",
+      "rec_ok": true,
+      "note": "Owner hand-vet: film fine. Up TV series still idk — not vetted.",
+      "trailer_url": "https://www.youtube.com/watch?v=m7pFraFvV5M",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/0/05/Up_%282009_film%29.jpg"
+    },
+    {
+      "title": "WALL-E",
+      "year": "2008",
+      "rec_ok": true,
+      "note": "Owner hand-vet: fine.",
+      "trailer_url": "https://www.youtube.com/watch?v=CZ1CATNbXg0",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/4/4c/WALL-E_poster.jpg"
+    },
+    {
+      "title": "How to Train Your Dragon",
+      "year": "2010",
+      "rec_ok": true,
+      "note": "Owner hand-vet: animated films fine. Live-action and TV still idk — not vetted.",
+      "trailer_url": "https://www.youtube.com/watch?v=2AKsAxrhqgM",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/9/99/How_to_Train_Your_Dragon_Poster.jpg"
+    },
+    {
+      "title": "How to Train Your Dragon 2",
+      "year": "2014",
+      "rec_ok": true,
+      "note": "Owner hand-vet: animated films fine. Live-action and TV still idk — not vetted.",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/a/af/How_to_Train_Your_Dragon_2_poster.jpg",
+      "trailer_url": "https://www.youtube.com/watch?v=vwtdJwjQbLM"
+    },
+    {
+      "title": "How to Train Your Dragon: The Hidden World",
+      "year": "2019",
+      "rec_ok": true,
+      "note": "Owner hand-vet: animated films fine. Live-action and TV still idk — not vetted.",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/f/fd/How_to_Train_Your_Dragon_3_poster.png",
+      "trailer_url": "https://www.youtube.com/watch?v=CYe7oMmCFr0"
+    },
+    {
+      "title": "Kung Fu Panda",
+      "year": "2008",
+      "rec_ok": true,
+      "note": "Owner: films 1–3 clean except some gross humor. Rest of franchise still idk.",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/7/76/Kungfupanda.jpg",
+      "trailer_url": "https://www.youtube.com/watch?v=siLm9q4WIjI"
+    },
+    {
+      "title": "Kung Fu Panda 2",
+      "year": "2011",
+      "rec_ok": true,
+      "note": "Owner: films 1–3 clean except some gross humor. Rest of franchise still idk.",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/7/76/Kungfupanda.jpg",
+      "trailer_url": "https://www.youtube.com/watch?v=iypQ4TvxdAY"
+    },
+    {
+      "title": "Kung Fu Panda 3",
+      "year": "2016",
+      "rec_ok": true,
+      "note": "Owner: films 1–3 clean except some gross humor. Rest of franchise still idk.",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/7/76/Kungfupanda.jpg",
+      "trailer_url": "https://www.youtube.com/watch?v=H-30B0cqh88"
+    },
+    {
+      "title": "Paddington",
+      "year": "2014",
+      "rec_ok": true,
+      "note": "Owner: clean except some body humor — parent flag.",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/0/06/PaddingtonPOSTER.jpg",
+      "trailer_url": "https://www.youtube.com/watch?v=nkZjknR0AcU"
+    },
+    {
+      "title": "Paddington 2",
+      "year": "2017",
+      "rec_ok": true,
+      "note": "Owner: clean except some body humor — parent flag.",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/b/b6/Paddington_2_poster.jpg",
+      "trailer_url": "https://www.youtube.com/watch?v=m3RYkFQY0WM"
+    },
+    {
+      "title": "My Neighbor Totoro",
+      "year": "1988",
+      "rec_ok": true,
+      "note": "Owner hand-vet: clean.",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/0/02/My_Neighbor_Totoro_-_Tonari_no_Totoro_%28Movie_Poster%29.jpg"
+    },
+    {
+      "title": "The Iron Giant",
+      "year": "1999",
+      "rec_ok": true,
+      "note": "Owner hand-vet: clean.",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/d/d3/The_Iron_Giant_poster.JPG",
+      "trailer_url": "https://www.youtube.com/watch?v=1XHf94YqGyQ"
+    },
+    {
+      "title": "Chicken Run",
+      "year": "2000",
+      "rec_ok": false,
+      "note": "Owner: parent discretion — adult-leaning situation (young rooster among hens) without being graphic. No auto-recommend.",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/0/00/Chicken_run_ver1.jpg",
+      "trailer_url": "https://www.youtube.com/watch?v=qTj4aSPwTBk"
+    },
+    {
+      "title": "Despicable Me",
+      "year": "2010",
+      "rec_ok": false,
+      "note": "Owner: not recommend — franchise and TV; lead actor supports unethical cause.",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/c/c0/Despicable_Me_%282010_animated_feature_film%29.jpg",
+      "trailer_url": "https://www.youtube.com/watch?v=mNjg9SaanVk"
+    },
+    {
+      "title": "Despicable Me 2",
+      "year": "2013",
+      "rec_ok": false,
+      "note": "Owner: not recommend — franchise and TV; lead actor supports unethical cause.",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/2/29/Despicable_Me_2_poster.jpg",
+      "trailer_url": "https://www.youtube.com/watch?v=AuzyODgWRp4"
+    },
+    {
+      "title": "Despicable Me 3",
+      "year": "2017",
+      "rec_ok": false,
+      "note": "Owner: not recommend — franchise and TV; lead actor supports unethical cause.",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/8/80/Despicable_Me_3_theatrical_release_poster.jpg",
+      "trailer_url": "https://www.youtube.com/watch?v=gRDbiX3Zm8c"
+    },
+    {
+      "title": "Despicable Me 4",
+      "year": "2024",
+      "rec_ok": false,
+      "note": "Owner: not recommend — franchise and TV; lead actor supports unethical cause.",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/e/ed/Despicable_Me_4_Theatrical_Release_Poster.jpeg",
+      "trailer_url": "https://www.youtube.com/watch?v=bCcVSW-c3nA"
+    },
+    {
+      "title": "Minions",
+      "year": "2015",
+      "rec_ok": false,
+      "note": "Owner: not recommend — Despicable Me line; lead actor supports unethical cause.",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/1/19/Minions_%282015_film%29.jpg",
+      "trailer_url": "https://www.youtube.com/watch?v=dVDk7PXNXB8"
+    },
+    {
+      "title": "The Lego Movie",
+      "year": "2014",
+      "rec_ok": true,
+      "note": "Owner: both Lego Movie films clean; some gross non-adult humor — parent flag.",
+      "trailer_url": "https://www.youtube.com/watch?v=layIMWcdgxg",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/1/10/The_Lego_Movie_poster.jpg"
+    },
+    {
+      "title": "The Lego Movie 2: The Second Part",
+      "year": "2019",
+      "rec_ok": true,
+      "note": "Owner: both Lego Movie films clean; some gross non-adult humor — parent flag.",
+      "trailer_url": "https://www.youtube.com/watch?v=i6ilL5z6cjA",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/f/fd/The_Lego_Movie_2_The_Second_Part_theatrical_poster.jpg"
+    },
+    {
+      "title": "Coco",
+      "year": "2017",
+      "rec_ok": false,
+      "note": "Owner: complicated — possible reject on ethical reasoning; at best no auto-recommend (Halalit-style).",
+      "trailer_url": "https://www.youtube.com/watch?v=eeqUNYGLn7Q",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/9/98/Coco_%282017_film%29_poster.jpg"
+    },
+    {
+      "title": "Moana",
+      "year": "2016",
+      "rec_ok": false,
+      "note": "Owner: not recommend — main side-character actor supports unethical cause.",
+      "trailer_url": "https://www.youtube.com/watch?v=yfCOEGyHMwc",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/2/26/Moana_Teaser_Poster.jpg"
+    },
+    {
+      "title": "Inside Out",
+      "year": "2015",
+      "rec_ok": true,
+      "note": "Owner hand-vet: first film fine. Inside Out 2 still idk — not vetted.",
+      "trailer_url": "https://www.youtube.com/watch?v=0aEdrSbYH90",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/0/0a/Inside_Out_%282015_film%29_poster.jpg"
+    },
+    {
+      "title": "A Bug's Life",
+      "year": "1998",
+      "rec_ok": true,
+      "note": "Owner: clean / auto-recommend; parental flag for villain scary death.",
+      "trailer_url": "https://www.youtube.com/watch?v=Kklo1hfoDGA",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/c/cc/A_Bug%27s_Life.jpg"
+    },
+    {
+      "title": "Brave",
+      "year": "2012",
+      "rec_ok": false,
+      "note": "Owner: mostly plot clean; parental flag — immodesty issues for women's clothing. No auto-recommend.",
+      "trailer_url": "https://www.youtube.com/watch?v=6CKcqIahedc",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/9/96/Brave_Poster.jpg"
+    },
+    {
+      "title": "Tangled",
+      "year": "2010",
+      "rec_ok": false,
+      "note": "Owner: mostly plot clean; parental flag — immodesty issues for women's clothing. No auto-recommend.",
+      "trailer_url": "https://www.youtube.com/watch?v=DLpXhJZ804c",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/a/a8/Tangled_poster.jpg"
+    },
+    {
+      "title": "Lilo & Stitch",
+      "year": "2002",
+      "rec_ok": false,
+      "note": "Owner: mostly plot clean; parental flag — immodesty issues for women's clothing. No auto-recommend.",
+      "trailer_url": "https://www.youtube.com/watch?v=9OAC55UWAQs",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/c/c6/LiloandStitchmovieposter.jpg"
+    },
+    {
+      "title": "Big Hero 6",
+      "year": "2014",
+      "rec_ok": true,
+      "note": "Owner: film fine. Big Hero 6 series still idk. Baymax! TV — reject (LGBTQ).",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/4/4b/Big_Hero_6_%28film%29_poster.jpg",
+      "trailer_url": "https://www.youtube.com/watch?v=LVCuVN1WBWA"
+    },
+    {
+      "title": "Baymax!",
+      "year": "2022",
+      "rec_ok": false,
+      "note": "Owner reject: Baymax! TV — LGBTQ content.",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/commons/3/3d/Disney_Baymax%21_logo.png",
+      "trailer_url": "https://www.youtube.com/watch?v=Tl0LGiuJEnY"
+    },
+    {
+      "title": "Cars",
+      "year": "2006",
+      "rec_ok": true,
+      "note": "Owner hand-vet: films 1–3 clean.",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/3/34/Cars_2006.jpg",
+      "trailer_url": "https://www.youtube.com/watch?v=W_H7_tDHFE8"
+    },
+    {
+      "title": "Cars 2",
+      "year": "2011",
+      "rec_ok": true,
+      "note": "Owner hand-vet: films 1–3 clean.",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/7/7f/Cars_2_Poster.jpg",
+      "trailer_url": "https://www.youtube.com/watch?v=7C7LJGgzvq8"
+    },
+    {
+      "title": "Cars 3",
+      "year": "2017",
+      "rec_ok": true,
+      "note": "Owner hand-vet: films 1–3 clean.",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/9/94/Cars_3_poster.jpg",
+      "trailer_url": "https://www.youtube.com/watch?v=FBR5u6clw6g"
+    },
+    {
+      "title": "The Emperor's New Groove",
+      "year": "2000",
+      "rec_ok": false,
+      "note": "Owner: some adult jokes (not graphic); some physical immodesty for women's clothing. Parental flag — no auto-recommend.",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/6/69/Grooveposter.jpg",
+      "trailer_url": "https://www.youtube.com/watch?v=JX6btxoFhI8"
+    },
+    {
+      "title": "Encanto",
+      "year": "2021",
+      "rec_ok": true,
+      "note": "Owner: clean / may auto-recommend; flag for family-negativity issues.",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/8/83/Encanto_poster.jpg",
+      "trailer_url": "https://www.youtube.com/watch?v=nScqcgd2LlE"
+    },
+    {
+      "title": "Wreck-It Ralph",
+      "year": "2012",
+      "rec_ok": true,
+      "note": "Owner: both Ralph films clean; flag for some physical immodesty for women's clothing.",
+      "trailer_url": "https://www.youtube.com/watch?v=vf4r5q8-aWo",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/1/15/Wreckitralphposter.jpeg"
+    },
+    {
+      "title": "Ralph Breaks the Internet",
+      "year": "2018",
+      "rec_ok": true,
+      "note": "Owner: both Ralph films clean; flag for some physical immodesty for women's clothing.",
+      "trailer_url": "https://www.youtube.com/watch?v=JMgLxOZJWvs",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/0/0b/Ralph_Breaks_the_Internet_%282018_film_poster%29.png"
+    },
+    {
+      "title": "Zootopia",
+      "year": "2016",
+      "rec_ok": true,
+      "note": "Owner: Zootopia 1 fine. Rest of franchise still idk — not vetted.",
+      "trailer_url": "https://www.youtube.com/watch?v=5nP9hU8eUfE",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/9/96/Zootopia_%28movie_poster%29.jpg"
+    },
+    {
+      "title": "Shrek",
+      "year": "2001",
+      "rec_ok": false,
+      "note": "Owner: parked — physical immodesty for women's clothing; parent-negativity flag. Possible reject; do not re-ask unless owner asks.",
+      "trailer_url": "https://www.youtube.com/watch?v=CwXOrWvPBPk",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/7/7b/Shrek_%282001_animated_feature_film%29.jpg"
+    },
+    {
+      "title": "Shrek 2",
+      "year": "2004",
+      "rec_ok": false,
+      "note": "Owner: parked with Shrek films — immodesty + parent-negativity; possible reject.",
+      "trailer_url": "https://www.youtube.com/watch?v=xBgSfhp5Fxo",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/b/b9/Shrek_2_poster.jpg"
+    },
+    {
+      "title": "Shrek the Third",
+      "year": "2007",
+      "rec_ok": false,
+      "note": "Owner: parked with Shrek films — immodesty + parent-negativity; possible reject.",
+      "trailer_url": "https://www.youtube.com/watch?v=_MoIr7811Bs",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/2/22/Shrek_the_Third_%282007_animated_feature_film%29.jpg"
+    },
+    {
+      "title": "Shrek Forever After",
+      "year": "2010",
+      "rec_ok": false,
+      "note": "Owner: parked with Shrek films — immodesty + parent-negativity; possible reject.",
+      "trailer_url": "https://www.youtube.com/watch?v=Ma9oseKpj9g",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/7/70/Shrek_Forever_After_%282010_animated_feature_film%29.jpg"
+    },
+    {
+      "title": "Madagascar",
+      "year": "2005",
+      "rec_ok": false,
+      "note": "Owner: parent discretion — some adult-pandering content. No auto-recommend.",
+      "trailer_url": "https://www.youtube.com/watch?v=orAqhC-Hp_o",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/3/36/Madagascar_Theatrical_Poster.jpg"
+    },
+    {
+      "title": "Madagascar: Escape 2 Africa",
+      "year": "2008",
+      "rec_ok": false,
+      "note": "Owner: parent discretion — Madagascar films; some adult-pandering. No auto-recommend.",
+      "trailer_url": "https://www.youtube.com/watch?v=MUAbupPbGbQ",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/7/7f/Madagascar2poster.jpg"
+    },
+    {
+      "title": "Madagascar 3: Europe's Most Wanted",
+      "year": "2012",
+      "rec_ok": false,
+      "note": "Owner: parent discretion — Madagascar films; some adult-pandering. No auto-recommend.",
+      "trailer_url": "https://www.youtube.com/watch?v=J39ZDuq3erY",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/c/c4/Madagascar3-Poster.jpg"
+    },
+    {
+      "title": "Ice Age",
+      "year": "2002",
+      "rec_ok": true,
+      "note": "Owner: Ice Age films clean except the last (still idk).",
+      "trailer_url": "https://www.youtube.com/watch?v=i4noiCRJRoE",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/3/3c/Ice_Age_%282002_film%29_poster.jpg"
+    },
+    {
+      "title": "Ice Age: The Meltdown",
+      "year": "2006",
+      "rec_ok": true,
+      "note": "Owner: Ice Age films clean except the last (still idk).",
+      "trailer_url": "https://www.youtube.com/watch?v=pfESEXIZ_lw",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/f/f1/Ice_Age_2_poster.jpg"
+    },
+    {
+      "title": "Ice Age: Dawn of the Dinosaurs",
+      "year": "2009",
+      "rec_ok": true,
+      "note": "Owner: Ice Age films clean except the last (still idk).",
+      "trailer_url": "https://www.youtube.com/watch?v=byUCa2vjDik",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/2/24/Ice_Age_Dawn_of_the_Dinosaurs_theatrical_poster.jpg"
+    },
+    {
+      "title": "Ice Age: Continental Drift",
+      "year": "2012",
+      "rec_ok": true,
+      "note": "Owner: Ice Age films clean except the last (still idk).",
+      "trailer_url": "https://www.youtube.com/watch?v=0jUTl0TkmX8",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/6/6c/Ice_Age_Continental_Drift.jpg"
+    },
+    {
+      "title": "Horton Hears a Who!",
+      "year": "2008",
+      "rec_ok": true,
+      "note": "Owner: clean; some gross humor — parent flag.",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/8/8b/Horton_Hears_a_Who%21.jpg",
+      "trailer_url": "https://www.youtube.com/watch?v=HvuO0lK3U10"
+    },
+    {
+      "title": "The Lorax",
+      "year": "2012",
+      "rec_ok": true,
+      "note": "Owner: clean; some family negativity — parent flag.",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/b/b5/Lorax_teaser_poster.jpg",
+      "trailer_url": "https://www.youtube.com/watch?v=1bHdzTUNw-4"
+    },
+    {
+      "title": "Shaun the Sheep Movie",
+      "year": "2015",
+      "rec_ok": true,
+      "note": "Owner: clean with some gross humor — recommend with parent flag.",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/0/01/Shaun_the_Sheep_MoviePoster.jpg",
+      "trailer_url": "https://www.youtube.com/watch?v=0_4vs0nCCUI"
+    },
+    {
+      "title": "The Wizard of Oz",
+      "year": "1939",
+      "rec_ok": true,
+      "note": "Owner hand-vet: clean.",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/commons/6/69/Wizard_of_oz_movie_poster.jpg",
+      "trailer_url": "https://www.youtube.com/watch?v=njdreZRjvpc"
+    },
+    {
+      "title": "Mary Poppins",
+      "year": "1964",
+      "rec_ok": true,
+      "note": "Owner: clean; some family negativity — parent flag.",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/7/78/Marypoppins.jpg",
+      "trailer_url": "https://www.youtube.com/watch?v=YfkEQDPlb8g"
+    },
+    {
+      "title": "The Jungle Book",
+      "year": "1967",
+      "rec_ok": true,
+      "note": "Owner: on recommend list; some gross-humor flag.",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/1/1d/Thejunglebook_movieposter.jpg",
+      "trailer_url": "https://www.youtube.com/watch?v=owgrkAQ-Log"
+    },
+    {
+      "title": "Spirited Away",
+      "year": "2001",
+      "rec_ok": true,
+      "note": "Owner: clean; some family negativity — parent flag.",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/d/db/Spirited_Away_Japanese_poster.png"
+    },
+    {
+      "title": "The Lion King",
+      "year": "1994",
+      "rec_ok": true,
+      "note": "Owner hand-vet: clean.",
+      "trailer_url": "https://www.youtube.com/watch?v=eHcZlPpNt0Q",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/3/3d/The_Lion_King_poster.jpg"
+    },
+    {
+      "title": "Aladdin",
+      "year": "1992",
+      "rec_ok": false,
+      "note": "Owner heavy reject: mega fanservice plus dehumanization of Arabian country.",
+      "trailer_url": "https://www.youtube.com/watch?v=eTjHiQKJUDY",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/b/bd/Aladdin_%281992_Disney_film%29_poster.jpg"
+    },
+    {
+      "title": "Beauty and the Beast",
+      "year": "1991",
+      "rec_ok": false,
+      "note": "Owner: mostly clean; parent discretion — some physical immodesty on Belle’s part. No auto-recommend.",
+      "trailer_url": "https://www.youtube.com/watch?v=iurbZwxKFUE",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/5/5e/Beauty_and_the_Beast_%281991_film%29_poster.jpg"
+    },
+    {
+      "title": "Mulan",
+      "year": "1998",
+      "rec_ok": false,
+      "note": "Owner: parent discretion — adult humor; non-graphic underwater scene where Mulan is naked. No auto-recommend.",
+      "trailer_url": "https://www.youtube.com/watch?v=HKH7_n425Ss",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/a/a3/Movie_poster_mulan.JPG"
+    },
+    {
+      "title": "Hercules",
+      "year": "1997",
+      "rec_ok": false,
+      "note": "Owner reject: Meg is pretty immodest.",
+      "trailer_url": "https://www.youtube.com/watch?v=OwlynHlZEc4",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/6/65/Hercules_%281997_film%29_poster.jpg"
+    },
+    {
+      "title": "Tarzan",
+      "year": "1999",
+      "rec_ok": false,
+      "note": "Owner reject: immodesty.",
+      "trailer_url": "https://www.youtube.com/watch?v=ie53R2HEZ6g",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/4/4f/Tarzan_%281999_film%29_-_theatrical_poster.jpg"
+    },
+    {
+      "title": "The Princess and the Frog",
+      "year": "2009",
+      "rec_ok": true,
+      "note": "Owner: clean with some gross jokes and some female immodest outfits — parent flag.",
+      "trailer_url": "https://www.youtube.com/watch?v=M4dANjdAjWw",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/8/81/The_Princess_and_the_Frog_poster.jpg"
+    },
+    {
+      "title": "Peter Pan",
+      "year": "1953",
+      "rec_ok": false,
+      "note": "Owner reject: Tinker Bell’s outfit.",
+      "trailer_url": "https://www.youtube.com/watch?v=L-o0ufCPANo",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/commons/d/dc/Peter_Pan_%281953_poster%29.jpg"
+    },
+    {
+      "title": "Cinderella",
+      "year": "1950",
+      "rec_ok": true,
+      "note": "Owner: stepfamily negativity — recommend with flag.",
+      "trailer_url": "https://www.youtube.com/watch?v=UcjYD91YW_M",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/commons/1/1d/1950_is_the_Cinderella_year.jpg"
+    },
+    {
+      "title": "Sleeping Beauty",
+      "year": "1959",
+      "rec_ok": true,
+      "note": "Owner: clean with flag for immodest princess outfit.",
+      "trailer_url": "https://www.youtube.com/watch?v=EO2ADZtvYOU",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/commons/6/6c/Sleeping_Beauty_%281959_poster_-_Style_A%29.jpg"
+    },
+    {
+      "title": "Pinocchio",
+      "year": "1940",
+      "rec_ok": true,
+      "note": "Owner hand-vet: clean.",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/b/ba/Pinocchio-1940-poster.jpg",
+      "trailer_url": "https://www.youtube.com/watch?v=GBgyVY_ClzQ"
+    },
+    {
+      "title": "Bambi",
+      "year": "1942",
+      "rec_ok": true,
+      "note": "Owner hand-vet: clean.",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/8/88/Walt_Disney%27s_Bambi_poster.jpg",
+      "trailer_url": "https://www.youtube.com/watch?v=yDGv4GIR7A4"
+    },
+    {
+      "title": "Dumbo",
+      "year": "1941",
+      "rec_ok": false,
+      "note": "Owner: parent discretion — Dumbo bombers at end; pink elephants scene; family-negativity flag. No auto-recommend.",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/a/a7/Dumbo-1941-poster.jpg",
+      "trailer_url": "https://www.youtube.com/watch?v=tLtQ3bCvBA0"
+    },
+    {
+      "title": "One Hundred and One Dalmatians",
+      "year": "1961",
+      "rec_ok": true,
+      "note": "Owner hand-vet: clean.",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/c/cd/One_Hundred_and_One_Dalmatians_movie_poster.jpg"
+    },
+    {
+      "title": "Lady and the Tramp",
+      "year": "1955",
+      "rec_ok": true,
+      "note": "Owner hand-vet: clean.",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/3/39/Lady-and-tramp-1955-poster.jpg",
+      "trailer_url": "https://www.youtube.com/watch?v=oVG-vQNbiJQ"
+    },
+    {
+      "title": "The Aristocats",
+      "year": "1970",
+      "rec_ok": true,
+      "note": "Owner hand-vet: clean.",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/8/8d/Aristoposter.jpg"
+    },
+    {
+      "title": "Robin Hood",
+      "year": "1973",
+      "rec_ok": false,
+      "note": "Owner: parent discretion — protagonist drinking wine. No auto-recommend.",
+      "trailer_url": "https://www.youtube.com/watch?v=BpqR6Ca-LL8",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/9/91/Robinhood_1973_poster.png"
+    },
+    {
+      "title": "The Little Mermaid",
+      "year": "1989",
+      "rec_ok": false,
+      "note": "Owner hard reject: major fanservice.",
+      "trailer_url": "https://www.youtube.com/watch?v=nPE0f-MB_bQ",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/c/c0/The_Little_Mermaid_%28Official_1989_Film_Poster%29.png"
+    },
+    {
+      "title": "Beauty and the Beast: The Enchanted Christmas",
+      "year": "1997",
+      "rec_ok": false,
+      "note": "Owner reject: Christmas is the entire topic. Rule — films centered on Christmas or other non-Muslim religious holidays are off the recommend list (Home Alone-style stories that aren’t only the holiday title may differ; Christmas-in-the-title tends to be out).",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/2/2e/Beauty_and_the_Beast_The_Enchanted_Christmas_original_vhs.jpg"
+    },
+    {
+      "title": "Alice in Wonderland",
+      "year": "1951",
+      "rec_ok": true,
+      "note": "Owner hand-vet: clean.",
+      "trailer_url": "https://www.youtube.com/watch?v=PA-h3-0wheo",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/commons/f/f6/Alice_in_Wonderland_Poster.png"
+    },
+    {
+      "title": "The Many Adventures of Winnie the Pooh",
+      "year": "1977",
+      "rec_ok": true,
+      "note": "Owner: clean — prioritize near top of recommend list.",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/commons/c/c9/Winnie_the_Pooh_ride_sign_at_Disneyland.jpg"
+    },
+    {
+      "title": "Pooh's Grand Adventure: The Search for Christopher Robin",
+      "year": "1997",
+      "rec_ok": true,
+      "note": "Owner: clean — prioritize near top of recommend list.",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/f/fa/PGATSFCR.jpg"
+    },
+    {
+      "title": "The Tigger Movie",
+      "year": "2000",
+      "rec_ok": true,
+      "note": "Owner: clean — prioritize near top of recommend list.",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/1/13/The_Tigger_Movie_film.jpg"
+    },
+    {
+      "title": "Bolt",
+      "year": "2008",
+      "rec_ok": true,
+      "note": "Owner hand-vet: clean.",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/4/44/Bolt_ver2.jpg"
+    },
+    {
+      "title": "Chicken Little",
+      "year": "2005",
+      "rec_ok": true,
+      "note": "Owner hand-vet: clean.",
+      "trailer_url": "https://www.youtube.com/watch?v=gQetyAdnwAo",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/a/a5/Chickenlittlemcgiposter.jpg"
+    },
+    {
+      "title": "Atlantis: The Lost Empire",
+      "year": "2001",
+      "rec_ok": false,
+      "note": "Owner heavy reject: immodest outfits.",
+      "trailer_url": "https://www.youtube.com/watch?v=JuWOj27MyMg",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/d/de/Atlantis_The_Lost_Empire_poster.jpg"
+    },
+    {
+      "title": "Ponyo",
+      "year": "2008",
+      "rec_ok": false,
+      "note": "Owner: parent discretion — some fanservice (Ponyo’s mother’s outfit). No auto-recommend.",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/5/51/Ponyo.png",
+      "trailer_url": "https://www.youtube.com/watch?v=8xwTOqHzXQ4"
+    },
+    {
+      "title": "Kiki's Delivery Service",
+      "year": "1989",
+      "rec_ok": true,
+      "note": "Owner: clean plot; flag — Kiki wearing short pants.",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/0/07/Kiki%27s_Delivery_Service_%28Movie%29.jpg",
+      "trailer_url": "https://www.youtube.com/watch?v=ILHPQkwPFZs"
+    },
+    {
+      "title": "Castle in the Sky",
+      "year": "1986",
+      "rec_ok": false,
+      "note": "Owner: plot clean; parent discretion — brief close-up of Laputa symbol as immodest woman figure. No auto-recommend.",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/f/f5/Castle_in_the_Sky_%281986%29.png",
+      "trailer_url": "https://www.youtube.com/watch?v=2acgn9bo-_k"
+    },
+    {
+      "title": "Nausicaä of the Valley of the Wind",
+      "year": "1984",
+      "rec_ok": false,
+      "note": "Owner reject: major brief fanservice moment.",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/b/bc/Nausicaaposter.jpg"
+    },
+    {
+      "title": "Princess Mononoke",
+      "year": "1997",
+      "rec_ok": false,
+      "note": "Owner reject: some fanservice; prostitutes are part of the plot.",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/8/8c/Princess_Mononoke_Japanese_poster.png",
+      "trailer_url": "https://www.youtube.com/watch?v=XVjbOxQ1qN0"
+    },
+    {
+      "title": "Howl's Moving Castle",
+      "year": "2004",
+      "rec_ok": true,
+      "note": "Owner: recommend with flag — male protagonist has some sexist attitude but becomes a better person by the end.",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/a/a0/Howls-moving-castleposter.jpg"
+    },
+    {
+      "title": "The Tale of the Princess Kaguya",
+      "year": "2013",
+      "rec_ok": false,
+      "note": "Owner reject: brief nursing scene; predatory suitor scenes.",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/6/68/The_Tale_of_the_Princess_Kaguya_%28poster%29.jpg"
+    },
+    {
+      "title": "Whisper of the Heart",
+      "year": "1995",
+      "rec_ok": true,
+      "note": "Owner: clean with flag — includes high school-esque romance.",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/9/93/Whisper_of_the_Heart_%28Movie_Poster%29.jpg"
+    },
+    {
+      "title": "The Croods",
+      "year": "2013",
+      "rec_ok": false,
+      "note": "Owner reject: physical immodesty on main female protagonist and mother.",
+      "trailer_url": "https://www.youtube.com/watch?v=3SUkil-muQM",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/6/63/The_Croods.png"
+    },
+    {
+      "title": "The Mitchells vs. the Machines",
+      "year": "2021",
+      "rec_ok": false,
+      "note": "Owner reject: mostly clean, but end-credit references to protagonist being LGBTQ.",
+      "trailer_url": "https://www.youtube.com/watch?v=4gl_b0Qth2k",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/4/41/MitchellsMachinesPoster.jpg"
+    },
+    {
+      "title": "Klaus",
+      "year": "2019",
+      "rec_ok": false,
+      "note": "Owner hard reject: essentially all about Christmas (holiday rule).",
+      "trailer_url": "https://www.youtube.com/watch?v=ccVspnmWzy0",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/2/26/Klaus_poster.jpeg"
+    },
+    {
+      "title": "Wolfwalkers",
+      "year": "2020",
+      "rec_ok": false,
+      "note": "Owner: parent discretion — potential queer coding flag; no explicit LGBTQ. No auto-recommend.",
+      "trailer_url": "https://www.youtube.com/watch?v=VEJTAUds0zU",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/6/60/Wolfwalkers.png"
+    },
+    {
+      "title": "Ernest & Celestine",
+      "year": "2012",
+      "rec_ok": false,
+      "note": "Owner: parent discretion — colonial themes. No auto-recommend.",
+      "trailer_url": "https://www.youtube.com/watch?v=PyU-mSUOnSs",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/5/5c/Ernest_%26_Celestine_poster.jpg"
+    },
+    {
+      "title": "Fantastic Mr. Fox",
+      "year": "2009",
+      "rec_ok": false,
+      "note": "Owner reject: glorification of alcohol.",
+      "trailer_url": "https://www.youtube.com/watch?v=K_BzxFkkImI",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/a/af/Fantastic_mr_fox.jpg"
+    },
+    {
+      "title": "Isle of Dogs",
+      "year": "2018",
+      "rec_ok": false,
+      "note": "Owner: parent discretion — dark content flag, but otherwise clean. No auto-recommend.",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/2/23/IsleOfDogsFirstLook.jpg",
+      "trailer_url": "https://www.youtube.com/watch?v=GkPHhTqssaU"
+    },
+    {
+      "title": "The Prince of Egypt",
+      "year": "1998",
+      "rec_ok": false,
+      "note": "Owner hard reject: religious misrepresentation.",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/6/6c/Prince_of_egypt_ver2.jpg",
+      "trailer_url": "https://www.youtube.com/watch?v=N0Vh65UrBK4"
+    },
+    {
+      "title": "The Land Before Time",
+      "year": "1988",
+      "rec_ok": true,
+      "note": "Owner hand-vet: clean.",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/a/ad/The_Land_Before_Time_poster.jpg",
+      "trailer_url": "https://www.youtube.com/watch?v=0vfmzrE2mMc"
+    },
+    {
+      "title": "The Secret of NIMH",
+      "year": "1982",
+      "rec_ok": true,
+      "note": "Owner hand-vet: clean.",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/8/84/The_Secret_of_NIMH.jpg",
+      "trailer_url": "https://www.youtube.com/watch?v=cISmv0IGoQQ"
+    },
+    {
+      "title": "All Dogs Go to Heaven",
+      "year": "1989",
+      "rec_ok": false,
+      "note": "Owner hard reject: much of the film involves gambling, including a child helping place bets.",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/5/50/AllDogsGotoHeaven.jpg",
+      "trailer_url": "https://www.youtube.com/watch?v=K5w_MU_q1YI"
+    },
+    {
+      "title": "Coraline",
+      "year": "2009",
+      "rec_ok": false,
+      "note": "Owner hard reject: naked women scene.",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/3/36/Coraline_poster.jpg",
+      "trailer_url": "https://www.youtube.com/watch?v=m9bOpeuvNwY"
+    },
+    {
+      "title": "Kubo and the Two Strings",
+      "year": "2016",
+      "rec_ok": true,
+      "note": "Owner: clean with flag for family negativity — recommend list.",
+      "trailer_url": "https://www.youtube.com/watch?v=AWMyKZyIFnA",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/c/c4/Kubo_and_the_Two_Strings_poster.png"
+    },
+    {
+      "title": "ParaNorman",
+      "year": "2012",
+      "rec_ok": true,
+      "note": "Owner: recommend with parental flag for afterlife themes.",
+      "trailer_url": "https://www.youtube.com/watch?v=wPwGwwVbn9I",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/3/32/ParaNorman_poster.jpg"
+    },
+    {
+      "title": "Onward",
+      "year": "2020",
+      "rec_ok": true,
+      "note": "Owner hand-vet: clean.",
+      "trailer_url": "https://www.youtube.com/watch?v=OqowaVS0Opo",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/0/03/Onward_poster.jpg"
+    },
+    {
+      "title": "Soul",
+      "year": "2020",
+      "rec_ok": true,
+      "note": "Owner: clean with flag for mental-health content.",
+      "trailer_url": "https://www.youtube.com/watch?v=skOZYxvDlzQ",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/3/39/Soul_%282020_film%29_poster.jpg"
+    },
+    {
+      "title": "Luca",
+      "year": "2021",
+      "rec_ok": true,
+      "note": "Owner: clean with flags — some bad-word joke; heavy family negativity.",
+      "trailer_url": "https://www.youtube.com/watch?v=fADTQlpET0k",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/3/33/Luca_%282021_film%29.png"
+    },
+    {
+      "title": "The Good Dinosaur",
+      "year": "2015",
+      "rec_ok": false,
+      "note": "Owner hard reject: heavy intoxication scene played as humorous instead of problematic.",
+      "trailer_url": "https://www.youtube.com/watch?v=0QlRSVKwFA0",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/8/80/The_Good_Dinosaur_poster.jpg"
+    },
+    {
+      "title": "Rio",
+      "year": "2011",
+      "rec_ok": false,
+      "note": "Owner reject: plot clean, but major immodesty scene — side-character woman in parade outfit.",
+      "trailer_url": "https://www.youtube.com/watch?v=KRy6azdiqtc",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/b/bb/Rio2011Poster.jpg"
+    },
+    {
+      "title": "Rio 2",
+      "year": "2014",
+      "rec_ok": true,
+      "note": "Owner: clean; flag warning about first film’s immodesty scene (Rio 1 rejected).",
+      "trailer_url": "https://www.youtube.com/watch?v=pJjdasmpuXY",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/6/67/Rio_2_Poster.JPG"
+    },
+    {
+      "title": "Epic",
+      "year": "2013",
+      "rec_ok": false,
+      "note": "Owner reject: plot clean, but immodesty scenes.",
+      "trailer_url": "https://www.youtube.com/watch?v=GOrpYWYVXWw",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/b/be/Epic_%282013_film%29_poster.jpg"
+    },
+    {
+      "title": "Rise of the Guardians",
+      "year": "2012",
+      "rec_ok": true,
+      "note": "Owner: plot clean; parental flag for worship-like belief content.",
+      "trailer_url": "https://www.youtube.com/watch?v=P2lsBhXfdc4",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/9/92/Rise_of_the_Guardians_poster.jpg"
+    },
+    {
+      "title": "Megamind",
+      "year": "2010",
+      "rec_ok": true,
+      "note": "Owner: plot clean; flag for romantic focus on Roxanne.",
+      "trailer_url": "https://www.youtube.com/watch?v=ead9HCX9fe4",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/8/89/Megamind2010Poster.jpg"
+    },
+    {
+      "title": "Over the Hedge",
+      "year": "2006",
+      "rec_ok": true,
+      "note": "Owner: clean; some gross-joke scene with ‘naked’ turtle without shell.",
+      "trailer_url": "https://www.youtube.com/watch?v=kkrGBlvGK4I",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/f/f7/Over_the_Hedge_Poster.jpg"
+    },
+    {
+      "title": "Bee Movie",
+      "year": "2007",
+      "rec_ok": false,
+      "note": "Owner reject: essentially a human woman and a male bee attracted to each other.",
+      "trailer_url": "https://www.youtube.com/watch?v=wz5dWmmqwN4",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/5/5f/Bee_Movie_%282007_animated_feature_film%29.jpg"
+    },
+    {
+      "title": "Raya and the Last Dragon",
+      "year": "2021",
+      "rec_ok": true,
+      "note": "Owner hand-vet: recommend.",
+      "trailer_url": "https://www.youtube.com/watch?v=rU6T0K3zoYg",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/e/ea/Raya_and_the_Last_Dragon.png"
+    },
+    {
+      "title": "Strange World",
+      "year": "2022",
+      "rec_ok": false,
+      "note": "Owner automatic reject: LGBTQ content.",
+      "trailer_url": "https://www.youtube.com/watch?v=P70Uuh1RcMQ",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/f/fe/Strange_World_poster.jpg"
+    },
+    {
+      "title": "Wish",
+      "year": "2023",
+      "rec_ok": false,
+      "note": "Owner: parent discretion — focus on wishes as magical. No auto-recommend.",
+      "trailer_url": "https://www.youtube.com/watch?v=INfdIZAyi7U",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/d/de/WishMoviePoster.jpg"
+    },
+    {
+      "title": "Elemental",
+      "year": "2023",
+      "rec_ok": false,
+      "note": "Owner: parent discretion — adult romance references without being explicit. No auto-recommend.",
+      "trailer_url": "https://www.youtube.com/watch?v=qgEgLa5M2OE",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/4/4d/Elemental_final_poster.jpg"
+    },
+    {
+      "title": "Turning Red",
+      "year": "2022",
+      "rec_ok": false,
+      "note": "Owner reject: focus on puberty; also flag for family negativity and worshipping ancestors.",
+      "trailer_url": "https://www.youtube.com/watch?v=ZYq8Vj4RjFY",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/9/9e/Turning_Red_poster.jpg"
+    },
+    {
+      "title": "Lightyear",
+      "year": "2022",
+      "rec_ok": false,
+      "note": "Owner hard reject: LGBTQ content.",
+      "trailer_url": "https://www.youtube.com/watch?v=J4Fj2UrTCiU",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/f/f9/Lightyear_%28film%29_poster.jpg"
+    },
+    {
+      "title": "Frozen",
+      "year": "2013",
+      "rec_ok": false,
+      "note": "Owner: parent discretion — immodest Elsa outfits. No auto-recommend.",
+      "trailer_url": "https://www.youtube.com/watch?v=g8nQDgvjA28",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/0/05/Frozen_%282013_film%29_poster.jpg"
+    },
+    {
+      "title": "Frozen II",
+      "year": "2019",
+      "rec_ok": false,
+      "note": "Owner: parent discretion — immodest Elsa outfits. No auto-recommend.",
+      "trailer_url": "https://www.youtube.com/watch?v=SbOrz72EzNU",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/8/89/Frozen_II_%282019_animated_film%29.jpg"
+    },
+    {
+      "title": "Planes",
+      "year": "2013",
+      "rec_ok": true,
+      "note": "Owner hand-vet: clean.",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/7/7b/Planes_FilmPoster.jpeg",
+      "trailer_url": "https://www.youtube.com/watch?v=5Sc-24Ees3E"
+    },
+    {
+      "title": "Planes: Fire & Rescue",
+      "year": "2014",
+      "rec_ok": true,
+      "note": "Owner hand-vet: clean.",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/c/cc/Planes_Fire_%26_Rescue_poster.jpg",
+      "trailer_url": "https://www.youtube.com/watch?v=uYXxqwk7EMY"
+    },
+    {
+      "title": "Open Season",
+      "year": "2006",
+      "rec_ok": true,
+      "note": "Owner: clean with gross-humor flag.",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/9/9e/Open_Season.jpg",
+      "trailer_url": "https://www.youtube.com/watch?v=67tNWU_P7pg"
+    },
+    {
+      "title": "Cloudy with a Chance of Meatballs 2",
+      "year": "2013",
+      "rec_ok": true,
+      "note": "Owner hand-vet: clean.",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/d/d1/Cloudy_with_a_chance_of_meatballs_theataposter.jpg",
+      "trailer_url": "https://www.youtube.com/watch?v=fMqORpkU9vs"
+    },
+    {
+      "title": "Hotel Transylvania",
+      "year": "2012",
+      "rec_ok": true,
+      "note": "Owner: clean with flag for parent negativity.",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/f/f5/HotelTransylvania.jpg",
+      "trailer_url": "https://www.youtube.com/watch?v=2Ioqovct5Vs"
+    },
+    {
+      "title": "Hop",
+      "year": "2011",
+      "rec_ok": false,
+      "note": "Owner hard reject: entire plot about Easter (holiday rule).",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/b/b5/Hop_%282011%29_US_Poster.jpg",
+      "trailer_url": "https://www.youtube.com/watch?v=duNTdCSTqmQ"
+    },
+    {
+      "title": "The Adventures of Tintin",
+      "year": "2011",
+      "rec_ok": false,
+      "note": "Owner reject: humorous alcoholic representation.",
+      "trailer_url": "https://www.youtube.com/watch?v=fE5IQybGRPc",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/a/a1/The_Adventures_of_Tintin_-_Secret_of_the_Unicorn.jpg"
+    },
+    {
+      "title": "Cloudy with a Chance of Meatballs",
+      "year": "2009",
+      "rec_ok": true,
+      "note": "Owner: mostly clean — recommend.",
+      "trailer_url": "https://www.youtube.com/watch?v=UaXzK1gS6cs",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/d/d1/Cloudy_with_a_chance_of_meatballs_theataposter.jpg"
+    },
+    {
+      "title": "Hotel Transylvania 2",
+      "year": "2015",
+      "rec_ok": true,
+      "note": "Owner: mostly clean; some immodesty — flag.",
+      "trailer_url": "https://www.youtube.com/watch?v=smcHKYUs4RE",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/5/5d/Hotel_Transylvania_2_poster.jpg"
+    },
+    {
+      "title": "Hotel Transylvania 3: Summer Vacation",
+      "year": "2018",
+      "rec_ok": true,
+      "note": "Owner: mostly clean; some immodesty — flag.",
+      "trailer_url": "https://www.youtube.com/watch?v=WjpdpeuGwaY",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/9/9e/Hotel_Transylvania_3_%282018%29_Poster.jpg"
+    },
+    {
+      "title": "Abominable",
+      "year": "2019",
+      "rec_ok": true,
+      "note": "Owner: mostly clean; flags — some focus on Buddhist religion; family negativity.",
+      "trailer_url": "https://www.youtube.com/watch?v=XrgVtuDRBjM",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/1/10/Abominable_%282019_poster%29.png"
+    },
+    {
+      "title": "Vivo",
+      "year": "2021",
+      "rec_ok": true,
+      "note": "Owner: clean plot; flag — some immodest female outfit toward end of film.",
+      "trailer_url": "https://www.youtube.com/watch?v=IpaoRB1X2QM",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/d/dd/Vivo_poster.jpg"
+    },
+    {
+      "title": "The Star",
+      "year": "2017",
+      "rec_ok": false,
+      "note": "Owner reject (nope) — Nativity/Christmas holiday story.",
+      "trailer_url": "https://www.youtube.com/watch?v=QCtp84nKmJw",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/5/55/The_Star_%282017_film%29_poster.jpg"
+    },
+    {
+      "title": "Sing",
+      "year": "2016",
+      "rec_ok": true,
+      "note": "Owner: mostly clean with some gross humor — recommend with flag.",
+      "trailer_url": "https://www.youtube.com/watch?v=esSjfWbDUck",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/b/bb/Sing_%282016_film%29_poster.jpg"
+    },
+    {
+      "title": "Sing 2",
+      "year": "2021",
+      "rec_ok": true,
+      "note": "Owner: mostly clean with some gross humor — recommend with flag.",
+      "trailer_url": "https://www.youtube.com/watch?v=Jxwerv9HsKI",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/8/87/Sing_2_poster.jpg"
+    },
+    {
+      "title": "Trolls",
+      "year": "2016",
+      "rec_ok": true,
+      "note": "Owner: mostly clean with some gross humor — recommend with flag.",
+      "trailer_url": "https://www.youtube.com/watch?v=iUnRuQLYdTw",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/9/98/Trolls_%28film%29_poster.png"
+    },
+    {
+      "title": "Trolls World Tour",
+      "year": "2020",
+      "rec_ok": true,
+      "note": "Owner: mostly clean with some gross humor — recommend with flag.",
+      "trailer_url": "https://www.youtube.com/watch?v=JPzmECxyp_8",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/e/ed/Trolls_World_Tour_poster.jpg"
+    },
+    {
+      "title": "The Boss Baby",
+      "year": "2017",
+      "rec_ok": false,
+      "note": "Owner: parent discretion — gross potty humor; otherwise plot clean. No auto-recommend.",
+      "trailer_url": "https://www.youtube.com/watch?v=O2Bsw3lrhvs",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/0/0e/The_Boss_Baby_poster.jpg"
+    },
+    {
+      "title": "Captain Underpants: The First Epic Movie",
+      "year": "2017",
+      "rec_ok": false,
+      "note": "Owner: parent discretion — gross potty humor; otherwise plot clean. No auto-recommend.",
+      "trailer_url": "https://www.youtube.com/watch?v=E6y0M4_ptUA",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/2/24/Captain_Underpants_The_First_Epic_Movie_poster.jpg"
+    },
+    {
+      "title": "Mr. Peabody & Sherman",
+      "year": "2014",
+      "rec_ok": true,
+      "note": "Owner: clean with some gross humor — recommend with flag.",
+      "trailer_url": "https://www.youtube.com/watch?v=KTmQCd7l6cI",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/5/58/Mr_Peabody_%26_Sherman_Poster.JPG"
+    },
+    {
+      "title": "Home",
+      "year": "2015",
+      "rec_ok": true,
+      "note": "Owner: clean with some gross humor — recommend with flag.",
+      "trailer_url": "https://www.youtube.com/watch?v=MyqZf8LiWvM",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/8/85/Home_%282015_film%29_poster.jpg"
+    },
+    {
+      "title": "The Emoji Movie",
+      "year": "2017",
+      "rec_ok": true,
+      "note": "Owner: clean with some gross humor — recommend with flag.",
+      "trailer_url": "https://www.youtube.com/watch?v=uV9LYMAEnRA",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/6/63/The_Emoji_Movie_film_poster.jpg"
+    },
+    {
+      "title": "Storks",
+      "year": "2016",
+      "rec_ok": false,
+      "note": "Owner reject: mostly clean, but LGBTQ representation toward end of film.",
+      "trailer_url": "https://www.youtube.com/watch?v=QChRW52UwvI",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/1/13/Storks_%28film%29_poster_2.jpg"
+    },
+    {
+      "title": "The Lego Batman Movie",
+      "year": "2017",
+      "rec_ok": true,
+      "note": "Owner: clean with some gross humor plus physically immodest Lego women figures — flags.",
+      "trailer_url": "https://www.youtube.com/watch?v=u9dPsBRCljk",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/6/61/The_Lego_Batman_Movie_PromotionalPoster.jpg"
+    },
+    {
+      "title": "The Lego Ninjago Movie",
+      "year": "2017",
+      "rec_ok": true,
+      "note": "Owner: clean with some gross humor plus physically immodest Lego women figures — flags.",
+      "trailer_url": "https://www.youtube.com/watch?v=GRMyaNAeZWA",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/9/9f/The_Lego_Ninjago_Movie.jpg"
+    },
+    {
+      "title": "Spider-Man: Into the Spider-Verse",
+      "year": "2018",
+      "rec_ok": true,
+      "note": "Owner: plot clean; flag for physical immodesty (superhero outfits).",
+      "trailer_url": "https://www.youtube.com/watch?v=64QXmeV3FtI",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/f/fa/Spider-Man_Into_the_Spider-Verse_poster.png"
+    },
+    {
+      "title": "Spider-Man: Across the Spider-Verse",
+      "year": "2023",
+      "rec_ok": true,
+      "note": "Owner: plot clean; flag for physical immodesty (superhero outfits).",
+      "poster_url": "https://upload.wikimedia.org/wikipedia/en/a/a0/Spider-Man_Beyond_the_Spider-Verse_logo.jpg",
+      "trailer_url": "https://www.youtube.com/watch?v=5LJwMtnjidg"
+    }
+  ]
 }

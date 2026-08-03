@@ -86,6 +86,17 @@
     return "https://www.youtube.com/results?search_query=" + q + "+trailer";
   }
 
+  function trailerHref(movieOrData) {
+    var specific = (movieOrData && (movieOrData.trailerUrl || movieOrData.trailer_url)) || "";
+    if (specific) return specific;
+    return searchLink("youtube", (movieOrData && movieOrData.title) || "", (movieOrData && movieOrData.year) || "");
+  }
+
+  function trailerLabel(movieOrData) {
+    var specific = (movieOrData && (movieOrData.trailerUrl || movieOrData.trailer_url)) || "";
+    return specific ? "Trailer" : "Trailer search";
+  }
+
   function scoreMovie(movie, prefs) {
     var score = 0;
     var themes = (movie.themes || []).map(function (t) {
@@ -207,10 +218,10 @@
       jw.textContent = "JustWatch search";
 
       var yt = document.createElement("a");
-      yt.href = searchLink("youtube", movie.title, movie.year);
+      yt.href = trailerHref(movie);
       yt.target = "_blank";
       yt.rel = "noopener noreferrer";
-      yt.textContent = "Trailer search";
+      yt.textContent = trailerLabel(movie);
 
       actions.appendChild(shelfBtn);
       actions.appendChild(checkBtn);
@@ -402,6 +413,13 @@
     jw.rel = "noopener noreferrer";
     jw.textContent = "JustWatch search";
     actions.appendChild(jw);
+
+    var yt = document.createElement("a");
+    yt.href = trailerHref(data);
+    yt.target = "_blank";
+    yt.rel = "noopener noreferrer";
+    yt.textContent = trailerLabel(data);
+    actions.appendChild(yt);
 
     box.appendChild(actions);
   }
