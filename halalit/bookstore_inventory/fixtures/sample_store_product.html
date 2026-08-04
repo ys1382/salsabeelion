@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Charlotte's Web — Sample Fixture Bookstore</title>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Book",
+        "name": "Charlotte's Web",
+        "url": "https://sample-bookstore.local/book/9780064400558",
+        "isbn": "9780064400558",
+        "author": {"@type": "Person", "name": "E. B. White"},
+        "bookFormat": "https://schema.org/Paperback",
+        "offers": {
+          "@type": "Offer",
+          "price": "11.49",
+          "priceCurrency": "USD",
+          "availability": "https://schema.org/InStock",
+          "itemCondition": "https://schema.org/NewCondition",
+          "url": "https://sample-bookstore.local/book/9780064400558"
+        }
+      }
+    ]
+  }
+  </script>
+</head>
+<body>
+  <h1>Charlotte's Web</h1>
+  <p>In Stock — $11.49</p>
+</body>
+</html>

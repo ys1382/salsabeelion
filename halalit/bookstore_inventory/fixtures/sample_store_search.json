@@ -1,0 +1,42 @@
+[
+  {
+    "title": "Charlotte's Web",
+    "author": "E. B. White",
+    "isbn_13": "9780064400558",
+    "isbn_10": "0064400557",
+    "format": "Paperback",
+    "condition": "new",
+    "price": 11.49,
+    "currency": "USD",
+    "availability": "in_stock",
+    "product_url": "https://sample-bookstore.local/book/9780064400558",
+    "source_identifier": "isbn:9780064400558",
+    "store_location_id": "main"
+  },
+  {
+    "title": "The Hobbit",
+    "author": "J. R. R. Tolkien",
+    "isbn_13": "9780547928227",
+    "format": "Paperback",
+    "condition": "new",
+    "price": 14.99,
+    "currency": "USD",
+    "availability": "in_stock",
+    "product_url": "https://sample-bookstore.local/book/9780547928227",
+    "source_identifier": "isbn:9780547928227",
+    "store_location_id": "main"
+  },
+  {
+    "title": "The Hobbit",
+    "author": "J. R. R. Tolkien",
+    "isbn_13": "9780007525492",
+    "format": "Audiobook",
+    "condition": "new",
+    "price": 24.99,
+    "currency": "USD",
+    "availability": "in_stock",
+    "product_url": "https://sample-bookstore.local/book/9780007525492",
+    "source_identifier": "isbn:9780007525492",
+    "store_location_id": "main"
+  }
+]

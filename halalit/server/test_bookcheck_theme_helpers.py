@@ -24,9 +24,13 @@ for mod_name in (
         stub.session_user = lambda *a, **k: None
     elif mod_name == "halalit_lookup_log":
         stub.record_bookcheck_lookup = lambda *a, **k: None
+        stub.lookup_group_key = lambda *a, **k: ""
     elif mod_name == "halalit_lookup_quality":
         stub.is_garbage_lookup = lambda *a, **k: False
     sys.modules[mod_name] = stub
+
+# theme_scan_cache imports lookup_group_key from the real module; keep stub complete.
+sys.modules["halalit_lookup_log"].lookup_group_key = lambda *a, **k: ""  # type: ignore
 
 from bookcheck_theme_api import (  # noqa: E402
     _merge_sensitive_present,

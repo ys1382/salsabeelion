@@ -390,6 +390,20 @@
         </div>
       </details>
 
+      <details class="office-section panel" id="ownerBookstoreSection">
+        <summary class="office-section__summary">
+          <span class="office-section__title"><strong>Bookstore inventory</strong></span>
+          <span class="office-section__toggle" aria-hidden="true"></span>
+        </summary>
+        <div class="office-section__body">
+          <p class="hint">Specific locations (e.g. B&amp;N Stevens Creek), not generic chains. Live adapters stay paused until legal/robots review. Readers favorite locations on Wishlist.</p>
+          <p class="hint" id="bookstoreDashStatus"></p>
+          <div id="bookstoreDashStores"></div>
+          <h3 style="color:var(--accent);font-size:0.95rem;margin:1rem 0 0.4rem">Match review queue</h3>
+          <div id="bookstoreDashReviews"></div>
+        </div>
+      </details>
+
       <details class="office-section panel" id="ownerDismissedSection">
         <summary class="office-section__summary">
           <span class="office-section__title"><strong>Dismissed notifications</strong> <span class="muted" id="dismissedCountLabel"></span></span>
@@ -640,6 +654,7 @@
   <script src="./halalit-owner-shelf-scanner.js?v=20260717a"></script>
   <script src="./halalit-bookcheck.js?v=20260728b"></script>
   <script src="./halalit-auth.js?v=20260715a"></script>
+  <script src="./halalit-bookstore-owner.js?v=20260804a"></script>
   <script>
     (function () {
       function fmtDate(ts) {

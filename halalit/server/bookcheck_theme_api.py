@@ -11,6 +11,9 @@ POST /api/cover-identify   removed (410) — barcode / type title instead
 POST /api/owner/shelf-identify  removed (410) — parked on Halalit roadmap; not live
 POST /api/library/check    JSON: { "title": "...", "author": "...", "isbn?": "...", "placeId?": "..." }
                                → library branch borrowable check (Central Park / Cupertino practice)
+GET/POST /api/bookstore/inventory  → bookstore availability (cached listings; not a checkout)
+GET /api/bookstore/places
+GET /api/owner/bookstore/dashboard (+ owner POST run/flags/match-review)
 GET  /health  and  /api/health
 
 Does not assess fanservice or panel art — client shows "not checked yet" for comics.
@@ -37,6 +40,11 @@ from halalit_lookup_quality import is_garbage_lookup
 from bookcheck_web_search import fetch_review_snippets, format_review_snippets_for_prompt
 from library_catalog_check import check_title as library_check_title
 from theme_scan_cache import get_cached_theme_scan, put_cached_theme_scan
+
+try:
+    import bookstore_api as bookstore_api_handlers
+except ImportError:
+    bookstore_api_handlers = None  # type: ignore
 
 try:
     ThreadingHTTPServer  # noqa: F401
@@ -1170,6 +1178,10 @@ class Handler(BaseHTTPRequestHandler):
         path = self.path.rstrip("/").split("?")[0]
         if accounts_handle_get(path, self, json_response):
             return
+        if bookstore_api_handlers and bookstore_api_handlers.handle_get(
+            path, self, json_response, session_user
+        ):
+            return
         if path in ("/health", "/api/health"):
             json_response(
                 self,
@@ -1189,6 +1201,7 @@ class Handler(BaseHTTPRequestHandler):
                     "braveConfigured": bool(os.environ.get("BRAVE_SEARCH_API_KEY", "").strip()),
                     "libraryCheck": True,
                     "libraryCheckPlace": "santa-clara-central-park",
+                    "bookstoreInventory": True,
                 },
             )
             return
@@ -1226,6 +1239,7 @@ class Handler(BaseHTTPRequestHandler):
             or path == "/api/owner/vets/save-series"
             or path == "/api/owner/vets/delete"
             or path == "/api/library/suggest"
+            or path.startswith("/api/bookstore/")
         ):
             try:
                 body = json.loads(self.rfile.read(length).decode("utf-8")) if length else {}
@@ -1235,6 +1249,10 @@ class Handler(BaseHTTPRequestHandler):
             if not isinstance(body, dict):
                 body = {}
             if accounts_handle_post(path, self, body, json_response):
+                return
+            if bookstore_api_handlers and bookstore_api_handlers.handle_post(
+                path, self, body, json_response, session_user
+            ):
                 return
             json_response(self, 404, {"ok": False, "error": "not_found"})
             return
@@ -1329,10 +1347,17 @@ class Handler(BaseHTTPRequestHandler):
 
 
 def main() -> None:
+    if os.environ.get("HALALIT_BOOKSTORE_JOBS", "").strip() in ("1", "true", "yes"):
+        try:
+            from bookstore_inventory.jobs.scheduler import start_scheduler
+
+            start_scheduler()
+        except Exception as e:
+            print(f"bookstore jobs not started: {e}")
     server = ThreadingHTTPServer((BIND, PORT), Handler)
     print(
         f"Halalit Bookcheck theme API on http://{BIND}:{PORT} "
-        f"(theme-scan=gemini-only, gemini={'yes' if KEY else 'no'})"
+        f"(theme-scan=gemini-only, gemini={'yes' if KEY else 'no'}, bookstore={bool(bookstore_api_handlers)})"
     )
     try:
         server.serve_forever()

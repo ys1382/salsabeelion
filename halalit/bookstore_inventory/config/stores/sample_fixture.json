@@ -1,0 +1,38 @@
+{
+  "store_id": "sample_fixture",
+  "adapter": "sample_fixture",
+  "name": "Sample Fixture Bookstore",
+  "website": "https://sample-bookstore.local/",
+  "enabled": true,
+  "active": true,
+  "paused": false,
+  "inventory_source": "fixture",
+  "online_ordering": true,
+  "request_delay_seconds": 0,
+  "refresh_frequency_minutes": 60,
+  "stale_threshold_hours": 72,
+  "approved_domains": ["sample-bookstore.local"],
+  "isbn_product_url_template": "https://sample-bookstore.local/book/{isbn}",
+  "locations": [
+    {
+      "location_id": "main",
+      "place_id": "sample-main-street",
+      "location_name": "Main Street Shop",
+      "place_label": "Sample Fixture Bookstore — Main Street",
+      "short_label": "Sample Main St",
+      "initials": "SF",
+      "street_address": "1 Example Ave",
+      "city": "Sampleville",
+      "state": "CA",
+      "postal_code": "00000",
+      "latitude": 37.0,
+      "longitude": -122.0,
+      "hours": "Mon–Sat 10–6",
+      "website": "https://sample-bookstore.local/",
+      "online_ordering": true,
+      "active": true,
+      "favorite_default": false
+    }
+  ],
+  "notes": "Local fixture only — never hits the network."
+}

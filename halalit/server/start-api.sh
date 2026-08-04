@@ -21,6 +21,7 @@ if [[ -z "${ANTHROPIC_API_KEY:-}" ]]; then
 fi
 export KIDS_SITES_ANTHROPIC_KEY_PATH="${KIDS_SITES_ANTHROPIC_KEY_PATH:-$(dirname "$(pwd)")/anthropic.key}"
 HERE="$(cd "$(dirname "$0")" && pwd)"
+HALALIT_ROOT="$(cd "$HERE/.." && pwd)"
 SHARED=""
 for candidate in \
   "$(dirname "$HERE")/_shared" \
@@ -31,8 +32,9 @@ for candidate in \
     break
   fi
 done
-if [[ -n "$SHARED" ]]; then
-  export PYTHONPATH="${SHARED}${PYTHONPATH:+:$PYTHONPATH}"
-fi
+# Also allow importing when package is nested next to this script (VPS layout).
+export PYTHONPATH="${HERE}:${HALALIT_ROOT}${SHARED:+:$SHARED}${PYTHONPATH:+:$PYTHONPATH}"
+# Optional: HALALIT_BOOKSTORE_JOBS=1 to start APScheduler ISBN watchlist jobs
+# Optional: HALALIT_BOOKSTORE_DB path (defaults to HALALIT_ACCOUNTS_DB)
 # Review snippets: DuckDuckGo lite by default (no key). Optional Brave — set BRAVE_SEARCH_API_KEY in .env.
 exec python3 bookcheck_theme_api.py

@@ -1,0 +1,42 @@
+{
+  "store_id": "keplers",
+  "adapter": "keplers",
+  "name": "Kepler's Books",
+  "website": "https://www.keplers.com/",
+  "enabled": false,
+  "allow_isbn_check_when_disabled": false,
+  "active": true,
+  "paused": true,
+  "inventory_source": "product_page_jsonld",
+  "online_ordering": true,
+  "request_delay_seconds": 10,
+  "refresh_frequency_minutes": 720,
+  "stale_threshold_hours": 168,
+  "approved_domains": ["keplers.com", "www.keplers.com"],
+  "isbn_product_url_template": "https://www.keplers.com/book/{isbn}",
+  "robots_notes": "Disallow: /search/ and /books/. ISBN product pages under /book/{isbn} may be checked when enabled.",
+  "locations": [
+    {
+      "location_id": "menlo_park",
+      "place_id": "keplers-menlo-park",
+      "location_name": "Menlo Park",
+      "place_label": "Kepler's Books — Menlo Park",
+      "short_label": "Kepler's Menlo Park",
+      "initials": "K",
+      "street_address": "1010 El Camino Real, Suite 100",
+      "city": "Menlo Park",
+      "state": "CA",
+      "postal_code": "94025",
+      "latitude": 37.453,
+      "longitude": -122.181,
+      "phone": "650-324-4321",
+      "hours": "Sun–Mon 10–6; Tue–Sat 10–9",
+      "website": "https://www.keplers.com/",
+      "county": "San Mateo County",
+      "online_ordering": true,
+      "active": true,
+      "favorite_default": true
+    }
+  ],
+  "legal_status": "needs_owner_review_before_enable"
+}

@@ -1,0 +1,432 @@
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "ProductGroup",
+      "@id": "https://www.barnesandnoble.com/w/charlottes-web-e-b-white/1101727968#ProductGroup",
+      "name": "Charlotte's Web",
+      "image": "https://cdn.shopify.com/s/files/1/0674/5433/7265/files/9780064400558_p0.jpg?v=1768989587",
+      "hasVariant": [
+        {
+          "@type": "Product",
+          "name": "Charlotte's Web",
+          "url": "https://www.barnesandnoble.com/w/charlottes-web-e-b-white/1101727968?ean=9780060263850",
+          "sku": "9780060263850",
+          "image": "https://cdn.shopify.com/s/files/1/0674/5433/7265/files/9780060263850_p0.jpg?v=1768981476",
+          "description": "(truncated)",
+          "bookFormat": "https://schema.org/Hardcover",
+          "offers": {
+            "@type": "Offer",
+            "url": "https://www.barnesandnoble.com/w/charlottes-web-e-b-white/1101727968?ean=9780060263850",
+            "price": "19.99",
+            "priceCurrency": "USD",
+            "availability": "https://schema.org/InStock",
+            "itemCondition": "https://schema.org/NewCondition",
+            "seller": {
+              "@type": "Organization",
+              "name": "Barnes & Noble"
+            }
+          }
+        },
+        {
+          "@type": "Product",
+          "name": "Charlotte's Web",
+          "url": "https://www.barnesandnoble.com/w/charlottes-web-e-b-white/1101727968?ean=9780060263867",
+          "sku": "9780060263867",
+          "image": "https://cdn.shopify.com/s/files/1/0674/5433/7265/files/9780060263867_p0.jpg?v=1765233812",
+          "description": "(truncated)",
+          "bookFormat": "https://schema.org/Hardcover",
+          "offers": {
+            "@type": "Offer",
+            "url": "https://www.barnesandnoble.com/w/charlottes-web-e-b-white/1101727968?ean=9780060263867",
+            "price": "19.89",
+            "priceCurrency": "USD",
+            "availability": "https://schema.org/InStock",
+            "itemCondition": "https://schema.org/NewCondition",
+            "seller": {
+              "@type": "Organization",
+              "name": "Barnes & Noble"
+            }
+          }
+        },
+        {
+          "@type": "Product",
+          "name": "Charlotte's Web",
+          "url": "https://www.barnesandnoble.com/w/charlottes-web-e-b-white/1101727968?ean=9780061124952",
+          "sku": "9780061124952",
+          "image": "https://cdn.shopify.com/s/files/1/0674/5433/7265/files/9780061124952_p0.jpg?v=1765236847",
+          "description": "(truncated)",
+          "bookFormat": "https://schema.org/Hardcover",
+          "offers": {
+            "@type": "Offer",
+            "url": "https://www.barnesandnoble.com/w/charlottes-web-e-b-white/1101727968?ean=9780061124952",
+            "price": "15.99",
+            "priceCurrency": "USD",
+            "availability": "https://schema.org/InStock",
+            "itemCondition": "https://schema.org/NewCondition",
+            "seller": {
+              "@type": "Organization",
+              "name": "Barnes & Noble"
+            }
+          }
+        },
+        {
+          "@type": "Product",
+          "name": "Charlotte's Web",
+          "url": "https://www.barnesandnoble.com/w/charlottes-web-e-b-white/1101727968?ean=9780063448155",
+          "sku": "9780063448155",
+          "image": "https://cdn.shopify.com/s/files/1/0674/5433/7265/files/9780063448155_p0.jpg?v=1765254257",
+          "description": "(truncated)",
+          "bookFormat": "https://schema.org/Paperback",
+          "offers": {
+            "@type": "Offer",
+            "url": "https://www.barnesandnoble.com/w/charlottes-web-e-b-white/1101727968?ean=9780063448155",
+            "price": "10.99",
+            "priceCurrency": "USD",
+            "availability": "https://schema.org/InStock",
+            "itemCondition": "https://schema.org/NewCondition",
+            "seller": {
+              "@type": "Organization",
+              "name": "Barnes & Noble"
+            }
+          }
+        },
+        {
+          "@type": "Product",
+          "name": "Charlotte's Web (Full Color Edition)",
+          "url": "https://www.barnesandnoble.com/w/charlottes-web-e-b-white/1101727968?ean=9780064410939",
+          "sku": "9780064410939",
+          "image": "https://cdn.shopify.com/s/files/1/0674/5433/7265/files/9780064410939_p0.jpg?v=1768987506",
+          "description": "(truncated)",
+          "bookFormat": "https://schema.org/Paperback",
+          "offers": {
+            "@type": "Offer",
+            "url": "https://www.barnesandnoble.com/w/charlottes-web-e-b-white/1101727968?ean=9780064410939",
+            "price": "12.99",
+            "priceCurrency": "USD",
+            "availability": "https://schema.org/InStock",
+            "itemCondition": "https://schema.org/NewCondition",
+            "seller": {
+              "@type": "Organization",
+              "name": "Barnes & Noble"
+            }
+          }
+        },
+        {
+          "@type": "Product",
+          "name": "Charlotte's Web",
+          "url": "https://www.barnesandnoble.com/w/charlottes-web-e-b-white/1101727968?ean=9780064400558",
+          "sku": "9780064400558",
+          "image": "https://cdn.shopify.com/s/files/1/0674/5433/7265/files/9780064400558_p0.jpg?v=1768989587",
+          "description": "(truncated)",
+          "bookFormat": "https://schema.org/Paperback",
+          "offers": {
+            "@type": "Offer",
+            "url": "https://www.barnesandnoble.com/w/charlottes-web-e-b-white/1101727968?ean=9780064400558",
+            "price": "10.99",
+            "priceCurrency": "USD",
+            "availability": "https://schema.org/InStock",
+            "itemCondition": "https://schema.org/NewCondition",
+            "seller": {
+              "@type": "Organization",
+              "name": "Barnes & Noble"
+            }
+          }
+        },
+        {
+          "@type": "Product",
+          "name": "Charlotte's Web",
+          "url": "https://www.barnesandnoble.com/w/charlottes-web-e-b-white/1101727968?ean=9781984843258",
+          "sku": "9781984843258",
+          "image": "https://cdn.shopify.com/s/files/1/0674/5433/7265/files/9781984843258_p0.jpg?v=1764996842",
+          "description": "(truncated)",
+          "bookFormat": "https://schema.org/AudiobookFormat",
+          "offers": {
+            "@type": "Offer",
+            "url": "https://www.barnesandnoble.com/w/charlottes-web-e-b-white/1101727968?ean=9781984843258",
+            "price": "27.0",
+            "priceCurrency": "USD",
+            "availability": "https://schema.org/InStock",
+            "itemCondition": "https://schema.org/NewCondition",
+            "seller": {
+              "@type": "Organization",
+              "name": "Barnes & Noble"
+            }
+          }
+        },
+        {
+          "@type": "Product",
+          "name": "Charlotte's Web",
+          "url": "https://www.barnesandnoble.com/w/charlottes-web-e-b-white/1101727968?ean=2940169236118",
+          "sku": "2940169236118",
+          "image": "https://cdn.shopify.com/s/files/1/0674/5433/7265/files/2940169236118_p0.jpg?v=1764959740",
+          "description": "(truncated)",
+          "bookFormat": "https://schema.org/AudiobookFormat",
+          "readBy": [
+            {
+              "@type": "Person",
+              "name": "E. B. White"
+            }
+          ],
+          "offers": {
+            "@type": "Offer",
+            "url": "https://www.barnesandnoble.com/w/charlottes-web-e-b-white/1101727968?ean=2940169236118",
+            "price": "15.0",
+            "priceCurrency": "USD",
+            "availability": "https://schema.org/InStock",
+            "itemCondition": "https://schema.org/NewCondition",
+            "seller": {
+              "@type": "Organization",
+              "name": "Barnes & Noble"
+            }
+          }
+        },
+        {
+          "@type": "Product",
+          "name": "Charlotte's Web",
+          "url": "https://www.barnesandnoble.com/w/charlottes-web-e-b-white/1101727968?ean=2940173453068",
+          "sku": "2940173453068",
+          "image": "https://cdn.shopify.com/s/files/1/0674/5433/7265/files/2940173453068_p0.jpg?v=1777693768",
+          "description": "(truncated)",
+          "bookFormat": "https://schema.org/AudiobookFormat",
+          "readBy": [
+            {
+              "@type": "Person",
+              "name": "Meryl Streep"
+            },
+            {
+              "@type": "Person",
+              "name": "January LaVoy"
+            },
+            {
+              "@type": "Person",
+              "name": "Kirby Heyborne"
+            },
+            {
+              "@type": "Person",
+              "name": "MacLeod Andrews"
+            },
+            {
+              "@type": "Person",
+              "name": "Mark Bramhall"
+            },
+            {
+              "@type": "Person",
+              "name": "Scott Brick"
+            },
+            {
+              "@type": "Person",
+              "name": "Full Cast"
+            }
+          ],
+          "offers": {
+            "@type": "Offer",
+            "url": "https://www.barnesandnoble.com/w/charlottes-web-e-b-white/1101727968?ean=2940173453068",
+            "price": "15.0",
+            "priceCurrency": "USD",
+            "availability": "https://schema.org/InStock",
+            "itemCondition": "https://schema.org/NewCondition",
+            "seller": {
+              "@type": "Organization",
+              "name": "Barnes & Noble"
+            }
+          }
+        },
+        {
+          "@type": "Product",
+          "name": "Charlotte's Web",
+          "url": "https://www.barnesandnoble.com/w/charlottes-web-e-b-white/1101727968?ean=2940173008589",
+          "sku": "2940173008589",
+          "image": "https://cdn.shopify.com/s/files/1/0674/5433/7265/files/2940173008589_p0.jpg?v=1777711007",
+          "description": "(truncated)",
+          "bookFormat": "https://schema.org/AudiobookFormat",
+          "readBy": [
+            {
+              "@type": "Person",
+              "name": "Meryl Streep"
+            },
+            {
+              "@type": "Person",
+              "name": "January LaVoy"
+            },
+            {
+              "@type": "Person",
+              "name": "Kirby Heyborne"
+            },
+            {
+              "@type": "Person",
+              "name": "MacLeod Andrews"
+            },
+            {
+              "@type": "Person",
+              "name": "Mark Bramhall"
+            },
+            {
+              "@type": "Person",
+              "name": "Scott Brick"
+            },
+            {
+              "@type": "Person",
+              "name": "Full Cast"
+            }
+          ],
+          "offers": {
+            "@type": "Offer",
+            "url": "https://www.barnesandnoble.com/w/charlottes-web-e-b-white/1101727968?ean=2940173008589",
+            "price": "15.0",
+            "priceCurrency": "USD",
+            "availability": "https://schema.org/InStock",
+            "itemCondition": "https://schema.org/NewCondition",
+            "seller": {
+              "@type": "Organization",
+              "name": "Barnes & Noble"
+            }
+          }
+        },
+        {
+          "@type": "Product",
+          "name": "Charlotte's Web",
+          "url": "https://www.barnesandnoble.com/w/charlottes-web-e-b-white/1101727968?ean=2940172222054",
+          "sku": "2940172222054",
+          "image": "https://cdn.shopify.com/s/files/1/0674/5433/7265/files/2940172222054_p0.jpg?v=1777771918",
+          "description": "(truncated)",
+          "bookFormat": "https://schema.org/AudiobookFormat",
+          "readBy": [
+            {
+              "@type": "Person",
+              "name": "E. B. White"
+            }
+          ],
+          "offers": {
+            "@type": "Offer",
+            "url": "https://www.barnesandnoble.com/w/charlottes-web-e-b-white/1101727968?ean=2940172222054",
+            "price": "15.0",
+            "priceCurrency": "USD",
+            "availability": "https://schema.org/InStock",
+            "itemCondition": "https://schema.org/NewCondition",
+            "seller": {
+              "@type": "Organization",
+              "name": "Barnes & Noble"
+            }
+          }
+        },
+        {
+          "@type": "Product",
+          "name": "Charlotte's Web",
+          "url": "https://www.barnesandnoble.com/w/charlottes-web-e-b-white/1101727968?ean=9780062406781",
+          "sku": "9780062406781",
+          "image": "https://cdn.shopify.com/s/files/1/0674/5433/7265/files/9780062406781_p0.jpg?v=1765829499",
+          "description": "(truncated)",
+          "bookFormat": "https://schema.org/EBook",
+          "offers": {
+            "@type": "Offer",
+            "url": "https://www.barnesandnoble.com/w/charlottes-web-e-b-white/1101727968?ean=9780062406781",
+            "price": "18.99",
+            "priceCurrency": "USD",
+            "availability": "https://schema.org/InStock",
+            "itemCondition": "https://schema.org/NewCondition",
+            "seller": {
+              "@type": "Organization",
+              "name": "Barnes & Noble"
+            }
+          }
+        },
+        {
+          "@type": "Product",
+          "name": "Charlotte's Web (Turtleback School & Library Binding Edition)",
+          "url": "https://www.barnesandnoble.com/w/charlottes-web-e-b-white/1101727968?ean=9780808537724",
+          "sku": "9780808537724",
+          "image": "https://cdn.shopify.com/s/files/1/0674/5433/7265/files/9780808537724_p0.jpg?v=1766155322",
+          "description": "(truncated)",
+          "bookFormat": "https://schema.org/Hardcover",
+          "offers": {
+            "@type": "Offer",
+            "url": "https://www.barnesandnoble.com/w/charlottes-web-e-b-white/1101727968?ean=9780808537724",
+            "price": "20.4",
+            "priceCurrency": "USD",
+            "availability": "https://schema.org/OutOfStock",
+            "itemCondition": "https://schema.org/NewCondition",
+            "seller": {
+              "@type": "Organization",
+              "name": "Barnes & Noble"
+            }
+          }
+        },
+        {
+          "@type": "Product",
+          "name": "Charlotte's web",
+          "url": "https://www.barnesandnoble.com/w/charlottes-web-e-b-white/1101727968?ean=2940201701895",
+          "sku": "2940201701895",
+          "image": "https://cdn.shopify.com/s/files/1/0674/5433/7265/files/2940201701895_p0.jpg?v=1781363998",
+          "description": "(truncated)",
+          "bookFormat": "https://schema.org/AudiobookFormat",
+          "readBy": [
+            {
+              "@type": "Person",
+              "name": "Anton de Goede"
+            }
+          ],
+          "offers": {
+            "@type": "Offer",
+            "url": "https://www.barnesandnoble.com/w/charlottes-web-e-b-white/1101727968?ean=2940201701895",
+            "price": "14.05",
+            "priceCurrency": "USD",
+            "availability": "https://schema.org/InStock",
+            "itemCondition": "https://schema.org/NewCondition",
+            "seller": {
+              "@type": "Organization",
+              "name": "Barnes & Noble"
+            }
+          }
+        },
+        {
+          "@type": "Product",
+          "name": "Charlotte's web",
+          "url": "https://www.barnesandnoble.com/w/charlottes-web-e-b-white/1101727968?ean=2940201766689",
+          "sku": "2940201766689",
+          "image": "https://cdn.shopify.com/s/files/1/0674/5433/7265/files/2940201766689_p0.jpg?v=1781363999",
+          "description": "(truncated)",
+          "bookFormat": "https://schema.org/AudiobookFormat",
+          "readBy": [
+            {
+              "@type": "Person",
+              "name": "Anton de Goede"
+            }
+          ],
+          "offers": {
+            "@type": "Offer",
+            "url": "https://www.barnesandnoble.com/w/charlottes-web-e-b-white/1101727968?ean=2940201766689",
+            "price": "14.05",
+            "priceCurrency": "USD",
+            "availability": "https://schema.org/InStock",
+            "itemCondition": "https://schema.org/NewCondition",
+            "seller": {
+              "@type": "Organization",
+              "name": "Barnes & Noble"
+            }
+          }
+        }
+      ],
+      "variesBy": "https://schema.org/bookFormat",
+      "productGroupID": "1101727968"
+    },
+    {
+      "@type": "Product",
+      "@id": "https://www.barnesandnoble.com/w/charlottes-web-e-b-white/1101727968#Product",
+      "name": "Charlotte's Web",
+      "image": "https://cdn.shopify.com/s/files/1/0674/5433/7265/files/9780064400558_p0.jpg?v=1768989587",
+      "offers": {
+        "@type": "Offer",
+        "url": "https://www.barnesandnoble.com/w/charlottes-web-e-b-white/1101727968?ean=9780064400558",
+        "price": "10.99",
+        "priceCurrency": "USD",
+        "availability": "https://schema.org/InStock",
+        "itemCondition": "https://schema.org/NewCondition",
+        "seller": {
+          "@type": "Organization",
+          "name": "Barnes & Noble"
+        }
+      }
+    }
+  ]
+}

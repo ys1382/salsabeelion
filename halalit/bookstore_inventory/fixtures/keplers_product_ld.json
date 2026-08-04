@@ -1,0 +1,34 @@
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Book",
+      "@id": "https://keplers.com/book/9780064400558?v=1949",
+      "name": "Charlotte's Web: A Newbery Honor Award Winner",
+      "url": "https://keplers.com/book/9780064400558?v=1949",
+      "image": {
+        "@type": "ImageObject",
+        "representativeOfPage": "True",
+        "url": "https://images.booksense.com/images/558/400/9780064400558.jpg"
+      },
+      "workExample": {
+        "@type": "Book",
+        "isbn": "9780064400558",
+        "potentialAction": {
+          "@type": "ReadAction",
+          "expectsAcceptanceOf": {
+            "@type": "Offer",
+            "price": "11.49",
+            "priceCurrency": "USD",
+            "itemCondition": "https://schema.org/NewCondition",
+            "availability": "https://schema.org/InStock",
+            "category": "purchase"
+          }
+        },
+        "url": "https://keplers.com/book/9780064400558?v=1949",
+        "datePublished": "2025-09-24"
+      },
+      "description": "(truncated for fixture)"
+    }
+  ]
+}

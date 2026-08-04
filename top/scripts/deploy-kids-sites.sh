@@ -148,6 +148,12 @@ if site_enabled halalit; then
       --exclude 'lookup-log.jsonl' \
       --exclude '__pycache__' \
       "$ROOT/halalit/server/" "$HOST:~/$REMOTE_BASE/oddtrove-server/"
+    if [[ -d "$ROOT/halalit/bookstore_inventory" ]]; then
+      rsync -avz \
+        --exclude '__pycache__' \
+        --exclude '.pytest_cache' \
+        "$ROOT/halalit/bookstore_inventory/" "$HOST:~/$REMOTE_BASE/oddtrove-server/bookstore_inventory/"
+    fi
   fi
 fi
 if site_enabled rpg; then

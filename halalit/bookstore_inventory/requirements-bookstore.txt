@@ -1,0 +1,10 @@
+# Optional extras for Halalit bookstore inventory (install on the API host).
+# Core inventory package runs with stdlib only (fixture adapter + JSON-LD HTTP checks).
+
+# Background jobs
+APScheduler>=3.10.4,<4
+
+# Optional browser / AI extraction — only when an adapter explicitly needs JS
+# and the path is robots-allowed. Not required for fixture or JSON-LD ISBN checks.
+# crawl4ai>=0.4.0
+# playwright>=1.40.0

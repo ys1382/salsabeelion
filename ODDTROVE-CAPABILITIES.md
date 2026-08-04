@@ -60,6 +60,7 @@ Last updated: 2026-07-17
 - Client-side shelves, import, series expand, Book Quest branches
 - Block or allow titles via `halalit-family-shelf-policy.js` and `halalit-curated-shelf-warnings.js`
 - Private owner lists in `halalit/.cursor/private/` (not deployed)
+- Bookstore inventory **scaffold** (`halalit/bookstore_inventory/`) — SQLite listings, fixture adapter, Owner’s Office dashboard, Wishlist “Available from bookstores” UI. Live B&N / Kepler’s / Green Apple adapters stay **paused** until robots/API/legal review; no purchase checkout on Halalit.
 
 **Cannot do without new work:**
 - Real user accounts or sync across devices (no Halalit auth backend today)

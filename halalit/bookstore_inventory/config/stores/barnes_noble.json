@@ -1,0 +1,48 @@
+{
+  "store_id": "barnes_noble",
+  "adapter": "barnes_noble",
+  "name": "Barnes & Noble",
+  "website": "https://www.barnesandnoble.com/",
+  "enabled": false,
+  "allow_isbn_check_when_disabled": false,
+  "active": true,
+  "paused": true,
+  "inventory_source": "product_page_jsonld",
+  "online_ordering": true,
+  "request_delay_seconds": 12,
+  "refresh_frequency_minutes": 720,
+  "stale_threshold_hours": 168,
+  "approved_domains": [
+    "barnesandnoble.com",
+    "www.barnesandnoble.com",
+    "stores.barnesandnoble.com"
+  ],
+  "isbn_product_url_template": "https://www.barnesandnoble.com/w/?ean={isbn}",
+  "robots_notes": "Disallow: /search. Prefer product pages by EAN/ISBN. Store pages under stores.barnesandnoble.com/store/{id}. Enable only after legal/ops review.",
+  "locations": [
+    {
+      "location_id": "stevens_creek",
+      "place_id": "bn-stevens-creek",
+      "location_name": "Stevens Creek Blvd",
+      "place_label": "Barnes & Noble — Stevens Creek (Santa Clara County)",
+      "short_label": "B&N Stevens Creek",
+      "initials": "BN",
+      "street_address": "3600 Stevens Creek Blvd",
+      "city": "San Jose",
+      "state": "CA",
+      "postal_code": "95117",
+      "latitude": 37.323,
+      "longitude": -121.973,
+      "phone": "408-984-3495",
+      "hours": "Daily (confirm on store page)",
+      "website": "https://stores.barnesandnoble.com/store/1944",
+      "bn_store_number": "1944",
+      "county": "Santa Clara County",
+      "online_ordering": true,
+      "inventory_source": "store_page_plus_product",
+      "active": true,
+      "favorite_default": true
+    }
+  ],
+  "legal_status": "needs_owner_review_before_enable"
+}
