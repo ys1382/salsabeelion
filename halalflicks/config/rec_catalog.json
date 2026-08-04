@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "note": "Owner-curated recommendation pool only. Do not auto-add Flickcheck fine results. Link out only — nothing streams here. Parent-flag notes stay visible; discretion/reject titles stay out. Holiday rule: titles centered on Christmas or other non-Muslim religious holidays are off this list (Christmas-in-the-title usually out; stories that merely include a holiday scene may differ).",
+  "note": "Owner-curated recommendation pool only. Do not auto-add Flickcheck fine results. Link out only — nothing streams here. Parent-flag notes stay visible; discretion/reject titles stay out. Holiday rule: titles centered on Christmas or other non-Muslim religious holidays are off this list (Christmas-in-the-title usually out; stories that merely include a holiday scene may differ). Actor rule: never add films starring The Rock (Dwayne Johnson) — owner reject.",
   "movies": [
     {
       "title": "The Many Adventures of Winnie the Pooh",
@@ -534,18 +534,6 @@
         "music",
         "family",
         "magic"
-      ]
-    },
-    {
-      "title": "The Jungle Book",
-      "year": "1967",
-      "note": "Owner OK with parent flag — some gross humor.",
-      "themes": [
-        "disney",
-        "kids_movie",
-        "animals",
-        "adventure",
-        "music"
       ]
     },
     {
@@ -1131,6 +1119,330 @@
         "superheroes",
         "adventure",
         "family"
+      ]
+    },
+    {
+      "title": "Migration",
+      "year": "2023",
+      "note": "Owner OK — recommend.",
+      "themes": [
+        "illumination",
+        "kids_movie",
+        "birds",
+        "family",
+        "adventure",
+        "comedy"
+      ]
+    },
+    {
+      "title": "Puss in Boots",
+      "year": "2011",
+      "note": "Owner OK — recommend.",
+      "themes": [
+        "dreamworks",
+        "kids_movie",
+        "adventure",
+        "comedy",
+        "cats"
+      ]
+    },
+    {
+      "title": "Puss in Boots: The Last Wish",
+      "year": "2022",
+      "note": "Owner OK — recommend.",
+      "themes": [
+        "dreamworks",
+        "kids_movie",
+        "adventure",
+        "friendship",
+        "cats"
+      ]
+    },
+    {
+      "title": "Orion and the Dark",
+      "year": "2024",
+      "note": "Owner OK — recommend.",
+      "themes": [
+        "dreamworks",
+        "kids_movie",
+        "friendship",
+        "fear",
+        "comfort"
+      ]
+    },
+    {
+      "title": "Matilda",
+      "year": "1996",
+      "note": "Owner OK — recommend.",
+      "themes": [
+        "kids_movie",
+        "family",
+        "comedy",
+        "school",
+        "empowerment"
+      ]
+    },
+    {
+      "title": "Willy Wonka & the Chocolate Factory",
+      "year": "1971",
+      "note": "Owner OK — recommend.",
+      "themes": [
+        "kids_movie",
+        "classic",
+        "fantasy",
+        "candy",
+        "adventure"
+      ]
+    },
+    {
+      "title": "Charlie and the Chocolate Factory",
+      "year": "2005",
+      "note": "Owner OK — recommend.",
+      "themes": [
+        "kids_movie",
+        "fantasy",
+        "candy",
+        "adventure",
+        "family"
+      ]
+    },
+    {
+      "title": "Jumanji",
+      "year": "1995",
+      "note": "Owner OK — recommend.",
+      "themes": [
+        "kids_movie",
+        "adventure",
+        "fantasy",
+        "family"
+      ]
+    },
+    {
+      "title": "The Karate Kid",
+      "year": "1984",
+      "note": "Owner OK — fine.",
+      "themes": [
+        "kids_movie",
+        "martial_arts",
+        "mentorship",
+        "friendship",
+        "classic"
+      ]
+    },
+    {
+      "title": "E.T. the Extra-Terrestrial",
+      "year": "1982",
+      "note": "Owner OK — fine.",
+      "themes": [
+        "kids_movie",
+        "aliens",
+        "friendship",
+        "classic",
+        "adventure"
+      ]
+    },
+    {
+      "title": "Back to the Future",
+      "year": "1985",
+      "note": "Owner OK — fine.",
+      "themes": [
+        "kids_movie",
+        "time_travel",
+        "adventure",
+        "comedy",
+        "classic"
+      ]
+    },
+    {
+      "title": "The NeverEnding Story",
+      "year": "1984",
+      "note": "Owner OK — fine.",
+      "themes": [
+        "kids_movie",
+        "fantasy",
+        "adventure",
+        "classic"
+      ]
+    },
+    {
+      "title": "Charlotte's Web",
+      "year": "2006",
+      "note": "Owner OK — fine.",
+      "themes": [
+        "kids_movie",
+        "animals",
+        "friendship",
+        "farm",
+        "kindness"
+      ]
+    },
+    {
+      "title": "Spy Kids",
+      "year": "2001",
+      "note": "Owner OK — recommend.",
+      "themes": [
+        "kids_movie",
+        "spies",
+        "adventure",
+        "family",
+        "comedy"
+      ]
+    },
+    {
+      "title": "Spy Kids 2: The Island of Lost Dreams",
+      "year": "2002",
+      "note": "Owner OK — recommend.",
+      "themes": [
+        "kids_movie",
+        "spies",
+        "adventure",
+        "family",
+        "comedy"
+      ]
+    },
+    {
+      "title": "Spy Kids 3-D: Game Over",
+      "year": "2003",
+      "note": "Owner OK — recommend.",
+      "themes": [
+        "kids_movie",
+        "spies",
+        "adventure",
+        "family",
+        "comedy"
+      ]
+    },
+    {
+      "title": "Spy Kids: All the Time in the World",
+      "year": "2011",
+      "note": "Owner OK — recommend.",
+      "themes": [
+        "kids_movie",
+        "spies",
+        "adventure",
+        "family",
+        "comedy"
+      ]
+    },
+    {
+      "title": "Casper",
+      "year": "1995",
+      "note": "Owner OK — recommend.",
+      "themes": [
+        "kids_movie",
+        "ghosts",
+        "friendship",
+        "family",
+        "comedy"
+      ]
+    },
+    {
+      "title": "101 Dalmatians",
+      "year": "1996",
+      "note": "Owner OK — recommend (live-action).",
+      "themes": [
+        "kids_movie",
+        "dogs",
+        "adventure",
+        "family",
+        "comedy"
+      ]
+    },
+    {
+      "title": "102 Dalmatians",
+      "year": "2000",
+      "note": "Owner OK — recommend.",
+      "themes": [
+        "kids_movie",
+        "dogs",
+        "adventure",
+        "family",
+        "comedy"
+      ]
+    },
+    {
+      "title": "Christopher Robin",
+      "year": "2018",
+      "note": "Owner OK — recommend.",
+      "themes": [
+        "disney",
+        "kids_movie",
+        "pooh",
+        "friendship",
+        "family",
+        "comfort"
+      ]
+    },
+    {
+      "title": "Pokémon Detective Pikachu",
+      "year": "2019",
+      "note": "Owner OK with flag — maybe some gross humor.",
+      "themes": [
+        "kids_movie",
+        "pokemon",
+        "mystery",
+        "adventure",
+        "friendship"
+      ]
+    },
+    {
+      "title": "A Minecraft Movie",
+      "year": "2025",
+      "note": "Owner OK — fine.",
+      "themes": [
+        "kids_movie",
+        "adventure",
+        "comedy",
+        "minecraft",
+        "friendship"
+      ]
+    },
+    {
+      "title": "The Garfield Movie",
+      "year": "2024",
+      "note": "Owner OK — recommend.",
+      "themes": [
+        "kids_movie",
+        "cats",
+        "comedy",
+        "family",
+        "friendship"
+      ]
+    },
+    {
+      "title": "My Little Pony: Friendship Is Magic",
+      "year": "2010",
+      "note": "Owner OK with flags — last-season LGBTQ; some romance-focused eps; darker moments (Too Many Pinkie Pies).",
+      "themes": [
+        "kids_show",
+        "tv_series",
+        "friendship",
+        "fantasy",
+        "ponies"
+      ]
+    },
+    {
+      "title": "The Magic School Bus",
+      "year": "1994",
+      "note": "Owner OK — fine and great; light kids humor.",
+      "themes": [
+        "kids_show",
+        "tv_series",
+        "science",
+        "school",
+        "learning"
+      ]
+    },
+    {
+      "title": "Wild Kratts",
+      "year": "2011",
+      "note": "Owner OK — fine.",
+      "themes": [
+        "kids_show",
+        "tv_series",
+        "animals",
+        "science",
+        "adventure"
       ]
     }
   ]

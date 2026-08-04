@@ -259,7 +259,7 @@
       "title": "Moana",
       "year": "2016",
       "rec_ok": false,
-      "note": "Owner: not recommend — main side-character actor supports unethical cause.",
+      "note": "Owner reject: physical immodesty; main male actor supports unethical causes (also previously noted side-character actor).",
       "trailer_url": "https://www.youtube.com/watch?v=yfCOEGyHMwc",
       "poster_url": "https://upload.wikimedia.org/wikipedia/en/2/26/Moana_Teaser_Poster.jpg"
     },
@@ -514,8 +514,8 @@
     {
       "title": "The Jungle Book",
       "year": "1967",
-      "rec_ok": true,
-      "note": "Owner: on recommend list; some gross-humor flag.",
+      "rec_ok": false,
+      "note": "Owner: parent discretion — less clothing / immodesty (reclassified from recommend after live-action review). No auto-recommend.",
       "poster_url": "https://upload.wikimedia.org/wikipedia/en/1/1d/Thejunglebook_movieposter.jpg",
       "trailer_url": "https://www.youtube.com/watch?v=owgrkAQ-Log"
     },
@@ -1266,6 +1266,522 @@
       "note": "Owner: plot clean; flag for physical immodesty (superhero outfits).",
       "poster_url": "https://upload.wikimedia.org/wikipedia/en/a/a0/Spider-Man_Beyond_the_Spider-Verse_logo.jpg",
       "trailer_url": "https://www.youtube.com/watch?v=5LJwMtnjidg"
+    },
+    {
+      "title": "Porco Rosso",
+      "year": "1992",
+      "rec_ok": false,
+      "note": "Owner: parent discretion — Gina-level fanservice. No auto-recommend."
+    },
+    {
+      "title": "The Cat Returns",
+      "year": "2002",
+      "rec_ok": false,
+      "note": "Owner: parent discretion — main character confesses feelings for an anthropomorphic cat. No auto-recommend."
+    },
+    {
+      "title": "From Up on Poppy Hill",
+      "year": "2011",
+      "rec_ok": false,
+      "note": "Owner: parent discretion — misunderstanding/fear of father being unfaithful; “is it OK if I’m in love because he might be my half-brother” plot. No auto-recommend."
+    },
+    {
+      "title": "The Wind Rises",
+      "year": "2013",
+      "rec_ok": false,
+      "note": "Owner: parent discretion — main character designs planes for war and that is treated as normalized. No auto-recommend."
+    },
+    {
+      "title": "The Boy and the Heron",
+      "year": "2023",
+      "rec_ok": false,
+      "note": "Owner: English version reject — Mark Hamill supports unethical causes. Japanese version: parent discretion — mental-health content. No auto-recommend either way."
+    },
+    {
+      "title": "Wolf Children",
+      "year": "2012",
+      "rec_ok": false,
+      "note": "Owner reject: revealing bath scene with children (not full-body, still reject)."
+    },
+    {
+      "title": "The Girl Who Leapt Through Time",
+      "year": "2006",
+      "rec_ok": false,
+      "note": "Owner: parent discretion — mostly about romance. No auto-recommend."
+    },
+    {
+      "title": "Sailor Moon R: The Movie",
+      "year": "1993",
+      "rec_ok": false,
+      "note": "Owner reject: level of fanservice."
+    },
+    {
+      "title": "Migration",
+      "year": "2023",
+      "rec_ok": true,
+      "note": "Owner hand-vet: recommend."
+    },
+    {
+      "title": "The Super Mario Bros. Movie",
+      "year": "2023",
+      "rec_ok": false,
+      "note": "Owner: parent discretion — some women’s revealing tops. No auto-recommend."
+    },
+    {
+      "title": "Puss in Boots",
+      "year": "2011",
+      "rec_ok": true,
+      "note": "Owner hand-vet: recommend."
+    },
+    {
+      "title": "Puss in Boots: The Last Wish",
+      "year": "2022",
+      "rec_ok": true,
+      "note": "Owner hand-vet: recommend."
+    },
+    {
+      "title": "Moana 2",
+      "year": "2024",
+      "rec_ok": false,
+      "note": "Owner reject: physical immodesty; main male actor supports unethical causes (same concerns as Moana 1)."
+    },
+    {
+      "title": "Elio",
+      "year": "2025",
+      "rec_ok": false,
+      "note": "Owner reject: LGBTQ content."
+    },
+    {
+      "title": "Nimona",
+      "year": "2023",
+      "rec_ok": false,
+      "note": "Owner reject: LGBTQ content."
+    },
+    {
+      "title": "Teenage Mutant Ninja Turtles: Mutant Mayhem",
+      "year": "2023",
+      "rec_ok": false,
+      "note": "Owner: parent discretion — film itself mostly fine, but same storyline’s TV show has LGBTQ characters. No auto-recommend."
+    },
+    {
+      "title": "The Bad Guys",
+      "year": "2022",
+      "rec_ok": false,
+      "note": "Owner: parent discretion — some women’s revealing tops. No auto-recommend."
+    },
+    {
+      "title": "Ruby Gillman, Teenage Kraken",
+      "year": "2023",
+      "rec_ok": false,
+      "note": "Owner reject: mermaid/merfolk immodesty."
+    },
+    {
+      "title": "Orion and the Dark",
+      "year": "2024",
+      "rec_ok": true,
+      "note": "Owner hand-vet: recommend."
+    },
+    {
+      "title": "That Christmas",
+      "year": "2024",
+      "rec_ok": false,
+      "note": "Owner reject: centered on a Christian holiday (holiday rule)."
+    },
+    {
+      "title": "Matilda",
+      "year": "1996",
+      "rec_ok": true,
+      "note": "Owner hand-vet: recommend."
+    },
+    {
+      "title": "Willy Wonka & the Chocolate Factory",
+      "year": "1971",
+      "rec_ok": true,
+      "note": "Owner hand-vet: recommend."
+    },
+    {
+      "title": "Charlie and the Chocolate Factory",
+      "year": "2005",
+      "rec_ok": true,
+      "note": "Owner hand-vet: recommend."
+    },
+    {
+      "title": "Hook",
+      "year": "1991",
+      "rec_ok": false,
+      "note": "Owner: parent discretion. No auto-recommend."
+    },
+    {
+      "title": "The Secret Garden",
+      "year": "1993",
+      "rec_ok": false,
+      "note": "Owner: parent discretion. No auto-recommend."
+    },
+    {
+      "title": "The Parent Trap",
+      "year": "1998",
+      "rec_ok": false,
+      "note": "Owner: parent discretion. No auto-recommend."
+    },
+    {
+      "title": "The Princess Diaries",
+      "year": "2001",
+      "rec_ok": false,
+      "note": "Owner reject: focus on romance plus revealing scene regarding protagonist."
+    },
+    {
+      "title": "Harry Potter and the Sorcerer's Stone",
+      "year": "2001",
+      "rec_ok": false,
+      "note": "Owner reject: entire Harry Potter series — novels by author who supports unethical causes."
+    },
+    {
+      "title": "Harry Potter and the Chamber of Secrets",
+      "year": "2002",
+      "rec_ok": false,
+      "note": "Owner reject: entire Harry Potter series — novels by author who supports unethical causes."
+    },
+    {
+      "title": "Harry Potter and the Prisoner of Azkaban",
+      "year": "2004",
+      "rec_ok": false,
+      "note": "Owner reject: entire Harry Potter series — novels by author who supports unethical causes."
+    },
+    {
+      "title": "Harry Potter and the Goblet of Fire",
+      "year": "2005",
+      "rec_ok": false,
+      "note": "Owner reject: entire Harry Potter series — novels by author who supports unethical causes."
+    },
+    {
+      "title": "Harry Potter and the Order of the Phoenix",
+      "year": "2007",
+      "rec_ok": false,
+      "note": "Owner reject: entire Harry Potter series — novels by author who supports unethical causes."
+    },
+    {
+      "title": "Harry Potter and the Half-Blood Prince",
+      "year": "2009",
+      "rec_ok": false,
+      "note": "Owner reject: entire Harry Potter series — novels by author who supports unethical causes."
+    },
+    {
+      "title": "Harry Potter and the Deathly Hallows – Part 1",
+      "year": "2010",
+      "rec_ok": false,
+      "note": "Owner reject: entire Harry Potter series — novels by author who supports unethical causes."
+    },
+    {
+      "title": "Harry Potter and the Deathly Hallows – Part 2",
+      "year": "2011",
+      "rec_ok": false,
+      "note": "Owner reject: entire Harry Potter series — novels by author who supports unethical causes."
+    },
+    {
+      "title": "Jumanji",
+      "year": "1995",
+      "rec_ok": true,
+      "note": "Owner hand-vet: recommend."
+    },
+    {
+      "title": "Jumanji: Welcome to the Jungle",
+      "year": "2017",
+      "rec_ok": false,
+      "note": "Owner reject: The Rock (Dwayne Johnson) supports unethical causes. Rule — do not recommend anything with The Rock as an actor."
+    },
+    {
+      "title": "The Karate Kid",
+      "year": "1984",
+      "rec_ok": true,
+      "note": "Owner hand-vet: fine / recommend."
+    },
+    {
+      "title": "E.T. the Extra-Terrestrial",
+      "year": "1982",
+      "rec_ok": true,
+      "note": "Owner hand-vet: fine / recommend."
+    },
+    {
+      "title": "Back to the Future",
+      "year": "1985",
+      "rec_ok": true,
+      "note": "Owner hand-vet: fine / recommend."
+    },
+    {
+      "title": "Labyrinth",
+      "year": "1986",
+      "rec_ok": false,
+      "note": "Owner: parent discretion — weird dynamic between Sarah and the Goblin King; Goblin King wears some immodest clothing. No auto-recommend."
+    },
+    {
+      "title": "The NeverEnding Story",
+      "year": "1984",
+      "rec_ok": true,
+      "note": "Owner hand-vet: fine / recommend."
+    },
+    {
+      "title": "Home Alone",
+      "year": "1990",
+      "rec_ok": false,
+      "note": "Owner: parent discretion — Christmas parental flag; main character uses rather crass language; family negativity. No auto-recommend."
+    },
+    {
+      "title": "Home Alone 2: Lost in New York",
+      "year": "1992",
+      "rec_ok": false,
+      "note": "Owner: parent discretion — Christmas parental flag; main character uses rather crass language; family negativity. No auto-recommend."
+    },
+    {
+      "title": "Charlotte's Web",
+      "year": "2006",
+      "rec_ok": true,
+      "note": "Owner hand-vet: fine / recommend."
+    },
+    {
+      "title": "The Karate Kid Part II",
+      "year": "1986",
+      "rec_ok": false,
+      "note": "Owner: parent discretion — focus on “getting the girl” is a big part of the plot. No auto-recommend."
+    },
+    {
+      "title": "The Karate Kid Part III",
+      "year": "1989",
+      "rec_ok": false,
+      "note": "Owner: parent discretion — focus on “getting the girl” is a big part of the plot. No auto-recommend."
+    },
+    {
+      "title": "Spy Kids",
+      "year": "2001",
+      "rec_ok": true,
+      "note": "Owner hand-vet: recommend."
+    },
+    {
+      "title": "Spy Kids 2: The Island of Lost Dreams",
+      "year": "2002",
+      "rec_ok": true,
+      "note": "Owner hand-vet: recommend."
+    },
+    {
+      "title": "National Treasure",
+      "year": "2004",
+      "rec_ok": false,
+      "note": "Owner: parent discretion — heist movie. No auto-recommend."
+    },
+    {
+      "title": "Lemony Snicket's A Series of Unfortunate Events",
+      "year": "2004",
+      "rec_ok": false,
+      "note": "Owner: parent discretion — based on a book series that makes adult references too often. No auto-recommend."
+    },
+    {
+      "title": "The Spiderwick Chronicles",
+      "year": "2008",
+      "rec_ok": false,
+      "note": "Owner: parent discretion — a little scary but clean. No auto-recommend."
+    },
+    {
+      "title": "Spy Kids 3-D: Game Over",
+      "year": "2003",
+      "rec_ok": true,
+      "note": "Owner hand-vet: recommend."
+    },
+    {
+      "title": "Spy Kids: All the Time in the World",
+      "year": "2011",
+      "rec_ok": true,
+      "note": "Owner hand-vet: recommend."
+    },
+    {
+      "title": "Casper",
+      "year": "1995",
+      "rec_ok": true,
+      "note": "Owner hand-vet: recommend."
+    },
+    {
+      "title": "The Flintstones in Viva Rock Vegas",
+      "year": "2000",
+      "rec_ok": false,
+      "note": "Owner reject: Rock Vegas — gambling focus."
+    },
+    {
+      "title": "One Hundred and One Dalmatians",
+      "year": "1996",
+      "rec_ok": true,
+      "note": "Owner hand-vet: recommend (1996 live-action)."
+    },
+    {
+      "title": "102 Dalmatians",
+      "year": "2000",
+      "rec_ok": true,
+      "note": "Owner hand-vet: recommend."
+    },
+    {
+      "title": "The Jungle Book",
+      "year": "2016",
+      "rec_ok": false,
+      "note": "Owner reject: less clothing / immodesty."
+    },
+    {
+      "title": "Christopher Robin",
+      "year": "2018",
+      "rec_ok": true,
+      "note": "Owner hand-vet: recommend."
+    },
+    {
+      "title": "Aladdin",
+      "year": "2019",
+      "rec_ok": false,
+      "note": "Owner reject: religious misrepresentation (default for Aladdin) plus less clothing / immodesty."
+    },
+    {
+      "title": "The Little Mermaid",
+      "year": "2023",
+      "rec_ok": false,
+      "note": "Owner reject: immodesty (live-action)."
+    },
+    {
+      "title": "Mulan",
+      "year": "2020",
+      "rec_ok": false,
+      "note": "Owner reject: main character’s actor supports unethical causes."
+    },
+    {
+      "title": "Lilo & Stitch",
+      "year": "2025",
+      "rec_ok": false,
+      "note": "Owner reject: immodesty (live-action)."
+    },
+    {
+      "title": "Miraculous: Ladybug & Cat Noir, The Movie",
+      "year": "2023",
+      "rec_ok": false,
+      "note": "Owner: parent discretion bordering reject — tights immodesty. No auto-recommend."
+    },
+    {
+      "title": "Sonic the Hedgehog",
+      "year": "2020",
+      "rec_ok": false,
+      "note": "Owner: parent discretion — sister of main girl character sometimes wears immodest clothing. No auto-recommend."
+    },
+    {
+      "title": "Sonic the Hedgehog 2",
+      "year": "2022",
+      "rec_ok": false,
+      "note": "Owner: parent discretion — sister of main girl character sometimes wears immodest clothing. No auto-recommend."
+    },
+    {
+      "title": "Sonic the Hedgehog 3",
+      "year": "2024",
+      "rec_ok": false,
+      "note": "Owner: parent discretion — sister sometimes immodest clothing; mental-health issues (Shadow and Grandpa Eggman). No auto-recommend."
+    },
+    {
+      "title": "Pokémon Detective Pikachu",
+      "year": "2019",
+      "rec_ok": true,
+      "note": "Owner: recommend; maybe some gross humor — flag."
+    },
+    {
+      "title": "Dora and the Lost City of Gold",
+      "year": "2019",
+      "rec_ok": false,
+      "note": "Owner: parent discretion — some grosser humor. No auto-recommend."
+    },
+    {
+      "title": "A Minecraft Movie",
+      "year": "2025",
+      "rec_ok": true,
+      "note": "Owner hand-vet: fine / recommend."
+    },
+    {
+      "title": "Wonka",
+      "year": "2023",
+      "rec_ok": false,
+      "note": "Owner reject: adult stuff."
+    },
+    {
+      "title": "The Garfield Movie",
+      "year": "2024",
+      "rec_ok": true,
+      "note": "Owner hand-vet: recommend."
+    },
+    {
+      "title": "Bluey",
+      "year": "2018",
+      "rec_ok": false,
+      "note": "Owner: parent discretion — sometimes has adult jokes or references. TV series. No auto-recommend."
+    },
+    {
+      "title": "Phineas and Ferb",
+      "year": "2007",
+      "rec_ok": false,
+      "note": "Owner: parent discretion — sometimes has adult jokes or references. TV series. No auto-recommend."
+    },
+    {
+      "title": "Gravity Falls",
+      "year": "2012",
+      "rec_ok": false,
+      "note": "Owner reject: more adult and gross humor. TV series."
+    },
+    {
+      "title": "Kim Possible",
+      "year": "2002",
+      "rec_ok": false,
+      "note": "Owner reject: immodest top; girl often focused on boyfriend relationship. TV series."
+    },
+    {
+      "title": "Avatar: The Last Airbender",
+      "year": "2005",
+      "rec_ok": false,
+      "note": "Owner: parent discretion / mostly clean with flag — a few episodes have swimwear etc. TV series. No auto-recommend."
+    },
+    {
+      "title": "The Legend of Korra",
+      "year": "2012",
+      "rec_ok": false,
+      "note": "Owner reject: some mental-health content; more romance than ATLA; ends on an LGBTQ note. TV series."
+    },
+    {
+      "title": "Batman: The Animated Series",
+      "year": "1992",
+      "rec_ok": false,
+      "note": "Owner reject: tights and more revealing outfits in general. TV series."
+    },
+    {
+      "title": "Superman: The Animated Series",
+      "year": "1996",
+      "rec_ok": false,
+      "note": "Owner reject: tights and more revealing outfits in general. TV series."
+    },
+    {
+      "title": "Justice League",
+      "year": "2001",
+      "rec_ok": false,
+      "note": "Owner reject: tights and more revealing outfits (e.g. Wonder Woman). TV series."
+    },
+    {
+      "title": "Teen Titans",
+      "year": "2003",
+      "rec_ok": false,
+      "note": "Owner reject: tights and more revealing outfits in general. TV series."
+    },
+    {
+      "title": "My Little Pony: Friendship Is Magic",
+      "year": "2010",
+      "rec_ok": true,
+      "note": "Owner: generally fine — recommend with flags: some LGBTQ representation in last season; some romance-focused (not adult) episodes; darker moments (e.g. Too Many Pinkie Pies — pinkies evaporated back to the pool). TV series."
+    },
+    {
+      "title": "The Magic School Bus",
+      "year": "1994",
+      "rec_ok": true,
+      "note": "Owner: pretty much fine and great — kids humor, nothing worse. TV series."
+    },
+    {
+      "title": "Wild Kratts",
+      "year": "2011",
+      "rec_ok": true,
+      "note": "Owner hand-vet: fine. TV series."
     }
   ]
 }
