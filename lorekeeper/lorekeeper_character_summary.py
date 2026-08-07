@@ -961,10 +961,15 @@ def _who_is_profile_bit(bit: str, label: str) -> bool:
     from lorekeeper_character_compose import (
         _is_plot_arc_clause,
         is_other_character_scene_beat,
+        is_story_significance_clause,
     )
 
     if _is_plot_arc_clause(bit) or is_other_character_scene_beat(bit, label):
         return False
+    if is_story_significance_clause(bit, label) and any(
+        _name_in_text(name, bit) for name in [label]
+    ):
+        return True
     bucket = _classify_sentence(bit, [label])
     if bucket in ("role", "identity", "relationship"):
         return True

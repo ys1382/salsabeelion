@@ -88,6 +88,20 @@ _PLOT_ARC_RE = re.compile(
     re.I,
 )
 
+# Story-role significance — keep on who-is (not scene chronology).
+_STORY_SIGNIFICANCE_RE = re.compile(
+    r"\b("
+    r"storywalks?|story[- ]walks?|storywalker|"
+    r"sets? in motion|set in motion|"
+    r"changes? (?:their|the|his|her) world(?:\s+forever)?|"
+    r"rediscover(?:y|s|ed)?|"
+    r"preyfolk|predators?(?:'s|')?|"
+    r"changes (?:everything|the balance)|"
+    r"ultimately (?:will |does |did )?"
+    r")\b",
+    re.I,
+)
+
 # Chronology / POV-order language — not cast-card identity.
 # Keep this narrow: "the POV cuts" / look-on-face notes must NOT match.
 _PLOT_SEQUENCE_RE = re.compile(
@@ -118,7 +132,8 @@ _CAST_CARD_ANCHOR_RE = re.compile(
     r"queen|king|guardian|viewpoint|main character|side character|"
     r"arcanist|species|rabbit|wolf|fox|lynx|also known as|"
     r"known to|knows .+ as|younger brother|older brother|"
-    r"subject of|quarry|sentient|male|female"
+    r"subject of|quarry|sentient|male|female|"
+    r"storywalks?|sets? in motion|preyfolk"
     r")\b",
     re.I,
 )
@@ -139,6 +154,9 @@ def _is_plot_arc_clause(clause: str) -> bool:
     s = (clause or "").strip()
     if not s:
         return False
+    # Story-role significance is allowed on who-is — not the same as plot dump.
+    if is_story_significance_clause(s):
+        return False
     if _PLOT_ARC_RE.search(s):
         return True
     if _PLOT_SEQUENCE_RE.search(s):
@@ -146,6 +164,23 @@ def _is_plot_arc_clause(clause: str) -> bool:
     if re.search(r"\bby the (?:end|close|events)\b", s, re.I):
         return True
     return False
+
+
+def is_story_significance_clause(clause: str, label: str = "") -> bool:
+    """True for role-in-the-story significance (what they set in motion), not scene beats."""
+    s = (clause or "").strip()
+    if not s or not _STORY_SIGNIFICANCE_RE.search(s):
+        return False
+    if label and is_other_character_scene_beat(s, label):
+        return False
+    # Pure POV-order chronology still out — unless it's clearly significance-led.
+    if _PLOT_SEQUENCE_RE.search(s) and not re.search(
+        r"\b(sets? in motion|changes? (?:their|the) world|storywalk)",
+        s,
+        re.I,
+    ):
+        return False
+    return True
 
 
 def is_other_character_scene_beat(sentence: str, label: str) -> bool:
@@ -320,7 +355,8 @@ _PROFILE_CLAUSE_RE = re.compile(
     r"protagonist|antagonist|main character|viewpoint|point of view|pov|narrator|"
     r"guardian|spirit|villain|hero|grey|gray|skin|tall|short|arcanist|elf|wolf|"
     r"male|female|going after|hunts?|hunting|"
-    r"husband|wife|spouse|cousin|species|looks like|known as|called"
+    r"husband|wife|spouse|cousin|species|looks like|known as|called|"
+    r"storywalks?|sets? in motion|younger brother|older brother"
     r")\b",
     re.I,
 )
@@ -353,8 +389,12 @@ def _clause_adds_profile(clause: str, label: str) -> bool:
     s = (clause or "").strip()
     if not s or _skip_planning_line(s, label):
         return False
-    if _is_plot_arc_clause(s) or is_other_character_scene_beat(s, label):
+    if is_other_character_scene_beat(s, label):
         return False
+    if _is_plot_arc_clause(s):
+        return False
+    if is_story_significance_clause(s, label):
+        return True
     if _BIOGRAPHY_RE.search(s):
         return False
     if re.search(r"&(?:nbsp|#160;)|\u00a0", s, re.I):
@@ -565,11 +605,11 @@ def compose_character_reference(
     elif facet in ("role", "voice", "relationship"):
         clause_cap = 1
     else:
-        clause_cap = 5
+        clause_cap = 7
     p1 = _join_paragraph(lead, max_clauses=clause_cap)
     if p1:
         paragraphs.append(p1)
-    p2 = _join_paragraph(rel_clauses, max_clauses=clause_cap if facet == "relationship" else 3)
+    p2 = _join_paragraph(rel_clauses, max_clauses=clause_cap if facet == "relationship" else 5)
     if p2:
         paragraphs.append(p2)
 
@@ -579,7 +619,56 @@ def compose_character_reference(
         return ""
 
     body = "\n\n".join(paragraphs)
+    body = smooth_who_is_prose(label, body)
     return f"{label}\n\n{body}\n\n{_FOOTER_REFERENCE}"
+
+
+def smooth_who_is_prose(label: str, body: str) -> str:
+    """Fold bare gender lines into flowing cast prose — avoid stuttered 'X is male.'"""
+    text = (body or "").strip()
+    label = (label or "").strip()
+    if not text or not label:
+        return text
+    parts = text.split("\n\n")
+    out_parts: list[str] = []
+    for part in parts:
+        sentences = [s.strip() for s in re.split(r"(?<=[.!?])\s+", part) if s.strip()]
+        gender: str | None = None
+        kept: list[str] = []
+        for s in sentences:
+            m = re.match(rf"^{re.escape(label)}\s+is\s+(male|female)\.?$", s, re.I)
+            if m:
+                gender = m.group(1).lower()
+                continue
+            kept.append(s)
+        if gender and kept:
+            first = kept[0]
+            if re.match(rf"^{re.escape(label)}\s+is\s+the\b", first, re.I):
+                kept[0] = re.sub(
+                    rf"^({re.escape(label)}\s+is\s+the)\b",
+                    rf"\1 {gender}",
+                    first,
+                    count=1,
+                    flags=re.I,
+                )
+            elif re.match(rf"^{re.escape(label)}\s+is\b", first, re.I):
+                kept[0] = re.sub(
+                    rf"^({re.escape(label)}\s+is)\b",
+                    rf"\1 a {gender}",
+                    first,
+                    count=1,
+                    flags=re.I,
+                )
+            else:
+                kept[0] = re.sub(
+                    rf"^({re.escape(label)})\b",
+                    rf"\1 ({gender})",
+                    first,
+                    count=1,
+                    flags=re.I,
+                )
+        out_parts.append(" ".join(kept) if kept else part)
+    return "\n\n".join(p for p in out_parts if p.strip())
 
 
 def character_unclear_body(

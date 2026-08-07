@@ -10,6 +10,7 @@ from lorekeeper_character_compose import (
     is_coverage_question,
     is_other_character_scene_beat,
     is_plot_walkthrough_text,
+    smooth_who_is_prose,
 )
 from lorekeeper_loose_ends import is_flagged_fix_question, is_planned_gap_question
 from lorekeeper_character_summary import character_targets, is_who_is_question
@@ -278,7 +279,9 @@ def trim_off_topic_sentences(question: str, answer: str, *, allow_broad: bool) -
         return answer
     if len(kept) >= len([x for x in sentences if x.strip()]):
         return answer
-    rebuilt = title_line + ("\n\n" if title_line else "") + " ".join(kept[:3])
+    rebuilt = title_line + ("\n\n" if title_line else "") + " ".join(
+        kept[:6] if is_who_is_question(question) else kept[:3]
+    )
     if footer:
         rebuilt = rebuilt.rstrip() + "\n\n" + footer
     return rebuilt
@@ -362,7 +365,7 @@ def apply_length_policy(
     facet = detect_narrow_facet(question)
     limits = {
         "relationship": 280,
-        "who": 900,
+        "who": 1400,
         "topic": 1200,
         "fallback": 900,
         "knowledge": 900,
@@ -474,6 +477,9 @@ def scrub_rag_artifacts(question: str, answer: str, *, allow_broad: bool) -> str
         return body
     if is_who_is_question(question):
         body = scrub_who_is_plot_walkthrough(body, question=question)
+        labels = character_targets(question)
+        if labels:
+            body = smooth_who_is_prose(labels[0], body)
     if not is_who_is_question(question) and (
         _CAST_CARD_HEADER.search(body) or "**Role" in body or "**Key Ties" in body
     ):

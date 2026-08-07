@@ -35,8 +35,8 @@ class RagTests(unittest.TestCase):
     def test_system_who_is_cast_card(self):
         system = _system_for_kind("In Fairy Tale, who is Ella?", "who", brief=False)
         self.assertIn("CAST CARD", system)
-        self.assertIn("prior-story hook", system)
-        self.assertIn("POV order", system)
+        self.assertIn("flowing", system.lower())
+        self.assertIn("family ties", system.lower())
         self.assertNotIn("contradictory, say so honestly", system)
 
     def test_system_audit_meta(self):

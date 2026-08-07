@@ -387,12 +387,65 @@ class CharacterComposeTests(unittest.TestCase):
         cleaned = scrub_who_is_plot_walkthrough(
             mixed, question="In Ashford Saga, who is Character M?"
         )
+        from lorekeeper_character_compose import smooth_who_is_prose
+
+        cleaned = smooth_who_is_prose("Character M", cleaned)
         self.assertIn("protagonist", cleaned.lower())
         self.assertIn("rabbit", cleaned.lower())
         self.assertNotIn("character s", cleaned.lower())
         self.assertNotIn("first pov", cleaned.lower())
         self.assertNotIn("badly injured", cleaned.lower())
         self.assertNotIn("isn't surprised", cleaned.lower())
+        self.assertNotRegex(cleaned, r"(?i)character m is male\.?\s*$")
+
+    def test_smooth_who_is_weaves_gender(self):
+        from lorekeeper_character_compose import smooth_who_is_prose
+
+        raw = (
+            "Character M is the protagonist, a sentient white rabbit. "
+            "Character M is male. Character M is brother to Character B."
+        )
+        out = smooth_who_is_prose("Character M", raw)
+        self.assertIn("male", out.lower())
+        self.assertNotRegex(out, r"(?i)^character m is male\.?$")
+        self.assertNotIn("Character M is male.", out)
+        self.assertIn("brother", out.lower())
+
+    def test_who_is_keeps_significance_and_brothers(self):
+        entries = [
+            _entry(
+                "c1",
+                "Character M",
+                "Character M is the protagonist. Character M is a sentient white rabbit. "
+                "Character M is male. Character M storywalks into Character D's world and "
+                "sets in motion the Predators' rediscovery that the Preyfolk are also "
+                "sentient and thus changes their world forever. "
+                "Younger brother to Character B and Character C.",
+                tags=["Ashford Saga"],
+                kind="character",
+            ),
+            _entry(
+                "r1",
+                "Ties",
+                "Character M is younger brother to Character B and Character C.",
+                tags=["Ashford Saga"],
+                kind="relationship",
+            ),
+        ]
+        res = self._ask("In Ashford Saga, who is Character M?", entries)
+        answer = res.get("answer") or ""
+        self.assertEqual(res.get("materialState"), "summarizable")
+        self.assertIn("protagonist", answer.lower())
+        self.assertIn("rabbit", answer.lower())
+        self.assertIn("brother", answer.lower())
+        self.assertTrue(
+            "storywalk" in answer.lower()
+            or "sets in motion" in answer.lower()
+            or "preyfolk" in answer.lower()
+            or "forever" in answer.lower(),
+            msg=answer,
+        )
+        self.assertNotRegex(answer, r"(?i)character m is male\.")
 
     def test_who_is_prefers_cast_note_over_plot_draft(self):
         entries = [

@@ -548,6 +548,33 @@
       }
     },
     {
+      "id": "who_is_flowing_significance_and_ties",
+      "label": "Who-is flowing card with significance + brothers, no lone gender",
+      "entries": [
+        {
+          "id": "c1",
+          "title": "Character M",
+          "body": "Character M is the protagonist. Character M is a sentient white rabbit. Character M is male. Character M storywalks into Character D's world and sets in motion the Predators' rediscovery that the Preyfolk are also sentient and thus changes their world forever.",
+          "tags": ["Ashford Saga"],
+          "kind": "character"
+        },
+        {
+          "id": "r1",
+          "title": "Family",
+          "body": "Character M is younger brother to Character B and Character C.",
+          "tags": ["Ashford Saga"],
+          "kind": "relationship"
+        }
+      ],
+      "question": "In Ashford Saga, who is Character M?",
+      "assert": {
+        "questionKind": "who",
+        "materialState": "summarizable",
+        "answerContains": ["protagonist", "rabbit", "brother"],
+        "answerNotContains": ["Character M is male."]
+      }
+    },
+    {
       "id": "who_is_not_other_pov_event",
       "label": "Who-is drops other-character POV injury beat",
       "entries": [

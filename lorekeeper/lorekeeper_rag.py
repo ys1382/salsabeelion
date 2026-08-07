@@ -120,22 +120,24 @@ def _uses_cast_card(
 
 
 _WHO_CAST_CARD = """
-This is a WHO-IS question — answer as a CAST CARD, not a story summary.
+This is a WHO-IS question — answer as a flowing CAST CARD, not a story summary and not choppy one-liners.
 
-Lead with identity (only what the sources support), in this order when present:
-1. Cast role in this work (protagonist, POV, villain, side character, etc.) — if sources say protagonist, never downgrade to side character
-2. What they are as a being/type (species, look, world-group) when stated as fact
-3. Who they are to others (sibling, spouse, quarry/subject of X's interest, ally, rival)
+Write 1–2 cohesive paragraphs in reference voice ("Etherei is…"). Weave facts together — never a stuttered stack like "Etherei is male." as its own sentence.
 
-Also include when supported:
-- Status and key ties (married to X, sister of Y, queen of Z)
-- At most ONE short prior-story hook if the sources explicitly say it (e.g. "Previously, in the events of [fairytale]…") — orientation only, not a recap
-- Where the reader first meets them, if the sources name a scene or chapter — one phrase, not a scene retelling
-- Alternate names when sources link them (also known as, aka) — one short line only
+Include when the sources support it, in natural prose:
+1. Cast role (protagonist, POV, villain, side character, etc.) — if sources say protagonist, never downgrade
+2. Story-role significance — what they set in motion or how they change the world (storywalk, rediscovery, forever-stakes) when sources state it as identity/role, not as a scene beat
+3. What they are (species/type, look, world-group, gender) woven into the same sentences
+4. Who they are to others — siblings, spouse, quarry/subject of X's curiosity, allies — ALWAYS include brother/sister/family ties when notes or draft state them
+5. Alternate names (aka / known by) with correct direction
+
+Also OK when supported:
+- At most ONE short prior-story hook (e.g. "Previously, in the events of [fairytale]…") — orientation only
+- Where the reader first meets them — one phrase, not a scene retelling
 
 When notes are thin but draft/document sources dominate:
-- Distill cast role, status, species/type, and fixed ties clearly shown in draft prose.
-- One or two factual sentences — not a scene retelling or plot walkthrough.
+- Distill cast role, significance, species/type, gender, and fixed ties from draft — still flowing prose.
+- Prefer family ties stated anywhere in notes OR draft over omitting them.
 
 Alternate names and identity (direction matters — do not flip):
 - "A is known by B as X" means B knows A by the name X — never reverse to "B is known by A".
@@ -153,18 +155,15 @@ Supported inference (only when pre-parsed lines appear below — use verbatim; n
   4. Blank line, then a short summary from note sources only
   Never scold; never invent a merged fact.
 
-OMIT from the lead paragraph — never answer who-is with these:
-- Plot walkthrough, life story, or "everything they go through"
-- POV order / section order ("right after", "next POV", "next section begins", "switches to X's POV", "in his first POV")
+OMIT — never answer who-is with these:
+- Plot walkthrough / POV order ("right after", "next POV", "in his first POV", "switches to X's POV")
 - Another character's observation of a scene beat ("Serias isn't surprised to see that Etherei is injured")
-- Chase, escape, smile-back, mouthed apology, injury-discovery, or other scene beats as the answer
-- Arc language ("by the events of the series", "caught between realities", "emotional/narrative center", "forms the heart of the story")
-- Scene-by-scene beats, dialogue retelling, or synthesizing what happens across chapters
-- Author planning notes, TODOs, discrepancies, "you're worried/concerned about", or contradictions between notes
+- Chase, escape, smile-back, mouthed apology, injury-discovery beats
+- Vague arc padding ("emotional/narrative center", "forms the heart of the story") without concrete role facts
+- Author planning notes, TODOs, discrepancies
+- Lone gender sentences ("X is male.") — weave gender into the role/species sentence instead
 
-Lead only with who/what they are: cast role, species/type, gender if stated, and ties to others.
-
-Format: reference voice only ("Ella is…"). 2–4 short factual sentences in the lead paragraph. Do NOT say "you wrote" or coach the writer.
+Format: reference voice only. Do NOT say "you wrote" or coach the writer.
 
 If sources are thin, add a final paragraph headed "What isn't spelled out yet in your notes:" — honest gaps from sources only; never invent missing details. Do not mix gap language into the lead."""
 
@@ -533,8 +532,9 @@ def _build_user_prompt(
             draft_tail_block = draft_tail_prompt_block(scoped_entries, question)
     elif _uses_cast_card(question, question_kind, plan):
         kind_hint = (
-            "Compose a cast card: role, species/type, ties to others. "
-            "No plot walkthrough, no POV/section order, no chase/escape beats.\n\n"
+            "Compose a flowing cast card: role + story significance, species/type, "
+            "family ties from notes or draft, aliases. Weave gender in — no lone "
+            "'X is male.' No plot walkthrough, no other-character POV scene beats.\n\n"
         )
         doc_sources = sum(
             1
@@ -807,7 +807,7 @@ def answer_with_rag(
         plan=plan,
     )
     if effective_kind == "who" or is_who_is_question(question):
-        max_tokens = 280 if mode == "brief" else 450
+        max_tokens = 400 if mode == "brief" else 750
     elif effective_kind == "relationship":
         max_tokens = 200 if mode == "brief" else 320
     elif is_audit_question(question) or effective_kind == "coverage":
