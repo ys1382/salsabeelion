@@ -285,61 +285,94 @@ def is_plausible_cast_person_name(name: str) -> bool:
 
 
 def _kinship_shape_sentence(sentence: str, label: str) -> bool:
-    """True for short kinship / standing / raised-by lines — not plot that mentions 'brother'."""
+    """True for short kinship / standing / known-as lines — not plot that mentions 'brother'."""
     s = re.sub(r"\s+", " ", (sentence or "").strip())
-    if not s or len(s) > 240:
+    if not s or len(s) > 280:
         return False
     lab = re.escape(label)
     patterns = (
         rf"^{lab}\s+is\s+(?:(?:younger|older|twin)\s+)?(?:brother|sister|son|daughter)\s+to\s+.+$",
         rf"^{lab}\s+is\s+(?:married|engaged)\s+to\s+.+$",
         rf"^{lab}\s+is\s+(?:the\s+)?(?:subject|quarry)\s+of\s+.+$",
-        rf"^{lab}\s+is\s+(?:son|daughter|child)\s+of\s+.+$",
+        rf"^{lab}\s+is\s+(?:the\s+)?(?:son|daughter|child)\s+of\s+.+$",
+        rf"^{lab}\s+is\s+(?:(?:also|better)\s+)?known\s+(?:as|to)\b.+$",
+        rf"^(?:He|She)\s+is\s+(?:the\s+)?(?:son|daughter|child)\s+of\s+.+$",
+        rf"^(?:He|She)\s+is\s+(?:(?:younger|older|twin)\s+)?(?:brother|sister)\s+to\s+.+$",
+        rf"^(?:He|She)\s+is\s+the\s+(?:son|daughter|child)\s+of\b.+$",
         rf"^(?:(?:younger|older|twin)\s+)?(?:brother|sister)\s+to\s+.+$",
         rf"^married\s+to\s+.+$",
+        rf"^(?:son|daughter|child)\s+of\s+.+$",
         rf"^{lab}\s*[—–\-:,]\s*(?:(?:younger|older|twin)\s+)?(?:brother|sister)\s+to\s+.+$",
-        # Family facts in gold-tone cards
+        # Optional orphan facts — allowed but deprioritized when richer slots exist
         rf"^{lab}\s+is\b.{{0,120}}\braised by\b.+$",
         rf"^{lab}\s+is\b.{{0,160}}\b(?:father died|widow mother|mother struggled)\b.+$",
     )
     return any(re.match(p, s, re.I) for p in patterns)
 
 
+_ORPHAN_LIFE_RE = re.compile(
+    r"\b("
+    r"raised by|taken in by|father died|widow mother|widow,?\s+struggled|"
+    r"mother struggled|struggled to provide|when he was (?:very )?young|"
+    r"after his father"
+    r")\b",
+    re.I,
+)
+
+
+def is_orphan_life_summary(sentence: str) -> bool:
+    """True for father-died / widow / raised-by life-summary cast lines."""
+    return bool(_ORPHAN_LIFE_RE.search(sentence or ""))
+
+
 def _is_gold_tone_cast_sentence(sentence: str, label: str) -> bool:
     """
-    Pinned good shape: role + identity type and/or family standing in one woven sentence.
-    Example: protagonist + Preyfolk rabbit + raised by brothers / father died…
+    Pinned good shape: role + fairytale known-as and/or named kin standing.
+    Prefer identity over orphan raised-by summaries.
     """
     s = re.sub(r"\s+", " ", (sentence or "").strip())
     if not s or not label:
         return False
     if not re.match(rf"^{re.escape(label)}\s+is\b", s, re.I):
         return False
-    if len(s) > 360:
+    if len(s) > 420:
         return False
     if _WHO_IS_BLOAT_RE.search(s) or _SCENE_AFTER_IS_RE.search(s) or _PLOT_SEQUENCE_RE.search(s):
         return False
     has_role = bool(
         re.search(r"\b(protagonist|antagonist|main character|side character)\b", s, re.I)
     )
-    has_type = bool(
-        re.search(
-            r"\b(rabbit|preyfolk|wolf|fox|lynx|arcanist|male|female|sentient|white rabbit)\b",
-            s,
-            re.I,
-        )
-    )
-    has_family = bool(
+    has_alias = bool(
         re.search(
             r"\b("
-            r"brother|sister|father|mother|widow|raised by|parent|"
-            r"subject of|quarry|known as|known by|also known"
+            r"known to the fairytale|known to the fairy[- ]tale|fairytale world|"
+            r"known as|also known as|white rabbit"
             r")\b",
             s,
             re.I,
         )
     )
-    return has_role and (has_type or has_family)
+    has_named_kin = bool(
+        re.search(
+            r"\b("
+            r"son of|daughter of|child of|buck|doe|"
+            r"younger brother|older brother|brother to|sister to"
+            r")\b",
+            s,
+            re.I,
+        )
+    )
+    has_type = bool(
+        re.search(
+            r"\b(rabbit|preyfolk|wolf|fox|lynx|arcanist|sentient|white rabbit)\b",
+            s,
+            re.I,
+        )
+    )
+    # Orphan-only role+raised-by is no longer the gold pin.
+    if is_orphan_life_summary(s) and not (has_alias or has_named_kin):
+        return False
+    return has_role and (has_alias or has_named_kin or has_type)
 
 
 def _kinship_targets_plausible(sentence: str, label: str) -> bool:
@@ -354,7 +387,7 @@ def _kinship_targets_plausible(sentence: str, label: str) -> bool:
     if not m:
         return True
     tail = m.group(1).strip()
-    # "Character D's curiosity" / "Obsidian and Stygian"
+    # "Character D's curiosity" / "Obsidian and Stygian" / "buck Snow Thistle and doe Ebony"
     chunks = re.split(r"\s+and\s+|,\s*", tail)
     for chunk in chunks:
         chunk = chunk.strip()
@@ -364,19 +397,34 @@ def _kinship_targets_plausible(sentence: str, label: str) -> bool:
             if head and not is_plausible_cast_person_name(head):
                 return False
             continue
-        # Strip trailing role phrases.
+        # Strip buck/doe / role prefixes and trailing role phrases.
+        chunk = re.sub(r"^(?:buck|doe|the)\s+", "", chunk, flags=re.I).strip()
         chunk = re.sub(r"\s*\(.*\)$", "", chunk).strip()
+        # "two of the Rabbits of Death from Pinocchio, Obsidian" style — keep named tails
+        if re.search(r"\bfrom\b", chunk, re.I) and not re.search(
+            r"\b[A-Z][a-z]{2,}\b", chunk
+        ):
+            continue
         if not chunk:
             continue
         if not is_plausible_cast_person_name(chunk.split()[0] if chunk else ""):
-            # Multi-word names: check full chunk without trailing common nouns
             cleaned = re.sub(
                 r"\b(curiosity|interest|attention|trust)\b.*$",
                 "",
                 chunk,
                 flags=re.I,
             ).strip()
+            cleaned = re.sub(r"^(?:buck|doe|the)\s+", "", cleaned, flags=re.I).strip()
+            if cleaned and is_plausible_cast_person_name(cleaned.split()[0]):
+                continue
             if cleaned and is_plausible_cast_person_name(cleaned):
+                continue
+            # Standing phrases without a single person name are OK.
+            if re.search(
+                r"\b(rabbits? of death|fairytale|pinocchio|alice|wonderland)\b",
+                chunk,
+                re.I,
+            ):
                 continue
             if not is_plausible_cast_person_name(chunk):
                 return False
@@ -723,7 +771,8 @@ def _clause_adds_profile(clause: str, label: str) -> bool:
     if re.search(
         r"\b(married|engaged|brother|sister|mother|father|son|daughter|guardian|spirit|"
         r"husband|wife|spouse|cousin|grey|gray|arcanist|elf|villain|hero|species|"
-        r"subject of|quarry|raised by|rabbit|preyfolk)\b",
+        r"subject of|quarry|raised by|rabbit|preyfolk|known as|known to|buck|doe|"
+        r"white rabbit|fairytale)\b",
         s,
         re.I,
     ):
@@ -876,7 +925,8 @@ def compose_character_reference(
             continue
         if clause not in lead and clause not in rel_clauses:
             if re.search(
-                r"\b(married|spouse|brother|sister|son|daughter|subject of|quarry)\b",
+                r"\b(married|spouse|brother|sister|son|daughter|subject of|quarry|"
+                r"known as|known to|buck|doe)\b",
                 clause,
                 re.I,
             ):
@@ -941,12 +991,13 @@ def compose_character_reference(
 
 
 def who_is_has_family_slots(answer: str) -> bool:
-    """True when answer includes brother/parent/raised-by/curiosity-standing facts."""
+    """True when answer includes brother/parent/alias/curiosity-standing facts."""
     return bool(
         re.search(
             r"\b("
             r"brother|sister|father|mother|widow|raised by|parent|"
-            r"subject of|quarry"
+            r"son of|daughter of|buck|doe|"
+            r"subject of|quarry|known as|known to|white rabbit"
             r")\b",
             answer or "",
             re.I,
@@ -961,8 +1012,8 @@ def weave_who_is_gold_tone(
     rel_clauses: list[str],
 ) -> str:
     """
-    Merge role/identity + brother/parent/standing into plain formal cast prose.
-    Returns empty string when there is not enough material.
+    Merge role + fairytale known-as + named parents/brothers into plain cast prose.
+    Prefer identity over orphan raised-by life summary.
     """
     lead = [c for c in _dedupe_clauses(lead) if c]
     rel = [c for c in _dedupe_clauses(rel_clauses) if c]
@@ -978,10 +1029,23 @@ def weave_who_is_gold_tone(
             )
         )
 
+    def _strip_male_female_role(c: str) -> str:
+        return re.sub(
+            rf"({re.escape(label)}\s+is\s+the\s+)(?:male|female)\s+",
+            r"\1",
+            c,
+            count=1,
+            flags=re.I,
+        )
+
     brothers: list[str] = []
     seen_b: set[str] = set()
+    rich_brother_lines: list[str] = []
+    named_parents: list[str] = []
+    alias_lines: list[str] = []
     other_family: list[str] = []
     extras_from_rel: list[str] = []
+    orphan_lines: list[str] = []
 
     def _brother_tail(c: str) -> str | None:
         for pat in (
@@ -994,11 +1058,73 @@ def weave_who_is_gold_tone(
                 return m.group(1).strip()
         return None
 
+    def _normalize_standing(c: str) -> str:
+        standing = c
+        if re.match(r"^(?:subject|quarry)\s+of\b", c, re.I):
+            standing = f"{label} is the {c[0].lower()}{c[1:]}"
+        elif re.match(r"^(?:son|daughter|child)\s+of\b", c, re.I):
+            standing = f"{label} is the {c[0].lower()}{c[1:]}"
+        elif re.match(
+            rf"^{re.escape(label)}\s*[—–\-:,]\s*(?:(?:younger|older|twin)\s+)?brother to\b",
+            c,
+            re.I,
+        ):
+            standing = re.sub(
+                rf"^{re.escape(label)}\s*[—–\-:,]\s*",
+                f"{label} is ",
+                c,
+                count=1,
+                flags=re.I,
+            )
+        if not standing.endswith((".", "!", "?")):
+            standing += "."
+        return standing
+
     for c in list(lead) + list(rel):
+        if _gender_only(c):
+            continue
+        if is_orphan_life_summary(c) and not re.search(
+            r"\b(known as|known to|son of|daughter of|white rabbit)\b", c, re.I
+        ):
+            # Pure orphan life summary — keep only as weak fallback.
+            if not _is_gold_tone_cast_sentence(c, label):
+                orphan_lines.append(_strip_male_female_role(c))
+            continue
+        if re.search(
+            r"\b(known as|known to|also known|fairytale world|fairy[- ]tale world)\b",
+            c,
+            re.I,
+        ) and not re.search(r"\b(subject of|quarry)\b", c, re.I):
+            line = _strip_male_female_role(c)
+            if line not in alias_lines:
+                alias_lines.append(line if line.endswith((".", "!", "?")) else line + ".")
+            continue
+        if re.search(r"\b(?:son|daughter|child)\s+of\b", c, re.I):
+            named_parents.append(_normalize_standing(c))
+            continue
         tail = _brother_tail(c)
-        if tail:
+        if tail is not None:
+            # Keep rich standing lines (Rabbits of Death / Pinocchio, etc.).
+            if re.search(
+                r"\b(from|rabbits? of death|pinocchio|alice|wonderland|death)\b",
+                c,
+                re.I,
+            ):
+                rich_brother_lines.append(_normalize_standing(c))
             for part in re.split(r"\s+and\s+|,\s*", tail):
                 name = part.strip().rstrip(".")
+                name = re.sub(
+                    r"^(?:two of the|one of the|the)\s+.+$",
+                    "",
+                    name,
+                    flags=re.I,
+                ).strip()
+                # Prefer trailing proper names after standing phrases.
+                name_m = re.search(
+                    r"\b([A-Z][a-z]{2,}(?:\s+[A-Z][a-z]{2,})?)\s*$", name
+                )
+                if name_m:
+                    name = name_m.group(1)
                 if not name or not is_plausible_cast_person_name(name.split()[0]):
                     continue
                 key = name.lower()
@@ -1008,22 +1134,16 @@ def weave_who_is_gold_tone(
                 brothers.append(name)
             continue
         if re.search(
-            r"\b(sister|father|mother|widow|raised|parent|subject of|quarry|married|"
-            r"son|daughter)\b",
+            r"\b(sister|father|mother|widow|raised|parent|subject of|quarry|married)\b",
             c,
             re.I,
         ) and not re.search(r"\b(protagonist|antagonist|main character)\b", c, re.I):
-            # Keep standing/parent/spouse lines; gold role+raised stays in lead base.
             if c not in other_family and not _is_gold_tone_cast_sentence(c, label):
-                # Normalize bare "Subject of X" standing lines.
-                standing = c
-                if re.match(r"^(?:subject|quarry)\s+of\b", c, re.I):
-                    standing = f"{label} is the {c[0].lower()}{c[1:]}"
-                    if not standing.endswith("."):
-                        standing += "."
-                other_family.append(standing)
+                if is_orphan_life_summary(c):
+                    orphan_lines.append(c)
+                else:
+                    other_family.append(_normalize_standing(c))
             continue
-        # Identity scraps that landed in rel (legacy routing) — keep as extras.
         if re.search(
             r"\b(rabbit|preyfolk|wolf|fox|lynx|arcanist|sentient|guardian|grey|gray|skin)\b",
             c,
@@ -1032,12 +1152,12 @@ def weave_who_is_gold_tone(
             if c not in extras_from_rel:
                 extras_from_rel.append(c)
 
-    # Only weave when family/standing slots exist — otherwise keep normal join
-    # so species/guardian lines are not dropped.
-    if not brothers and not other_family:
+    has_identity_slots = bool(
+        brothers or rich_brother_lines or named_parents or alias_lines or other_family
+    )
+    if not has_identity_slots:
         return ""
 
-    # Prefer a role-bearing lead sentence; never start from bare gender.
     base = next(
         (
             c
@@ -1065,82 +1185,134 @@ def weave_who_is_gold_tone(
     if not base:
         return ""
 
-    # Attach work title if missing.
+    base = _strip_male_female_role(base)
+    # Drop orphan appositive from a role+raised-by gold dump when better slots exist.
+    if is_orphan_life_summary(base) and (named_parents or alias_lines or rich_brother_lines):
+        base = re.split(
+            r",\s*(?:a\s+)?(?:Preyfolk|who was raised|whose father)\b",
+            base,
+            maxsplit=1,
+            flags=re.I,
+        )[0].rstrip(" ,")
+        if not base.endswith((".", "!", "?")):
+            base += "."
+
     if work_title and work_title.lower() not in base.lower():
         if re.search(r"\b(protagonist|antagonist|main character)\b", base, re.I):
             base = base.rstrip(".") + f" of {work_title}."
 
-    # Fold remaining identity scraps (species, guardian, alias, gender).
     extras: list[str] = list(extras_from_rel)
-    gender_bit = ""
     for c in lead:
-        if c == base:
+        if c == base or _gender_only(c):
             continue
-        if _gender_only(c):
-            gender_bit = "male" if re.search(r"\bmale\b", c, re.I) else "female"
+        if c in other_family or c in alias_lines or c in named_parents:
             continue
-        if c in other_family:
+        if is_orphan_life_summary(c):
+            continue
+        if _brother_tail(c) is not None:
             continue
         if re.search(
-            rf"^{re.escape(label)}\s+is\s+(?:(?:younger|older|twin)\s+)?brother to\b",
-            c,
-            re.I,
+            r"\b(known as|known to|also known|white rabbit|fairytale)\b", c, re.I
         ):
             continue
         extras.append(c)
 
-    # Weave gender into role line when present.
-    if gender_bit and re.search(r"\b(protagonist|antagonist|main character)\b", base, re.I):
-        if not re.search(rf"\b{gender_bit}\b", base, re.I):
-            base = re.sub(
-                rf"({re.escape(label)}\s+is\s+(?:the\s+)?)",
-                rf"\1{gender_bit} ",
-                base,
-                count=1,
-                flags=re.I,
-            )
-
-    # Attach short species appositive when base lacks it.
-    for c in list(extras):
+    sentences: list[str] = []
+    role = base if base.endswith((".", "!", "?")) else base + "."
+    fairytale_aliases = [
+        a
+        for a in alias_lines
         if re.search(
-            r"\b(rabbit|preyfolk|wolf|fox|lynx|arcanist|sentient|guardian)\b",
-            c,
+            r"\b(fairytale|fairy[- ]tale|white rabbit from|wonderland)\b",
+            a,
             re.I,
-        ):
-            frag = re.sub(
-                rf"^{re.escape(label)}\s+is\s+",
-                "",
-                c,
-                count=1,
-                flags=re.I,
-            ).rstrip(".")
-            if frag and frag.lower() not in base.lower():
-                if re.search(r"\b(protagonist|antagonist|main character)\b", base, re.I):
-                    base = base.rstrip(".") + f", {frag}."
-                    extras.remove(c)
+        )
+    ]
+    other_aliases = [a for a in alias_lines if a not in fairytale_aliases]
+    if fairytale_aliases:
+        alias = fairytale_aliases[0]
+        role_core = role.rstrip(".")
+        alias_core = re.sub(
+            rf"^{re.escape(label)}\s+is\s+",
+            "",
+            alias,
+            count=1,
+            flags=re.I,
+        ).rstrip(".")
+        if alias_core.lower() not in role_core.lower():
+            sentences.append(f"{role_core}, but is {alias_core}.")
+        else:
+            sentences.append(role)
+    else:
+        sentences.append(role)
 
-    sentences = [base if base.endswith((".", "!", "?")) else base + "."]
-
-    if brothers:
+    kin_bits: list[str] = []
+    if named_parents:
+        parent = named_parents[0]
+        parent_core = re.sub(
+            rf"^{re.escape(label)}\s+is\s+(?:the\s+)?",
+            "",
+            parent,
+            count=1,
+            flags=re.I,
+        ).rstrip(".")
+        kin_bits.append(parent_core)
+    if rich_brother_lines:
+        bro = rich_brother_lines[0]
+        bro_core = re.sub(
+            rf"^{re.escape(label)}\s+is\s+",
+            "",
+            bro,
+            count=1,
+            flags=re.I,
+        ).rstrip(".")
+        kin_bits.append(bro_core)
+    elif brothers:
         if len(brothers) == 1:
-            sentences.append(f"{label} is brother to {brothers[0]}.")
+            kin_bits.append(f"younger brother to {brothers[0]}")
         elif len(brothers) == 2:
-            sentences.append(
-                f"{label} is brother to {brothers[0]} and {brothers[1]}."
+            kin_bits.append(
+                f"younger brother to {brothers[0]} and {brothers[1]}"
             )
         else:
             joined = ", ".join(brothers[:-1]) + f", and {brothers[-1]}"
-            sentences.append(f"{label} is brother to {joined}.")
+            kin_bits.append(f"younger brother to {joined}")
 
-    for c in other_family[:3]:
+    if kin_bits:
+        first = kin_bits[0]
+        if first.startswith(("son ", "daughter ", "child ")):
+            first_out = f"the {first}"
+        else:
+            first_out = first
+        if len(kin_bits) == 1:
+            sentences.append(f"He is {first_out}.")
+        else:
+            rest = ", and " + ", and ".join(kin_bits[1:])
+            sentences.append(f"He is {first_out}{rest}.")
+
+    for c in other_family[:2]:
         clause = c if c.endswith((".", "!", "?")) else c + "."
         if clause not in sentences:
             sentences.append(clause)
 
-    for c in extras[:3]:
+    for c in other_aliases[:2]:
         clause = c if c.endswith((".", "!", "?")) else c + "."
         if clause not in sentences:
             sentences.append(clause)
+
+    # Species extras when fairytale alias does not already carry White Rabbit identity.
+    if not fairytale_aliases:
+        for c in extras[:2]:
+            clause = c if c.endswith((".", "!", "?")) else c + "."
+            if clause not in sentences and not is_orphan_life_summary(clause):
+                sentences.append(clause)
+
+    # Orphan fallback only when no named parents / rich brother standing.
+    if not named_parents and not rich_brother_lines and orphan_lines and not kin_bits:
+        clause = orphan_lines[0]
+        if not clause.endswith((".", "!", "?")):
+            clause += "."
+        sentences.append(_strip_male_female_role(clause))
 
     body = " ".join(sentences)
     if not _composed_has_substance([body], label):
@@ -1149,7 +1321,7 @@ def weave_who_is_gold_tone(
 
 
 def smooth_who_is_prose(label: str, body: str) -> str:
-    """Fold bare gender lines into flowing cast prose — avoid stuttered 'X is male.'"""
+    """Drop bare gender when kin signals sex; otherwise fold into species, never role."""
     text = (body or "").strip()
     label = (label or "").strip()
     if not text or not label:
@@ -1165,33 +1337,48 @@ def smooth_who_is_prose(label: str, body: str) -> str:
             if m:
                 gender = m.group(1).lower()
                 continue
+            # Strip accidental "male/female protagonist" wording.
+            s = re.sub(
+                rf"({re.escape(label)}\s+is\s+the\s+)(?:male|female)\s+"
+                rf"(?=protagonist|antagonist|main character)",
+                r"\1",
+                s,
+                count=1,
+                flags=re.I,
+            )
             kept.append(s)
         if gender and kept:
-            first = kept[0]
-            if re.match(rf"^{re.escape(label)}\s+is\s+the\b", first, re.I):
-                kept[0] = re.sub(
-                    rf"^({re.escape(label)}\s+is\s+the)\b",
-                    rf"\1 {gender}",
-                    first,
-                    count=1,
-                    flags=re.I,
+            has_kin_sex = any(
+                re.search(
+                    r"\b(son of|daughter of|buck|doe|brother|sister|he is|she is)\b",
+                    s,
+                    re.I,
                 )
-            elif re.match(rf"^{re.escape(label)}\s+is\b", first, re.I):
-                kept[0] = re.sub(
-                    rf"^({re.escape(label)}\s+is)\b",
-                    rf"\1 a {gender}",
-                    first,
-                    count=1,
-                    flags=re.I,
-                )
-            else:
-                kept[0] = re.sub(
-                    rf"^({re.escape(label)})\b",
-                    rf"\1 ({gender})",
-                    first,
-                    count=1,
-                    flags=re.I,
-                )
+                for s in kept
+            )
+            if not has_kin_sex:
+                woven = False
+                for i, s in enumerate(kept):
+                    if re.search(
+                        r"\b(wolf|rabbit|fox|lynx|arcanist|preyfolk|sentient)\b",
+                        s,
+                        re.I,
+                    ) and not re.search(
+                        r"\b(protagonist|antagonist|main character)\b", s, re.I
+                    ):
+                        if not re.search(rf"\b{gender}\b", s, re.I):
+                            kept[i] = re.sub(
+                                rf"({re.escape(label)}\s+is\s+(?:an?\s+)?)",
+                                rf"\1{gender} ",
+                                s,
+                                count=1,
+                                flags=re.I,
+                            )
+                        woven = True
+                        break
+                if not woven:
+                    # Prefer dropping bare gender over "X is male." or male protagonist.
+                    pass
         out_parts.append(" ".join(kept) if kept else part)
     return "\n\n".join(p for p in out_parts if p.strip())
 

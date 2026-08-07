@@ -32,7 +32,7 @@ from lorekeeper_reliability import (
 
 from lorekeeper_ask_plan import AskPlan
 
-RAG_VERSION = "21.1.0-rag"
+RAG_VERSION = "21.2.0-rag"
 
 # Override with LOREKEEPER_ANTHROPIC_MODEL on the server if needed.
 DEFAULT_MODEL = os.environ.get(
@@ -122,19 +122,20 @@ def _uses_cast_card(
 _WHO_CAST_CARD = """
 This is a WHO-IS question — answer as a CAST CARD in a pinned tone.
 
-TONE (do not break this): formal but plain — not posh, not chatty. Prefer one or two woven sentences like:
-"Character M is the male protagonist of Ashford Saga, a Preyfolk (rabbit) who was raised by two older brothers after his father died and his widow mother struggled to provide."
+TONE (do not break this): formal but plain — not posh, not chatty. Prefer 1–2 sentences like:
+"Character M is the protagonist of Ashford Saga, but is known to the fairytale world at large as the White Rabbit from Alice in Wonderland. He is the son of buck Snow Thistle and doe Ebony, and younger brother to two of the Rabbits of Death from Pinocchio, Obsidian and Stygian."
 
-REQUIRED SLOTS — when sources state them, you MUST weave them in (do not stop after role alone):
-1. Role — protagonist / POV / antagonist
-2. Stable identity — species/type (Preyfolk, rabbit, White Rabbit, gender) woven into the same sentence
-3. Brothers/sisters — names when stated (notes or draft)
-4. Parents / raised-by — father died, widow mother, raised by older brothers, etc. when stated as family fact (not a scene)
-5. Standing toward a named figure — e.g. subject of Character E's curiosity (Tenebris-type) when stated
-6. Alias / known-as — only if sources link it, correct direction
+REQUIRED SLOTS — when sources state them, weave them in (do not stop after role alone):
+1. Role — protagonist / POV / antagonist (do NOT say "male protagonist" / "female protagonist")
+2. Fairytale / outside-world known-as — e.g. known to the fairytale world at large as the White Rabbit… when sources say so
+3. Named parents — son/daughter of buck/doe or named parents when stated
+4. Brothers/sisters — names plus their standing when sources give it (e.g. Rabbits of Death from Pinocchio)
+5. Standing toward a named figure — e.g. subject of Character E's curiosity when stated
+6. Alias / known-as among characters — only if sources link it, correct direction
 
-Write 1–2 sentences that cover every filled slot. A third short sentence is OK only for alias or one standing line.
-Weave gender into the role/species sentence — never a lone "X is male."
+Gender: signal via buck/doe, son/daughter, brother/sister, or natural he/she — never a lone "X is male." and never "male protagonist."
+
+PREFER identity + standing over orphan life summary. If sources also have father-died / widow / raised-by / struggled-to-provide, omit that backstory when named parents, fairytale known-as, or brother standing already fill the card.
 
 OMIT completely:
 - Scene beats (roused from thoughts, grooming, glancing, chase, injury)
@@ -513,9 +514,9 @@ def _build_user_prompt(
             draft_tail_block = draft_tail_prompt_block(scoped_entries, question)
     elif _uses_cast_card(question, question_kind, plan):
         kind_hint = (
-            "Pinned cast-card tone: 1–2 woven sentences (formal, plain). "
-            "MUST include when sources have them: brothers, parents/raised-by, "
-            "and standing (subject of X's curiosity). Role + species/type in the lead. "
+            "Pinned cast-card tone: role + fairytale known-as + named parents + "
+            "brothers (with standing). No 'male protagonist'. Prefer identity over "
+            "orphan raised-by/widow life summary when better slots exist. "
             "No scene plot, no awareness dumps, no fake brother stopwords.\n\n"
         )
         doc_sources = sum(

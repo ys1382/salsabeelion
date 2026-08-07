@@ -951,7 +951,7 @@ _SPECIES_TOKEN_STOP = frozenset(
     antagonist villain hero heroine protagonist deuteragonist narrator
     character characters person people member members
     subject quarry curiosity interest attention known also
-    male female
+    male female son daughter child sentient
     """.split()
 )
 _GENDER_OPTION_RE = re.compile(

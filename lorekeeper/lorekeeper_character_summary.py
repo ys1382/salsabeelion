@@ -701,10 +701,15 @@ def _classify_sentence(sentence: str, names: list[str] | None = None) -> str:
     if re.search(
         r"\b(husband|wife|spouse|mother|father|parent|son|daughter|child|brother|sister|"
         r"married|engaged|dating|uncle|aunt|cousin|nephew|niece|grandfather|grandmother|"
-        r"subject of|quarry of)\b",
+        r"subject of|quarry of|son of|daughter of|child of|buck|doe)\b",
         s_low,
     ):
         return "relationship"
+    if re.search(
+        r"\b(known as|known to|also known as|fairytale world|white rabbit)\b",
+        s_low,
+    ):
+        return "identity"
     if names and _has_profile_copula(sentence, names):
         return "identity"
     if re.search(

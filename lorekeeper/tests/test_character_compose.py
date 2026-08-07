@@ -475,8 +475,7 @@ class CharacterComposeTests(unittest.TestCase):
             "Character M is male. Character M is brother to Character B."
         )
         out = smooth_who_is_prose("Character M", raw)
-        self.assertIn("male", out.lower())
-        self.assertNotRegex(out, r"(?i)^character m is male\.?$")
+        self.assertNotIn("male protagonist", out.lower())
         self.assertNotIn("Character M is male.", out)
         self.assertIn("brother", out.lower())
 
@@ -485,10 +484,9 @@ class CharacterComposeTests(unittest.TestCase):
             _entry(
                 "c1",
                 "Character M",
-                "Character M is the male protagonist of Ashford Saga, a Preyfolk (rabbit) "
-                "who was raised by two older brothers after his father died and his widow "
-                "mother struggled to provide. Character M is younger brother to Obsidian "
-                "and Stygian. Character M is the subject of Tenebris's curiosity.",
+                "Character M is the protagonist of Ashford Saga. Character M is a sentient "
+                "white rabbit. Character M is younger brother to Obsidian and Stygian. "
+                "Character M is the subject of Tenebris's curiosity.",
                 tags=["Ashford Saga"],
                 kind="character",
             ),
@@ -505,16 +503,41 @@ class CharacterComposeTests(unittest.TestCase):
         self.assertEqual(res.get("materialState"), "summarizable")
         low = answer.lower()
         self.assertIn("protagonist", low)
-        self.assertIn("rabbit", low)
         self.assertIn("obsidian", low)
         self.assertIn("stygian", low)
         self.assertIn("tenebris", low)
-        self.assertTrue(
-            any(x in low for x in ("raised", "father", "widow", "mother")),
-            msg=answer,
-        )
+        self.assertNotIn("male protagonist", low)
         self.assertNotIn("roused", low)
         self.assertNotIn("next section", low)
+        self.assertNotRegex(answer, r"(?i)character m is male\.")
+
+    def test_who_is_identity_alias_named_kin(self):
+        entries = [
+            _entry(
+                "c1",
+                "Character M",
+                "Character M is the protagonist of Ashford Saga. Character M is known to the "
+                "fairytale world at large as the White Rabbit from Alice in Wonderland. "
+                "Character M is the son of buck Snow Thistle and doe Ebony. Character M is "
+                "younger brother to two of the Rabbits of Death from Pinocchio, Obsidian and "
+                "Stygian. Character M's father died when he was very young and his widow "
+                "mother struggled to provide, so he was raised by his older brothers.",
+                tags=["Ashford Saga"],
+                kind="character",
+            ),
+        ]
+        res = self._ask("In Ashford Saga, who is Character M?", entries)
+        answer = res.get("answer") or ""
+        low = answer.lower()
+        self.assertIn("protagonist", low)
+        self.assertIn("white rabbit", low)
+        self.assertTrue("fairytale" in low or "known to" in low, msg=answer)
+        self.assertIn("snow thistle", low)
+        self.assertIn("ebony", low)
+        self.assertIn("obsidian", low)
+        self.assertIn("stygian", low)
+        self.assertNotIn("male protagonist", low)
+        self.assertNotIn("struggled to provide", low)
         self.assertNotRegex(answer, r"(?i)character m is male\.")
 
     def test_weave_who_is_gold_tone_merges_brothers(self):
@@ -538,7 +561,21 @@ class CharacterComposeTests(unittest.TestCase):
         self.assertIn("obsidian", low)
         self.assertIn("stygian", low)
         self.assertIn("tenebris", low)
+        self.assertNotIn("male protagonist", low)
         self.assertLessEqual(body.count("brother to"), 1)
+
+    def test_smooth_who_is_drops_bare_gender(self):
+        from lorekeeper_character_compose import smooth_who_is_prose
+
+        raw = (
+            "Character M is the protagonist, a sentient white rabbit. "
+            "Character M is male. Character M is brother to Character B."
+        )
+        out = smooth_who_is_prose("Character M", raw)
+        self.assertNotIn("male protagonist", out.lower())
+        self.assertNotIn("Character M is male.", out)
+        self.assertIn("brother", out.lower())
+        self.assertIn("protagonist", out.lower())
 
     def test_who_is_prefers_cast_note_over_plot_draft(self):
         entries = [

@@ -37,7 +37,8 @@ class RagTests(unittest.TestCase):
         self.assertIn("CAST CARD", system)
         self.assertIn("REQUIRED SLOTS", system)
         self.assertIn("pinned tone", system.lower())
-        self.assertIn("stable identity", system.lower())
+        self.assertIn("fairytale", system.lower())
+        self.assertIn('do not say "male protagonist"', system.lower())
         self.assertNotIn("contradictory, say so honestly", system)
 
     def test_system_audit_meta(self):

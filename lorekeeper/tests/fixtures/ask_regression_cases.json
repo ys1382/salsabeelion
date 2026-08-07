@@ -548,13 +548,58 @@
       }
     },
     {
-      "id": "who_is_gold_tone_family_slots",
-      "label": "Who-is gold tone includes brothers, parents/raised-by, curiosity standing",
+      "id": "who_is_identity_alias_named_kin",
+      "label": "Who-is prefers fairytale known-as + named parents/brothers over orphan life summary",
       "entries": [
         {
           "id": "c1",
           "title": "Character M",
-          "body": "Character M is the male protagonist of Ashford Saga, a Preyfolk (rabbit) who was raised by two older brothers after his father died and his widow mother struggled to provide. Character M is younger brother to Obsidian and Stygian. Character M is the subject of Tenebris's curiosity.",
+          "body": "Character M is the protagonist of Ashford Saga. Character M is known to the fairytale world at large as the White Rabbit from Alice in Wonderland. Character M is the son of buck Snow Thistle and doe Ebony. Character M is younger brother to two of the Rabbits of Death from Pinocchio, Obsidian and Stygian. Character M's father died when he was very young and his widow mother struggled to provide, so he was raised by his older brothers.",
+          "tags": ["Ashford Saga"],
+          "kind": "character"
+        },
+        {
+          "id": "d1",
+          "title": "Draft scene",
+          "body": "Character M is roused from his thoughts. So right now Character M is aware that Tenebris is watching.",
+          "tags": ["Ashford Saga"],
+          "kind": "document"
+        }
+      ],
+      "question": "In Ashford Saga, who is Character M?",
+      "assert": {
+        "questionKind": "who",
+        "materialState": "summarizable",
+        "answerContains": [
+          "protagonist",
+          "White Rabbit",
+          "Snow Thistle",
+          "Ebony",
+          "Obsidian",
+          "Stygian"
+        ],
+        "answerContainsAny": [
+          "fairytale",
+          "known to"
+        ],
+        "answerNotContains": [
+          "male protagonist",
+          "Character M is male.",
+          "struggled to provide",
+          "roused",
+          "So right now",
+          "aware that"
+        ]
+      }
+    },
+    {
+      "id": "who_is_gold_tone_family_slots",
+      "label": "Who-is keeps brothers and curiosity standing without requiring orphan life summary",
+      "entries": [
+        {
+          "id": "c1",
+          "title": "Character M",
+          "body": "Character M is the protagonist of Ashford Saga. Character M is a sentient white rabbit. Character M is younger brother to Obsidian and Stygian. Character M is the subject of Tenebris's curiosity.",
           "tags": ["Ashford Saga"],
           "kind": "character"
         },
@@ -572,16 +617,9 @@
         "materialState": "summarizable",
         "answerContains": [
           "protagonist",
-          "rabbit",
           "Obsidian",
           "Stygian",
           "Tenebris"
-        ],
-        "answerContainsAny": [
-          "raised",
-          "father",
-          "widow",
-          "mother"
         ],
         "answerNotContains": [
           "roused",
@@ -589,7 +627,8 @@
           "aware that",
           "Next section",
           "brother to Especially",
-          "Character M is male."
+          "Character M is male.",
+          "male protagonist"
         ]
       }
     },

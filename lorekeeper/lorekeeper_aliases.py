@@ -23,7 +23,7 @@ _NAME_STOP = frozenset(
 
 @dataclass(frozen=True)
 class AliasFact:
-    kind: Literal["same_person", "known_to", "shared_name"]
+    kind: Literal["same_person", "known_to", "shared_name", "world_known"]
     subject: str
     other: str | None = None
     alias: str | None = None
@@ -86,6 +86,17 @@ _AKA = re.compile(
     rf"{NAME}\s+(?:\(|\[)?\s*aka\s+{ALIAS}",
     re.I,
 )
+# Fairytale / outside-world recognition (writer's framing — not a cast member).
+_KNOWN_TO_WORLD = re.compile(
+    rf"{NAME}\s+is\s+known\s+to\s+(?:the\s+)?"
+    rf"(?:fairytale|fairy[- ]tale|wider|outside)\s+world(?:\s+at\s+large)?\s+as\s+"
+    rf"(?:the\s+)?(.+?)(?:\.|$)",
+    re.I,
+)
+_KNOWN_AS_PLAIN = re.compile(
+    rf"{NAME}\s+is\s+known\s+as\s+(?:the\s+)?(.+?)(?:\.|$)",
+    re.I,
+)
 
 # A is known BY B — B knows A (never reverse).
 _KNOWN_BY = re.compile(
@@ -121,6 +132,21 @@ def _parse_sentence(sentence: str) -> list[AliasFact]:
                 facts.append(AliasFact("same_person", left, alias=alias))
             return facts
 
+    m = _KNOWN_TO_WORLD.search(s)
+    if m:
+        left = _clean_name(m.group(1))
+        alias_raw = re.sub(r"\s+", " ", (m.group(2) or "").strip().rstrip("."))
+        if left and alias_raw:
+            facts.append(
+                AliasFact(
+                    "world_known",
+                    left,
+                    other="the fairytale world at large",
+                    alias=alias_raw,
+                )
+            )
+        return facts
+
     m = _KNOWN_BY.search(s)
     if m:
         subject = _clean_name(m.group(1))
@@ -137,6 +163,14 @@ def _parse_sentence(sentence: str) -> list[AliasFact]:
         alias = _pick_alias(m.group(3), m.group(4), m.group(5))
         if subject and other and alias and not _names_match(subject, other):
             facts.append(AliasFact("known_to", subject, other=other, alias=alias))
+        return facts
+
+    m = _KNOWN_AS_PLAIN.search(s)
+    if m and not re.search(r"\bknown\s+by\b", s, re.I):
+        left = _clean_name(m.group(1))
+        alias_raw = re.sub(r"\s+", " ", (m.group(2) or "").strip().rstrip("."))
+        if left and alias_raw and len(alias_raw) >= 3:
+            facts.append(AliasFact("same_person", left, alias=alias_raw))
         return facts
 
     m = _SHARED_NAME.search(s)
@@ -303,6 +337,11 @@ def alias_reference_lines_for(
                 add(f"{fact.other} knows {fact.subject} as {fact.alias}.")
             elif _names_match(label, fact.alias):
                 add(f"{fact.alias} is the name {fact.other} uses for {fact.subject}.")
+
+        elif fact.kind == "world_known" and fact.alias:
+            if _names_match(label, fact.subject):
+                scope = fact.other or "the fairytale world at large"
+                add(f"{fact.subject} is known to {scope} as {fact.alias}.")
 
         elif fact.kind == "shared_name" and fact.other:
             if _names_match(label, fact.subject) or _names_match(label, fact.other):
