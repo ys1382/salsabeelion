@@ -101,7 +101,8 @@ _AUTHOR_META_RE = re.compile(
     r"might be better|consider whether|idea for|note to self|"
     r"find more ways|ways to mention|need to mention|"
     r"i wrote|i write|i say that|i decided|i've now decided|doesn't make sense|"
-    r"initially,\s*i"
+    r"initially,\s*i|"
+    r"next (?:POV|section)|POV will be|switches? to .{0,40}POV"
     r")\b",
     re.I,
 )

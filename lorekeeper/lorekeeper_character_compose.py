@@ -88,6 +88,39 @@ _PLOT_ARC_RE = re.compile(
     re.I,
 )
 
+# Chronology / POV-order language — not cast-card identity.
+# Keep this narrow: "the POV cuts" / look-on-face notes must NOT match.
+_PLOT_SEQUENCE_RE = re.compile(
+    r"\b("
+    r"right after|soon after|just after|"
+    r"next (?:POV|section|chapter|scene|beat)|"
+    r"switches? to .{0,48}(?:POV|point of view)|"
+    r"(?:his|her|their) next POV|"
+    r"the next POV|"
+    r"POV (?:shows?|is when|will be)|"
+    r"section begins|"
+    r"about to (?:slip|disappear|escape|vanish)|"
+    r"looks? back with|"
+    r"mouthed (?:an? )?(?:apology|words?)|"
+    r"scene[- ]by[- ]scene|plot walkthrough|"
+    r"what happens next|the next beat|"
+    r"chasing them|stalking them|"
+    r"lunge(?:s|d)? to (?:his|her|their) feet"
+    r")\b",
+    re.I,
+)
+
+_CAST_CARD_ANCHOR_RE = re.compile(
+    r"\b("
+    r"protagonist|antagonist|villain|hero|heroine|married|brother|sister|"
+    r"queen|king|guardian|viewpoint|main character|side character|"
+    r"arcanist|species|rabbit|wolf|fox|lynx|also known as|"
+    r"known to|knows .+ as|younger brother|older brother|"
+    r"subject of|quarry|sentient"
+    r")\b",
+    re.I,
+)
+
 
 def _is_plot_arc_clause(clause: str) -> bool:
     s = (clause or "").strip()
@@ -95,9 +128,28 @@ def _is_plot_arc_clause(clause: str) -> bool:
         return False
     if _PLOT_ARC_RE.search(s):
         return True
+    if _PLOT_SEQUENCE_RE.search(s):
+        return True
     if re.search(r"\bby the (?:end|close|events)\b", s, re.I):
         return True
     return False
+
+
+def is_plot_walkthrough_text(text: str) -> bool:
+    """True when text is mostly scene/POV chronology, not a cast card."""
+    t = (text or "").strip()
+    if not t:
+        return False
+    hits = len(_PLOT_SEQUENCE_RE.findall(t))
+    if hits >= 2:
+        return True
+    if hits >= 1 and not _CAST_CARD_ANCHOR_RE.search(t):
+        return True
+    return False
+
+
+def has_cast_card_anchors(text: str) -> bool:
+    return bool(_CAST_CARD_ANCHOR_RE.search(text or ""))
 
 
 def work_title_from_hints(hints: set[str]) -> str | None:
@@ -214,7 +266,8 @@ _PROFILE_CLAUSE_RE = re.compile(
 
 _NARRATIVE_OPENERS = re.compile(
     r"^(Opening|Closing|Then|When|After|Before|Suddenly|Meanwhile|Later|Finally|"
-    r"As\s|While\s|The\s+(?:door|sun|wind|night|morning|room|hall|gate))\b",
+    r"So\s+right\s+after|As\s|While\s|"
+    r"The\s+(?:door|sun|wind|night|morning|room|hall|gate))\b",
     re.I,
 )
 
@@ -222,7 +275,8 @@ _AUTHOR_META_RE = re.compile(
     r"\b("
     r"i think|i thought|could start|should start|same time as the|chapter\s+\d+|"
     r"plot note|planning note|outline|note to self|maybe|perhaps|"
-    r"find more ways|ways to mention|need to mention|todo|fix later"
+    r"find more ways|ways to mention|need to mention|todo|fix later|"
+    r"next (?:POV|section)|POV will be|switches? to .{0,40}POV"
     r")\b",
     re.I,
 )
@@ -611,6 +665,9 @@ def cast_answer_is_thin(answer: str, label: str) -> bool:
         return True
     if re.search(r"\bmale\s+or\s+female\b|\bfemale\s+or\s+male\b", low):
         return True
+    # Plot/POV chronology without cast anchors is not a finished who-is answer.
+    if is_plot_walkthrough_text(a) and not has_cast_card_anchors(a):
+        return True
     if _UNCLEAR_SECTION_HEADING in a:
         before = a.split(_UNCLEAR_SECTION_HEADING, 1)[0]
         chunks = [p.strip() for p in before.split("\n\n") if p.strip()]
@@ -619,12 +676,10 @@ def cast_answer_is_thin(answer: str, label: str) -> bool:
             if is_composed_reference_answer(a):
                 return _composed_only_weak_pov(label, "\n\n".join(body_chunks))
             low_body = " ".join(body_chunks).lower()
-            if re.search(
-                r"\b(protagonist|antagonist|villain|hero|married|brother|sister|queen|king|"
-                r"guardian|viewpoint|main character|arcanist|also known as|known to|knows .+ as)\b",
-                low_body,
-            ):
+            if has_cast_card_anchors(low_body):
                 return False
+            if is_plot_walkthrough_text("\n\n".join(body_chunks)):
+                return True
     if "little is spelled out yet" in low or "but little is" in low:
         return True
     if "nothing saved yet" in low and "describes" in low:
@@ -636,14 +691,13 @@ def cast_answer_is_thin(answer: str, label: str) -> bool:
         core = re.split(r"\n\n— From your notes only", core, maxsplit=1)[0]
         parts = [p.strip() for p in core.split("\n\n") if p.strip()]
         body_parts = [p for p in parts if p != label and not p.startswith("—")]
-        if _composed_only_weak_pov(label, "\n\n".join(body_parts)):
+        body_joined = "\n\n".join(body_parts)
+        if _composed_only_weak_pov(label, body_joined):
+            return True
+        if is_plot_walkthrough_text(body_joined) and not has_cast_card_anchors(body_joined):
             return True
         return False
-    if re.search(
-        r"\b(protagonist|antagonist|villain|hero|married|brother|sister|queen|king|"
-        r"guardian|viewpoint|main character|arcanist|also known as|known to|knows .+ as)\b",
-        low,
-    ):
+    if has_cast_card_anchors(a) and not is_plot_walkthrough_text(a):
         return False
     label_low = label.lower()
     if label_low in low and re.search(rf"\b{re.escape(label_low)}\s+is\b", low):
@@ -652,6 +706,8 @@ def cast_answer_is_thin(answer: str, label: str) -> bool:
             a,
         )
         if len(main.strip()) > 45:
+            if is_plot_walkthrough_text(main):
+                return True
             return False
     return True
 

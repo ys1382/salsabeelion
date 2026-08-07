@@ -122,15 +122,19 @@ def _uses_cast_card(
 _WHO_CAST_CARD = """
 This is a WHO-IS question — answer as a CAST CARD, not a story summary.
 
-Include (only what the sources support):
-- Cast role in this work (protagonist, POV, villain, side character, etc.) — if sources say protagonist, never downgrade to side character
-- Status and key ties (married to X, sister of Y, queen of Z, species/look if stated as fact)
+Lead with identity (only what the sources support), in this order when present:
+1. Cast role in this work (protagonist, POV, villain, side character, etc.) — if sources say protagonist, never downgrade to side character
+2. What they are as a being/type (species, look, world-group) when stated as fact
+3. Who they are to others (sibling, spouse, quarry/subject of X's interest, ally, rival)
+
+Also include when supported:
+- Status and key ties (married to X, sister of Y, queen of Z)
 - At most ONE short prior-story hook if the sources explicitly say it (e.g. "Previously, in the events of [fairytale]…") — orientation only, not a recap
 - Where the reader first meets them, if the sources name a scene or chapter — one phrase, not a scene retelling
 - Alternate names when sources link them (also known as, aka) — one short line only
 
 When notes are thin but draft/document sources dominate:
-- Distill cast role, status, and fixed traits clearly shown in draft prose (voice, rank, look, how others treat them).
+- Distill cast role, status, species/type, and fixed ties clearly shown in draft prose.
 - One or two factual sentences — not a scene retelling or plot walkthrough.
 
 Alternate names and identity (direction matters — do not flip):
@@ -149,8 +153,10 @@ Supported inference (only when pre-parsed lines appear below — use verbatim; n
   4. Blank line, then a short summary from note sources only
   Never scold; never invent a merged fact.
 
-OMIT from the lead paragraph:
+OMIT from the lead paragraph — never answer who-is with these:
 - Plot walkthrough, life story, or "everything they go through"
+- POV order / section order ("right after", "next POV", "next section begins", "switches to X's POV")
+- Chase, escape, smile-back, mouthed apology, or other scene beats as the answer
 - Arc language ("by the events of the series", "caught between realities", "emotional/narrative center", "forms the heart of the story")
 - Scene-by-scene beats, dialogue retelling, or synthesizing what happens across chapters
 - Author planning notes, TODOs, discrepancies, "you're worried/concerned about", or contradictions between notes
@@ -524,8 +530,8 @@ def _build_user_prompt(
             draft_tail_block = draft_tail_prompt_block(scoped_entries, question)
     elif _uses_cast_card(question, question_kind, plan):
         kind_hint = (
-            "Compose a cast card: role, status, ties, optional one-line prior-story hook. "
-            "No plot recap.\n\n"
+            "Compose a cast card: role, species/type, ties to others. "
+            "No plot walkthrough, no POV/section order, no chase/escape beats.\n\n"
         )
         doc_sources = sum(
             1

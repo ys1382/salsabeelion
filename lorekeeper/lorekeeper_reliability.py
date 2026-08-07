@@ -820,13 +820,19 @@ def sources_from_ranked(
     picked = [r for r in ranked if r.get("score", 0) >= threshold]
     if not picked:
         picked = ranked[:limit]
-    return [
-        {
+    out: list[dict[str, Any]] = []
+    for row in picked[:limit]:
+        item: dict[str, Any] = {
             "id": row["id"],
             "title": row["title"],
             "kind": row["kind"],
             "kindLabel": row["kindLabel"],
             "excerpt": row["excerpt"],
         }
-        for row in picked[:limit]
-    ]
+        # Keep body when ranked has it — who-is identity scrub needs more than
+        # a one-line excerpt to confirm species/role claims from the same note.
+        body = str(row.get("body") or "").strip()
+        if body:
+            item["body"] = body[:8000]
+        out.append(item)
+    return out

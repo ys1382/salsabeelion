@@ -195,6 +195,27 @@ def _score_entry(
             score += 4 + min(name_hits, 3) * 2
             if _SCENE_BEAT_Q.search(question or ""):
                 score += 6
+    # Who-is: prefer cast/relationship notes over scene/draft chronology.
+    if is_who_is_question(question):
+        if kind in ("character", "relationship"):
+            score += 18
+        elif kind in ("species", "politics"):
+            score += 10
+        elif kind in ("document", "scene"):
+            if re.search(
+                r"\b(protagonist|antagonist|married|brother|sister|species|"
+                r"is a |is an |known as)\b",
+                hay_text,
+            ):
+                score += 4
+            else:
+                score -= 10
+            if re.search(
+                r"\b(right after|next (?:POV|section)|POV (?:shows?|will be)|"
+                r"section begins|stalking them|chasing them)\b",
+                hay_text,
+            ):
+                score -= 12
     # Relationship + timeline questions: prefer notes that name the asked people and era.
     pair = relationship_between_pair(question)
     if pair:

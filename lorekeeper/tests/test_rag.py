@@ -36,6 +36,7 @@ class RagTests(unittest.TestCase):
         system = _system_for_kind("In Fairy Tale, who is Ella?", "who", brief=False)
         self.assertIn("CAST CARD", system)
         self.assertIn("prior-story hook", system)
+        self.assertIn("POV order", system)
         self.assertNotIn("contradictory, say so honestly", system)
 
     def test_system_audit_meta(self):
@@ -68,7 +69,7 @@ class RagTests(unittest.TestCase):
             "Etherei is the protagonist of Smoke and Mirrors, married to Rowan.\n\n"
             "— From your notes only. Nothing invented."
         )
-        with mock.patch("lorekeeper_rag._call_anthropic", return_value=fake_answer):
+        with mock.patch("lorekeeper_rag._call_anthropic", return_value=(fake_answer, "end_turn")):
             result = answer_with_rag(
                 question,
                 entries,

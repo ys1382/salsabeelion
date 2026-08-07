@@ -328,6 +328,12 @@ class CharacterComposeTests(unittest.TestCase):
     def test_plot_arc_clause_filtered_from_compose(self):
         self.assertTrue(_is_plot_arc_clause("By the events of the series, Ella has become caught between realities."))
         self.assertTrue(_is_plot_arc_clause("Ella forms the emotional and narrative center of the work."))
+        self.assertTrue(
+            _is_plot_arc_clause(
+                "So right after Ella tells his brothers, the next POV will be the Wolf."
+            )
+        )
+        self.assertTrue(_is_plot_arc_clause("Next section begins with Ella's POV."))
         answer = compose_character_reference(
             "Ella",
             brief={"role": "Ella is the protagonist.", "ties": []},
@@ -341,6 +347,56 @@ class CharacterComposeTests(unittest.TestCase):
         )
         self.assertIn("protagonist", answer.lower())
         self.assertNotIn("caught between", answer.lower())
+
+    def test_who_is_rejects_plot_walkthrough_as_thin(self):
+        from lorekeeper_character_compose import cast_answer_is_thin, is_plot_walkthrough_text
+
+        dump = (
+            "So right after Character M tells his brothers about multiverse theory, "
+            "Character M's POV shows him thinking on the hunter. The next POV will be "
+            "that of the Wolf stalking them. Next section begins with Character M "
+            "about to slip pursuit."
+        )
+        self.assertTrue(is_plot_walkthrough_text(dump))
+        self.assertTrue(cast_answer_is_thin(dump, "Character M"))
+        card = (
+            "Character M is the protagonist. Character M is a sentient white rabbit. "
+            "Younger brother to Character B."
+        )
+        self.assertFalse(is_plot_walkthrough_text(card))
+        self.assertFalse(cast_answer_is_thin(card, "Character M"))
+
+    def test_who_is_prefers_cast_note_over_plot_draft(self):
+        entries = [
+            _entry(
+                "c1",
+                "Character M",
+                "Character M is the protagonist. Character M is a sentient white rabbit. "
+                "Younger brother to Character B and Character C. "
+                "Subject of Character D's curiosity.",
+                tags=["Ashford Saga"],
+                kind="character",
+            ),
+            _entry(
+                "d1",
+                "Ashford draft",
+                "So right after Character M tells his brothers about multiverse theory, "
+                "Character M's POV shows him thinking on the hunter coming after him. "
+                "The next POV will be that of the Wolf stalking them. "
+                "Next section begins with Character M's POV while he is about to slip pursuit.",
+                tags=["Ashford Saga"],
+                kind="document",
+            ),
+        ]
+        res = self._ask("In Ashford Saga, who is Character M?", entries)
+        answer = res.get("answer") or ""
+        self.assertEqual(res.get("materialState"), "summarizable")
+        self.assertIn("protagonist", answer.lower())
+        self.assertIn("rabbit", answer.lower())
+        self.assertIn("brother", answer.lower())
+        self.assertNotIn("right after", answer.lower())
+        self.assertNotIn("next pov", answer.lower())
+        self.assertNotIn("multiverse", answer.lower())
 
     def test_gap_reference_puts_unclear_section_last(self):
         answer = compose_character_gap_reference(

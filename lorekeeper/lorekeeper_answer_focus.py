@@ -4,7 +4,12 @@ from __future__ import annotations
 import re
 from typing import Any, Literal
 
-from lorekeeper_character_compose import is_audit_question, is_coverage_question
+from lorekeeper_character_compose import (
+    _is_plot_arc_clause,
+    is_audit_question,
+    is_coverage_question,
+    is_plot_walkthrough_text,
+)
 from lorekeeper_loose_ends import is_flagged_fix_question, is_planned_gap_question
 from lorekeeper_character_summary import character_targets, is_who_is_question
 from lorekeeper_relations import is_relationship_between_question
@@ -466,6 +471,8 @@ def scrub_rag_artifacts(question: str, answer: str, *, allow_broad: bool) -> str
         if footer:
             return body + "\n\n" + footer
         return body
+    if is_who_is_question(question):
+        body = scrub_who_is_plot_walkthrough(body)
     if not is_who_is_question(question) and (
         _CAST_CARD_HEADER.search(body) or "**Role" in body or "**Key Ties" in body
     ):
@@ -485,6 +492,25 @@ def scrub_rag_artifacts(question: str, answer: str, *, allow_broad: bool) -> str
     if footer:
         return body + "\n\n" + footer
     return body
+
+
+def scrub_who_is_plot_walkthrough(body: str) -> str:
+    """Drop POV/section chronology sentences from who-is answers; keep cast facts."""
+    text = (body or "").strip()
+    if not text or not is_plot_walkthrough_text(text):
+        return text
+    sentences = re.split(r"(?<=[.!?])\s+", text)
+    kept: list[str] = []
+    for sentence in sentences:
+        s = sentence.strip()
+        if not s:
+            continue
+        if _is_plot_arc_clause(s):
+            continue
+        kept.append(s)
+    if not kept:
+        return text
+    return " ".join(kept)
 
 
 def scrub_unsupported_identity_claims(

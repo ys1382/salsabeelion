@@ -546,6 +546,40 @@
           "rabbit"
         ]
       }
+    },
+    {
+      "id": "who_is_not_plot_dump",
+      "label": "Who-is returns cast card, not POV/plot chronology",
+      "entries": [
+        {
+          "id": "c1",
+          "title": "Character M",
+          "body": "Character M is the protagonist. Character M is a sentient white rabbit. Younger brother to Character B and Character C. Subject of Character D's curiosity.",
+          "tags": ["Ashford Saga"],
+          "kind": "character"
+        },
+        {
+          "id": "d1",
+          "title": "Ashford draft",
+          "body": "So right after Character M tells his brothers about multiverse theory, Character M's POV shows him thinking on the hunter coming after him. The next POV will be that of the Wolf stalking them. Next section begins with Character M's POV while he is about to slip pursuit.",
+          "tags": ["Ashford Saga"],
+          "kind": "document"
+        }
+      ],
+      "question": "In Ashford Saga, who is Character M?",
+      "assert": {
+        "questionKind": "who",
+        "materialState": "summarizable",
+        "answerContains": ["protagonist", "rabbit", "brother"],
+        "answerNotContains": [
+          "right after",
+          "next POV",
+          "Next section",
+          "multiverse",
+          "slip pursuit",
+          "stalking them"
+        ]
+      }
     }
   ]
 }
