@@ -208,6 +208,14 @@ Bring these into planning and design so they are not dropped across sessions.
 - [x] **Owner shelf photo scan removed from live (Jul 2026)** — Multi-title shelf camera + `/api/owner/shelf-identify` taken off Owner’s Office / API (410). **Parked:** may restore later from git; Owner scanned TBR + barcode owner scanner remain.
 - [x] **Cover-identify API removed (Jul 2026)** — `/api/cover-identify` returns 410; Scroll Scanner is barcode/type only. **Parked on roadmap** if ever reconsidered.
 
+### Bookstores — in-person first + scraping (owner Aug 2026)
+
+Pinned under [Library & bookstore availability](#library--bookstore-availability-direction--later--jun-2026-clarified-jul-2026-bookstore-in-person-goal-aug-2026) (full detail there).
+
+- [ ] **In-person bookstore efficiency** — Foot traffic to favorite shops (B&N Stevens Creek, Kepler’s, etc.) over Amazon/eBay mail-order; directions / check-stock CTAs first.
+- [ ] **Live ISBN scraping (when enabled)** — Product-page checks only; robots-safe; priority queue for popular/wishlist ISBNs; honest tiers (hit / check stock / hide).
+- [ ] **UX honesty pass** — No fake “online listing found” on verification failed; no stock claims from popularity alone.
+
 <!-- Add new tasks or roadmap notes below -->
 
 ### Nancy Drew — AI unless readers ask (owner Jun 2026)
@@ -314,9 +322,25 @@ Bookcheck should know **which kind of vet** powered the result and say so plainl
 - [ ] **Site help: FAQ first** — Curated “how Halalit works” (tabs, Book Quest vs Bookcheck, recommendation types, **Advanced recommendations settings**, honest limits). Short in-context hints on Home / Book Quest / Bookcheck. Optional later: **help search** over that copy only (suggested questions + keyword match)—**not** an open chatbot. No book-safety or “is this okay?” answers in help (send to Bookcheck). No internal design detail in user-facing copy.
 - [ ] **Reader suggestions box** — Private way for readers/parents to send suggestions (books, features, site ideas) to the owner—not a public wall. Scope TBD (email, form, export); align with warmth-without-social.
 
-### Library & bookstore availability (direction / later — Jun 2026; clarified Jul 2026)
+### Library & bookstore availability (direction / later — Jun 2026; clarified Jul 2026; bookstore in-person goal Aug 2026)
 
 **Direction:** help readers find where a Wishlist title actually shows up — not Libby checkout, no library card required for v1.
+
+**Bookstore product goal (owner Aug 2026):** Make **going into bookstores in person** more common than buying the same title from Amazon/eBay (or other mail-order) without a visit. Libraries still matter when they have the book; bookstores matter when libraries don’t (or the reader wants to buy). Halalit is a **foot-traffic helper**, not a checkout cart. Prefer local shop CTAs (directions, hours, “check stock at [this store]”, open that store’s title page) over ship-to-home / marketplace links.
+
+**Honest capability tiers (don’t invent shelf stock):**
+- Library clear yes → show borrowable / initials as today.
+- Bookstore clearly doesn’t have it → **don’t** list as a hit.
+- Might have it / online listing only / can’t prove shelf → **“Check stock at [Stevens Creek / Menlo Park / …]”** + link-out — not “in stock here.”
+- Verification failed / nothing known → hide from hits or one quiet “couldn’t verify” — never a fake availability card.
+- If the site doesn’t mention pickup → say **unknown**, not “no pickup.”
+- Popularity / Netflix / “biggest books” may **prioritize check order** only — never claim stock from fame alone.
+
+**Site reality (Bay Area starters):**
+- **Libraries** — best in-person signal when catalog says borrowable.
+- **Kepler’s / similar indies** — product page often closer to “this shop”; robots block `/search/` and `/books/`; ISBN `/book/{isbn}` checks when enabled + permitted.
+- **B&N (e.g. Stevens Creek #1944)** — stronger online product / order signals; weaker guaranteed “on this store’s shelf”; robots block `/search`; ISBN/`ean` product checks when enabled. Store page + directions are the main in-person lever when shelf stock isn’t proven.
+- No bypass of CAPTCHA, login walls, or Disallow paths. Prefer official feeds/APIs if a store offers them.
 
 - [x] **Practice — Santa Clara Central Park Library (Jul 2026)** — Wishlist library check via Halalit API `POST /api/library/check` + BiblioCommons gateway. **Yes** = borrowable copy at branch code `C` (checked out OK). Citywide / Northside not yet.
 - [x] **Practice — Santa Clara Mission Branch Library (Jul 2026)** — Same city catalog (`sclibrary`), `placeId: santa-clara-mission`, branch code `M`. **Yes** = borrowable at Mission only (not citywide).
@@ -324,15 +348,15 @@ Bookcheck should know **which kind of vet** powered the result and say so plainl
 - [x] **Wishlist favorites + soft tip (Jul 2026)** — Reader saves favorite placeIds (`halalitLibraryFavoritePlaces`, device/account). Hover or focus a wishlist spine/list row checks **all** favorites (client cache + sequential delay); tip e.g. “Currently available at Central Park and Cupertino.” Batch dropdown check kept as fallback. Three practice libraries only (no bookstores yet; no freeform place typing).
 - [x] **Wishlist library initials on spines (Jul 2026)** — Hover tip removed. After **Check libraries** (favorites only), matching wishlist spines/list rows show readable initials (**SC** Central Park, **M** Mission, **C** Cupertino county) plus a short legend under the panel. First 10 wishlist titles per run.
 - [x] **Reader-added libraries — community, not BiblioCommons-only (Jul 2026, local)** — Policy gate admits community public libraries (homepage or catalog). **BiblioCommons** → auto borrowable checks. **Other community systems** (e.g. Berkeley CARL) → auto-add as **open catalog** favorites (Check opens search; no fake spine initials). Pending only if name-only / not clearly community. Scam/deny → hard reject. Not deployed until owner says deploy.
-- [ ] **Wishlist → library & bookstore catalog check** — From Wishlist, check **public** catalogs for places the reader saves or types in (library name, bookstore, catalog URL). Only list places where the title/ISBN **actually matches** — skip fuzzy “did you mean…” junk when the real book isn’t there. **Libraries:** “in catalog” is enough (not live shelf status). **Bookstores:** in stock online or preorder when the site shows it. Start with a **short local list** (owner-configured or hand-wired for the reader’s area); expand later. In-person asks at a library/indie may unlock a reliable hook for that system. *(UI note: dropdown placeholder becomes “Choose library/bookstore” when bookstores are wired.)*
-
-  **Example local list shape (owner’s Seattle-area notes — not the only region):** public libraries with searchable catalogs; indie shops with honest shelf/preorder lines (e.g. Third Place Books, Queen Anne Book Co, Elliott Bay); chain stores that expose **store-specific** pickup stock (e.g. B&N locations the reader actually uses). Skip used/recycle shops without reliable online inventory; skip stores whose site/Bookshop.org page does **not** reflect shelf stock.
-
-- [ ] **Availability on Bookcheck + Book Quest (later)** — Same “where can I get it?” idea next to a pass/recommend path — after Wishlist check pattern exists. Not instead of safety copy.
+- [ ] **Wishlist → library & bookstore catalog check** — From Wishlist, check **public** catalogs for places the reader saves or types in (library name, bookstore, catalog URL). Only list places where the title/ISBN **actually matches** — skip fuzzy “did you mean…” junk when the real book isn’t there. **Libraries:** “in catalog” is enough (not live shelf status). **Bookstores:** only claim what that location’s source can prove (see tiers above). Start with a **short local list**; expand later. *(UI: “Choose library/bookstore” when bookstores are wired.)*
+- [ ] **In-person bookstore efficiency (Wishlist)** — Favorite specific shops; batch “check my bookstore locations”; hero actions = directions / hours / phone / “check stock at [store]” / open that store’s title page. Rank local bookstore before Amazon/eBay/mail-order. Soft demote or omit ship-to-home as the primary CTA. Fix misleading “online listing found” when verification actually failed.
+- [ ] **Live ISBN checks (paused → enable when owner OK)** — Per-store adapters: B&N, Kepler’s, Green Apple. ISBN product-page / JSON-LD only when robots allow; no full `/search` or `/books/` crawl without feed/permission. `HALALIT_BOOKSTORE_LIVE_CHECKS` + unpause/`enabled` on server. Rate limits, freshness labels, Owner’s Office health.
+- [ ] **Check-order priority** — When running live bookstore jobs, check high-signal ISBNs first (wishlist + popular / adaptation titles) as a **queue order**, then other wishlist ISBNs — still no stock claims from popularity alone.
+- [ ] **Availability on Bookcheck + Book Quest (later)** — Same “where can I get it?” next to pass/recommend — after Wishlist pattern is solid. Not instead of safety copy. Still in-person-first for bookstores.
 - [ ] **Linked library cards / accounts (later / optional)** — Deeper than public-catalog “in catalog.” Needs [Personal accounts](#4-personal-accounts) or scoped library links; **minimal sensitive data**; no public borrow profile. **Not** required for Wishlist catalog-check v1.
-- [ ] **Bookstore connectors — catalog-backed only** — Prefer retailers/indies with a real inventory or honest product page. **Exclude** recycle / used shops that don’t know stock online. Copy must match what each connector can honestly say.
+- [ ] **Bookstore connectors — catalog-backed only** — Prefer retailers/indies with a real inventory or honest product page. **Exclude** recycle / used shops that don’t know stock online. Copy must match what each connector can honestly say. Seek store feeds/APIs when scrapes are blocked.
 - [x] **Bookstore inventory aggregation scaffold (Aug 2026)** — Modular adapters + SQLite models + matching/freshness + Owner’s Office + Wishlist UI. **Location-first favorites** (e.g. B&N Stevens Creek #1944, Kepler’s Menlo Park, Green Apple Clement)—not generic chains; readers can add locations. Live adapters **paused** (robots). Fixture + tests. Docs: `bookstore_inventory/README.md`.
-- **Open questions before build:** Per-area place list vs only reader-saved places; server-side fetch + cache (don’t hammer catalogs from the browser); store-ID flows for chains; “open on their site to confirm” always; rate limits; “Halalit is not the library/store” disclaimer.
+- **Open questions:** Per-area seed list vs only reader-saved places; how hard to demote marketplace links in UI; store-ID shelf signals for B&N when/if available; written permission or feeds from Kepler’s / Green Apple / B&N; rate limits; always “Halalit is not the library/store.”
 
 ### Community, awards & reading life (owner Jul 2026)
 
