@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "note": "Owner-curated recommendation pool only. Do not auto-add Flickcheck fine results. Link out only — nothing streams here. Parent-flag notes stay visible; discretion/reject titles stay out. Holiday rule: titles centered on Christmas or other non-Muslim religious holidays are off this list (Christmas-in-the-title usually out; stories that merely include a holiday scene may differ). Actor rule: never add films starring The Rock (Dwayne Johnson) — owner reject.",
+  "note": "Owner-curated recommendation pool only. Do not auto-add Flickcheck fine results. Link out only — nothing streams here. Parent-flag notes stay visible; discretion/reject titles stay out. Holiday rule: titles centered on Christmas or other non-Muslim religious holidays are off this list (Christmas-in-the-title usually out; stories that merely include a holiday scene may differ). Actor rule: never add films starring The Rock (Dwayne Johnson) — owner reject. Slice-of-life kids TV often includes Christian-holiday episodes — parental flag even when the series is otherwise OK.",
   "movies": [
     {
       "title": "The Many Adventures of Winnie the Pooh",
@@ -1443,6 +1443,234 @@
         "animals",
         "science",
         "adventure"
+      ]
+    },
+    {
+      "title": "Dora the Explorer",
+      "year": "2000",
+      "note": "Owner OK with flag — mermaid episode immodesty is shirt-like, not clamshell bikini. Holiday eps common in slice-of-life kids TV.",
+      "themes": [
+        "kids_show",
+        "tv_series",
+        "adventure",
+        "learning",
+        "preschool"
+      ]
+    },
+    {
+      "title": "Go, Diego, Go!",
+      "year": "2005",
+      "note": "Owner OK. Holiday eps common in slice-of-life kids TV.",
+      "themes": [
+        "kids_show",
+        "tv_series",
+        "animals",
+        "adventure",
+        "preschool"
+      ]
+    },
+    {
+      "title": "Peppa Pig",
+      "year": "2004",
+      "note": "Owner OK. Holiday eps common in slice-of-life kids TV.",
+      "themes": [
+        "kids_show",
+        "tv_series",
+        "preschool",
+        "family",
+        "comedy"
+      ]
+    },
+    {
+      "title": "Daniel Tiger's Neighborhood",
+      "year": "2012",
+      "note": "Owner OK. Holiday eps common in slice-of-life kids TV.",
+      "themes": [
+        "kids_show",
+        "tv_series",
+        "preschool",
+        "feelings",
+        "family"
+      ]
+    },
+    {
+      "title": "Sesame Street",
+      "year": "1969",
+      "note": "Owner OK. Holiday eps common in slice-of-life kids TV.",
+      "themes": [
+        "kids_show",
+        "tv_series",
+        "preschool",
+        "learning",
+        "classic"
+      ]
+    },
+    {
+      "title": "Mister Rogers' Neighborhood",
+      "year": "1968",
+      "note": "Owner OK. Holiday eps common in slice-of-life kids TV.",
+      "themes": [
+        "kids_show",
+        "tv_series",
+        "preschool",
+        "kindness",
+        "classic"
+      ]
+    },
+    {
+      "title": "Curious George",
+      "year": "2006",
+      "note": "Owner OK. Holiday eps common in slice-of-life kids TV.",
+      "themes": [
+        "kids_show",
+        "tv_series",
+        "preschool",
+        "adventure",
+        "animals"
+      ]
+    },
+    {
+      "title": "Clifford the Big Red Dog",
+      "year": "2000",
+      "note": "Owner OK. Holiday eps common in slice-of-life kids TV.",
+      "themes": [
+        "kids_show",
+        "tv_series",
+        "preschool",
+        "dogs",
+        "friendship"
+      ]
+    },
+    {
+      "title": "The Backyardigans",
+      "year": "2004",
+      "note": "Owner OK. Holiday eps common in slice-of-life kids TV.",
+      "themes": [
+        "kids_show",
+        "tv_series",
+        "preschool",
+        "adventure",
+        "music"
+      ]
+    },
+    {
+      "title": "Wonder Pets!",
+      "year": "2006",
+      "note": "Owner OK. Holiday eps common in slice-of-life kids TV.",
+      "themes": [
+        "kids_show",
+        "tv_series",
+        "preschool",
+        "animals",
+        "teamwork"
+      ]
+    },
+    {
+      "title": "Thomas & Friends",
+      "year": "1984",
+      "note": "Owner OK. Holiday eps common in slice-of-life kids TV.",
+      "themes": [
+        "kids_show",
+        "tv_series",
+        "preschool",
+        "trains",
+        "friendship"
+      ]
+    },
+    {
+      "title": "Fireman Sam",
+      "year": "1987",
+      "note": "Owner OK. Holiday eps common in slice-of-life kids TV.",
+      "themes": [
+        "kids_show",
+        "tv_series",
+        "preschool",
+        "rescue",
+        "community"
+      ]
+    },
+    {
+      "title": "Dog Man",
+      "year": "2025",
+      "note": "Owner OK — fine.",
+      "themes": [
+        "kids_movie",
+        "comedy",
+        "dogs",
+        "adventure",
+        "friendship"
+      ]
+    },
+    {
+      "title": "Leo",
+      "year": "2023",
+      "note": "Owner OK with flag — some gross kids humor.",
+      "themes": [
+        "kids_movie",
+        "comedy",
+        "school",
+        "friendship",
+        "lizards"
+      ]
+    },
+    {
+      "title": "Ron's Gone Wrong",
+      "year": "2021",
+      "note": "Owner OK — fine.",
+      "themes": [
+        "kids_movie",
+        "robots",
+        "friendship",
+        "comedy",
+        "tech"
+      ]
+    },
+    {
+      "title": "Spies in Disguise",
+      "year": "2019",
+      "note": "Owner OK — fine.",
+      "themes": [
+        "kids_movie",
+        "spies",
+        "comedy",
+        "adventure",
+        "friendship"
+      ]
+    },
+    {
+      "title": "Smallfoot",
+      "year": "2018",
+      "note": "Owner OK — fine.",
+      "themes": [
+        "kids_movie",
+        "yeti",
+        "friendship",
+        "music",
+        "comedy"
+      ]
+    },
+    {
+      "title": "Ferdinand",
+      "year": "2017",
+      "note": "Owner OK — fine.",
+      "themes": [
+        "kids_movie",
+        "animals",
+        "friendship",
+        "comedy",
+        "kindness"
+      ]
+    },
+    {
+      "title": "The Secret Life of Pets",
+      "year": "2016",
+      "note": "Owner OK — fine.",
+      "themes": [
+        "illumination",
+        "kids_movie",
+        "animals",
+        "comedy",
+        "friendship"
       ]
     }
   ]

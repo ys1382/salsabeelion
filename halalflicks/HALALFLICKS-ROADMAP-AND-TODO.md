@@ -89,6 +89,18 @@ Titles already shown in chat vet batches — **do not re-ask** unless the owner 
 
 **Parked idk / do not re-ask until owner asks:** Prior film parks…; Recess; DuckTales 2017/1987 (parked — owner said probably fine); TaleSpin; Rescue Rangers; Darkwing Duck; Arthur.
 
-**Logged reject / no auto-rec:** See `hand_vetted.json`. TV batch 1: Bluey / Phineas and Ferb / ATLA (discretion); Gravity Falls; Kim Possible; Korra (LGBTQ ending); Batman/Superman/JL/Teen Titans (tights/outfits). Recommend: MLP FiM (flags), Magic School Bus, Wild Kratts.
+**TV batch 2 (shown):** Octonauts; Paw Patrol; Dora the Explorer; Go, Diego, Go!; Peppa Pig; Daniel Tiger’s Neighborhood; Sesame Street; Mister Rogers’ Neighborhood; Curious George; Clifford the Big Red Dog; Cyberchase; WordGirl; Maya & Miguel; The Backyardigans; Wonder Pets!; Bubble Guppies; Team Umizoomi; Blaze and the Monster Machines; Thomas & Friends; Fireman Sam.
+
+**Owner process (pinned):** Titles the owner **parks** are written to `config/parked.json` + hand_vetted (`parked: true`) and **must not be re-offered** until the owner asks. Mixed movie+TV batches from here: **10 films + 10 series**, newest first; when newer releases appear, they go to the top.
+
+**Catalog rules:** Holidays (non-Muslim religious holiday–centered titles off list); slice-of-life kids TV often has Christian-holiday episodes (parental flag); The Rock; Harry Potter series (author).
+
+**Mixed batch A (shown):** Dog Man; Iwájú; Thelma the Unicorn; Young Jedi Adventures; Spellbound; SuperKitties; Harold and the Purple Crayon; Work It Out Wombats!; Transformers One; Moon Girl and Devil Dinosaur; Piece by Piece; The Creature Cases; Mufasa; Hamster & Gretel; Leo; Gabby’s Dollhouse; Under the Boardwalk; Spidey and His Amazing Friends; Chicken for Linda!; Donkey Hodie.
+
+**Mixed batch B (shown):** The Bad Guys 2; Primos; Fixed; Kiff; In Your Dreams; Hailey’s On It!; Plankton: The Movie; Big City Greens; Ne Zha 2; Amphibia; Smurfs (2025); Craig of the Creek; The Day the Earth Blew Up; We Bare Bears; Memoir of a Snail; Mickey Mouse Funhouse; Kensuke’s Kingdom; Pupstruction; Sirocco; Alma’s Way.
+
+**Mixed batch C (shown):** PAW Patrol: The Mighty Movie; Firebuds; DC League of Super-Pets; Alice’s Wonderland Bakery; Ron’s Gone Wrong; Eureka!; The Willoughbys; Rosie’s Rules; Over the Moon; Xavier Riddle; Spies in Disguise; Odd Squad; Missing Link; Nature Cat; Smallfoot; Molly of Denali; Ferdinand; The Fairly OddParents; The Secret Life of Pets; SpongeBob SquarePants.
+
+**Logged reject / no auto-rec:** See `config/hand_vetted.json`. Parked registry: `config/parked.json`.
 
 ---

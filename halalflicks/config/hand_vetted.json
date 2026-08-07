@@ -1782,6 +1782,589 @@
       "year": "2011",
       "rec_ok": true,
       "note": "Owner hand-vet: fine. TV series."
+    },
+    {
+      "title": "Octonauts",
+      "year": "2010",
+      "rec_ok": false,
+      "note": "Owner parked (tv) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Paw Patrol",
+      "year": "2013",
+      "rec_ok": false,
+      "note": "Owner parked (tv) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Cyberchase",
+      "year": "2002",
+      "rec_ok": false,
+      "note": "Owner parked (tv) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "WordGirl",
+      "year": "2007",
+      "rec_ok": false,
+      "note": "Owner parked (tv) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Maya & Miguel",
+      "year": "2004",
+      "rec_ok": false,
+      "note": "Owner parked (tv) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Bubble Guppies",
+      "year": "2011",
+      "rec_ok": false,
+      "note": "Owner parked (tv) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Team Umizoomi",
+      "year": "2010",
+      "rec_ok": false,
+      "note": "Owner parked (tv) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Blaze and the Monster Machines",
+      "year": "2014",
+      "rec_ok": false,
+      "note": "Owner parked (tv) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Dora the Explorer",
+      "year": "2000",
+      "rec_ok": true,
+      "note": "Owner: fine / recommend. Flag — one mermaid episode has some immodesty, but not typical clamshell-bikini style; more like a shirt. TV series. Slice-of-life kids shows often include Christian-holiday episodes — parental flag."
+    },
+    {
+      "title": "Go, Diego, Go!",
+      "year": "2005",
+      "rec_ok": true,
+      "note": "Owner: fine. TV series. Slice-of-life kids shows often include Christian-holiday episodes — parental flag."
+    },
+    {
+      "title": "Peppa Pig",
+      "year": "2004",
+      "rec_ok": true,
+      "note": "Owner: fine. TV series. Slice-of-life kids shows often include Christian-holiday episodes — parental flag."
+    },
+    {
+      "title": "Daniel Tiger's Neighborhood",
+      "year": "2012",
+      "rec_ok": true,
+      "note": "Owner: fine. TV series. Slice-of-life kids shows often include Christian-holiday episodes — parental flag."
+    },
+    {
+      "title": "Sesame Street",
+      "year": "1969",
+      "rec_ok": true,
+      "note": "Owner: fine. TV series. Slice-of-life kids shows often include Christian-holiday episodes — parental flag."
+    },
+    {
+      "title": "Mister Rogers' Neighborhood",
+      "year": "1968",
+      "rec_ok": true,
+      "note": "Owner: fine. TV series. Slice-of-life kids shows often include Christian-holiday episodes — parental flag."
+    },
+    {
+      "title": "Curious George",
+      "year": "2006",
+      "rec_ok": true,
+      "note": "Owner: fine. TV series. Slice-of-life kids shows often include Christian-holiday episodes — parental flag."
+    },
+    {
+      "title": "Clifford the Big Red Dog",
+      "year": "2000",
+      "rec_ok": true,
+      "note": "Owner: fine. TV series. Slice-of-life kids shows often include Christian-holiday episodes — parental flag."
+    },
+    {
+      "title": "The Backyardigans",
+      "year": "2004",
+      "rec_ok": true,
+      "note": "Owner: fine. TV series. Slice-of-life kids shows often include Christian-holiday episodes — parental flag."
+    },
+    {
+      "title": "Wonder Pets!",
+      "year": "2006",
+      "rec_ok": true,
+      "note": "Owner: fine. TV series. Slice-of-life kids shows often include Christian-holiday episodes — parental flag."
+    },
+    {
+      "title": "Thomas & Friends",
+      "year": "1984",
+      "rec_ok": true,
+      "note": "Owner: fine. TV series. Note — children’s slice-of-life shows often have episodes containing Christian holidays etc. Parental flag."
+    },
+    {
+      "title": "Fireman Sam",
+      "year": "1987",
+      "rec_ok": true,
+      "note": "Owner: fine. TV series. Note — children’s slice-of-life shows often have episodes containing Christian holidays etc. Parental flag."
+    },
+    {
+      "title": "Recess",
+      "year": "1997",
+      "rec_ok": false,
+      "parked": true,
+      "note": "Owner parked (tv) — do not re-ask until owner asks."
+    },
+    {
+      "title": "DuckTales",
+      "year": "2017",
+      "rec_ok": false,
+      "parked": true,
+      "note": "Owner parked (tv) — probably fine, but parked; do not re-ask until owner asks."
+    },
+    {
+      "title": "DuckTales",
+      "year": "1987",
+      "rec_ok": false,
+      "parked": true,
+      "note": "Owner parked (tv) — probably fine, but parked; do not re-ask until owner asks."
+    },
+    {
+      "title": "TaleSpin",
+      "year": "1990",
+      "rec_ok": false,
+      "parked": true,
+      "note": "Owner parked (tv) — do not re-ask until owner asks."
+    },
+    {
+      "title": "Chip 'n Dale: Rescue Rangers",
+      "year": "1989",
+      "rec_ok": false,
+      "parked": true,
+      "note": "Owner parked (tv) — do not re-ask until owner asks."
+    },
+    {
+      "title": "Darkwing Duck",
+      "year": "1991",
+      "rec_ok": false,
+      "parked": true,
+      "note": "Owner parked (tv) — do not re-ask until owner asks."
+    },
+    {
+      "title": "Arthur",
+      "year": "1996",
+      "rec_ok": false,
+      "parked": true,
+      "note": "Owner parked (tv) — do not re-ask until owner asks."
+    },
+    {
+      "title": "Dog Man",
+      "year": "2025",
+      "rec_ok": true,
+      "note": "Owner hand-vet: fine / recommend."
+    },
+    {
+      "title": "Iwájú",
+      "year": "2024",
+      "rec_ok": false,
+      "note": "Owner parked (tv) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Thelma the Unicorn",
+      "year": "2024",
+      "rec_ok": false,
+      "note": "Owner parked (film) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Star Wars: Young Jedi Adventures",
+      "year": "2023",
+      "rec_ok": false,
+      "note": "Owner parked (tv) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Spellbound",
+      "year": "2024",
+      "rec_ok": false,
+      "note": "Owner parked (film) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "SuperKitties",
+      "year": "2023",
+      "rec_ok": false,
+      "note": "Owner parked (tv) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Harold and the Purple Crayon",
+      "year": "2024",
+      "rec_ok": false,
+      "note": "Owner parked (film) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Work It Out Wombats!",
+      "year": "2023",
+      "rec_ok": false,
+      "note": "Owner parked (tv) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Transformers One",
+      "year": "2024",
+      "rec_ok": false,
+      "note": "Owner: not recommend — Elita’s actress supports unethical causes."
+    },
+    {
+      "title": "Moon Girl and Devil Dinosaur",
+      "year": "2023",
+      "rec_ok": false,
+      "note": "Owner reject: LGBTQ characters are prominent in the show. TV series."
+    },
+    {
+      "title": "Piece by Piece",
+      "year": "2024",
+      "rec_ok": false,
+      "note": "Owner parked (film) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "The Creature Cases",
+      "year": "2022",
+      "rec_ok": false,
+      "note": "Owner parked (tv) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Mufasa: The Lion King",
+      "year": "2024",
+      "rec_ok": false,
+      "note": "Owner parked (film) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Hamster & Gretel",
+      "year": "2022",
+      "rec_ok": false,
+      "note": "Owner parked (tv) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Leo",
+      "year": "2023",
+      "rec_ok": true,
+      "note": "Owner: fine with flag — some gross kids-humor element."
+    },
+    {
+      "title": "Gabby's Dollhouse",
+      "year": "2021",
+      "rec_ok": false,
+      "note": "Owner parked (tv) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Under the Boardwalk",
+      "year": "2023",
+      "rec_ok": false,
+      "note": "Owner parked (film) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Spidey and His Amazing Friends",
+      "year": "2021",
+      "rec_ok": false,
+      "note": "Owner parked (tv) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Chicken for Linda!",
+      "year": "2023",
+      "rec_ok": false,
+      "note": "Owner parked (film) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Donkey Hodie",
+      "year": "2021",
+      "rec_ok": false,
+      "note": "Owner parked (tv) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "The Bad Guys 2",
+      "year": "2025",
+      "rec_ok": false,
+      "note": "Owner parked (film) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Primos",
+      "year": "2024",
+      "rec_ok": false,
+      "note": "Owner parked (tv) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Fixed",
+      "year": "2025",
+      "rec_ok": false,
+      "note": "Owner parked (film) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Kiff",
+      "year": "2023",
+      "rec_ok": false,
+      "note": "Owner parked (tv) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "In Your Dreams",
+      "year": "2025",
+      "rec_ok": false,
+      "note": "Owner parked (film) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Hailey's On It!",
+      "year": "2023",
+      "rec_ok": false,
+      "note": "Owner parked (tv) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Plankton: The Movie",
+      "year": "2025",
+      "rec_ok": false,
+      "note": "Owner parked (film) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Big City Greens",
+      "year": "2018",
+      "rec_ok": false,
+      "note": "Owner parked (tv) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Ne Zha 2",
+      "year": "2025",
+      "rec_ok": false,
+      "note": "Owner: parent discretion — dark but not romantic content. No auto-recommend."
+    },
+    {
+      "title": "Amphibia",
+      "year": "2019",
+      "rec_ok": false,
+      "note": "Owner: not recommend — LGBTQ. TV series."
+    },
+    {
+      "title": "Smurfs",
+      "year": "2025",
+      "rec_ok": false,
+      "note": "Owner parked (film) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Craig of the Creek",
+      "year": "2018",
+      "rec_ok": false,
+      "note": "Owner parked (tv) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "The Day the Earth Blew Up: A Looney Tunes Movie",
+      "year": "2025",
+      "rec_ok": false,
+      "note": "Owner parked (film) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "We Bare Bears",
+      "year": "2015",
+      "rec_ok": false,
+      "note": "Owner parked (tv) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Memoir of a Snail",
+      "year": "2024",
+      "rec_ok": false,
+      "note": "Owner parked (film) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Mickey Mouse Funhouse",
+      "year": "2021",
+      "rec_ok": false,
+      "note": "Owner parked (tv) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Kensuke's Kingdom",
+      "year": "2023",
+      "rec_ok": false,
+      "note": "Owner parked (film) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Pupstruction",
+      "year": "2023",
+      "rec_ok": false,
+      "note": "Owner parked (tv) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Sirocco and the Kingdom of Winds",
+      "year": "2023",
+      "rec_ok": false,
+      "note": "Owner parked (film) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Alma's Way",
+      "year": "2021",
+      "rec_ok": false,
+      "note": "Owner parked (tv) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "PAW Patrol: The Mighty Movie",
+      "year": "2023",
+      "rec_ok": false,
+      "note": "Owner parked (film) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Firebuds",
+      "year": "2022",
+      "rec_ok": false,
+      "note": "Owner parked (tv) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "DC League of Super-Pets",
+      "year": "2022",
+      "rec_ok": false,
+      "note": "Owner reject: tights and especially Wonder Woman outfit immodesty."
+    },
+    {
+      "title": "Alice's Wonderland Bakery",
+      "year": "2022",
+      "rec_ok": false,
+      "note": "Owner parked (tv) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Ron's Gone Wrong",
+      "year": "2021",
+      "rec_ok": true,
+      "note": "Owner hand-vet: fine / recommend."
+    },
+    {
+      "title": "Eureka!",
+      "year": "2022",
+      "rec_ok": false,
+      "note": "Owner parked (tv) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "The Willoughbys",
+      "year": "2020",
+      "rec_ok": false,
+      "note": "Owner parked (film) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Rosie's Rules",
+      "year": "2022",
+      "rec_ok": false,
+      "note": "Owner parked (tv) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Over the Moon",
+      "year": "2020",
+      "rec_ok": false,
+      "note": "Owner parked (film) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Xavier Riddle and the Secret Museum",
+      "year": "2019",
+      "rec_ok": false,
+      "note": "Owner parked (tv) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Spies in Disguise",
+      "year": "2019",
+      "rec_ok": true,
+      "note": "Owner hand-vet: fine / recommend."
+    },
+    {
+      "title": "Odd Squad",
+      "year": "2014",
+      "rec_ok": false,
+      "note": "Owner parked (tv) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Missing Link",
+      "year": "2019",
+      "rec_ok": false,
+      "note": "Owner parked (film) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Nature Cat",
+      "year": "2015",
+      "rec_ok": false,
+      "note": "Owner parked (tv) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Smallfoot",
+      "year": "2018",
+      "rec_ok": true,
+      "note": "Owner hand-vet: fine / recommend."
+    },
+    {
+      "title": "Molly of Denali",
+      "year": "2019",
+      "rec_ok": false,
+      "note": "Owner parked (tv) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Ferdinand",
+      "year": "2017",
+      "rec_ok": true,
+      "note": "Owner hand-vet: fine / recommend."
+    },
+    {
+      "title": "The Fairly OddParents",
+      "year": "2001",
+      "rec_ok": false,
+      "note": "Owner reject: some sexist/adult jokes plus immodest dressing. TV series."
+    },
+    {
+      "title": "The Secret Life of Pets",
+      "year": "2016",
+      "rec_ok": true,
+      "note": "Owner hand-vet: fine / recommend."
+    },
+    {
+      "title": "SpongeBob SquarePants",
+      "year": "1999",
+      "rec_ok": false,
+      "note": "Owner: parent discretion — episode where the protagonist gets drunk on ice cream; when the squirrel girl is at home she is often wearing a bikini. TV series. No auto-recommend."
     }
   ]
 }

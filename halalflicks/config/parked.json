@@ -1,0 +1,372 @@
+{
+  "version": 1,
+  "note": "Owner-parked titles — never re-offer in vet batches until owner explicitly asks. Updated whenever owner says park.",
+  "titles": [
+    {
+      "title": "Octonauts",
+      "year": "2010",
+      "kind": "tv",
+      "note": "Owner parked (tv) — do not re-ask until owner asks."
+    },
+    {
+      "title": "Paw Patrol",
+      "year": "2013",
+      "kind": "tv",
+      "note": "Owner parked (tv) — do not re-ask until owner asks."
+    },
+    {
+      "title": "Cyberchase",
+      "year": "2002",
+      "kind": "tv",
+      "note": "Owner parked (tv) — do not re-ask until owner asks."
+    },
+    {
+      "title": "WordGirl",
+      "year": "2007",
+      "kind": "tv",
+      "note": "Owner parked (tv) — do not re-ask until owner asks."
+    },
+    {
+      "title": "Maya & Miguel",
+      "year": "2004",
+      "kind": "tv",
+      "note": "Owner parked (tv) — do not re-ask until owner asks."
+    },
+    {
+      "title": "Bubble Guppies",
+      "year": "2011",
+      "kind": "tv",
+      "note": "Owner parked (tv) — do not re-ask until owner asks."
+    },
+    {
+      "title": "Team Umizoomi",
+      "year": "2010",
+      "kind": "tv",
+      "note": "Owner parked (tv) — do not re-ask until owner asks."
+    },
+    {
+      "title": "Blaze and the Monster Machines",
+      "year": "2014",
+      "kind": "tv",
+      "note": "Owner parked (tv) — do not re-ask until owner asks."
+    },
+    {
+      "title": "Recess",
+      "year": "1997",
+      "kind": "tv",
+      "note": "Owner parked (tv) — do not re-ask until owner asks."
+    },
+    {
+      "title": "DuckTales",
+      "year": "2017",
+      "kind": "tv",
+      "note": "Owner parked (tv) — probably fine, but parked; do not re-ask until owner asks."
+    },
+    {
+      "title": "DuckTales",
+      "year": "1987",
+      "kind": "tv",
+      "note": "Owner parked (tv) — probably fine, but parked; do not re-ask until owner asks."
+    },
+    {
+      "title": "TaleSpin",
+      "year": "1990",
+      "kind": "tv",
+      "note": "Owner parked (tv) — do not re-ask until owner asks."
+    },
+    {
+      "title": "Chip 'n Dale: Rescue Rangers",
+      "year": "1989",
+      "kind": "tv",
+      "note": "Owner parked (tv) — do not re-ask until owner asks."
+    },
+    {
+      "title": "Darkwing Duck",
+      "year": "1991",
+      "kind": "tv",
+      "note": "Owner parked (tv) — do not re-ask until owner asks."
+    },
+    {
+      "title": "Arthur",
+      "year": "1996",
+      "kind": "tv",
+      "note": "Owner parked (tv) — do not re-ask until owner asks."
+    },
+    {
+      "title": "Iwájú",
+      "year": "2024",
+      "kind": "tv",
+      "note": "Owner parked (tv) — do not re-ask until owner asks."
+    },
+    {
+      "title": "Thelma the Unicorn",
+      "year": "2024",
+      "kind": "film",
+      "note": "Owner parked (film) — do not re-ask until owner asks."
+    },
+    {
+      "title": "Star Wars: Young Jedi Adventures",
+      "year": "2023",
+      "kind": "tv",
+      "note": "Owner parked (tv) — do not re-ask until owner asks."
+    },
+    {
+      "title": "Spellbound",
+      "year": "2024",
+      "kind": "film",
+      "note": "Owner parked (film) — do not re-ask until owner asks."
+    },
+    {
+      "title": "SuperKitties",
+      "year": "2023",
+      "kind": "tv",
+      "note": "Owner parked (tv) — do not re-ask until owner asks."
+    },
+    {
+      "title": "Harold and the Purple Crayon",
+      "year": "2024",
+      "kind": "film",
+      "note": "Owner parked (film) — do not re-ask until owner asks."
+    },
+    {
+      "title": "Work It Out Wombats!",
+      "year": "2023",
+      "kind": "tv",
+      "note": "Owner parked (tv) — do not re-ask until owner asks."
+    },
+    {
+      "title": "Piece by Piece",
+      "year": "2024",
+      "kind": "film",
+      "note": "Owner parked (film) — do not re-ask until owner asks."
+    },
+    {
+      "title": "The Creature Cases",
+      "year": "2022",
+      "kind": "tv",
+      "note": "Owner parked (tv) — do not re-ask until owner asks."
+    },
+    {
+      "title": "Mufasa: The Lion King",
+      "year": "2024",
+      "kind": "film",
+      "note": "Owner parked (film) — do not re-ask until owner asks."
+    },
+    {
+      "title": "Hamster & Gretel",
+      "year": "2022",
+      "kind": "tv",
+      "note": "Owner parked (tv) — do not re-ask until owner asks."
+    },
+    {
+      "title": "Gabby's Dollhouse",
+      "year": "2021",
+      "kind": "tv",
+      "note": "Owner parked (tv) — do not re-ask until owner asks."
+    },
+    {
+      "title": "Under the Boardwalk",
+      "year": "2023",
+      "kind": "film",
+      "note": "Owner parked (film) — do not re-ask until owner asks."
+    },
+    {
+      "title": "Spidey and His Amazing Friends",
+      "year": "2021",
+      "kind": "tv",
+      "note": "Owner parked (tv) — do not re-ask until owner asks."
+    },
+    {
+      "title": "Chicken for Linda!",
+      "year": "2023",
+      "kind": "film",
+      "note": "Owner parked (film) — do not re-ask until owner asks."
+    },
+    {
+      "title": "Donkey Hodie",
+      "year": "2021",
+      "kind": "tv",
+      "note": "Owner parked (tv) — do not re-ask until owner asks."
+    },
+    {
+      "title": "The Bad Guys 2",
+      "year": "2025",
+      "kind": "film",
+      "note": "Owner parked (film) — do not re-ask until owner asks."
+    },
+    {
+      "title": "Primos",
+      "year": "2024",
+      "kind": "tv",
+      "note": "Owner parked (tv) — do not re-ask until owner asks."
+    },
+    {
+      "title": "Fixed",
+      "year": "2025",
+      "kind": "film",
+      "note": "Owner parked (film) — do not re-ask until owner asks."
+    },
+    {
+      "title": "Kiff",
+      "year": "2023",
+      "kind": "tv",
+      "note": "Owner parked (tv) — do not re-ask until owner asks."
+    },
+    {
+      "title": "In Your Dreams",
+      "year": "2025",
+      "kind": "film",
+      "note": "Owner parked (film) — do not re-ask until owner asks."
+    },
+    {
+      "title": "Hailey's On It!",
+      "year": "2023",
+      "kind": "tv",
+      "note": "Owner parked (tv) — do not re-ask until owner asks."
+    },
+    {
+      "title": "Plankton: The Movie",
+      "year": "2025",
+      "kind": "film",
+      "note": "Owner parked (film) — do not re-ask until owner asks."
+    },
+    {
+      "title": "Big City Greens",
+      "year": "2018",
+      "kind": "tv",
+      "note": "Owner parked (tv) — do not re-ask until owner asks."
+    },
+    {
+      "title": "Smurfs",
+      "year": "2025",
+      "kind": "film",
+      "note": "Owner parked (film) — do not re-ask until owner asks."
+    },
+    {
+      "title": "Craig of the Creek",
+      "year": "2018",
+      "kind": "tv",
+      "note": "Owner parked (tv) — do not re-ask until owner asks."
+    },
+    {
+      "title": "The Day the Earth Blew Up: A Looney Tunes Movie",
+      "year": "2025",
+      "kind": "film",
+      "note": "Owner parked (film) — do not re-ask until owner asks."
+    },
+    {
+      "title": "We Bare Bears",
+      "year": "2015",
+      "kind": "tv",
+      "note": "Owner parked (tv) — do not re-ask until owner asks."
+    },
+    {
+      "title": "Memoir of a Snail",
+      "year": "2024",
+      "kind": "film",
+      "note": "Owner parked (film) — do not re-ask until owner asks."
+    },
+    {
+      "title": "Mickey Mouse Funhouse",
+      "year": "2021",
+      "kind": "tv",
+      "note": "Owner parked (tv) — do not re-ask until owner asks."
+    },
+    {
+      "title": "Kensuke's Kingdom",
+      "year": "2023",
+      "kind": "film",
+      "note": "Owner parked (film) — do not re-ask until owner asks."
+    },
+    {
+      "title": "Pupstruction",
+      "year": "2023",
+      "kind": "tv",
+      "note": "Owner parked (tv) — do not re-ask until owner asks."
+    },
+    {
+      "title": "Sirocco and the Kingdom of Winds",
+      "year": "2023",
+      "kind": "film",
+      "note": "Owner parked (film) — do not re-ask until owner asks."
+    },
+    {
+      "title": "Alma's Way",
+      "year": "2021",
+      "kind": "tv",
+      "note": "Owner parked (tv) — do not re-ask until owner asks."
+    },
+    {
+      "title": "PAW Patrol: The Mighty Movie",
+      "year": "2023",
+      "kind": "film",
+      "note": "Owner parked (film) — do not re-ask until owner asks."
+    },
+    {
+      "title": "Firebuds",
+      "year": "2022",
+      "kind": "tv",
+      "note": "Owner parked (tv) — do not re-ask until owner asks."
+    },
+    {
+      "title": "Alice's Wonderland Bakery",
+      "year": "2022",
+      "kind": "tv",
+      "note": "Owner parked (tv) — do not re-ask until owner asks."
+    },
+    {
+      "title": "Eureka!",
+      "year": "2022",
+      "kind": "tv",
+      "note": "Owner parked (tv) — do not re-ask until owner asks."
+    },
+    {
+      "title": "The Willoughbys",
+      "year": "2020",
+      "kind": "film",
+      "note": "Owner parked (film) — do not re-ask until owner asks."
+    },
+    {
+      "title": "Rosie's Rules",
+      "year": "2022",
+      "kind": "tv",
+      "note": "Owner parked (tv) — do not re-ask until owner asks."
+    },
+    {
+      "title": "Over the Moon",
+      "year": "2020",
+      "kind": "film",
+      "note": "Owner parked (film) — do not re-ask until owner asks."
+    },
+    {
+      "title": "Xavier Riddle and the Secret Museum",
+      "year": "2019",
+      "kind": "tv",
+      "note": "Owner parked (tv) — do not re-ask until owner asks."
+    },
+    {
+      "title": "Odd Squad",
+      "year": "2014",
+      "kind": "tv",
+      "note": "Owner parked (tv) — do not re-ask until owner asks."
+    },
+    {
+      "title": "Missing Link",
+      "year": "2019",
+      "kind": "film",
+      "note": "Owner parked (film) — do not re-ask until owner asks."
+    },
+    {
+      "title": "Nature Cat",
+      "year": "2015",
+      "kind": "tv",
+      "note": "Owner parked (tv) — do not re-ask until owner asks."
+    },
+    {
+      "title": "Molly of Denali",
+      "year": "2019",
+      "kind": "tv",
+      "note": "Owner parked (tv) — do not re-ask until owner asks."
+    }
+  ]
+}
