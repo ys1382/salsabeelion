@@ -376,6 +376,40 @@ class CharacterComposeTests(unittest.TestCase):
         self.assertTrue(is_other_character_scene_beat(other, "Character M"))
         self.assertTrue(_is_plot_arc_clause(other))
 
+    def test_who_is_scrubs_awareness_plot_dump(self):
+        from lorekeeper_answer_focus import scrub_who_is_plot_walkthrough
+        from lorekeeper_character_compose import (
+            cast_answer_is_thin,
+            who_is_answer_has_bloat,
+        )
+
+        dump = (
+            "Character M is the male protagonist of the story, the White Rabbit from "
+            "Tale Alpha in Ashford Saga. Character M is known by the name Chroniker by "
+            "Character D and those Character D trusts. specifically; Character E has no "
+            "reason to realize that the Preyfolk of his own reality are similarly sentient. "
+            "Not long after Character M mentions his theory that they are no longer in "
+            "their home dimension, he reflects on the fact that a Predator is tracking them. "
+            "So right now, Character M is aware that Character D does not yet want him dead. "
+            "Character M Background: his father died when Character M was very young, so he "
+            "doesn't remember much, but what he does remember would surprise his brothers."
+        )
+        self.assertTrue(who_is_answer_has_bloat(dump))
+        self.assertTrue(cast_answer_is_thin(dump, "Character M"))
+        cleaned = scrub_who_is_plot_walkthrough(
+            dump, question="In Ashford Saga, who is Character M?"
+        )
+        low = cleaned.lower()
+        self.assertIn("protagonist", low)
+        self.assertIn("rabbit", low)
+        self.assertIn("chroniker", low)
+        self.assertNotIn("aware that", low)
+        self.assertNotIn("not long after", low)
+        self.assertNotIn("tracking", low)
+        self.assertNotIn("background", low)
+        self.assertNotIn("no reason to realize", low)
+        self.assertFalse(who_is_answer_has_bloat(cleaned))
+
     def test_who_is_scrubs_other_character_pov_event(self):
         from lorekeeper_answer_focus import scrub_who_is_plot_walkthrough
 

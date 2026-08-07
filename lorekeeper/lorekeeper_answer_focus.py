@@ -10,7 +10,9 @@ from lorekeeper_character_compose import (
     is_coverage_question,
     is_other_character_scene_beat,
     is_plot_walkthrough_text,
+    is_who_is_cast_fact_sentence,
     smooth_who_is_prose,
+    who_is_answer_has_bloat,
 )
 from lorekeeper_loose_ends import is_flagged_fix_question, is_planned_gap_question
 from lorekeeper_character_summary import character_targets, is_who_is_question
@@ -365,7 +367,7 @@ def apply_length_policy(
     facet = detect_narrow_facet(question)
     limits = {
         "relationship": 280,
-        "who": 1400,
+        "who": 700,
         "topic": 1200,
         "fallback": 900,
         "knowledge": 900,
@@ -502,30 +504,87 @@ def scrub_rag_artifacts(question: str, answer: str, *, allow_broad: bool) -> str
 
 
 def scrub_who_is_plot_walkthrough(body: str, *, question: str = "") -> str:
-    """Drop POV/scene chronology and other-character event beats from who-is answers."""
+    """Hard keep-list: who-is answers may only keep cast-card fact sentences."""
     text = (body or "").strip()
     if not text:
         return text
     labels = character_targets(question) if question else []
     label = labels[0] if labels else ""
-    sentences = re.split(r"(?<=[.!?])\s+", text)
+    # Drop the lone title line ("Etherei\n\n…") so it cannot glue onto the first fact.
+    if label:
+        text = re.sub(
+            rf"^{re.escape(label)}\s*\n+",
+            "",
+            text,
+            count=1,
+            flags=re.I,
+        ).strip()
+    # Split by paragraphs first, then sentence ends / semicolons.
+    sentences: list[str] = []
+    for block in re.split(r"\n+", text):
+        block = block.strip()
+        if not block:
+            continue
+        if label and re.fullmatch(rf"{re.escape(label)}", block, re.I):
+            continue
+        parts = re.split(r"(?<=[.!?])\s+|(?<=;)\s+", block)
+        sentences.extend(parts)
     kept: list[str] = []
-    dropped_any = False
     for sentence in sentences:
-        s = sentence.strip()
+        s = re.sub(r"\s+", " ", sentence.strip().strip(";"))
         if not s:
             continue
-        if _is_plot_arc_clause(s):
-            dropped_any = True
+        if not label:
+            if _is_plot_arc_clause(s) or who_is_answer_has_bloat(s):
+                continue
+            kept.append(s)
             continue
-        if label and is_other_character_scene_beat(s, label):
-            dropped_any = True
+        if is_who_is_cast_fact_sentence(s, label):
+            kept.append(s)
             continue
-        kept.append(s)
+        # Drop everything else — awareness, plot, background dumps.
     if not kept:
+        # Fall back to first subject-led identity sentence if any.
+        for sentence in sentences:
+            s = re.sub(r"\s+", " ", sentence.strip().strip(";"))
+            if label and re.match(rf"^{re.escape(label)}\s+(?:is|was)\b", s, re.I):
+                if not who_is_answer_has_bloat(s) and len(s) < 280:
+                    return s
         return text
-    if not dropped_any and not is_plot_walkthrough_text(text):
-        return text
+    # Prefer identity + ties; cap so dumps cannot return through volume.
+    if label:
+        identityish: list[str] = []
+        tiesish: list[str] = []
+        other: list[str] = []
+        for s in kept:
+            if re.search(
+                r"\b(brother|sister|father|mother|parent|married|subject of|quarry|known)\b",
+                s,
+                re.I,
+            ):
+                tiesish.append(s)
+            elif re.match(rf"^{re.escape(label)}\s+(?:is|was)\b", s, re.I):
+                identityish.append(s)
+            else:
+                other.append(s)
+        # Prefer role/species identity lines over thin scraps.
+        identityish.sort(
+            key=lambda s: (
+                0
+                if re.search(
+                    r"\b(protagonist|antagonist|rabbit|wolf|fox|lynx|arcanist|white rabbit)\b",
+                    s,
+                    re.I,
+                )
+                else 1,
+                0 if re.search(r"\b(male|female|sentient)\b", s, re.I) else 1,
+                len(s),
+            )
+        )
+        ordered = identityish[:4] + tiesish[:4] + other[:1]
+        kept = ordered or kept[:5]
+    else:
+        kept = kept[:4]
     return " ".join(kept)
 
 

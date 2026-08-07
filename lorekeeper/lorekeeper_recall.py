@@ -11,7 +11,11 @@ from lorekeeper_character_summary import (
     character_targets,
     is_who_is_question,
 )
-from lorekeeper_character_compose import cast_answer_is_thin, work_title_from_hints
+from lorekeeper_character_compose import (
+    cast_answer_is_thin,
+    who_is_answer_has_bloat,
+    work_title_from_hints,
+)
 from lorekeeper_ask_plan import AskPlan
 from lorekeeper_ask_router import (
     character_labels_for_plan,
@@ -1465,7 +1469,10 @@ def recall_from_user_data(
             if (
                 effective_kind == "who"
                 and label
-                and cast_answer_is_thin(rag_result.get("answer") or "", label)
+                and (
+                    cast_answer_is_thin(rag_result.get("answer") or "", label)
+                    or who_is_answer_has_bloat(rag_result.get("answer") or "")
+                )
             ):
                 pipeline = answer_for_work(
                     question,
@@ -1477,8 +1484,11 @@ def recall_from_user_data(
                     best_excerpt=_best_excerpt,
                     kind_label=_kind_label,
                 )
-                if pipeline and not cast_answer_is_thin(
-                    pipeline.get("answer") or "", label
+                local_ans = (pipeline or {}).get("answer") or ""
+                if (
+                    pipeline
+                    and not cast_answer_is_thin(local_ans, label)
+                    and not who_is_answer_has_bloat(local_ans)
                 ):
                     return _finish({
                         "ok": True,

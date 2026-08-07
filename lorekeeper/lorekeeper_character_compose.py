@@ -88,16 +88,13 @@ _PLOT_ARC_RE = re.compile(
     re.I,
 )
 
-# Story-role significance — keep on who-is (not scene chronology).
+# Story-role significance — ONLY explicit role stakes about the subject.
+# Do NOT list world words (preyfolk/predator/sentient) alone — that let plot dumps pass.
 _STORY_SIGNIFICANCE_RE = re.compile(
     r"\b("
     r"storywalks?|story[- ]walks?|storywalker|"
     r"sets? in motion|set in motion|"
-    r"changes? (?:their|the|his|her) world(?:\s+forever)?|"
-    r"rediscover(?:y|s|ed)?|"
-    r"preyfolk|predators?(?:'s|')?|"
-    r"changes (?:everything|the balance)|"
-    r"ultimately (?:will |does |did )?"
+    r"changes? (?:their|the|his|her) world(?:\s+forever)?"
     r")\b",
     re.I,
 )
@@ -106,7 +103,7 @@ _STORY_SIGNIFICANCE_RE = re.compile(
 # Keep this narrow: "the POV cuts" / look-on-face notes must NOT match.
 _PLOT_SEQUENCE_RE = re.compile(
     r"\b("
-    r"right after|soon after|just after|"
+    r"right after|soon after|just after|not long after|"
     r"next (?:POV|section|chapter|scene|beat)|"
     r"switches? to .{0,48}(?:POV|point of view)|"
     r"(?:his|her|their) next POV|"
@@ -126,6 +123,22 @@ _PLOT_SEQUENCE_RE = re.compile(
     re.I,
 )
 
+# Draft/awareness/plot bloat — never keep on who-is cast cards.
+_WHO_IS_BLOAT_RE = re.compile(
+    r"(?i)("
+    r"\bnot long after\b|\bso right now\b|\bright now,?\s+"
+    r"|\bis aware\b|\bare aware\b|\baware that\b|\breflects? on\b"
+    r"|\bmentions? (?:his|her|their|the) theory\b|\btheory that\b"
+    r"|\bbackground\s*:"
+    r"|\btracking (?:them|him|her)\b|\bworks for\b"
+    r"|\bno reason to realize\b|\bcould have killed\b|\bgot bit\b|\bfirst got\b"
+    r"|\bspecifically\s*;"
+    r"|\banother chance\b|\bout of shock\b"
+    r"|\bdoesn'?t remember much\b|\bwould surprise his brothers\b"
+    r"|\bmain victim\b|\bannoyance to\b"
+    r")"
+)
+
 _CAST_CARD_ANCHOR_RE = re.compile(
     r"\b("
     r"protagonist|antagonist|villain|hero|heroine|married|brother|sister|"
@@ -133,7 +146,7 @@ _CAST_CARD_ANCHOR_RE = re.compile(
     r"arcanist|species|rabbit|wolf|fox|lynx|also known as|"
     r"known to|knows .+ as|younger brother|older brother|"
     r"subject of|quarry|sentient|male|female|"
-    r"storywalks?|sets? in motion|preyfolk"
+    r"storywalks?|sets? in motion|father|mother|parent|son of|daughter of"
     r")\b",
     re.I,
 )
@@ -145,6 +158,15 @@ _OTHER_CHAR_EVENT_RE = re.compile(
     r"finds? (?:that|him|her|them)|found (?:that|him|her|them)|"
     r"watches?|watched|badly injured|wounded|bleeding|"
     r"in (?:his|her|their) (?:first|second|third|opening|early) POV"
+    r")\b",
+    re.I,
+)
+
+_KINSHIP_RE = re.compile(
+    r"\b("
+    r"brother|sister|sibling|mother|father|parent|son|daughter|child|"
+    r"married|spouse|wife|husband|cousin|younger brother|older brother|"
+    r"subject of|quarry|known by|known as|also known as|aka\b"
     r")\b",
     re.I,
 )
@@ -167,20 +189,131 @@ def _is_plot_arc_clause(clause: str) -> bool:
 
 
 def is_story_significance_clause(clause: str, label: str = "") -> bool:
-    """True for role-in-the-story significance (what they set in motion), not scene beats."""
+    """True for subject-led role stakes (storywalk / sets in motion), not world-word hits."""
     s = (clause or "").strip()
     if not s or not _STORY_SIGNIFICANCE_RE.search(s):
         return False
     if label and is_other_character_scene_beat(s, label):
         return False
-    # Pure POV-order chronology still out — unless it's clearly significance-led.
-    if _PLOT_SEQUENCE_RE.search(s) and not re.search(
-        r"\b(sets? in motion|changes? (?:their|the) world|storywalk)",
-        s,
-        re.I,
+    if _WHO_IS_BLOAT_RE.search(s):
+        return False
+    if _PLOT_SEQUENCE_RE.search(s):
+        return False
+    # Must be about the subject when a label is known.
+    if label and not re.search(rf"\b{re.escape(label)}\b", s, re.I):
+        return False
+    if label and not (
+        re.match(rf"^{re.escape(label)}\b", s, re.I)
+        or re.search(rf"\b{re.escape(label)}\s+(?:is|was|storywalks?|sets?)\b", s, re.I)
     ):
         return False
     return True
+
+
+def who_is_answer_has_bloat(text: str) -> bool:
+    """True when a who-is answer mixes in awareness/plot/background dump."""
+    t = (text or "").strip()
+    if not t:
+        return False
+    if _WHO_IS_BLOAT_RE.search(t):
+        return True
+    # Many sentences + plot-sequence markers = dump even if anchors present.
+    sentences = [s for s in re.split(r"(?<=[.!?])\s+|(?<=;)\s+", t) if s.strip()]
+    if len(sentences) >= 4 and _PLOT_SEQUENCE_RE.search(t):
+        return True
+    if len(sentences) >= 5 and not _KINSHIP_RE.search(t):
+        # Long identity dump without ties still counts as bloated walkthrough.
+        plotish = sum(1 for s in sentences if _PLOT_SEQUENCE_RE.search(s) or _WHO_IS_BLOAT_RE.search(s))
+        if plotish >= 2:
+            return True
+    return False
+
+
+def is_who_is_cast_fact_sentence(sentence: str, label: str) -> bool:
+    """
+    Keep-list for who-is: role, species/type identity, kinship/ties, aliases,
+    optional subject-led story stakes — nothing else.
+    """
+    s = re.sub(r"\s+", " ", (sentence or "").strip())
+    label = (label or "").strip()
+    if not s or not label:
+        return False
+    if len(s) > 420:
+        return False
+    if _WHO_IS_BLOAT_RE.search(s):
+        return False
+    if is_other_character_scene_beat(s, label):
+        return False
+    if _PLOT_SEQUENCE_RE.search(s):
+        return False
+    if not re.search(rf"\b{re.escape(label)}\b", s, re.I):
+        # Allow short kinship lines that omit the label ("Younger brother to B.")
+        if _KINSHIP_RE.search(s) and re.search(
+            r"\b(?:brother|sister|son|daughter|married|father|mother|subject of|quarry)\b",
+            s,
+            re.I,
+        ):
+            return len(s) < 160
+        return False
+
+    # Subject-led identity / role / species / gender / alias.
+    if re.match(rf"^{re.escape(label)}\s+(?:is|was|are|were)\b", s, re.I):
+        if re.search(
+            r"\b("
+            r"protagonist|antagonist|villain|hero|heroine|main character|side character|"
+            r"side antagonist|rabbit|wolf|fox|lynx|arcanist|male|female|sentient|"
+            r"known|called|aka|brother|sister|son|daughter|married|"
+            r"subject of|quarry|white rabbit|from .+ wonderland|guardian|spirit"
+            r")\b",
+            s,
+            re.I,
+        ):
+            return True
+        # "X is the male protagonist…" covered above; short status OK if not a scrap.
+        if len(s) <= 180 and not _PLOT_ARC_RE.search(s):
+            if re.fullmatch(
+                rf"{re.escape(label)}\s+is\s+[\w'-]+\.?",
+                s,
+                re.I,
+            ) and not re.search(
+                r"\b("
+                r"male|female|protagonist|antagonist|villain|hero|rabbit|wolf|fox|"
+                r"lynx|arcanist|sentient|guardian|spirit|married"
+                r")\b",
+                s,
+                re.I,
+            ):
+                return False
+            return True
+        return False
+
+    # "Etherei — grey-skinned arcanist…" / "Character M — Younger brother to B."
+    if re.match(rf"^{re.escape(label)}\s*[—–\-:,]", s, re.I):
+        if re.search(
+            r"\b("
+            r"arcanist|rabbit|wolf|guardian|spirit|protagonist|antagonist|"
+            r"male|female|sentient|grey|gray|skin|"
+            r"brother|sister|married|father|mother|parent|subject of|quarry|known"
+            r")\b",
+            s,
+            re.I,
+        ):
+            return len(s) < 220
+        return False
+
+    if re.search(
+        rf"\b{re.escape(label)}\s+is\s+(?:known|also known|called)\b",
+        s,
+        re.I,
+    ):
+        return True
+    if re.search(rf"\b{re.escape(label)}\s+is\s+known by\b", s, re.I):
+        return True
+    if _KINSHIP_RE.search(s) and re.search(rf"\b{re.escape(label)}\b", s, re.I):
+        return True
+    if is_story_significance_clause(s, label):
+        return True
+    return False
 
 
 def is_other_character_scene_beat(sentence: str, label: str) -> bool:
@@ -815,8 +948,10 @@ def cast_answer_is_thin(answer: str, label: str) -> bool:
         return True
     if re.search(r"\bmale\s+or\s+female\b|\bfemale\s+or\s+male\b", low):
         return True
-    # Plot/POV chronology without cast anchors is not a finished who-is answer.
+    # Plot/POV chronology or awareness dump is not a finished who-is answer.
     if is_plot_walkthrough_text(a) and not has_cast_card_anchors(a):
+        return True
+    if who_is_answer_has_bloat(a):
         return True
     if _UNCLEAR_SECTION_HEADING in a:
         before = a.split(_UNCLEAR_SECTION_HEADING, 1)[0]
@@ -847,7 +982,7 @@ def cast_answer_is_thin(answer: str, label: str) -> bool:
         if is_plot_walkthrough_text(body_joined) and not has_cast_card_anchors(body_joined):
             return True
         return False
-    if has_cast_card_anchors(a) and not is_plot_walkthrough_text(a):
+    if has_cast_card_anchors(a) and not is_plot_walkthrough_text(a) and not who_is_answer_has_bloat(a):
         return False
     label_low = label.lower()
     if label_low in low and re.search(rf"\b{re.escape(label_low)}\s+is\b", low):

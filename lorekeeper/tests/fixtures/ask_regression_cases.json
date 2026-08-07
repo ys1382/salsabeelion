@@ -548,6 +548,39 @@
       }
     },
     {
+      "id": "who_is_strips_awareness_background_dump",
+      "label": "Who-is keeps cast identity, drops awareness/plot/background dump",
+      "entries": [
+        {
+          "id": "c1",
+          "title": "Character M",
+          "body": "Character M is the protagonist. Character M is a sentient white rabbit. Character M is male. Character M is younger brother to Character B and Character C. Character M is the subject of Character E's curiosity. Character M is known by Character D as Chroniker.",
+          "tags": ["Ashford Saga"],
+          "kind": "character"
+        },
+        {
+          "id": "d1",
+          "title": "Draft dump",
+          "body": "Not long after Character M mentions his theory, he reflects on a Predator tracking them. So right now Character M is aware that Character D does not want him dead. Character M Background: his father died when he was young.",
+          "tags": ["Ashford Saga"],
+          "kind": "document"
+        }
+      ],
+      "question": "In Ashford Saga, who is Character M?",
+      "assert": {
+        "questionKind": "who",
+        "materialState": "summarizable",
+        "answerContains": ["protagonist", "rabbit", "brother"],
+        "answerNotContains": [
+          "aware that",
+          "Not long after",
+          "tracking",
+          "Background",
+          "does not want him dead"
+        ]
+      }
+    },
+    {
       "id": "who_is_flowing_significance_and_ties",
       "label": "Who-is flowing card with significance + brothers, no lone gender",
       "entries": [

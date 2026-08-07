@@ -120,52 +120,31 @@ def _uses_cast_card(
 
 
 _WHO_CAST_CARD = """
-This is a WHO-IS question — answer as a flowing CAST CARD, not a story summary and not choppy one-liners.
+This is a WHO-IS question — answer as a SHORT CAST CARD only.
 
-Write 1–2 cohesive paragraphs in reference voice ("Etherei is…"). Weave facts together — never a stuttered stack like "Etherei is male." as its own sentence.
+Write at most TWO short sentences (three if needed for ties). Reference voice ("Etherei is…").
+Weave gender into the role/species sentence — never a lone "X is male."
 
-Include when the sources support it, in natural prose:
-1. Cast role (protagonist, POV, villain, side character, etc.) — if sources say protagonist, never downgrade
-2. Story-role significance — what they set in motion or how they change the world (storywalk, rediscovery, forever-stakes) when sources state it as identity/role, not as a scene beat
-3. What they are (species/type, look, world-group, gender) woven into the same sentences
-4. Who they are to others — siblings, spouse, quarry/subject of X's curiosity, allies — ALWAYS include brother/sister/family ties when notes or draft state them
-5. Alternate names (aka / known by) with correct direction
+INCLUDE only when sources support it:
+1. Who they are in the story — cast role (protagonist / POV / antagonist) plus at most ONE subject-led stakes clause if sources explicitly say they storywalk / set something in motion / change the world
+2. What they are — stable identity type (species, gender, famous-tale identity like White Rabbit). NOT situational plot roles ("main victim of the hunt", "annoyance to the mayor")
+3. Who they are to other people — brothers/sisters/parents, and standing toward named figures (e.g. subject of Tenebris's curiosity) when sources state it
+4. Alternate names / known-as with correct direction
 
-Also OK when supported:
-- At most ONE short prior-story hook (e.g. "Previously, in the events of [fairytale]…") — orientation only
-- Where the reader first meets them — one phrase, not a scene retelling
+ALWAYS pull sibling/parent ties from notes OR draft when stated.
 
-When notes are thin but draft/document sources dominate:
-- Distill cast role, significance, species/type, gender, and fixed ties from draft — still flowing prose.
-- Prefer family ties stated anywhere in notes OR draft over omitting them.
+OMIT completely — do not paraphrase into the card:
+- Awareness / theory / "so right now" / "not long after" / what someone realizes
+- Hunt tracking, injury, bite, kill-chance, scene beats
+- "Background:" biography dumps
+- Another character's POV observations
+- Plot walkthrough or chapter chronology
 
-Alternate names and identity (direction matters — do not flip):
-- "A is known by B as X" means B knows A by the name X — never reverse to "B is known by A".
-- "B has shared A's name with people B trusts" means B disclosed A's identity — not an alias of B.
-- If pre-parsed linked-name lines appear below the question, use them verbatim; do not rewrite their direction.
+If draft text mixes identity with plot, extract ONLY the identity and kinship lines.
 
-Supported inference (only when pre-parsed lines appear below — use verbatim; never invent):
-- Sibling ties from vocative dialogue when the speaker context is clear in sources
-- Viewpoint / main-character lean from draft prose when no explicit cast role is stated
-- Species or world traits only when sources tie this character to that group
-- When main draft (document) sources and note sources disagree: do NOT pick a winner and do NOT omit — use this exact layout:
-  1. First line exactly: This is what the main draft says:
-  2. Blank line, then a short summary from draft/document sources only
-  3. Blank line, then exactly: This is what your notes say:
-  4. Blank line, then a short summary from note sources only
-  Never scold; never invent a merged fact.
+Format: one tight paragraph. Do NOT say "you wrote."
 
-OMIT — never answer who-is with these:
-- Plot walkthrough / POV order ("right after", "next POV", "in his first POV", "switches to X's POV")
-- Another character's observation of a scene beat ("Serias isn't surprised to see that Etherei is injured")
-- Chase, escape, smile-back, mouthed apology, injury-discovery beats
-- Vague arc padding ("emotional/narrative center", "forms the heart of the story") without concrete role facts
-- Author planning notes, TODOs, discrepancies
-- Lone gender sentences ("X is male.") — weave gender into the role/species sentence instead
-
-Format: reference voice only. Do NOT say "you wrote" or coach the writer.
-
-If sources are thin, add a final paragraph headed "What isn't spelled out yet in your notes:" — honest gaps from sources only; never invent missing details. Do not mix gap language into the lead."""
+If ties or role are missing from sources, add a short final paragraph headed "What isn't spelled out yet in your notes:" — never invent."""
 
 _AUDIT_META = """
 This is an AUDIT question — meta voice is OK.
@@ -532,9 +511,10 @@ def _build_user_prompt(
             draft_tail_block = draft_tail_prompt_block(scoped_entries, question)
     elif _uses_cast_card(question, question_kind, plan):
         kind_hint = (
-            "Compose a flowing cast card: role + story significance, species/type, "
-            "family ties from notes or draft, aliases. Weave gender in — no lone "
-            "'X is male.' No plot walkthrough, no other-character POV scene beats.\n\n"
+            "SHORT cast card only: role + stable species/type identity, family/tie lines, "
+            "aliases. Weave gender in. Include sibling/parent ties from notes or draft. "
+            "ONE optional subject-led stakes clause (storywalk/sets in motion) if stated. "
+            "NO awareness, theory, background dumps, hunt/injury, or other-POV scene beats.\n\n"
         )
         doc_sources = sum(
             1
@@ -807,7 +787,7 @@ def answer_with_rag(
         plan=plan,
     )
     if effective_kind == "who" or is_who_is_question(question):
-        max_tokens = 400 if mode == "brief" else 750
+        max_tokens = 280 if mode == "brief" else 420
     elif effective_kind == "relationship":
         max_tokens = 200 if mode == "brief" else 320
     elif is_audit_question(question) or effective_kind == "coverage":
