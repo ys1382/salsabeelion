@@ -349,7 +349,11 @@ class CharacterComposeTests(unittest.TestCase):
         self.assertNotIn("caught between", answer.lower())
 
     def test_who_is_rejects_plot_walkthrough_as_thin(self):
-        from lorekeeper_character_compose import cast_answer_is_thin, is_plot_walkthrough_text
+        from lorekeeper_character_compose import (
+            cast_answer_is_thin,
+            is_other_character_scene_beat,
+            is_plot_walkthrough_text,
+        )
 
         dump = (
             "So right after Character M tells his brothers about multiverse theory, "
@@ -365,6 +369,30 @@ class CharacterComposeTests(unittest.TestCase):
         )
         self.assertFalse(is_plot_walkthrough_text(card))
         self.assertFalse(cast_answer_is_thin(card, "Character M"))
+        other = (
+            "Character S, in his first POV, isn't surprised to see that Character M "
+            "is badly injured in Ashford Saga."
+        )
+        self.assertTrue(is_other_character_scene_beat(other, "Character M"))
+        self.assertTrue(_is_plot_arc_clause(other))
+
+    def test_who_is_scrubs_other_character_pov_event(self):
+        from lorekeeper_answer_focus import scrub_who_is_plot_walkthrough
+
+        mixed = (
+            "Character S, in his first POV, isn't surprised to see that Character M "
+            "is badly injured in Ashford Saga. Character M is the protagonist of the "
+            "story, the white rabbit. Character M is male."
+        )
+        cleaned = scrub_who_is_plot_walkthrough(
+            mixed, question="In Ashford Saga, who is Character M?"
+        )
+        self.assertIn("protagonist", cleaned.lower())
+        self.assertIn("rabbit", cleaned.lower())
+        self.assertNotIn("character s", cleaned.lower())
+        self.assertNotIn("first pov", cleaned.lower())
+        self.assertNotIn("badly injured", cleaned.lower())
+        self.assertNotIn("isn't surprised", cleaned.lower())
 
     def test_who_is_prefers_cast_note_over_plot_draft(self):
         entries = [

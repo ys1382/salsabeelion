@@ -958,6 +958,13 @@ def _clear_profile_line(bit: str, label: str) -> bool:
 def _who_is_profile_bit(bit: str, label: str) -> bool:
     if _is_author_meta_sentence(bit, [label]):
         return False
+    from lorekeeper_character_compose import (
+        _is_plot_arc_clause,
+        is_other_character_scene_beat,
+    )
+
+    if _is_plot_arc_clause(bit) or is_other_character_scene_beat(bit, label):
+        return False
     bucket = _classify_sentence(bit, [label])
     if bucket in ("role", "identity", "relationship"):
         return True
@@ -982,6 +989,10 @@ def _who_is_profile_bit(bit: str, label: str) -> bool:
 
 def _who_is_cast_bit_from_draft(bit: str, label: str) -> bool:
     """Draft prose: cast facts and fixed traits — not plot walkthrough."""
+    from lorekeeper_character_compose import is_other_character_scene_beat
+
+    if is_other_character_scene_beat(bit, label):
+        return False
     if _who_is_profile_bit(bit, label):
         return True
     if _is_author_meta_sentence(bit, [label]) or _is_plot_arc_clause(bit):

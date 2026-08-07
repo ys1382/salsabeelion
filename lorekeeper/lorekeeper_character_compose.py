@@ -97,6 +97,7 @@ _PLOT_SEQUENCE_RE = re.compile(
     r"switches? to .{0,48}(?:POV|point of view)|"
     r"(?:his|her|their) next POV|"
     r"the next POV|"
+    r"in (?:his|her|their) (?:first|second|third|opening|early) POV|"
     r"POV (?:shows?|is when|will be)|"
     r"section begins|"
     r"about to (?:slip|disappear|escape|vanish)|"
@@ -105,7 +106,8 @@ _PLOT_SEQUENCE_RE = re.compile(
     r"scene[- ]by[- ]scene|plot walkthrough|"
     r"what happens next|the next beat|"
     r"chasing them|stalking them|"
-    r"lunge(?:s|d)? to (?:his|her|their) feet"
+    r"lunge(?:s|d)? to (?:his|her|their) feet|"
+    r"isn'?t surprised|wasn'?t surprised|badly injured"
     r")\b",
     re.I,
 )
@@ -116,7 +118,18 @@ _CAST_CARD_ANCHOR_RE = re.compile(
     r"queen|king|guardian|viewpoint|main character|side character|"
     r"arcanist|species|rabbit|wolf|fox|lynx|also known as|"
     r"known to|knows .+ as|younger brother|older brother|"
-    r"subject of|quarry|sentient"
+    r"subject of|quarry|sentient|male|female"
+    r")\b",
+    re.I,
+)
+
+_OTHER_CHAR_EVENT_RE = re.compile(
+    r"\b("
+    r"isn'?t surprised|wasn'?t surprised|surprised to (?:see|find|learn)|"
+    r"sees? that|saw that|notices? that|noticed that|"
+    r"finds? (?:that|him|her|them)|found (?:that|him|her|them)|"
+    r"watches?|watched|badly injured|wounded|bleeding|"
+    r"in (?:his|her|their) (?:first|second|third|opening|early) POV"
     r")\b",
     re.I,
 )
@@ -133,6 +146,54 @@ def _is_plot_arc_clause(clause: str) -> bool:
     if re.search(r"\bby the (?:end|close|events)\b", s, re.I):
         return True
     return False
+
+
+def is_other_character_scene_beat(sentence: str, label: str) -> bool:
+    """
+    True for another cast member's POV/event observation about the subject —
+    not a who-is identity line ("Etherei is the protagonist").
+    """
+    s = (sentence or "").strip()
+    label = (label or "").strip()
+    if not s or not label:
+        return False
+    # Keep subject-led identity / status lines.
+    if re.match(rf"^{re.escape(label)}\s+(?:is|was|are|were)\b", s, re.I):
+        return False
+    if re.match(rf"^{re.escape(label)}\s*[—–\-:,]", s, re.I):
+        return False
+    if not re.search(rf"\b{re.escape(label)}\b", s, re.I):
+        return False
+    # "Serias, in his first POV, … Etherei …"
+    if re.search(
+        r"\bin (?:his|her|their) (?:first|second|third|opening|early) POV\b",
+        s,
+        re.I,
+    ):
+        return True
+    # Led by a different proper name, then an event/observation about the subject.
+    m = re.match(
+        r"^([A-Z][\w'-]+(?:\s+(?:of|[A-Z][\w'-]+)){0,2})\b",
+        s,
+    )
+    if not m:
+        return False
+    other = m.group(1).strip()
+    if other.lower() == label.lower():
+        return False
+    # Skip work titles / filler openers mistaken for names.
+    if other.lower() in {
+        "the",
+        "in",
+        "from",
+        "what",
+        "this",
+        "that",
+        "smoke",
+        "ashford",
+    }:
+        return False
+    return bool(_OTHER_CHAR_EVENT_RE.search(s))
 
 
 def is_plot_walkthrough_text(text: str) -> bool:
@@ -292,7 +353,7 @@ def _clause_adds_profile(clause: str, label: str) -> bool:
     s = (clause or "").strip()
     if not s or _skip_planning_line(s, label):
         return False
-    if _is_plot_arc_clause(s):
+    if _is_plot_arc_clause(s) or is_other_character_scene_beat(s, label):
         return False
     if _BIOGRAPHY_RE.search(s):
         return False

@@ -155,11 +155,14 @@ Supported inference (only when pre-parsed lines appear below — use verbatim; n
 
 OMIT from the lead paragraph — never answer who-is with these:
 - Plot walkthrough, life story, or "everything they go through"
-- POV order / section order ("right after", "next POV", "next section begins", "switches to X's POV")
-- Chase, escape, smile-back, mouthed apology, or other scene beats as the answer
+- POV order / section order ("right after", "next POV", "next section begins", "switches to X's POV", "in his first POV")
+- Another character's observation of a scene beat ("Serias isn't surprised to see that Etherei is injured")
+- Chase, escape, smile-back, mouthed apology, injury-discovery, or other scene beats as the answer
 - Arc language ("by the events of the series", "caught between realities", "emotional/narrative center", "forms the heart of the story")
 - Scene-by-scene beats, dialogue retelling, or synthesizing what happens across chapters
 - Author planning notes, TODOs, discrepancies, "you're worried/concerned about", or contradictions between notes
+
+Lead only with who/what they are: cast role, species/type, gender if stated, and ties to others.
 
 Format: reference voice only ("Ella is…"). 2–4 short factual sentences in the lead paragraph. Do NOT say "you wrote" or coach the writer.
 

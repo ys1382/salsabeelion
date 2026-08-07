@@ -548,6 +548,39 @@
       }
     },
     {
+      "id": "who_is_not_other_pov_event",
+      "label": "Who-is drops other-character POV injury beat",
+      "entries": [
+        {
+          "id": "c1",
+          "title": "Character M",
+          "body": "Character M is the protagonist. Character M is a sentient white rabbit. Character M is male. Younger brother to Character B.",
+          "tags": ["Ashford Saga"],
+          "kind": "character"
+        },
+        {
+          "id": "d1",
+          "title": "Ashford draft",
+          "body": "Character S, in his first POV, isn't surprised to see that Character M is badly injured in Ashford Saga. Character M is the protagonist of the story, the white rabbit. Character M is male.",
+          "tags": ["Ashford Saga"],
+          "kind": "document"
+        }
+      ],
+      "question": "In Ashford Saga, who is Character M?",
+      "assert": {
+        "questionKind": "who",
+        "materialState": "summarizable",
+        "answerContains": ["protagonist", "rabbit"],
+        "answerNotContains": [
+          "Character S",
+          "first POV",
+          "isn't surprised",
+          "badly injured",
+          "not surprised"
+        ]
+      }
+    },
+    {
       "id": "who_is_not_plot_dump",
       "label": "Who-is returns cast card, not POV/plot chronology",
       "entries": [
