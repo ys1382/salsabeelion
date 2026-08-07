@@ -15,6 +15,7 @@ for _p in (_SERVER_DIR, _HALALIT_ROOT):
 from bookstore_inventory.service import (  # noqa: E402
     add_reader_place,
     ensure_catalog_book,
+    live_check_isbn_for_places,
     owner_dashboard,
     public_listings_for_book,
     public_places,
@@ -100,27 +101,17 @@ def handle_post(path: str, handler, body: dict[str, Any], json_response, session
                 conn.commit()
             finally:
                 conn.close()
-        result = public_listings_for_book(
-            title=title, author=author, isbn=isbn, place_ids=place_ids or None
-        )
-        if not result.get("listings"):
+        live_flag = os.environ.get("HALALIT_BOOKSTORE_LIVE_CHECKS", "1").strip().lower()
+        if isbn and live_flag not in ("0", "false", "no"):
             try:
-                run_adapter_job("sample_fixture", job_type="fixture_refresh")
-                result = public_listings_for_book(
-                    title=title, author=author, isbn=isbn, place_ids=place_ids or None
+                live_check_isbn_for_places(
+                    isbn, place_ids=place_ids or None, title=title, author=author
                 )
             except Exception:
                 pass
-        if os.environ.get("HALALIT_BOOKSTORE_LIVE_CHECKS", "").strip() in ("1", "true", "yes"):
-            if isbn:
-                for store_id in ("barnes_noble", "keplers", "green_apple"):
-                    try:
-                        run_adapter_job(store_id, job_type="isbn_watchlist")
-                    except Exception:
-                        pass
-                result = public_listings_for_book(
-                    title=title, author=author, isbn=isbn, place_ids=place_ids or None
-                )
+        result = public_listings_for_book(
+            title=title, author=author, isbn=isbn, place_ids=place_ids or None
+        )
         json_response(handler, 200, result)
         return True
 

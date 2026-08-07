@@ -1,0 +1,42 @@
+{
+  "store_id": "book_passage",
+  "adapter": "indiecommerce",
+  "name": "Book Passage",
+  "website": "https://www.bookpassage.com/",
+  "enabled": true,
+  "active": true,
+  "paused": false,
+  "capability_tier": "in_stock_here",
+  "claim_headline_in_stock": "Listed in stock at this shop",
+  "claim_cta": "Open product page",
+  "inventory_source": "product_page_jsonld",
+  "online_ordering": true,
+  "request_delay_seconds": 10,
+  "refresh_frequency_minutes": 360,
+  "stale_threshold_hours": 168,
+  "approved_domains": ["bookpassage.com", "www.bookpassage.com"],
+  "isbn_product_url_template": "https://www.bookpassage.com/book/{isbn}",
+  "robots_notes": "Disallow: /search/ and /books/. ISBN product pages under /book/{isbn} only.",
+  "locations": [
+    {
+      "location_id": "corte_madera",
+      "place_id": "book-passage-corte-madera",
+      "location_name": "Corte Madera",
+      "place_label": "Book Passage — Corte Madera",
+      "short_label": "Book Passage Corte Madera",
+      "initials": "BP",
+      "street_address": "51 Tamal Vista Blvd",
+      "city": "Corte Madera",
+      "state": "CA",
+      "postal_code": "94925",
+      "phone": "415-927-0960",
+      "hours": "Mon–Sat 10–6; Sun 11–6",
+      "website": "https://www.bookpassage.com/",
+      "county": "Marin County",
+      "online_ordering": true,
+      "active": true,
+      "favorite_default": true
+    }
+  ],
+  "legal_status": "isbn_product_pages_enabled"
+}

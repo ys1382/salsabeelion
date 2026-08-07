@@ -3,14 +3,17 @@
   "adapter": "barnes_noble",
   "name": "Barnes & Noble",
   "website": "https://www.barnesandnoble.com/",
-  "enabled": false,
+  "enabled": true,
   "allow_isbn_check_when_disabled": false,
   "active": true,
-  "paused": true,
+  "paused": false,
+  "capability_tier": "order_online",
+  "claim_headline_orderable": "Available through online ordering",
+  "claim_cta": "Order / check on B&N",
   "inventory_source": "product_page_jsonld",
   "online_ordering": true,
   "request_delay_seconds": 12,
-  "refresh_frequency_minutes": 720,
+  "refresh_frequency_minutes": 360,
   "stale_threshold_hours": 168,
   "approved_domains": [
     "barnesandnoble.com",
@@ -18,7 +21,7 @@
     "stores.barnesandnoble.com"
   ],
   "isbn_product_url_template": "https://www.barnesandnoble.com/w/?ean={isbn}",
-  "robots_notes": "Disallow: /search. Prefer product pages by EAN/ISBN. Store pages under stores.barnesandnoble.com/store/{id}. Enable only after legal/ops review.",
+  "robots_notes": "Disallow: /search. ISBN/EAN product pages only. Not a Stevens Creek shelf guarantee.",
   "locations": [
     {
       "location_id": "stevens_creek",
@@ -44,5 +47,5 @@
       "favorite_default": true
     }
   ],
-  "legal_status": "needs_owner_review_before_enable"
+  "legal_status": "isbn_product_pages_enabled_order_online_claims_only"
 }

@@ -31,7 +31,14 @@ def load_store_config(store_id: str) -> dict[str, Any]:
 
 
 def _ensure_registered() -> None:
-    from . import barnes_noble, green_apple, keplers, sample_fixture  # noqa: F401
+    from . import (  # noqa: F401
+        barnes_noble,
+        green_apple,
+        indiecommerce_generic,
+        keplers,
+        kinokuniya_sf,
+        sample_fixture,
+    )
 
 
 def get_adapter(store_id: str, config: dict[str, Any] | None = None) -> BookstoreAdapter:

@@ -3,18 +3,21 @@
   "adapter": "keplers",
   "name": "Kepler's Books",
   "website": "https://www.keplers.com/",
-  "enabled": false,
+  "enabled": true,
   "allow_isbn_check_when_disabled": false,
   "active": true,
-  "paused": true,
+  "paused": false,
+  "capability_tier": "in_stock_here",
+  "claim_headline_in_stock": "Listed in stock at this shop",
+  "claim_cta": "Open product page",
   "inventory_source": "product_page_jsonld",
   "online_ordering": true,
   "request_delay_seconds": 10,
-  "refresh_frequency_minutes": 720,
+  "refresh_frequency_minutes": 360,
   "stale_threshold_hours": 168,
   "approved_domains": ["keplers.com", "www.keplers.com"],
   "isbn_product_url_template": "https://www.keplers.com/book/{isbn}",
-  "robots_notes": "Disallow: /search/ and /books/. ISBN product pages under /book/{isbn} may be checked when enabled.",
+  "robots_notes": "Disallow: /search/ and /books/. Shelf checks use ISBN product pages under /book/{isbn} only.",
   "locations": [
     {
       "location_id": "menlo_park",
@@ -38,5 +41,5 @@
       "favorite_default": true
     }
   ],
-  "legal_status": "needs_owner_review_before_enable"
+  "legal_status": "isbn_product_pages_enabled"
 }

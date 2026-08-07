@@ -26,16 +26,22 @@ halalit/www/halalit-bookstore-*.js
 
 **Live access order per store:** official API/feed → public JSON → JSON-LD → static HTML → Playwright only if needed and robots-allowed. LLM page browsing is not used.
 
-## Robots / legal status (starter stores)
+## Robots / legal status (live stores)
 
-| Store | robots notes | Default |
-|-------|----------------|---------|
-| Sample fixture | local only | **enabled** |
-| Kepler’s | `Disallow: /search/`, `/books/`; crawl-delay 10 | **paused / disabled** |
-| Green Apple | same IndieCommerce pattern | **paused / disabled** |
-| Barnes & Noble | `Disallow: /search` | **paused / disabled** |
+| Store | Tier | robots notes | Live shelf check |
+|-------|------|--------------|------------------|
+| Sample fixture | demo | local only | fixture |
+| Kepler’s | **in stock** | Disallow `/search/`, `/books/` | ISBN `/book/{isbn}` |
+| Green Apple | **in stock** | same; Cloudflare often blocks bots | ISBN `/book/{isbn}` when reachable |
+| Book Passage | **in stock** | same IndieCommerce pattern | ISBN `/book/{isbn}` |
+| Booksmith | **in stock** | same | ISBN `/book/{isbn}` |
+| Copperfield’s | **in stock** | same | ISBN `/book/{isbn}` |
+| Barnes & Noble | **order online** | Disallow `/search` | EAN product page (not shelf proof) |
+| Kinokuniya SF | **order online** | often 403 / no readable robots | wired; hides until reachable |
 
-ISBN **product pages** (`/book/{isbn}` or B&N `?ean=`) can be checked when you enable an adapter after review. **Full catalog scrape and search are not permitted** by current robots.txt — ask each store for a feed/API or written permission before turning those on.
+**“Scrape the shelves”** here means **live ISBN product-page checks** for favorites — not a full catalog crawl. `/search` and `/books/` stay off-limits. Set `HALALIT_BOOKSTORE_LIVE_CHECKS=0` to disable live hits (cached listings only).
+
+ISBN **product pages** can be checked when an adapter is enabled. **Full catalog scrape and search are not permitted** by current robots.txt — ask each store for a feed/API or written permission before turning those on.
 
 ## Install (API host)
 
@@ -58,7 +64,7 @@ Stdlib alone is enough for the fixture adapter and JSON-LD ISBN checks.
 | `HALALIT_BOOKSTORE_JOB_MINUTES` | Interval (default 180) |
 | `HALALIT_BOOKSTORE_MAX_CONCURRENT` | Cap parallel store jobs (default 2) |
 | `HALALIT_BOOKSTORE_USER_AGENT` | Honest bot UA |
-| `HALALIT_BOOKSTORE_LIVE_CHECKS=1` | Allow live ISBN checks on inventory POST (still respects per-store `enabled`) |
+| `HALALIT_BOOKSTORE_LIVE_CHECKS` | Default **on**. Set `0` / `false` to skip live ISBN product-page checks on inventory POST. |
 
 ## Matching
 

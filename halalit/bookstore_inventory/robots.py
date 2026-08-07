@@ -5,7 +5,7 @@ import logging
 import time
 import urllib.parse
 import urllib.robotparser
-from typing import Any
+from pathlib import Path
 
 from .http_client import fetch_url
 
@@ -13,6 +13,15 @@ logger = logging.getLogger("halalit.bookstore.robots")
 
 _CACHE: dict[str, tuple[float, urllib.robotparser.RobotFileParser | None]] = {}
 _CACHE_TTL = 3600.0
+
+BUNDLED_DIR = Path(__file__).resolve().parent / "fixtures" / "robots"
+
+# When live robots.txt is Cloudflare-blocked, use a previously captured
+# IndieCommerce robots (Disallow /search/ and /books/; /book/{isbn} allowed).
+_BUNDLED_BY_HOST = {
+    "greenapplebooks.com": "indiecommerce_default.txt",
+    "www.greenapplebooks.com": "indiecommerce_default.txt",
+}
 
 
 class RobotsBlockedError(RuntimeError):
@@ -22,6 +31,31 @@ class RobotsBlockedError(RuntimeError):
 def _robots_url(base_website: str) -> str:
     p = urllib.parse.urlparse(base_website)
     return f"{p.scheme}://{p.netloc}/robots.txt"
+
+
+def _looks_like_robots_text(text: str) -> bool:
+    low = (text or "")[:2000].lower()
+    if "<html" in low or "just a moment" in low or "cf-chl" in low:
+        return False
+    return "user-agent" in low or "disallow" in low or "allow:" in low
+
+
+def _bundled_parser(website: str) -> urllib.robotparser.RobotFileParser | None:
+    host = urllib.parse.urlparse(website).netloc.lower()
+    if host.startswith("www."):
+        bare = host[4:]
+    else:
+        bare = host
+    name = _BUNDLED_BY_HOST.get(host) or _BUNDLED_BY_HOST.get(bare)
+    if not name:
+        return None
+    path = BUNDLED_DIR / name
+    if not path.is_file():
+        return None
+    rp = urllib.robotparser.RobotFileParser()
+    rp.parse(path.read_text(encoding="utf-8").splitlines())
+    logger.info("using bundled robots for %s (%s)", host, name)
+    return rp
 
 
 def load_robots(
@@ -47,17 +81,29 @@ def load_robots(
             timeout=15,
         )
         if resp.status != 200:
-            logger.info("robots.txt missing or blocked for %s (%s) — treat as cautious deny for scrapes", website, resp.status)
-            _CACHE[robots_url] = (now + _CACHE_TTL, None)
-            return None
+            bundled = _bundled_parser(website)
+            _CACHE[robots_url] = (now + _CACHE_TTL, bundled)
+            if bundled is None:
+                logger.info(
+                    "robots.txt missing or blocked for %s (%s) — no bundled fallback",
+                    website,
+                    resp.status,
+                )
+            return bundled
         text = resp.body.decode("utf-8", errors="replace")
+        if not _looks_like_robots_text(text):
+            bundled = _bundled_parser(website)
+            _CACHE[robots_url] = (now + _CACHE_TTL, bundled)
+            logger.info("robots.txt for %s looked like a challenge page — bundled=%s", website, bool(bundled))
+            return bundled
         rp.parse(text.splitlines())
         _CACHE[robots_url] = (now + _CACHE_TTL, rp)
         return rp
     except Exception as e:
         logger.warning("robots fetch failed for %s: %s", website, e)
-        _CACHE[robots_url] = (now + 300, None)
-        return None
+        bundled = _bundled_parser(website)
+        _CACHE[robots_url] = (now + 300, bundled)
+        return bundled
 
 
 def allowed(

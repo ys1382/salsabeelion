@@ -206,10 +206,10 @@
     var listings = (payload && payload.listings) || [];
     var disclaimer =
       (payload && payload.disclaimer) ||
-      "Specific store locations only. Confirm stock before visiting. Halalit does not sell books.";
+      "Specific store locations only. Confirm before visiting. Halalit does not sell books.";
     var empty =
       (payload && payload.empty_message) ||
-      "No inventory on file for your favorite bookstore locations yet.";
+      "None of your favorite bookstores showed this title as in stock or orderable.";
 
     var html = '<section class="halalit-bookstore-avail" aria-label="Available from bookstores">';
     html += "<h3>Available from your bookstore locations</h3>";
@@ -234,42 +234,51 @@
         item.price != null
           ? (item.currency || "USD") + " " + Number(item.price).toFixed(2)
           : "";
-      var meta = [item.condition, item.format, item.availability, price]
-        .filter(Boolean)
-        .join(" · ");
+      var claim = item.claim_headline || "";
+      var kind = item.claim_kind || "";
+      var meta = [item.condition, item.format, price].filter(Boolean).join(" · ");
       html += '<li class="halalit-bookstore-avail__item">';
       html += '<div class="halalit-bookstore-avail__meta">';
       html += "<strong>" + escapeHtml(title) + "</strong>";
       if (addr) html += "<p>" + escapeHtml(addr) + "</p>";
-      if (meta) html += "<p>" + escapeHtml(meta) + "</p>";
-      if (item.stock_scope === "chain_listing_confirm_at_location") {
+      if (claim) {
         html +=
-          '<p class="halalit-bookstore-avail__note">Online listing found for this chain — please confirm shelf stock at this specific location.</p>';
+          '<p class="halalit-bookstore-avail__fresh"><strong>' +
+          escapeHtml(claim) +
+          "</strong></p>";
       }
-      if (summary) {
+      if (kind === "order_online") {
+        html +=
+          '<p class="halalit-bookstore-avail__note">Online ordering — not a promise it’s on this store’s shelf.</p>';
+      }
+      if (kind === "in_stock_here") {
+        html +=
+          '<p class="halalit-bookstore-avail__note">Shop product page listed this as in stock — still confirm in person.</p>';
+      }
+      if (meta) html += "<p>" + escapeHtml(meta) + "</p>";
+      if (summary && kind === "in_stock_here") {
         html +=
           '<p class="halalit-bookstore-avail__fresh">' + escapeHtml(summary) + "</p>";
       }
-      if (fresh.disclaimer) {
-        html +=
-          '<p class="halalit-bookstore-avail__note">' +
-          escapeHtml(fresh.disclaimer) +
-          "</p>";
-      }
       html +=
         '<p class="halalit-bookstore-avail__seller">' +
-        escapeHtml(item.seller_note || "Sold by this bookstore location — not by Halalit.") +
+        escapeHtml(item.seller_note || "Sold by this bookstore — not by Halalit.") +
         "</p>";
       html += "</div><p class=\"halalit-bookstore-avail__actions\">";
-      if (storeHref) {
+      var cta = item.cta_primary || "View at bookstore";
+      if (productHref || storeHref) {
+        html +=
+          '<a class="import-btn" href="' +
+          escapeHtml(productHref || storeHref) +
+          '" target="_blank" rel="noopener noreferrer">' +
+          escapeHtml(cta) +
+          "</a> ";
+      }
+      if (storeHref && productHref && storeHref !== productHref && kind === "in_stock_here") {
         html +=
           '<a class="import-btn" href="' +
           escapeHtml(storeHref) +
           '" target="_blank" rel="noopener noreferrer">View at bookstore</a> ';
-        html +=
-          '<a class="import-btn" href="' +
-          escapeHtml(productHref || storeHref) +
-          '" target="_blank" rel="noopener noreferrer">Check local availability</a> ';
       }
       if (addr) {
         var maps =
@@ -319,7 +328,7 @@
   function mountForBook(host, opts) {
     if (!host) return Promise.resolve();
     host.innerHTML =
-      '<p class="halalit-bookstore-avail__loading">Checking your bookstore locations…</p>';
+      '<p class="halalit-bookstore-avail__loading">Checking your bookstore shelves…</p>';
     return fetchInventory(opts)
       .then(function (payload) {
         renderListings(host, payload);

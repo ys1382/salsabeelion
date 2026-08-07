@@ -341,6 +341,11 @@ def public_places(conn=None) -> list[dict[str, Any]]:
                 extra = {}
             place_id = r["place_id"] or f"{r['store_id']}-{r['location_id']}"
             label = r["place_label"] or f"{r['store_name']} — {r['location_name']}"
+            tier = "unknown"
+            try:
+                tier = str(load_store_config(r["store_id"]).get("capability_tier") or "unknown")
+            except Exception:
+                tier = "unknown"
             out.append(
                 {
                     "placeId": place_id,
@@ -363,6 +368,7 @@ def public_places(conn=None) -> list[dict[str, Any]]:
                     "favoriteDefault": bool(r["favorite_default"]),
                     "storePaused": bool(r["store_paused"]),
                     "bnStoreNumber": extra.get("bn_store_number") or extra.get("store_number"),
+                    "capabilityTier": tier,
                 }
             )
         for r in conn.execute(
@@ -471,6 +477,171 @@ def _location_rows_for_place_ids(conn, place_ids: list[str]) -> list[Any]:
     ).fetchall()
 
 
+_HIT_AVAIL = frozenset(
+    {"in_stock", "available", "limited", "preorder", "orderable"}
+)
+
+
+def _store_cfg(store_id: str) -> dict[str, Any]:
+    try:
+        return load_store_config(store_id)
+    except Exception:
+        return {}
+
+
+def _public_claim_for_listing(
+    store_id: str, listing: Any | None
+) -> dict[str, Any] | None:
+    """
+    Map a listing to an honest public claim, or None to hide the card.
+
+    - in_stock_here: product page listed in stock at that shop
+    - order_online: can get it through the store's online ordering
+    Hide misses, verification failures, and unclear availability.
+    """
+    if listing is None:
+        return None
+    avail = str(listing["availability"] or "").strip().lower()
+    if avail not in _HIT_AVAIL:
+        return None
+    cfg = _store_cfg(store_id)
+    tier = str(cfg.get("capability_tier") or "unknown")
+    if tier == "in_stock_here":
+        headline = cfg.get("claim_headline_in_stock") or "Listed in stock at this shop"
+        return {
+            "claim_kind": "in_stock_here",
+            "claim_headline": headline,
+            "cta_primary": cfg.get("claim_cta") or "Open product page",
+            "capability_tier": tier,
+        }
+    if tier == "order_online":
+        headline = cfg.get("claim_headline_orderable") or "Available through online ordering"
+        return {
+            "claim_kind": "order_online",
+            "claim_headline": headline,
+            "cta_primary": cfg.get("claim_cta") or "Order online",
+            "capability_tier": tier,
+        }
+    # Unknown tier: only show if clearly in stock, with cautious copy
+    if avail in ("in_stock", "available", "limited", "preorder"):
+        return {
+            "claim_kind": "in_stock_here",
+            "claim_headline": "Listed on this store’s product page",
+            "cta_primary": "Open product page",
+            "capability_tier": tier,
+        }
+    return None
+
+
+def live_check_isbn_for_places(
+    isbn: str,
+    *,
+    place_ids: list[str] | None = None,
+    title: str | None = None,
+    author: str | None = None,
+) -> dict[str, Any]:
+    """
+    Live ISBN product-page “shelf check” for enabled stores.
+
+    Not a full catalog crawl — robots block /search and /books/.
+    Checks each store’s ISBN product URL and upserts hits.
+    """
+    isbn10, isbn13 = normalize_isbn_pair(isbn)
+    dig = isbn13 or isbn10
+    if not dig:
+        return {"ok": False, "error": "isbn_required", "checked": []}
+
+    conn = connect()
+    checked: list[dict[str, Any]] = []
+    try:
+        init_schema(conn)
+        seed_stores_from_config(conn)
+        ensure_catalog_book(conn, title=title, author=author, isbn=dig)
+        conn.commit()
+
+        wanted = [str(p).strip() for p in (place_ids or []) if str(p).strip()]
+        if wanted:
+            loc_rows = _location_rows_for_place_ids(conn, wanted)
+            store_ids = sorted({r["store_id"] for r in loc_rows})
+        else:
+            store_ids = [
+                r["store_id"]
+                for r in conn.execute(
+                    "SELECT store_id FROM bookstores WHERE active=1 AND paused=0"
+                ).fetchall()
+            ]
+
+        for store_id in store_ids:
+            if store_id in ("sample_fixture", "reader"):
+                continue
+            row = conn.execute(
+                "SELECT paused, active FROM bookstores WHERE store_id=?",
+                (store_id,),
+            ).fetchone()
+            if not row or not row["active"] or row["paused"]:
+                checked.append({"store_id": store_id, "ok": False, "error": "paused_or_inactive"})
+                continue
+            cfg = _store_cfg(store_id)
+            if not cfg.get("enabled", False):
+                checked.append({"store_id": store_id, "ok": False, "error": "disabled"})
+                continue
+            try:
+                adapter = get_adapter(store_id, cfg)
+                item = asyncio.run(adapter.check_isbn(dig))
+                if not item:
+                    checked.append({"store_id": store_id, "ok": True, "hit": False})
+                    continue
+                item = dict(item)
+                item["store_id"] = store_id
+                # Keep the requested ISBN as the lookup key (product pages may
+                # redirect to a related edition with a different ISBN in JSON-LD).
+                if isbn13:
+                    item["isbn_13"] = isbn13
+                if isbn10:
+                    item["isbn_10"] = isbn10
+                # Attach first matching location when favorites are set
+                if wanted:
+                    for loc in loc_rows:
+                        if loc["store_id"] == store_id:
+                            item["store_location_id"] = loc["location_id"]
+                            break
+                avail = str(item.get("availability") or "").strip().lower()
+                if avail in _HIT_AVAIL:
+                    upsert_listing(conn, item)
+                    checked.append(
+                        {
+                            "store_id": store_id,
+                            "ok": True,
+                            "hit": True,
+                            "availability": avail,
+                        }
+                    )
+                else:
+                    checked.append(
+                        {
+                            "store_id": store_id,
+                            "ok": True,
+                            "hit": False,
+                            "availability": avail or None,
+                        }
+                    )
+            except Exception as e:
+                logger.info("live ISBN check failed for %s: %s", store_id, e)
+                _log_error(conn, store_id, type(e).__name__, str(e)[:500], None)
+                checked.append(
+                    {
+                        "store_id": store_id,
+                        "ok": False,
+                        "error": type(e).__name__,
+                        "message": str(e)[:200],
+                    }
+                )
+        conn.commit()
+        return {"ok": True, "isbn": dig, "checked": checked}
+    finally:
+        conn.close()
+
+
 def public_listings_for_book(
     *,
     title: str | None = None,
@@ -539,6 +710,9 @@ def public_listings_for_book(
         listings: list[dict[str, Any]] = []
 
         def _append_for_location(loc: Any, listing: Any | None) -> None:
+            claim = _public_claim_for_listing(loc["store_id"], listing)
+            if claim is None:
+                return
             place_id = loc["place_id"] if loc["place_id"] else f"{loc['store_id']}-{loc['location_id']}"
             place_label = loc["place_label"] or f"{loc['store_name']} — {loc['location_name']}"
             address_bits = [
@@ -549,7 +723,7 @@ def public_listings_for_book(
                 listing["last_checked_at"] if listing else None,
                 availability=(listing["availability"] if listing else None),
                 consecutive_misses=int(listing["consecutive_misses"] or 0) if listing else 0,
-                verification_failed=listing is None,
+                verification_failed=False,
             )
             product_url = listing["product_url"] if listing else None
             store_url = loc["website"] or loc["store_website"]
@@ -558,6 +732,7 @@ def public_listings_for_book(
                 county = loc["county"]
             except (KeyError, IndexError):
                 county = None
+            kind = claim["claim_kind"]
             listings.append(
                 {
                     "place_id": place_id,
@@ -581,15 +756,29 @@ def public_listings_for_book(
                     "freshness": fresh,
                     "product_url": product_url,
                     "store_url": store_url,
-                    "online_or_instore": "in_store",
+                    "claim_kind": kind,
+                    "claim_headline": claim["claim_headline"],
+                    "cta_primary": claim["cta_primary"],
+                    "capability_tier": claim["capability_tier"],
+                    "online_or_instore": (
+                        "online_ordering" if kind == "order_online" else "in_store"
+                    ),
                     "stock_scope": (
-                        "location"
-                        if listing and listing["store_location_id"] == loc["location_id"]
-                        else "chain_listing_confirm_at_location"
+                        "online_ordering"
+                        if kind == "order_online"
+                        else (
+                            "location"
+                            if listing and listing["store_location_id"] == loc["location_id"]
+                            else "shop_product_page"
+                        )
                     ),
                     "seller_note": (
                         f"Sold by {place_label} — Halalit does not sell or fulfill this book. "
-                        "Confirm shelf stock at this location before visiting."
+                        + (
+                            "Confirm with the shop before visiting."
+                            if kind == "in_stock_here"
+                            else "Online ordering — not a promise it’s on this store’s shelf."
+                        )
                     ),
                 }
             )
@@ -605,31 +794,7 @@ def public_listings_for_book(
                 if chosen is None and store_listings:
                     chosen = store_listings[0]
                 _append_for_location(loc, chosen)
-            reader_ids = set(wanted) - {r["place_id"] for r in loc_rows}
-            if reader_ids:
-                qmarks = ",".join("?" * len(reader_ids))
-                for rp in conn.execute(
-                    f"SELECT * FROM bookstore_reader_places WHERE active=1 AND place_id IN ({qmarks})",
-                    list(reader_ids),
-                ).fetchall():
-                    fake_loc = {
-                        "place_id": rp["place_id"],
-                        "store_id": rp["store_id"] or "reader",
-                        "location_id": "reader",
-                        "place_label": rp["place_label"],
-                        "location_name": rp["location_name"],
-                        "street_address": rp["street_address"],
-                        "city": rp["city"],
-                        "state": rp["state"],
-                        "postal_code": rp["postal_code"],
-                        "county": rp["county"],
-                        "phone": rp["phone"],
-                        "hours": None,
-                        "website": rp["website"],
-                        "store_name": rp["place_label"],
-                        "store_website": rp["website"],
-                    }
-                    _append_for_location(fake_loc, None)
+            # Reader-added places: no automated scrape — do not invent availability cards.
         else:
             for store_id, items in by_store.items():
                 locs = conn.execute(
@@ -657,15 +822,15 @@ def public_listings_for_book(
                 None
                 if listings
                 else (
-                    "No inventory on file for your favorite bookstore locations yet. "
-                    "Open that store’s page to confirm, or pick another favorite location."
+                    "None of your favorite bookstores showed this title as in stock or orderable. "
+                    "Try opening the store’s product page, or pick another favorite."
                 )
             ),
             "disclaimer": (
                 "Results are for specific bookstore locations you chose — not a generic chain page. "
-                "Inventory is not guaranteed real-time. "
-                "Please confirm availability at that store before visiting. "
-                "Halalit does not process bookstore purchases."
+                "“In stock” means the shop’s product page listed it; "
+                "“online ordering” is not a shelf promise. "
+                "Confirm before visiting. Halalit does not process bookstore purchases."
             ),
         }
     finally:

@@ -1,0 +1,47 @@
+{
+  "store_id": "kinokuniya_sf",
+  "adapter": "kinokuniya_sf",
+  "name": "Kinokuniya",
+  "website": "https://united-states.kinokuniya.com/",
+  "enabled": true,
+  "active": true,
+  "paused": false,
+  "capability_tier": "order_online",
+  "claim_headline_orderable": "Available through online ordering",
+  "claim_cta": "Order on Kinokuniya",
+  "inventory_source": "product_page",
+  "online_ordering": true,
+  "request_delay_seconds": 12,
+  "refresh_frequency_minutes": 720,
+  "stale_threshold_hours": 168,
+  "approved_domains": [
+    "united-states.kinokuniya.com",
+    "usa.kinokuniya.com",
+    "kinokuniya.com",
+    "www.kinokuniya.com"
+  ],
+  "isbn_product_url_template": "https://united-states.kinokuniya.com/bw/{isbn}",
+  "robots_notes": "Bot access often blocked (403). When reachable, product pages only — order-online claims, not SF shelf proof.",
+  "locations": [
+    {
+      "location_id": "japantown",
+      "place_id": "kinokuniya-sf-japantown",
+      "location_name": "San Francisco (Japantown)",
+      "place_label": "Kinokuniya — San Francisco (Japantown)",
+      "short_label": "Kinokuniya SF",
+      "initials": "KK",
+      "street_address": "1581 Webster Street, Japan Center",
+      "city": "San Francisco",
+      "state": "CA",
+      "postal_code": "94115",
+      "phone": "415-567-7625",
+      "hours": "Daily 10:30–8:00",
+      "website": "https://usa.kinokuniya.com/stores-kinokuniya-san-francisco",
+      "county": "San Francisco County",
+      "online_ordering": true,
+      "active": true,
+      "favorite_default": true
+    }
+  ],
+  "legal_status": "isbn_product_pages_enabled_order_online_claims_only"
+}

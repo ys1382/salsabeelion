@@ -252,6 +252,8 @@ def upsert_store(conn: sqlite3.Connection, store: dict[str, Any]) -> None:
           inventory_source=excluded.inventory_source,
           online_ordering=excluded.online_ordering,
           active=excluded.active,
+          paused=excluded.paused,
+          needs_repair=excluded.needs_repair,
           refresh_frequency_minutes=excluded.refresh_frequency_minutes,
           stale_threshold_hours=excluded.stale_threshold_hours,
           request_delay_seconds=excluded.request_delay_seconds,

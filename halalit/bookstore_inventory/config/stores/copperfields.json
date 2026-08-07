@@ -1,0 +1,42 @@
+{
+  "store_id": "copperfields",
+  "adapter": "indiecommerce",
+  "name": "Copperfield's Books",
+  "website": "https://www.copperfieldsbooks.com/",
+  "enabled": true,
+  "active": true,
+  "paused": false,
+  "capability_tier": "in_stock_here",
+  "claim_headline_in_stock": "Listed in stock at this shop",
+  "claim_cta": "Open product page",
+  "inventory_source": "product_page_jsonld",
+  "online_ordering": true,
+  "request_delay_seconds": 10,
+  "refresh_frequency_minutes": 360,
+  "stale_threshold_hours": 168,
+  "approved_domains": ["copperfieldsbooks.com", "www.copperfieldsbooks.com"],
+  "isbn_product_url_template": "https://www.copperfieldsbooks.com/book/{isbn}",
+  "robots_notes": "Disallow: /search/ and /books/. ISBN product pages under /book/{isbn} only.",
+  "locations": [
+    {
+      "location_id": "petaluma",
+      "place_id": "copperfields-petaluma",
+      "location_name": "Petaluma",
+      "place_label": "Copperfield's Books — Petaluma",
+      "short_label": "Copperfield's Petaluma",
+      "initials": "CF",
+      "street_address": "140 Kentucky Street",
+      "city": "Petaluma",
+      "state": "CA",
+      "postal_code": "94952",
+      "phone": "707-762-0563",
+      "hours": "Sun–Fri 10–6; Sat 10–7",
+      "website": "https://www.copperfieldsbooks.com/petaluma",
+      "county": "Sonoma County",
+      "online_ordering": true,
+      "active": true,
+      "favorite_default": true
+    }
+  ],
+  "legal_status": "isbn_product_pages_enabled"
+}

@@ -60,7 +60,7 @@ Last updated: 2026-07-17
 - Client-side shelves, import, series expand, Book Quest branches
 - Block or allow titles via `halalit-family-shelf-policy.js` and `halalit-curated-shelf-warnings.js`
 - Private owner lists in `halalit/.cursor/private/` (not deployed)
-- Bookstore inventory **scaffold** (`halalit/bookstore_inventory/`) — SQLite listings, fixture adapter, Owner’s Office dashboard, Wishlist “Available from bookstores” UI. Live B&N / Kepler’s / Green Apple adapters stay **paused** until robots/API/legal review; no purchase checkout on Halalit.
+- Bookstore inventory (`halalit/bookstore_inventory/`) — SQLite + adapters + Wishlist UI. **Live ISBN shelf checks enabled** for yes-tier Indies (Kepler’s, Green Apple, Book Passage, Booksmith, Copperfield’s) and partly-tier online ordering (B&N Stevens Creek, Kinokuniya SF). No purchase checkout. Full `/search`/`/books/` crawl still robots-blocked; Cloudflare may block some shops.
 
 **Cannot do without new work:**
 - Real user accounts or sync across devices (no Halalit auth backend today)

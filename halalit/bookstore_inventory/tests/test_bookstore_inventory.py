@@ -156,9 +156,8 @@ class ServiceIntegrationTests(unittest.TestCase):
             isbn="9780064400558",
             place_ids=["bn-stevens-creek"],
         )
-        # May be empty or verification_failed card for B&N location with no listing
-        for item in bn_only["listings"]:
-            self.assertEqual(item["place_id"], "bn-stevens-creek")
+        # No B&N listing on file → hide (no fake “online listing” card)
+        self.assertEqual(bn_only["listings"], [])
 
     def test_stale_miss_handling(self) -> None:
         from bookstore_inventory.service import seed_stores_from_config
