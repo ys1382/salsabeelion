@@ -548,6 +548,52 @@
       }
     },
     {
+      "id": "who_is_gold_tone_family_slots",
+      "label": "Who-is gold tone includes brothers, parents/raised-by, curiosity standing",
+      "entries": [
+        {
+          "id": "c1",
+          "title": "Character M",
+          "body": "Character M is the male protagonist of Ashford Saga, a Preyfolk (rabbit) who was raised by two older brothers after his father died and his widow mother struggled to provide. Character M is younger brother to Obsidian and Stygian. Character M is the subject of Tenebris's curiosity.",
+          "tags": ["Ashford Saga"],
+          "kind": "character"
+        },
+        {
+          "id": "d1",
+          "title": "Draft scene",
+          "body": "Character M is roused from his thoughts by Stygian's approach. So right now Character M is aware that Tenebris is watching. Next section begins with Character M's POV.",
+          "tags": ["Ashford Saga"],
+          "kind": "document"
+        }
+      ],
+      "question": "In Ashford Saga, who is Character M?",
+      "assert": {
+        "questionKind": "who",
+        "materialState": "summarizable",
+        "answerContains": [
+          "protagonist",
+          "rabbit",
+          "Obsidian",
+          "Stygian",
+          "Tenebris"
+        ],
+        "answerContainsAny": [
+          "raised",
+          "father",
+          "widow",
+          "mother"
+        ],
+        "answerNotContains": [
+          "roused",
+          "So right now",
+          "aware that",
+          "Next section",
+          "brother to Especially",
+          "Character M is male."
+        ]
+      }
+    },
+    {
       "id": "who_is_no_scene_plot_or_bogus_brothers",
       "label": "Who-is drops scene plot and invented brother stopwords",
       "entries": [
@@ -615,7 +661,7 @@
     },
     {
       "id": "who_is_flowing_significance_and_ties",
-      "label": "Who-is flowing card with significance + brothers, no lone gender",
+      "label": "Who-is gold card with brothers, no lone gender or storywalk dump",
       "entries": [
         {
           "id": "c1",
@@ -637,7 +683,7 @@
         "questionKind": "who",
         "materialState": "summarizable",
         "answerContains": ["protagonist", "rabbit", "brother"],
-        "answerNotContains": ["Character M is male."]
+        "answerNotContains": ["Character M is male.", "storywalks", "sets in motion"]
       }
     },
     {

@@ -700,7 +700,8 @@ def _classify_sentence(sentence: str, names: list[str] | None = None) -> str:
         return "role"
     if re.search(
         r"\b(husband|wife|spouse|mother|father|parent|son|daughter|child|brother|sister|"
-        r"married|engaged|dating|uncle|aunt|cousin|nephew|niece|grandfather|grandmother)\b",
+        r"married|engaged|dating|uncle|aunt|cousin|nephew|niece|grandfather|grandmother|"
+        r"subject of|quarry of)\b",
         s_low,
     ):
         return "relationship"

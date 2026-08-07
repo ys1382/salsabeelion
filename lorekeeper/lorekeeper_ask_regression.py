@@ -93,6 +93,11 @@ def assert_regression_case(case: dict[str, Any], res: dict[str, Any]) -> list[st
     for needle in assertions.get("answerContains") or []:
         if str(needle).lower() not in answer_low:
             errors.append(f"{case_id}: answer missing {needle!r}")
+    any_needles = assertions.get("answerContainsAny") or []
+    if any_needles and not any(str(n).lower() in answer_low for n in any_needles):
+        errors.append(
+            f"{case_id}: answer missing any of {[str(n) for n in any_needles]!r}"
+        )
     for needle in assertions.get("answerNotContains") or []:
         if str(needle).lower() in answer_low:
             errors.append(f"{case_id}: answer must not contain {needle!r}")

@@ -32,7 +32,7 @@ from lorekeeper_reliability import (
 
 from lorekeeper_ask_plan import AskPlan
 
-RAG_VERSION = "21.0.0-rag"
+RAG_VERSION = "21.1.0-rag"
 
 # Override with LOREKEEPER_ANTHROPIC_MODEL on the server if needed.
 DEFAULT_MODEL = os.environ.get(
@@ -120,31 +120,33 @@ def _uses_cast_card(
 
 
 _WHO_CAST_CARD = """
-This is a WHO-IS question — answer as a SHORT CAST CARD only.
+This is a WHO-IS question — answer as a CAST CARD in a pinned tone.
 
-Write at most TWO short sentences (three if needed for ties). Reference voice ("Etherei is…").
+TONE (do not break this): formal but plain — not posh, not chatty. Prefer one or two woven sentences like:
+"Character M is the male protagonist of Ashford Saga, a Preyfolk (rabbit) who was raised by two older brothers after his father died and his widow mother struggled to provide."
+
+REQUIRED SLOTS — when sources state them, you MUST weave them in (do not stop after role alone):
+1. Role — protagonist / POV / antagonist
+2. Stable identity — species/type (Preyfolk, rabbit, White Rabbit, gender) woven into the same sentence
+3. Brothers/sisters — names when stated (notes or draft)
+4. Parents / raised-by — father died, widow mother, raised by older brothers, etc. when stated as family fact (not a scene)
+5. Standing toward a named figure — e.g. subject of Character E's curiosity (Tenebris-type) when stated
+6. Alias / known-as — only if sources link it, correct direction
+
+Write 1–2 sentences that cover every filled slot. A third short sentence is OK only for alias or one standing line.
 Weave gender into the role/species sentence — never a lone "X is male."
 
-INCLUDE only when sources support it:
-1. Who they are in the story — cast role (protagonist / POV / antagonist) plus at most ONE subject-led stakes clause if sources explicitly say they storywalk / set something in motion / change the world
-2. What they are — stable identity type (species, gender, famous-tale identity like White Rabbit). NOT situational plot roles ("main victim of the hunt", "annoyance to the mayor")
-3. Who they are to other people — brothers/sisters/parents, and standing toward named figures (e.g. subject of Tenebris's curiosity) when sources state it
-4. Alternate names / known-as with correct direction
+OMIT completely:
+- Scene beats (roused from thoughts, grooming, glancing, chase, injury)
+- Awareness / theory / "so right now" / "not long after"
+- Fake kinship names or stopwords as people (Especially, Are, …)
+- Situational plot roles ("main victim of the hunt")
+- Plot walkthrough
 
-ALWAYS pull sibling/parent ties from notes OR draft when stated.
+If draft mixes identity with plot, extract ONLY identity + family/standing facts.
+Invent nothing. If a required slot is missing from sources, omit it — do not invent.
 
-OMIT completely — do not paraphrase into the card:
-- Awareness / theory / "so right now" / "not long after" / what someone realizes
-- Hunt tracking, injury, bite, kill-chance, scene beats
-- "Background:" biography dumps
-- Another character's POV observations
-- Plot walkthrough or chapter chronology
-
-If draft text mixes identity with plot, extract ONLY the identity and kinship lines.
-
-Format: one tight paragraph. Do NOT say "you wrote."
-
-If ties or role are missing from sources, add a short final paragraph headed "What isn't spelled out yet in your notes:" — never invent."""
+Footer: — From your notes only. Nothing invented."""
 
 _AUDIT_META = """
 This is an AUDIT question — meta voice is OK.
@@ -511,10 +513,10 @@ def _build_user_prompt(
             draft_tail_block = draft_tail_prompt_block(scoped_entries, question)
     elif _uses_cast_card(question, question_kind, plan):
         kind_hint = (
-            "SHORT cast card only: role + stable species/type identity, family/tie lines, "
-            "aliases. Weave gender in. Include sibling/parent ties from notes or draft. "
-            "ONE optional subject-led stakes clause (storywalk/sets in motion) if stated. "
-            "NO awareness, theory, background dumps, hunt/injury, or other-POV scene beats.\n\n"
+            "Pinned cast-card tone: 1–2 woven sentences (formal, plain). "
+            "MUST include when sources have them: brothers, parents/raised-by, "
+            "and standing (subject of X's curiosity). Role + species/type in the lead. "
+            "No scene plot, no awareness dumps, no fake brother stopwords.\n\n"
         )
         doc_sources = sum(
             1
@@ -787,7 +789,7 @@ def answer_with_rag(
         plan=plan,
     )
     if effective_kind == "who" or is_who_is_question(question):
-        max_tokens = 280 if mode == "brief" else 420
+        max_tokens = 320 if mode == "brief" else 520
     elif effective_kind == "relationship":
         max_tokens = 200 if mode == "brief" else 320
     elif is_audit_question(question) or effective_kind == "coverage":

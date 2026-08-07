@@ -480,41 +480,65 @@ class CharacterComposeTests(unittest.TestCase):
         self.assertNotIn("Character M is male.", out)
         self.assertIn("brother", out.lower())
 
-    def test_who_is_keeps_significance_and_brothers(self):
+    def test_who_is_gold_tone_family_slots(self):
         entries = [
             _entry(
                 "c1",
                 "Character M",
-                "Character M is the protagonist. Character M is a sentient white rabbit. "
-                "Character M is male. Character M storywalks into Character D's world and "
-                "sets in motion the Predators' rediscovery that the Preyfolk are also "
-                "sentient and thus changes their world forever. "
-                "Younger brother to Character B and Character C.",
+                "Character M is the male protagonist of Ashford Saga, a Preyfolk (rabbit) "
+                "who was raised by two older brothers after his father died and his widow "
+                "mother struggled to provide. Character M is younger brother to Obsidian "
+                "and Stygian. Character M is the subject of Tenebris's curiosity.",
                 tags=["Ashford Saga"],
                 kind="character",
             ),
             _entry(
-                "r1",
-                "Ties",
-                "Character M is younger brother to Character B and Character C.",
+                "d1",
+                "Draft",
+                "Character M is roused from his thoughts. Next section begins with Character M.",
                 tags=["Ashford Saga"],
-                kind="relationship",
+                kind="document",
             ),
         ]
         res = self._ask("In Ashford Saga, who is Character M?", entries)
         answer = res.get("answer") or ""
         self.assertEqual(res.get("materialState"), "summarizable")
-        self.assertIn("protagonist", answer.lower())
-        self.assertIn("rabbit", answer.lower())
-        self.assertIn("brother", answer.lower())
+        low = answer.lower()
+        self.assertIn("protagonist", low)
+        self.assertIn("rabbit", low)
+        self.assertIn("obsidian", low)
+        self.assertIn("stygian", low)
+        self.assertIn("tenebris", low)
         self.assertTrue(
-            "storywalk" in answer.lower()
-            or "sets in motion" in answer.lower()
-            or "preyfolk" in answer.lower()
-            or "forever" in answer.lower(),
+            any(x in low for x in ("raised", "father", "widow", "mother")),
             msg=answer,
         )
+        self.assertNotIn("roused", low)
+        self.assertNotIn("next section", low)
         self.assertNotRegex(answer, r"(?i)character m is male\.")
+
+    def test_weave_who_is_gold_tone_merges_brothers(self):
+        from lorekeeper_character_compose import weave_who_is_gold_tone
+
+        body = weave_who_is_gold_tone(
+            "Character M",
+            "Ashford Saga",
+            [
+                "Character M is the protagonist in Ashford Saga.",
+                "Character M is a sentient white rabbit.",
+            ],
+            [
+                "Character M is brother to Obsidian.",
+                "Character M is brother to Stygian.",
+                "Character M is the subject of Tenebris's curiosity.",
+            ],
+        )
+        low = body.lower()
+        self.assertIn("protagonist", low)
+        self.assertIn("obsidian", low)
+        self.assertIn("stygian", low)
+        self.assertIn("tenebris", low)
+        self.assertLessEqual(body.count("brother to"), 1)
 
     def test_who_is_prefers_cast_note_over_plot_draft(self):
         entries = [

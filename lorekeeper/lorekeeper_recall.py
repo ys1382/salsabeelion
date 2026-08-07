@@ -14,6 +14,7 @@ from lorekeeper_character_summary import (
 from lorekeeper_character_compose import (
     cast_answer_is_thin,
     who_is_answer_has_bloat,
+    who_is_has_family_slots,
     work_title_from_hints,
 )
 from lorekeeper_ask_plan import AskPlan
@@ -1466,41 +1467,49 @@ def recall_from_user_data(
                             "recallEngine": "local",
                             "entryCount": len(entries),
                         }))
-            if (
-                effective_kind == "who"
-                and label
-                and (
-                    cast_answer_is_thin(rag_result.get("answer") or "", label)
-                    or who_is_answer_has_bloat(rag_result.get("answer") or "")
+            if effective_kind == "who" and label:
+                rag_ans = rag_result.get("answer") or ""
+                rag_thin = cast_answer_is_thin(rag_ans, label) or who_is_answer_has_bloat(
+                    rag_ans
                 )
-            ):
-                pipeline = answer_for_work(
-                    question,
-                    scoped,
-                    work_hints=work_hints,
-                    strict_work=strict_work,
-                    mode=recall_mode,
-                    tokenize=_tokenize,
-                    best_excerpt=_best_excerpt,
-                    kind_label=_kind_label,
-                )
-                local_ans = (pipeline or {}).get("answer") or ""
-                if (
-                    pipeline
-                    and not cast_answer_is_thin(local_ans, label)
-                    and not who_is_answer_has_bloat(local_ans)
-                ):
-                    return _finish({
-                        "ok": True,
-                        "answer": pipeline["answer"],
-                        "sources": pipeline["sources"],
-                        "materialState": pipeline["materialState"],
-                        "mode": recall_mode,
-                        "questionKind": pipeline["questionKind"],
-                        "recallVersion": RECALL_VERSION,
-                        "recallEngine": "local",
-                        "entryCount": len(entries),
-                    })
+                rag_missing_family = not who_is_has_family_slots(rag_ans)
+                if rag_thin or rag_missing_family:
+                    pipeline = answer_for_work(
+                        question,
+                        scoped,
+                        work_hints=work_hints,
+                        strict_work=strict_work,
+                        mode=recall_mode,
+                        tokenize=_tokenize,
+                        best_excerpt=_best_excerpt,
+                        kind_label=_kind_label,
+                    )
+                    local_ans = (pipeline or {}).get("answer") or ""
+                    local_ok = (
+                        pipeline
+                        and not cast_answer_is_thin(local_ans, label)
+                        and not who_is_answer_has_bloat(local_ans)
+                    )
+                    # Prefer local when RAG is thin/bloated, or when local fills
+                    # brother/parent/standing slots RAG omitted.
+                    if local_ok and (
+                        rag_thin
+                        or (
+                            rag_missing_family
+                            and who_is_has_family_slots(local_ans)
+                        )
+                    ):
+                        return _finish({
+                            "ok": True,
+                            "answer": pipeline["answer"],
+                            "sources": pipeline["sources"],
+                            "materialState": pipeline["materialState"],
+                            "mode": recall_mode,
+                            "questionKind": pipeline["questionKind"],
+                            "recallVersion": RECALL_VERSION,
+                            "recallEngine": "local",
+                            "entryCount": len(entries),
+                        })
             return _finish(_attach_router_meta({
                 "ok": True,
                 "answer": rag_result["answer"],

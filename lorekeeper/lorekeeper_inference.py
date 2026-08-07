@@ -950,6 +950,8 @@ _SPECIES_TOKEN_STOP = frozenset(
     going after after before when while because though although however
     antagonist villain hero heroine protagonist deuteragonist narrator
     character characters person people member members
+    subject quarry curiosity interest attention known also
+    male female
     """.split()
 )
 _GENDER_OPTION_RE = re.compile(
