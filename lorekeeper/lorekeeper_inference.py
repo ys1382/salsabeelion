@@ -14,6 +14,11 @@ _NAME_STOP = frozenset(
     yes no well oh ah hey look please thanks thank sorry wait stop listen maybe
     truly indeed why how never always really fine okay sure right wrong gods god
     help hello goodbye good dear lad lass boy girl man woman sire mercy forgive
+    are is was were been being be am especially somewhat rather ironically
+    considering furtively approach arms thoughts fears vigor latter former
+    beneath prone carrying soothed worried glancing eldest vigor ironically
+    soothed fears somewhat although because during while until against toward
+    towards within without among across around between
     """.split()
 )
 

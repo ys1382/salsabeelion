@@ -136,7 +136,19 @@ _WHO_IS_BLOAT_RE = re.compile(
     r"|\banother chance\b|\bout of shock\b"
     r"|\bdoesn'?t remember much\b|\bwould surprise his brothers\b"
     r"|\bmain victim\b|\bannoyance to\b"
+    r"|\bis roused\b|\broused from\b|\bfurtively glancing\b"
+    r"|\bforcibly groomed\b|\bcarrying (?:their|his|her)\b"
+    r"|\bsoothed (?:the|his|her)\b|\bworris?ed for\b"
     r")"
+)
+
+# "X is <scene action…>" — not cast identity.
+_SCENE_AFTER_IS_RE = re.compile(
+    r"\b(?:is|was|are|were)\s+(?:roused|worried|glancing|carrying|groomed|soothed|"
+    r"tracking|thinking|reflecting|sitting|standing|looking|walking|running|"
+    r"watching|turning|reaching|holding|pulling|pushing|approaching|"
+    r"startled|surprised|relieved|afraid|frightened)\b",
+    re.I,
 )
 
 _CAST_CARD_ANCHOR_RE = re.compile(
@@ -229,6 +241,108 @@ def who_is_answer_has_bloat(text: str) -> bool:
     return False
 
 
+def is_plausible_cast_person_name(name: str) -> bool:
+    """Reject English stopwords mistaken for cast names (Especially, Are, …)."""
+    raw = (name or "").strip().rstrip(".")
+    if not raw or len(raw) < 3:
+        return False
+    # Multi-word: each part must be plausible (allows "Character B").
+    from lorekeeper_inference import _NAME_STOP, _VERB_STOP, _INTERJECTIONS
+
+    parts = re.findall(r"[A-Za-z0-9']+", raw)
+    if not parts:
+        return False
+    for part in parts:
+        low = part.lower()
+        if low in _NAME_STOP or low in _VERB_STOP or low in _INTERJECTIONS:
+            return False
+        if low in {
+            "especially",
+            "somewhat",
+            "although",
+            "considering",
+            "rather",
+            "ironically",
+            "furtively",
+            "approach",
+            "beneath",
+            "prone",
+            "vigor",
+            "latter",
+            "former",
+            "are",
+            "is",
+            "was",
+            "were",
+            "been",
+            "being",
+        }:
+            return False
+    # Prefer Capitalized / Character N — reject all-lowercase English scraps.
+    if raw.islower():
+        return False
+    return True
+
+
+def _kinship_shape_sentence(sentence: str, label: str) -> bool:
+    """True for short kinship / standing lines — not plot that merely mentions 'brother'."""
+    s = re.sub(r"\s+", " ", (sentence or "").strip())
+    if not s or len(s) > 180:
+        return False
+    lab = re.escape(label)
+    patterns = (
+        rf"^{lab}\s+is\s+(?:(?:younger|older|twin)\s+)?(?:brother|sister|son|daughter)\s+to\s+.+$",
+        rf"^{lab}\s+is\s+(?:married|engaged)\s+to\s+.+$",
+        rf"^{lab}\s+is\s+(?:the\s+)?(?:subject|quarry)\s+of\s+.+$",
+        rf"^{lab}\s+is\s+(?:son|daughter|child)\s+of\s+.+$",
+        rf"^(?:(?:younger|older|twin)\s+)?(?:brother|sister)\s+to\s+.+$",
+        rf"^married\s+to\s+.+$",
+        rf"^{lab}\s*[—–\-:,]\s*(?:(?:younger|older|twin)\s+)?(?:brother|sister)\s+to\s+.+$",
+    )
+    return any(re.match(p, s, re.I) for p in patterns)
+
+
+def _kinship_targets_plausible(sentence: str, label: str) -> bool:
+    """Drop 'brother to Especially/Are' style scraps."""
+    s = re.sub(r"\s+", " ", (sentence or "").strip())
+    m = re.search(
+        r"\b(?:brother|sister|son|daughter|married|engaged|subject|quarry|child)\s+"
+        r"(?:of|to)\s+(.+?)\.?$",
+        s,
+        re.I,
+    )
+    if not m:
+        return True
+    tail = m.group(1).strip()
+    # "Character D's curiosity" / "Obsidian and Stygian"
+    chunks = re.split(r"\s+and\s+|,\s*", tail)
+    for chunk in chunks:
+        chunk = chunk.strip()
+        # Allow "X's curiosity" standing phrases.
+        if re.search(r"'s\s+\w+$", chunk, re.I):
+            head = chunk.split("'")[0].strip()
+            if head and not is_plausible_cast_person_name(head):
+                return False
+            continue
+        # Strip trailing role phrases.
+        chunk = re.sub(r"\s*\(.*\)$", "", chunk).strip()
+        if not chunk:
+            continue
+        if not is_plausible_cast_person_name(chunk.split()[0] if chunk else ""):
+            # Multi-word names: check full chunk without trailing common nouns
+            cleaned = re.sub(
+                r"\b(curiosity|interest|attention|trust)\b.*$",
+                "",
+                chunk,
+                flags=re.I,
+            ).strip()
+            if cleaned and is_plausible_cast_person_name(cleaned):
+                continue
+            if not is_plausible_cast_person_name(chunk):
+                return False
+    return True
+
+
 def is_who_is_cast_fact_sentence(sentence: str, label: str) -> bool:
     """
     Keep-list for who-is: role, species/type identity, kinship/ties, aliases,
@@ -238,39 +352,44 @@ def is_who_is_cast_fact_sentence(sentence: str, label: str) -> bool:
     label = (label or "").strip()
     if not s or not label:
         return False
-    if len(s) > 420:
+    if len(s) > 280:
         return False
     if _WHO_IS_BLOAT_RE.search(s):
+        return False
+    if _SCENE_AFTER_IS_RE.search(s):
         return False
     if is_other_character_scene_beat(s, label):
         return False
     if _PLOT_SEQUENCE_RE.search(s):
         return False
+
+    # Kinship / standing — short shapes only; validate name targets.
+    if _kinship_shape_sentence(s, label):
+        return _kinship_targets_plausible(s, label)
+
     if not re.search(rf"\b{re.escape(label)}\b", s, re.I):
-        # Allow short kinship lines that omit the label ("Younger brother to B.")
-        if _KINSHIP_RE.search(s) and re.search(
-            r"\b(?:brother|sister|son|daughter|married|father|mother|subject of|quarry)\b",
+        return False
+
+    # Subject-led identity / role / species / gender / alias — NOT kinship-via-plot.
+    if re.match(rf"^{re.escape(label)}\s+(?:is|was|are|were)\b", s, re.I):
+        # Long "X is …" with scene/plot language is out even if "brother" appears.
+        if len(s) > 160 and not re.search(
+            r"\b(protagonist|antagonist|rabbit|wolf|known as|known by|also known)\b",
             s,
             re.I,
         ):
-            return len(s) < 160
-        return False
-
-    # Subject-led identity / role / species / gender / alias.
-    if re.match(rf"^{re.escape(label)}\s+(?:is|was|are|were)\b", s, re.I):
+            return False
         if re.search(
             r"\b("
             r"protagonist|antagonist|villain|hero|heroine|main character|side character|"
             r"side antagonist|rabbit|wolf|fox|lynx|arcanist|male|female|sentient|"
-            r"known|called|aka|brother|sister|son|daughter|married|"
-            r"subject of|quarry|white rabbit|from .+ wonderland|guardian|spirit"
+            r"known|called|aka|white rabbit|from .+ wonderland|guardian|spirit"
             r")\b",
             s,
             re.I,
         ):
             return True
-        # "X is the male protagonist…" covered above; short status OK if not a scrap.
-        if len(s) <= 180 and not _PLOT_ARC_RE.search(s):
+        if len(s) <= 120 and not _PLOT_ARC_RE.search(s):
             if re.fullmatch(
                 rf"{re.escape(label)}\s+is\s+[\w'-]+\.?",
                 s,
@@ -287,18 +406,17 @@ def is_who_is_cast_fact_sentence(sentence: str, label: str) -> bool:
             return True
         return False
 
-    # "Etherei — grey-skinned arcanist…" / "Character M — Younger brother to B."
+    # "Etherei — grey-skinned arcanist…" identity dash lines (not plot).
     if re.match(rf"^{re.escape(label)}\s*[—–\-:,]", s, re.I):
         if re.search(
             r"\b("
             r"arcanist|rabbit|wolf|guardian|spirit|protagonist|antagonist|"
-            r"male|female|sentient|grey|gray|skin|"
-            r"brother|sister|married|father|mother|parent|subject of|quarry|known"
+            r"male|female|sentient|grey|gray|skin"
             r")\b",
             s,
             re.I,
         ):
-            return len(s) < 220
+            return len(s) < 200
         return False
 
     if re.search(
@@ -306,12 +424,10 @@ def is_who_is_cast_fact_sentence(sentence: str, label: str) -> bool:
         s,
         re.I,
     ):
-        return True
+        return len(s) < 260
     if re.search(rf"\b{re.escape(label)}\s+is\s+known by\b", s, re.I):
-        return True
-    if _KINSHIP_RE.search(s) and re.search(rf"\b{re.escape(label)}\b", s, re.I):
-        return True
-    if is_story_significance_clause(s, label):
+        return len(s) < 260
+    if is_story_significance_clause(s, label) and len(s) < 260:
         return True
     return False
 
@@ -426,6 +542,8 @@ def _tie_to_reference(label: str, tie: str) -> str:
     m = re.match(r"^(Brother|Sister|Mother|Father|Son|Daughter|Child)\s+to\s+(.+?)\.?\s*$", tie, re.I)
     if m:
         rel, other = m.group(1).lower(), m.group(2).split("(")[0].strip().rstrip(".")
+        if not is_plausible_cast_person_name(other):
+            return ""
         if rel == "brother":
             return f"{label} is brother to {other}."
         if rel == "sister":

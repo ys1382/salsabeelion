@@ -548,6 +548,39 @@
       }
     },
     {
+      "id": "who_is_no_scene_plot_or_bogus_brothers",
+      "label": "Who-is drops scene plot and invented brother stopwords",
+      "entries": [
+        {
+          "id": "c1",
+          "title": "Character M",
+          "body": "Character M is the protagonist. Character M is a sentient white rabbit. Character M is male. Character M is younger brother to Obsidian and Stygian.",
+          "tags": ["Ashford Saga"],
+          "kind": "character"
+        },
+        {
+          "id": "d1",
+          "title": "Draft scene",
+          "body": "Character M is roused from his thoughts by Stygian's approach. Character M had been rather worried for his eldest brother. Especially after the storm, they are wet. Character M is brother to Especially. Character M is brother to Are.",
+          "tags": ["Ashford Saga"],
+          "kind": "document"
+        }
+      ],
+      "question": "In Ashford Saga, who is Character M?",
+      "assert": {
+        "questionKind": "who",
+        "materialState": "summarizable",
+        "answerContains": ["protagonist"],
+        "answerNotContains": [
+          "roused",
+          "Especially",
+          "brother to Are",
+          "brother to especially",
+          "worried for his eldest"
+        ]
+      }
+    },
+    {
       "id": "who_is_strips_awareness_background_dump",
       "label": "Who-is keeps cast identity, drops awareness/plot/background dump",
       "entries": [

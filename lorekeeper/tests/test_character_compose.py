@@ -376,6 +376,41 @@ class CharacterComposeTests(unittest.TestCase):
         self.assertTrue(is_other_character_scene_beat(other, "Character M"))
         self.assertTrue(_is_plot_arc_clause(other))
 
+    def test_who_is_rejects_plot_with_brother_mention_and_bogus_names(self):
+        from lorekeeper_answer_focus import scrub_who_is_plot_walkthrough
+        from lorekeeper_character_compose import (
+            is_plausible_cast_person_name,
+            is_who_is_cast_fact_sentence,
+        )
+
+        plot = (
+            "Character M is roused from his thoughts by Character B's approach, "
+            "the younger rabbit carrying their overclothing in his arms. Character M "
+            "had been rather worried for his eldest brother, considering that Character C "
+            "had gotten wet, but something in the vigor with which Character C had forcibly "
+            "groomed Character M ironically soothed the latter's fears somewhat."
+        )
+        self.assertFalse(is_who_is_cast_fact_sentence(plot, "Character M"))
+        self.assertFalse(is_plausible_cast_person_name("Especially"))
+        self.assertFalse(is_plausible_cast_person_name("Are"))
+        self.assertTrue(is_plausible_cast_person_name("Obsidian"))
+        dump = (
+            "Character M is the male protagonist in Ashford Saga. "
+            + plot
+            + " Character M is brother to Obsidian. Character M is brother to Especially. "
+            "Character M is brother to Are."
+        )
+        cleaned = scrub_who_is_plot_walkthrough(
+            dump, question="In Ashford Saga, who is Character M?"
+        )
+        low = cleaned.lower()
+        self.assertIn("protagonist", low)
+        self.assertIn("obsidian", low)
+        self.assertNotIn("roused", low)
+        self.assertNotIn("especially", low)
+        self.assertNotIn("brother to are", low)
+        self.assertNotIn("groomed", low)
+
     def test_who_is_scrubs_awareness_plot_dump(self):
         from lorekeeper_answer_focus import scrub_who_is_plot_walkthrough
         from lorekeeper_character_compose import (
