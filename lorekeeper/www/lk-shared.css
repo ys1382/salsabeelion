@@ -873,7 +873,7 @@ a { color: var(--accent); }
   left: 0;
   right: 0;
   pointer-events: none;
-  z-index: 4;
+  z-index: 6;
 }
 .lk-page-gap-cover {
   position: absolute;

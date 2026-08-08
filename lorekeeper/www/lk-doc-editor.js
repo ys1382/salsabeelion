@@ -2,8 +2,9 @@
   var PAGE_H = 1056;
   var PAGE_GAP = 14;
   /** Keep whole lines clear of bottom margin / page edge (no mid-line clips). */
-  var PAGE_LINE_BUFFER = 36;
-  var PAD_OVERSHOOT = 8;
+  var PAGE_LINE_BUFFER = 40;
+  var PAD_OVERSHOOT = 10;
+  var PAGE_SYNC_MAX_ROUNDS = 48;
   var MARGIN_PX = { narrow: 48, normal: 96, wide: 144 };
 
   var doc = null;
@@ -742,7 +743,7 @@
   function applyPagePush(node, el, m, unit, pageH) {
     if (!node || !el) return;
     var top = blockBorderTop(node, el);
-    var push = padToNextContentStart(top, m, unit, pageH);
+    var push = padOverflowToNextPage(top, m, unit, pageH);
     node.classList.add("lk-page-pushed");
     node.style.marginTop = push + "px";
   }
@@ -767,9 +768,9 @@
     quill.insertEmbed(index, "pagePad", Math.ceil(height), "silent");
   }
 
-  function pageIndexForY(y, unit, pageH) {
-    if (y < pageH) return 0;
-    return 1 + Math.floor((y - unit) / unit);
+  function pageIndexForY(y, unit) {
+    if (unit <= 0) return 0;
+    return Math.max(0, Math.floor(y / unit));
   }
 
   function whiteStartForPage(pageIdx, unit) {
@@ -781,12 +782,28 @@
   }
 
   function padToNextContentStart(y, m, unit, pageH) {
-    var pageIdx = pageIndexForY(y, unit, pageH);
+    var pageIdx = pageIndexForY(y, unit);
     var whiteStart = whiteStartForPage(pageIdx, unit);
     var contentEnd = whiteStart + pageH - m - PAGE_LINE_BUFFER;
     var greyStart = whiteStart + pageH;
     var nextIdx = pageIdx;
     if (y >= greyStart - 1 || y > contentEnd) nextIdx = pageIdx + 1;
+    var target = contentStartForPage(nextIdx, m, unit);
+    if (target <= y) {
+      nextIdx += 1;
+      target = contentStartForPage(nextIdx, m, unit);
+    }
+    return Math.max(1, Math.ceil(target - y + PAD_OVERSHOOT));
+  }
+
+  /** Google Docs-style: overflow always jumps to the next sheet’s content box. */
+  function padOverflowToNextPage(y, m, unit, pageH) {
+    var pageIdx = pageIndexForY(y, unit);
+    var greyStart = whiteStartForPage(pageIdx, unit) + pageH;
+    if (y >= greyStart - 1) {
+      return padToNextContentStart(y, m, unit, pageH);
+    }
+    var nextIdx = pageIdx + 1;
     var target = contentStartForPage(nextIdx, m, unit);
     if (target <= y) {
       nextIdx += 1;
@@ -806,7 +823,7 @@
   function pushNodeToNextContentStart(node, el, m, unit, pageH) {
     if (!node) return;
     var top = blockBorderTop(node, el);
-    var padH = padToNextContentStart(top, m, unit, pageH);
+    var padH = padOverflowToNextPage(top, m, unit, pageH);
     if (padH > 0) insertPagePadBefore(node, padH);
   }
 
@@ -974,12 +991,13 @@
   }
 
   function pageMetricsForY(y, m, unit, pageH) {
-    var pageIdx = pageIndexForY(y, unit, pageH);
+    var pageIdx = pageIndexForY(y, unit);
     var whiteStart = whiteStartForPage(pageIdx, unit);
     return {
       pageIdx: pageIdx,
       contentEnd: whiteStart + pageH - m - PAGE_LINE_BUFFER,
       greyStart: whiteStart + pageH,
+      gapEnd: whiteStart + pageH + (unit - pageH),
       contentStart: contentStartForPage(pageIdx, m, unit),
     };
   }
@@ -998,13 +1016,12 @@
   function padTailAfterSplit(tail, el, m, unit, pageH) {
     if (!tail) return;
     var tailTop = blockBorderTop(tail, el);
-    var tailPage = pageMetricsForY(tailTop, m, unit, pageH);
-    if (blockNeedsPagePush(tailTop, tailPage)) {
-      insertPagePadBefore(tail, padToNextContentStart(tailTop, m, unit, pageH));
-    }
+    // Always send overflow to the next page (do not leave the tail in the bottom margin/gap).
+    var padH = padOverflowToNextPage(tailTop, m, unit, pageH);
+    if (padH > 0) insertPagePadBefore(tail, padH);
   }
 
-  /** Line-aware pagination: split at line boundaries, gap spacers push overflow to next sheet. */
+  /** Line-aware pagination: whole lines move to the next sheet — Google Docs style. */
   function syncBlockPageGaps() {
     if (loading || syncingGaps || !quill) return;
     var el = editorEl();
@@ -1031,7 +1048,7 @@
       var changed = true;
       var rounds = 0;
 
-      while (changed && rounds < 12) {
+      while (changed && rounds < PAGE_SYNC_MAX_ROUNDS) {
         changed = false;
         rounds += 1;
 
@@ -1046,7 +1063,7 @@
           var blockPage = pageMetricsForY(blockTop, m, unit, pageH);
 
           if (blockNeedsPagePush(blockTop, blockPage)) {
-            insertPagePadBefore(block, padToNextContentStart(blockTop, m, unit, pageH));
+            insertPagePadBefore(block, padOverflowToNextPage(blockTop, m, unit, pageH));
             changed = true;
             break;
           }
@@ -1109,7 +1126,7 @@
 
   function scheduleBlockPageGaps() {
     if (gapTimer) clearTimeout(gapTimer);
-    gapTimer = setTimeout(runPageLayoutSync, 32);
+    gapTimer = setTimeout(runPageLayoutSync, 16);
   }
 
   function runPageLayoutSync() {
@@ -1156,14 +1173,20 @@
 
     var cover = ensureGapCover();
     if (cover) {
-      cover.style.height = minH + "px";
+      var editor = el;
+      var offsetTop = 0;
+      var container = document.querySelector("#docEditor .ql-container");
+      if (container && editor) {
+        offsetTop = Math.max(0, editor.offsetTop || 0);
+      }
+      cover.style.height = offsetTop + minH + "px";
       cover.innerHTML = "";
       for (var g = 0; g < pages - 1; g++) {
         var strip = document.createElement("div");
         strip.className = "lk-page-gap-cover";
-        // Cover only the grey gutter — do not paint into the next page’s top lines.
-        strip.style.top = g * unit + pageH + "px";
-        strip.style.height = gap + "px";
+        // Exact grey gutter only — pagination must keep whole lines out of this band.
+        strip.style.top = offsetTop + g * unit + pageH + "px";
+        strip.style.height = Math.max(gap, 1) + "px";
         cover.appendChild(strip);
       }
     }
