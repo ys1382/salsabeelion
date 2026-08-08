@@ -138,10 +138,49 @@ class RecallScopeTests(unittest.TestCase):
         self.assertNotIn("ice and isolation", answer)
         self.assertNotEqual(res.get("materialState"), "nothing_saved")
 
-    def test_scope_work_prefixes_question(self):
-        q = augment_question_with_scope_work("who is Character A?", "Ashford Saga")
-        self.assertIn("Ashford Saga", q)
-        self.assertTrue(q.lower().startswith("in ashford saga"))
+    def test_who_is_document_scope_uses_unlinked_work_notes(self):
+        """Who-is from Doc Ask must read work notes, not only the open draft."""
+        entries = [
+            {
+                "id": "d1",
+                "title": "Ashford draft",
+                "body": (
+                    "Character M is the protagonist of the story, the White Rabbit "
+                    "from Alice in Wonderland. Character M is known by the name "
+                    "Chroniker by Character D."
+                ),
+                "tags": ["Ashford Saga"],
+                "kind": "document",
+            },
+            {
+                "id": "n1",
+                "title": "Character M",
+                "body": (
+                    "Character M is younger brother to Obsidian and Stygian. "
+                    "Character M is the chosen one meant to defeat the dragon demon king."
+                ),
+                "tags": ["Ashford Saga"],
+                "kind": "character",
+                "linkedDocId": "",
+            },
+        ]
+        res = recall_from_user_data(
+            "who is Character M?",
+            {"lorekeeper_entries_v1": json.dumps(entries)},
+            scope={
+                "mode": "document",
+                "workTitle": "Ashford Saga",
+                "documentId": "d1",
+            },
+        )
+        answer = (res.get("answer") or "").lower()
+        self.assertEqual(res.get("questionKind"), "who")
+        self.assertIn("obsidian", answer)
+        self.assertIn("stygian", answer)
+        self.assertTrue(
+            "chosen" in answer or "dragon" in answer or "brother" in answer,
+            msg=res.get("answer"),
+        )
 
 
 if __name__ == "__main__":

@@ -32,6 +32,10 @@
     };
   }
 
+  function looksLikeWhoIs(q) {
+    return /\bwho(?:'s|\s+is)\b/i.test(String(q || ""));
+  }
+
   function scopeHint(scope) {
     if (scope.mode === "document") {
       return "Searching this document and notes linked to it.";
@@ -158,6 +162,10 @@
         return;
       }
       var scope = scopeFromUi(getDoc);
+      // Who-is needs companion notes for the work, not only the open draft.
+      if (looksLikeWhoIs(q) && scope.workTitle) {
+        scope.mode = "work";
+      }
       // Straight to answer — no confirm-sources checkbox step.
       runAskRequest(q, scope, { scope: scope });
     });

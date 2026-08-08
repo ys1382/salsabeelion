@@ -922,6 +922,15 @@ def recall_from_user_data(
     # Notes-vs-draft needs every note for the work, not only notes linked to the open doc.
     if is_notes_not_in_draft_question(question):
         scope_mode = "work"
+    # Who-is / character overview: companion notes for the story matter as much as
+    # the open draft. Document-only scope drops unlinked work notes and yields
+    # draft-only alias cards (White Rabbit / Chroniker) with no kin or stakes.
+    if (
+        is_who_is_question(question)
+        and scope_mode == "document"
+        and (scope_work or scope_doc_id)
+    ):
+        scope_mode = "work"
     if scope_work and scope_mode not in ("random_ideas", "floaters"):
         question = augment_question_with_scope_work(question, scope_work)
 
@@ -932,7 +941,11 @@ def recall_from_user_data(
     )
 
     entries = _all_entries(data)
-    if is_notes_not_in_draft_question(question) and not scope_work and scope_doc_id:
+    if (
+        (is_notes_not_in_draft_question(question) or is_who_is_question(question))
+        and not scope_work
+        and scope_doc_id
+    ):
         for entry in entries:
             if not isinstance(entry, dict):
                 continue
@@ -943,6 +956,15 @@ def recall_from_user_data(
                 tag_s = str(tag).strip()
                 if tag_s and len(tag_s) > 2:
                     scope_work = tag_s
+                    question = augment_question_with_scope_work(question, scope_work)
+                    break
+            if scope_work:
+                break
+            # Document workTag / work field when tags are empty.
+            for key in ("workTag", "work", "workTitle"):
+                wt = str(entry.get(key) or "").strip()
+                if wt and len(wt) > 2:
+                    scope_work = wt
                     question = augment_question_with_scope_work(question, scope_work)
                     break
             if scope_work:
