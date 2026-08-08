@@ -878,7 +878,7 @@
       var HALALIT_SIX_SHELF_NAMES =
         "<em>fantasy</em>, <em>science fiction</em>, <em>mystery</em>, <em>realistic fiction</em>, <em>nonfiction</em>, and <em>dystopian</em>";
       var HALALIT_START_GENRE_BEAT =
-        "<p>They let a small silence do its work. <q>Before you take the corridor, I’ll ask you to name one of six shelves I keep for readers from all walks of life—" +
+        "<p>A small silence does its work. <q>Before you take the corridor, I’ll ask you to name one of six shelves I keep for readers from all walks of life—" +
         HALALIT_SIX_SHELF_NAMES +
         ". The path of thresholds and tolls stays the same—but the title I press into your hands at the close will belong only to the shelf you choose.</q></p>";
       var HALALIT_RULES_GENRE_BEAT =
@@ -891,18 +891,19 @@
        */
       var AREA_PACKS = [
         {
+          gender: "f",
           start: {
             label: "Prologue",
             title: "The lantern room",
             html:
-              "<p>The librarian slides a brass lamp toward you. Outside, rain writes thin lines on the glass.</p><p>\"One short quest,\" they say. \"At the end we’ll know what kind of story you actually want to live in next.\"</p>" +
+              "<p>The librarian slides a brass lamp toward you. Outside, rain writes thin lines on the glass.</p><p>\"One short quest,\" she says. \"At the end we’ll know what kind of story you actually want to live in next.\"</p>" +
               HALALIT_START_GENRE_BEAT,
           },
           librarianRules: {
             label: "Prologue",
             title: "The lantern room",
             html:
-              "<p>The librarian settles back, pleased you asked.</p><p>\"Short version: you’ll cross a threshold, pay a kind of toll, then stand before the shelf that remembers how you moved. Each choice nudges four quiet scores—caution, nerve, company, solitude—so the ending can suggest what sort of book might feel true next. Nothing here can trap you; it only listens.\"</p><p>They tilt the lamp toward the inner door. \"When you’re ready, the corridor is the first real step.\"</p>" +
+              "<p>The librarian settles back, pleased you asked.</p><p>\"Short version: you’ll cross a threshold, pay a kind of toll, then stand before the shelf that remembers how you moved. Each choice nudges four quiet scores—caution, nerve, company, solitude—so the ending can suggest what sort of book might feel true next. Nothing here can trap you; it only listens.\"</p><p>She tilts the lamp toward the inner door. \"When you’re ready, the corridor is the first real step.\"</p>" +
               HALALIT_RULES_GENRE_BEAT,
           },
           corridor: {
@@ -924,6 +925,7 @@
           },
         },
         {
+          gender: "m",
           start: {
             label: "Prologue",
             title: "The map alcove",
@@ -935,14 +937,14 @@
             label: "Prologue",
             title: "The map alcove",
             html:
-              "<p>They weight a corner of the nearest chart with a smooth stone. \"Rules, then: you’ll cross a threshold, pay a toll in the old way, and stand where the shelves remember your stride. Your choices lean four quiet dials—caution, nerve, company, solitude—so the ending can suggest a book that fits who you were in motion.\"</p><p>They slide a wooden rule aside. \"The corridor beyond this room is the first real line on the map.\"</p>" +
+              "<p>He weights a corner of the nearest chart with a smooth stone. \"Rules, then: you’ll cross a threshold, pay a toll in the old way, and stand where the shelves remember your stride. Your choices lean four quiet dials—caution, nerve, company, solitude—so the ending can suggest a book that fits who you were in motion.\"</p><p>He slides a wooden rule aside. \"The corridor beyond this room is the first real line on the map.\"</p>" +
               HALALIT_RULES_GENRE_BEAT,
           },
           corridor: {
             label: "First threshold",
             title: "The compass corridor",
             html:
-              "<p>The passage bends once, twice—then straightens toward a door painted with a compass rose so faded you can barely tell north from story.</p><p>From the other side comes the scrape of a chair, then someone humming off-key, as if they’re rehearsing a speech they’ll never give.</p>",
+              "<p>The passage bends once, twice—then straightens toward a door painted with a compass rose so faded you can barely tell north from story.</p><p>From the other side comes the scrape of a chair, then someone humming off-key, as if rehearsing a speech that will never be given.</p>",
           },
           afterKnockLead:
             "<p>The rose on the door seems to steady, needle-thin, as if your knock gave it a north.</p>",
@@ -952,31 +954,32 @@
             default:
               "<p>Beyond the guardian, shelves climb like cliffs; wind you cannot feel still lifts dust in spirals. One empty slot glows like a harbor lantern.</p>",
             story:
-              "<p>Beyond the guardian, the stacks lean in kindly, as if your small honest story left a tide mark they mean to keep.</p><p>One empty slot glows like a harbor lantern.</p>",
+              "<p>Beyond the guardian, the stacks lean in kindly, as if your small honest story left a tide mark the wood means to keep.</p><p>One empty slot glows like a harbor lantern.</p>",
             riddle:
               "<p>Beyond the guardian, chalk skates somewhere overhead, finishing the bargain you made; the wood answers with a chuckle deep in its grain.</p><p>One empty slot glows like a harbor lantern.</p>",
           },
         },
         {
+          gender: "f",
           start: {
             label: "Prologue",
             title: "The winter garden window",
             html:
-              "<p>Frost feathers the inside of a tall window; beyond it, a walled garden sleeps under a thin quilt of snow. The librarian sets a lantern on the sill.</p><p>\"One short quest,\" they say, breath fogging the glass for a heartbeat. \"When you return, we’ll know what kind of warmth you’ve been missing in your reading.\"</p>" +
+              "<p>Frost feathers the inside of a tall window; beyond it, a walled garden sleeps under a thin quilt of snow. The librarian sets a lantern on the sill.</p><p>\"One short quest,\" she says, breath fogging the glass for a heartbeat. \"When you return, we’ll know what kind of warmth you’ve been missing in your reading.\"</p>" +
               HALALIT_START_GENRE_BEAT,
           },
           librarianRules: {
             label: "Prologue",
             title: "The winter garden window",
             html:
-              "<p>They wipe the glass clear with a cuff. \"Plainly: you’ll cross a threshold, pay a toll, then meet the shelf that remembers how you carried yourself. Each choice tilts four quiet measures—caution, nerve, company, solitude—so the ending can name a book that suits the reader you were along the way.\"</p><p>They nod toward an inner door where draughts slip under like curious cats. \"The corridor waits when you are.\"</p>" +
+              "<p>She wipes the glass clear with a cuff. \"Plainly: you’ll cross a threshold, pay a toll, then meet the shelf that remembers how you carried yourself. Each choice tilts four quiet measures—caution, nerve, company, solitude—so the ending can name a book that suits the reader you were along the way.\"</p><p>She nods toward an inner door where draughts slip under like curious cats. \"The corridor waits when you are.\"</p>" +
               HALALIT_RULES_GENRE_BEAT,
           },
           corridor: {
             label: "First threshold",
             title: "The storm door",
             html:
-              "<p>The corridor ends at a door banded with iron, cold to the touch. Snowmelt tracks lead toward it—someone came in recently and forgot to dry their boots.</p><p>Behind the wood, a voice counts slowly, as if measuring patience against the weather.</p>",
+              "<p>The corridor ends at a door banded with iron, cold to the touch. Snowmelt tracks lead toward it—someone came in recently and forgot to dry both boots.</p><p>Behind the wood, a voice counts slowly, as if measuring patience against the weather.</p>",
           },
           afterKnockLead:
             "<p>Your knock rings honest as a handbell; the counting stops mid-number, replaced by the soft shift of someone standing.</p>",
@@ -986,24 +989,25 @@
             default:
               "<p>Beyond the guardian, rows of spines rise like hedgerows after snow. One empty slot glows with the patient gold of a hearth not lit yet.</p>",
             story:
-              "<p>Beyond the guardian, the shelves seem to thaw toward you, as if truth spoken aloud were a kind of heat they recognize.</p><p>One empty slot glows with the patient gold of a hearth not lit yet.</p>",
+              "<p>Beyond the guardian, the shelves seem to thaw toward you, as if truth spoken aloud were a kind of heat the wood recognizes.</p><p>One empty slot glows with the patient gold of a hearth not lit yet.</p>",
             riddle:
               "<p>Beyond the guardian, chalk taps once, twice—an answer being finished where you cannot see—and the stacks exhale mist and old paper.</p><p>One empty slot glows with the patient gold of a hearth not lit yet.</p>",
           },
         },
         {
+          gender: "m",
           start: {
             label: "Prologue",
             title: "The bindery niche",
             html:
-              "<p>You’re led past humming presses into a quiet niche hung with half-finished covers—leather, cloth, marbled paper curling at the edges. Thread and glue scent the air.</p><p>\"One short quest,\" the librarian murmurs, sliding a slim awl into their sleeve like a bookmark. \"At the end we’ll know which binding fits the story you’re ready to carry.\"</p>" +
+              "<p>You’re led past humming presses into a quiet niche hung with half-finished covers—leather, cloth, marbled paper curling at the edges. Thread and glue scent the air.</p><p>\"One short quest,\" the librarian murmurs, sliding a slim awl into his sleeve like a bookmark. \"At the end we’ll know which binding fits the story you’re ready to carry.\"</p>" +
               HALALIT_START_GENRE_BEAT,
           },
           librarianRules: {
             label: "Prologue",
             title: "The bindery niche",
             html:
-              "<p>They test a corner fold with their thumb. \"Listen: you’ll cross a threshold, pay a toll, then stand where the shelf reads your gait like a signature. Your choices adjust four quiet threads—caution, nerve, company, solitude—so the ending can suggest a book sewn to your measure.\"</p><p>They gesture past the presses. \"The corridor is the spine that leads outward.\"</p>" +
+              "<p>He tests a corner fold with his thumb. \"Listen: you’ll cross a threshold, pay a toll, then stand where the shelf reads your gait like a signature. Your choices adjust four quiet threads—caution, nerve, company, solitude—so the ending can suggest a book sewn to your measure.\"</p><p>He gestures past the presses. \"The corridor is the spine that leads outward.\"</p>" +
               HALALIT_RULES_GENRE_BEAT,
           },
           corridor: {
@@ -1027,38 +1031,30 @@
         },
       ];
 
-      function currentAreaPack() {
-        var idx = playthroughIndex % AREA_PACKS.length;
-        if (idx < 0) idx += AREA_PACKS.length;
-        return AREA_PACKS[idx];
-      }
-
-      /**
-       * Who blocks the way and how the door answers — rotates every playthrough.
-       * Toll mechanics stay fixed: same two choices, same “time, truth, or trouble” line.
-       */
       var CROSSING_SKINS = [
         {
+          gender: "f",
           crossingLabel: "Crossing",
           crossingTitle: "The velvet keeper",
           afterKnock:
             "<p>You knock—two measured taps, patient and clear.</p>" +
-            "<p>On the other side, the voices stop mid-sentence. A latch lifts with a courteous click. Warm lamplight spills across your shoes as the door eases inward on well-oiled hinges. Someone exhales—not quite a laugh, not quite suspicion. You have their attention before anyone has spoken of tolls.</p>",
+            "<p>On the other side, the voices stop mid-sentence. A latch lifts with a courteous click. Warm lamplight spills across your shoes as the door eases inward on well-oiled hinges. Someone exhales—not quite a laugh, not quite suspicion. You have her attention before anyone has spoken of tolls.</p>",
           afterHandle:
             "<p>The handle turns under your palm. The door swings before you have quite decided whether to commit.</p>" +
-            "<p>The half-heard conversation on the other side stops mid-word. Footsteps reach the gap—then stillness, and a single face in the widening light: alert, curious, the way a keeper looks when the story took a shortcut and they mean to hear the next line.</p>",
+            "<p>The half-heard conversation on the other side stops mid-word. Footsteps reach the gap—then stillness, and a single face in the widening light: alert, curious, the way a keeper looks when the story took a shortcut and she means to hear the next line.</p>",
           guardian: {
             polite:
-              "<p>A figure in moth-eaten velvet fills the frame the way a bookmark holds a chapter—deliberate, not cruel. They have been listening since your knock.</p>" +
-              "<p>\"Civility first,\" they murmur, as if confirming a rumor they hoped was true. Then their mouth firms. \"Even so: one toll. Time, truth, or trouble—say how you mean to pay.\"</p>",
+              "<p>A woman in moth-eaten velvet fills the frame the way a bookmark holds a chapter—deliberate, not cruel. She has been listening since your knock.</p>" +
+              "<p>\"Civility first,\" she murmurs, as if confirming a rumor she hoped was true. Then her mouth firms. \"Even so: one toll. Time, truth, or trouble—say how you mean to pay.\"</p>",
             bold:
-              "<p>A figure in moth-eaten velvet meets you a step inside, already at ease with the quicker way you arrived—as if bold first steps are just another shelf in their catalogue.</p>" +
-              "<p>\"You took the short path in,\" they say, without heat. \"Fair enough. One toll—time, truth, or trouble. Name the coin you will spend.\"</p>",
+              "<p>A woman in moth-eaten velvet meets you a step inside, already at ease with the quicker way you arrived—as if bold first steps are just another shelf in her catalogue.</p>" +
+              "<p>\"You took the short path in,\" she says, without heat. \"Fair enough. One toll—time, truth, or trouble. Name the coin you will spend.\"</p>",
             default:
-              "<p>A figure in moth-eaten velvet blocks the way. \"One toll,\" they murmur. \"Time, truth, or trouble.\"</p>",
+              "<p>A woman in moth-eaten velvet blocks the way. \"One toll,\" she murmurs. \"Time, truth, or trouble.\"</p>",
           },
         },
         {
+          gender: "m",
           crossingLabel: "Crossing",
           crossingTitle: "The ink-steward",
           afterKnock:
@@ -1066,96 +1062,100 @@
             "<p>The muttering on the other side resolves into a single set of footsteps. The door opens on a sleeve speckled with old ink; the steward blinks as if waking from a sum. Lamplight pools at your feet, polite as a fresh margin.</p>",
           afterHandle:
             "<p>The latch gives with the soft crackle of dried gum. The door swings wide before etiquette catches up.</p>" +
-            "<p>An ink-steward stands with a blotter half-raised, hair tied back with twine. Their eyebrows lift—not angry, only astonished that anyone would arrive by draft instead of draftsmanship.</p>",
+            "<p>An ink-steward stands with a blotter half-raised, hair tied back with twine. His eyebrows lift—not angry, only astonished that anyone would arrive by draft instead of draftsmanship.</p>",
           guardian: {
             polite:
-              "<p>The ink-steward inclines their head, blotter lowered like a white flag. \"You announced yourself properly,\" they say. \"The ledger likes that.\"</p>" +
-              "<p>They tap the doorframe once. \"Even so: one toll. Time, truth, or trouble—say how you mean to pay.\"</p>",
+              "<p>The ink-steward inclines his head, blotter lowered like a white flag. \"You announced yourself properly,\" he says. \"The ledger likes that.\"</p>" +
+              "<p>He taps the doorframe once. \"Even so: one toll. Time, truth, or trouble—say how you mean to pay.\"</p>",
             bold:
-              "<p>The ink-steward meets you in the doorway, sleeves rolled, chalk dust on one cheek. \"You came in like a blot spreading,\" they say, more amused than scolded.</p>" +
+              "<p>The ink-steward meets you in the doorway, sleeves rolled, chalk dust on one cheek. \"You came in like a blot spreading,\" he says, more amused than scolded.</p>" +
               "<p>\"Fair enough. One toll—time, truth, or trouble. Name the coin you will spend.\"</p>",
             default:
-              "<p>An ink-steward blocks the sill, blotter in hand. \"One toll,\" they murmur. \"Time, truth, or trouble.\"</p>",
+              "<p>An ink-steward blocks the sill, blotter in hand. \"One toll,\" he murmurs. \"Time, truth, or trouble.\"</p>",
           },
         },
         {
+          gender: "m",
           crossingLabel: "Crossing",
           crossingTitle: "The night porter",
           afterKnock:
             "<p>You knock—firm, friendly, the way you would at a cousin’s back door.</p>" +
-            "<p>A bolt slides; cold air trades places with lamplight. A porter in a patched coat peers out, ring of keys silent at their belt. \"Hush,\" they breathe, as if the building itself were sleeping one room over.</p>",
+            "<p>A bolt slides; cold air trades places with lamplight. A porter in a patched coat peers out, ring of keys silent at his belt. \"Hush,\" he breathes, as if the building itself were sleeping one room over.</p>",
           afterHandle:
             "<p>The handle turns; hinges complain only once, then remember their manners.</p>" +
-            "<p>The porter is already there—how, you cannot say—one hand on a master key, the other raised palm-out in a gesture that means <em>wait, let the draft settle</em>. Snowmelt or rain—whichever the corridor carried—dots their shoulders like punctuation.</p>",
+            "<p>The porter is already there—how, you cannot say—one hand on a master key, the other raised palm-out in a gesture that means <em>wait, let the draft settle</em>. Snowmelt or rain—whichever the corridor carried—dots his shoulders like punctuation.</p>",
           guardian: {
             polite:
-              "<p>The porter’s shoulders ease. \"Good knock,\" they whisper. \"The old place hears courtesy.\"</p>" +
-              "<p>They gesture you inward with the key-ring hand. \"Even so: one toll. Time, truth, or trouble—say how you mean to pay.\"</p>",
+              "<p>The porter’s shoulders ease. \"Good knock,\" he whispers. \"The old place hears courtesy.\"</p>" +
+              "<p>He gestures you inward with the key-ring hand. \"Even so: one toll. Time, truth, or trouble—say how you mean to pay.\"</p>",
             bold:
-              "<p>The porter exhales through their teeth—not quite a whistle. \"Straight through, are we?\"</p>" +
-              "<p>They step aside anyway, boots squeaking once on stone. \"Fair enough. One toll—time, truth, or trouble. Name the coin you will spend.\"</p>",
+              "<p>The porter exhales through his teeth—not quite a whistle. \"Straight through, are we?\"</p>" +
+              "<p>He steps aside anyway, boots squeaking once on stone. \"Fair enough. One toll—time, truth, or trouble. Name the coin you will spend.\"</p>",
             default:
-              "<p>The night porter fills the doorway, keys at rest. \"One toll,\" they murmur. \"Time, truth, or trouble.\"</p>",
+              "<p>The night porter fills the doorway, keys at rest. \"One toll,\" he murmurs. \"Time, truth, or trouble.\"</p>",
           },
         },
         {
+          gender: "f",
           crossingLabel: "Crossing",
-          crossingTitle: "The bridge-sibling",
+          crossingTitle: "The bridge-keeper",
           afterKnock:
             "<p>You knock; the sound carries like a pebble dropped into a well.</p>" +
-            "<p>Two voices had been arguing in gentle overlap—now one laughs, low and kind, and the door opens on a person who might be the librarian’s younger cousin: same patience, different scarf. \"We heard you coming,\" they say, which cannot be true, yet feels true.</p>",
+            "<p>Two voices had been arguing in gentle overlap—now one laughs, low and kind, and the door opens on a woman who might be the librarian’s younger cousin: same patience, different scarf. \"We heard you coming,\" she says, which cannot be true, yet feels true.</p>",
           afterHandle:
             "<p>The door yields; warmth rolls out, smelling of cedar and borrowed coats.</p>" +
-            "<p>The person on the other side was mid-gesture, finger raised as if finishing someone else’s sentence. They freeze, grin flickering. \"Shortcut,\" they say lightly. \"My favorite genre.\"</p>",
+            "<p>The woman on the other side was mid-gesture, finger raised as if finishing someone else’s sentence. She freezes, grin flickering. \"Shortcut,\" she says lightly. \"My favorite genre.\"</p>",
           guardian: {
             polite:
-              "<p>They fold their hands at their belt. \"Polite knocks make polite thresholds,\" they say. \"We keep score of small mercies here.\"</p>" +
-              "<p>Their eyes brighten—not teasing, testing. \"Even so: one toll. Time, truth, or trouble—say how you mean to pay.\"</p>",
+              "<p>She folds her hands at her belt. \"Polite knocks make polite thresholds,\" she says. \"We keep score of small mercies here.\"</p>" +
+              "<p>Her eyes brighten—not teasing, testing. \"Even so: one toll. Time, truth, or trouble—say how you mean to pay.\"</p>",
             bold:
-              "<p>They lean on the jamb, unoffended. \"Door-first, story-second—I know the type.\"</p>" +
+              "<p>She leans on the jamb, unoffended. \"Door-first, story-second—I know the type.\"</p>" +
               "<p>\"Fair enough. One toll—time, truth, or trouble. Name the coin you will spend.\"</p>",
             default:
-              "<p>A keeper in a borrowed coat blocks the warm gap. \"One toll,\" they say gently. \"Time, truth, or trouble.\"</p>",
+              "<p>A keeper in a borrowed coat blocks the warm gap. \"One toll,\" she says gently. \"Time, truth, or trouble.\"</p>",
           },
         },
         {
+          gender: "f",
           crossingLabel: "Crossing",
-          crossingTitle: "The catalog ghost",
+          crossingTitle: "The catalog-keeper",
           afterKnock:
             "<p>You knock twice, then once more for luck—the rhythm feels right in this corridor.</p>" +
             "<p>Silence, then paper: a card slid into view at the gap, printed with a single word—<em>Enter</em>—before the door swings. Someone stands just beyond the light, face half in shadow, smile fully present.</p>",
           afterHandle:
             "<p>The latch was never latched; the door admits you like a drawer sliding home.</p>" +
-            "<p>A clerkish figure waits with a pencil behind their ear, catalog cards fanned like a hand of patience. \"Fast hooves,\" they murmur, tapping the pencil once against their thumb.</p>",
+            "<p>A clerkish woman waits with a pencil behind her ear, catalog cards fanned like a hand of patience. \"Fast hooves,\" she murmurs, tapping the pencil once against her thumb.</p>",
           guardian: {
             polite:
-              "<p>They tuck the pencil away as if honoring a truce. \"You knocked like someone who reads footnotes,\" they say.</p>" +
+              "<p>She tucks the pencil away as if honoring a truce. \"You knocked like someone who reads footnotes,\" she says.</p>" +
               "<p>\"Even so: one toll. Time, truth, or trouble—say how you mean to pay.\"</p>",
             bold:
-              "<p>They do not flinch at your speed. \"Bold entries go in red ink in some libraries,\" they say, almost fondly.</p>" +
+              "<p>She does not flinch at your speed. \"Bold entries go in red ink in some libraries,\" she says, almost fondly.</p>" +
               "<p>\"Here they only cost the usual. One toll—time, truth, or trouble. Name the coin you will spend.\"</p>",
             default:
-              "<p>A catalog-keeper studies you from the threshold. \"One toll,\" they intone softly. \"Time, truth, or trouble.\"</p>",
+              "<p>A catalog-keeper studies you from the threshold. \"One toll,\" she intones softly. \"Time, truth, or trouble.\"</p>",
           },
         },
         {
+          gender: "m",
           crossingLabel: "Crossing",
           crossingTitle: "The tape librarian",
           afterKnock:
             "<p>You knock; something on the other side rustles—tape, ribbon, the sound of patience being measured.</p>" +
-            "<p>The door opens on hands still holding a curl of cloth tape, as if the room were mid-repair. The librarian of this threshold bows slightly, not performing, only precise. \"Welcome to the seam,\" they say.</p>",
+            "<p>The door opens on hands still holding a curl of cloth tape, as if the room were mid-repair. The librarian of this threshold bows slightly, not performing, only precise. \"Welcome to the seam,\" he says.</p>",
           afterHandle:
             "<p>The door jumps in its frame; tape unfurls from a hook and catches the light like a small banner.</p>" +
-            "<p>The tape librarian steadies the strip with two fingers, unhurried. \"Arrived by impulse,\" they note, without judgment. \"The seam remembers every kind of entrance.\"</p>",
+            "<p>The tape librarian steadies the strip with two fingers, unhurried. \"Arrived by impulse,\" he notes, without judgment. \"The seam remembers every kind of entrance.\"</p>",
           guardian: {
             polite:
-              "<p>They wind the tape neatly around one palm. \"Courtesy first—always,\" they say. \"It keeps the spines from arguing.\"</p>" +
+              "<p>He winds the tape neatly around one palm. \"Courtesy first—always,\" he says. \"It keeps the spines from arguing.\"</p>" +
               "<p>\"Even so: one toll. Time, truth, or trouble—say how you mean to pay.\"</p>",
             bold:
-              "<p>They snip the tape with thumbnail and tooth—<em>tsk</em>—and smile. \"Handle-turners make lively shelves,\" they admit.</p>" +
+              "<p>He snips the tape with thumbnail and tooth—<em>tsk</em>—and smiles. \"Handle-turners make lively shelves,\" he admits.</p>" +
               "<p>\"Fair enough. One toll—time, truth, or trouble. Name the coin you will spend.\"</p>",
             default:
-              "<p>The tape librarian bars the way with a ribbon of red cotton. \"One toll,\" they murmur. \"Time, truth, or trouble.\"</p>",
+              "<p>The tape librarian bars the way with a ribbon of red cotton. \"One toll,\" he murmurs. \"Time, truth, or trouble.\"</p>",
           },
         },
       ];
@@ -1165,6 +1165,44 @@
         var idx = (playthroughIndex + stride) % CROSSING_SKINS.length;
         if (idx < 0) idx += CROSSING_SKINS.length;
         return CROSSING_SKINS[idx];
+      }
+
+      function librarianGender() {
+        var g = currentAreaPack().gender;
+        return g === "m" ? "m" : "f";
+      }
+
+      function guardianGender() {
+        var g = currentCrossingSkin().gender;
+        return g === "m" ? "m" : "f";
+      }
+
+      /** he/she set for quest people — never they/them. */
+      function questPronouns(gender) {
+        if (gender === "m") {
+          return {
+            they: "he",
+            They: "He",
+            their: "his",
+            Their: "His",
+            them: "him",
+            Them: "Him",
+            themselves: "himself",
+            womanMan: "man",
+            WomanMan: "Man",
+          };
+        }
+        return {
+          they: "she",
+          They: "She",
+          their: "her",
+          Their: "Her",
+          them: "her",
+          Them: "Her",
+          themselves: "herself",
+          womanMan: "woman",
+          WomanMan: "Woman",
+        };
       }
 
       const scores = { cautious: 0, bold: 0, social: 0, lone: 0 };
@@ -1186,8 +1224,8 @@
         {
           prompt: "What can you break without touching it?",
           hints: [
-            "They squint at the slate. <q>Think less about what shatters under a hammer, and more about what a single voice can undo—without a hand laid on glass.</q>",
-            "They underline nothing, twice. <q>It isn’t an object you carry in your pocket. It’s what the room was holding a heartbeat before someone spoke.</q>",
+            "Chalk pauses on the slate. <q>Think less about what shatters under a hammer, and more about what a single voice can undo—without a hand laid on glass.</q>",
+            "The keeper underlines nothing, twice. <q>It isn’t an object you carry in your pocket. It’s what the room was holding a heartbeat before someone spoke.</q>",
           ],
           choices: [
             {
@@ -1211,7 +1249,7 @@
           prompt: "What has hands but cannot clap?",
           hints: [
             "Chalk ticks once. <q>Picture something patient that faces you in a circle, marking the hours without applause.</q>",
-            "They mouth the word <em>hands</em> as if tasting it. <q>Not flesh—something that points, ticks, and never once claps for itself.</q>",
+            "The keeper mouths the word <em>hands</em> as if tasting it. <q>Not flesh—something that points, ticks, and never once claps for itself.</q>",
           ],
           choices: [
             {
@@ -1234,8 +1272,8 @@
         {
           prompt: "What gets wetter as it dries?",
           hints: [
-            "They sketch a small loop in the air. <q>Not weather running backward—think of humble work in a bathroom or after a bath.</q>",
-            "Their voice softens. <q>It grows heavy <em>doing</em> its job—even as it finishes the job of leaving <em>you</em> dry.</q>",
+            "The keeper sketches a small loop in the air. <q>Not weather running backward—think of humble work in a bathroom or after a bath.</q>",
+            "The voice softens. <q>It grows heavy <em>doing</em> its job—even as it finishes the job of leaving <em>you</em> dry.</q>",
           ],
           choices: [
             {
@@ -1258,7 +1296,7 @@
         {
           prompt: "The more of me you take, the more you leave behind. What am I?",
           hints: [
-            "They tap the floorboards. <q>Whatever it is, you make more of it the farther you walk—without packing it in a bag.</q>",
+            "The keeper taps the floorboards. <q>Whatever it is, you make more of it the farther you walk—without packing it in a bag.</q>",
             "A small smile. <q>Children draw this trail behind themselves without thinking. So do honest adults, when no one’s watching.</q>",
           ],
           choices: [
@@ -1282,7 +1320,7 @@
         {
           prompt: "What goes up and never comes down?",
           hints: [
-            "They count on their fingers—upward only. <q>Everyone you meet carries this number quietly, whether they boast or hide it.</q>",
+            "The keeper counts on one hand—upward only. <q>Everyone you meet carries this number quietly, whether boasting or hiding it.</q>",
             "The chalk squeaks once. <q>Birthdays stack it. No staircase leads back down—not for mortals, anyway.</q>",
           ],
           choices: [
@@ -1306,8 +1344,8 @@
         {
           prompt: "I’m tall when I’m young and I’m short when I’m old. What am I?",
           hints: [
-            "They mime a shrinking line. <q>Something eats from one end while it stands bravely tall at the other—wax, wick, and courage.</q>",
-            "They glance toward an imaginary cake. <q>Birthdays know this guest well. So do power cuts, and quiet reading after dark.</q>",
+            "The keeper mimes a shrinking line. <q>Something eats from one end while it stands bravely tall at the other—wax, wick, and courage.</q>",
+            "A glance toward an imaginary cake. <q>Birthdays know this guest well. So do power cuts, and quiet reading after dark.</q>",
           ],
           choices: [
             {
@@ -1330,8 +1368,8 @@
         {
           prompt: "What has a neck but no head?",
           hints: [
-            "They tilt an invisible vessel. <q>Look where you pour—cupboard, table, picnic. Glass, cork, a narrow throat.</q>",
-            "They draw a ring in the dust. <q><em>Neck</em> is plain here—not a metaphor for a path through the woods.</q>",
+            "The keeper tilts an invisible vessel. <q>Look where you pour—cupboard, table, picnic. Glass, cork, a narrow throat.</q>",
+            "A ring is drawn in the dust. <q><em>Neck</em> is plain here—not a metaphor for a path through the woods.</q>",
           ],
           choices: [
             {
@@ -1354,8 +1392,8 @@
         {
           prompt: "What belongs to you, but other people use it more than you do?",
           hints: [
-            "They touch their own collar, thoughtful. <q>You still <em>own</em> it when others borrow it constantly—introductions, roll call, mail.</q>",
-            "Their eyes crinkle—not unkindly. <q>It’s the word that runs ahead of you into rooms you haven’t entered yet.</q>",
+            "The keeper touches a collar, thoughtful. <q>You still <em>own</em> it when others borrow it constantly—introductions, roll call, mail.</q>",
+            "Eyes crinkle—not unkindly. <q>It’s the word that runs ahead of you into rooms you haven’t entered yet.</q>",
           ],
           choices: [
             {
@@ -1425,19 +1463,19 @@
         start: {
           label: "Prologue",
           title: "The lantern room",
-          html: "<p>The librarian slides a brass lamp toward you. Outside, rain writes thin lines on the glass.</p><p>\"One short quest,\" they say. \"At the end we’ll know what kind of story you actually want to live in next.\"</p>",
+          html: "<p>The librarian slides a brass lamp toward you. Outside, rain writes thin lines on the glass.</p><p>\"One short quest,\" she says. \"At the end we’ll know what kind of story you actually want to live in next.\"</p>",
           choices: [
-            { text: "Ask them to explain every rule before you move.", scores: { cautious: 2 }, next: "librarianRules" },
-            { text: "Step toward the inner door while they’re still talking.", scores: { bold: 2 }, next: "genreChoice" },
+            { text: "Ask the librarian to explain every rule before you move.", scores: { cautious: 2 }, next: "librarianRules" },
+            { text: "Step toward the inner door while the librarian is still talking.", scores: { bold: 2 }, next: "genreChoice" },
           ],
         },
         librarianRules: {
           label: "Prologue",
           title: "The lantern room",
-          html: "<p>The librarian settles back, pleased you asked.</p><p>\"Short version: you’ll cross a threshold, pay a kind of toll, then stand before the shelf that remembers how you moved. Each choice nudges four quiet scores—caution, nerve, company, solitude—so the ending can suggest what sort of book might feel true next. Nothing here can trap you; it only listens.\"</p><p>They tilt the lamp toward the inner door. \"When you’re ready, the corridor is the first real step.\"</p>",
+          html: "<p>The librarian settles back, pleased you asked.</p><p>\"Short version: you’ll cross a threshold, pay a kind of toll, then stand before the shelf that remembers how you moved. Each choice nudges four quiet scores—caution, nerve, company, solitude—so the ending can suggest what sort of book might feel true next. Nothing here can trap you; it only listens.\"</p><p>She tilts the lamp toward the inner door. \"When you’re ready, the corridor is the first real step.\"</p>",
           choices: [
-            { text: "Thank them—you’re ready to name the kind of shelf you want.", scores: { social: 1, cautious: 1 }, next: "genreChoice" },
-            { text: "Give a small nod and let them lead you to the shelf names.", scores: { lone: 1, cautious: 1 }, next: "genreChoice" },
+            { text: "Thank the librarian—you’re ready to name the kind of shelf you want.", scores: { social: 1, cautious: 1 }, next: "genreChoice" },
+            { text: "Give a small nod and let the librarian lead you to the shelf names.", scores: { lone: 1, cautious: 1 }, next: "genreChoice" },
           ],
         },
         genreChoice: {
@@ -1460,7 +1498,7 @@
           title: "An answer to the knock",
           html:
             "<p>You knock—two measured taps, patient and clear.</p>" +
-            "<p>On the other side, the voices stop mid-sentence. A latch lifts with a courteous click. Warm lamplight spills across your shoes as the door eases inward on well-oiled hinges. Someone exhales—not quite a laugh, not quite suspicion. You have their attention before anyone has spoken of tolls.</p>",
+            "<p>On the other side, the voices stop mid-sentence. A latch lifts with a courteous click. Warm lamplight spills across your shoes as the door eases inward on well-oiled hinges. Someone exhales—not quite a laugh, not quite suspicion. You have her attention before anyone has spoken of tolls.</p>",
           choices: [
             { text: "Give your name clearly, as you meant to when you knocked.", scores: { social: 1, cautious: 1 }, next: "guardian" },
             { text: "Let courtesy lead: wait quietly on the threshold until you are invited in.", scores: { cautious: 2, social: 1 }, next: "guardian" },
@@ -1471,9 +1509,9 @@
           title: "The door gives",
           html:
             "<p>The handle turns under your palm. The door swings before you have quite decided whether to commit.</p>" +
-            "<p>The half-heard conversation on the other side stops mid-word. Footsteps reach the gap—then stillness, and a single face in the widening light: alert, curious, the way a keeper looks when the story took a shortcut and they mean to hear the next line.</p>",
+            "<p>The half-heard conversation on the other side stops mid-word. Footsteps reach the gap—then stillness, and a single face in the widening light: alert, curious, the way a keeper looks when the story took a shortcut and she means to hear the next line.</p>",
           choices: [
-            { text: "Give them space on the threshold: \"I can wait here if you’d rather set the pace.\"", scores: { cautious: 1, social: 1 }, next: "guardian" },
+            { text: "Give the keeper space on the threshold: \"I can wait here if you’d rather set the pace.\"", scores: { cautious: 1, social: 1 }, next: "guardian" },
             { text: "Commit: step through as if you had been expected all along.", scores: { bold: 1, lone: 1 }, next: "guardian" },
           ],
         },
@@ -1489,7 +1527,7 @@
               tollKind: "story",
             },
             {
-              text: "Agree to solve a riddle they haven’t finished writing yet.",
+              text: "Agree to solve a riddle the keeper hasn’t finished writing yet.",
               scores: { bold: 2, lone: 1 },
               next: "riddleToll",
               tollKind: "riddle",
@@ -1517,7 +1555,7 @@
           title: "What are you here to learn?",
           html:
             "<p>The librarian walks you past the rattling door to a sunlit alcove—globes, field journals, a bowl of wooden spoons, and a stack of sketchbooks tied with twine.</p>" +
-            "<p><q>True nonfiction doesn’t need the corridor bargain tonight,</q> they say. <q>Tell me the <em>field</em> you’re curious about. The shelves will answer in facts, recipes, or lines—not spells.</q></p>" +
+            "<p><q>True nonfiction doesn’t need the corridor bargain tonight,</q> the librarian says. <q>Tell me the <em>field</em> you’re curious about. The shelves will answer in facts, recipes, or lines—not spells.</q></p>" +
             "<p class=\"muted\">Pick the path that fits what you want to explore.</p>",
           choices: [
             {
@@ -1543,10 +1581,10 @@
           html:
             "<p>You follow a chalk line out of the library and into open air—real sky, real wind, no magic, only attention.</p>" +
             "<p>Pine needles soften your steps. A creek writes on stone. The librarian walks beside you, naming what you notice: watershed, shelter, the way a hillside holds rain.</p>" +
-            "<p><q>Nonfiction about nature rewards patience,</q> they murmur. <q>You looked with your whole body, not a wand.</q></p>",
+            "<p><q>Nonfiction about nature rewards patience,</q> the librarian murmurs. <q>You looked with your whole body, not a wand.</q></p>",
           choices: [
             {
-              text: "Thank them—you’re ready to see which fact-book fits this walk.",
+              text: "Thank the librarian—you’re ready to see which fact-book fits this walk.",
               scores: { cautious: 1, social: 1 },
               next: "nonfictionShelf",
               nonfictionTrack: "nature",
@@ -1558,7 +1596,7 @@
           title: "The ingredient market",
           html:
             "<p>Stone counters, baskets of herbs, and brass scales—no enchantment, only good smells and honest hunger for learning.</p>" +
-            "<p>The librarian invites you to linger where the produce is brightest. <q>Choose what your hands reach for first,</q> they say. <q>Halalit will listen to your appetite for <em>kinds</em> of cooking—not a grade in school.</q></p>",
+            "<p>The librarian invites you to linger where the produce is brightest. <q>Choose what your hands reach for first,</q> the librarian says. <q>Halalit will listen to your appetite for <em>kinds</em> of cooking—not a grade in school.</q></p>",
           choices: [
             {
               text: "Bright herbs, olive oil, chickpeas, lemon—za’atar and hummus kinds of flavors.",
@@ -1636,6 +1674,7 @@
       }
 
       function riddleTollHtml() {
+        var P = questPronouns(guardianGender());
         var riddleText = currentRiddleRound().prompt;
         var riddle =
           "<p class=\"muted\" style=\"font-style:italic;margin-top:0.25rem;\">" +
@@ -1648,28 +1687,46 @@
         }
         if (hints.length && riddleHintLevel >= hints.length) {
           hintBlock +=
-            "<p>They set the chalk down. <q>That’s every shadow I can cast without naming the thing. Pick the line that fits you best—the shelves forgive an honest miss.</q></p>";
+            "<p>" +
+            P.They +
+            " set the chalk down. <q>That’s every shadow I can cast without naming the thing. Pick the line that fits you best—the shelves forgive an honest miss.</q></p>";
         }
         if (doorManner === "polite") {
           return (
-            "<p>Their eyes lift from your shoes to your face, plainly curious. \"A riddle half-drafted is still a binding sort of game,\" they murmur. \"Very well—listen while I find the ending.\"</p>" +
-            "<p>Chalk whispers on slate. They pause mid-line, one phrase left blank. \"I'm missing the twist, but the heart of it's clear enough. Answer this much, and we'll see whether the room accepts it.\"</p>" +
+            "<p>" +
+            P.Their +
+            " eyes lift from your shoes to your face, plainly curious. \"A riddle half-drafted is still a binding sort of game,\" " +
+            P.they +
+            " murmur. \"Very well—listen while I find the ending.\"</p>" +
+            "<p>Chalk whispers on slate. " +
+            P.They +
+            " pause mid-line, one phrase left blank. \"I'm missing the twist, but the heart of it's clear enough. Answer this much, and we'll see whether the room accepts it.\"</p>" +
             riddle +
-            "<p>They wait, chalk hovering, as if your first honest try might finish the line for them.</p>" +
+            "<p>" +
+            P.They +
+            " wait, chalk hovering, as if your first honest try might finish the line.</p>" +
             hintBlock
           );
         }
         if (doorManner === "bold") {
           return (
-            "<p>They tilt their head, weighing your nerve. \"You'll answer what isn't finished yet? Then you carry the risk if the last line misbehaves.\" Chalk scrapes twice, then stalls.</p>" +
+            "<p>" +
+            P.They +
+            " tilt " +
+            P.their +
+            " head, weighing your nerve. \"You'll answer what isn't finished yet? Then you carry the risk if the last line misbehaves.\" Chalk scrapes twice, then stalls.</p>" +
             "<p>\"Here is what I have—rough chalk, no polished ending yet.\"</p>" +
             riddle +
-            "<p>They hold your gaze. \"Give me an answer you mean—not a shrug. The shelves are listening.\"</p>" +
+            "<p>" +
+            P.They +
+            " hold your gaze. \"Give me an answer you mean—not a shrug. The shelves are listening.\"</p>" +
             hintBlock
           );
         }
         return (
-          "<p>The figure taps chalk against their palm. \"Half a riddle, then—fair is what we have.\"</p>" +
+          "<p>The keeper taps chalk against " +
+          P.their +
+          " palm. \"Half a riddle, then—fair is what we have.\"</p>" +
           riddle +
           "<p>\"Speak your try aloud; unfinished things still like a witness.\"</p>" +
           hintBlock
@@ -1709,11 +1766,16 @@
       };
 
       function genreChoiceHtml() {
+        var P = questPronouns(librarianGender());
         return (
           "<p>The librarian leans both palms on the desk. <q>I keep six gates for tonight’s quest—listen once, then answer with your voice.</q></p>" +
           "<p><q>Will you read in <em>fantasy</em>? In <em>science fiction</em>? A <em>mystery</em>? <em>Realistic fiction</em> that stays grounded in our own world? True <em>nonfiction</em>? Or a <em>dystopian</em> shelf where societies bend and brave children ask hard questions?</q></p>" +
-          "<p>They slide open a shallow drawer; six catalog cards lie in a row like quiet witnesses—<em>fantasy</em>, <em>science fiction</em>, <em>mystery</em>, <em>realistic fiction</em>, <em>nonfiction</em>, <em>dystopian</em>.</p>" +
-          "<p><q>Before the corridor,</q> they murmur, <q>name the one country you mean to honor. Fantasy, science fiction, mystery, realistic fiction, and dystopian paths still cross the threshold and pay the old toll—but the title I give you at the close will come only from the shelf you claim now.</q></p>" +
+          "<p>" +
+          P.They +
+          " slide open a shallow drawer; six catalog cards lie in a row like quiet witnesses—<em>fantasy</em>, <em>science fiction</em>, <em>mystery</em>, <em>realistic fiction</em>, <em>nonfiction</em>, <em>dystopian</em>.</p>" +
+          "<p><q>Before the corridor,</q> " +
+          P.they +
+          " murmur, <q>name the one country you mean to honor. Fantasy, science fiction, mystery, realistic fiction, and dystopian paths still cross the threshold and pay the old toll—but the title I give you at the close will come only from the shelf you claim now.</q></p>" +
           "<p><q><em>Nonfiction</em> is different tonight: you’ll choose a real-world field—land, kitchen, or sketchbook—and the fact shelves will answer without a riddle at the door.</q></p>" +
           "<p class=\"muted\">Tap the line that matches what you told me.</p>"
         );
@@ -2996,7 +3058,8 @@
       }
 
       function withSceneVisual(sceneKey, innerMarkup) {
-        return sceneImageFigureHtml(sceneKey) + innerMarkup;
+        /* Scene art paused — book covers only for now. */
+        return innerMarkup;
       }
 
       function applyScores(delta) {
@@ -3886,7 +3949,7 @@
         var choiceList =
           nodeId === "riddleToll" ? riddleChoicesForRender() : nodeId === "genreChoice" ? GENRE_CHOICES : node.choices;
 
-        let html = sceneImageFigureHtml(nodeId) + bodyHtml + "<div class=\"choices\">";
+        let html = bodyHtml + "<div class=\"choices\">";
         choiceList.forEach(function (ch, i) {
           html += "<button type=\"button\" class=\"choice\" data-i=\"" + i + "\">" + ch.text + "</button>";
         });
