@@ -122,5 +122,37 @@ class AliasTests(unittest.TestCase):
         )
 
 
+    def test_known_by_the_name_slash_alias(self):
+        entries = [
+            {
+                "id": "n1",
+                "title": "Names",
+                "kind": "character",
+                "tags": ["Ashford Saga", "Character M"],
+                "body": (
+                    "Character M is known by the name Chroniker/the Chroniker by "
+                    "Character D and those Character D trusts enough to share what "
+                    "he knows about the White Rabbit"
+                ),
+            }
+        ]
+        facts = collect_alias_facts(entries, {"ashford saga"})
+        self.assertTrue(
+            any(
+                f.kind == "known_to"
+                and f.alias
+                and f.alias.lower() == "chroniker"
+                and f.other
+                and f.other.lower() == "character d"
+                for f in facts
+            ),
+            msg=facts,
+        )
+        lines = alias_reference_lines_for("Character M", entries, {"ashford saga"})
+        joined = " ".join(lines).lower()
+        self.assertIn("chroniker", joined)
+        self.assertIn("character d", joined)
+
+
 if __name__ == "__main__":
     unittest.main()

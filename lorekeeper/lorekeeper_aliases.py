@@ -104,6 +104,18 @@ _KNOWN_BY = re.compile(
     rf"(?:as|by(?:\s+the\s+name(?:\s+of)?)?)\s+{ALIAS}",
     re.I,
 )
+# "X is known by the name Chroniker by the Cheshire Cat…"
+_KNOWN_BY_THE_NAME = re.compile(
+    rf"{NAME}\s+is\s+known\s+by\s+the\s+name(?:\s+of)?\s+"
+    rf"(?:the\s+)?(.+?)"
+    rf"\s+by\s+(?:the\s+)?{NAME}",
+    re.I,
+)
+_KNOWN_BY_THE_NAME_PLAIN = re.compile(
+    rf"{NAME}\s+is\s+known\s+by\s+the\s+name(?:\s+of)?\s+"
+    rf"(?:the\s+)?(.+?)(?:\.|$)",
+    re.I,
+)
 _KNOWS_AS = re.compile(
     rf"{NAME}\s+knows\s+{NAME}\s+(?:as|by(?:\s+the\s+name(?:\s+of)?)?)\s+{ALIAS}",
     re.I,
@@ -115,6 +127,24 @@ _SHARED_NAME = re.compile(
     rf"with\s+people\s+\1\s+trusts",
     re.I,
 )
+
+
+def _clean_alias_phrase(raw: str) -> str:
+    """Normalize 'Chroniker/the Chroniker' style alias phrases."""
+    text = re.sub(r"\s+", " ", (raw or "").strip().rstrip(".,;:"))
+    if not text:
+        return ""
+    # Prefer the first slash alternative when both name the same role.
+    if "/" in text:
+        left, right = [p.strip() for p in text.split("/", 1)]
+        right = re.sub(r"^(?:the\s+)", "", right, flags=re.I).strip()
+        left_core = re.sub(r"^(?:the\s+)", "", left, flags=re.I).strip()
+        if left_core and right and left_core.lower() == right.lower():
+            text = left_core
+        elif left_core:
+            text = left_core
+    text = re.sub(r"^(?:the\s+)", "", text, flags=re.I).strip()
+    return _clean_name(text) or text
 
 
 def _parse_sentence(sentence: str) -> list[AliasFact]:
@@ -155,6 +185,28 @@ def _parse_sentence(sentence: str) -> list[AliasFact]:
         if subject and other and alias and not _names_match(subject, other):
             facts.append(AliasFact("known_to", subject, other=other, alias=alias))
         return facts
+
+    m = _KNOWN_BY_THE_NAME.search(s)
+    if m:
+        subject = _clean_name(m.group(1))
+        alias = _clean_alias_phrase(m.group(2) or "")
+        other = _clean_name(m.group(3) or "")
+        if subject and alias and other and not _names_match(subject, other):
+            facts.append(AliasFact("known_to", subject, other=other, alias=alias))
+            return facts
+        if subject and alias and not _names_match(subject, alias):
+            facts.append(AliasFact("same_person", subject, alias=alias))
+            return facts
+
+    m = _KNOWN_BY_THE_NAME_PLAIN.search(s)
+    if m and " known by the name" in f" {s.lower()}":
+        # Avoid stealing "known by NAME as ALIAS" which _KNOWN_BY handles.
+        if not re.search(rf"\bknown\s+by\s+{NAME}\s+(?:as|by)\b", s, re.I):
+            subject = _clean_name(m.group(1))
+            alias = _clean_alias_phrase(m.group(2) or "")
+            if subject and alias and not _names_match(subject, alias):
+                facts.append(AliasFact("same_person", subject, alias=alias))
+                return facts
 
     m = _KNOWS_AS.search(s)
     if m:

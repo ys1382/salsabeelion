@@ -351,7 +351,8 @@ def _kinship_shape_sentence(sentence: str, label: str) -> bool:
         rf"^{lab}\s+is\s+(?:married|engaged)\s+to\s+.+$",
         rf"^{lab}\s+is\s+(?:the\s+)?(?:subject|quarry)\s+of\s+.+$",
         rf"^{lab}\s+is\s+(?:the\s+)?(?:son|daughter|child)\s+of\s+.+$",
-        rf"^{lab}\s+is\s+(?:(?:also|better)\s+)?known\s+(?:as|to)\b.+$",
+        rf"^{lab}\s+is\s+(?:(?:also|better)\s+)?known\s+(?:as|to|by)\b.+$",
+        rf"^(?:He|She)\s+is\s+(?:(?:also|better)\s+)?known\s+(?:as|to|by)\b.+$",
         rf"^(?:He|She)\s+is\s+(?:the\s+)?(?:son|daughter|child)\s+of\s+.+$",
         rf"^(?:He|She)\s+is\s+(?:(?:younger|older|twin)\s+)?(?:brother|sister)\s+to\s+.+$",
         rf"^(?:He|She)\s+is\s+the\s+(?:son|daughter|child)\s+of\b.+$",
@@ -1248,7 +1249,7 @@ def weave_who_is_gold_tone(
                 )
             continue
         if re.search(
-            r"\b(known as|known to|also known|fairytale world|fairy[- ]tale world)\b",
+            r"\b(known as|known to|known by|also known|fairytale world|fairy[- ]tale world)\b",
             c,
             re.I,
         ) and not re.search(r"\b(subject of|quarry)\b", c, re.I):
