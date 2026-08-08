@@ -537,6 +537,20 @@ class CharacterComposeTests(unittest.TestCase):
                 kind="character",
             ),
             _entry(
+                "d1",
+                "Ashford draft",
+                (
+                    "He’d been rather worried for his eldest brother, considering that "
+                    "Obsidian had gotten as wet as Character M, but something in the vigor "
+                    "with which Obsidian had forcibly groomed Character M ironically soothed "
+                    "him. “You’re darn right that you needed to apologize, but don’t act "
+                    "like your apologies aren’t enough.” Stygian looks at the white rabbit. "
+                    "The face of whom is still buried in the shirt of the elder Moonshadow."
+                ),
+                tags=["Ashford Saga"],
+                kind="document",
+            ),
+            _entry(
                 "n1",
                 "Names",
                 (
@@ -560,6 +574,18 @@ class CharacterComposeTests(unittest.TestCase):
         )
         self.assertNotIn("not older by enough", low)
         self.assertNotIn("brother to obsidian and.", low)
+        for junk in (
+            "brother to quietly",
+            "brother to forced",
+            "brother to you",
+            "little one",
+            "brother to enough",
+            "brother to moonshadow",
+            "brother to twins",
+        ):
+            self.assertNotIn(junk, low, msg=f"junk sibling {junk!r} in: {answer}")
+        # Chroniker alias from Names should survive scrub.
+        self.assertIn("chroniker", low)
         self.assertNotIn("roused", low)
         self.assertNotIn("next section", low)
         self.assertNotRegex(answer, r"(?i)character m is male\.")

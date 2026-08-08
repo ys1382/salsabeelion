@@ -19,6 +19,9 @@ _NAME_STOP = frozenset(
     beneath prone carrying soothed worried glancing eldest vigor ironically
     soothed fears somewhat although because during while until against toward
     towards within without among across around between
+    you enough forced forcibly quietly twins twin little one styg moonshadow
+    rabbits rabbit preyfolk predators predator wolf weasel father mother
+    brothers sisters sibling siblings family kit kits
     """.split()
 )
 
@@ -42,6 +45,7 @@ _VERB_STOP = frozenset(
     pushes reach reaches reached open opens opened close closes closed read reads write
     writes give gives gave bring brings brought send sends sent call calls called
     whisper whispers whispered shout shouts shouted reply replies replied mutter mutters
+    forced forcibly enough quietly
     """.split()
 )
 
@@ -178,9 +182,10 @@ def _name_has_character_signal(name: str, text: str) -> bool:
             rf"(?:named|called)\s+{re.escape(name)}\b|"
             rf"\b{re.escape(name)}\s+and\s+(?:his|her|their)\s+twin\b|"
             rf"\btwins?\s+{re.escape(name)}\s+and\b|"
-            rf"\b{re.escape(name)}\s+and\s+[A-Z][a-z]{{2,}}\b|"
-            rf"\b[A-Z][a-z]{{2,}}\s+and\s+{re.escape(name)}\b|"
-            rf"\band\s+{re.escape(name)}\b",
+            rf"\byounger brother to\b[^.]{{0,80}}\b{re.escape(name)}\b|"
+            rf"\bbrother to\b[^.]{{0,60}}\b{re.escape(name)}\b|"
+            rf"\bbrothers?\s+{re.escape(name)}\s+and\b|"
+            rf"\bbrothers?\s+[A-Z][a-z]{{2,}}\s+and\s+{re.escape(name)}\b",
             text,
             re.I,
         )
@@ -625,6 +630,13 @@ def _register_brother_name(
         return
     if raw.lower() == label_low:
         return
+    try:
+        from lorekeeper_character_compose import is_plausible_cast_person_name
+
+        if not is_plausible_cast_person_name(raw):
+            return
+    except Exception:
+        pass
     if not explicit and text and not _name_has_character_signal(raw, text):
         return
     key = raw.lower()
@@ -704,16 +716,8 @@ def _apply_twin_brother_inference(
             reg(m.group(1), True)
         for m in re.finditer(r"\btwin\s*,\s*([A-Za-z][a-z]{2,})\b", sentence, re.I):
             reg(m.group(1), True)
-        people = [
-            n
-            for n in _candidate_names(sentence)
-            if _is_person_name(n) and n.lower() != label_low
-        ]
-        known_here = [n for n in people if n.lower() in known_keys]
-        others = [n for n in people if n.lower() not in known_keys]
-        if known_here and others:
-            for other in others:
-                reg(other)
+        # Do not scoop every capitalized word near "twins" — that invents
+        # cast siblings from draft adjectives and group labels.
 
 
 def collect_brother_names(label: str, entries: list[dict[str, Any]]) -> list[str]:
@@ -750,14 +754,28 @@ def collect_brother_names(label: str, entries: list[dict[str, Any]]) -> list[str
             re.I,
         ):
             reg(m.group(1), True)
-        for rel_word, _, pattern in _VOCATIVE_PATTERNS:
-            if rel_word != "brother" or not pattern.search(sentence):
-                continue
-            if not _label_owns_family_beat(label, prior, sentence):
-                continue
-            other = _extract_addressee_name(sentence, label, rel_word, prior=prior)
-            if other:
-                reg(other, True)
+        # Explicit "younger brother to A and B" / "brother to A and B".
+        for m in re.finditer(
+            r"\b(?:(?:younger|older|twin)\s+)?brother\s+to\s+"
+            r"([A-Za-z][a-z]{2,}(?:\s+[A-Za-z][a-z]{2,})?)"
+            r"(?:\s+and\s+([A-Za-z][a-z]{2,}(?:\s+[A-Za-z][a-z]{2,})?))?",
+            sentence,
+            re.I,
+        ):
+            reg(m.group(1), True)
+            if m.group(2):
+                reg(m.group(2), True)
+        # Short vocative dialogue only ("Brother," Character A said) — not long
+        # draft paragraphs that merely mention brothers.
+        if len(sentence) <= 160:
+            for rel_word, _, pattern in _VOCATIVE_PATTERNS:
+                if rel_word != "brother" or not pattern.search(sentence):
+                    continue
+                if not _label_owns_family_beat(label, prior, sentence):
+                    continue
+                other = _extract_addressee_name(sentence, label, rel_word, prior=prior)
+                if other:
+                    reg(other, True)
 
     for m in _BROTHERS_AND.finditer(text):
         if _name_in_text(label, text) or family_chain_in_body(text):
@@ -1285,7 +1303,11 @@ def build_character_brief(
     brother_names = collect_brother_names(label, entries)
     ties = [t for t in ties if not _is_brother_tie(t)]
     seen = {t.lower()[:80] for t in ties}
+    from lorekeeper_character_compose import is_plausible_cast_person_name
+
     for name in brother_names:
+        if not is_plausible_cast_person_name(name):
+            continue
         add(f"Brother to {name}.")
     merged = _merged_bodies(entries)
     if len(brother_names) == 1:

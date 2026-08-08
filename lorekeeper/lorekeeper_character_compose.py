@@ -320,6 +320,18 @@ def is_plausible_cast_person_name(name: str) -> bool:
             "were",
             "been",
             "being",
+            "you",
+            "enough",
+            "forced",
+            "quietly",
+            "twins",
+            "twin",
+            "little",
+            "one",
+            "styg",
+            "moonshadow",
+            "rabbits",
+            "rabbit",
         }:
             return False
     # Prefer Capitalized / Character N — reject all-lowercase English scraps.
