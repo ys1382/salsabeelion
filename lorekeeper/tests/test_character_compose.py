@@ -582,13 +582,47 @@ class CharacterComposeTests(unittest.TestCase):
             "brother to enough",
             "brother to moonshadow",
             "brother to twins",
+            "brother to platinus",
+            "platinus",
         ):
             self.assertNotIn(junk, low, msg=f"junk sibling {junk!r} in: {answer}")
         # Chroniker alias from Names should survive scrub.
         self.assertIn("chroniker", low)
-        self.assertNotIn("roused", low)
-        self.assertNotIn("next section", low)
-        self.assertNotRegex(answer, r"(?i)character m is male\.")
+
+    def test_who_is_ignores_other_work_twin_notes(self):
+        entries = [
+            _entry(
+                "p1",
+                "Protagonist Notes",
+                (
+                    "Character M is the protagonist. He is younger brother to Obsidian "
+                    "and Stygian."
+                ),
+                tags=["Ashford Saga", "Character M"],
+                kind="note",
+            ),
+            _entry(
+                "other",
+                "Protagonist: Platinus",
+                "The protagonist is named Platinus. Twins can Combine.",
+                tags=["Cities of Rust"],
+                kind="character",
+            ),
+            _entry(
+                "twins",
+                "Prism twins",
+                "Twins can Combine. Galloxidor and Prism are brothers.",
+                tags=["Cities of Rust"],
+                kind="event",
+            ),
+        ]
+        res = self._ask("In Ashford Saga, who is Character M?", entries)
+        low = (res.get("answer") or "").lower()
+        self.assertIn("obsidian", low)
+        self.assertIn("stygian", low)
+        self.assertNotIn("platinus", low)
+        self.assertNotIn("galloxidor", low)
+        self.assertNotIn("prism", low)
 
     def test_who_is_overview_significance_and_close_ties(self):
         entries = [

@@ -726,62 +726,63 @@ def collect_brother_names(label: str, entries: list[dict[str, Any]]) -> list[str
     seen: set[str] = set()
     names: list[str] = []
 
-    def reg(raw: str | None, explicit: bool = False) -> None:
-        _register_brother_name(raw, label_low, seen, names, text=text, explicit=explicit)
+    def _harvest_from_text(text: str) -> None:
+        if not text or not _name_in_text(label, text):
+            return
 
-    text = _merged_bodies(entries)
-    if not text:
-        return names
+        def reg(raw: str | None, explicit: bool = False) -> None:
+            _register_brother_name(
+                raw, label_low, seen, names, text=text, explicit=explicit
+            )
 
-    sentences = _split_sentences(text)
-    for i, sentence in enumerate(sentences):
-        prior = sentences[i - 1] if i else ""
-        linked = (
-            _name_in_text(label, sentence)
-            or _name_in_text(label, prior)
-            or _label_owns_family_beat(label, prior, sentence)
-            or family_chain_in_body(sentence)
-            or bool(re.search(r"\btwins?\b", sentence, re.I))
-        )
-        if not linked:
-            continue
-        for m in re.finditer(r"\b([A-Za-z][a-z]{2,})\s*,\s*brother\b", sentence, re.I):
-            reg(m.group(1), False)
-        for m in re.finditer(
-            r"(?:another|other|second|younger|older)\s+brother"
-            r"(?:\s+(?:named|called|is)\s+|\s*[,—–-]\s*)([A-Za-z][a-z]{2,})",
-            sentence,
-            re.I,
-        ):
-            reg(m.group(1), True)
-        # Explicit "younger brother to A and B" / "brother to A and B".
-        for m in re.finditer(
-            r"\b(?:(?:younger|older|twin)\s+)?brother\s+to\s+"
-            r"([A-Za-z][a-z]{2,}(?:\s+[A-Za-z][a-z]{2,})?)"
-            r"(?:\s+and\s+([A-Za-z][a-z]{2,}(?:\s+[A-Za-z][a-z]{2,})?))?",
-            sentence,
-            re.I,
-        ):
-            reg(m.group(1), True)
-            if m.group(2):
+        sentences = _split_sentences(text)
+        for i, sentence in enumerate(sentences):
+            prior = sentences[i - 1] if i else ""
+            linked = (
+                _name_in_text(label, sentence)
+                or _name_in_text(label, prior)
+                or _label_owns_family_beat(label, prior, sentence)
+            )
+            if not linked:
+                continue
+            for m in re.finditer(r"\b([A-Za-z][a-z]{2,})\s*,\s*brother\b", sentence, re.I):
+                reg(m.group(1), False)
+            for m in re.finditer(
+                r"(?:another|other|second|younger|older)\s+brother"
+                r"(?:\s+(?:named|called|is)\s+|\s*[,—–-]\s*)([A-Za-z][a-z]{2,})",
+                sentence,
+                re.I,
+            ):
+                reg(m.group(1), True)
+            # Explicit "younger brother to A and B" / "brother to A and B".
+            for m in re.finditer(
+                r"\b(?:(?:younger|older|twin)\s+)?brother\s+to\s+"
+                r"([A-Za-z][a-z]{2,}(?:\s+[A-Za-z][a-z]{2,})?)"
+                r"(?:\s+and\s+([A-Za-z][a-z]{2,}(?:\s+[A-Za-z][a-z]{2,})?))?",
+                sentence,
+                re.I,
+            ):
+                reg(m.group(1), True)
+                if m.group(2):
+                    reg(m.group(2), True)
+            # Short vocative dialogue only ("Brother," Character A said).
+            if len(sentence) <= 160:
+                for rel_word, _, pattern in _VOCATIVE_PATTERNS:
+                    if rel_word != "brother" or not pattern.search(sentence):
+                        continue
+                    if not _label_owns_family_beat(label, prior, sentence):
+                        continue
+                    other = _extract_addressee_name(
+                        sentence, label, rel_word, prior=prior
+                    )
+                    if other:
+                        reg(other, True)
+
+        for m in _BROTHERS_AND.finditer(text):
+            window = text[max(0, m.start() - 120) : m.end() + 80]
+            if _name_in_text(label, window) or family_chain_in_body(window):
+                reg(m.group(1), True)
                 reg(m.group(2), True)
-        # Short vocative dialogue only ("Brother," Character A said) — not long
-        # draft paragraphs that merely mention brothers.
-        if len(sentence) <= 160:
-            for rel_word, _, pattern in _VOCATIVE_PATTERNS:
-                if rel_word != "brother" or not pattern.search(sentence):
-                    continue
-                if not _label_owns_family_beat(label, prior, sentence):
-                    continue
-                other = _extract_addressee_name(sentence, label, rel_word, prior=prior)
-                if other:
-                    reg(other, True)
-
-    for m in _BROTHERS_AND.finditer(text):
-        if _name_in_text(label, text) or family_chain_in_body(text):
-            reg(m.group(1), True)
-            reg(m.group(2), True)
-    if _name_in_text(label, text) or family_chain_in_body(text):
         for m in re.finditer(
             rf"\b{re.escape(label)}'?s?\s+brothers?\s+(?:are\s+)?([A-Za-z][a-z]{{2,}})\s+and\s+([A-Za-z][a-z]{{2,}})\b",
             text,
@@ -794,41 +795,69 @@ def collect_brother_names(label: str, entries: list[dict[str, Any]]) -> list[str
             text,
             re.I,
         ):
-            reg(m.group(1), True)
-            reg(m.group(2), True)
+            window = text[max(0, m.start() - 120) : m.end() + 80]
+            if _name_in_text(label, window):
+                reg(m.group(1), True)
+                reg(m.group(2), True)
         for m in re.finditer(
             r"\bbrother\s+([A-Za-z][a-z]{2,})\s+and\s+(?:brother\s+)?([A-Za-z][a-z]{2,})\b",
             text,
             re.I,
         ):
-            reg(m.group(1), True)
-            reg(m.group(2), True)
-    for m in re.finditer(
-        r"\b([A-Za-z][a-z]{2,})\s+had\s+another\s+brother"
-        r"(?:\s+(?:named|called)\s+|\s*[,—–-]\s*)([A-Za-z][a-z]{2,})\b",
-        text,
-        re.I,
-    ):
-        reg(m.group(2), True)
-    for m in re.finditer(
-        r"\b(?:the|his|her|their)\s+brother\s+had\s+another\s+brother"
-        r"(?:\s+(?:named|called)\s+|\s*[,—–-]\s*)([A-Za-z][a-z]{2,})\b",
-        text,
-        re.I,
-    ):
-        reg(m.group(1), True)
+            window = text[max(0, m.start() - 120) : m.end() + 80]
+            if _name_in_text(label, window):
+                reg(m.group(1), True)
+                reg(m.group(2), True)
+        for m in re.finditer(
+            r"\b([A-Za-z][a-z]{2,})\s+had\s+another\s+brother"
+            r"(?:\s+(?:named|called)\s+|\s*[,—–-]\s*)([A-Za-z][a-z]{2,})\b",
+            text,
+            re.I,
+        ):
+            window = text[max(0, m.start() - 120) : m.end() + 80]
+            if _name_in_text(label, window):
+                reg(m.group(2), True)
+        for m in re.finditer(
+            r"\b(?:the|his|her|their)\s+brother\s+had\s+another\s+brother"
+            r"(?:\s+(?:named|called)\s+|\s*[,—–-]\s*)([A-Za-z][a-z]{2,})\b",
+            text,
+            re.I,
+        ):
+            window = text[max(0, m.start() - 120) : m.end() + 80]
+            if _name_in_text(label, window):
+                reg(m.group(1), True)
+
+        _apply_twin_brother_inference(text, label, label_low, names, reg)
+
+    # Per-entry harvest — never merge the whole scope first, or another work's
+    # twin/brother notes bleed into this character (e.g. Platinus into Etherei).
+    for entry in entries:
+        if not isinstance(entry, dict):
+            continue
+        kind = str(entry.get("kind") or "")
+        title = str(entry.get("title") or "")
+        body = str(entry.get("body") or "")
+        blob = f"{title}\n{body}".strip()
+        if not blob:
+            continue
+        if kind == "document" and not _name_in_text(label, blob):
+            continue
+        _harvest_from_text(blob)
 
     from lorekeeper_relations import plain_relationship_lines_for
+
+    def reg_line(raw: str | None, explicit: bool = False) -> None:
+        _register_brother_name(
+            raw, label_low, seen, names, text="", explicit=explicit
+        )
 
     for line in plain_relationship_lines_for(label, entries):
         m = re.match(rf"^{re.escape(label)}\s+is\s+(.+?)'s\s+brother\.", line, re.I)
         if m:
-            reg(m.group(1), True)
+            reg_line(m.group(1), True)
         m = re.match(rf"^(.+?)\s+is\s+{re.escape(label)}'s\s+brother\.", line, re.I)
         if m:
-            reg(m.group(1), True)
-
-    _apply_twin_brother_inference(text, label, label_low, names, reg)
+            reg_line(m.group(1), True)
 
     return names
 
@@ -1309,7 +1338,15 @@ def build_character_brief(
         if not is_plausible_cast_person_name(name):
             continue
         add(f"Brother to {name}.")
-    merged = _merged_bodies(entries)
+    # Twin / another-brother hints only from notes that mention this character.
+    label_bodies = []
+    for entry in entries:
+        if not isinstance(entry, dict):
+            continue
+        blob = f"{entry.get('title') or ''}\n{entry.get('body') or ''}"
+        if _name_in_text(label, blob):
+            label_bodies.append(blob)
+    merged = "\n".join(label_bodies)
     if len(brother_names) == 1:
         if re.search(r"\btwins?\b", merged or "", re.I):
             add("Another brother (twin) mentioned in your notes — name not stated.")
