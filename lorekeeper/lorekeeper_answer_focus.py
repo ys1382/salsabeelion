@@ -14,6 +14,7 @@ from lorekeeper_character_compose import (
     is_who_is_cast_fact_sentence,
     smooth_who_is_prose,
     who_is_answer_has_bloat,
+    who_is_answer_has_upheaval_reason,
 )
 from lorekeeper_loose_ends import is_flagged_fix_question, is_planned_gap_question
 from lorekeeper_character_summary import character_targets, is_who_is_question
@@ -348,6 +349,72 @@ def _trim_to_complete_sentences(body: str, max_chars: int) -> str:
     return drop_trailing_unfinished_clause(trimmed)
 
 
+def _trim_who_is_preserving_stakes(body: str, max_chars: int, label: str) -> str:
+    """
+    Who-is cast cards: when over budget, drop lower-priority sentences first.
+    Keep role, kin, and upheaval type/reason ahead of long extras.
+    """
+    body = (body or "").strip()
+    if len(body) <= max_chars:
+        return drop_trailing_unfinished_clause(body)
+    parts = [
+        re.sub(r"\s+", " ", p.strip())
+        for p in re.split(r"(?<=[.!?])\s+", body)
+        if p.strip()
+    ]
+    if not parts:
+        return _trim_to_complete_sentences(body, max_chars)
+
+    def _priority(s: str) -> tuple[int, int]:
+        low = s.lower()
+        if re.match(rf"^{re.escape(label)}\s+(?:is|was)\b", s, re.I) and re.search(
+            r"\b(protagonist|antagonist|white rabbit|rabbit|wolf)\b", low
+        ):
+            return (0, len(s))
+        if is_overview_significance_clause(s, label) and who_is_answer_has_upheaval_reason(
+            s
+        ):
+            return (1, len(s))
+        if is_overview_significance_clause(s, label):
+            return (2, len(s))
+        if re.search(
+            r"\b(brother|sister|son of|daughter of|father|mother|parent)\b", low
+        ):
+            return (3, len(s))
+        if re.search(r"\b(known as|known by|known to|chroniker)\b", low):
+            return (4, len(s))
+        return (5, -len(s))
+
+    ranked = sorted(enumerate(parts), key=lambda it: (_priority(it[1]), it[0]))
+    keep_idx: set[int] = set()
+    total = 0
+    for idx, sentence in ranked:
+        add = len(sentence) + (1 if keep_idx else 0)
+        if keep_idx and total + add > max_chars:
+            # Always try to keep at least one upheaval-reason line if present.
+            if _priority(sentence)[0] <= 1 and not any(
+                _priority(parts[i])[0] <= 1 for i in keep_idx
+            ):
+                # Drop a lowest-priority kept sentence to make room.
+                victims = sorted(
+                    keep_idx, key=lambda i: (-_priority(parts[i])[0], -len(parts[i]))
+                )
+                if victims:
+                    drop_i = victims[0]
+                    total -= len(parts[drop_i]) + (1 if len(keep_idx) > 1 else 0)
+                    keep_idx.discard(drop_i)
+                    if total + add <= max_chars:
+                        keep_idx.add(idx)
+                        total += add
+            continue
+        keep_idx.add(idx)
+        total += add
+    if not keep_idx:
+        return _trim_to_complete_sentences(body, max_chars)
+    ordered = [parts[i] for i in sorted(keep_idx)]
+    return drop_trailing_unfinished_clause(" ".join(ordered))
+
+
 def apply_length_policy(
     question: str,
     answer: str,
@@ -368,7 +435,7 @@ def apply_length_policy(
     facet = detect_narrow_facet(question)
     limits = {
         "relationship": 280,
-        "who": 700,
+        "who": 1100,
         "topic": 1200,
         "fallback": 900,
         "knowledge": 900,
@@ -383,7 +450,16 @@ def apply_length_policy(
         if footer:
             return body + "\n\n" + footer if body else answer
         return body or answer
-    trimmed = _trim_to_complete_sentences(body, max_chars)
+    # Who-is: prefer upheaval reason / cast stakes over chopping the tail.
+    if question_kind == "who" or is_who_is_question(question):
+        labels = character_targets(question)
+        label = labels[0] if labels else ""
+        if label:
+            trimmed = _trim_who_is_preserving_stakes(body, max_chars, label)
+        else:
+            trimmed = _trim_to_complete_sentences(body, max_chars)
+    else:
+        trimmed = _trim_to_complete_sentences(body, max_chars)
     if not trimmed:
         trimmed = _trim_to_complete_sentences(body, max(max_chars, 200))
     if footer:
@@ -585,7 +661,7 @@ def scrub_who_is_plot_walkthrough(body: str, *, question: str = "") -> str:
                 len(s),
             )
         )
-        ordered = identityish[:4] + tiesish[:4] + stakesish[:1] + other[:1]
+        ordered = identityish[:4] + tiesish[:4] + stakesish[:2] + other[:1]
         kept = ordered or kept[:5]
     else:
         kept = kept[:4]

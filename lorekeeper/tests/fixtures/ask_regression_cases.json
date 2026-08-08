@@ -763,7 +763,8 @@
         "questionKind": "who",
         "materialState": "summarizable",
         "answerContains": ["protagonist", "rabbit", "brother"],
-        "answerNotContains": ["Character M is male.", "storywalks", "sets in motion"]
+        "answerContainsAny": ["rediscover", "sentient"],
+        "answerNotContains": ["Character M is male.", "aware that", "So right now"]
       }
     },
     {

@@ -998,18 +998,22 @@ def _who_is_profile_bit(bit: str, label: str) -> bool:
         _is_plot_arc_clause,
         is_other_character_scene_beat,
         is_story_significance_clause,
+        who_is_answer_has_bloat,
     )
 
+    if who_is_answer_has_bloat(bit):
+        return False
     if _is_plot_arc_clause(bit) or is_other_character_scene_beat(bit, label):
         return False
+    from lorekeeper_character_compose import is_overview_significance_clause
+
+    # Overview / upheaval-reason stakes first — may share "sets in motion" phrasing.
+    if is_overview_significance_clause(bit, label):
+        return True
     if is_story_significance_clause(bit, label) and any(
         _name_in_text(name, bit) for name in [label]
     ):
         return False
-    from lorekeeper_character_compose import is_overview_significance_clause
-
-    if is_overview_significance_clause(bit, label):
-        return True
     bucket = _classify_sentence(bit, [label])
     if bucket in ("role", "identity", "relationship"):
         return True
@@ -1451,6 +1455,42 @@ def _collect_hits(
     return hits
 
 
+def _explicit_upheaval_reason_lines_from_drafts(
+    label: str, scope: list[dict[str, Any]], names: list[str]
+) -> list[str]:
+    """Pull short upheaval-reason cast lines from draft (rediscovery / sentience)."""
+    from lorekeeper_character_compose import is_overview_significance_clause
+
+    lines: list[str] = []
+    seen: set[str] = set()
+    query_names = list(names) or [label]
+    for entry in scope:
+        if not _is_draft_entry(entry):
+            continue
+        body = normalize_corpus_text(str(entry.get("body") or ""))
+        for sentence in _split_sentences(body):
+            if _is_author_meta_sentence(sentence, query_names):
+                continue
+            if not any(_name_in_text(name, sentence) for name in query_names):
+                # Allow He/She upheaval-reason after subject is established in draft.
+                if not re.match(r"^(?:He|She)\b", sentence, re.I):
+                    continue
+            if not is_overview_significance_clause(sentence, label):
+                continue
+            from lorekeeper_character_compose import who_is_answer_has_upheaval_reason
+
+            if not who_is_answer_has_upheaval_reason(sentence):
+                continue
+            if _classify_sentence(sentence, query_names) in ("scene", "dialogue"):
+                continue
+            key = re.sub(r"\s+", " ", sentence.lower())[:100]
+            if key in seen:
+                continue
+            seen.add(key)
+            lines.append(sentence)
+    return lines[:3]
+
+
 def _explicit_profile_lines_from_drafts(
     label: str, scope: list[dict[str, Any]], names: list[str]
 ) -> list[str]:
@@ -1662,7 +1702,43 @@ def _synthesize_from_notes_first(
                             combined, use_draft_cast=True
                         )
                         if merged_ans and answer_good_enough(merged_ans):
-                            return merged_ans, merged_ids
+                            answer, ids = merged_ans, merged_ids
+                # Who-is: fold draft upheaval type/reason when notes only say upheaval happens.
+                if is_who_is_question(question):
+                    from lorekeeper_character_compose import (
+                        who_is_answer_has_upheaval_reason,
+                    )
+
+                    ans_now = answer or ""
+                    has_upheaval_status = bool(
+                        re.search(
+                            r"\b(upheaval|crosses? realit|sets? off .{0,80}?chain)\b",
+                            ans_now,
+                            re.I,
+                        )
+                    )
+                    if has_upheaval_status and not who_is_answer_has_upheaval_reason(
+                        ans_now
+                    ):
+                        reason_lines = _explicit_upheaval_reason_lines_from_drafts(
+                            label, scope, [label]
+                        )
+                        if reason_lines:
+                            combined = _merge_hits(
+                                note_hits,
+                                [("draft-upheaval", "Draft", reason_lines, True)],
+                            )
+                            merged_ans, merged_ids = synthesize(
+                                combined, use_draft_cast=True
+                            )
+                            if (
+                                merged_ans
+                                and answer_good_enough(merged_ans)
+                                and who_is_answer_has_upheaval_reason(merged_ans)
+                            ):
+                                return merged_ans, merged_ids
+                if answer and answer_good_enough(answer):
+                    return answer, ids
             return answer, ids
 
     if doc_hits or note_hits:

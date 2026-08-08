@@ -679,10 +679,16 @@ class CharacterComposeTests(unittest.TestCase):
         self.assertTrue(is_overview_significance_clause(upheaval, "Character M"))
         self.assertTrue(is_overview_significance_clause(he_led, "Character M"))
         self.assertTrue(is_who_is_cast_fact_sentence(upheaval, "Character M"))
+        reason_line = (
+            "Character M storywalks into Character D's world and sets in motion "
+            "the Predators' rediscovery that the Preyfolk are also sentient and "
+            "thus changes their world forever."
+        )
+        self.assertTrue(is_overview_significance_clause(reason_line, "Character M"))
+        self.assertTrue(is_who_is_cast_fact_sentence(reason_line, "Character M"))
         self.assertFalse(
             is_overview_significance_clause(
-                "Character M storywalks into Character D's world and sets in motion "
-                "the Predators' rediscovery.",
+                "Character M storywalks into Character D's world.",
                 "Character M",
             )
         )
@@ -751,6 +757,52 @@ class CharacterComposeTests(unittest.TestCase):
         self.assertNotIn("storywalks", low)
         self.assertNotIn("aware that", low)
         self.assertNotIn("sets in motion", low)
+
+    def test_who_is_folds_draft_upheaval_reason_into_notes(self):
+        """Notes say upheaval happens; draft names rediscovery/sentience reason — keep both."""
+        entries = [
+            _entry(
+                "p1",
+                "Protagonist Notes",
+                "Character M is the protagonist of the story, the White Rabbit from "
+                "Alice in Wonderland. He is younger brother to Obsidian and Stygian. "
+                "He somehow crosses realities into the home dimension of Character D "
+                "and sets off a chain of events that will result in relationship "
+                "upheaval for Predator and Preyfolk alike.",
+                tags=["Ashford Saga", "Character M"],
+                kind="note",
+            ),
+            _entry(
+                "n1",
+                "Names",
+                "Character M is known by the name Chroniker by Character D.",
+                tags=["Ashford Saga", "Character M"],
+                kind="note",
+            ),
+            _entry(
+                "d1",
+                "Ashford draft",
+                "Character M storywalks into Character D's world and sets in motion "
+                "the Predators' rediscovery that the Preyfolk are also sentient and "
+                "thus changes their world forever. So right now Character M is aware "
+                "that Character D does not yet want him dead.",
+                tags=["Ashford Saga"],
+                kind="document",
+            ),
+        ]
+        res = self._ask("In Ashford Saga, who is Character M?", entries)
+        answer = res.get("answer") or ""
+        low = answer.lower()
+        self.assertEqual(res.get("materialState"), "summarizable")
+        self.assertIn("protagonist", low)
+        self.assertIn("chroniker", low)
+        self.assertTrue("upheaval" in low or "crosses" in low, msg=answer)
+        self.assertTrue(
+            "rediscover" in low or "sentient" in low,
+            msg=answer,
+        )
+        self.assertNotIn("aware that", low)
+        self.assertNotIn("does not yet want him dead", low)
 
     def test_who_is_identity_alias_named_kin(self):
         entries = [

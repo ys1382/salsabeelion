@@ -101,7 +101,7 @@ _STORY_SIGNIFICANCE_RE = re.compile(
 
 # Character-overview stakes (plain overview — not scene plot, not storywalk dumps).
 # Includes accidental world-change / societal upheaval / crossing into another's world
-# (cast status), but NOT storywalk / "sets in motion" dump phrasing.
+# (cast status), but NOT bare storywalk dumps without an upheaval reason.
 _OVERVIEW_SIGNIFICANCE_RE = re.compile(
     r"\b("
     r"chosen one|the chosen|destined to|fated to|prophesied|"
@@ -117,6 +117,19 @@ _OVERVIEW_SIGNIFICANCE_RE = re.compile(
     r"(?:societal|social|political) upheaval|"
     r"upheaval for .{0,40}?(?:predator|preyfolk|prey folk)|"
     r"accidental(?:ly)? .{0,40}?(?:world[- ]?chang|upheaval|stumble)"
+    r")\b",
+    re.I,
+)
+
+# Type/reason of upheaval (Predator–Preyfolk rediscovery / sentience), not POV dumps.
+_UPHEAVAL_REASON_RE = re.compile(
+    r"\b("
+    r"rediscover(?:y|s|ed|ing)?|"
+    r"(?:predators?|preyfolk|prey folk).{0,80}?sentient|"
+    r"sentient.{0,60}?(?:predators?|preyfolk|prey folk)|"
+    r"preyfolk (?:are|were) (?:also )?sentient|"
+    r"upheaval (?:because|from|due to|over|about)|"
+    r"(?:because|due to|from) .{0,60}?upheaval"
     r")\b",
     re.I,
 )
@@ -233,10 +246,39 @@ def _is_plot_arc_clause(clause: str) -> bool:
     return False
 
 
-def is_overview_significance_clause(clause: str, label: str = "") -> bool:
-    """True for plain overview stakes (chosen one / upheaval / crossing worlds), not storywalk dumps."""
+def is_upheaval_reason_clause(clause: str, label: str = "") -> bool:
+    """True for short cast-status lines that name why upheaval happens (rediscovery / sentience)."""
     s = (clause or "").strip()
-    if not s or not _OVERVIEW_SIGNIFICANCE_RE.search(s):
+    if not s or not _UPHEAVAL_REASON_RE.search(s):
+        return False
+    if _WHO_IS_BLOAT_RE.search(s) or _PLOT_SEQUENCE_RE.search(s):
+        return False
+    if label and is_other_character_scene_beat(s, label):
+        return False
+    if label and not re.search(rf"\b{re.escape(label)}\b", s, re.I):
+        if not re.match(r"^(?:He|She)\b", s, re.I):
+            return False
+    if len(s) > 360:
+        return False
+    # Reject pure awareness / tracking dumps even if "sentient" appears.
+    if re.search(
+        r"\b(aware that|no reason to realize|tracking (?:them|him|her)|reflects? on)\b",
+        s,
+        re.I,
+    ):
+        return False
+    return True
+
+
+def is_overview_significance_clause(clause: str, label: str = "") -> bool:
+    """True for plain overview stakes (chosen one / upheaval / crossing worlds / upheaval reason)."""
+    s = (clause or "").strip()
+    if not s:
+        return False
+    # Upheaval type/reason may share "sets in motion" phrasing — keep as cast status.
+    if is_upheaval_reason_clause(s, label):
+        return True
+    if not _OVERVIEW_SIGNIFICANCE_RE.search(s):
         return False
     if is_story_significance_clause(s, label):
         return False
@@ -252,6 +294,11 @@ def is_overview_significance_clause(clause: str, label: str = "") -> bool:
     if len(s) > 320:
         return False
     return True
+
+
+def who_is_answer_has_upheaval_reason(answer: str) -> bool:
+    """True when the card already names upheaval type/reason (rediscovery / sentience)."""
+    return bool(_UPHEAVAL_REASON_RE.search(answer or ""))
 
 
 def is_story_significance_clause(clause: str, label: str = "") -> bool:
@@ -872,11 +919,11 @@ def _clause_adds_profile(clause: str, label: str) -> bool:
         return False
     if _is_plot_arc_clause(s):
         return False
-    # Who-is: allow plain overview stakes; still reject storywalk dumps.
-    if is_story_significance_clause(s, label):
-        return False
+    # Who-is: allow overview stakes (incl. upheaval reason); still reject bare storywalk dumps.
     if is_overview_significance_clause(s, label):
         return True
+    if is_story_significance_clause(s, label):
+        return False
     if _BIOGRAPHY_RE.search(s):
         # Allow pinned family facts (raised-by / parents) on a role-or-identity card.
         if label and (
@@ -1142,7 +1189,8 @@ def who_is_has_close_ties(answer: str) -> bool:
 
 def who_is_has_story_significance(answer: str) -> bool:
     """True when answer includes plain overview stakes beyond bare protagonist."""
-    return bool(_OVERVIEW_SIGNIFICANCE_RE.search(answer or ""))
+    a = answer or ""
+    return bool(_OVERVIEW_SIGNIFICANCE_RE.search(a) or _UPHEAVAL_REASON_RE.search(a))
 
 
 def who_is_has_family_slots(answer: str) -> bool:
@@ -1487,7 +1535,7 @@ def weave_who_is_gold_tone(
     else:
         sentences.append(role)
 
-    for sig in significance_lines[:1]:
+    for sig in significance_lines[:2]:
         if sig not in sentences:
             sentences.append(sig)
 
