@@ -695,6 +695,14 @@ def _classify_sentence(sentence: str, names: list[str] | None = None) -> str:
         return "scene"
     if names and _name_led_identity(sentence, names):
         return "identity"
+    # Overview stakes (world-crossing / upheaval / chosen-one) before role-word hits.
+    # Otherwise titles like "Lord Tenebris" mis-bucket as role and get dropped.
+    label = names[0] if names else ""
+    if label:
+        from lorekeeper_character_compose import is_overview_significance_clause
+
+        if is_overview_significance_clause(sentence, label):
+            return "identity"
     s_low = sentence.lower()
     if re.search(rf"\b(?:{_PROFILE_ROLE_WORDS})\b", s_low):
         return "role"
@@ -707,7 +715,8 @@ def _classify_sentence(sentence: str, names: list[str] | None = None) -> str:
         return "relationship"
     if re.search(
         r"\b(known as|known to|also known as|fairytale world|white rabbit|"
-        r"chosen one|destined|nemesis|best friend)\b",
+        r"chosen one|destined|nemesis|best friend|"
+        r"crosses? realit|relationship upheaval|sets? off .{0,80}?upheaval)\b",
         s_low,
     ):
         return "identity"
@@ -1126,6 +1135,11 @@ def _synthesize_character_answer(
                 continue
             bucket = _classify_sentence(bit, [label])
             if bucket == "role" and not cast_role_line_about_label(bit, label):
+                from lorekeeper_character_compose import is_overview_significance_clause
+
+                # Overview stakes mis-bucketed as role (e.g. "Lord …" title word) — keep.
+                if is_overview_significance_clause(bit, label):
+                    identity.append(bit)
                 continue
             if bucket == "role":
                 roles.append(bit)

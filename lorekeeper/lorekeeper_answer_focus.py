@@ -9,6 +9,7 @@ from lorekeeper_character_compose import (
     is_audit_question,
     is_coverage_question,
     is_other_character_scene_beat,
+    is_overview_significance_clause,
     is_plot_walkthrough_text,
     is_who_is_cast_fact_sentence,
     smooth_who_is_prose,
@@ -551,13 +552,16 @@ def scrub_who_is_plot_walkthrough(body: str, *, question: str = "") -> str:
                 if not who_is_answer_has_bloat(s) and len(s) < 280:
                     return s
         return text
-    # Prefer identity + ties; cap so dumps cannot return through volume.
+    # Prefer identity + ties + overview stakes; cap so dumps cannot return through volume.
     if label:
         identityish: list[str] = []
         tiesish: list[str] = []
+        stakesish: list[str] = []
         other: list[str] = []
         for s in kept:
-            if re.search(
+            if is_overview_significance_clause(s, label):
+                stakesish.append(s)
+            elif re.search(
                 r"\b(brother|sister|father|mother|parent|married|subject of|quarry|known)\b",
                 s,
                 re.I,
@@ -581,7 +585,7 @@ def scrub_who_is_plot_walkthrough(body: str, *, question: str = "") -> str:
                 len(s),
             )
         )
-        ordered = identityish[:4] + tiesish[:4] + other[:1]
+        ordered = identityish[:4] + tiesish[:4] + stakesish[:1] + other[:1]
         kept = ordered or kept[:5]
     else:
         kept = kept[:4]

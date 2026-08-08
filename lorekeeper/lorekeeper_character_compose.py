@@ -100,6 +100,8 @@ _STORY_SIGNIFICANCE_RE = re.compile(
 )
 
 # Character-overview stakes (plain overview — not scene plot, not storywalk dumps).
+# Includes accidental world-change / societal upheaval / crossing into another's world
+# (cast status), but NOT storywalk / "sets in motion" dump phrasing.
 _OVERVIEW_SIGNIFICANCE_RE = re.compile(
     r"\b("
     r"chosen one|the chosen|destined to|fated to|prophesied|"
@@ -107,7 +109,14 @@ _OVERVIEW_SIGNIFICANCE_RE = re.compile(
     r"to (?:defeat|save|destroy|stop) the\b|"
     r"nemesis|arch[- ]?enem(?:y|ies)|sworn enem(?:y|ies)|"
     r"best friend|closest friend|sworn friend|"
-    r"father to|mother to|mentor to|prot[eé]g[eé]"
+    r"father to|mother to|mentor to|prot[eé]g[eé]|"
+    r"crosses? (?:realit(?:y|ies)|into|over into|worlds?)|"
+    r"cross(?:es|ing)? .{0,40}?into .{0,60}?(?:world|dimension|reality)|"
+    r"sets? off .{0,100}?(?:upheaval|chain of events)|"
+    r"relationship upheaval|"
+    r"(?:societal|social|political) upheaval|"
+    r"upheaval for .{0,40}?(?:predator|preyfolk|prey folk)|"
+    r"accidental(?:ly)? .{0,40}?(?:world[- ]?chang|upheaval|stumble)"
     r")\b",
     re.I,
 )
@@ -225,7 +234,7 @@ def _is_plot_arc_clause(clause: str) -> bool:
 
 
 def is_overview_significance_clause(clause: str, label: str = "") -> bool:
-    """True for plain overview stakes (chosen one / nemesis / father to), not storywalk dumps."""
+    """True for plain overview stakes (chosen one / upheaval / crossing worlds), not storywalk dumps."""
     s = (clause or "").strip()
     if not s or not _OVERVIEW_SIGNIFICANCE_RE.search(s):
         return False
@@ -236,10 +245,11 @@ def is_overview_significance_clause(clause: str, label: str = "") -> bool:
     if label and is_other_character_scene_beat(s, label):
         return False
     if label and not re.search(rf"\b{re.escape(label)}\b", s, re.I):
-        # Allow "He is father to…" after subject was established.
-        if not re.match(r"^(?:He|She)\s+is\b", s, re.I):
+        # Allow pronoun-led overview after subject was established
+        # ("He is father to…", "He somehow crosses realities…").
+        if not re.match(r"^(?:He|She)\b", s, re.I):
             return False
-    if len(s) > 280:
+    if len(s) > 320:
         return False
     return True
 
@@ -997,7 +1007,11 @@ def compose_character_reference(
         _to_reference_clause(r, label)
         for r in roles
         if not _skip_planning_line(r, label)
-        if _ROLE_WORDS_RE.search(r) or re.search(rf"\b{re.escape(label)}\s+is\b", r, re.I)
+        if (
+            _ROLE_WORDS_RE.search(r)
+            or re.search(rf"\b{re.escape(label)}\s+is\b", r, re.I)
+            or is_overview_significance_clause(r, label)
+        )
     ]
     explicit_roles = [r for r in explicit_roles if r]
 

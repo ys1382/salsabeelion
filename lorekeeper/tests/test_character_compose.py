@@ -657,6 +657,101 @@ class CharacterComposeTests(unittest.TestCase):
         )
         self.assertNotIn("male protagonist", low)
 
+    def test_who_is_keeps_accidental_world_upheaval_status(self):
+        """Mirror Etherei Protagonist Notes shape: role + kin + accidental upheaval status."""
+        from lorekeeper_answer_focus import scrub_who_is_plot_walkthrough
+        from lorekeeper_character_compose import (
+            is_overview_significance_clause,
+            is_who_is_cast_fact_sentence,
+            weave_who_is_gold_tone,
+        )
+
+        upheaval = (
+            "Character M somehow crosses realities into the home dimension of Character D, "
+            "who, in this story, is named Lord Shadow, and sets off a chain of events that "
+            "will result in relationship upheaval for Predator and Preyfolk alike."
+        )
+        he_led = (
+            "He somehow crosses realities into the home dimension of Character D, who, in "
+            "this story, is named Lord Shadow, and sets off a chain of events that will "
+            "result in relationship upheaval for Predator and Preyfolk alike."
+        )
+        self.assertTrue(is_overview_significance_clause(upheaval, "Character M"))
+        self.assertTrue(is_overview_significance_clause(he_led, "Character M"))
+        self.assertTrue(is_who_is_cast_fact_sentence(upheaval, "Character M"))
+        self.assertFalse(
+            is_overview_significance_clause(
+                "Character M storywalks into Character D's world and sets in motion "
+                "the Predators' rediscovery.",
+                "Character M",
+            )
+        )
+        woven = weave_who_is_gold_tone(
+            "Character M",
+            "Ashford Saga",
+            [
+                "Character M is the protagonist of the story, the White Rabbit from "
+                "Alice in Wonderland.",
+                upheaval,
+            ],
+            [
+                "Character M is younger brother to Obsidian and Stygian, the Moonshadow "
+                "Rabbits, and the son of the buck Snow Thistle and the doe Ebony.",
+                "Character M is known by the name Chroniker by Character D.",
+            ],
+        )
+        woven_low = woven.lower()
+        self.assertIn("protagonist", woven_low)
+        self.assertIn("upheaval", woven_low)
+        self.assertIn("crosses", woven_low)
+        cleaned = scrub_who_is_plot_walkthrough(
+            woven, question="In Ashford Saga, who is Character M?"
+        )
+        clean_low = cleaned.lower()
+        self.assertIn("protagonist", clean_low)
+        self.assertIn("chroniker", clean_low)
+        self.assertIn("upheaval", clean_low)
+        self.assertIn("crosses", clean_low)
+        self.assertNotIn("storywalks", clean_low)
+        self.assertNotIn("aware that", clean_low)
+
+        entries = [
+            _entry(
+                "p1",
+                "Protagonist Notes",
+                "Character M is the protagonist of the story, the White Rabbit from "
+                "Alice in Wonderland. He is younger brother to Obsidian and Stygian, "
+                "the Moonshadow Rabbits, and the son of the buck Snow Thistle and the "
+                "doe Ebony. " + he_led,
+                tags=["Ashford Saga", "Character M"],
+                kind="note",
+            ),
+            _entry(
+                "n1",
+                "Names",
+                "Character M is known by the name Chroniker by Character D and those "
+                "Character D trusts.",
+                tags=["Ashford Saga", "Character M"],
+                kind="note",
+            ),
+        ]
+        res = self._ask("In Ashford Saga, who is Character M?", entries)
+        answer = res.get("answer") or ""
+        low = answer.lower()
+        self.assertEqual(res.get("materialState"), "summarizable")
+        self.assertIn("protagonist", low)
+        self.assertIn("white rabbit", low)
+        self.assertIn("obsidian", low)
+        self.assertIn("stygian", low)
+        self.assertIn("chroniker", low)
+        self.assertTrue(
+            "upheaval" in low or "crosses" in low,
+            msg=answer,
+        )
+        self.assertNotIn("storywalks", low)
+        self.assertNotIn("aware that", low)
+        self.assertNotIn("sets in motion", low)
+
     def test_who_is_identity_alias_named_kin(self):
         entries = [
             _entry(
