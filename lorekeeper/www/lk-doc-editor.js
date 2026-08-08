@@ -14,6 +14,8 @@
   var dirty = false;
   var loading = false;
   var syncingGaps = false;
+  /** User typed while a gap sync was running — run layout again after. */
+  var gapResyncNeeded = false;
   var saveMaxTimer = null;
   var resumeCaptureTimer = null;
   /** After Delete document — block park/flush from re-saving that one doc. */
@@ -91,6 +93,7 @@
     if (global.LoreKeeperSpell && global.LoreKeeperSpell.clearQuillSpellMarks) {
       global.LoreKeeperSpell.clearQuillSpellMarks(quill);
     }
+    var wordsBefore = editorContentWords();
     var root = quill.root.cloneNode(true);
     root.querySelectorAll(".lk-auto-page-gap").forEach(function (node) {
       node.remove();
@@ -102,6 +105,15 @@
     mergeContinuationsInDom(root);
     var nextHtml = root.innerHTML;
     if (isEmptyHtml(nextHtml) && !isEmptyHtml(doc.bodyHtml)) return;
+    var wordsAfter = String(nextHtml || "")
+      .replace(/<[^>]+>/g, " ")
+      .replace(/&nbsp;/gi, " ")
+      .replace(/&amp;/gi, "&")
+      .replace(/&lt;/gi, "<")
+      .replace(/&gt;/gi, ">")
+      .replace(/\s+/g, "");
+    // Refuse a save that would drop prose from a layout/merge glitch.
+    if (wordsBefore && wordsAfter.length < wordsBefore.length) return;
     doc.bodyHtml = nextHtml;
     doc.bodyFormat = "html";
   }
@@ -379,10 +391,14 @@
   }
 
   function onEditorChange() {
-    if (loading || syncingGaps || !doc || !quill) return;
+    if (loading || !doc || !quill) return;
     updateWordCount();
-    scheduleBlockPageGaps();
-    schedulePageChrome();
+    if (syncingGaps) {
+      gapResyncNeeded = true;
+    } else {
+      scheduleBlockPageGaps();
+      schedulePageChrome();
+    }
     queueSave();
     scheduleMobileRestoreSync();
   }
@@ -392,7 +408,8 @@
     if (quill.__lkChangeHandler) {
       quill.off("text-change", quill.__lkChangeHandler);
     }
-    quill.__lkChangeHandler = function () {
+    quill.__lkChangeHandler = function (_delta, _old, source) {
+      if (source === "silent") return;
       onEditorChange();
     };
     quill.on("text-change", quill.__lkChangeHandler);
@@ -700,6 +717,18 @@
     return node && node.classList && node.classList.contains("lk-auto-page-gap");
   }
 
+  /** Prose only — skips page-pad / page-break embeds so layout sync cannot “lose” words. */
+  function editorContentWords() {
+    if (!quill) return "";
+    var parts = [];
+    var ops = quill.getContents().ops || [];
+    for (var i = 0; i < ops.length; i++) {
+      var ins = ops[i].insert;
+      if (typeof ins === "string") parts.push(ins);
+    }
+    return parts.join("").replace(/\s+/g, "");
+  }
+
   function clearPagePushes() {
     var el = editorEl();
     if (!el) return;
@@ -803,7 +832,13 @@
         var nextBlot = global.Quill.find(next);
         if (nextBlot) {
           var joinIndex = quill.getIndex(nextBlot);
-          if (joinIndex > 0) quill.deleteText(joinIndex - 1, 1, "silent");
+          if (joinIndex > 0) {
+            var joinChar = quill.getText(joinIndex - 1, 1);
+            // Only remove the paragraph break — never a real letter.
+            if (joinChar === "\n") {
+              quill.deleteText(joinIndex - 1, 1, "silent");
+            }
+          }
         }
         next = node.nextElementSibling;
         while (next && isPagePad(next)) next = next.nextElementSibling;
@@ -961,84 +996,105 @@
     if (!el) return;
 
     syncingGaps = true;
+    var wordsBefore = editorContentWords();
+    var restoreDelta = quill.getContents();
+    var aborted = false;
+
     removePagePads();
     clearPagePushes();
     mergeAutoContinuations();
 
-    var metrics = pageMetrics();
-    var pageH = metrics.pageH;
-    var gap = metrics.gap;
-    var unit = pageH + gap;
-    var m = marginPx();
-    var changed = true;
-    var rounds = 0;
+    if (editorContentWords() !== wordsBefore) {
+      quill.setContents(restoreDelta, "silent");
+      aborted = true;
+    } else {
+      var metrics = pageMetrics();
+      var pageH = metrics.pageH;
+      var gap = metrics.gap;
+      var unit = pageH + gap;
+      var m = marginPx();
+      var changed = true;
+      var rounds = 0;
 
-    while (changed && rounds < 12) {
-      changed = false;
-      rounds += 1;
+      while (changed && rounds < 12) {
+        changed = false;
+        rounds += 1;
 
-      for (var i = 0; i < el.children.length; i++) {
-        var block = el.children[i];
-        if (isPagePad(block) || isManualPageBreak(block)) continue;
+        for (var i = 0; i < el.children.length; i++) {
+          var block = el.children[i];
+          if (isPagePad(block) || isManualPageBreak(block)) continue;
 
-        var blockTop = blockBorderTop(block, el);
-        var blockH = block.offsetHeight || 0;
-        if (!blockH) continue;
+          var blockTop = blockBorderTop(block, el);
+          var blockH = block.offsetHeight || 0;
+          if (!blockH) continue;
 
-        var blockPage = pageMetricsForY(blockTop, m, unit, pageH);
+          var blockPage = pageMetricsForY(blockTop, m, unit, pageH);
 
-        if (blockNeedsPagePush(blockTop, blockPage)) {
-          insertPagePadBefore(block, padToNextContentStart(blockTop, m, unit, pageH));
-          changed = true;
-          break;
-        }
+          if (blockNeedsPagePush(blockTop, blockPage)) {
+            insertPagePadBefore(block, padToNextContentStart(blockTop, m, unit, pageH));
+            changed = true;
+            break;
+          }
 
-        if (!isSplittableBlock(block)) {
-          if (blockTop + blockH > blockPage.contentEnd + 1) {
+          if (!isSplittableBlock(block)) {
+            if (blockTop + blockH > blockPage.contentEnd + 1) {
+              pushNodeToNextContentStart(block, el, m, unit, pageH);
+              changed = true;
+              break;
+            }
+            continue;
+          }
+
+          var lines = getBlockLines(block, el);
+          if (!lines.length) continue;
+
+          var hit = -1;
+          for (var L = 0; L < lines.length; L++) {
+            if (lineOverflowsPage(lines[L], m, unit, pageH)) {
+              hit = L;
+              break;
+            }
+          }
+          if (hit < 0) continue;
+
+          var line = lines[hit];
+          if (hit === 0 && line.offset <= 0) {
             pushNodeToNextContentStart(block, el, m, unit, pageH);
             changed = true;
             break;
           }
-          continue;
-        }
 
-        var lines = getBlockLines(block, el);
-        if (!lines.length) continue;
-
-        var hit = -1;
-        for (var L = 0; L < lines.length; L++) {
-          if (lineOverflowsPage(lines[L], m, unit, pageH)) {
-            hit = L;
-            break;
+          if (line.offset > 0) {
+            var tail = splitBlockAt(block, line.offset);
+            padTailAfterSplit(tail, el, m, unit, pageH);
+          } else {
+            pushNodeToNextContentStart(block, el, m, unit, pageH);
           }
-        }
-        if (hit < 0) continue;
-
-        var line = lines[hit];
-        if (hit === 0 && line.offset <= 0) {
-          pushNodeToNextContentStart(block, el, m, unit, pageH);
           changed = true;
           break;
         }
+      }
 
-        if (line.offset > 0) {
-          var tail = splitBlockAt(block, line.offset);
-          padTailAfterSplit(tail, el, m, unit, pageH);
-        } else {
-          pushNodeToNextContentStart(block, el, m, unit, pageH);
-        }
-        changed = true;
-        break;
+      if (editorContentWords() !== wordsBefore) {
+        quill.setContents(restoreDelta, "silent");
+        aborted = true;
+        gapResyncNeeded = false;
       }
     }
 
     syncingGaps = false;
     updatePageChrome();
+    if (!aborted && gapResyncNeeded) {
+      gapResyncNeeded = false;
+      scheduleBlockPageGaps();
+    } else if (aborted) {
+      gapResyncNeeded = false;
+    }
   }
 
   function scheduleBlockPageGaps() {
     if (gapTimer) clearTimeout(gapTimer);
-    gapTimer = setTimeout(runPageLayoutSync, 180);
+    gapTimer = setTimeout(runPageLayoutSync, 32);
   }
 
   function runPageLayoutSync() {
