@@ -15,6 +15,7 @@ from lorekeeper_character_compose import (
     cast_answer_is_thin,
     who_is_answer_has_bloat,
     who_is_has_family_slots,
+    who_is_overview_missing_depth,
     work_title_from_hints,
 )
 from lorekeeper_ask_plan import AskPlan
@@ -200,16 +201,17 @@ def _score_entry(
             score += 4 + min(name_hits, 3) * 2
             if _SCENE_BEAT_Q.search(question or ""):
                 score += 6
-    # Who-is: prefer cast/relationship notes over scene/draft chronology.
+    # Who-is: prefer cast/relationship/companion notes over scene/draft chronology.
     if is_who_is_question(question):
         if kind in ("character", "relationship"):
             score += 18
-        elif kind in ("species", "politics"):
-            score += 10
+        elif kind in ("species", "politics", "note", "world", "worldbuilding"):
+            score += 12
         elif kind in ("document", "scene"):
             if re.search(
                 r"\b(protagonist|antagonist|married|brother|sister|species|"
-                r"is a |is an |known as)\b",
+                r"is a |is an |known as|chosen one|nemesis|best friend|"
+                r"son of|daughter of|father to)\b",
                 hay_text,
             ):
                 score += 4
@@ -221,6 +223,13 @@ def _score_entry(
                 hay_text,
             ):
                 score -= 12
+        # Boost companion notes that carry overview depth for the asked name.
+        if re.search(
+            r"\b(brother|sister|son of|daughter of|nemesis|best friend|"
+            r"chosen one|destined|father to|mother to|cousin)\b",
+            hay_text,
+        ):
+            score += 8
     # Relationship + timeline questions: prefer notes that name the asked people and era.
     pair = relationship_between_pair(question)
     if pair:
@@ -1472,8 +1481,9 @@ def recall_from_user_data(
                 rag_thin = cast_answer_is_thin(rag_ans, label) or who_is_answer_has_bloat(
                     rag_ans
                 )
+                rag_shallow = who_is_overview_missing_depth(rag_ans)
                 rag_missing_family = not who_is_has_family_slots(rag_ans)
-                if rag_thin or rag_missing_family:
+                if rag_thin or rag_missing_family or rag_shallow:
                     pipeline = answer_for_work(
                         question,
                         scoped,
@@ -1490,15 +1500,10 @@ def recall_from_user_data(
                         and not cast_answer_is_thin(local_ans, label)
                         and not who_is_answer_has_bloat(local_ans)
                     )
-                    # Prefer local when RAG is thin/bloated, or when local fills
-                    # brother/parent/standing slots RAG omitted.
-                    if local_ok and (
-                        rag_thin
-                        or (
-                            rag_missing_family
-                            and who_is_has_family_slots(local_ans)
-                        )
-                    ):
+                    local_deeper = who_is_has_family_slots(local_ans) and (
+                        rag_missing_family or rag_shallow
+                    )
+                    if local_ok and (rag_thin or local_deeper):
                         return _finish({
                             "ok": True,
                             "answer": pipeline["answer"],

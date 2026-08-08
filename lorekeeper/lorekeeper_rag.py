@@ -32,7 +32,7 @@ from lorekeeper_reliability import (
 
 from lorekeeper_ask_plan import AskPlan
 
-RAG_VERSION = "21.2.0-rag"
+RAG_VERSION = "21.3.0-rag"
 
 # Override with LOREKEEPER_ANTHROPIC_MODEL on the server if needed.
 DEFAULT_MODEL = os.environ.get(
@@ -120,32 +120,32 @@ def _uses_cast_card(
 
 
 _WHO_CAST_CARD = """
-This is a WHO-IS question — answer as a CAST CARD in a pinned tone.
+This is a WHO-IS question — answer as a short CHARACTER OVERVIEW for the named person only.
 
-TONE (do not break this): formal but plain — not posh, not chatty. Prefer 1–2 sentences like:
-"Character M is the protagonist of Ashford Saga, but is known to the fairytale world at large as the White Rabbit from Alice in Wonderland. He is the son of buck Snow Thistle and doe Ebony, and younger brother to two of the Rabbits of Death from Pinocchio, Obsidian and Stygian."
+TONE: formal but plain — not posh, not chatty, not technical. Prefer 2–3 sentences like:
+"Character M is the protagonist of Ashford Saga and the chosen one meant to defeat the dragon demon king, but is known to the fairytale world at large as the White Rabbit from Alice in Wonderland. He is the son of buck Snow Thistle and doe Ebony, and younger brother to Obsidian and Stygian. Character D is his nemesis."
 
-REQUIRED SLOTS — when sources state them, weave them in (do not stop after role alone):
-1. Role — protagonist / POV / antagonist (do NOT say "male protagonist" / "female protagonist")
-2. Fairytale / outside-world known-as — e.g. known to the fairytale world at large as the White Rabbit… when sources say so
-3. Named parents — son/daughter of buck/doe or named parents when stated
-4. Brothers/sisters — names plus their standing when sources give it (e.g. Rabbits of Death from Pinocchio)
-5. Standing toward a named figure — e.g. subject of Character E's curiosity when stated
-6. Alias / known-as among characters — only if sources link it, correct direction
+REQUIRED when sources state them (do not stop after role + alias alone):
+1. Role — protagonist / POV / antagonist (never "male protagonist")
+2. Story significance — why they matter in the story when notes say it (chosen one, destined to…, father to X)
+3. Fairytale / outside-world known-as — only if sources say so
+4. Close defining ties ONLY — kin, nemesis, best friend, subject-of-curiosity standing — people who define THIS character
+5. Named parents / brothers with standing when stated
 
-Gender: signal via buck/doe, son/daughter, brother/sister, or natural he/she — never a lone "X is male." and never "male protagonist."
+HARD LIMIT on ties: at most 2–3 close people. Never dump the whole cast or side friendships.
 
-PREFER identity + standing over orphan life summary. If sources also have father-died / widow / raised-by / struggled-to-provide, omit that backstory when named parents, fairytale known-as, or brother standing already fill the card.
+Prefer companion NOTES (character / relationship / lore notes) for kin and significance — do not stop at draft-only alias lines when notes also name family or stakes.
+
+Gender via buck/doe, son/daughter, brother/sister, or natural he/she — never a lone "X is male."
+
+PREFER overview identity over orphan life summary (father-died / widow / raised-by) when better slots exist.
 
 OMIT completely:
-- Scene beats (roused from thoughts, grooming, glancing, chase, injury)
-- Awareness / theory / "so right now" / "not long after"
-- Fake kinship names or stopwords as people (Especially, Are, …)
-- Situational plot roles ("main victim of the hunt")
-- Plot walkthrough
+- Scene beats, awareness dumps, plot walkthrough
+- Fake kinship stopwords (Especially, Are, …)
+- Everyone else in the story who is not a defining tie
 
-If draft mixes identity with plot, extract ONLY identity + family/standing facts.
-Invent nothing. If a required slot is missing from sources, omit it — do not invent.
+Invent nothing. If a slot is missing from sources, omit it.
 
 Footer: — From your notes only. Nothing invented."""
 
@@ -514,20 +514,33 @@ def _build_user_prompt(
             draft_tail_block = draft_tail_prompt_block(scoped_entries, question)
     elif _uses_cast_card(question, question_kind, plan):
         kind_hint = (
-            "Pinned cast-card tone: role + fairytale known-as + named parents + "
-            "brothers (with standing). No 'male protagonist'. Prefer identity over "
-            "orphan raised-by/widow life summary when better slots exist. "
-            "No scene plot, no awareness dumps, no fake brother stopwords.\n\n"
+            "Pinned character overview: role + story significance + close defining "
+            "ties (kin/nemesis/best friend) from NOTES as well as draft. "
+            "Do not stop after alias alone. Cap ties at 2–3 people — not a cast roster. "
+            "No 'male protagonist', no orphan life dump, no scene plot.\n\n"
         )
         doc_sources = sum(
             1
             for row in ranked
             if str(row.get("kind") or "") == "document" or "#p" in str(row.get("id") or "")
         )
+        note_sources = sum(
+            1
+            for row in ranked
+            if str(row.get("kind") or "").lower()
+            in ("character", "relationship", "note", "species", "politics", "")
+            and "#p" not in str(row.get("id") or "")
+        )
         if doc_sources and doc_sources >= max(1, len(ranked) // 2):
             draft_hint = (
-                "Retrieval is mostly draft/document — notes may be thin. "
-                "State cast role, status, and fixed traits from the draft; do not retell scenes.\n\n"
+                "Retrieval is mostly draft/document — still check any character/"
+                "relationship/note sources for kin, nemesis, and story significance. "
+                "Do not retell scenes.\n\n"
+            )
+        elif note_sources:
+            draft_hint = (
+                "Companion notes are available — prefer them for family ties and "
+                "story significance; use draft only for fixed identity/alias facts.\n\n"
             )
         targets = character_targets(question)
         if targets and scoped_entries:

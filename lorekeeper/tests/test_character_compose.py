@@ -511,6 +511,39 @@ class CharacterComposeTests(unittest.TestCase):
         self.assertNotIn("next section", low)
         self.assertNotRegex(answer, r"(?i)character m is male\.")
 
+    def test_who_is_overview_significance_and_close_ties(self):
+        entries = [
+            _entry(
+                "d1",
+                "Draft",
+                "Character M is the protagonist of the story, the White Rabbit from Alice "
+                "in Wonderland in Ashford Saga. Character M is known by the name Chroniker "
+                "by Character D.",
+                tags=["Ashford Saga"],
+                kind="document",
+            ),
+            _entry(
+                "n1",
+                "Character M",
+                "Character M is the chosen one meant to defeat the dragon demon king. "
+                "Character M is younger brother to Obsidian and Stygian. "
+                "Character E is Character M's nemesis.",
+                tags=["Ashford Saga"],
+                kind="character",
+            ),
+        ]
+        res = self._ask("In Ashford Saga, who is Character M?", entries)
+        answer = res.get("answer") or ""
+        low = answer.lower()
+        self.assertIn("protagonist", low)
+        self.assertIn("obsidian", low)
+        self.assertIn("stygian", low)
+        self.assertTrue(
+            any(x in low for x in ("chosen", "nemesis", "dragon")),
+            msg=answer,
+        )
+        self.assertNotIn("male protagonist", low)
+
     def test_who_is_identity_alias_named_kin(self):
         entries = [
             _entry(

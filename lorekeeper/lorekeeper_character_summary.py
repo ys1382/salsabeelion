@@ -706,7 +706,8 @@ def _classify_sentence(sentence: str, names: list[str] | None = None) -> str:
     ):
         return "relationship"
     if re.search(
-        r"\b(known as|known to|also known as|fairytale world|white rabbit)\b",
+        r"\b(known as|known to|also known as|fairytale world|white rabbit|"
+        r"chosen one|destined|nemesis|best friend)\b",
         s_low,
     ):
         return "identity"
@@ -975,6 +976,10 @@ def _who_is_profile_bit(bit: str, label: str) -> bool:
     if is_story_significance_clause(bit, label) and any(
         _name_in_text(name, bit) for name in [label]
     ):
+        return False
+    from lorekeeper_character_compose import is_overview_significance_clause
+
+    if is_overview_significance_clause(bit, label):
         return True
     bucket = _classify_sentence(bit, [label])
     if bucket in ("role", "identity", "relationship"):

@@ -99,6 +99,30 @@ _STORY_SIGNIFICANCE_RE = re.compile(
     re.I,
 )
 
+# Character-overview stakes (plain overview — not scene plot, not storywalk dumps).
+_OVERVIEW_SIGNIFICANCE_RE = re.compile(
+    r"\b("
+    r"chosen one|the chosen|destined to|fated to|prophesied|"
+    r"meant to (?:defeat|save|destroy|stop|kill|protect)|"
+    r"to (?:defeat|save|destroy|stop) the\b|"
+    r"nemesis|arch[- ]?enem(?:y|ies)|sworn enem(?:y|ies)|"
+    r"best friend|closest friend|sworn friend|"
+    r"father to|mother to|mentor to|prot[eé]g[eé]"
+    r")\b",
+    re.I,
+)
+
+# Close defining ties for a cast overview (not the whole cast).
+_CLOSE_TIE_RE = re.compile(
+    r"\b("
+    r"brother|sister|cousin|son of|daughter of|child of|"
+    r"father to|mother to|married|spouse|"
+    r"nemesis|arch[- ]?enem(?:y|ies)|best friend|closest friend|"
+    r"subject of|quarry|buck|doe"
+    r")\b",
+    re.I,
+)
+
 # Chronology / POV-order language — not cast-card identity.
 # Keep this narrow: "the POV cuts" / look-on-face notes must NOT match.
 _PLOT_SEQUENCE_RE = re.compile(
@@ -200,6 +224,26 @@ def _is_plot_arc_clause(clause: str) -> bool:
     return False
 
 
+def is_overview_significance_clause(clause: str, label: str = "") -> bool:
+    """True for plain overview stakes (chosen one / nemesis / father to), not storywalk dumps."""
+    s = (clause or "").strip()
+    if not s or not _OVERVIEW_SIGNIFICANCE_RE.search(s):
+        return False
+    if is_story_significance_clause(s, label):
+        return False
+    if _WHO_IS_BLOAT_RE.search(s) or _PLOT_SEQUENCE_RE.search(s):
+        return False
+    if label and is_other_character_scene_beat(s, label):
+        return False
+    if label and not re.search(rf"\b{re.escape(label)}\b", s, re.I):
+        # Allow "He is father to…" after subject was established.
+        if not re.match(r"^(?:He|She)\s+is\b", s, re.I):
+            return False
+    if len(s) > 280:
+        return False
+    return True
+
+
 def is_story_significance_clause(clause: str, label: str = "") -> bool:
     """True for subject-led role stakes (storywalk / sets in motion), not world-word hits."""
     s = (clause or "").strip()
@@ -299,6 +343,10 @@ def _kinship_shape_sentence(sentence: str, label: str) -> bool:
         rf"^(?:He|She)\s+is\s+(?:the\s+)?(?:son|daughter|child)\s+of\s+.+$",
         rf"^(?:He|She)\s+is\s+(?:(?:younger|older|twin)\s+)?(?:brother|sister)\s+to\s+.+$",
         rf"^(?:He|She)\s+is\s+the\s+(?:son|daughter|child)\s+of\b.+$",
+        rf"^{lab}\s+is\s+(?:the\s+)?(?:nemesis|arch[- ]?enemy|best friend|closest friend)\s+of\s+.+$",
+        rf"^{lab}\s+is\s+(?:father|mother|mentor)\s+to\s+.+$",
+        rf"^(?:He|She)\s+is\s+(?:father|mother|mentor)\s+to\s+.+$",
+        rf"^(?:He|She)\s+is\s+(?:the\s+)?(?:nemesis|best friend)\s+of\s+.+$",
         rf"^(?:(?:younger|older|twin)\s+)?(?:brother|sister)\s+to\s+.+$",
         rf"^married\s+to\s+.+$",
         rf"^(?:son|daughter|child)\s+of\s+.+$",
@@ -459,14 +507,22 @@ def is_who_is_cast_fact_sentence(sentence: str, label: str) -> bool:
     if _kinship_shape_sentence(s, label):
         return _kinship_targets_plausible(s, label)
 
+    # Plain overview stakes (chosen one / nemesis / father to).
+    if is_overview_significance_clause(s, label):
+        return True
+
     if not re.search(rf"\b{re.escape(label)}\b", s, re.I):
+        # Pronoun-led overview / kin already handled above when patterns match.
         return False
 
     # Subject-led identity / role / species / gender / alias — NOT kinship-via-plot.
     if re.match(rf"^{re.escape(label)}\s+(?:is|was|are|were)\b", s, re.I):
         # Long "X is …" with scene/plot language is out even if "brother" appears.
         if len(s) > 160 and not re.search(
-            r"\b(protagonist|antagonist|rabbit|wolf|known as|known by|also known)\b",
+            r"\b("
+            r"protagonist|antagonist|rabbit|wolf|known as|known by|also known|"
+            r"chosen one|destined|nemesis|father to|mother to"
+            r")\b",
             s,
             re.I,
         ):
@@ -475,11 +531,14 @@ def is_who_is_cast_fact_sentence(sentence: str, label: str) -> bool:
             r"\b("
             r"protagonist|antagonist|villain|hero|heroine|main character|side character|"
             r"side antagonist|rabbit|wolf|fox|lynx|arcanist|male|female|sentient|"
-            r"known|called|aka|white rabbit|from .+ wonderland|guardian|spirit"
+            r"known|called|aka|white rabbit|from .+ wonderland|guardian|spirit|"
+            r"chosen one|destined|fated|nemesis|best friend"
             r")\b",
             s,
             re.I,
         ):
+            return True
+        if is_overview_significance_clause(s, label):
             return True
         if len(s) <= 120 and not _PLOT_ARC_RE.search(s):
             if re.fullmatch(
@@ -503,7 +562,7 @@ def is_who_is_cast_fact_sentence(sentence: str, label: str) -> bool:
         if re.search(
             r"\b("
             r"arcanist|rabbit|wolf|guardian|spirit|protagonist|antagonist|"
-            r"male|female|sentient|grey|gray|skin"
+            r"male|female|sentient|grey|gray|skin|chosen|nemesis"
             r")\b",
             s,
             re.I,
@@ -735,9 +794,11 @@ def _clause_adds_profile(clause: str, label: str) -> bool:
         return False
     if _is_plot_arc_clause(s):
         return False
-    # Who-is slots only — storywalk / "sets in motion" are not cast-card profile.
+    # Who-is: allow plain overview stakes; still reject storywalk dumps.
     if is_story_significance_clause(s, label):
         return False
+    if is_overview_significance_clause(s, label):
+        return True
     if _BIOGRAPHY_RE.search(s):
         # Allow pinned family facts (raised-by / parents) on a role-or-identity card.
         if label and (
@@ -990,16 +1051,31 @@ def compose_character_reference(
     return f"{label}\n\n{body}\n\n{_FOOTER_REFERENCE}"
 
 
+def who_is_has_close_ties(answer: str) -> bool:
+    """True when answer includes defining kin / nemesis / best-friend style ties."""
+    return bool(_CLOSE_TIE_RE.search(answer or ""))
+
+
+def who_is_has_story_significance(answer: str) -> bool:
+    """True when answer includes plain overview stakes beyond bare protagonist."""
+    return bool(_OVERVIEW_SIGNIFICANCE_RE.search(answer or ""))
+
+
 def who_is_has_family_slots(answer: str) -> bool:
-    """True when answer includes brother/parent/alias/curiosity-standing facts."""
+    """Close ties or overview significance — alias alone does not count."""
+    return who_is_has_close_ties(answer) or who_is_has_story_significance(answer)
+
+
+def who_is_overview_missing_depth(answer: str) -> bool:
+    """True when the card is mostly role + alias without close ties / significance."""
+    a = answer or ""
+    if who_is_has_close_ties(a) or who_is_has_story_significance(a):
+        return False
     return bool(
         re.search(
-            r"\b("
-            r"brother|sister|father|mother|widow|raised by|parent|"
-            r"son of|daughter of|buck|doe|"
-            r"subject of|quarry|known as|known to|white rabbit"
-            r")\b",
-            answer or "",
+            r"\b(protagonist|antagonist|main character|known as|known by|known to|"
+            r"white rabbit|also known)\b",
+            a,
             re.I,
         )
     )
@@ -1044,6 +1120,7 @@ def weave_who_is_gold_tone(
     named_parents: list[str] = []
     alias_lines: list[str] = []
     other_family: list[str] = []
+    significance_lines: list[str] = []
     extras_from_rel: list[str] = []
     orphan_lines: list[str] = []
 
@@ -1084,11 +1161,22 @@ def weave_who_is_gold_tone(
         if _gender_only(c):
             continue
         if is_orphan_life_summary(c) and not re.search(
-            r"\b(known as|known to|son of|daughter of|white rabbit)\b", c, re.I
+            r"\b(known as|known to|son of|daughter of|white rabbit|chosen|nemesis)\b",
+            c,
+            re.I,
         ):
             # Pure orphan life summary — keep only as weak fallback.
             if not _is_gold_tone_cast_sentence(c, label):
                 orphan_lines.append(_strip_male_female_role(c))
+            continue
+        if is_overview_significance_clause(c, label) and not re.search(
+            r"\b(brother to|sister to|son of|daughter of)\b", c, re.I
+        ):
+            line = _strip_male_female_role(c)
+            if line not in significance_lines:
+                significance_lines.append(
+                    line if line.endswith((".", "!", "?")) else line + "."
+                )
             continue
         if re.search(
             r"\b(known as|known to|also known|fairytale world|fairy[- ]tale world)\b",
@@ -1134,7 +1222,10 @@ def weave_who_is_gold_tone(
                 brothers.append(name)
             continue
         if re.search(
-            r"\b(sister|father|mother|widow|raised|parent|subject of|quarry|married)\b",
+            r"\b("
+            r"sister|father|mother|widow|raised|parent|subject of|quarry|married|"
+            r"nemesis|best friend|closest friend|cousin|father to|mother to"
+            r")\b",
             c,
             re.I,
         ) and not re.search(r"\b(protagonist|antagonist|main character)\b", c, re.I):
@@ -1153,7 +1244,12 @@ def weave_who_is_gold_tone(
                 extras_from_rel.append(c)
 
     has_identity_slots = bool(
-        brothers or rich_brother_lines or named_parents or alias_lines or other_family
+        brothers
+        or rich_brother_lines
+        or named_parents
+        or alias_lines
+        or other_family
+        or significance_lines
     )
     if not has_identity_slots:
         return ""
@@ -1172,10 +1268,13 @@ def weave_who_is_gold_tone(
                 c
                 for c in lead
                 if not _gender_only(c)
-                and re.search(
-                    r"\b(rabbit|preyfolk|wolf|fox|lynx|arcanist|guardian|sentient)\b",
-                    c,
-                    re.I,
+                and (
+                    is_overview_significance_clause(c, label)
+                    or re.search(
+                        r"\b(rabbit|preyfolk|wolf|fox|lynx|arcanist|guardian|sentient)\b",
+                        c,
+                        re.I,
+                    )
                 )
             ),
             None,
@@ -1187,7 +1286,9 @@ def weave_who_is_gold_tone(
 
     base = _strip_male_female_role(base)
     # Drop orphan appositive from a role+raised-by gold dump when better slots exist.
-    if is_orphan_life_summary(base) and (named_parents or alias_lines or rich_brother_lines):
+    if is_orphan_life_summary(base) and (
+        named_parents or alias_lines or rich_brother_lines or significance_lines
+    ):
         base = re.split(
             r",\s*(?:a\s+)?(?:Preyfolk|who was raised|whose father)\b",
             base,
@@ -1201,11 +1302,33 @@ def weave_who_is_gold_tone(
         if re.search(r"\b(protagonist|antagonist|main character)\b", base, re.I):
             base = base.rstrip(".") + f" of {work_title}."
 
+    # Fold a short significance phrase into the role line when possible.
+    if significance_lines and re.search(
+        r"\b(protagonist|antagonist|main character)\b", base, re.I
+    ):
+        sig = significance_lines[0]
+        sig_core = re.sub(
+            rf"^{re.escape(label)}\s+is\s+(?:the\s+)?",
+            "",
+            sig,
+            count=1,
+            flags=re.I,
+        ).rstrip(".")
+        if sig_core and sig_core.lower() not in base.lower() and len(sig_core) < 120:
+            if re.search(r"\b(chosen one|destined|fated|meant to)\b", sig_core, re.I):
+                base = base.rstrip(".") + f", {sig_core}."
+                significance_lines = significance_lines[1:]
+
     extras: list[str] = list(extras_from_rel)
     for c in lead:
         if c == base or _gender_only(c):
             continue
-        if c in other_family or c in alias_lines or c in named_parents:
+        if (
+            c in other_family
+            or c in alias_lines
+            or c in named_parents
+            or c in significance_lines
+        ):
             continue
         if is_orphan_life_summary(c):
             continue
@@ -1214,6 +1337,8 @@ def weave_who_is_gold_tone(
         if re.search(
             r"\b(known as|known to|also known|white rabbit|fairytale)\b", c, re.I
         ):
+            continue
+        if is_overview_significance_clause(c, label):
             continue
         extras.append(c)
 
@@ -1245,6 +1370,10 @@ def weave_who_is_gold_tone(
             sentences.append(role)
     else:
         sentences.append(role)
+
+    for sig in significance_lines[:1]:
+        if sig not in sentences:
+            sentences.append(sig)
 
     kin_bits: list[str] = []
     if named_parents:
@@ -1295,7 +1424,7 @@ def weave_who_is_gold_tone(
         if clause not in sentences:
             sentences.append(clause)
 
-    for c in other_aliases[:2]:
+    for c in other_aliases[:1]:
         clause = c if c.endswith((".", "!", "?")) else c + "."
         if clause not in sentences:
             sentences.append(clause)
@@ -1308,7 +1437,13 @@ def weave_who_is_gold_tone(
                 sentences.append(clause)
 
     # Orphan fallback only when no named parents / rich brother standing.
-    if not named_parents and not rich_brother_lines and orphan_lines and not kin_bits:
+    if (
+        not named_parents
+        and not rich_brother_lines
+        and orphan_lines
+        and not kin_bits
+        and not significance_lines
+    ):
         clause = orphan_lines[0]
         if not clause.endswith((".", "!", "?")):
             clause += "."

@@ -34,11 +34,10 @@ class RagTests(unittest.TestCase):
 
     def test_system_who_is_cast_card(self):
         system = _system_for_kind("In Fairy Tale, who is Ella?", "who", brief=False)
-        self.assertIn("CAST CARD", system)
-        self.assertIn("REQUIRED SLOTS", system)
-        self.assertIn("pinned tone", system.lower())
-        self.assertIn("fairytale", system.lower())
-        self.assertIn('do not say "male protagonist"', system.lower())
+        self.assertIn("CHARACTER OVERVIEW", system)
+        self.assertIn("close defining ties", system.lower())
+        self.assertIn("story significance", system.lower())
+        self.assertIn('never "male protagonist"', system.lower())
         self.assertNotIn("contradictory, say so honestly", system)
 
     def test_system_audit_meta(self):
