@@ -1,8 +1,9 @@
 (function (global) {
   var PAGE_H = 1056;
   var PAGE_GAP = 14;
-  var PAGE_LINE_BUFFER = 28;
-  var PAD_OVERSHOOT = 6;
+  /** Keep whole lines clear of bottom margin / page edge (no mid-line clips). */
+  var PAGE_LINE_BUFFER = 36;
+  var PAD_OVERSHOOT = 8;
   var MARGIN_PX = { narrow: 48, normal: 96, wide: 144 };
 
   var doc = null;
@@ -775,6 +776,10 @@
     return pageIdx === 0 ? 0 : unit * pageIdx;
   }
 
+  function contentStartForPage(pageIdx, m, unit) {
+    return whiteStartForPage(pageIdx, unit) + m;
+  }
+
   function padToNextContentStart(y, m, unit, pageH) {
     var pageIdx = pageIndexForY(y, unit, pageH);
     var whiteStart = whiteStartForPage(pageIdx, unit);
@@ -782,16 +787,20 @@
     var greyStart = whiteStart + pageH;
     var nextIdx = pageIdx;
     if (y >= greyStart - 1 || y > contentEnd) nextIdx = pageIdx + 1;
-    var target = whiteStartForPage(nextIdx, unit) + (nextIdx === 0 ? m : 0);
+    var target = contentStartForPage(nextIdx, m, unit);
     if (target <= y) {
       nextIdx += 1;
-      target = whiteStartForPage(nextIdx, unit) + (nextIdx === 0 ? m : 0);
+      target = contentStartForPage(nextIdx, m, unit);
     }
     return Math.max(1, Math.ceil(target - y + PAD_OVERSHOOT));
   }
 
   function blockNeedsPagePush(blockTop, blockPage) {
-    return blockTop > blockPage.contentEnd + 1 || blockTop >= blockPage.greyStart - 1;
+    return (
+      blockTop > blockPage.contentEnd + 1 ||
+      blockTop >= blockPage.greyStart - 1 ||
+      (blockPage.pageIdx > 0 && blockTop < blockPage.contentStart - 1)
+    );
   }
 
   function pushNodeToNextContentStart(node, el, m, unit, pageH) {
@@ -971,13 +980,19 @@
       pageIdx: pageIdx,
       contentEnd: whiteStart + pageH - m - PAGE_LINE_BUFFER,
       greyStart: whiteStart + pageH,
-      contentStart: whiteStart + (pageIdx === 0 ? m : 0),
+      contentStart: contentStartForPage(pageIdx, m, unit),
     };
   }
 
   function lineOverflowsPage(line, m, unit, pageH) {
     var page = pageMetricsForY(line.top, m, unit, pageH);
-    return line.bottom > page.contentEnd + 1 || line.top > page.contentEnd + 1 || line.top >= page.greyStart;
+    // Whole line must stay in the content box — never straddle gap or sit under top chrome.
+    if (line.bottom > page.contentEnd + 1) return true;
+    if (line.top > page.contentEnd + 1) return true;
+    if (line.top >= page.greyStart - 1) return true;
+    if (line.bottom > page.greyStart - 1) return true;
+    if (page.pageIdx > 0 && line.top < page.contentStart - 1) return true;
+    return false;
   }
 
   function padTailAfterSplit(tail, el, m, unit, pageH) {
@@ -1146,8 +1161,9 @@
       for (var g = 0; g < pages - 1; g++) {
         var strip = document.createElement("div");
         strip.className = "lk-page-gap-cover";
-        strip.style.top = Math.max(0, g * unit + pageH - 14) + "px";
-        strip.style.height = gap + 28 + "px";
+        // Cover only the grey gutter — do not paint into the next page’s top lines.
+        strip.style.top = g * unit + pageH + "px";
+        strip.style.height = gap + "px";
         cover.appendChild(strip);
       }
     }

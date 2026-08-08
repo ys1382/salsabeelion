@@ -844,8 +844,7 @@ a { color: var(--accent); }
   border: none;
   font-size: 11pt;
   position: relative;
-  /* Shows through masked page-gap bands so ink never paints in the gutter. */
-  background: #9aa0a6;
+  background: transparent;
 }
 .lk-page-chrome-back {
   position: absolute;
@@ -881,7 +880,6 @@ a { color: var(--accent); }
   left: 0;
   right: 0;
   background: #9aa0a6;
-  box-shadow: 0 0 0 2px #9aa0a6;
   pointer-events: none;
 }
 .lk-page-gap-front,
@@ -977,29 +975,6 @@ body.lk-page-doc:not(.lk-doc-ready) .lk-doc-sheet {
   background-repeat: repeat-y;
   background-position: 0 0;
   box-shadow: none;
-  /* Clip painting to white sheets only — words in the grey gutter are not drawn. */
-  -webkit-mask-image: repeating-linear-gradient(
-    to bottom,
-    #000 0,
-    #000 var(--lk-page-h, 1056px),
-    transparent var(--lk-page-h, 1056px),
-    transparent var(--lk-page-unit)
-  );
-  mask-image: repeating-linear-gradient(
-    to bottom,
-    #000 0,
-    #000 var(--lk-page-h, 1056px),
-    transparent var(--lk-page-h, 1056px),
-    transparent var(--lk-page-unit)
-  );
-  -webkit-mask-size: 100% var(--lk-page-unit);
-  mask-size: 100% var(--lk-page-unit);
-  -webkit-mask-repeat: repeat-y;
-  mask-repeat: repeat-y;
-  -webkit-mask-origin: padding-box;
-  mask-origin: padding-box;
-  -webkit-mask-clip: padding-box;
-  mask-clip: padding-box;
 }
 .lk-margin-narrow .ql-editor {
   --lk-margin-x: 48px;
