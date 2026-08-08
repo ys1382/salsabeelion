@@ -230,6 +230,21 @@ def _score_entry(
             hay_text,
         ):
             score += 8
+        # Cast overview titles (Protagonist Notes, Parent Notes, Names) beat
+        # scene/orphan-life notes when they name the asked character.
+        if re.search(
+            r"\b(protagonist\s+notes?|antagonist\s+notes?|parent\s+notes?|"
+            r"character\s+notes?|cast\s+notes?)\b",
+            title,
+            re.I,
+        ) and targets and any(
+            re.search(rf"\b{re.escape(name)}\b", hay_text, re.I) for name in targets if name
+        ):
+            score += 24
+        if re.match(r"^names?\b", title.strip(), re.I) and targets and any(
+            re.search(rf"\b{re.escape(name)}\b", hay_text, re.I) for name in targets if name
+        ):
+            score += 12
     # Relationship + timeline questions: prefer notes that name the asked people and era.
     pair = relationship_between_pair(question)
     if pair:

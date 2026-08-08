@@ -737,8 +737,11 @@ def _segments_mentioning(body: str, names: list[str]) -> list[str]:
         return []
     segments: list[str] = []
     blocks = [b.strip() for b in re.split(r"\n+", body) if b.strip()] or [body]
+    # Split cast-sheet lines on em/en dash or colon only — never on comma.
+    # Comma after a proper name is normal prose ("…Obsidian and Stygian, the…")
+    # and must not chop kinship lines mid-sentence.
     cast_split = re.compile(
-        r"(?=\b(?:Character\s+[A-Z0-9]+|[A-Z][a-z]{2,}(?:\s+[A-Z][a-z]{2,})?)\s*[—–\-:,])"
+        r"(?=\b(?:Character\s+[A-Z0-9]+|[A-Z][a-z]{2,}(?:\s+[A-Z][a-z]{2,})?)\s*[—–\-:])"
     )
     for block in blocks:
         pieces = [p.strip() for p in cast_split.split(block) if p.strip()] or [block]
@@ -746,6 +749,15 @@ def _segments_mentioning(body: str, names: list[str]) -> list[str]:
             if any(_name_in_text(name, piece) for name in names):
                 segments.append(piece)
     return segments
+
+
+_OVERVIEW_NOTE_TITLE_RE = re.compile(
+    r"\b("
+    r"protagonist\s+notes?|antagonist\s+notes?|parent\s+notes?|"
+    r"character\s+notes?|cast\s+notes?|names?\b"
+    r")\b",
+    re.I,
+)
 
 
 def _entry_is_character_sheet(entry: dict[str, Any], names: list[str]) -> bool:
@@ -757,6 +769,14 @@ def _entry_is_character_sheet(entry: dict[str, Any], names: list[str]) -> bool:
     title = str(entry.get("title") or "").strip().lower()
     for name in names:
         if title == name.lower():
+            return True
+    # Companion overview notes (Protagonist Notes, Parent Notes, Names) for
+    # the asked person — treat as cast sheets so kinship lines stay whole.
+    if _OVERVIEW_NOTE_TITLE_RE.search(title):
+        body = str(entry.get("body") or "")
+        tags = " ".join(str(t) for t in (entry.get("tags") or []))
+        hay = f"{title}\n{body}\n{tags}"
+        if any(_name_in_text(name, hay) for name in names):
             return True
     return False
 

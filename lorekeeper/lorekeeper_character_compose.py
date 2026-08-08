@@ -331,7 +331,7 @@ def is_plausible_cast_person_name(name: str) -> bool:
 def _kinship_shape_sentence(sentence: str, label: str) -> bool:
     """True for short kinship / standing / known-as lines — not plot that mentions 'brother'."""
     s = re.sub(r"\s+", " ", (sentence or "").strip())
-    if not s or len(s) > 280:
+    if not s or len(s) > 360:
         return False
     lab = re.escape(label)
     patterns = (
@@ -362,7 +362,16 @@ _ORPHAN_LIFE_RE = re.compile(
     r"\b("
     r"raised by|taken in by|father died|widow mother|widow,?\s+struggled|"
     r"mother struggled|struggled to provide|when he was (?:very )?young|"
-    r"after his father"
+    r"after his father|took care of him and his brothers|"
+    r"mother took care|as a widow|as best she could"
+    r")\b",
+    re.I,
+)
+
+_INCOMPLETE_KIN_FRAGMENT_RE = re.compile(
+    r"\b("
+    r"not older by enough|decent year gap|not quite clear how much older|"
+    r"maybe closer to a little over"
     r")\b",
     re.I,
 )
@@ -426,56 +435,93 @@ def _is_gold_tone_cast_sentence(sentence: str, label: str) -> bool:
 def _kinship_targets_plausible(sentence: str, label: str) -> bool:
     """Drop 'brother to Especially/Are' style scraps."""
     s = re.sub(r"\s+", " ", (sentence or "").strip())
-    m = re.search(
-        r"\b(?:brother|sister|son|daughter|married|engaged|subject|quarry|child)\s+"
-        r"(?:of|to)\s+(.+?)\.?$",
+    # Combined cast lines often pack siblings + parents in one sentence.
+    # Validate each kinship phrase on its own so appositives/"and the son of…"
+    # cannot poison sibling-name checks.
+    phrases: list[str] = []
+    for m in re.finditer(
+        r"\b(?:(?:younger|older|twin)\s+)?(?:brother|sister)\s+to\s+(.+?)(?="
+        r",\s+and\s+the\s+(?:son|daughter|child)\s+of\b|"
+        r"\s+and\s+the\s+(?:son|daughter|child)\s+of\b|"
+        r"[.]|$)",
         s,
         re.I,
-    )
-    if not m:
-        return True
-    tail = m.group(1).strip()
-    # "Character D's curiosity" / "Obsidian and Stygian" / "buck Snow Thistle and doe Ebony"
-    chunks = re.split(r"\s+and\s+|,\s*", tail)
-    for chunk in chunks:
-        chunk = chunk.strip()
-        # Allow "X's curiosity" standing phrases.
-        if re.search(r"'s\s+\w+$", chunk, re.I):
-            head = chunk.split("'")[0].strip()
-            if head and not is_plausible_cast_person_name(head):
-                return False
-            continue
-        # Strip buck/doe / role prefixes and trailing role phrases.
-        chunk = re.sub(r"^(?:buck|doe|the)\s+", "", chunk, flags=re.I).strip()
-        chunk = re.sub(r"\s*\(.*\)$", "", chunk).strip()
-        # "two of the Rabbits of Death from Pinocchio, Obsidian" style — keep named tails
-        if re.search(r"\bfrom\b", chunk, re.I) and not re.search(
-            r"\b[A-Z][a-z]{2,}\b", chunk
-        ):
-            continue
-        if not chunk:
-            continue
-        if not is_plausible_cast_person_name(chunk.split()[0] if chunk else ""):
-            cleaned = re.sub(
-                r"\b(curiosity|interest|attention|trust)\b.*$",
-                "",
-                chunk,
-                flags=re.I,
-            ).strip()
-            cleaned = re.sub(r"^(?:buck|doe|the)\s+", "", cleaned, flags=re.I).strip()
-            if cleaned and is_plausible_cast_person_name(cleaned.split()[0]):
+    ):
+        phrases.append(m.group(1).strip(" ,"))
+    for m in re.finditer(
+        r"\b(?:son|daughter|child)\s+of\s+(.+?)(?:\.|$)",
+        s,
+        re.I,
+    ):
+        phrases.append(m.group(1).strip(" ,"))
+    for m in re.finditer(
+        r"\b(?:married|engaged|subject|quarry|nemesis|best friend|closest friend|"
+        r"father|mother|mentor)\s+(?:of|to)\s+(.+?)(?:\.|$)",
+        s,
+        re.I,
+    ):
+        phrases.append(m.group(1).strip(" ,"))
+    if not phrases:
+        m = re.search(
+            r"\b(?:brother|sister|son|daughter|married|engaged|subject|quarry|child)\s+"
+            r"(?:of|to)\s+(.+?)\.?$",
+            s,
+            re.I,
+        )
+        if not m:
+            return True
+        phrases = [m.group(1).strip()]
+
+    for tail in phrases:
+        # "Character D's curiosity" / "Obsidian and Stygian" / "buck Snow Thistle and doe Ebony"
+        chunks = re.split(r"\s+and\s+|,\s*", tail)
+        for chunk in chunks:
+            chunk = chunk.strip()
+            chunk = re.sub(r"^(?:and|or)\s+", "", chunk, flags=re.I).strip()
+            # Allow "X's curiosity" standing phrases.
+            if re.search(r"'s\s+\w+$", chunk, re.I):
+                head = chunk.split("'")[0].strip()
+                if head and not is_plausible_cast_person_name(head):
+                    return False
                 continue
-            if cleaned and is_plausible_cast_person_name(cleaned):
-                continue
-            # Standing phrases without a single person name are OK.
+            # Strip buck/doe / role prefixes and trailing role phrases.
+            chunk = re.sub(r"^(?:buck|doe|the)\s+", "", chunk, flags=re.I).strip()
+            chunk = re.sub(r"\s*\(.*\)$", "", chunk).strip()
+            # Appositive group labels ("Moonshadow Rabbits") are not person targets.
             if re.search(
-                r"\b(rabbits? of death|fairytale|pinocchio|alice|wonderland)\b",
+                r"\b(rabbits?|twins?|brothers?|sisters?|parents?|family)\b",
                 chunk,
                 re.I,
+            ) and not re.match(r"^[A-Z][a-z]+$", chunk):
+                continue
+            # "two of the Rabbits of Death from Pinocchio, Obsidian" style — keep named tails
+            if re.search(r"\bfrom\b", chunk, re.I) and not re.search(
+                r"\b[A-Z][a-z]{2,}\b", chunk
             ):
                 continue
-            if not is_plausible_cast_person_name(chunk):
-                return False
+            if not chunk:
+                continue
+            if not is_plausible_cast_person_name(chunk.split()[0] if chunk else ""):
+                cleaned = re.sub(
+                    r"\b(curiosity|interest|attention|trust)\b.*$",
+                    "",
+                    chunk,
+                    flags=re.I,
+                ).strip()
+                cleaned = re.sub(r"^(?:buck|doe|the)\s+", "", cleaned, flags=re.I).strip()
+                if cleaned and is_plausible_cast_person_name(cleaned.split()[0]):
+                    continue
+                if cleaned and is_plausible_cast_person_name(cleaned):
+                    continue
+                # Standing phrases without a single person name are OK.
+                if re.search(
+                    r"\b(rabbits? of death|fairytale|pinocchio|alice|wonderland)\b",
+                    chunk,
+                    re.I,
+                ):
+                    continue
+                if not is_plausible_cast_person_name(chunk):
+                    return False
     return True
 
 
@@ -497,6 +543,15 @@ def is_who_is_cast_fact_sentence(sentence: str, label: str) -> bool:
     if is_other_character_scene_beat(s, label):
         return False
     if _PLOT_SEQUENCE_RE.search(s):
+        return False
+    if _INCOMPLETE_KIN_FRAGMENT_RE.search(s):
+        return False
+    if is_orphan_life_summary(s) and not re.search(
+        r"\b(son of|daughter of|brother to|sister to|known as|known by|white rabbit|"
+        r"chosen one|nemesis)\b",
+        s,
+        re.I,
+    ):
         return False
 
     # Pinned gold-tone woven card (role + type/family in one sentence).
@@ -861,6 +916,8 @@ def _skip_planning_line(line: str, label: str) -> bool:
         return True
     if _AUTHOR_META_RE.search(s):
         return True
+    if _INCOMPLETE_KIN_FRAGMENT_RE.search(s):
+        return True
     if re.match(r"^I\s+(think|thought|feel|want|should|could|might|need)\b", s, re.I):
         return True
     if re.search(
@@ -1187,7 +1244,39 @@ def weave_who_is_gold_tone(
             if line not in alias_lines:
                 alias_lines.append(line if line.endswith((".", "!", "?")) else line + ".")
             continue
-        if re.search(r"\b(?:son|daughter|child)\s+of\b", c, re.I):
+        if re.search(r"\b(?:son|daughter|child)\s+of\b", c, re.I) and re.search(
+            r"\b(?:brother|sister)\s+to\b", c, re.I
+        ):
+            # Combined kinship line: keep both parent + sibling slots.
+            parent_m = re.search(
+                r"^(.+?)(?:,\s+and\s+|\s+and\s+)(the\s+(?:son|daughter|child)\s+of\s+.+)$",
+                c,
+                re.I,
+            )
+            if parent_m and re.search(
+                r"\b(?:brother|sister)\s+to\b", parent_m.group(1), re.I
+            ):
+                sib_bit = parent_m.group(1).strip(" ,")
+                parent_bit = parent_m.group(2).strip(" ,")
+                if not re.match(rf"^{re.escape(label)}\s+is\b", sib_bit, re.I):
+                    if re.match(
+                        r"^(?:(?:younger|older|twin)\s+)?(?:brother|sister)\s+to\b",
+                        sib_bit,
+                        re.I,
+                    ):
+                        sib_bit = f"{label} is {sib_bit}"
+                named_parents.append(
+                    _normalize_standing(
+                        parent_bit
+                        if re.match(rf"^{re.escape(label)}\s+is\b", parent_bit, re.I)
+                        else f"{label} is {parent_bit}"
+                    )
+                )
+                c = sib_bit if sib_bit.endswith((".", "!", "?")) else sib_bit + "."
+            else:
+                named_parents.append(_normalize_standing(c))
+                continue
+        elif re.search(r"\b(?:son|daughter|child)\s+of\b", c, re.I):
             named_parents.append(_normalize_standing(c))
             continue
         tail = _brother_tail(c)

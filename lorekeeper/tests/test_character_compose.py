@@ -507,6 +507,59 @@ class CharacterComposeTests(unittest.TestCase):
         self.assertIn("stygian", low)
         self.assertIn("tenebris", low)
         self.assertNotIn("male protagonist", low)
+
+    def test_who_is_keeps_kinship_when_comma_follows_sibling_name(self):
+        """Prose like 'Obsidian and Stygian, the Moonshadow…' must not chop at the comma."""
+        entries = [
+            _entry(
+                "p1",
+                "Protagonist Notes",
+                (
+                    "Character M is the protagonist of the story, the White Rabbit from "
+                    "Alice in Wonderland. He is younger brother to Obsidian and Stygian, "
+                    "the Moonshadow Rabbits, and the son of the buck Snow Thistle and "
+                    "the doe Ebony."
+                ),
+                tags=["Ashford Saga", "Character M"],
+                kind="note",
+            ),
+            _entry(
+                "c1",
+                "Character M",
+                (
+                    "Character M Background: his father died when Character M was very young, "
+                    "so he doesn’t remember much, but what he does remember would surprise "
+                    "his brothers. His mother took care of him and his brothers as best she "
+                    "could. Not older by enough to be mistaken for Character M’s father "
+                    "but by a decent year gap)."
+                ),
+                tags=["Ashford Saga", "Character M"],
+                kind="character",
+            ),
+            _entry(
+                "n1",
+                "Names",
+                (
+                    "Character M is known by the name Chroniker by Character D and those "
+                    "Character D trusts enough to share what he knows about the White Rabbit."
+                ),
+                tags=["Ashford Saga", "Character M"],
+                kind="character",
+            ),
+        ]
+        res = self._ask("In Ashford Saga, who is Character M?", entries)
+        answer = res.get("answer") or ""
+        self.assertEqual(res.get("materialState"), "summarizable")
+        low = answer.lower()
+        self.assertIn("protagonist", low)
+        self.assertIn("obsidian", low)
+        self.assertIn("stygian", low)
+        self.assertTrue(
+            "snow thistle" in low or "ebony" in low,
+            msg=f"expected named parents in: {answer}",
+        )
+        self.assertNotIn("not older by enough", low)
+        self.assertNotIn("brother to obsidian and.", low)
         self.assertNotIn("roused", low)
         self.assertNotIn("next section", low)
         self.assertNotRegex(answer, r"(?i)character m is male\.")
