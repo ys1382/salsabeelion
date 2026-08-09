@@ -209,6 +209,57 @@
     return hydrated;
   }
 
+  function plainWordCount(html) {
+    var text = String(html || "")
+      .replace(/<[^>]+>/g, " ")
+      .replace(/&nbsp;/gi, " ")
+      .replace(/\u00a0/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+    if (!text) return 0;
+    return text.split(/\s+/).filter(Boolean).length;
+  }
+
+  /** Prefer longer bodyHtml per document so a clipped local mirror cannot wipe the server draft. */
+  function mergeDocumentsPreferLonger(localRaw, serverRaw) {
+    var localList;
+    var serverList;
+    try {
+      localList = JSON.parse(localRaw);
+      serverList = JSON.parse(serverRaw);
+    } catch (e) {
+      return localRaw;
+    }
+    if (!Array.isArray(localList) || !Array.isArray(serverList)) return localRaw;
+    var byId = {};
+    serverList.forEach(function (d) {
+      if (d && d.id) byId[d.id] = d;
+    });
+    var changed = false;
+    localList.forEach(function (d, i) {
+      if (!d || !d.id || !byId[d.id]) return;
+      var s = byId[d.id];
+      var lw = plainWordCount(d.bodyHtml);
+      var sw = plainWordCount(s.bodyHtml);
+      if (sw > 40 && sw > lw && lw < Math.floor(sw * 0.95)) {
+        localList[i] = s;
+        changed = true;
+      }
+    });
+    // Keep server-only docs too.
+    serverList.forEach(function (s) {
+      if (!s || !s.id) return;
+      var found = localList.some(function (d) {
+        return d && d.id === s.id;
+      });
+      if (!found) {
+        localList.push(s);
+        changed = true;
+      }
+    });
+    return changed ? JSON.stringify(localList) : localRaw;
+  }
+
   function mergeIntoCache(data) {
     if (!data || typeof data !== "object") return;
     var queued = false;
@@ -216,6 +267,14 @@
       if (Object.prototype.hasOwnProperty.call(pending, k)) return;
       var local = localGetItem(k);
       if (local != null && local !== "" && local !== data[k]) {
+        if (k === "lorekeeper_documents_v1") {
+          var merged = mergeDocumentsPreferLonger(local, data[k]);
+          if (merged !== local && plainWordCountSum(merged) >= plainWordCountSum(local)) {
+            cache[k] = merged;
+            localSetItem(k, merged);
+            return;
+          }
+        }
         cache[k] = local;
         pending[k] = local;
         markPendingKey(k);
@@ -225,6 +284,20 @@
       cache[k] = data[k];
     });
     if (queued) scheduleFlush();
+  }
+
+  function plainWordCountSum(docsRaw) {
+    try {
+      var list = JSON.parse(docsRaw);
+      if (!Array.isArray(list)) return 0;
+      var n = 0;
+      list.forEach(function (d) {
+        n += plainWordCount(d && d.bodyHtml);
+      });
+      return n;
+    } catch (e) {
+      return 0;
+    }
   }
 
   function hydrateFromServer(data) {

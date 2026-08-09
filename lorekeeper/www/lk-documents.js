@@ -323,6 +323,14 @@
         doc.bodyHtmlBackupAt = prior.bodyHtmlBackupAt;
       }
     }
+    // Refuse saves that shrink a long draft (page-clip / bad join).
+    if (prior && !isEmptyHtml(prior.bodyHtml) && !isEmptyHtml(doc.bodyHtml)) {
+      var priorWords = bodyPlainText(prior.bodyHtml).split(/\s+/).filter(Boolean).length;
+      var nextWords = bodyPlainText(doc.bodyHtml).split(/\s+/).filter(Boolean).length;
+      if (priorWords > 40 && nextWords < Math.floor(priorWords * 0.95)) {
+        doc.bodyHtml = prior.bodyHtml;
+      }
+    }
     if (isEmptyHtml(doc.bodyHtml)) {
       var snap = latestSnapshot(doc.id);
       if (snap && !isEmptyHtml(snap.bodyHtml)) {

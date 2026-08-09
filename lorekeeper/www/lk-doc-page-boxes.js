@@ -113,6 +113,7 @@
   function setQuillHtml(html) {
     if (!quill) return;
     var saved = stripLayout(String(html || "").trim());
+    var expect = plainWords(saved);
     quill.setContents([]);
     if (!saved) {
       quill.setText("");
@@ -127,6 +128,15 @@
       quill.setContents(delta, "silent");
     } catch (e) {
       quill.clipboard.dangerouslyPasteHTML(0, saved, "silent");
+    }
+    var got = plainWords(quillHtml());
+    if (expect.length > 200 && got.length < Math.floor(expect.length * 0.95)) {
+      try {
+        quill.setContents([]);
+        quill.clipboard.dangerouslyPasteHTML(0, saved, "silent");
+      } catch (e2) {
+        /* keep whatever loaded; pageHtmls still holds full draft */
+      }
     }
   }
 
@@ -385,6 +395,10 @@
     var html = quillHtml();
     // Never replace stored prose with an empty editor snapshot during load/layout.
     if (isEmptyHtml(html) && !isEmptyHtml(pageHtmls[activeIndex])) return;
+    // Never replace a long stored page with a much shorter Quill snapshot (clip/load fail).
+    var before = plainWords(pageHtmls[activeIndex] || "");
+    var after = plainWords(html);
+    if (before.length > 200 && after.length < Math.floor(before.length * 0.95)) return;
     pageHtmls[activeIndex] = html;
   }
 
@@ -526,6 +540,9 @@
         // Phase B: scroll inside the page until Phase C moves overflow to the next sheet.
         editor.style.overflow = "auto";
       }
+    }
+    if (growMode) {
+      forceGrowToContent();
     }
     if (canvas) {
       canvas.scrollTop = savedScroll;

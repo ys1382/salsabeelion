@@ -109,6 +109,17 @@
     });
   }
 
+  function htmlWordCount(html) {
+    var text = String(html || "")
+      .replace(/<[^>]+>/g, " ")
+      .replace(/&nbsp;/gi, " ")
+      .replace(/\u00a0/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+    if (!text) return 0;
+    return text.split(/\s+/).filter(Boolean).length;
+  }
+
   function syncDocBodyFromEditor() {
     if (!doc || !quill || loading) return;
     if (global.LoreKeeperSpell && global.LoreKeeperSpell.clearQuillSpellMarks) {
@@ -117,6 +128,13 @@
     if (global.LoreKeeperDocPageBoxes && global.LoreKeeperDocPageBoxes.getJoinedHtml) {
       var joined = LoreKeeperDocPageBoxes.getJoinedHtml();
       if (isEmptyHtml(joined) && !isEmptyHtml(doc.bodyHtml)) return;
+      // Never let a clipped page layout wipe a longer saved draft.
+      var before = htmlWordCount(doc.bodyHtml);
+      var after = htmlWordCount(joined);
+      if (before > 40 && after < Math.floor(before * 0.95)) {
+        setSaveStatus("Save blocked — editor looked shorter than your draft. Refresh or restore a version.", "error");
+        return;
+      }
       doc.bodyHtml = joined;
       doc.bodyFormat = "html";
       return;
@@ -136,6 +154,9 @@
       .replace(/&gt;/gi, ">")
       .replace(/\s+/g, "");
     if (wordsBefore && wordsAfter.length < wordsBefore.length) return;
+    if (htmlWordCount(doc.bodyHtml) > 40 && htmlWordCount(nextHtml) < Math.floor(htmlWordCount(doc.bodyHtml) * 0.95)) {
+      return;
+    }
     doc.bodyHtml = nextHtml;
     doc.bodyFormat = "html";
   }
