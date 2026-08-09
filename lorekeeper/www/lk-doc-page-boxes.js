@@ -230,37 +230,104 @@
     }
 
     var pages = [];
-    var current = "";
-    for (var i = 0; i < blocks.length; i++) {
-      var blockHtml = blocks[i].outerHTML;
-      var trial = current + blockHtml;
-      if (blockFits(measure, trial || "<p><br></p>", maxH)) {
-        current = trial;
-        continue;
-      }
-      if (!current) {
-        var split = splitBlockHtmlToFit(blockHtml, maxH);
-        if (split.head) pages.push(split.head);
-        if (split.tail && !isEmptyHtml(split.tail)) {
-          current = split.tail;
-        } else {
-          current = "";
-        }
-        continue;
-      }
-      pages.push(current);
-      current = "";
-      if (blockFits(measure, blockHtml, maxH)) {
-        current = blockHtml;
-      } else {
-        var split2 = splitBlockHtmlToFit(blockHtml, maxH);
-        if (split2.head) pages.push(split2.head);
-        current = split2.tail || "";
-      }
+    var parts = [];
+    var used = 0;
+    var i = 0;
+    var guard = 0;
+    var maxSteps = Math.max(64, blocks.length * 4);
+
+    function flush() {
+      if (!parts.length) return;
+      pages.push(parts.join(""));
+      parts = [];
+      used = 0;
     }
-    if (current || !pages.length) pages.push(current);
+
+    while (i < blocks.length && guard < maxSteps) {
+      guard += 1;
+      var blockHtml = blocks[i].outerHTML;
+      measure.innerHTML = blockHtml;
+      var h = measure.scrollHeight || 0;
+
+      if (h > maxH + 1) {
+        flush();
+        measure.remove();
+        var split = splitBlockHtmlToFit(blockHtml, maxH);
+        measure = buildMeasureEl();
+        if (split.head) pages.push(split.head);
+        if (split.tail && !isEmptyHtml(split.tail) && split.tail !== blockHtml) {
+          // Re-queue the tail as a synthetic next block
+          var tmp = document.createElement("div");
+          tmp.innerHTML = split.tail;
+          if (tmp.firstElementChild) {
+            blocks.splice(i + 1, 0, tmp.firstElementChild);
+          } else {
+            pages.push(split.tail);
+          }
+        } else if (split.tail && !isEmptyHtml(split.tail)) {
+          // Unsplittable oversized block — keep whole on its own page (clipped until typed)
+          pages.push(split.tail);
+        }
+        i += 1;
+        continue;
+      }
+
+      if (parts.length && used + h > maxH + 1) {
+        flush();
+      }
+      parts.push(blockHtml);
+      used += h;
+      i += 1;
+    }
+    flush();
     measure.remove();
-    return pages.length ? pages : [""];
+    return pages.length ? pages : [clean];
+  }
+
+  function loadFromBodyHtml(html) {
+    var clean = stripLayout(html || "");
+    // Show something immediately — never block the loading screen on full pagination.
+    pageHtmls = [clean];
+    activeIndex = 0;
+    syncing = true;
+    try {
+      renderStack();
+      setQuillHtml(clean);
+    } catch (e) {
+      /* keep going */
+    }
+    syncing = false;
+
+    global.setTimeout(function () {
+      if (!quill) return;
+      try {
+        var wordsBefore = plainWords(clean);
+        var pages = paginateFullHtml(clean);
+        if (!pages.length) pages = [clean];
+        var wordsAfter = plainWords(pages.join(""));
+        if (wordsBefore && wordsAfter.length < wordsBefore.length) {
+          pages = [clean];
+        }
+        pageHtmls = pages;
+        activeIndex = 0;
+        syncing = true;
+        renderStack();
+        setQuillHtml(pageHtmls[0] || "");
+        syncing = false;
+        reflowActive(true);
+      } catch (err) {
+        syncing = false;
+        pageHtmls = [clean];
+        activeIndex = 0;
+        try {
+          renderStack();
+          setQuillHtml(clean);
+        } catch (e2) {
+          /* ignore */
+        }
+      }
+      if (onAfterReflow) onAfterReflow();
+    }, 0);
   }
 
   function headerFooterHtml(pageNum, pageCount) {
@@ -600,23 +667,6 @@
     renderStack();
     setQuillHtml(pageHtmls[activeIndex] || "");
     syncing = false;
-  }
-
-  function loadFromBodyHtml(html) {
-    var wordsBefore = plainWords(html);
-    pageHtmls = paginateFullHtml(html);
-    if (!pageHtmls.length) pageHtmls = [""];
-    var wordsAfter = plainWords(pageHtmls.join(""));
-    if (wordsBefore && wordsAfter.length < wordsBefore.length) {
-      // Fallback: single page, never drop prose
-      pageHtmls = [stripLayout(html) || ""];
-    }
-    activeIndex = 0;
-    syncing = true;
-    renderStack();
-    setQuillHtml(pageHtmls[0] || "");
-    syncing = false;
-    reflowActive(true);
   }
 
   function applyLayoutVars() {

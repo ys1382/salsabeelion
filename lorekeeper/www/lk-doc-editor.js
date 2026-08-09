@@ -932,46 +932,41 @@
 
   function loadDocContentIntoEditor(html) {
     loadHtmlIntoEditor(html);
-    if (!isEmptyHtml(html) && !editorHasText()) {
-      loadHtmlIntoEditor(html);
-    }
   }
 
   function loadDocIntoEditor() {
     loading = true;
     var html = doc.bodyHtml || "";
-    if (global.LoreKeeperDocuments && global.LoreKeeperDocuments.normalizeBodyHtml) {
-      html = LoreKeeperDocuments.normalizeBodyHtml(html);
-      doc.bodyHtml = html;
-    }
-    loadDocContentIntoEditor(html);
-    initFontPicker();
-    loadPageSetupFields();
-    updateWordCount();
-    updatePageChrome();
-    applyDocFont();
-    global.requestAnimationFrame(function () {
+    try {
+      if (global.LoreKeeperDocuments && global.LoreKeeperDocuments.normalizeBodyHtml) {
+        html = LoreKeeperDocuments.normalizeBodyHtml(html);
+        doc.bodyHtml = html;
+      }
+      loadDocContentIntoEditor(html);
+      initFontPicker();
+      loadPageSetupFields();
+      updateWordCount();
       applyDocFont();
-      if (!isEmptyHtml(html) && !editorHasText()) {
-        loadDocContentIntoEditor(html);
-        updateWordCount();
-        updatePageChrome();
-      }
-      try {
-        runPageLayoutSync();
-      } catch (e) {
-        /* layout-only; never block load */
-      }
+    } catch (e) {
+      console.error("LoreKeeper: document load failed", e);
+    }
+    // Always clear the loading screen — even if layout pagination is still settling.
+    global.requestAnimationFrame(function () {
       loading = false;
       bindEditorInput();
       bindResumeCapture();
+      setSaveStatus("Up to date", "idle");
+      setDocEditorReady();
+      updateRestoreBackupUi();
+      updateDocHistoryUi();
+      attachWriteContext();
       global.requestAnimationFrame(function () {
-        restoreResumePosition();
-        setSaveStatus("Up to date", "idle");
-        setDocEditorReady();
-        updateRestoreBackupUi();
-        updateDocHistoryUi();
-        attachWriteContext();
+        try {
+          restoreResumePosition();
+          if (global.LoreKeeperDocPageBoxes) LoreKeeperDocPageBoxes.scheduleReflow();
+        } catch (e2) {
+          /* ignore */
+        }
       });
     });
   }
