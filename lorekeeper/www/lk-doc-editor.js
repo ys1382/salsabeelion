@@ -970,6 +970,10 @@
   function loadDocIntoEditor() {
     loading = true;
     var html = doc.bodyHtml || "";
+    // Clear "Loading…" before heavy Quill paste / pagination so the UI never looks stuck.
+    global.requestAnimationFrame(function () {
+      setDocEditorReady();
+    });
     try {
       if (global.LoreKeeperDocuments && global.LoreKeeperDocuments.normalizeBodyHtml) {
         html = LoreKeeperDocuments.normalizeBodyHtml(html);
@@ -983,7 +987,6 @@
     } catch (e) {
       console.error("LoreKeeper: document load failed", e);
     }
-    // Always clear the loading screen — even if layout pagination is still settling.
     global.requestAnimationFrame(function () {
       loading = false;
       bindEditorInput();
@@ -993,10 +996,12 @@
       updateRestoreBackupUi();
       updateDocHistoryUi();
       attachWriteContext();
+      if (global.LoreKeeperDocPageBoxes && LoreKeeperDocPageBoxes.schedulePaginateAfterReady) {
+        LoreKeeperDocPageBoxes.schedulePaginateAfterReady();
+      }
       global.requestAnimationFrame(function () {
         try {
           restoreResumePosition();
-          if (global.LoreKeeperDocPageBoxes) LoreKeeperDocPageBoxes.scheduleReflow();
         } catch (e2) {
           /* ignore */
         }

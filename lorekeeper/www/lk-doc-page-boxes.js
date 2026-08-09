@@ -239,6 +239,8 @@
     var i = 0;
     var guard = 0;
     var maxSteps = Math.max(64, blocks.length * 4);
+    var started = Date.now();
+    var BUDGET_MS = 100;
 
     function flush() {
       if (!parts.length) return;
@@ -249,18 +251,28 @@
 
     while (i < blocks.length && guard < maxSteps) {
       guard += 1;
+      if (Date.now() - started > BUDGET_MS) {
+        // Too slow — keep Phase A tall single page instead of freezing the tab.
+        measure.remove();
+        return [clean];
+      }
       var blockHtml = blocks[i].outerHTML;
       measure.innerHTML = blockHtml;
       var h = measure.scrollHeight || 0;
 
       if (h > maxH + 1) {
         flush();
+        // Skip expensive binary-split when over budget; put whole block on next page pack.
+        if (Date.now() - started > BUDGET_MS * 0.7) {
+          pages.push(blockHtml);
+          i += 1;
+          continue;
+        }
         measure.remove();
         var split = splitBlockHtmlToFit(blockHtml, maxH);
         measure = buildMeasureEl();
         if (split.head) pages.push(split.head);
         if (split.tail && !isEmptyHtml(split.tail) && split.tail !== blockHtml) {
-          // Re-queue the tail as a synthetic next block
           var tmp = document.createElement("div");
           tmp.innerHTML = split.tail;
           if (tmp.firstElementChild) {
@@ -269,7 +281,6 @@
             pages.push(split.tail);
           }
         } else if (split.tail && !isEmptyHtml(split.tail)) {
-          // Unsplittable oversized block — keep whole on its own page (clipped until typed)
           pages.push(split.tail);
         }
         i += 1;
@@ -288,8 +299,12 @@
     return pages.length ? pages : [clean];
   }
 
+  var pendingPaginateHtml = null;
+  var paginateTimer = null;
+
   function loadFromBodyHtml(html) {
     var clean = stripLayout(html || "");
+    pendingPaginateHtml = clean;
     // Show full draft immediately on one growing sheet (no chop, no hang).
     pageHtmls = [clean];
     activeIndex = 0;
@@ -302,41 +317,49 @@
     }
     syncing = false;
     if (onAfterReflow) onAfterReflow();
+    // Pagination is scheduled only after the loading screen clears (see schedulePaginateAfterReady).
+  }
 
-    if (!ALLOW_MULTI_PAGE) return;
-
-    function applyPages() {
-      if (!quill) return;
+  /** Call after setDocEditorReady so "Loading…" never waits on page split. */
+  function schedulePaginateAfterReady() {
+    if (!ALLOW_MULTI_PAGE || !pendingPaginateHtml) return;
+    if (paginateTimer) clearTimeout(paginateTimer);
+    var clean = pendingPaginateHtml;
+    // Wait until the first paint/ready is done, then try a cheap split.
+    paginateTimer = global.setTimeout(function () {
+      paginateTimer = null;
+      if (!quill || pendingPaginateHtml !== clean) return;
       try {
         var wordsBefore = plainWords(clean);
+        // Huge docs: skip split for now — stay on tall readable page.
+        if (clean.length > 200000) {
+          pendingPaginateHtml = null;
+          return;
+        }
         var pages = paginateFullHtml(clean);
         if (!pages.length) pages = [clean];
         var wordsAfter = plainWords(pages.join(""));
-        // Word guard: abort split if any prose would be lost.
         if (wordsBefore && wordsAfter !== wordsBefore) {
+          pendingPaginateHtml = null;
           return;
         }
-        if (pages.length <= 1) return;
+        if (pages.length <= 1) {
+          pendingPaginateHtml = null;
+          return;
+        }
         pageHtmls = pages;
         activeIndex = 0;
         syncing = true;
         renderStack();
         setQuillHtml(pageHtmls[0] || "");
         syncing = false;
+        pendingPaginateHtml = null;
         if (onAfterReflow) onAfterReflow();
       } catch (err) {
         syncing = false;
-        // Keep tall single-page fallback from the first paint.
+        pendingPaginateHtml = null;
       }
-    }
-
-    if (typeof global.requestIdleCallback === "function") {
-      global.requestIdleCallback(function () {
-        applyPages();
-      }, { timeout: 1500 });
-    } else {
-      global.setTimeout(applyPages, 0);
-    }
+    }, 400);
   }
 
   function headerFooterHtml(pageNum, pageCount) {
@@ -796,6 +819,7 @@
     bind: bind,
     loadFromBodyHtml: loadFromBodyHtml,
     scheduleReflow: scheduleReflow,
+    schedulePaginateAfterReady: schedulePaginateAfterReady,
     reflowNow: function () {
       reflowActive(false);
     },
