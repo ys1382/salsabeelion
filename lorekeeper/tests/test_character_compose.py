@@ -1126,6 +1126,88 @@ class CharacterComposeTests(unittest.TestCase):
             msg=answer,
         )
 
+    def test_who_is_rejects_knower_thinks_that_pov(self):
+        from lorekeeper_character_compose import (
+            is_knower_pov_about_label,
+            is_other_character_scene_beat,
+        )
+
+        bad = (
+            "Umber thinks that Theron is worried that someone will "
+            "try to lay claim to the White Rabbit before Theron can."
+        )
+        self.assertTrue(is_knower_pov_about_label(bad, "Theron"))
+        self.assertTrue(is_other_character_scene_beat(bad, "Theron"))
+        entries = [
+            _entry(
+                "u1",
+                "Umber sheet",
+                bad + " Umber is a grey wolf.",
+                kind="character",
+                tags=["Ashford Saga"],
+            ),
+            _entry(
+                "t1",
+                "Lord Theron",
+                (
+                    "Lord Theron of Cheshire is not entirely of this world; "
+                    "his status as a Fairy Tale character grants him social rank."
+                ),
+                kind="character",
+                tags=["Ashford Saga"],
+            ),
+        ]
+        res = self._ask("In Ashford Saga, who is Theron?", entries)
+        answer = (res.get("answer") or "").lower()
+        self.assertNotIn("thinks that", answer)
+        self.assertTrue(
+            "cheshire" in answer or "fairy" in answer or "faeble" in answer,
+            msg=answer,
+        )
+
+    def test_who_is_compresses_rename_dump_and_keeps_twin(self):
+        entries = [
+            _entry(
+                "n1",
+                "Protagonist: Character P",
+                'The protagonist is named "Character P."',
+                kind="character",
+                tags=["Rust Saga"],
+            ),
+            _entry(
+                "n2",
+                "Names",
+                (
+                    "Character P is the birth name of the protagonist, then he changes his name "
+                    "to Cypher Prism after he flees his planet of birth, Techrontis and arrives "
+                    "on the ecumenopolis, and then changes his name to Palladiar (fantasy name "
+                    "based on Palladium) when he becomes the leader of his faction against "
+                    "Character G's faction."
+                ),
+                kind="character",
+                tags=["Rust Saga"],
+            ),
+            _entry(
+                "d1",
+                "Rust draft",
+                (
+                    "one of the twins, the protagonist's elder brother Character Q, forces his "
+                    "way out, and then pulls his younger twin, Character P, after himself."
+                ),
+                kind="document",
+                tags=["Rust Saga"],
+            ),
+        ]
+        res = self._ask("In Rust Saga, who is Character P?", entries)
+        answer = (res.get("answer") or "").lower()
+        self.assertIn("protagonist", answer)
+        self.assertTrue("brother" in answer or "twin" in answer, msg=answer)
+        self.assertTrue(
+            "cypher" in answer or "palladiar" in answer or "against" in answer,
+            msg=answer,
+        )
+        self.assertLess(answer.count("changes his name"), 2, msg=answer)
+
 
 if __name__ == "__main__":
     unittest.main()

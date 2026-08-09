@@ -126,7 +126,9 @@ _SPECIES_IDENTITY = re.compile(
 _PROFILE_ROLE_WORDS = (
     f"{ROLE_TERMS}|"
     r"spirit|guardian|"
-    r"ruler|king|queen|prince|princess|lord|lady|captain|soldier|wizard|witch"
+    r"ruler|king|queen|prince|princess|lord|lady|captain|soldier|wizard|witch|"
+    r"author|authors?|"
+    r"young woman|young man|baron|baroness|faeble|fairy[- ]?tale character"
 )
 
 
@@ -460,10 +462,32 @@ def _name_in_text(name: str, text: str) -> bool:
 
 
 def _is_author_meta_sentence(sentence: str, names: list[str] | None = None) -> bool:
-    s = (sentence or "").strip()
-    if not s:
+    from lorekeeper_character_compose import strip_inline_author_asides
+
+    raw = (sentence or "").strip()
+    if not raw:
         return True
     names = names or []
+    s = strip_inline_author_asides(raw) or raw
+    # Mixed cast + aside: keep if a clear subject identity remains after stripping.
+    if s != raw and names and (
+        _has_profile_copula(s, names)
+        or any(
+            re.search(
+                rf"\b{re.escape(n)}\s+(?:is|was|are|were)\b|"
+                rf"^(?:Lord|Lady|Duke|Duchess)\s+{re.escape(n)}\b",
+                s,
+                re.I,
+            )
+            for n in names
+        )
+    ):
+        if not re.match(
+            r"^I\s+(think|thought|feel|felt|want|wanted|should|could|might|need)\b",
+            s,
+            re.I,
+        ):
+            return False
     if _AUTHOR_META_RE.search(s):
         return True
     if re.match(r"^I\s+(think|thought|feel|felt|want|wanted|should|could|might|need|needed|was thinking)\b", s, re.I):
@@ -636,12 +660,30 @@ def _has_profile_copula(sentence: str, names: list[str]) -> bool:
             return True
         if re.search(rf"\b{n}\s+(?:is|was)\s+(?:married|engaged)\b", s_low):
             return True
+        # "Elham is a young woman… and an author" / "not entirely of this world"
+        if re.search(
+            rf"\b{n}\s+(?:is|was|are|were)\s+(?:a|an|the|not|probably)\b",
+            s_low,
+        ):
+            return True
+        if re.search(
+            rf"\b(?:protagonist|antagonist|villain|hero|heroine)\s+is\s+named\s+"
+            rf"[\"“']?{n}\b",
+            s_low,
+        ):
+            return True
         if re.search(rf"\b{n}\s*[—–\-:,]\s*", sentence, re.I):
             return True
         if _TRAIT_HINT.search(sentence) and re.search(rf"\b{n}\b", s_low):
             return True
         # "Duke Dijon is a Eurasian Lynx" / "Dijon is a lynx"
         if re.search(rf"\b{n}\b", s_low) and _SPECIES_IDENTITY.search(sentence):
+            return True
+        # "Lord Tenebris of Cheshire … is …"
+        if re.search(
+            rf"\b(?:lord|lady|duke|duchess|baron|baroness)\s+{n}\b",
+            s_low,
+        ) and re.search(r"\b(?:is|was|are|were)\b", s_low):
             return True
     if re.search(r"\b(son|daughter|child|brother|sister)\s+of\b", s_low):
         return True
@@ -861,45 +903,85 @@ def _bits_for_character(entry: dict[str, Any], names: list[str]) -> list[str]:
     label = names[0] if names else ""
     is_sheet = _entry_is_character_sheet(entry, names)
 
+    from lorekeeper_character_compose import (
+        compress_rename_infodump_to_cast_lines,
+        is_rename_infodump_clause,
+        strip_inline_author_asides,
+    )
+
+    # Title "Protagonist: Platinus" → role line even when body is thin.
+    title_role = re.match(
+        r"^(Protagonist|Antagonist|Villain|Hero|Heroine|Deuteragonist)\s*:\s*(.+)$",
+        title.strip(),
+        re.I,
+    )
+    if title_role and label:
+        titled = title_role.group(2).strip().strip("\"'")
+        if _names_include(titled, names) or titled.lower() == label.lower():
+            bits.append(f"{label} is the {title_role.group(1).lower()}.")
+
+    def _keep_bit(sentence: str) -> list[str]:
+        cleaned = strip_inline_author_asides(sentence) or sentence
+        if is_rename_infodump_clause(cleaned, label) or is_rename_infodump_clause(
+            sentence, label
+        ):
+            compressed = compress_rename_infodump_to_cast_lines(sentence, label)
+            if compressed:
+                return compressed
+            return []
+        if _who_is_profile_bit(cleaned, label, allow_pronoun=is_sheet):
+            from lorekeeper_character_compose import normalize_premise_cast_line
+
+            cleaned = normalize_premise_cast_line(cleaned, label)
+            return [cleaned if len(cleaned) >= 12 else sentence]
+        if _who_is_profile_bit(sentence, label, allow_pronoun=is_sheet):
+            return [sentence]
+        return []
+
     if is_sheet:
         if body:
-            bits = [
-                s
-                for s in _split_sentences(body)
-                if _who_is_profile_bit(s, label, allow_pronoun=True)
-            ]
+            for s in _split_sentences(body):
+                bits.extend(_keep_bit(s))
             if not bits and _title_exact_match(entry, names):
                 bits = _bits_from_segment(f"{label} — {body}", names)
-        elif title:
+        elif title and not bits:
             bits = [f"(Entry titled “{title}” — no body text yet.)"]
     elif role_terms:
         for sentence in _split_sentences(body):
             s_low = sentence.lower()
             if any(role in s_low for role in role_terms):
-                if _who_is_profile_bit(sentence, label, allow_pronoun=False):
-                    bits.append(sentence)
+                bits.extend(_keep_bit(sentence))
     else:
         segments = _segments_mentioning(body, names)
         for segment in segments:
             for bit in _bits_from_segment(segment, names):
-                if _who_is_profile_bit(bit, label, allow_pronoun=False):
-                    bits.append(bit)
+                bits.extend(_keep_bit(bit))
         if not bits:
             sentences = _split_sentences(body)
-            for i, sentence in enumerate(sentences):
-                if _is_author_meta_sentence(sentence, names):
-                    continue
+            for sentence in sentences:
                 if not any(_name_in_text(name, sentence) for name in names):
-                    continue
-                if not _who_is_profile_bit(sentence, label, allow_pronoun=False):
-                    continue
-                bits.append(sentence)
-                if i + 1 < len(sentences):
-                    nxt = sentences[i + 1]
-                    if re.match(r"^(He|She|They|It|His|Her|Their)\b", nxt, re.I):
-                        # Pronoun continuation only on this person's own sheet.
+                    # "The protagonist is named Platinus" — name is the object.
+                    if not re.search(
+                        rf"\bnamed\s+[\"“']?(?:{'|'.join(re.escape(n) for n in names)})\b",
+                        sentence,
+                        re.I,
+                    ):
                         continue
+                kept = _keep_bit(sentence)
+                if not kept:
+                    continue
+                bits.extend(kept)
 
+    # Dedupe while preserving order.
+    seen: set[str] = set()
+    deduped: list[str] = []
+    for b in bits:
+        key = re.sub(r"\s+", " ", b.lower())[:120]
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(b)
+    bits = deduped
     bits.sort(key=lambda s: _BUCKET_RANK.get(_classify_sentence(s, names), 3))
     return bits[:12]
 
@@ -1065,23 +1147,29 @@ def _clear_profile_line(bit: str, label: str) -> bool:
 
 
 def _who_is_profile_bit(bit: str, label: str, *, allow_pronoun: bool = False) -> bool:
-    if _is_author_meta_sentence(bit, [label]):
-        return False
     from lorekeeper_character_compose import (
         _is_plot_arc_clause,
         cast_sentence_about_subject,
+        is_knower_pov_about_label,
         is_other_character_scene_beat,
         is_scrap_identity_clause,
         is_story_significance_clause,
         label_only_as_alias_mention,
+        strip_inline_author_asides,
         who_is_answer_has_bloat,
     )
 
+    raw = (bit or "").strip()
+    bit = strip_inline_author_asides(raw) or raw
+    if _is_author_meta_sentence(bit, [label]) and _is_author_meta_sentence(raw, [label]):
+        return False
     if who_is_answer_has_bloat(bit):
         return False
     if is_scrap_identity_clause(bit, label):
         return False
     if label_only_as_alias_mention(bit, label):
+        return False
+    if is_knower_pov_about_label(bit, label) or is_knower_pov_about_label(raw, label):
         return False
     # Interior thought / scene beat — never cast-card identity (even if "White Rabbit" appears).
     if re.search(
@@ -1295,7 +1383,10 @@ def _synthesize_character_answer(
                 continue
             bucket = _classify_sentence(bit, [label])
             if bucket == "role" and not cast_role_line_about_label(bit, label):
-                from lorekeeper_character_compose import is_overview_significance_clause
+                from lorekeeper_character_compose import (
+                    is_overview_significance_clause,
+                    is_who_is_cast_fact_sentence,
+                )
 
                 # Pronoun role on this person's sheet: "He is … antagonist"
                 if re.match(r"^(?:He|She)\b", bit, re.I) and re.search(
@@ -1309,6 +1400,13 @@ def _synthesize_character_answer(
                 # Overview stakes mis-bucketed as role (e.g. "Lord …" title word) — keep.
                 if is_overview_significance_clause(bit, label):
                     identity.append(bit)
+                    continue
+                # "Lord Tenebris of Cheshire is a Fairy Tale character…" — identity, not cast-role.
+                if is_who_is_cast_fact_sentence(bit, label) or _has_profile_copula(
+                    bit, [label]
+                ):
+                    identity.append(bit)
+                    continue
                 continue
             if bucket == "role":
                 roles.append(bit)
@@ -1694,60 +1792,123 @@ def _explicit_who_is_cast_lines_from_drafts(
 
     lines: list[str] = []
     seen: set[str] = set()
+
+    def _add(line: str) -> None:
+        line = re.sub(r"\s+", " ", (line or "").strip())
+        if not line:
+            return
+        key = line.lower()[:100]
+        if key in seen:
+            return
+        seen.add(key)
+        lines.append(line)
+
     for entry in scope:
         if not _is_draft_entry(entry):
             continue
         body = normalize_corpus_text(str(entry.get("body") or ""))
+        # Twin / elder-brother beats buried in birth scenes.
+        cast_name = (
+            r"[A-Za-z][a-z]{2,}(?:\s+(?:[A-Za-z][a-z]{2,}|[A-Z0-9]))?"
+        )
+        for m in re.finditer(
+            rf"elder brother\s+({cast_name}).{{0,160}}younger twin,?\s+"
+            rf"(?:{'|'.join(re.escape(n) for n in query_names)})\b",
+            body,
+            re.I | re.S,
+        ):
+            bro = m.group(1).strip()
+            if bro.lower() != label.lower() and bro.lower() != "character":
+                _add(f"{label} is younger twin brother to {bro}.")
+        for m in re.finditer(
+            rf"\b({cast_name})\s+and\s+(?:{'|'.join(re.escape(n) for n in query_names)})\s+"
+            rf"are brothers\b|"
+            rf"\b(?:{'|'.join(re.escape(n) for n in query_names)})\s+and\s+({cast_name})\s+"
+            rf"are brothers\b",
+            body,
+            re.I,
+        ):
+            other = (m.group(1) or m.group(2) or "").strip()
+            if (
+                other
+                and other.lower() != label.lower()
+                and other.lower() != "character"
+            ):
+                _add(f"{label} is brother to {other}.")
         for sentence in _split_sentences(body):
-            if _is_author_meta_sentence(sentence, query_names):
+            from lorekeeper_character_compose import (
+                normalize_premise_cast_line,
+                strip_inline_author_asides,
+            )
+
+            cleaned = strip_inline_author_asides(sentence) or sentence
+            cleaned = normalize_premise_cast_line(cleaned, label)
+            if _is_author_meta_sentence(cleaned, query_names) and _is_author_meta_sentence(
+                sentence, query_names
+            ):
                 continue
             if re.search(
                 r"\b("
                 r"tries? not to|trying not to|not to dwell|doesn'?t want to dwell|"
                 r"no doubt views|daring to demonstrate"
                 r")\b",
-                sentence,
+                cleaned,
                 re.I,
             ):
                 continue
-            if not any(_name_in_text(name, sentence) for name in query_names):
+            # Letter sign-offs are not cast cards.
+            if re.match(r"^(?:Best regards|Sincerely|Yours truly)\b", cleaned, re.I):
+                # Still harvest "Lord X, Baron of Y" from the signature line.
+                sig = re.search(
+                    rf"\b(?:Lord|Lady|Duke|Duchess|Baron|Baroness)\s+"
+                    rf"{re.escape(label)}\b(?:,\s*)?(Baron of [A-Z][\w'-]+)?",
+                    cleaned,
+                    re.I,
+                )
+                if sig and sig.group(1):
+                    _add(f"{label} is {sig.group(1)}.")
                 continue
-            if _classify_sentence(sentence, query_names) in ("scene", "dialogue"):
+            if not any(_name_in_text(name, cleaned) for name in query_names):
+                continue
+            if _classify_sentence(cleaned, query_names) in ("scene", "dialogue"):
                 continue
             about = bool(
                 re.search(
                     rf"\b(?:{'|'.join(re.escape(n) for n in query_names)})\s+"
                     rf"(?:is|was|are|were)\b",
-                    sentence,
+                    cleaned,
                     re.I,
                 )
                 or re.search(
                     rf"\b(?:{'|'.join(re.escape(n) for n in query_names)})\s*[—–\-:,]",
-                    sentence,
+                    cleaned,
                     re.I,
                 )
-                or is_overview_significance_clause(sentence, label)
-                or is_opposition_cast_clause(sentence, label)
+                or re.match(
+                    rf"^(?:Premise|Role|Cast|Identity|Summary)\s*:\s*"
+                    rf"(?:{'|'.join(re.escape(n) for n in query_names)})\b",
+                    cleaned,
+                    re.I,
+                )
+                or is_overview_significance_clause(cleaned, label)
+                or is_opposition_cast_clause(cleaned, label)
             )
             if not about:
                 continue
             if not (
-                _who_is_cast_bit_from_draft(sentence, label)
-                or is_who_is_cast_fact_sentence(sentence, label)
-                or is_overview_significance_clause(sentence, label)
-                or is_opposition_cast_clause(sentence, label)
+                _who_is_cast_bit_from_draft(cleaned, label)
+                or is_who_is_cast_fact_sentence(cleaned, label)
+                or is_overview_significance_clause(cleaned, label)
+                or is_opposition_cast_clause(cleaned, label)
                 or (
-                    _has_profile_copula(sentence, query_names)
-                    and _classify_sentence(sentence, query_names)
+                    _has_profile_copula(cleaned, query_names)
+                    and _classify_sentence(cleaned, query_names)
                     in ("role", "identity", "relationship")
                 )
+                or _who_is_profile_bit(cleaned, label, allow_pronoun=False)
             ):
                 continue
-            key = re.sub(r"\s+", " ", sentence.lower())[:100]
-            if key in seen:
-                continue
-            seen.add(key)
-            lines.append(sentence)
+            _add(cleaned)
     return lines[:12]
 
 

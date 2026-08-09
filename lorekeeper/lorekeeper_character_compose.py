@@ -253,6 +253,8 @@ _OTHER_CHAR_EVENT_RE = re.compile(
     r"\b("
     r"isn'?t surprised|wasn'?t surprised|surprised to (?:see|find|learn)|"
     r"sees? that|saw that|notices? that|noticed that|"
+    r"thinks? that|thought that|worries that|worried that|"
+    r"believes? that|knows? that|realizes? that|suspects? that|"
     r"finds? (?:that|him|her|them)|found (?:that|him|her|them)|"
     r"watches?|watched|badly injured|wounded|bleeding|"
     r"in (?:his|her|their) (?:first|second|third|opening|early) POV"
@@ -546,6 +548,8 @@ def cast_sentence_about_subject(
 
     if label_only_as_alias_mention(s, label):
         return False
+    if is_knower_pov_about_label(s, label):
+        return False
 
     if re.match(rf"^{lab}\s+(?:is|was|are|were|storywalks?|sets?)\b", s, re.I):
         return True
@@ -562,10 +566,25 @@ def cast_sentence_about_subject(
         re.I,
     ):
         return True
-    if re.search(rf"\b{lab}\s+(?:is|was|are|were)\b", s, re.I):
+    # "The protagonist is named Platinus."
+    if re.search(
+        rf"\b(?:protagonist|antagonist|villain|hero|heroine)\s+is\s+named\s+"
+        rf"[\"“']?{lab}\b",
+        s,
+        re.I,
+    ):
+        return True
+    # "Premise: Elham is a young woman…"
+    if re.match(
+        rf"^(?:Premise|Role|Cast|Identity|Summary)\s*:\s*{lab}\s+"
+        rf"(?:is|was|are|were)\b",
+        s,
+        re.I,
+    ):
         return True
 
-    # Another proper name leads the sentence — about them, not the asked label.
+    # Another proper name leads the sentence — about them, not the asked label
+    # (unless it is a title line for the label).
     m = re.match(
         r"^([A-Z][\w'-]+(?:\s+(?:of|[A-Z][\w'-]+)){0,2})\b",
         s,
@@ -589,13 +608,125 @@ def cast_sentence_about_subject(
             "when",
             "after",
             "before",
+            "premise",
+            "role",
+            "cast",
+            "identity",
+            "summary",
+            "lord",
+            "lady",
+            "duke",
+            "duchess",
         }:
+            # Mid-sentence "Y is" inside someone else's thought/scene is not about Y.
             return False
 
     if re.match(r"^(?:He|She|They)\b", s, re.I):
         return bool(allow_pronoun)
 
     return False
+
+
+def is_knower_pov_about_label(sentence: str, label: str) -> bool:
+    """True when another cast member thinks/worries that the asked person …"""
+    s = re.sub(r"\s+", " ", (sentence or "").strip())
+    label = (label or "").strip()
+    if not s or not label:
+        return False
+    lab = re.escape(label)
+    # "Umber thinks that Tenebris is…"
+    if re.match(
+        rf"^(?!{lab}\b)([A-Z][\w'-]+(?:\s+[A-Z][\w'-]+)?)\s+"
+        rf"(?:thinks?|thought|worries|worried|believes?|knows?|realizes?|"
+        rf"suspects?|fears?|assumes?|guesses?)\s+that\s+.*\b{lab}\b",
+        s,
+        re.I,
+    ):
+        return True
+    if re.search(
+        rf"\b(?:thinks?|worries|believes?|knows?|realizes?|suspects?|fears?)\s+that\s+"
+        rf"{lab}\s+(?:is|was|are|were|will|can|could|might)\b",
+        s,
+        re.I,
+    ) and not re.match(rf"^{lab}\b", s, re.I):
+        return True
+    return False
+
+
+def strip_inline_author_asides(sentence: str) -> str:
+    """Remove parenthetical / inline 'I want…' asides so cast facts can surface."""
+    s = re.sub(r"\s+", " ", (sentence or "").strip())
+    if not s:
+        return ""
+    s = re.sub(r"\([^)]{0,200}\bI\b[^)]{0,200}\)", "", s)
+    s = re.sub(
+        r",\s*I\s+(?:want|think|still|don'?t|haven'?t|need|should|could|might)"
+        r"[^.;]{0,160}",
+        "",
+        s,
+        flags=re.I,
+    )
+    s = re.sub(r"\s+", " ", s).strip(" ,;")
+    return s
+
+
+def normalize_premise_cast_line(sentence: str, label: str) -> str:
+    """Turn 'Premise: Elham is…' into a plain cast sentence."""
+    s = re.sub(r"\s+", " ", (sentence or "").strip())
+    label = (label or "").strip()
+    if not s or not label:
+        return s
+    m = re.match(
+        rf"^(?:Premise|Role|Cast|Identity|Summary)\s*:\s*"
+        rf"({re.escape(label)}\s+.+)$",
+        s,
+        re.I,
+    )
+    if m:
+        s = m.group(1).strip()
+    if s and not s.endswith((".", "!", "?")):
+        s += "."
+    return s
+
+
+def compress_rename_infodump_to_cast_lines(sentence: str, label: str) -> list[str]:
+    """Turn a long birth-name dump into short cast slots (no invention)."""
+    s = re.sub(r"\s+", " ", (sentence or "").strip())
+    label = (label or "").strip()
+    if not s or not label or not is_rename_infodump_clause(s, label):
+        return []
+    out: list[str] = []
+    if re.search(r"\b(birth name of the protagonist|protagonist)\b", s, re.I):
+        out.append(f"{label} is the protagonist.")
+    akas = re.findall(
+        r"changes?\s+(?:his|her|their)\s+name\s+to\s+"
+        r"([A-Z][\w'-]+(?:\s+[A-Z][\w'-]+)?)",
+        s,
+        re.I,
+    )
+    # Drop parenthetical alternatives after a name.
+    cleaned_akas: list[str] = []
+    for aka in akas:
+        aka = re.split(r"\s*\(", aka, maxsplit=1)[0].strip()
+        if aka and aka.lower() != label.lower() and aka not in cleaned_akas:
+            cleaned_akas.append(aka)
+    if len(cleaned_akas) == 1:
+        out.append(f"{label} is also known as {cleaned_akas[0]}.")
+    elif len(cleaned_akas) >= 2:
+        out.append(
+            f"{label} is also known as {cleaned_akas[0]} and later {cleaned_akas[-1]}."
+        )
+    m = re.search(
+        r"(?:leader of (?:his|her|their) faction\s+)?against\s+"
+        r"([A-Z][\w-]+)(?:'s)?\s+faction",
+        s,
+        re.I,
+    )
+    if m:
+        rival = m.group(1).strip()
+        if rival.lower() != label.lower():
+            out.append(f"{label} leads a faction against {rival}.")
+    return out[:4]
 
 
 def is_incomplete_cast_clause(sentence: str, label: str = "") -> bool:
@@ -653,7 +784,10 @@ def is_opposition_cast_clause(sentence: str, label: str = "") -> bool:
         r"\b("
         r"up against|opposed by|opposes?|opposition|"
         r"rival (?:to|of)|nemesis|arch[- ]?enem(?:y|ies)|sworn enem(?:y|ies)|"
-        r"enemy of|against .{0,40}?faction|main antagonist|side antagonist"
+        r"enemy of|against .{0,40}?faction|"
+        r"leads? (?:a |his |her |their )?faction against|"
+        r"faction against|"
+        r"main antagonist|side antagonist"
         r")\b",
         s,
         re.I,
@@ -990,11 +1124,31 @@ def is_who_is_cast_fact_sentence(sentence: str, label: str) -> bool:
         # Pronoun-led overview / kin already handled above when patterns match.
         return False
 
-    # "Lord Tenebris is the Cheshire Cat…" when asked label is Tenebris.
+    # "Premise: Elham is a young woman and an author."
+    if re.match(
+        rf"^(?:Premise|Role|Cast|Identity|Summary)\s*:\s*{re.escape(label)}\s+"
+        rf"(?:is|was|are|were)\b",
+        s,
+        re.I,
+    ):
+        if re.search(
+            r"\b("
+            r"young woman|young man|author|protagonist|antagonist|villain|hero|"
+            r"rabbit|wolf|lynx|arcanist|male|female|sentient"
+            r")\b",
+            s,
+            re.I,
+        ):
+            return True
+        if len(s) <= 180:
+            return True
+
+    # "Lord Tenebris is the Cheshire Cat…" / "Lord Tenebris of Cheshire is…"
     title_prefix = (
         rf"^(?:Lord|Lady|Duke|Duchess|Sir|Dame|King|Queen|Prince|Princess|"
-        rf"Baron|Baroness|Count|Countess)\s+{re.escape(label)}\s+"
-        rf"(?:is|was|are|were)\b"
+        rf"Baron|Baroness|Count|Countess)\s+{re.escape(label)}"
+        rf"(?:\s+of\s+[A-Z][\w'-]+)?"
+        rf"\s+(?:is|was|are|were)\b"
     )
     if re.match(title_prefix, s, re.I):
         if re.search(
@@ -1002,13 +1156,15 @@ def is_who_is_cast_fact_sentence(sentence: str, label: str) -> bool:
             r"protagonist|antagonist|villain|hero|heroine|main character|side character|"
             r"side antagonist|rabbit|wolf|fox|lynx|arcanist|male|female|sentient|"
             r"known|called|aka|white rabbit|cheshire|from .+ wonderland|guardian|spirit|"
-            r"chosen one|destined|fated|nemesis|best friend|noble|predator|prey"
+            r"chosen one|destined|fated|nemesis|best friend|noble|predator|prey|"
+            r"fairy[- ]?tale|faeble|baron|not entirely of this world|social rank|"
+            r"of this world|another world"
             r")\b",
             s,
             re.I,
         ):
             return True
-        if len(s) <= 160 and not _PLOT_ARC_RE.search(s):
+        if len(s) <= 220 and not _PLOT_ARC_RE.search(s):
             return True
 
     # Subject-led identity / role / species / gender / alias — NOT kinship-via-plot.
@@ -1087,6 +1243,8 @@ def is_other_character_scene_beat(sentence: str, label: str) -> bool:
     label = (label or "").strip()
     if not s or not label:
         return False
+    if is_knower_pov_about_label(s, label):
+        return True
     # Keep subject-led identity / status lines.
     if re.match(rf"^{re.escape(label)}\s+(?:is|was|are|were)\b", s, re.I):
         return False
@@ -1121,6 +1279,9 @@ def is_other_character_scene_beat(sentence: str, label: str) -> bool:
         "that",
         "smoke",
         "ashford",
+        "premise",
+        "role",
+        "cast",
     }:
         return False
     return bool(_OTHER_CHAR_EVENT_RE.search(s))
@@ -1318,6 +1479,8 @@ def _clause_adds_profile(clause: str, label: str) -> bool:
     # Who-is: allow overview stakes (incl. upheaval reason); still reject bare storywalk dumps.
     if is_overview_significance_clause(s, label):
         return True
+    if is_opposition_cast_clause(s, label):
+        return True
     if is_story_significance_clause(s, label):
         return False
     if _BIOGRAPHY_RE.search(s):
@@ -1344,7 +1507,23 @@ def _clause_adds_profile(clause: str, label: str) -> bool:
         return False
     if re.search(rf"\b{re.escape(label)}\s+(?:is|was|are|were)\b", s, re.I):
         return True
+    # "Lord Tenebris of Cheshire is…" when asked label is Tenebris.
+    if re.search(
+        rf"\b(?:Lord|Lady|Duke|Duchess|Baron|Baroness|Sir|Dame)\s+"
+        rf"{re.escape(label)}\b.{{0,60}}?\b(?:is|was|are|were)\b",
+        s,
+        re.I,
+    ):
+        return True
+    if re.search(rf"\b{re.escape(label)}\s+of\s+\w+.{{0,40}}?\b(?:is|was|are|were)\b", s, re.I):
+        return True
     if re.search(rf"\b{re.escape(label)}\s*[—–\-:,]", s, re.I):
+        return True
+    if re.search(
+        r"\b(fairy[- ]?tale|faeble|young woman|young man|author)\b",
+        s,
+        re.I,
+    ) and re.search(rf"\b{re.escape(label)}\b", s, re.I):
         return True
     if _ROLE_WORDS_RE.search(s):
         return True
@@ -1413,8 +1592,16 @@ def _composed_has_substance(paragraphs: list[str], label: str) -> bool:
     if re.search(rf"\b{re.escape(label)}\s+(?:is|was)\b", body, re.I):
         return True
     if re.search(
+        rf"\b(?:Lord|Lady|Duke|Duchess|Baron|Baroness)\s+{re.escape(label)}\b"
+        rf".{{0,60}}?\b(?:is|was|are|were)\b",
+        body,
+        re.I,
+    ):
+        return True
+    if re.search(
         r"\b(married|brother|sister|son|daughter|guardian|spirit|protagonist|antagonist|"
-        r"grey|gray|arcanist|elf|villain|hero)\b",
+        r"grey|gray|arcanist|elf|villain|hero|fairy[- ]?tale|faeble|cheshire|"
+        r"baron of|young woman|young man|author)\b",
         body,
         re.I,
     ):
@@ -1651,12 +1838,14 @@ def weave_who_is_gold_tone(
     significance_lines: list[str] = []
     extras_from_rel: list[str] = []
     orphan_lines: list[str] = []
+    gender_word: str | None = None
 
     def _brother_tail(c: str) -> str | None:
         for pat in (
-            rf"^{re.escape(label)}\s+is\s+(?:(?:younger|older|twin)\s+)?brother to\s+(.+?)\.?$",
-            rf"^{re.escape(label)}\s*[—–\-:,]\s*(?:(?:younger|older|twin)\s+)?brother to\s+(.+?)\.?$",
-            rf"^(?:(?:younger|older|twin)\s+)?brother to\s+(.+?)\.?$",
+            rf"^{re.escape(label)}\s+is\s+(?:(?:younger|older|twin)\s+)*brother to\s+(.+?)\.?$",
+            rf"^{re.escape(label)}\s*[—–\-:,]\s*(?:(?:younger|older|twin)\s+)*brother to\s+(.+?)\.?$",
+            rf"^(?:(?:younger|older|twin)\s+)*brother to\s+(.+?)\.?$",
+            rf"^{re.escape(label)}\s+is\s+(?:a\s+)?younger twin(?:\s+brother)?\s+to\s+(.+?)\.?$",
         ):
             m = re.search(pat, c, re.I)
             if m:
@@ -1687,6 +1876,13 @@ def weave_who_is_gold_tone(
 
     for c in list(lead) + list(rel):
         if _gender_only(c):
+            m = re.match(
+                rf"^{re.escape(label)}\s+is\s+(male|female)\.?$",
+                c,
+                re.I,
+            )
+            if m:
+                gender_word = m.group(1).lower()
             continue
         if is_orphan_life_summary(c) and not re.search(
             r"\b(known as|known to|son of|daughter of|white rabbit|chosen|nemesis)\b",
@@ -1699,6 +1895,27 @@ def weave_who_is_gold_tone(
             continue
         if is_overview_significance_clause(c, label) and not re.search(
             r"\b(brother to|sister to|son of|daughter of)\b", c, re.I
+        ):
+            line = _strip_male_female_role(c)
+            if line not in significance_lines:
+                significance_lines.append(
+                    line if line.endswith((".", "!", "?")) else line + "."
+                )
+            continue
+        if is_opposition_cast_clause(c, label):
+            line = _strip_male_female_role(c)
+            if line not in significance_lines:
+                significance_lines.append(
+                    line if line.endswith((".", "!", "?")) else line + "."
+                )
+            continue
+        # Titled world-origin / fairy-tale standing (Lord X of Y is …).
+        if re.search(
+            rf"^(?:Lord|Lady|Duke|Duchess|Baron|Baroness)\s+{re.escape(label)}\b|"
+            rf"\b{re.escape(label)}\s+is\s+(?:a\s+)?(?:Baron|Lord|Lady)\b|"
+            r"\b(fairy[- ]?tale|faeble|not entirely of this world)\b",
+            c,
+            re.I,
         ):
             line = _strip_male_female_role(c)
             if line not in significance_lines:
@@ -2012,6 +2229,39 @@ def weave_who_is_gold_tone(
             clause += "."
         sentences.append(_strip_male_female_role(clause))
 
+    # Re-attach bare gender onto a species line when kin does not already signal sex.
+    if gender_word and sentences:
+        has_kin_sex = any(
+            re.search(
+                r"\b(son of|daughter of|buck|doe|brother|sister|he is|she is)\b",
+                s,
+                re.I,
+            )
+            for s in sentences
+        )
+        if not has_kin_sex:
+            woven = False
+            for i, s in enumerate(sentences):
+                if re.search(
+                    r"\b(wolf|rabbit|fox|lynx|arcanist|preyfolk|sentient)\b",
+                    s,
+                    re.I,
+                ) and not re.search(
+                    r"\b(protagonist|antagonist|main character)\b", s, re.I
+                ):
+                    if not re.search(rf"\b{gender_word}\b", s, re.I):
+                        sentences[i] = re.sub(
+                            rf"({re.escape(label)}\s+is\s+(?:an?\s+)?)",
+                            rf"\1{gender_word} ",
+                            s,
+                            count=1,
+                            flags=re.I,
+                        )
+                    woven = True
+                    break
+            if not woven:
+                sentences.append(f"{label} is {gender_word}.")
+
     body = " ".join(sentences)
     if not _composed_has_substance([body], label):
         return ""
@@ -2301,6 +2551,17 @@ def cast_answer_is_thin(answer: str, label: str) -> bool:
     if not a:
         return True
     low = a.lower()
+    body_only = (
+        re.split(r"\n\n— From your notes only", a, maxsplit=1)[0]
+        .replace(f"{label}\n\n", "")
+        .strip()
+    )
+    first_line = body_only.split("\n")[0].strip() if body_only else ""
+    # Knower-POV leak — never a finished cast card.
+    if is_knower_pov_about_label(first_line, label) or is_knower_pov_about_label(
+        body_only, label
+    ):
+        return True
     # Species/role scrap leaks — never treat as a finished cast card.
     if re.search(
         rf"\b{re.escape(label.lower())}\s+is\s+(?:side|of|one)\s*\.?\s*(?:$|\n)",
@@ -2313,12 +2574,15 @@ def cast_answer_is_thin(answer: str, label: str) -> bool:
     ):
         return True
     if is_incomplete_cast_clause(
-        re.split(r"\n\n— From your notes only", a, maxsplit=1)[0]
-        .replace(f"{label}\n\n", "")
-        .strip()
-        .split("\n")[0]
-        .strip(),
+        first_line,
         label,
+    ):
+        return True
+    # Rename dump alone is not a cast card.
+    if is_rename_infodump_clause(first_line, label) and not re.search(
+        r"\b(brother|sister|son of|daughter of|up against|rival|young woman|"
+        r"young man|baron|lord of|faction against)\b",
+        body_only.lower(),
     ):
         return True
     if re.search(r"\bmale\s+or\s+female\b|\bfemale\s+or\s+male\b", low):

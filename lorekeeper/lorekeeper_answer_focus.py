@@ -10,6 +10,7 @@ from lorekeeper_character_compose import (
     is_coverage_question,
     is_formal_awareness_status_clause,
     is_incomplete_cast_clause,
+    is_knower_pov_about_label,
     is_other_character_scene_beat,
     is_overview_significance_clause,
     is_plot_walkthrough_text,
@@ -615,7 +616,7 @@ def scrub_who_is_plot_walkthrough(body: str, *, question: str = "") -> str:
             continue
         if label and re.fullmatch(rf"{re.escape(label)}", block, re.I):
             continue
-        parts = re.split(r"(?<=[.!?])\s+|(?<=;)\s+", block)
+        parts = re.split(r"(?<=[.!?])\s+", block)
         sentences.extend(parts)
     kept: list[str] = []
     for sentence in sentences:
@@ -623,6 +624,8 @@ def scrub_who_is_plot_walkthrough(body: str, *, question: str = "") -> str:
         if not s:
             continue
         if is_incomplete_cast_clause(s, label):
+            continue
+        if label and is_knower_pov_about_label(s, label):
             continue
         if not label:
             if _is_plot_arc_clause(s) or who_is_answer_has_bloat(s):
