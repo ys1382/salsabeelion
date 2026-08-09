@@ -56,6 +56,26 @@
 
   function restoreResumePosition() {
     if (!quill || !doc) return;
+    var canvas = document.getElementById("docCanvas");
+    // Prefer saved canvas scroll when present — don't yank the reader back to the caret.
+    if (canvas && typeof doc.lastScrollTop === "number" && doc.lastScrollTop > 0) {
+      canvas.scrollTop = doc.lastScrollTop;
+      var len = docTextLength();
+      var index =
+        typeof doc.lastCaretIndex === "number" && doc.lastCaretIndex >= 0
+          ? Math.min(doc.lastCaretIndex, len)
+          : len;
+      quill.__lkResumeIndex = index;
+      var isMobile = global.LoreKeeperMobileComfort && global.LoreKeeperMobileComfort.isMobile();
+      if (!isMobile) {
+        try {
+          quill.setSelection(index, 0, "silent");
+        } catch (e) {
+          /* ignore */
+        }
+      }
+      return;
+    }
     var len = docTextLength();
     var index;
     if (typeof doc.lastCaretIndex === "number" && doc.lastCaretIndex >= 0) {
@@ -67,8 +87,7 @@
     scrollIndexIntoView(index, 0);
     var isMobile = global.LoreKeeperMobileComfort && global.LoreKeeperMobileComfort.isMobile();
     if (!isMobile) {
-      quill.setSelection(index, 0, "user");
-      quill.focus();
+      quill.setSelection(index, 0, "silent");
     }
   }
 
@@ -403,7 +422,7 @@
       gapResyncNeeded = true;
     } else {
       scheduleBlockPageGaps();
-      schedulePageChrome();
+      // Do not refreshChrome/rebuild pages on every keystroke — that resets scroll to top.
     }
     queueSave();
     scheduleMobileRestoreSync();

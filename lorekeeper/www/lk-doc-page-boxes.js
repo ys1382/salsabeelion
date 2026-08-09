@@ -350,6 +350,8 @@
   function renderStack() {
     var stack = ensureStack();
     if (!stack || !quill) return;
+    var canvas = document.getElementById("docCanvas");
+    var savedScroll = canvas ? canvas.scrollTop : 0;
     moveToolbarAboveStack();
     captureActiveIntoArray();
     trimTrailingEmptyPages();
@@ -462,6 +464,9 @@
         editor.style.height = contentH + "px";
         editor.style.overflow = "hidden";
       }
+    }
+    if (canvas) {
+      canvas.scrollTop = savedScroll;
     }
   }
 
@@ -749,9 +754,14 @@
   function refreshChrome() {
     applyLayoutVars();
     if (!quill) return;
+    // Phase A: never rebuild the stack on chrome refresh — that jumps scroll to the top.
+    if (!ALLOW_MULTI_PAGE) return;
+    var canvas = document.getElementById("docCanvas");
+    var savedScroll = canvas ? canvas.scrollTop : 0;
     captureActiveIntoArray();
     renderStack();
     setQuillHtml(pageHtmls[activeIndex] || "");
+    if (canvas) canvas.scrollTop = savedScroll;
   }
 
   global.LoreKeeperDocPageBoxes = {
