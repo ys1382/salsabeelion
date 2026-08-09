@@ -16,8 +16,9 @@
   var activeIndex = 0;
   var syncing = false;
   var bound = false;
-  /** Phase A: one growing sheet, no clip. Phase B turns multi-page on. */
-  var ALLOW_MULTI_PAGE = false;
+  /** Phase B: stacked pages after load. Phase C turns on typing overflow. */
+  var ALLOW_MULTI_PAGE = true;
+  var ALLOW_TYPE_OVERFLOW = false;
 
   function doc() {
     return getDoc ? getDoc() : null;
@@ -289,7 +290,7 @@
 
   function loadFromBodyHtml(html) {
     var clean = stripLayout(html || "");
-    // Phase A: one sheet with full text visible — no deferred paginate/reflow (those clipped).
+    // Show full draft immediately on one growing sheet (no chop, no hang).
     pageHtmls = [clean];
     activeIndex = 0;
     syncing = true;
@@ -301,6 +302,41 @@
     }
     syncing = false;
     if (onAfterReflow) onAfterReflow();
+
+    if (!ALLOW_MULTI_PAGE) return;
+
+    function applyPages() {
+      if (!quill) return;
+      try {
+        var wordsBefore = plainWords(clean);
+        var pages = paginateFullHtml(clean);
+        if (!pages.length) pages = [clean];
+        var wordsAfter = plainWords(pages.join(""));
+        // Word guard: abort split if any prose would be lost.
+        if (wordsBefore && wordsAfter !== wordsBefore) {
+          return;
+        }
+        if (pages.length <= 1) return;
+        pageHtmls = pages;
+        activeIndex = 0;
+        syncing = true;
+        renderStack();
+        setQuillHtml(pageHtmls[0] || "");
+        syncing = false;
+        if (onAfterReflow) onAfterReflow();
+      } catch (err) {
+        syncing = false;
+        // Keep tall single-page fallback from the first paint.
+      }
+    }
+
+    if (typeof global.requestIdleCallback === "function") {
+      global.requestIdleCallback(function () {
+        applyPages();
+      }, { timeout: 1500 });
+    } else {
+      global.setTimeout(applyPages, 0);
+    }
   }
 
   function headerFooterHtml(pageNum, pageCount) {
@@ -356,7 +392,7 @@
     captureActiveIntoArray();
     trimTrailingEmptyPages();
     if (!pageHtmls.length) pageHtmls = [""];
-    // Phase A: never split into clipped fixed pages
+    // Phase A fallback only: collapse to one page when multi-page is off.
     if (!ALLOW_MULTI_PAGE && pageHtmls.length > 1) {
       pageHtmls = [pageHtmls.join("")];
       activeIndex = 0;
@@ -462,7 +498,8 @@
       } else {
         editor.style.maxHeight = contentH + "px";
         editor.style.height = contentH + "px";
-        editor.style.overflow = "hidden";
+        // Phase B: scroll inside the page until Phase C moves overflow to the next sheet.
+        editor.style.overflow = "auto";
       }
     }
     if (canvas) {
@@ -661,8 +698,8 @@
   }
 
   function reflowActive(skipFollow) {
-    // Phase A: no overflow push / clip — growing single sheet only.
-    if (!ALLOW_MULTI_PAGE) return;
+    // Phase C enables typing overflow; Phase B is display split only.
+    if (!ALLOW_MULTI_PAGE || !ALLOW_TYPE_OVERFLOW) return;
     if (!quill || syncing) return;
     syncing = true;
     var follow = false;
@@ -699,8 +736,7 @@
   }
 
   function scheduleReflow() {
-    if (!ALLOW_MULTI_PAGE) {
-      // Phase A: keep sheet growing with typed content; no page-split reflow.
+    if (!ALLOW_MULTI_PAGE || !ALLOW_TYPE_OVERFLOW) {
       if (onAfterReflow) onAfterReflow();
       return;
     }
@@ -753,15 +789,7 @@
 
   function refreshChrome() {
     applyLayoutVars();
-    if (!quill) return;
-    // Phase A: never rebuild the stack on chrome refresh — that jumps scroll to the top.
-    if (!ALLOW_MULTI_PAGE) return;
-    var canvas = document.getElementById("docCanvas");
-    var savedScroll = canvas ? canvas.scrollTop : 0;
-    captureActiveIntoArray();
-    renderStack();
-    setQuillHtml(pageHtmls[activeIndex] || "");
-    if (canvas) canvas.scrollTop = savedScroll;
+    // Never rebuild the stack here — that jumps scroll to the top.
   }
 
   global.LoreKeeperDocPageBoxes = {

@@ -866,6 +866,9 @@ a { color: var(--accent); }
   height: auto !important;
   overflow: visible !important;
 }
+.lk-page-sheet:not(.is-growing) {
+  overflow: hidden;
+}
 .lk-page-sheet.is-active {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.16), 0 0 0 1px rgba(60, 64, 67, 0.12);
 }
