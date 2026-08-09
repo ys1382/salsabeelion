@@ -73,15 +73,16 @@
   }
 
   function ensureStack() {
+    stackEl = document.getElementById("docPagesStack");
+    if (stackEl) return stackEl;
     var host = document.getElementById("docEditor");
     if (!host) return null;
-    stackEl = document.getElementById("docPagesStack");
-    if (!stackEl) {
-      stackEl = document.createElement("div");
-      stackEl.id = "docPagesStack";
-      stackEl.className = "lk-pages-stack";
-      host.appendChild(stackEl);
-    }
+    stackEl = document.createElement("div");
+    stackEl.id = "docPagesStack";
+    stackEl.className = "lk-pages-stack";
+    var mount = document.getElementById("docQuillMount");
+    if (mount && mount.parentNode === host) host.insertBefore(stackEl, mount);
+    else host.appendChild(stackEl);
     return stackEl;
   }
 
@@ -89,7 +90,7 @@
     var host = document.getElementById("docEditor");
     if (!host || !stackEl) return;
     var toolbar = host.querySelector(".ql-toolbar");
-    if (toolbar && toolbar.nextSibling !== stackEl) {
+    if (toolbar && toolbar.parentNode === host && toolbar.nextSibling !== stackEl) {
       host.insertBefore(toolbar, stackEl);
     }
   }
@@ -348,7 +349,10 @@
   function captureActiveIntoArray() {
     if (!quill || activeIndex < 0) return;
     while (pageHtmls.length <= activeIndex) pageHtmls.push("");
-    pageHtmls[activeIndex] = quillHtml();
+    var html = quillHtml();
+    // Never replace stored prose with an empty editor snapshot during load/layout.
+    if (isEmptyHtml(html) && !isEmptyHtml(pageHtmls[activeIndex])) return;
+    pageHtmls[activeIndex] = html;
   }
 
   function joinedHtml() {

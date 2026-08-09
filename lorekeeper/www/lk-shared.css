@@ -855,6 +855,7 @@ a { color: var(--accent); }
 .lk-page-sheet {
   position: relative;
   width: 100%;
+  min-height: 24rem;
   background: #ffffff;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
   box-sizing: border-box;
@@ -973,8 +974,8 @@ body.lk-page-doc:not(.lk-doc-ready) .lk-doc-sheet {
   display: block;
   position: relative;
   z-index: 1;
-  min-height: 0;
-  height: auto !important;
+  min-height: 12rem;
+  height: 100%;
   padding: 0;
   color: #202124;
   line-height: 1.15;
@@ -986,6 +987,17 @@ body.lk-page-doc:not(.lk-doc-ready) .lk-doc-sheet {
   background: transparent;
   box-shadow: none;
   overflow: hidden;
+}
+#docQuillMount {
+  /* Seed only — Quill container is moved into the active page sheet. */
+  min-height: 0;
+}
+.lk-pages-stack:empty::before {
+  content: "Preparing pages…";
+  display: block;
+  padding: 2rem 1rem;
+  color: #3c4043;
+  font-family: system-ui, "Segoe UI", sans-serif;
 }
 .lk-line-1 .ql-editor,
 .lk-line-1 .lk-page-static { line-height: 1; }

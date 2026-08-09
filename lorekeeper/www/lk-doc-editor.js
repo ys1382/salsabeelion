@@ -147,7 +147,7 @@
   }
 
   function editorEl() {
-    return document.querySelector("#docEditor .ql-editor");
+    return document.querySelector("#docEditor .ql-editor") || document.querySelector("#docQuillMount .ql-editor");
   }
 
   function marginPx() {
@@ -881,7 +881,21 @@
   function initQuill() {
     if (quill || !global.Quill) return;
     if (global.LoreKeeperSpell) global.LoreKeeperSpell.registerQuillSpellBlot();
-    quill = new global.Quill("#docEditor", {
+    var host = document.getElementById("docEditor");
+    var mount = document.getElementById("docQuillMount");
+    if (host && !mount) {
+      if (!document.getElementById("docPagesStack")) {
+        var stack = document.createElement("div");
+        stack.id = "docPagesStack";
+        stack.className = "lk-pages-stack";
+        host.appendChild(stack);
+      }
+      mount = document.createElement("div");
+      mount.id = "docQuillMount";
+      host.appendChild(mount);
+    }
+    if (!mount) return;
+    quill = new global.Quill("#docQuillMount", {
       theme: "snow",
       modules: {
         toolbar: [
