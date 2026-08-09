@@ -855,28 +855,32 @@ a { color: var(--accent); }
 .lk-page-sheet {
   position: relative;
   width: 100%;
-  min-height: 24rem;
+  min-height: var(--lk-page-h, 1056px);
   background: #ffffff;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
   box-sizing: border-box;
-  overflow: hidden;
+  overflow: visible;
   flex: 0 0 auto;
+}
+.lk-page-sheet.is-growing {
+  height: auto !important;
+  overflow: visible !important;
 }
 .lk-page-sheet.is-active {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.16), 0 0 0 1px rgba(60, 64, 67, 0.12);
 }
 .lk-page-sheet-body {
   box-sizing: border-box;
-  height: 100%;
+  height: auto;
+  min-height: 100%;
 }
 .lk-page-sheet-body-active {
-  display: flex;
-  flex-direction: column;
+  display: block;
 }
 .lk-page-sheet-body-active .ql-container {
-  flex: 1 1 auto;
   border: none !important;
-  height: 100%;
+  height: auto !important;
+  min-height: 12rem;
 }
 .lk-page-sheet-chrome {
   position: absolute;
@@ -905,7 +909,7 @@ a { color: var(--accent); }
   line-height: inherit;
   box-sizing: border-box;
   padding: 0 !important;
-  overflow: hidden !important;
+  overflow: visible !important;
 }
 .lk-page-chrome-back {
   display: none;
@@ -975,7 +979,8 @@ body.lk-page-doc:not(.lk-doc-ready) .lk-doc-sheet {
   position: relative;
   z-index: 1;
   min-height: 12rem;
-  height: 100%;
+  height: auto !important;
+  max-height: none !important;
   padding: 0;
   color: #202124;
   line-height: 1.15;
@@ -986,7 +991,7 @@ body.lk-page-doc:not(.lk-doc-ready) .lk-doc-sheet {
   box-sizing: border-box;
   background: transparent;
   box-shadow: none;
-  overflow: hidden;
+  overflow: visible !important;
 }
 #docQuillMount {
   /* Seed only — Quill container is moved into the active page sheet. */

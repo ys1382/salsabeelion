@@ -16,6 +16,8 @@
   var activeIndex = 0;
   var syncing = false;
   var bound = false;
+  /** Phase A: one growing sheet, no clip. Phase B turns multi-page on. */
+  var ALLOW_MULTI_PAGE = false;
 
   function doc() {
     return getDoc ? getDoc() : null;
@@ -287,7 +289,7 @@
 
   function loadFromBodyHtml(html) {
     var clean = stripLayout(html || "");
-    // Show something immediately — never block the loading screen on full pagination.
+    // Phase A: one sheet with full text visible — no deferred paginate/reflow (those clipped).
     pageHtmls = [clean];
     activeIndex = 0;
     syncing = true;
@@ -298,37 +300,7 @@
       /* keep going */
     }
     syncing = false;
-
-    global.setTimeout(function () {
-      if (!quill) return;
-      try {
-        var wordsBefore = plainWords(clean);
-        var pages = paginateFullHtml(clean);
-        if (!pages.length) pages = [clean];
-        var wordsAfter = plainWords(pages.join(""));
-        if (wordsBefore && wordsAfter.length < wordsBefore.length) {
-          pages = [clean];
-        }
-        pageHtmls = pages;
-        activeIndex = 0;
-        syncing = true;
-        renderStack();
-        setQuillHtml(pageHtmls[0] || "");
-        syncing = false;
-        reflowActive(true);
-      } catch (err) {
-        syncing = false;
-        pageHtmls = [clean];
-        activeIndex = 0;
-        try {
-          renderStack();
-          setQuillHtml(clean);
-        } catch (e2) {
-          /* ignore */
-        }
-      }
-      if (onAfterReflow) onAfterReflow();
-    }, 0);
+    if (onAfterReflow) onAfterReflow();
   }
 
   function headerFooterHtml(pageNum, pageCount) {
@@ -382,6 +354,11 @@
     captureActiveIntoArray();
     trimTrailingEmptyPages();
     if (!pageHtmls.length) pageHtmls = [""];
+    // Phase A: never split into clipped fixed pages
+    if (!ALLOW_MULTI_PAGE && pageHtmls.length > 1) {
+      pageHtmls = [pageHtmls.join("")];
+      activeIndex = 0;
+    }
     if (activeIndex >= pageHtmls.length) activeIndex = pageHtmls.length - 1;
     if (activeIndex < 0) activeIndex = 0;
 
@@ -392,13 +369,26 @@
     }
 
     var pageCount = pageHtmls.length;
+    var growMode = !ALLOW_MULTI_PAGE || pageCount === 1;
+    var pageH = pageHeightPx();
+    var contentH = contentHeightPx();
     stack.innerHTML = "";
 
     for (var i = 0; i < pageCount; i++) {
       var sheet = document.createElement("div");
-      sheet.className = "lk-page-sheet" + (i === activeIndex ? " is-active" : "");
+      sheet.className =
+        "lk-page-sheet" +
+        (i === activeIndex ? " is-active" : "") +
+        (growMode ? " is-growing" : "");
       sheet.setAttribute("data-page", String(i));
-      sheet.style.height = pageHeightPx() + "px";
+      if (growMode) {
+        sheet.style.minHeight = pageH + "px";
+        sheet.style.height = "auto";
+        sheet.style.overflow = "visible";
+      } else {
+        sheet.style.height = pageH + "px";
+        sheet.style.overflow = "hidden";
+      }
       sheet.style.marginBottom = gapPx() + "px";
 
       var hf = headerFooterHtml(i + 1, pageCount);
@@ -417,14 +407,24 @@
       if (i === activeIndex) {
         body.classList.add("lk-page-sheet-body-active");
         body.appendChild(container);
-        container.style.height = contentHeightPx() + "px";
+        if (growMode) {
+          container.style.height = "auto";
+          container.style.minHeight = contentH + "px";
+        } else {
+          container.style.height = contentH + "px";
+        }
       } else {
         var staticEd = document.createElement("div");
         staticEd.className = "ql-editor lk-page-static";
         staticEd.innerHTML = pageHtmls[i] || "<p><br></p>";
-        staticEd.style.minHeight = contentHeightPx() + "px";
-        staticEd.style.maxHeight = contentHeightPx() + "px";
-        staticEd.style.overflow = "hidden";
+        staticEd.style.minHeight = contentH + "px";
+        if (growMode) {
+          staticEd.style.maxHeight = "none";
+          staticEd.style.overflow = "visible";
+        } else {
+          staticEd.style.maxHeight = contentH + "px";
+          staticEd.style.overflow = "hidden";
+        }
         body.appendChild(staticEd);
         sheet.addEventListener(
           "click",
@@ -449,13 +449,19 @@
 
     var editor = quill.root;
     if (editor) {
-      editor.style.minHeight = contentHeightPx() + "px";
-      editor.style.maxHeight = contentHeightPx() + "px";
-      editor.style.height = contentHeightPx() + "px";
-      editor.style.overflow = "hidden";
+      editor.style.minHeight = contentH + "px";
       editor.style.padding = "0";
       editor.style.background = "transparent";
       editor.style.boxShadow = "none";
+      if (growMode) {
+        editor.style.maxHeight = "none";
+        editor.style.height = "auto";
+        editor.style.overflow = "visible";
+      } else {
+        editor.style.maxHeight = contentH + "px";
+        editor.style.height = contentH + "px";
+        editor.style.overflow = "hidden";
+      }
     }
   }
 
@@ -650,6 +656,8 @@
   }
 
   function reflowActive(skipFollow) {
+    // Phase A: no overflow push / clip — growing single sheet only.
+    if (!ALLOW_MULTI_PAGE) return;
     if (!quill || syncing) return;
     syncing = true;
     var follow = false;
@@ -686,6 +694,11 @@
   }
 
   function scheduleReflow() {
+    if (!ALLOW_MULTI_PAGE) {
+      // Phase A: keep sheet growing with typed content; no page-split reflow.
+      if (onAfterReflow) onAfterReflow();
+      return;
+    }
     if (syncing) return;
     global.requestAnimationFrame(function () {
       if (syncing) return;
