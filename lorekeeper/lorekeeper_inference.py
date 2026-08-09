@@ -157,6 +157,12 @@ def _normalize_character_name(raw: str) -> str:
     return raw.strip()
 
 
+# Cast-name capture: "Obsidian", "Snow Thistle", or synthetic "Character Q".
+_CAST_PERSON_NAME = (
+    r"[A-Za-z][a-z]{2,}(?:\s+(?:[A-Za-z][a-z]{2,}|[A-Z0-9]))?"
+)
+
+
 def _is_person_name(name: str) -> bool:
     if not name or len(name) < 3:
         return False
@@ -755,10 +761,11 @@ def collect_brother_names(label: str, entries: list[dict[str, Any]]) -> list[str
             ):
                 reg(m.group(1), True)
             # Explicit "younger brother to A and B" / "brother to A and B".
+            # Include synthetic "Character Q" (word + single letter).
             for m in re.finditer(
-                r"\b(?:(?:younger|older|twin)\s+)?brother\s+to\s+"
-                r"([A-Za-z][a-z]{2,}(?:\s+[A-Za-z][a-z]{2,})?)"
-                r"(?:\s+and\s+([A-Za-z][a-z]{2,}(?:\s+[A-Za-z][a-z]{2,})?))?",
+                rf"\b(?:(?:younger|older|twin)\s+)?brother\s+to\s+"
+                rf"({_CAST_PERSON_NAME})"
+                rf"(?:\s+and\s+({_CAST_PERSON_NAME}))?",
                 sentence,
                 re.I,
             ):

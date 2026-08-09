@@ -147,7 +147,8 @@ _CLOSE_TIE_RE = re.compile(
     r"brother|sister|cousin|son of|daughter of|child of|"
     r"father to|mother to|married|spouse|"
     r"nemesis|arch[- ]?enem(?:y|ies)|best friend|closest friend|"
-    r"subject of|quarry|buck|doe"
+    r"subject of|quarry|buck|doe|"
+    r"up against|opposed by|rival (?:to|of)|enemy of"
     r")\b",
     re.I,
 )
@@ -440,6 +441,17 @@ def is_plausible_cast_person_name(name: str) -> bool:
     parts = re.findall(r"[A-Za-z0-9']+", raw)
     if not parts:
         return False
+    # Bare placeholders from truncated "Character Q" parses — not real cast names.
+    if len(parts) == 1 and parts[0].lower() in {
+        "character",
+        "person",
+        "someone",
+        "somebody",
+        "figure",
+        "protagonist",
+        "antagonist",
+    }:
+        return False
     for part in parts:
         low = part.lower()
         if low in _NAME_STOP or low in _VERB_STOP or low in _INTERJECTIONS:
@@ -488,7 +500,7 @@ def is_plausible_cast_person_name(name: str) -> bool:
 _SCRAP_IDENTITY_PREDICATES = frozenset(
     """
     birth death life age name one side of the a an at twin twins person people
-    someone somebody something nothing everything anything
+    someone somebody something nothing everything anything exception
     """.split()
 )
 
@@ -586,12 +598,90 @@ def cast_sentence_about_subject(
     return False
 
 
+def is_incomplete_cast_clause(sentence: str, label: str = "") -> bool:
+    """True for cut-off scraps like 'Tenebris is a sole exception and.'"""
+    s = re.sub(r"\s+", " ", (sentence or "").strip())
+    if not s:
+        return True
+    if re.search(
+        r"\b(and|or|but|with|of|to|for|as|than|that|which|who|whom)\s*\.?\s*$",
+        s,
+        re.I,
+    ):
+        return True
+    if label and re.search(
+        rf"^{re.escape(label)}\s+is\s+(?:a|an|the)\s+\w+(?:\s+\w+){{0,4}}\s+"
+        rf"(?:and|or|but)\s*\.?\s*$",
+        s,
+        re.I,
+    ):
+        return True
+    return False
+
+
+def is_rename_infodump_clause(sentence: str, label: str = "") -> bool:
+    """Long birth-name / rename dumps that crowd out kin and stakes on who-is."""
+    s = re.sub(r"\s+", " ", (sentence or "").strip())
+    if not s or len(s) < 140:
+        return False
+    if not re.search(
+        r"\b("
+        r"birth name|changes? (?:his|her|their) name|renamed|also known as|"
+        r"possible alternatives?|fantasy name based"
+        r")\b",
+        s,
+        re.I,
+    ):
+        return False
+    rename_hits = len(
+        re.findall(
+            r"\b(birth name|changes? (?:his|her|their) name|renamed|also known|"
+            r"possible alternatives?)\b",
+            s,
+            re.I,
+        )
+    )
+    return rename_hits >= 2 or s.count(",") >= 4 or len(s) > 260
+
+
+def is_opposition_cast_clause(sentence: str, label: str = "") -> bool:
+    """True for explicit opposition / rival / up-against cast facts."""
+    s = re.sub(r"\s+", " ", (sentence or "").strip())
+    if not s:
+        return False
+    if not re.search(
+        r"\b("
+        r"up against|opposed by|opposes?|opposition|"
+        r"rival (?:to|of)|nemesis|arch[- ]?enem(?:y|ies)|sworn enem(?:y|ies)|"
+        r"enemy of|against .{0,40}?faction|main antagonist|side antagonist"
+        r")\b",
+        s,
+        re.I,
+    ):
+        return False
+    if label and label_only_as_alias_mention(s, label):
+        return False
+    if label and not (
+        cast_sentence_about_subject(s, label, allow_pronoun=True)
+        or re.search(rf"\b{re.escape(label)}\b", s, re.I)
+    ):
+        return False
+    if _WHO_IS_BLOAT_RE.search(s) or _PLOT_SEQUENCE_RE.search(s):
+        return False
+    if len(s) > 320:
+        return False
+    return True
+
+
 def is_scrap_identity_clause(sentence: str, label: str) -> bool:
-    """True for garbage cards like 'Platinus is birth.'"""
-    s = re.sub(r"\s+", " ", (sentence or "").strip()).rstrip(".")
+    """True for garbage cards like 'Platinus is birth.' or unfinished 'is … and.'"""
+    s_raw = re.sub(r"\s+", " ", (sentence or "").strip())
+    s = s_raw.rstrip(".")
     label = (label or "").strip()
     if not s or not label:
         return False
+    if is_incomplete_cast_clause(s_raw, label) or is_incomplete_cast_clause(s, label):
+        return True
     m = re.match(
         rf"^{re.escape(label)}\s+is\s+(.+)$",
         s,
@@ -602,7 +692,19 @@ def is_scrap_identity_clause(sentence: str, label: str) -> bool:
     pred = m.group(1).strip().lower()
     if pred in _SCRAP_IDENTITY_PREDICATES:
         return True
-    # Single non-cast word with no role/species signal.
+    if re.fullmatch(r"(?:a|an|the)\s+\w+(?:\s+\w+){0,3}", pred):
+        if not re.search(
+            r"\b("
+            r"protagonist|antagonist|villain|hero|heroine|rabbit|wolf|fox|lynx|"
+            r"arcanist|guardian|spirit|noble|duke|lord|king|queen|prince|princess|"
+            r"young woman|young man|sentient|"
+            r"side character|main character|supporting character|minor character|"
+            r"viewpoint character|love interest|comic relief"
+            r")\b",
+            pred,
+            re.I,
+        ):
+            return True
     if " " not in pred and len(pred) <= 12:
         if not re.search(
             r"\b("
@@ -634,6 +736,8 @@ def _kinship_shape_sentence(sentence: str, label: str) -> bool:
         rf"^(?:He|She)\s+is\s+(?:(?:younger|older|twin)\s+)?(?:brother|sister)\s+to\s+.+$",
         rf"^(?:He|She)\s+is\s+the\s+(?:son|daughter|child)\s+of\b.+$",
         rf"^{lab}\s+is\s+(?:the\s+)?(?:nemesis|arch[- ]?enemy|best friend|closest friend)\s+of\s+.+$",
+        rf"^{lab}\s+is\s+(?:a\s+)?rival\s+(?:to|of)\s+.+$",
+        rf"^{lab}\s+is\s+up against\s+.+$",
         rf"^{lab}\s+is\s+(?:father|mother|mentor)\s+to\s+.+$",
         rf"^(?:He|She)\s+is\s+(?:father|mother|mentor)\s+to\s+.+$",
         rf"^(?:He|She)\s+is\s+(?:the\s+)?(?:nemesis|best friend)\s+of\s+.+$",
@@ -828,6 +932,8 @@ def is_who_is_cast_fact_sentence(sentence: str, label: str) -> bool:
         return False
     if is_scrap_identity_clause(s, label):
         return False
+    if is_incomplete_cast_clause(s, label):
+        return False
     if label_only_as_alias_mention(s, label):
         return False
     # Faction-roster / "doesn't know how Predators work" dumps — never cast-card.
@@ -871,6 +977,8 @@ def is_who_is_cast_fact_sentence(sentence: str, label: str) -> bool:
 
     # Plain overview stakes (chosen one / upheaval / crossing worlds).
     if is_overview_significance_clause(s, label):
+        return True
+    if is_opposition_cast_clause(s, label):
         return True
     if chatty_stakes:
         return True
@@ -1660,12 +1768,15 @@ def weave_who_is_gold_tone(
                     flags=re.I,
                 ).strip()
                 # Prefer trailing proper names after standing phrases.
+                # Allow "Character Q" (word + single capital letter) as well as
+                # multi-word names like "Snow Thistle".
                 name_m = re.search(
-                    r"\b([A-Z][a-z]{2,}(?:\s+[A-Z][a-z]{2,})?)\s*$", name
+                    r"\b([A-Z][a-z]{2,}(?:\s+(?:[A-Z][a-z]{2,}|[A-Z0-9]))?)\s*$",
+                    name,
                 )
                 if name_m:
                     name = name_m.group(1)
-                if not name or not is_plausible_cast_person_name(name.split()[0]):
+                if not name or not is_plausible_cast_person_name(name):
                     continue
                 key = name.lower()
                 if key in seen_b:
@@ -2199,6 +2310,15 @@ def cast_answer_is_thin(answer: str, label: str) -> bool:
     if re.search(
         rf"\b{re.escape(label.lower())}\s+is\s+(?:birth|death|life|age|name)\s*\.?\s*(?:$|\n)",
         low,
+    ):
+        return True
+    if is_incomplete_cast_clause(
+        re.split(r"\n\n— From your notes only", a, maxsplit=1)[0]
+        .replace(f"{label}\n\n", "")
+        .strip()
+        .split("\n")[0]
+        .strip(),
+        label,
     ):
         return True
     if re.search(r"\bmale\s+or\s+female\b|\bfemale\s+or\s+male\b", low):

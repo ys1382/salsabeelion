@@ -1039,39 +1039,90 @@ class CharacterComposeTests(unittest.TestCase):
         self.assertTrue("upheaval" in h_ans or "crosses" in h_ans, msg=h_ans)
         self.assertNotIn("main antagonist", h_ans)
 
-    def test_who_is_rejects_scrap_identity_birth(self):
+    def test_who_is_rejects_incomplete_exception_scrap(self):
+        from lorekeeper_answer_focus import drop_trailing_unfinished_clause, scrub_who_is_plot_walkthrough
         from lorekeeper_character_compose import (
-            _to_reference_clause,
             cast_answer_is_thin,
+            is_incomplete_cast_clause,
             is_scrap_identity_clause,
         )
 
-        self.assertEqual(_to_reference_clause("birth", "Character P"), "")
-        self.assertTrue(is_scrap_identity_clause("Character P is birth.", "Character P"))
-        self.assertTrue(
-            cast_answer_is_thin(
-                "Character P is birth.\n\n— From your notes only. Nothing invented.",
-                "Character P",
-            )
+        scrap = "Character S is a sole exception and."
+        self.assertTrue(is_incomplete_cast_clause(scrap, "Character S"))
+        self.assertTrue(is_scrap_identity_clause(scrap, "Character S"))
+        self.assertTrue(cast_answer_is_thin(scrap, "Character S"))
+        cleaned = scrub_who_is_plot_walkthrough(
+            scrap, question="In Ashford Saga, who is Character S?"
         )
+        self.assertNotIn("sole exception and", cleaned.lower())
+        self.assertEqual(drop_trailing_unfinished_clause(scrap), "")
 
-    def test_who_is_keeps_protagonist_and_situation_stakes(self):
+    def test_who_is_merges_draft_opposition_and_prefers_kin_over_rename_dump(self):
         entries = [
             _entry(
-                "e1",
-                "Character E",
+                "n1",
+                "Character P",
                 (
-                    "Character E is a young woman. Character E is the protagonist. "
-                    "She finds herself pulled into a waking dream after the lantern fails."
+                    "Character P is the birth name of the protagonist, then he changes his name "
+                    "to Cypher Prism after he flees his planet of birth, Techrontis and arrives "
+                    "on the ecumenopolis, and then changes his name to Palladiar (fantasy name "
+                    "based on Palladium, possible alternatives are Palladius, Palladium) when he "
+                    "becomes the leader of his faction against Character G's faction."
                 ),
-                tags=["Waking Dream"],
-            )
+                tags=["Rust Saga"],
+                kind="character",
+            ),
+            _entry(
+                "d1",
+                "Rust draft",
+                (
+                    "Character P is younger brother to Character Q. "
+                    "Character P is the son of Character R. "
+                    "Character P is up against Character G for control of the core world."
+                ),
+                tags=["Rust Saga"],
+                kind="document",
+            ),
         ]
-        res = self._ask("In Waking Dream, who is Character E?", entries)
+        res = self._ask("In Rust Saga, who is Character P?", entries)
+        answer = (res.get("answer") or "").lower()
+        self.assertIn("brother", answer)
+        self.assertTrue(
+            "character q" in answer or "character r" in answer or "up against" in answer,
+            msg=answer,
+        )
+        # Rename dump must not be the whole card.
+        self.assertFalse(
+            answer.count("changes") >= 2 and "brother" not in answer,
+            msg=answer,
+        )
+        self.assertNotIn("brother to character.", answer)
+        self.assertNotIn("and character.", answer)
+
+    def test_who_is_uses_draft_situation_when_notes_thin(self):
+        entries = [
+            _entry(
+                "n1",
+                "Character E",
+                "Character E is a young woman. Character E is the protagonist.",
+                tags=["Dream Saga"],
+            ),
+            _entry(
+                "d1",
+                "Dream draft",
+                (
+                    "Character E finds herself pulled into a waking dream after the lantern fails. "
+                    "Character E is up against Character V, who keeps rewriting the dream's rules."
+                ),
+                tags=["Dream Saga"],
+                kind="document",
+            ),
+        ]
+        res = self._ask("In Dream Saga, who is Character E?", entries)
         answer = (res.get("answer") or "").lower()
         self.assertIn("protagonist", answer)
         self.assertTrue(
-            "waking dream" in answer or "pulled into" in answer or "finds herself" in answer,
+            "waking dream" in answer or "pulled into" in answer or "up against" in answer,
             msg=answer,
         )
 

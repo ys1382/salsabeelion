@@ -1107,6 +1107,10 @@ def _who_is_profile_bit(bit: str, label: str, *, allow_pronoun: bool = False) ->
         ):
             return True
         return False
+    from lorekeeper_character_compose import is_opposition_cast_clause
+
+    if is_opposition_cast_clause(bit, label):
+        return True
     if not cast_sentence_about_subject(bit, label, allow_pronoun=allow_pronoun):
         # Own-sheet fragments: "Married to X", "Grey-skinned arcanist", "He is brother…"
         from lorekeeper_character_compose import _kinship_shape_sentence
@@ -1652,10 +1656,109 @@ def _explicit_upheaval_reason_lines_from_drafts(
     return lines[:3]
 
 
+def _explicit_who_is_cast_lines_from_drafts(
+    label: str, scope: list[dict[str, Any]], names: list[str]
+) -> list[str]:
+    """
+    Who-is draft harvest: explicit cast slots from the main draft —
+    role, identity, kin, opposition, overview stakes — not scene beats.
+    """
+    from lorekeeper_character_compose import (
+        is_opposition_cast_clause,
+        is_overview_significance_clause,
+        is_who_is_cast_fact_sentence,
+    )
+
+    query_names = list(names)
+    for name in list(names):
+        parts = str(name or "").split()
+        if len(parts) >= 2 and parts[0].lower() in {
+            "duke",
+            "duchess",
+            "lord",
+            "lady",
+            "sir",
+            "dame",
+            "king",
+            "queen",
+            "prince",
+            "princess",
+            "baron",
+            "baroness",
+            "count",
+            "countess",
+        }:
+            bare = " ".join(parts[1:])
+            if bare and bare not in query_names:
+                query_names.append(bare)
+
+    lines: list[str] = []
+    seen: set[str] = set()
+    for entry in scope:
+        if not _is_draft_entry(entry):
+            continue
+        body = normalize_corpus_text(str(entry.get("body") or ""))
+        for sentence in _split_sentences(body):
+            if _is_author_meta_sentence(sentence, query_names):
+                continue
+            if re.search(
+                r"\b("
+                r"tries? not to|trying not to|not to dwell|doesn'?t want to dwell|"
+                r"no doubt views|daring to demonstrate"
+                r")\b",
+                sentence,
+                re.I,
+            ):
+                continue
+            if not any(_name_in_text(name, sentence) for name in query_names):
+                continue
+            if _classify_sentence(sentence, query_names) in ("scene", "dialogue"):
+                continue
+            about = bool(
+                re.search(
+                    rf"\b(?:{'|'.join(re.escape(n) for n in query_names)})\s+"
+                    rf"(?:is|was|are|were)\b",
+                    sentence,
+                    re.I,
+                )
+                or re.search(
+                    rf"\b(?:{'|'.join(re.escape(n) for n in query_names)})\s*[—–\-:,]",
+                    sentence,
+                    re.I,
+                )
+                or is_overview_significance_clause(sentence, label)
+                or is_opposition_cast_clause(sentence, label)
+            )
+            if not about:
+                continue
+            if not (
+                _who_is_cast_bit_from_draft(sentence, label)
+                or is_who_is_cast_fact_sentence(sentence, label)
+                or is_overview_significance_clause(sentence, label)
+                or is_opposition_cast_clause(sentence, label)
+                or (
+                    _has_profile_copula(sentence, query_names)
+                    and _classify_sentence(sentence, query_names)
+                    in ("role", "identity", "relationship")
+                )
+            ):
+                continue
+            key = re.sub(r"\s+", " ", sentence.lower())[:100]
+            if key in seen:
+                continue
+            seen.add(key)
+            lines.append(sentence)
+    return lines[:12]
+
+
 def _explicit_profile_lines_from_drafts(
     label: str, scope: list[dict[str, Any]], names: list[str]
 ) -> list[str]:
     """Last resort: pull only explicit cast/profile sentences from drafts — never scene beats."""
+    # Prefer the richer who-is cast harvest; fall back to species/role-shaped lines.
+    rich = _explicit_who_is_cast_lines_from_drafts(label, scope, names)
+    if rich:
+        return rich
     # Also try bare name without duke/lord so draft "Dijon is a lynx" hits.
     query_names = list(names)
     for name in list(names):
@@ -1705,8 +1808,6 @@ def _explicit_profile_lines_from_drafts(
                 continue
             if _classify_sentence(sentence, query_names) in ("scene", "dialogue"):
                 continue
-            # Who-is draft profile: require true cast identity, not scene thoughts
-            # that merely mention White Rabbit / species words.
             if not re.search(
                 rf"\b(?:{'|'.join(re.escape(n) for n in query_names)})\s+"
                 rf"(?:is|was|are|were)\b",
@@ -1856,16 +1957,30 @@ def _synthesize_from_notes_first(
     if note_hits:
         answer, ids = synthesize(note_hits)
         if answer and answer_good_enough(answer):
-            # Portrait / what-is: fold clear draft identity (species, role) into notes.
             if portrait or is_who_is_question(question):
-                draft_roles = _explicit_profile_lines_from_drafts(
+                from lorekeeper_character_compose import (
+                    who_is_answer_has_upheaval_reason,
+                )
+
+                draft_cast = _explicit_who_is_cast_lines_from_drafts(
                     label, scope, [label]
                 )
-                if draft_roles:
+
+                if is_who_is_question(question) and draft_cast:
+                    combined = _merge_hits(
+                        note_hits,
+                        [("draft-cast", "Draft", draft_cast, True)],
+                    )
+                    merged_ans, merged_ids = synthesize(
+                        combined, use_draft_cast=True
+                    )
+                    if merged_ans and answer_good_enough(merged_ans):
+                        answer, ids = merged_ans, merged_ids
+                elif portrait and draft_cast:
                     ans_low = answer.lower()
                     missing = [
                         line
-                        for line in draft_roles
+                        for line in draft_cast
                         if _SPECIES_IDENTITY.search(line)
                         and not any(
                             tok in ans_low
@@ -1886,12 +2001,8 @@ def _synthesize_from_notes_first(
                         )
                         if merged_ans and answer_good_enough(merged_ans):
                             answer, ids = merged_ans, merged_ids
-                # Who-is: fold draft upheaval type/reason when notes only say upheaval happens.
-                if is_who_is_question(question):
-                    from lorekeeper_character_compose import (
-                        who_is_answer_has_upheaval_reason,
-                    )
 
+                if is_who_is_question(question):
                     ans_now = answer or ""
                     has_upheaval_status = bool(
                         re.search(
@@ -1907,10 +2018,15 @@ def _synthesize_from_notes_first(
                             label, scope, [label]
                         )
                         if reason_lines:
-                            combined = _merge_hits(
-                                note_hits,
-                                [("draft-upheaval", "Draft", reason_lines, True)],
+                            groups = [note_hits]
+                            if draft_cast:
+                                groups.append(
+                                    [("draft-cast", "Draft", draft_cast, True)]
+                                )
+                            groups.append(
+                                [("draft-upheaval", "Draft", reason_lines, True)]
                             )
+                            combined = _merge_hits(*groups)
                             merged_ans, merged_ids = synthesize(
                                 combined, use_draft_cast=True
                             )

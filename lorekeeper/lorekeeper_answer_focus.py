@@ -9,9 +9,11 @@ from lorekeeper_character_compose import (
     is_audit_question,
     is_coverage_question,
     is_formal_awareness_status_clause,
+    is_incomplete_cast_clause,
     is_other_character_scene_beat,
     is_overview_significance_clause,
     is_plot_walkthrough_text,
+    is_rename_infodump_clause,
     is_who_is_cast_fact_sentence,
     smooth_who_is_prose,
     who_is_answer_has_bloat,
@@ -305,6 +307,9 @@ def _looks_incomplete_tail(text: str) -> bool:
         re.I,
     ):
         return True
+    # "… exception and." — period glued onto an unfinished conjunction.
+    if re.search(r"\b(and|or|but|with|of|to|for|as)\s*\.\s*$", t, re.I):
+        return True
     if not re.search(r"[.!?…][\"')\]]*\s*$", t):
         return True
     return False
@@ -328,7 +333,8 @@ def drop_trailing_unfinished_clause(text: str) -> str:
         idx = t.rfind("**")
         if idx > 0:
             return drop_trailing_unfinished_clause(t[:idx].rstrip())
-    return t
+    # Whole answer was an unfinished scrap — drop it rather than return "X is … and."
+    return ""
 
 
 def _trim_to_complete_sentences(body: str, max_chars: int) -> str:
@@ -379,10 +385,14 @@ def _trim_who_is_preserving_stakes(body: str, max_chars: int, label: str) -> str
         if is_overview_significance_clause(s, label):
             return (2, len(s))
         if re.search(
-            r"\b(brother|sister|son of|daughter of|father|mother|parent)\b", low
+            r"\b(brother|sister|son of|daughter of|father|mother|parent|"
+            r"up against|rival|nemesis|opposed)\b",
+            low,
         ):
             return (3, len(s))
-        if re.search(r"\b(known as|known by|known to|chroniker)\b", low):
+        if is_rename_infodump_clause(s, label):
+            return (6, -len(s))
+        if re.search(r"\b(known as|known by|known to|chroniker|birth name)\b", low):
             return (4, len(s))
         return (5, -len(s))
 
@@ -612,6 +622,8 @@ def scrub_who_is_plot_walkthrough(body: str, *, question: str = "") -> str:
         s = re.sub(r"\s+", " ", sentence.strip().strip(";"))
         if not s:
             continue
+        if is_incomplete_cast_clause(s, label):
+            continue
         if not label:
             if _is_plot_arc_clause(s) or who_is_answer_has_bloat(s):
                 continue
@@ -623,25 +635,36 @@ def scrub_who_is_plot_walkthrough(body: str, *, question: str = "") -> str:
         # Drop everything else — awareness, plot, background dumps.
     if not kept:
         # Fall back to first subject-led identity sentence if any.
+        only_incomplete = True
         for sentence in sentences:
             s = re.sub(r"\s+", " ", sentence.strip().strip(";"))
+            if not s:
+                continue
+            if is_incomplete_cast_clause(s, label):
+                continue
+            only_incomplete = False
             if label and re.match(rf"^{re.escape(label)}\s+(?:is|was)\b", s, re.I):
                 if not who_is_answer_has_bloat(s) and len(s) < 280:
                     return s
-        return text
+        # Incomplete scraps only → clear; otherwise keep original for gap/inference paths.
+        return "" if only_incomplete else text
     # Prefer identity + ties + overview stakes; cap so dumps cannot return through volume.
     if label:
         identityish: list[str] = []
         tiesish: list[str] = []
         stakesish: list[str] = []
+        renameish: list[str] = []
         other: list[str] = []
         for s in kept:
-            if is_overview_significance_clause(s, label) or is_formal_awareness_status_clause(
+            if is_rename_infodump_clause(s, label):
+                renameish.append(s)
+            elif is_overview_significance_clause(s, label) or is_formal_awareness_status_clause(
                 s, label
             ):
                 stakesish.append(s)
             elif re.search(
-                r"\b(brother|sister|father|mother|parent|married|subject of|quarry|known)\b",
+                r"\b(brother|sister|father|mother|parent|married|subject of|quarry|"
+                r"known|rival|up against|nemesis|opposed)\b",
                 s,
                 re.I,
             ):
@@ -664,7 +687,8 @@ def scrub_who_is_plot_walkthrough(body: str, *, question: str = "") -> str:
                 len(s),
             )
         )
-        ordered = identityish[:4] + tiesish[:4] + stakesish[:3] + other[:1]
+        # Kin/stakes before long rename dumps.
+        ordered = identityish[:4] + tiesish[:4] + stakesish[:3] + other[:1] + renameish[:1]
         kept = ordered or kept[:5]
     else:
         kept = kept[:4]
