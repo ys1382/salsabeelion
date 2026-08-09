@@ -16,8 +16,8 @@
   var activeIndex = 0;
   var syncing = false;
   var bound = false;
-  /** Phase B: stacked pages after load. Phase C turns on typing overflow. */
-  var ALLOW_MULTI_PAGE = true;
+  /** Off until multi-page split is proven not to clip. Tall growing sheet = full text. */
+  var ALLOW_MULTI_PAGE = false;
   var ALLOW_TYPE_OVERFLOW = false;
 
   function doc() {
@@ -304,8 +304,8 @@
 
   function loadFromBodyHtml(html) {
     var clean = stripLayout(html || "");
-    pendingPaginateHtml = clean;
-    // Show full draft immediately on one growing sheet (no chop, no hang).
+    pendingPaginateHtml = null;
+    // Always show the full draft on one growing sheet — no clip, no deferred split.
     pageHtmls = [clean];
     activeIndex = 0;
     syncing = true;
@@ -317,67 +317,11 @@
     }
     syncing = false;
     if (onAfterReflow) onAfterReflow();
-    // Pagination is scheduled only after the loading screen clears (see schedulePaginateAfterReady).
   }
 
-  /** Call after setDocEditorReady so "Loading…" never waits on page split. */
+  /** Kept for Phase B later — currently a no-op while multi-page is off. */
   function schedulePaginateAfterReady() {
-    if (!ALLOW_MULTI_PAGE || !pendingPaginateHtml) return;
-    if (paginateTimer) clearTimeout(paginateTimer);
-    var clean = pendingPaginateHtml;
-    // After ready + first paint; keep tall page if split is unsafe or would clip.
-    paginateTimer = global.setTimeout(function () {
-      paginateTimer = null;
-      if (!quill || pendingPaginateHtml !== clean) return;
-      try {
-        var wordsBefore = plainWords(clean);
-        if (clean.length > 200000) {
-          pendingPaginateHtml = null;
-          return;
-        }
-        var pages = paginateFullHtml(clean);
-        if (!pages.length) pages = [clean];
-        var wordsAfter = plainWords(pages.join(""));
-        if (wordsBefore && wordsAfter !== wordsBefore) {
-          pendingPaginateHtml = null;
-          return;
-        }
-        if (pages.length <= 1) {
-          pendingPaginateHtml = null;
-          return;
-        }
-        // Verify each page's HTML actually fits the content box; else stay tall single page.
-        if (!pagesFitContentBox(pages)) {
-          pendingPaginateHtml = null;
-          return;
-        }
-        pageHtmls = pages;
-        activeIndex = 0;
-        syncing = true;
-        renderStack();
-        setQuillHtml(pageHtmls[0] || "");
-        syncing = false;
-        pendingPaginateHtml = null;
-        if (onAfterReflow) onAfterReflow();
-      } catch (err) {
-        syncing = false;
-        pendingPaginateHtml = null;
-      }
-    }, 600);
-  }
-
-  function pagesFitContentBox(pages) {
-    var measure = buildMeasureEl();
-    var maxH = contentHeightPx();
-    for (var i = 0; i < pages.length; i++) {
-      measure.innerHTML = pages[i] || "<p><br></p>";
-      if ((measure.scrollHeight || 0) > maxH + 12) {
-        measure.remove();
-        return false;
-      }
-    }
-    measure.remove();
-    return true;
+    pendingPaginateHtml = null;
   }
 
   function headerFooterHtml(pageNum, pageCount) {
@@ -448,8 +392,7 @@
     }
 
     var pageCount = pageHtmls.length;
-    // Until Phase C typing-overflow, never use fixed clip height — sheets may grow slightly.
-    var growMode = !ALLOW_TYPE_OVERFLOW || pageCount === 1;
+    var growMode = !ALLOW_MULTI_PAGE || pageCount === 1;
     var pageH = pageHeightPx();
     var contentH = contentHeightPx();
     stack.innerHTML = "";

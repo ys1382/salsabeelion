@@ -970,8 +970,10 @@
   function loadDocIntoEditor() {
     loading = true;
     var html = doc.bodyHtml || "";
-    // Hide "Loading…" immediately — Quill paste can take seconds on long drafts.
-    setDocEditorReady();
+    // Clear "Loading…" before heavy Quill paste / pagination so the UI never looks stuck.
+    global.requestAnimationFrame(function () {
+      setDocEditorReady();
+    });
     try {
       if (global.LoreKeeperDocuments && global.LoreKeeperDocuments.normalizeBodyHtml) {
         html = LoreKeeperDocuments.normalizeBodyHtml(html);
@@ -985,23 +987,25 @@
     } catch (e) {
       console.error("LoreKeeper: document load failed", e);
     }
-    loading = false;
-    bindEditorInput();
-    bindResumeCapture();
-    setSaveStatus("Up to date", "idle");
-    setDocEditorReady();
-    updateRestoreBackupUi();
-    updateDocHistoryUi();
-    attachWriteContext();
-    if (global.LoreKeeperDocPageBoxes && LoreKeeperDocPageBoxes.schedulePaginateAfterReady) {
-      LoreKeeperDocPageBoxes.schedulePaginateAfterReady();
-    }
     global.requestAnimationFrame(function () {
-      try {
-        restoreResumePosition();
-      } catch (e2) {
-        /* ignore */
+      loading = false;
+      bindEditorInput();
+      bindResumeCapture();
+      setSaveStatus("Up to date", "idle");
+      setDocEditorReady();
+      updateRestoreBackupUi();
+      updateDocHistoryUi();
+      attachWriteContext();
+      if (global.LoreKeeperDocPageBoxes && LoreKeeperDocPageBoxes.schedulePaginateAfterReady) {
+        LoreKeeperDocPageBoxes.schedulePaginateAfterReady();
       }
+      global.requestAnimationFrame(function () {
+        try {
+          restoreResumePosition();
+        } catch (e2) {
+          /* ignore */
+        }
+      });
     });
   }
 
