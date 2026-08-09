@@ -127,9 +127,13 @@ _UPHEAVAL_REASON_RE = re.compile(
     r"rediscover(?:y|s|ed|ing)?|"
     r"(?:predators?|preyfolk|prey folk).{0,80}?sentient|"
     r"sentient.{0,60}?(?:predators?|preyfolk|prey folk)|"
-    r"preyfolk (?:are|were) (?:also )?sentient|"
+    r"preyfolk (?:are|were) (?:also |just as )?sentient|"
+    r"just as sentient|"
+    r"(?:same level of )?sentience|"
+    r"reveal that .{0,40}?preyfolk|"
     r"upheaval (?:because|from|due to|over|about)|"
-    r"(?:because|due to|from) .{0,60}?upheaval"
+    r"(?:because|due to|from) .{0,60}?upheaval|"
+    r"set(?:s|ting)? in motion .{0,80}?(?:reveal|rediscover|sentien)"
     r")\b",
     re.I,
 )
@@ -185,7 +189,39 @@ _WHO_IS_BLOAT_RE = re.compile(
     r"|\bis roused\b|\broused from\b|\bfurtively glancing\b"
     r"|\bforcibly groomed\b|\bcarrying (?:their|his|her)\b"
     r"|\bsoothed (?:the|his|her)\b|\bworris?ed for\b"
+    r"|\bdoesn'?t know (?:anything )?about\b|\bdo not know (?:anything )?about\b"
+    r"|\baside from the (?:fact|unspoken)\b|\balso,\s+aside\b"
+    r"|\bcan and do work together\b"
+    r"|\bhow predators work\b"
     r")"
+)
+
+# Faction-roster / chatty knowledge dumps on who-is (not short formal awareness status).
+_WHO_IS_FACTION_DUMP_RE = re.compile(
+    r"(?i)("
+    r"golden owl.{0,100}(?:lynx|cheshire)|"
+    r"(?:eurasian\s+)?lynx.{0,80}cheshire|"
+    r"cheshire cat.{0,60}work together|"
+    r"(?:owl|lynx).{0,40},\s*(?:the\s+)?(?:eurasian\s+)?lynx.{0,40}cheshire|"
+    r"doesn'?t know (?:anything )?about how|"
+    r"aside from the (?:fact that|unspoken)|"
+    r"can and do work together|"
+    r"how predators work"
+    r")"
+)
+
+# Short formal awareness status only (nuance / unspoken line) — not faction lists.
+_FORMAL_AWARENESS_STATUS_RE = re.compile(
+    r"\b("
+    r"not yet fully aware|"
+    r"political nuance|"
+    r"unspoken (?:line|rule)|"
+    r"becoming (?:more )?attuned|"
+    r"slowly but surely|"
+    r"predator[- ]preyfolk relations|"
+    r"line that (?:he|she|they) has? somehow"
+    r")\b",
+    re.I,
 )
 
 # "X is <scene action…>" — not cast identity.
@@ -244,6 +280,35 @@ def _is_plot_arc_clause(clause: str) -> bool:
     if re.search(r"\bby the (?:end|close|events)\b", s, re.I):
         return True
     return False
+
+
+def is_formal_awareness_status_clause(clause: str, label: str = "") -> bool:
+    """
+    Short formal awareness status for who-is (political nuance / unspoken line).
+    Not faction-roster dumps or chatty 'doesn't know how Predators work' lists.
+    """
+    s = (clause or "").strip()
+    if not s or not _FORMAL_AWARENESS_STATUS_RE.search(s):
+        return False
+    if _WHO_IS_FACTION_DUMP_RE.search(s):
+        return False
+    if re.search(
+        r"\b(doesn'?t know (?:anything )?about|aside from the fact|"
+        r"golden owl|eurasian lynx|can and do work together)\b",
+        s,
+        re.I,
+    ):
+        return False
+    if _PLOT_SEQUENCE_RE.search(s):
+        return False
+    if label and is_other_character_scene_beat(s, label):
+        return False
+    if label and not re.search(rf"\b{re.escape(label)}\b", s, re.I):
+        if not re.match(r"^(?:He|She)\b", s, re.I):
+            return False
+    if len(s) > 240:
+        return False
+    return True
 
 
 def is_upheaval_reason_clause(clause: str, label: str = "") -> bool:
@@ -328,7 +393,7 @@ def who_is_answer_has_bloat(text: str) -> bool:
     t = (text or "").strip()
     if not t:
         return False
-    if _WHO_IS_BLOAT_RE.search(t):
+    if _WHO_IS_BLOAT_RE.search(t) or _WHO_IS_FACTION_DUMP_RE.search(t):
         return True
     # Many sentences + plot-sequence markers = dump even if anchors present.
     sentences = [s for s in re.split(r"(?<=[.!?])\s+|(?<=;)\s+", t) if s.strip()]
@@ -604,9 +669,22 @@ def is_who_is_cast_fact_sentence(sentence: str, label: str) -> bool:
     label = (label or "").strip()
     if not s or not label:
         return False
-    if len(s) > 360:
+    if len(s) > 420:
         return False
-    if _WHO_IS_BLOAT_RE.search(s):
+    # Faction-roster / "doesn't know how Predators work" dumps — never cast-card.
+    if _WHO_IS_FACTION_DUMP_RE.search(s):
+        return False
+    # Chatty rediscovery lines may say "So Name, …" — still allow if upheaval reason.
+    chatty_stakes = bool(
+        re.match(rf"^So\s+{re.escape(label)}\b", s, re.I)
+        and is_upheaval_reason_clause(
+            re.sub(rf"^So\s+{re.escape(label)}\s*,?\s*", f"{label} ", s, count=1, flags=re.I),
+            label,
+        )
+    )
+    if _WHO_IS_BLOAT_RE.search(s) and not chatty_stakes and not is_formal_awareness_status_clause(
+        s, label
+    ):
         return False
     if _SCENE_AFTER_IS_RE.search(s):
         return False
@@ -632,8 +710,13 @@ def is_who_is_cast_fact_sentence(sentence: str, label: str) -> bool:
     if _kinship_shape_sentence(s, label):
         return _kinship_targets_plausible(s, label)
 
-    # Plain overview stakes (chosen one / nemesis / father to).
+    # Plain overview stakes (chosen one / upheaval / crossing worlds).
     if is_overview_significance_clause(s, label):
+        return True
+    if chatty_stakes:
+        return True
+    # Short formal awareness status (nuance / unspoken line) — not faction dumps.
+    if is_formal_awareness_status_clause(s, label):
         return True
 
     if not re.search(rf"\b{re.escape(label)}\b", s, re.I):
@@ -1619,8 +1702,91 @@ def weave_who_is_gold_tone(
     return body
 
 
+def formalize_who_is_sentence(sentence: str, label: str) -> str:
+    """
+    Restate chatty upheaval/rediscovery lines in formal cast-card tone.
+    Does not invent facts — only reorders and firms wording already present.
+    """
+    s = re.sub(r"\s+", " ", (sentence or "").strip())
+    label = (label or "").strip()
+    if not s or not label:
+        return s
+
+    # Drop leading "So Name," / "So Name "
+    s = re.sub(rf"^So\s+{re.escape(label)}\s*,\s*", f"{label} ", s, count=1, flags=re.I)
+    s = re.sub(rf"^So\s+{re.escape(label)}\s+", f"{label} ", s, count=1, flags=re.I)
+    s = re.sub(r"^So\s+,?\s*", "", s, count=1, flags=re.I)
+
+    # "Name, by being discovered …, just set in motion …"
+    # → "By being discovered …, Name has already set in motion …"
+    m = re.match(
+        rf"^{re.escape(label)}\s*,?\s+by\s+(being\s+.+?)\s*,?\s+"
+        rf"(?:just\s+)?(?:has\s+)?set\s+in\s+motion\s+(.+)$",
+        s,
+        re.I,
+    )
+    if m:
+        by_bit = m.group(1).strip().rstrip(",")
+        rest = m.group(2).strip()
+        # Prefer Cheshire Cat when sources say CC Baron / Baron of Cheshire.
+        by_bit = re.sub(
+            r"\b(?:the\s+)?CC\s+Baron(?:\s+of\s+Cheshire)?\b",
+            "the Cheshire Cat",
+            by_bit,
+            flags=re.I,
+        )
+        rest = re.sub(
+            r"\bthe eventual\s*\([^)]*few months[^)]*\)\s*reveal that\b",
+            "the Predators' eventual rediscovery that",
+            rest,
+            flags=re.I,
+        )
+        rest = re.sub(
+            r"\bthe eventual\s+reveal that\b",
+            "the Predators' eventual rediscovery that",
+            rest,
+            flags=re.I,
+        )
+        rest = re.sub(
+            r"\bare just as sentient as Predators\b",
+            "possess the same level of sentience as Predators",
+            rest,
+            flags=re.I,
+        )
+        rest = re.sub(
+            r"\bPreyfolk of this Dimension\b",
+            "the Preyfolk of their own dimension",
+            rest,
+            flags=re.I,
+        )
+        # If timing was parenthetical "within a few months", append formal span once.
+        if re.search(r"\bfew months\b", sentence, re.I) and not re.search(
+            r"\bspan of several months\b", rest, re.I
+        ):
+            rest = rest.rstrip(".")
+            rest += (
+                ", a rediscovery that will gradually but inevitably take place "
+                "within the span of several months"
+            )
+        s = f"By {by_bit}, {label} has already set in motion {rest}"
+        if not s.endswith((".", "!", "?")):
+            s += "."
+        return s
+
+    # Mild firming for other upheaval-reason lines.
+    if is_upheaval_reason_clause(s, label) or is_overview_significance_clause(s, label):
+        s = re.sub(r"\bjust set in motion\b", "has already set in motion", s, flags=re.I)
+        s = re.sub(
+            r"\b(?:the\s+)?CC\s+Baron(?:\s+of\s+Cheshire)?\b",
+            "the Cheshire Cat",
+            s,
+            flags=re.I,
+        )
+    return s
+
+
 def smooth_who_is_prose(label: str, body: str) -> str:
-    """Drop bare gender when kin signals sex; otherwise fold into species, never role."""
+    """Drop bare gender when kin signals sex; formalize stakes; never invent facts."""
     text = (body or "").strip()
     label = (label or "").strip()
     if not text or not label:
@@ -1645,6 +1811,7 @@ def smooth_who_is_prose(label: str, body: str) -> str:
                 count=1,
                 flags=re.I,
             )
+            s = formalize_who_is_sentence(s, label)
             kept.append(s)
         if gender and kept:
             has_kin_sex = any(

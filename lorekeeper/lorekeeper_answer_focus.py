@@ -8,6 +8,7 @@ from lorekeeper_character_compose import (
     _is_plot_arc_clause,
     is_audit_question,
     is_coverage_question,
+    is_formal_awareness_status_clause,
     is_other_character_scene_beat,
     is_overview_significance_clause,
     is_plot_walkthrough_text,
@@ -635,7 +636,9 @@ def scrub_who_is_plot_walkthrough(body: str, *, question: str = "") -> str:
         stakesish: list[str] = []
         other: list[str] = []
         for s in kept:
-            if is_overview_significance_clause(s, label):
+            if is_overview_significance_clause(s, label) or is_formal_awareness_status_clause(
+                s, label
+            ):
                 stakesish.append(s)
             elif re.search(
                 r"\b(brother|sister|father|mother|parent|married|subject of|quarry|known)\b",
@@ -661,7 +664,7 @@ def scrub_who_is_plot_walkthrough(body: str, *, question: str = "") -> str:
                 len(s),
             )
         )
-        ordered = identityish[:4] + tiesish[:4] + stakesish[:2] + other[:1]
+        ordered = identityish[:4] + tiesish[:4] + stakesish[:3] + other[:1]
         kept = ordered or kept[:5]
     else:
         kept = kept[:4]

@@ -804,6 +804,79 @@ class CharacterComposeTests(unittest.TestCase):
         self.assertNotIn("aware that", low)
         self.assertNotIn("does not yet want him dead", low)
 
+    def test_who_is_formalizes_rediscovery_and_scrubs_faction_dump(self):
+        """Chatty rediscovery → formal tone; faction-roster awareness dump dropped."""
+        from lorekeeper_answer_focus import scrub_who_is_plot_walkthrough, focus_ask_response
+        from lorekeeper_character_compose import (
+            formalize_who_is_sentence,
+            is_formal_awareness_status_clause,
+            is_who_is_cast_fact_sentence,
+            smooth_who_is_prose,
+        )
+
+        chatty = (
+            "So Character M, by being discovered in Wonderland by the CC Baron, just set "
+            "in motion the eventual (not yet but within a few months) reveal that Preyfolk "
+            "of this Dimension are just as sentient as Predators."
+        )
+        formal = formalize_who_is_sentence(chatty, "Character M")
+        low_f = formal.lower()
+        self.assertTrue(formal.startswith("By being discovered"), msg=formal)
+        self.assertIn("has already set in motion", low_f)
+        self.assertIn("rediscovery", low_f)
+        self.assertIn("cheshire cat", low_f)
+        self.assertNotIn("so character m", low_f)
+        self.assertNotIn("just set in motion", low_f)
+        self.assertIn("several months", low_f)
+
+        dump = (
+            "Also, aside from the unspoken rule that Preyfolk can't act sentient "
+            "misunderstanding, Character M doesn't know anything about how Predators work, "
+            "aside from the fact that the Golden Owl, the Eurasian Lynx, and the Cheshire Cat "
+            "can and do work together."
+        )
+        self.assertFalse(is_who_is_cast_fact_sentence(dump, "Character M"))
+        status = (
+            "Character M is not yet fully aware of the political nuance pertaining to the "
+            "Predator-Preyfolk relations of this dimension, but he is slowly but surely "
+            "becoming more attuned to an unspoken line that he has somehow recently crossed."
+        )
+        self.assertTrue(is_formal_awareness_status_clause(status, "Character M"))
+        self.assertTrue(is_who_is_cast_fact_sentence(status, "Character M"))
+
+        mixed = (
+            "Character M is the protagonist of the story, the White Rabbit from Alice in "
+            "Wonderland. Character M is known to Cheshire Cat as Chroniker. "
+            + chatty
+            + " "
+            + dump
+            + " "
+            + status
+        )
+        cleaned = scrub_who_is_plot_walkthrough(
+            mixed, question="In Ashford Saga, who is Character M?"
+        )
+        cleaned = smooth_who_is_prose("Character M", cleaned)
+        focused = focus_ask_response(
+            "In Ashford Saga, who is Character M?",
+            {
+                "ok": True,
+                "answer": cleaned + "\n\n— From your notes only. Nothing invented.",
+                "questionKind": "who",
+                "sources": [],
+            },
+        )
+        out = (focused.get("answer") or "").lower()
+        self.assertIn("protagonist", out)
+        self.assertIn("chroniker", out)
+        self.assertTrue("by being discovered" in out or "rediscovery" in out, msg=out)
+        self.assertIn("political nuance", out)
+        self.assertNotIn("golden owl", out)
+        self.assertNotIn("eurasian lynx", out)
+        self.assertNotIn("doesn't know anything", out)
+        self.assertNotIn("so character m", out)
+        self.assertNotIn("can and do work together", out)
+
     def test_who_is_identity_alias_named_kin(self):
         entries = [
             _entry(

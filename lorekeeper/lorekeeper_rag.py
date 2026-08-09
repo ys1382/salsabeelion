@@ -122,15 +122,18 @@ def _uses_cast_card(
 _WHO_CAST_CARD = """
 This is a WHO-IS question — answer as a short CHARACTER OVERVIEW for the named person only.
 
-TONE: formal but plain — not posh, not chatty, not technical. Prefer 2–3 sentences like:
-"Character M is the protagonist of Ashford Saga and the chosen one meant to defeat the dragon demon king, but is known to the fairytale world at large as the White Rabbit from Alice in Wonderland. He is the son of buck Snow Thistle and doe Ebony, and younger brother to Obsidian and Stygian. Character D is his nemesis."
+TONE: formal but plain — not posh, not chatty, not technical. Prefer 2–4 sentences like:
+"Character M is the protagonist of Ashford Saga, the White Rabbit from Alice in Wonderland. He is the son of buck Snow Thistle and doe Ebony, and younger brother to Obsidian and Stygian. Character M is known to Character D as Chroniker. By being discovered in Wonderland by Character D, Character M has already set in motion the Predators' eventual rediscovery that the Preyfolk of their own dimension possess the same level of sentience as themselves, a rediscovery that will gradually but inevitably take place within the span of several months."
+
+Never open with "So Character M," or "Also, aside from…". Prefer "By being discovered…, Character M has already set in motion…" over "just set in motion".
 
 REQUIRED when sources state them (do not stop after role + alias alone):
 1. Role — protagonist / POV / antagonist (never "male protagonist")
-2. Story significance — why they matter in the story when notes say it (chosen one, destined to…, father to X)
+2. Story significance / upheaval reason — why they matter when notes say it (rediscovery, sentience, chosen one) in formal prose
 3. Fairytale / outside-world known-as — only if sources say so
 4. Close defining ties ONLY — kin, nemesis, best friend, subject-of-curiosity standing — people who define THIS character
 5. Named parents / brothers with standing when stated
+6. Optional ONE short formal awareness status only if sources state it (e.g. not yet fully aware of political nuance / an unspoken line crossed) — never a faction roster
 
 HARD LIMIT on ties: at most 2–3 close people. Never dump the whole cast or side friendships.
 
@@ -141,7 +144,8 @@ Gender via buck/doe, son/daughter, brother/sister, or natural he/she — never a
 PREFER overview identity over orphan life summary (father-died / widow / raised-by) when better slots exist.
 
 OMIT completely:
-- Scene beats, awareness dumps, plot walkthrough
+- Scene beats, plot walkthrough, chatty asides ("So …", "Also, aside from…")
+- Awareness dumps that list who works with whom (Golden Owl / Lynx / Cheshire Cat roster) or "doesn't know how Predators work"
 - Fake kinship stopwords (Especially, Are, …)
 - Everyone else in the story who is not a defining tie
 
