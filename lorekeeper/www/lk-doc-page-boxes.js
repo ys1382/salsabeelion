@@ -16,8 +16,8 @@
   var activeIndex = 0;
   var syncing = false;
   var bound = false;
-  /** Phase B: stacked pages after load. Phase C turns on typing overflow. */
-  var ALLOW_MULTI_PAGE = true;
+  /** Off until top-of-page clip after split is fixed. Tall growing sheet = full text. */
+  var ALLOW_MULTI_PAGE = false;
   var ALLOW_TYPE_OVERFLOW = false;
 
   function doc() {
