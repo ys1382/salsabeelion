@@ -16,8 +16,8 @@
   var activeIndex = 0;
   var syncing = false;
   var bound = false;
-  /** Off until multi-page split is proven not to clip. Tall growing sheet = full text. */
-  var ALLOW_MULTI_PAGE = false;
+  /** Phase B: stacked pages after load. Phase C turns on typing overflow. */
+  var ALLOW_MULTI_PAGE = true;
   var ALLOW_TYPE_OVERFLOW = false;
 
   function doc() {
@@ -248,9 +248,9 @@
     var used = 0;
     var i = 0;
     var guard = 0;
-    var maxSteps = Math.max(64, blocks.length * 4);
+    var maxSteps = Math.max(128, blocks.length * 6);
     var started = Date.now();
-    var BUDGET_MS = 100;
+    var BUDGET_MS = 4000;
 
     function flush() {
       if (!parts.length) return;
@@ -262,7 +262,7 @@
     while (i < blocks.length && guard < maxSteps) {
       guard += 1;
       if (Date.now() - started > BUDGET_MS) {
-        // Too slow — keep Phase A tall single page instead of freezing the tab.
+        // Abort whole split — caller keeps the tall single page.
         measure.remove();
         return [clean];
       }
@@ -272,12 +272,6 @@
 
       if (h > maxH + 1) {
         flush();
-        // Skip expensive binary-split when over budget; put whole block on next page pack.
-        if (Date.now() - started > BUDGET_MS * 0.7) {
-          pages.push(blockHtml);
-          i += 1;
-          continue;
-        }
         measure.remove();
         var split = splitBlockHtmlToFit(blockHtml, maxH);
         measure = buildMeasureEl();
@@ -291,6 +285,7 @@
             pages.push(split.tail);
           }
         } else if (split.tail && !isEmptyHtml(split.tail)) {
+          // Unsplittable oversized block — own page; pagesFit may reject → tall fallback.
           pages.push(split.tail);
         }
         i += 1;
@@ -307,6 +302,22 @@
     flush();
     measure.remove();
     return pages.length ? pages : [clean];
+  }
+
+  function pagesContentFits(pages) {
+    if (!pages || !pages.length) return false;
+    var maxH = contentHeightPx();
+    var measure = buildMeasureEl();
+    var ok = true;
+    for (var i = 0; i < pages.length; i++) {
+      measure.innerHTML = pages[i] || "<p><br></p>";
+      if ((measure.scrollHeight || 0) > maxH + 6) {
+        ok = false;
+        break;
+      }
+    }
+    measure.remove();
+    return ok;
   }
 
   var pendingPaginateHtml = null;
@@ -347,21 +358,14 @@
     }
   }
 
-  function loadFromBodyHtml(html) {
-    var clean = stripLayout(html || "");
-    pendingPaginateHtml = null;
-    // Always show the full draft on one growing sheet — no clip, no deferred split.
-    pageHtmls = [clean];
+  function stayOnTallPage(clean) {
+    pageHtmls = [clean || ""];
     activeIndex = 0;
     syncing = true;
     try {
       renderStack();
-      setQuillHtml(clean);
+      setQuillHtml(pageHtmls[0] || "");
       forceGrowToContent();
-      global.requestAnimationFrame(function () {
-        forceGrowToContent();
-        global.requestAnimationFrame(forceGrowToContent);
-      });
     } catch (e) {
       /* keep going */
     }
@@ -369,9 +373,67 @@
     if (onAfterReflow) onAfterReflow();
   }
 
-  /** Kept for Phase B later — currently a no-op while multi-page is off. */
+  function loadFromBodyHtml(html) {
+    var clean = stripLayout(html || "");
+    pendingPaginateHtml = ALLOW_MULTI_PAGE ? clean : null;
+    // Show full draft immediately on one growing sheet (no chop, no hang).
+    stayOnTallPage(clean);
+  }
+
+  /** Call after loading screen clears — never blocks “Loading…”. */
   function schedulePaginateAfterReady() {
-    pendingPaginateHtml = null;
+    if (!ALLOW_MULTI_PAGE || !pendingPaginateHtml) return;
+    if (paginateTimer) clearTimeout(paginateTimer);
+    var clean = pendingPaginateHtml;
+    paginateTimer = global.setTimeout(function () {
+      paginateTimer = null;
+      if (!quill || pendingPaginateHtml !== clean) return;
+      try {
+        var wordsBefore = plainWords(clean);
+        if (!wordsBefore) {
+          pendingPaginateHtml = null;
+          return;
+        }
+        // Extremely huge docs: stay tall for now (Phase B safety).
+        if (clean.length > 400000) {
+          pendingPaginateHtml = null;
+          return;
+        }
+        var pages = paginateFullHtml(clean);
+        if (!pages || pages.length <= 1) {
+          pendingPaginateHtml = null;
+          return;
+        }
+        var wordsAfter = plainWords(pages.join(""));
+        if (wordsAfter !== wordsBefore) {
+          pendingPaginateHtml = null;
+          return;
+        }
+        if (!pagesContentFits(pages)) {
+          pendingPaginateHtml = null;
+          return;
+        }
+        pageHtmls = pages;
+        activeIndex = 0;
+        syncing = true;
+        renderStack();
+        setQuillHtml(pageHtmls[0] || "");
+        syncing = false;
+        // If the active Quill page still overflows, abort to tall page.
+        global.requestAnimationFrame(function () {
+          if (pendingPaginateHtml !== clean && pendingPaginateHtml !== null) return;
+          if (pageHtmls.length > 1 && activeOverflows()) {
+            stayOnTallPage(clean);
+          }
+          pendingPaginateHtml = null;
+          if (onAfterReflow) onAfterReflow();
+        });
+      } catch (err) {
+        syncing = false;
+        pendingPaginateHtml = null;
+        stayOnTallPage(clean);
+      }
+    }, 500);
   }
 
   function headerFooterHtml(pageNum, pageCount) {
@@ -537,8 +599,8 @@
       } else {
         editor.style.maxHeight = contentH + "px";
         editor.style.height = contentH + "px";
-        // Phase B: scroll inside the page until Phase C moves overflow to the next sheet.
-        editor.style.overflow = "auto";
+        // Content was measured to fit; hide overflow instead of scrolling inside the sheet.
+        editor.style.overflow = "hidden";
       }
     }
     if (growMode) {
