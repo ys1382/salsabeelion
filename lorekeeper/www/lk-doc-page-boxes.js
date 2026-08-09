@@ -325,13 +325,12 @@
     if (!ALLOW_MULTI_PAGE || !pendingPaginateHtml) return;
     if (paginateTimer) clearTimeout(paginateTimer);
     var clean = pendingPaginateHtml;
-    // Wait until the first paint/ready is done, then try a cheap split.
+    // After ready + first paint; keep tall page if split is unsafe or would clip.
     paginateTimer = global.setTimeout(function () {
       paginateTimer = null;
       if (!quill || pendingPaginateHtml !== clean) return;
       try {
         var wordsBefore = plainWords(clean);
-        // Huge docs: skip split for now — stay on tall readable page.
         if (clean.length > 200000) {
           pendingPaginateHtml = null;
           return;
@@ -347,6 +346,11 @@
           pendingPaginateHtml = null;
           return;
         }
+        // Verify each page's HTML actually fits the content box; else stay tall single page.
+        if (!pagesFitContentBox(pages)) {
+          pendingPaginateHtml = null;
+          return;
+        }
         pageHtmls = pages;
         activeIndex = 0;
         syncing = true;
@@ -359,7 +363,21 @@
         syncing = false;
         pendingPaginateHtml = null;
       }
-    }, 400);
+    }, 600);
+  }
+
+  function pagesFitContentBox(pages) {
+    var measure = buildMeasureEl();
+    var maxH = contentHeightPx();
+    for (var i = 0; i < pages.length; i++) {
+      measure.innerHTML = pages[i] || "<p><br></p>";
+      if ((measure.scrollHeight || 0) > maxH + 12) {
+        measure.remove();
+        return false;
+      }
+    }
+    measure.remove();
+    return true;
   }
 
   function headerFooterHtml(pageNum, pageCount) {
@@ -430,7 +448,8 @@
     }
 
     var pageCount = pageHtmls.length;
-    var growMode = !ALLOW_MULTI_PAGE || pageCount === 1;
+    // Until Phase C typing-overflow, never use fixed clip height — sheets may grow slightly.
+    var growMode = !ALLOW_TYPE_OVERFLOW || pageCount === 1;
     var pageH = pageHeightPx();
     var contentH = contentHeightPx();
     stack.innerHTML = "";
