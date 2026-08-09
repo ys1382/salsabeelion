@@ -864,6 +864,7 @@ a { color: var(--accent); }
 }
 .lk-page-sheet.is-growing {
   height: auto !important;
+  max-height: none !important;
   overflow: visible !important;
 }
 .lk-page-sheet:not(.is-growing) {
@@ -877,6 +878,13 @@ a { color: var(--accent); }
   height: auto;
   min-height: 100%;
 }
+.lk-page-sheet.is-growing .lk-page-sheet-body,
+.lk-page-sheet.is-growing .lk-page-sheet-body-active {
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  overflow: visible !important;
+}
 .lk-page-sheet-body-active {
   display: block;
 }
@@ -884,6 +892,15 @@ a { color: var(--accent); }
   border: none !important;
   height: auto !important;
   min-height: 12rem;
+}
+/* Beat Quill snow’s height:100% / overflow-y:auto so long drafts are not clipped. */
+.lk-page-sheet.is-growing .ql-container,
+.lk-page-sheet.is-growing .ql-container.ql-snow,
+.lk-page-sheet.is-growing .ql-editor {
+  height: auto !important;
+  max-height: none !important;
+  overflow: visible !important;
+  overflow-y: visible !important;
 }
 .lk-page-sheet-chrome {
   position: absolute;

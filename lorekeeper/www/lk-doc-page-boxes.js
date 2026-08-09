@@ -302,6 +302,41 @@
   var pendingPaginateHtml = null;
   var paginateTimer = null;
 
+  /** Make Quill’s height:100% trap expand to the real draft height. */
+  function forceGrowToContent() {
+    if (ALLOW_MULTI_PAGE && pageHtmls.length > 1) return;
+    if (!quill || !quill.root || !quill.container) return;
+    var editor = quill.root;
+    var container = quill.container;
+    var sheet = container.closest ? container.closest(".lk-page-sheet") : null;
+    var body = container.parentNode;
+    var pageH = pageHeightPx();
+    var m = marginPx();
+
+    [editor, container].forEach(function (el) {
+      if (!el || !el.style) return;
+      el.style.height = "auto";
+      el.style.maxHeight = "none";
+      el.style.minHeight = "0";
+      el.style.overflow = "visible";
+      el.style.overflowY = "visible";
+    });
+    if (body && body.style) {
+      body.style.height = "auto";
+      body.style.maxHeight = "none";
+      body.style.minHeight = "0";
+      body.style.overflow = "visible";
+    }
+    if (sheet && sheet.style) {
+      sheet.classList.add("is-growing");
+      sheet.style.height = "auto";
+      sheet.style.maxHeight = "none";
+      sheet.style.overflow = "visible";
+      var needed = Math.max(pageH, (editor.scrollHeight || 0) + m * 2 + 48);
+      sheet.style.minHeight = needed + "px";
+    }
+  }
+
   function loadFromBodyHtml(html) {
     var clean = stripLayout(html || "");
     pendingPaginateHtml = null;
@@ -312,6 +347,11 @@
     try {
       renderStack();
       setQuillHtml(clean);
+      forceGrowToContent();
+      global.requestAnimationFrame(function () {
+        forceGrowToContent();
+        global.requestAnimationFrame(forceGrowToContent);
+      });
     } catch (e) {
       /* keep going */
     }
