@@ -291,21 +291,17 @@ def _linked_names(label: str, facts: list[AliasFact]) -> set[str]:
                         names.add(fact.subject)
                         changed = True
             elif fact.kind == "known_to" and fact.other and fact.alias:
+                # Alias only — the knower (other) is a different cast member.
                 if any(_names_match(n, fact.subject) for n in names):
                     if not any(_names_match(n, fact.alias) for n in names):
                         names.add(fact.alias)
-                        changed = True
-                    if not any(_names_match(n, fact.other) for n in names):
-                        names.add(fact.other)
                         changed = True
                 elif any(_names_match(n, fact.alias) for n in names):
                     if not any(_names_match(n, fact.subject) for n in names):
                         names.add(fact.subject)
                         changed = True
-                elif any(_names_match(n, fact.other) for n in names):
-                    if not any(_names_match(n, fact.subject) for n in names):
-                        names.add(fact.subject)
-                        changed = True
+                # Do not expand through the knower: "known to Lord Tenebris as Chroniker"
+                # must not treat Lord Tenebris as the same person as Etherei.
             elif fact.kind == "shared_name" and fact.other:
                 if any(_names_match(n, fact.subject) for n in names):
                     if not any(_names_match(n, fact.other) for n in names):

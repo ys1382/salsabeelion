@@ -10,6 +10,7 @@ from lorekeeper_aliases import (
     alias_reference_lines_for,
     collect_alias_facts,
     expand_character_names,
+    expand_name_list,
 )
 from lorekeeper_recall import recall_from_user_data
 
@@ -59,7 +60,8 @@ class AliasTests(unittest.TestCase):
         keys = {n.lower() for n in expanded}
         self.assertIn("character a", keys)
         self.assertIn("ella", keys)
-        self.assertIn("character b", keys)
+        # Knower is a different person — must not merge into the subject's name set.
+        self.assertNotIn("character b", keys)
 
     def test_same_person_also_known_as(self):
         entries = [_entry("n1", "Ella is also known as Cinder Ella.")]
@@ -152,6 +154,25 @@ class AliasTests(unittest.TestCase):
         joined = " ".join(lines).lower()
         self.assertIn("chroniker", joined)
         self.assertIn("character d", joined)
+
+    def test_known_to_knower_is_not_same_person_alias(self):
+        """'Known by NAME by Person' must expand Chroniker, not Person."""
+        entries = [
+            {
+                "id": "n1",
+                "title": "Names",
+                "kind": "note",
+                "tags": ["Ashford Saga", "Character M"],
+                "body": (
+                    "Character M is known by the name Chroniker by Character D and those "
+                    "Character D trusts enough to share what he knows about the White Rabbit."
+                ),
+            }
+        ]
+        expanded = expand_name_list(["Character M"], entries, {"ashford saga"})
+        low = [n.lower() for n in expanded]
+        self.assertIn("chroniker", low)
+        self.assertNotIn("character d", low)
 
 
 if __name__ == "__main__":

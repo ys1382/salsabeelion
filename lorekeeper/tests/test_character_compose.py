@@ -986,6 +986,95 @@ class CharacterComposeTests(unittest.TestCase):
         self.assertIn("What isn't spelled out yet in your notes:", answer)
         self.assertLess(answer.index("Character Z"), answer.index("What isn't spelled out yet"))
 
+    def test_who_is_subject_lock_no_steal_from_other_sheet(self):
+        """Who-is must not remap another character's kin/stakes onto a side alias."""
+        entries = [
+            _entry(
+                "n1",
+                "Protagonist Notes",
+                (
+                    "Character M is the protagonist of the story, the White Rabbit from "
+                    "Alice in Wonderland. He is younger brother to Obsidian and Stygian, "
+                    "and the son of the buck Snow Thistle and the doe Ebony. He somehow "
+                    "crosses realities into the home dimension of the Cheshire Cat, who, "
+                    "in this story, is named Lord Shadow, and sets off relationship "
+                    "upheaval for Predator and Preyfolk alike."
+                ),
+                tags=["Ashford Saga", "Character M"],
+            ),
+            _entry(
+                "n2",
+                "Lord Shadow",
+                (
+                    "Lord Shadow is the Cheshire Cat from Alice in Wonderland. "
+                    "He is a Predator noble and the main antagonist of the northern court."
+                ),
+                tags=["Ashford Saga", "Shadow"],
+                kind="character",
+            ),
+            _entry(
+                "n3",
+                "Names",
+                (
+                    "Character M is known by the name Chroniker by Lord Shadow and those "
+                    "Lord Shadow trusts enough to share what he knows about the White Rabbit."
+                ),
+                tags=["Ashford Saga", "Character M"],
+            ),
+        ]
+        shadow = self._ask("In Ashford Saga, who is Shadow?", entries)
+        s_ans = (shadow.get("answer") or "").lower()
+        self.assertIn("cheshire", s_ans)
+        self.assertTrue("antagonist" in s_ans or "predator" in s_ans, msg=s_ans)
+        self.assertNotIn("snow thistle", s_ans)
+        self.assertNotIn("obsidian", s_ans)
+        self.assertNotIn("crosses realities", s_ans)
+
+        hero = self._ask("In Ashford Saga, who is Character M?", entries)
+        h_ans = (hero.get("answer") or "").lower()
+        self.assertIn("protagonist", h_ans)
+        self.assertIn("white rabbit", h_ans)
+        self.assertIn("obsidian", h_ans)
+        self.assertIn("chroniker", h_ans)
+        self.assertTrue("upheaval" in h_ans or "crosses" in h_ans, msg=h_ans)
+        self.assertNotIn("main antagonist", h_ans)
+
+    def test_who_is_rejects_scrap_identity_birth(self):
+        from lorekeeper_character_compose import (
+            _to_reference_clause,
+            cast_answer_is_thin,
+            is_scrap_identity_clause,
+        )
+
+        self.assertEqual(_to_reference_clause("birth", "Character P"), "")
+        self.assertTrue(is_scrap_identity_clause("Character P is birth.", "Character P"))
+        self.assertTrue(
+            cast_answer_is_thin(
+                "Character P is birth.\n\n— From your notes only. Nothing invented.",
+                "Character P",
+            )
+        )
+
+    def test_who_is_keeps_protagonist_and_situation_stakes(self):
+        entries = [
+            _entry(
+                "e1",
+                "Character E",
+                (
+                    "Character E is a young woman. Character E is the protagonist. "
+                    "She finds herself pulled into a waking dream after the lantern fails."
+                ),
+                tags=["Waking Dream"],
+            )
+        ]
+        res = self._ask("In Waking Dream, who is Character E?", entries)
+        answer = (res.get("answer") or "").lower()
+        self.assertIn("protagonist", answer)
+        self.assertTrue(
+            "waking dream" in answer or "pulled into" in answer or "finds herself" in answer,
+            msg=answer,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

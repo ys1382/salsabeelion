@@ -619,6 +619,9 @@ def _title_matches_character(entry: dict[str, Any], names: list[str]) -> bool:
             return True
         if kind == "character" and title_low == name.lower():
             return True
+        # "Lord Tenebris" / "Duke Dijon" title when asking bare "Tenebris" / "Dijon"
+        if _names_include(title, [name]):
+            return True
     return False
 
 
@@ -719,7 +722,12 @@ def _classify_sentence(sentence: str, names: list[str] | None = None) -> str:
         r"crosses? realit|relationship upheaval|sets? off .{0,80}?upheaval)\b",
         s_low,
     ):
-        return "identity"
+        # "White Rabbit" inside a scene thought is not identity.
+        if not re.search(
+            r"\b(tries? not to|not to dwell|no doubt views|daring to)\b",
+            s_low,
+        ):
+            return "identity"
     if names and _has_profile_copula(sentence, names):
         return "identity"
     if re.search(
@@ -769,24 +777,79 @@ _OVERVIEW_NOTE_TITLE_RE = re.compile(
 )
 
 
+def _primary_cast_subject(body: str) -> str | None:
+    """First clear 'Name is…' subject in a cast overview note — not incidental aliases."""
+    for sentence in _split_sentences(body or "")[:6]:
+        m = re.match(
+            r"^("
+            r"Character\s+[A-Za-z0-9]+|"
+            r"[A-Z][a-z]{2,}(?:\s+[A-Z][a-z]{2,})?"
+            r")\s+(?:is|was)\b",
+            sentence.strip(),
+        )
+        if not m:
+            continue
+        name = m.group(1).strip()
+        if name.lower() in {
+            "the",
+            "this",
+            "that",
+            "his",
+            "her",
+            "their",
+            "he",
+            "she",
+            "they",
+        }:
+            continue
+        return name
+    return None
+
+
+def _names_include(primary: str, names: list[str]) -> bool:
+    p = (primary or "").strip().lower()
+    if not p:
+        return False
+    for name in names:
+        n = (name or "").strip().lower()
+        if not n:
+            continue
+        if p == n or p.endswith(" " + n) or n.endswith(" " + p):
+            return True
+        # Lord Tenebris ↔ Tenebris
+        p_parts = p.split()
+        n_parts = n.split()
+        if p_parts and n_parts and p_parts[-1] == n_parts[-1] and len(p_parts[-1]) >= 4:
+            return True
+    return False
+
+
 def _entry_is_character_sheet(entry: dict[str, Any], names: list[str]) -> bool:
     kind = str(entry.get("kind") or "")
-    if kind == "character":
-        return True
+    title = str(entry.get("title") or "").strip()
+    title_low = title.lower()
+    body = str(entry.get("body") or "")
+
     if _title_matches_character(entry, names):
         return True
-    title = str(entry.get("title") or "").strip().lower()
     for name in names:
-        if title == name.lower():
+        if title_low == name.lower():
             return True
-    # Companion overview notes (Protagonist Notes, Parent Notes, Names) for
-    # the asked person — treat as cast sheets so kinship lines stay whole.
-    if _OVERVIEW_NOTE_TITLE_RE.search(title):
-        body = str(entry.get("body") or "")
-        tags = " ".join(str(t) for t in (entry.get("tags") or []))
-        hay = f"{title}\n{body}\n{tags}"
-        if any(_name_in_text(name, hay) for name in names):
+
+    # kind=character is only this person's sheet when title/primary subject matches.
+    if kind == "character":
+        primary = _primary_cast_subject(body)
+        if primary and _names_include(primary, names):
             return True
+        return False
+
+    # Companion overview notes (Protagonist Notes, Parent Notes, Names) —
+    # only when the asked person is the note's primary subject, not a side alias.
+    if _OVERVIEW_NOTE_TITLE_RE.search(title_low):
+        primary = _primary_cast_subject(body)
+        if primary and _names_include(primary, names):
+            return True
+        return False
     return False
 
 
@@ -795,11 +858,16 @@ def _bits_for_character(entry: dict[str, Any], names: list[str]) -> list[str]:
     body = normalize_corpus_text(str(entry.get("body") or ""))
     bits: list[str] = []
     role_terms = [n.lower() for n in names if n.lower() in _ROLE_WORDS]
+    label = names[0] if names else ""
+    is_sheet = _entry_is_character_sheet(entry, names)
 
-    if _entry_is_character_sheet(entry, names):
+    if is_sheet:
         if body:
-            label = names[0] if names else ""
-            bits = [s for s in _split_sentences(body) if _who_is_profile_bit(s, label)]
+            bits = [
+                s
+                for s in _split_sentences(body)
+                if _who_is_profile_bit(s, label, allow_pronoun=True)
+            ]
             if not bits and _title_exact_match(entry, names):
                 bits = _bits_from_segment(f"{label} — {body}", names)
         elif title:
@@ -808,11 +876,14 @@ def _bits_for_character(entry: dict[str, Any], names: list[str]) -> list[str]:
         for sentence in _split_sentences(body):
             s_low = sentence.lower()
             if any(role in s_low for role in role_terms):
-                bits.append(sentence)
+                if _who_is_profile_bit(sentence, label, allow_pronoun=False):
+                    bits.append(sentence)
     else:
         segments = _segments_mentioning(body, names)
         for segment in segments:
-            bits.extend(_bits_from_segment(segment, names))
+            for bit in _bits_from_segment(segment, names):
+                if _who_is_profile_bit(bit, label, allow_pronoun=False):
+                    bits.append(bit)
         if not bits:
             sentences = _split_sentences(body)
             for i, sentence in enumerate(sentences):
@@ -820,12 +891,14 @@ def _bits_for_character(entry: dict[str, Any], names: list[str]) -> list[str]:
                     continue
                 if not any(_name_in_text(name, sentence) for name in names):
                     continue
+                if not _who_is_profile_bit(sentence, label, allow_pronoun=False):
+                    continue
                 bits.append(sentence)
                 if i + 1 < len(sentences):
                     nxt = sentences[i + 1]
                     if re.match(r"^(He|She|They|It|His|Her|Their)\b", nxt, re.I):
-                        if not _is_author_meta_sentence(nxt, names):
-                            bits.append(nxt)
+                        # Pronoun continuation only on this person's own sheet.
+                        continue
 
     bits.sort(key=lambda s: _BUCKET_RANK.get(_classify_sentence(s, names), 3))
     return bits[:12]
@@ -991,25 +1064,87 @@ def _clear_profile_line(bit: str, label: str) -> bool:
     return False
 
 
-def _who_is_profile_bit(bit: str, label: str) -> bool:
+def _who_is_profile_bit(bit: str, label: str, *, allow_pronoun: bool = False) -> bool:
     if _is_author_meta_sentence(bit, [label]):
         return False
     from lorekeeper_character_compose import (
         _is_plot_arc_clause,
+        cast_sentence_about_subject,
         is_other_character_scene_beat,
+        is_scrap_identity_clause,
         is_story_significance_clause,
+        label_only_as_alias_mention,
         who_is_answer_has_bloat,
     )
 
     if who_is_answer_has_bloat(bit):
+        return False
+    if is_scrap_identity_clause(bit, label):
+        return False
+    if label_only_as_alias_mention(bit, label):
+        return False
+    # Interior thought / scene beat — never cast-card identity (even if "White Rabbit" appears).
+    if re.search(
+        r"\b("
+        r"tries? not to|trying not to|not to dwell|doesn'?t want to dwell|"
+        r"no doubt views|daring to demonstrate|looks? back with|"
+        r"mouthed (?:an? )?(?:apology|words?)"
+        r")\b",
+        bit,
+        re.I,
+    ):
         return False
     if _is_plot_arc_clause(bit) or is_other_character_scene_beat(bit, label):
         return False
     from lorekeeper_character_compose import is_overview_significance_clause
 
     # Overview / upheaval-reason stakes first — may share "sets in motion" phrasing.
-    if is_overview_significance_clause(bit, label):
-        return True
+    if is_overview_significance_clause(bit, label, allow_pronoun=allow_pronoun):
+        if cast_sentence_about_subject(bit, label, allow_pronoun=allow_pronoun) or (
+            allow_pronoun
+            and re.match(r"^(?:He|She)\b", bit, re.I)
+            and not label_only_as_alias_mention(bit, label)
+        ):
+            return True
+        return False
+    if not cast_sentence_about_subject(bit, label, allow_pronoun=allow_pronoun):
+        # Own-sheet fragments: "Married to X", "Grey-skinned arcanist", "He is brother…"
+        from lorekeeper_character_compose import _kinship_shape_sentence
+
+        sheet_fragment_ok = False
+        if allow_pronoun:
+            if _kinship_shape_sentence(bit, label):
+                sheet_fragment_ok = True
+            elif re.match(
+                r"^(?:Married|Brother|Sister|Son|Daughter|Child)\s+to\b",
+                bit,
+                re.I,
+            ):
+                sheet_fragment_ok = True
+            elif (
+                _TRAIT_HINT.search(bit)
+                and len(bit) < 100
+                and not re.match(
+                    r"^(?:He|She|They|The|When|After|Before|So)\b",
+                    bit,
+                    re.I,
+                )
+                and not re.search(
+                    r"\b(tries? not to|not to dwell|no doubt views)\b",
+                    bit,
+                    re.I,
+                )
+            ):
+                sheet_fragment_ok = True
+            elif re.match(r"^(?:He|She)\b", bit, re.I) and re.search(
+                r"\b(brother|sister|son|daughter|father|mother|known as|known by|"
+                r"married|protagonist|antagonist)\b",
+                bit,
+                re.I,
+            ):
+                sheet_fragment_ok = True
+        if not sheet_fragment_ok:
+            return False
     if is_story_significance_clause(bit, label) and any(
         _name_in_text(name, bit) for name in [label]
     ):
@@ -1038,15 +1173,32 @@ def _who_is_profile_bit(bit: str, label: str) -> bool:
 
 def _who_is_cast_bit_from_draft(bit: str, label: str) -> bool:
     """Draft prose: cast facts and fixed traits — not plot walkthrough."""
-    from lorekeeper_character_compose import is_other_character_scene_beat
+    from lorekeeper_character_compose import (
+        cast_sentence_about_subject,
+        is_other_character_scene_beat,
+        label_only_as_alias_mention,
+    )
 
     if is_other_character_scene_beat(bit, label):
         return False
-    if _who_is_profile_bit(bit, label):
+    if label_only_as_alias_mention(bit, label):
+        return False
+    if _who_is_profile_bit(bit, label, allow_pronoun=False):
         return True
     if _is_author_meta_sentence(bit, [label]) or _is_plot_arc_clause(bit):
         return False
+    if re.search(
+        r"\b("
+        r"tries? not to|trying not to|not to dwell|doesn'?t want to dwell|"
+        r"no doubt views|daring to demonstrate"
+        r")\b",
+        bit,
+        re.I,
+    ):
+        return False
     if not any(_name_in_text(name, bit) for name in [label]):
+        return False
+    if not cast_sentence_about_subject(bit, label, allow_pronoun=False):
         return False
     if _BIOGRAPHY_RE.search(bit):
         return False
@@ -1125,22 +1277,31 @@ def _synthesize_character_answer(
     ids: list[str] = []
     source_titles: set[str] = set()
 
-    for eid, entry_title, bits, _is_doc in hits:
+    for eid, entry_title, bits, is_doc in hits:
         _record_source_id(ids, eid)
         if entry_title:
             source_titles.add(entry_title)
         for bit in bits:
-            bit_ok = (
-                _who_is_cast_bit_from_draft(bit, label)
-                if use_draft_cast
-                else _who_is_profile_bit(bit, label)
-            )
+            if use_draft_cast and is_doc:
+                bit_ok = _who_is_cast_bit_from_draft(bit, label)
+            else:
+                # Note/sheet bits keep pronoun kinship on the subject's own card.
+                bit_ok = _who_is_profile_bit(bit, label, allow_pronoun=True)
             if not coverage and not bit_ok:
                 continue
             bucket = _classify_sentence(bit, [label])
             if bucket == "role" and not cast_role_line_about_label(bit, label):
                 from lorekeeper_character_compose import is_overview_significance_clause
 
+                # Pronoun role on this person's sheet: "He is … antagonist"
+                if re.match(r"^(?:He|She)\b", bit, re.I) and re.search(
+                    r"\b(protagonist|antagonist|villain|hero|heroine|main character|"
+                    r"side character|noble|guardian)\b",
+                    bit,
+                    re.I,
+                ):
+                    roles.append(bit)
+                    continue
                 # Overview stakes mis-bucketed as role (e.g. "Lord …" title word) — keep.
                 if is_overview_significance_clause(bit, label):
                     identity.append(bit)
@@ -1527,6 +1688,15 @@ def _explicit_profile_lines_from_drafts(
         for sentence in _split_sentences(body):
             if _is_author_meta_sentence(sentence, query_names):
                 continue
+            if re.search(
+                r"\b("
+                r"tries? not to|trying not to|not to dwell|doesn'?t want to dwell|"
+                r"no doubt views|daring to demonstrate"
+                r")\b",
+                sentence,
+                re.I,
+            ):
+                continue
             if not any(_name_in_text(name, sentence) for name in query_names):
                 continue
             if not _has_profile_copula(sentence, query_names) and not _name_led_identity(
@@ -1534,6 +1704,19 @@ def _explicit_profile_lines_from_drafts(
             ):
                 continue
             if _classify_sentence(sentence, query_names) in ("scene", "dialogue"):
+                continue
+            # Who-is draft profile: require true cast identity, not scene thoughts
+            # that merely mention White Rabbit / species words.
+            if not re.search(
+                rf"\b(?:{'|'.join(re.escape(n) for n in query_names)})\s+"
+                rf"(?:is|was|are|were)\b",
+                sentence,
+                re.I,
+            ) and not re.search(
+                rf"\b(?:{'|'.join(re.escape(n) for n in query_names)})\s*[—–\-:,]",
+                sentence,
+                re.I,
+            ):
                 continue
             key = re.sub(r"\s+", " ", sentence.lower())[:100]
             if key in seen:

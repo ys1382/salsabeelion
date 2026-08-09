@@ -116,7 +116,10 @@ _OVERVIEW_SIGNIFICANCE_RE = re.compile(
     r"relationship upheaval|"
     r"(?:societal|social|political) upheaval|"
     r"upheaval for .{0,40}?(?:predator|preyfolk|prey folk)|"
-    r"accidental(?:ly)? .{0,40}?(?:world[- ]?chang|upheaval|stumble)"
+    r"accidental(?:ly)? .{0,40}?(?:world[- ]?chang|upheaval|stumble)|"
+    r"finds? (?:herself|himself|themselves) .{0,80}?(?:pulled|drawn|thrown|cast) into|"
+    r"pulled into (?:a |the )?(?:waking )?dream|"
+    r"finds? (?:herself|himself|themselves) in (?:a |the )?(?:situation|dream|world)"
     r")\b",
     re.I,
 )
@@ -335,14 +338,36 @@ def is_upheaval_reason_clause(clause: str, label: str = "") -> bool:
     return True
 
 
-def is_overview_significance_clause(clause: str, label: str = "") -> bool:
+def is_overview_significance_clause(
+    clause: str, label: str = "", *, allow_pronoun: bool = True
+) -> bool:
     """True for plain overview stakes (chosen one / upheaval / crossing worlds / upheaval reason)."""
     s = (clause or "").strip()
     if not s:
         return False
+    # Alias-only hits (Cheshire Cat named Lord Tenebris) are not that person's stakes.
+    if label and label_only_as_alias_mention(s, label):
+        return False
+
+    def _about_ok() -> bool:
+        if not label:
+            return True
+        if cast_sentence_about_subject(s, label, allow_pronoun=allow_pronoun):
+            return True
+        if allow_pronoun and re.match(r"^(?:He|She)\b", s, re.I):
+            return True
+        # Formalized stakes: "By being discovered…, Label has already set in motion…"
+        if re.search(
+            rf"\b{re.escape(label)}\s+(?:has|have|is|was|somehow|sets?|storywalks?)\b",
+            s,
+            re.I,
+        ):
+            return True
+        return False
+
     # Upheaval type/reason may share "sets in motion" phrasing — keep as cast status.
     if is_upheaval_reason_clause(s, label):
-        return True
+        return _about_ok()
     if not _OVERVIEW_SIGNIFICANCE_RE.search(s):
         return False
     if is_story_significance_clause(s, label):
@@ -351,11 +376,8 @@ def is_overview_significance_clause(clause: str, label: str = "") -> bool:
         return False
     if label and is_other_character_scene_beat(s, label):
         return False
-    if label and not re.search(rf"\b{re.escape(label)}\b", s, re.I):
-        # Allow pronoun-led overview after subject was established
-        # ("He is father to…", "He somehow crosses realities…").
-        if not re.match(r"^(?:He|She)\b", s, re.I):
-            return False
+    if not _about_ok():
+        return False
     if len(s) > 320:
         return False
     return True
@@ -460,6 +482,139 @@ def is_plausible_cast_person_name(name: str) -> bool:
     if raw.islower():
         return False
     return True
+
+
+# Single-word / tiny predicates that must never become "X is birth." cast cards.
+_SCRAP_IDENTITY_PREDICATES = frozenset(
+    """
+    birth death life age name one side of the a an at twin twins person people
+    someone somebody something nothing everything anything
+    """.split()
+)
+
+
+def label_only_as_alias_mention(sentence: str, label: str) -> bool:
+    """
+    True when the asked name appears only as someone else's alias
+    (e.g. Cheshire Cat, named Lord Tenebris) — not as the clause subject.
+    """
+    s = re.sub(r"\s+", " ", (sentence or "").strip())
+    label = (label or "").strip()
+    if not s or not label:
+        return False
+    lab = re.escape(label)
+    if not re.search(rf"\b{lab}\b", s, re.I):
+        return False
+    if re.match(rf"^{lab}\b", s, re.I):
+        return False
+    if re.search(rf"\b{lab}\s+(?:is|was|are|were)\b", s, re.I):
+        return False
+    return bool(
+        re.search(
+            rf"\b(?:named|called|known as)\s+(?:Lord\s+|Lady\s+|Duke\s+|Duchess\s+|"
+            rf"the\s+)?{lab}\b",
+            s,
+            re.I,
+        )
+    )
+
+
+def cast_sentence_about_subject(
+    sentence: str, label: str, *, allow_pronoun: bool = False
+) -> bool:
+    """
+    True when a who-is fact sentence is about the asked character as subject —
+    not another cast member's sheet that merely names them as an alias.
+    """
+    s = re.sub(r"\s+", " ", (sentence or "").strip())
+    label = (label or "").strip()
+    if not s or not label:
+        return False
+    lab = re.escape(label)
+
+    if label_only_as_alias_mention(s, label):
+        return False
+
+    if re.match(rf"^{lab}\s+(?:is|was|are|were|storywalks?|sets?)\b", s, re.I):
+        return True
+    if re.match(rf"^{lab}\s*[—–\-:,]", s, re.I):
+        return True
+    # Subject-led action / stakes: "Etherei somehow crosses…"
+    if re.match(rf"^{lab}\b", s, re.I):
+        return True
+    # Titled subject: "Lord Tenebris is…" when label is Tenebris.
+    if re.match(
+        rf"^(?:Lord|Lady|Duke|Duchess|Sir|Dame|King|Queen|Prince|Princess|"
+        rf"Baron|Baroness|Count|Countess)\s+{lab}\b",
+        s,
+        re.I,
+    ):
+        return True
+    if re.search(rf"\b{lab}\s+(?:is|was|are|were)\b", s, re.I):
+        return True
+
+    # Another proper name leads the sentence — about them, not the asked label.
+    m = re.match(
+        r"^([A-Z][\w'-]+(?:\s+(?:of|[A-Z][\w'-]+)){0,2})\b",
+        s,
+    )
+    if m:
+        other = m.group(1).strip()
+        other_low = other.lower()
+        if other_low != label.lower() and other_low not in {
+            "the",
+            "he",
+            "she",
+            "they",
+            "so",
+            "in",
+            "from",
+            "his",
+            "her",
+            "their",
+            "this",
+            "that",
+            "when",
+            "after",
+            "before",
+        }:
+            return False
+
+    if re.match(r"^(?:He|She|They)\b", s, re.I):
+        return bool(allow_pronoun)
+
+    return False
+
+
+def is_scrap_identity_clause(sentence: str, label: str) -> bool:
+    """True for garbage cards like 'Platinus is birth.'"""
+    s = re.sub(r"\s+", " ", (sentence or "").strip()).rstrip(".")
+    label = (label or "").strip()
+    if not s or not label:
+        return False
+    m = re.match(
+        rf"^{re.escape(label)}\s+is\s+(.+)$",
+        s,
+        re.I,
+    )
+    if not m:
+        return False
+    pred = m.group(1).strip().lower()
+    if pred in _SCRAP_IDENTITY_PREDICATES:
+        return True
+    # Single non-cast word with no role/species signal.
+    if " " not in pred and len(pred) <= 12:
+        if not re.search(
+            r"\b("
+            r"protagonist|antagonist|villain|hero|heroine|rabbit|wolf|fox|lynx|"
+            r"arcanist|guardian|spirit|male|female|sentient|noble|duke|lord|"
+            r"king|queen|prince|princess"
+            r")\b",
+            pred,
+            re.I,
+        ):
+            return True
+    return False
 
 
 def _kinship_shape_sentence(sentence: str, label: str) -> bool:
@@ -671,6 +826,10 @@ def is_who_is_cast_fact_sentence(sentence: str, label: str) -> bool:
         return False
     if len(s) > 420:
         return False
+    if is_scrap_identity_clause(s, label):
+        return False
+    if label_only_as_alias_mention(s, label):
+        return False
     # Faction-roster / "doesn't know how Predators work" dumps — never cast-card.
     if _WHO_IS_FACTION_DUMP_RE.search(s):
         return False
@@ -722,6 +881,27 @@ def is_who_is_cast_fact_sentence(sentence: str, label: str) -> bool:
     if not re.search(rf"\b{re.escape(label)}\b", s, re.I):
         # Pronoun-led overview / kin already handled above when patterns match.
         return False
+
+    # "Lord Tenebris is the Cheshire Cat…" when asked label is Tenebris.
+    title_prefix = (
+        rf"^(?:Lord|Lady|Duke|Duchess|Sir|Dame|King|Queen|Prince|Princess|"
+        rf"Baron|Baroness|Count|Countess)\s+{re.escape(label)}\s+"
+        rf"(?:is|was|are|were)\b"
+    )
+    if re.match(title_prefix, s, re.I):
+        if re.search(
+            r"\b("
+            r"protagonist|antagonist|villain|hero|heroine|main character|side character|"
+            r"side antagonist|rabbit|wolf|fox|lynx|arcanist|male|female|sentient|"
+            r"known|called|aka|white rabbit|cheshire|from .+ wonderland|guardian|spirit|"
+            r"chosen one|destined|fated|nemesis|best friend|noble|predator|prey"
+            r")\b",
+            s,
+            re.I,
+        ):
+            return True
+        if len(s) <= 160 and not _PLOT_ARC_RE.search(s):
+            return True
 
     # Subject-led identity / role / species / gender / alias — NOT kinship-via-plot.
     if re.match(rf"^{re.escape(label)}\s+(?:is|was|are|were)\b", s, re.I):
@@ -914,23 +1094,44 @@ def _tie_to_reference(label: str, tie: str) -> str:
     return _ensure_period(tie)
 
 
-def _to_reference_clause(sentence: str, label: str) -> str:
+def _to_reference_clause(
+    sentence: str, label: str, *, allow_pronoun_bind: bool = True
+) -> str:
     s = _strip_meta_from_line(sentence)
     if not s:
+        return ""
+    if label_only_as_alias_mention(s, label):
         return ""
     s = re.sub(rf"^{re.escape(label)}\s*[—–\-:,]\s*", "", s, flags=re.I)
     married = re.match(r"^Married to\s+(.+?)\.?\s*$", s, re.I)
     if married:
         return f"{label} is married to {married.group(1).rstrip('.')}."
     if re.match(rf"^{re.escape(label)}\s", s, re.I):
-        return _ensure_period(s)
+        out = _ensure_period(s)
+        return "" if is_scrap_identity_clause(out, label) else out
     if re.match(r"^(He|She|They)\b", s, re.I):
+        if not allow_pronoun_bind or label_only_as_alias_mention(s, label):
+            return ""
         s = re.sub(r"^(He|She|They)\b", label, s, count=1)
-        return _ensure_period(s)
+        out = _ensure_period(s)
+        return "" if is_scrap_identity_clause(out, label) else out
     if not re.search(r"\b(is|was|are|were)\b", s, re.I) and re.match(
         r"^[A-Za-z\-]+(?:\s+[a-z\-]+){0,4}\.?$", s
     ):
-        return f"{label} is {s.rstrip('.')}."
+        frag = s.rstrip(".").strip().lower()
+        if frag in _SCRAP_IDENTITY_PREDICATES or len(frag) < 3:
+            return ""
+        if " " not in frag and not re.search(
+            r"\b("
+            r"protagonist|antagonist|villain|hero|rabbit|wolf|fox|lynx|arcanist|"
+            r"guardian|spirit|noble|sentient"
+            r")\b",
+            frag,
+            re.I,
+        ):
+            return ""
+        out = f"{label} is {s.rstrip('.')}."
+        return "" if is_scrap_identity_clause(out, label) else _ensure_period(out)
     if _ROLE_WORDS_RE.search(s) or re.search(
         rf"\b{re.escape(label)}\s+(?:is|was|are|were)\b", s, re.I
     ):
@@ -997,6 +1198,10 @@ _BIOGRAPHY_RE = re.compile(
 def _clause_adds_profile(clause: str, label: str) -> bool:
     s = (clause or "").strip()
     if not s or _skip_planning_line(s, label):
+        return False
+    if is_scrap_identity_clause(s, label):
+        return False
+    if label_only_as_alias_mention(s, label):
         return False
     if is_other_character_scene_beat(s, label):
         return False
@@ -1988,6 +2193,11 @@ def cast_answer_is_thin(answer: str, label: str) -> bool:
     # Species/role scrap leaks — never treat as a finished cast card.
     if re.search(
         rf"\b{re.escape(label.lower())}\s+is\s+(?:side|of|one)\s*\.?\s*(?:$|\n)",
+        low,
+    ):
+        return True
+    if re.search(
+        rf"\b{re.escape(label.lower())}\s+is\s+(?:birth|death|life|age|name)\s*\.?\s*(?:$|\n)",
         low,
     ):
         return True
