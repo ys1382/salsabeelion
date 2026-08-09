@@ -36,7 +36,8 @@
     "./lk-bt-keyboard.js?v=1",
     "./lk-mobile-restore.js?v=1",
     "./lk-mobile-handoff.js?v=1",
-    "./lk-doc-editor.js?v=84",
+    "./lk-doc-page-boxes.js?v=1",
+    "./lk-doc-editor.js?v=85",
   ];
 
   function loadNext(index) {

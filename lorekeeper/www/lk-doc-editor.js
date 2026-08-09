@@ -95,16 +95,18 @@
     if (global.LoreKeeperSpell && global.LoreKeeperSpell.clearQuillSpellMarks) {
       global.LoreKeeperSpell.clearQuillSpellMarks(quill);
     }
+    if (global.LoreKeeperDocPageBoxes && global.LoreKeeperDocPageBoxes.getJoinedHtml) {
+      var joined = LoreKeeperDocPageBoxes.getJoinedHtml();
+      if (isEmptyHtml(joined) && !isEmptyHtml(doc.bodyHtml)) return;
+      doc.bodyHtml = joined;
+      doc.bodyFormat = "html";
+      return;
+    }
     var wordsBefore = editorContentWords();
     var root = quill.root.cloneNode(true);
     root.querySelectorAll(".lk-auto-page-gap").forEach(function (node) {
       node.remove();
     });
-    root.querySelectorAll(".lk-page-pushed").forEach(function (node) {
-      node.classList.remove("lk-page-pushed");
-      node.style.marginTop = "";
-    });
-    mergeContinuationsInDom(root);
     var nextHtml = root.innerHTML;
     if (isEmptyHtml(nextHtml) && !isEmptyHtml(doc.bodyHtml)) return;
     var wordsAfter = String(nextHtml || "")
@@ -114,7 +116,6 @@
       .replace(/&lt;/gi, "<")
       .replace(/&gt;/gi, ">")
       .replace(/\s+/g, "");
-    // Refuse a save that would drop prose from a layout/merge glitch.
     if (wordsBefore && wordsAfter.length < wordsBefore.length) return;
     doc.bodyHtml = nextHtml;
     doc.bodyFormat = "html";
@@ -238,7 +239,7 @@
     updatePageChrome();
     loading = false;
     applyDocFont();
-    syncBlockPageGaps();
+    runPageLayoutSync();
     dirty = false;
     setSaveStatus(statusMsg || "Restored from history.", "saved");
     updateRestoreBackupUi();
@@ -346,7 +347,7 @@
       updatePageChrome();
       loading = false;
       applyDocFont();
-      syncBlockPageGaps();
+      runPageLayoutSync();
       dirty = false;
       hideStaleBanner();
       setSaveStatus("Reloaded latest from your account.", "saved");
@@ -394,6 +395,9 @@
 
   function onEditorChange() {
     if (loading || !doc || !quill) return;
+    if (global.LoreKeeperDocPageBoxes && LoreKeeperDocPageBoxes.isSyncing && LoreKeeperDocPageBoxes.isSyncing()) {
+      return;
+    }
     updateWordCount();
     if (syncingGaps) {
       gapResyncNeeded = true;
@@ -585,6 +589,9 @@
   }
 
   function editorHasText() {
+    if (global.LoreKeeperDocPageBoxes && LoreKeeperDocPageBoxes.getJoinedHtml) {
+      return !isEmptyHtml(LoreKeeperDocPageBoxes.getJoinedHtml());
+    }
     if (!quill) return false;
     return !!quill.getText().trim();
   }
@@ -601,6 +608,10 @@
     var saved = stripAutoPadsFromHtml(String(html || "").trim());
     if (global.LoreKeeperDocuments && global.LoreKeeperDocuments.normalizeBodyHtml) {
       saved = LoreKeeperDocuments.normalizeBodyHtml(saved);
+    }
+    if (global.LoreKeeperDocPageBoxes && LoreKeeperDocPageBoxes.loadFromBodyHtml) {
+      LoreKeeperDocPageBoxes.loadFromBodyHtml(saved || "");
+      return;
     }
     quill.setContents([]);
     if (!saved) return;
@@ -659,25 +670,32 @@
         : fontId;
     }
     LoreKeeperFontCatalog.applyToElement(editorEl(), fontId);
+    document.querySelectorAll(".lk-page-static, .lk-page-measure").forEach(function (node) {
+      LoreKeeperFontCatalog.applyToElement(node, fontId);
+    });
   }
 
   function applyPageLayout() {
     var sheet = document.getElementById("docSheet");
-    var el = editorEl();
-    if (!sheet || !el) return;
+    if (!sheet || !doc) return;
 
     sheet.className =
       "lk-doc-sheet lk-margin-" + (doc.margins || "normal") + " lk-line-" + String(doc.lineSpacing || "1.15").replace(".", "");
 
-    var m = marginPx();
     sheet.style.setProperty("--lk-page-h", PAGE_H + "px");
     sheet.style.setProperty("--lk-page-gap", PAGE_GAP + "px");
-    el.style.setProperty("--lk-margin-x", m + "px");
-    el.style.setProperty("--lk-margin-y", m + "px");
-    el.style.lineHeight = doc.lineSpacing || "1.15";
-
-    scheduleBlockPageGaps();
-    schedulePageChrome();
+    var el = editorEl();
+    if (el) {
+      var m = marginPx();
+      el.style.setProperty("--lk-margin-x", m + "px");
+      el.style.setProperty("--lk-margin-y", m + "px");
+      el.style.lineHeight = doc.lineSpacing || "1.15";
+    }
+    if (global.LoreKeeperDocPageBoxes) LoreKeeperDocPageBoxes.refreshChrome();
+    else {
+      scheduleBlockPageGaps();
+      schedulePageChrome();
+    }
   }
 
   function loadPageSetupFields() {
@@ -693,8 +711,16 @@
   }
 
   function countWords() {
-    if (!quill) return 0;
-    var text = quill.getText().replace(/\u00a0/g, " ").trim();
+    var text = "";
+    if (global.LoreKeeperDocPageBoxes && LoreKeeperDocPageBoxes.getJoinedHtml) {
+      text = String(LoreKeeperDocPageBoxes.getJoinedHtml() || "")
+        .replace(/<[^>]+>/g, " ")
+        .replace(/&nbsp;/gi, " ")
+        .replace(/\u00a0/g, " ")
+        .trim();
+    } else if (quill) {
+      text = quill.getText().replace(/\u00a0/g, " ").trim();
+    }
     if (!text) return 0;
     return text.split(/\s+/).filter(Boolean).length;
   }
@@ -706,21 +732,13 @@
     el.textContent = n + " word" + (n === 1 ? "" : "s");
   }
 
-  function schedulePageChrome() {
-    if (chromeTimer) clearTimeout(chromeTimer);
-    chromeTimer = setTimeout(updatePageChrome, 60);
-  }
-
-  function isManualPageBreak(node) {
-    return node && node.classList && node.classList.contains("lk-page-break");
-  }
-
-  function isPagePad(node) {
-    return node && node.classList && node.classList.contains("lk-auto-page-gap");
-  }
-
-  /** Prose only — skips page-pad / page-break embeds so layout sync cannot “lose” words. */
   function editorContentWords() {
+    if (global.LoreKeeperDocPageBoxes && global.LoreKeeperDocPageBoxes.getJoinedHtml) {
+      return String(LoreKeeperDocPageBoxes.getJoinedHtml() || "")
+        .replace(/<[^>]+>/g, " ")
+        .replace(/&nbsp;/gi, " ")
+        .replace(/\s+/g, "");
+    }
     if (!quill) return "";
     var parts = [];
     var ops = quill.getContents().ops || [];
@@ -731,414 +749,29 @@
     return parts.join("").replace(/\s+/g, "");
   }
 
-  function clearPagePushes() {
-    var el = editorEl();
-    if (!el) return;
-    el.querySelectorAll(".lk-page-pushed").forEach(function (node) {
-      node.classList.remove("lk-page-pushed");
-      node.style.marginTop = "";
-    });
-  }
-
-  function applyPagePush(node, el, m, unit, pageH) {
-    if (!node || !el) return;
-    var top = blockBorderTop(node, el);
-    var push = padOverflowToNextPage(top, m, unit, pageH);
-    node.classList.add("lk-page-pushed");
-    node.style.marginTop = push + "px";
-  }
-
-  function removePagePads() {
-    if (!quill) return;
-    var el = editorEl();
-    if (!el) return;
-    var nodes = el.querySelectorAll(".lk-auto-page-gap");
-    for (var i = nodes.length - 1; i >= 0; i--) {
-      var blot = global.Quill.find(nodes[i]);
-      if (blot) blot.remove();
-      else nodes[i].remove();
-    }
-  }
-
-  function insertPagePadBefore(node, height) {
-    if (!quill || !node || height <= 0) return;
-    var blot = global.Quill.find(node);
-    if (!blot) return;
-    var index = quill.getIndex(blot);
-    quill.insertEmbed(index, "pagePad", Math.ceil(height), "silent");
-  }
-
-  function pageIndexForY(y, unit) {
-    if (unit <= 0) return 0;
-    return Math.max(0, Math.floor(y / unit));
-  }
-
-  function whiteStartForPage(pageIdx, unit) {
-    return pageIdx === 0 ? 0 : unit * pageIdx;
-  }
-
-  function contentStartForPage(pageIdx, m, unit) {
-    return whiteStartForPage(pageIdx, unit) + m;
-  }
-
-  function padToNextContentStart(y, m, unit, pageH) {
-    var pageIdx = pageIndexForY(y, unit);
-    var whiteStart = whiteStartForPage(pageIdx, unit);
-    var contentEnd = whiteStart + pageH - m - PAGE_LINE_BUFFER;
-    var greyStart = whiteStart + pageH;
-    var nextIdx = pageIdx;
-    if (y >= greyStart - 1 || y > contentEnd) nextIdx = pageIdx + 1;
-    var target = contentStartForPage(nextIdx, m, unit);
-    if (target <= y) {
-      nextIdx += 1;
-      target = contentStartForPage(nextIdx, m, unit);
-    }
-    return Math.max(1, Math.ceil(target - y + PAD_OVERSHOOT));
-  }
-
-  /** Google Docs-style: overflow always jumps to the next sheet’s content box. */
-  function padOverflowToNextPage(y, m, unit, pageH) {
-    var pageIdx = pageIndexForY(y, unit);
-    var greyStart = whiteStartForPage(pageIdx, unit) + pageH;
-    if (y >= greyStart - 1) {
-      return padToNextContentStart(y, m, unit, pageH);
-    }
-    var nextIdx = pageIdx + 1;
-    var target = contentStartForPage(nextIdx, m, unit);
-    if (target <= y) {
-      nextIdx += 1;
-      target = contentStartForPage(nextIdx, m, unit);
-    }
-    return Math.max(1, Math.ceil(target - y + PAD_OVERSHOOT));
-  }
-
-  function blockNeedsPagePush(blockTop, blockPage) {
-    return (
-      blockTop > blockPage.contentEnd + 1 ||
-      blockTop >= blockPage.greyStart - 1 ||
-      (blockPage.pageIdx > 0 && blockTop < blockPage.contentStart - 1)
-    );
-  }
-
-  function pushNodeToNextContentStart(node, el, m, unit, pageH) {
-    if (!node) return;
-    var top = blockBorderTop(node, el);
-    var padH = padOverflowToNextPage(top, m, unit, pageH);
-    if (padH > 0) insertPagePadBefore(node, padH);
-  }
-
-  function mergeContinuationsInDom(root) {
-    if (!root) return;
-    var kids = Array.from(root.children);
-    for (var i = 1; i < kids.length; i++) {
-      var node = kids[i];
-      if (!node.classList || !node.classList.contains("lk-auto-continued")) continue;
-      var prev = kids[i - 1];
-      if (!prev || (prev.classList && prev.classList.contains("lk-auto-page-gap"))) continue;
-      prev.innerHTML = prev.innerHTML + node.innerHTML;
-      node.remove();
-      kids = Array.from(root.children);
-      i = Math.max(0, i - 1);
-    }
-    root.querySelectorAll(".lk-auto-continued").forEach(function (node) {
-      node.classList.remove("lk-auto-continued");
-    });
-  }
-
-  function mergeAutoContinuations() {
-    if (!quill) return;
-    var el = editorEl();
-    if (!el) return;
-    var node = el.firstElementChild;
-    while (node) {
-      var next = node.nextElementSibling;
-      while (next && isPagePad(next)) next = next.nextElementSibling;
-      if (!next) break;
-      if (next.classList && next.classList.contains("lk-auto-continued")) {
-        var nextBlot = global.Quill.find(next);
-        if (nextBlot) {
-          var joinIndex = quill.getIndex(nextBlot);
-          if (joinIndex > 0) {
-            var joinChar = quill.getText(joinIndex - 1, 1);
-            // Only remove the paragraph break — never a real letter.
-            if (joinChar === "\n") {
-              quill.deleteText(joinIndex - 1, 1, "silent");
-            }
-          }
-        }
-        next = node.nextElementSibling;
-        while (next && isPagePad(next)) next = next.nextElementSibling;
-        continue;
-      }
-      node = next;
-    }
-    el.querySelectorAll(".lk-auto-continued").forEach(function (n) {
-      n.classList.remove("lk-auto-continued");
-    });
-  }
-
-  function setRangeAtOffset(container, range, offset) {
-    var walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, null);
-    var node;
-    var count = 0;
-    while ((node = walker.nextNode())) {
-      var len = node.length;
-      if (count + len > offset) {
-        range.setStart(node, offset - count);
-        range.setEnd(node, Math.min(offset - count + 1, len));
-        return true;
-      }
-      count += len;
-    }
-    return false;
-  }
-
-  function charOffsetForLineTop(block, range, screenTop) {
-    var text = block.textContent || "";
-    if (!text.length) return 0;
-    var lo = 0;
-    var hi = text.length;
-    while (lo < hi) {
-      var mid = (lo + hi) >> 1;
-      if (!setRangeAtOffset(block, range, mid)) {
-        lo = mid + 1;
-        continue;
-      }
-      var rects = range.getClientRects();
-      if (!rects.length) {
-        lo = mid + 1;
-        continue;
-      }
-      if (rects[0].top < screenTop - 0.5) lo = mid + 1;
-      else hi = mid;
-    }
-    return lo;
-  }
-
-  function getBlockLines(block, el) {
-    var lines = [];
-    var er = el.getBoundingClientRect();
-    var range = document.createRange();
-    range.selectNodeContents(block);
-    var rects = Array.prototype.slice.call(range.getClientRects());
-
-    if (!rects.length) {
-      var blockTop = blockBorderTop(block, el);
-      var h = block.offsetHeight || 0;
-      if (h) lines.push({ offset: 0, top: blockTop, bottom: blockTop + h });
-      return lines;
-    }
-
-    var groups = [];
-    for (var r = 0; r < rects.length; r++) {
-      var rect = rects[r];
-      if (rect.width < 0.5 && rect.height < 0.5) continue;
-      var top = rect.top - er.top;
-      var bottom = rect.bottom - er.top;
-      var found = false;
-      for (var g = 0; g < groups.length; g++) {
-        if (Math.abs(groups[g].screenTop - rect.top) < 2) {
-          groups[g].bottom = Math.max(groups[g].bottom, bottom);
-          found = true;
-          break;
-        }
-      }
-      if (!found) groups.push({ screenTop: rect.top, top: top, bottom: bottom });
-    }
-    groups.sort(function (a, b) {
-      return a.top - b.top;
-    });
-
-    for (var i = 0; i < groups.length; i++) {
-      var offset = charOffsetForLineTop(block, range, groups[i].screenTop + 0.5);
-      lines.push({ offset: offset, top: groups[i].top, bottom: groups[i].bottom });
-    }
-    return lines;
-  }
-
-  function isSplittableBlock(block) {
-    if (!block || !block.tagName) return false;
-    var tag = block.tagName.toUpperCase();
-    return tag === "P" || tag === "H1" || tag === "H2" || tag === "H3";
-  }
-
-  function snapToWordStart(text, offset) {
-    if (offset <= 0 || offset >= text.length) return offset;
-    if (/\s/.test(text.charAt(offset))) return offset;
-    if (offset > 0 && /\s/.test(text.charAt(offset - 1))) return offset;
-    var i = offset;
-    while (i > 0 && !/\s/.test(text.charAt(i - 1))) i--;
-    return i > 0 ? i : offset;
-  }
-
-  function splitBlockAt(block, charOffset) {
-    if (!isSplittableBlock(block)) return null;
-    var text = block.textContent || "";
-    charOffset = snapToWordStart(text, charOffset);
-    if (charOffset <= 0 || charOffset >= text.length) return null;
-    var blot = global.Quill.find(block);
-    if (!blot) return null;
-    var index = quill.getIndex(blot) + charOffset;
-    quill.insertText(index, "\n", "silent");
-    var next = block.nextElementSibling;
-    while (next && isPagePad(next)) next = next.nextElementSibling;
-    if (next && isSplittableBlock(next)) next.classList.add("lk-auto-continued");
-    return next;
-  }
-
-  function blockBorderTop(block, el) {
-    return block.getBoundingClientRect().top - el.getBoundingClientRect().top;
-  }
-
-  function pageMetricsForY(y, m, unit, pageH) {
-    var pageIdx = pageIndexForY(y, unit);
-    var whiteStart = whiteStartForPage(pageIdx, unit);
-    return {
-      pageIdx: pageIdx,
-      contentEnd: whiteStart + pageH - m - PAGE_LINE_BUFFER,
-      greyStart: whiteStart + pageH,
-      gapEnd: whiteStart + pageH + (unit - pageH),
-      contentStart: contentStartForPage(pageIdx, m, unit),
-    };
-  }
-
-  function lineOverflowsPage(line, m, unit, pageH) {
-    var page = pageMetricsForY(line.top, m, unit, pageH);
-    // Whole line must stay in the content box — never straddle gap or sit under top chrome.
-    if (line.bottom > page.contentEnd + 1) return true;
-    if (line.top > page.contentEnd + 1) return true;
-    if (line.top >= page.greyStart - 1) return true;
-    if (line.bottom > page.greyStart - 1) return true;
-    if (page.pageIdx > 0 && line.top < page.contentStart - 1) return true;
-    return false;
-  }
-
-  function padTailAfterSplit(tail, el, m, unit, pageH) {
-    if (!tail) return;
-    var tailTop = blockBorderTop(tail, el);
-    // Always send overflow to the next page (do not leave the tail in the bottom margin/gap).
-    var padH = padOverflowToNextPage(tailTop, m, unit, pageH);
-    if (padH > 0) insertPagePadBefore(tail, padH);
-  }
-
-  /** Line-aware pagination: whole lines move to the next sheet — Google Docs style. */
-  function syncBlockPageGaps() {
-    if (loading || syncingGaps || !quill) return;
-    var el = editorEl();
-    if (!el) return;
-
-    syncingGaps = true;
-    var wordsBefore = editorContentWords();
-    var restoreDelta = quill.getContents();
-    var aborted = false;
-
-    removePagePads();
-    clearPagePushes();
-    mergeAutoContinuations();
-
-    if (editorContentWords() !== wordsBefore) {
-      quill.setContents(restoreDelta, "silent");
-      aborted = true;
-    } else {
-      var metrics = pageMetrics();
-      var pageH = metrics.pageH;
-      var gap = metrics.gap;
-      var unit = pageH + gap;
-      var m = marginPx();
-      var changed = true;
-      var rounds = 0;
-
-      while (changed && rounds < PAGE_SYNC_MAX_ROUNDS) {
-        changed = false;
-        rounds += 1;
-
-        for (var i = 0; i < el.children.length; i++) {
-          var block = el.children[i];
-          if (isPagePad(block) || isManualPageBreak(block)) continue;
-
-          var blockTop = blockBorderTop(block, el);
-          var blockH = block.offsetHeight || 0;
-          if (!blockH) continue;
-
-          var blockPage = pageMetricsForY(blockTop, m, unit, pageH);
-
-          if (blockNeedsPagePush(blockTop, blockPage)) {
-            insertPagePadBefore(block, padOverflowToNextPage(blockTop, m, unit, pageH));
-            changed = true;
-            break;
-          }
-
-          if (!isSplittableBlock(block)) {
-            if (blockTop + blockH > blockPage.contentEnd + 1) {
-              pushNodeToNextContentStart(block, el, m, unit, pageH);
-              changed = true;
-              break;
-            }
-            continue;
-          }
-
-          var lines = getBlockLines(block, el);
-          if (!lines.length) continue;
-
-          var hit = -1;
-          for (var L = 0; L < lines.length; L++) {
-            if (lineOverflowsPage(lines[L], m, unit, pageH)) {
-              hit = L;
-              break;
-            }
-          }
-          if (hit < 0) continue;
-
-          var line = lines[hit];
-          if (hit === 0 && line.offset <= 0) {
-            pushNodeToNextContentStart(block, el, m, unit, pageH);
-            changed = true;
-            break;
-          }
-
-          if (line.offset > 0) {
-            var tail = splitBlockAt(block, line.offset);
-            padTailAfterSplit(tail, el, m, unit, pageH);
-          } else {
-            pushNodeToNextContentStart(block, el, m, unit, pageH);
-          }
-          changed = true;
-          break;
-        }
-      }
-
-      if (editorContentWords() !== wordsBefore) {
-        quill.setContents(restoreDelta, "silent");
-        aborted = true;
-        gapResyncNeeded = false;
-      }
-    }
-
-    syncingGaps = false;
-    updatePageChrome();
-    if (!aborted && gapResyncNeeded) {
-      gapResyncNeeded = false;
-      scheduleBlockPageGaps();
-    } else if (aborted) {
-      gapResyncNeeded = false;
-    }
-  }
-
   function scheduleBlockPageGaps() {
-    if (gapTimer) clearTimeout(gapTimer);
-    gapTimer = setTimeout(runPageLayoutSync, 16);
+    if (global.LoreKeeperDocPageBoxes) LoreKeeperDocPageBoxes.scheduleReflow();
   }
 
   function runPageLayoutSync() {
-    if (!quill || loading) return;
-    syncBlockPageGaps();
-    global.requestAnimationFrame(function () {
-      if (!quill || loading) return;
-      syncBlockPageGaps();
-    });
+    if (global.LoreKeeperDocPageBoxes) LoreKeeperDocPageBoxes.reflowNow();
+  }
+
+  function schedulePageChrome() {
+    if (chromeTimer) clearTimeout(chromeTimer);
+    chromeTimer = setTimeout(function () {
+      if (global.LoreKeeperDocPageBoxes) LoreKeeperDocPageBoxes.refreshChrome();
+    }, 60);
+  }
+
+  function updatePageChrome() {
+    if (global.LoreKeeperDocPageBoxes) LoreKeeperDocPageBoxes.refreshChrome();
   }
 
   function currentBodyHtmlForBackup() {
+    if (global.LoreKeeperDocPageBoxes && LoreKeeperDocPageBoxes.getJoinedHtml) {
+      return stripAutoPadsFromHtml(LoreKeeperDocPageBoxes.getJoinedHtml());
+    }
     if (!quill) return stripAutoPadsFromHtml(doc && doc.bodyHtml ? doc.bodyHtml : "");
     var root = quill.root.cloneNode(true);
     root.querySelectorAll(".lk-auto-page-gap").forEach(function (node) {
@@ -1159,137 +792,13 @@
     return String(html || "").trim();
   }
 
-  function updatePageChrome() {
-    var el = editorEl();
-    if (!el) return;
-    var metrics = pageMetrics();
-    var pageH = metrics.pageH;
-    var gap = metrics.gap;
-    var unit = pageH + gap;
-    var pages = Math.max(1, Math.ceil((el.scrollHeight + gap) / unit));
-    var minH = Math.max(pageH, pages * pageH + Math.max(0, pages - 1) * gap, el.scrollHeight);
-    el.style.minHeight = minH + "px";
-    el.style.setProperty("--lk-page-gap", gap + "px");
-
-    var cover = ensureGapCover();
-    if (cover) {
-      var editor = el;
-      var offsetTop = 0;
-      var container = document.querySelector("#docEditor .ql-container");
-      if (container && editor) {
-        offsetTop = Math.max(0, editor.offsetTop || 0);
-      }
-      cover.style.height = offsetTop + minH + "px";
-      cover.innerHTML = "";
-      for (var g = 0; g < pages - 1; g++) {
-        var strip = document.createElement("div");
-        strip.className = "lk-page-gap-cover";
-        // Exact grey gutter only — pagination must keep whole lines out of this band.
-        strip.style.top = offsetTop + g * unit + pageH + "px";
-        strip.style.height = Math.max(gap, 1) + "px";
-        cover.appendChild(strip);
-      }
-    }
-
-    var layer = ensureChromeBack();
-    if (!layer || !doc) return;
-
-    layer.style.height = minH + "px";
-    layer.innerHTML = "";
-
-    var m = marginPx();
-    var header = (doc.headerText || "").trim();
-    var footer = (doc.footerText || "").trim();
-    var numbers = doc.showPageNumbers !== false;
-
-    for (var i = 0; i < pages; i++) {
-      var pageTop = i * unit;
-      if (header) {
-        var head = document.createElement("div");
-        head.className = "lk-page-chrome lk-page-chrome-header";
-        head.style.top = pageTop + 28 + "px";
-        head.style.left = m + "px";
-        head.style.right = m + "px";
-        head.textContent = header;
-        layer.appendChild(head);
-      }
-      if (footer || numbers) {
-        var foot = document.createElement("div");
-        foot.className = "lk-page-chrome lk-page-chrome-footer";
-        foot.style.top = pageTop + pageH - m + 8 + "px";
-        foot.style.left = m + "px";
-        foot.style.right = m + "px";
-        var parts = [];
-        if (footer) parts.push(footer);
-        if (numbers) parts.push(String(i + 1));
-        foot.textContent = parts.join(footer && numbers ? " · " : "");
-        layer.appendChild(foot);
-      }
-    }
-  }
-
-  function registerPageBreakBlot() {
-    try {
-      var BlockEmbed = global.Quill.import("blots/block/embed");
-
-      function PageBreakBlot(domNode) {
-        BlockEmbed.call(this, domNode);
-      }
-      PageBreakBlot.prototype = Object.create(BlockEmbed.prototype);
-      PageBreakBlot.prototype.constructor = PageBreakBlot;
-      PageBreakBlot.create = function () {
-        var node = global.document.createElement("div");
-        node.classList.add("lk-page-break");
-        node.setAttribute("contenteditable", "false");
-        node.setAttribute("aria-label", "Page break");
-        return node;
-      };
-      PageBreakBlot.blotName = "pageBreak";
-      PageBreakBlot.tagName = "div";
-
-      global.Quill.register(PageBreakBlot);
-    } catch (e) {
-      /* already registered */
-    }
-  }
-
-  function registerPagePadBlot() {
-    try {
-      var BlockEmbed = global.Quill.import("blots/block/embed");
-
-      function PagePadBlot(domNode) {
-        BlockEmbed.call(this, domNode);
-      }
-      PagePadBlot.prototype = Object.create(BlockEmbed.prototype);
-      PagePadBlot.prototype.constructor = PagePadBlot;
-      PagePadBlot.create = function (value) {
-        var h = typeof value === "number" ? value : parseFloat(value) || PAGE_GAP;
-        var node = global.document.createElement("div");
-        node.classList.add("lk-auto-page-gap");
-        node.setAttribute("contenteditable", "false");
-        node.setAttribute("aria-hidden", "true");
-        node.style.height = Math.max(1, Math.ceil(h)) + "px";
-        return node;
-      };
-      PagePadBlot.blotName = "pagePad";
-      PagePadBlot.tagName = "div";
-
-      global.Quill.register(PagePadBlot);
-    } catch (e) {
-      /* already registered */
-    }
-  }
-
   function insertPageBreak() {
     if (!quill) return;
-    var range = quill.getSelection(true);
-    var index = range ? range.index : quill.getLength();
-    quill.insertEmbed(index, "pageBreak", true, "user");
-    quill.insertText(index + 1, "\n", "user");
-    quill.setSelection(index + 2, 0);
+    if (global.LoreKeeperDocPageBoxes && LoreKeeperDocPageBoxes.insertPageBreak) {
+      LoreKeeperDocPageBoxes.insertPageBreak();
+    }
     syncDocFromEditor();
     scheduleSave();
-    scheduleBlockPageGaps();
     schedulePageChrome();
   }
 
@@ -1372,8 +881,6 @@
   function initQuill() {
     if (quill || !global.Quill) return;
     if (global.LoreKeeperSpell) global.LoreKeeperSpell.registerQuillSpellBlot();
-    registerPageBreakBlot();
-    registerPagePadBlot();
     quill = new global.Quill("#docEditor", {
       theme: "snow",
       modules: {
@@ -1385,11 +892,20 @@
       },
       placeholder: "Pick up where you left off — messy is fine. Your words only.",
     });
+    if (global.LoreKeeperDocPageBoxes && LoreKeeperDocPageBoxes.bind) {
+      LoreKeeperDocPageBoxes.bind({
+        quill: quill,
+        getDoc: function () {
+          return doc;
+        },
+        onAfterReflow: function () {
+          updateWordCount();
+        },
+      });
+    }
     bindEditorInput();
     bindResumeCapture();
     if (doc) applyDocFont();
-    ensureChromeBack();
-    ensureGapCover();
     if (global.LoreKeeperMobileComfort && global.LoreKeeperMobileComfort.initDocPage) {
       global.LoreKeeperMobileComfort.initDocPage(quill);
     }
