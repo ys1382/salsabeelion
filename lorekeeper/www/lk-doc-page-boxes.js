@@ -358,6 +358,17 @@
     }
   }
 
+  function pinActivePageTop() {
+    if (!quill) return;
+    if (quill.root) quill.root.scrollTop = 0;
+    if (quill.container) quill.container.scrollTop = 0;
+    try {
+      quill.setSelection(0, 0, "silent");
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
   function stayOnTallPage(clean) {
     pageHtmls = [clean || ""];
     activeIndex = 0;
@@ -418,10 +429,16 @@
         syncing = true;
         renderStack();
         setQuillHtml(pageHtmls[0] || "");
+        pinActivePageTop();
+        var canvas = document.getElementById("docCanvas");
+        // Don't keep the tall-page bottom scroll — that lands on the last sheets / clips page tops.
+        if (canvas) canvas.scrollTop = 0;
         syncing = false;
         // If the active Quill page still overflows, abort to tall page.
         global.requestAnimationFrame(function () {
           if (pendingPaginateHtml !== clean && pendingPaginateHtml !== null) return;
+          pinActivePageTop();
+          if (canvas) canvas.scrollTop = 0;
           if (pageHtmls.length > 1 && activeOverflows()) {
             stayOnTallPage(clean);
           }
@@ -601,13 +618,20 @@
         editor.style.height = contentH + "px";
         // Content was measured to fit; hide overflow instead of scrolling inside the sheet.
         editor.style.overflow = "hidden";
+        editor.scrollTop = 0;
+        if (container) container.scrollTop = 0;
       }
     }
     if (growMode) {
       forceGrowToContent();
     }
     if (canvas) {
-      canvas.scrollTop = savedScroll;
+      // Multi-page rebuild: never re-apply a tall-document bottom scroll onto letter sheets.
+      if (!growMode && pageCount > 1 && savedScroll > pageH) {
+        canvas.scrollTop = 0;
+      } else {
+        canvas.scrollTop = savedScroll;
+      }
     }
   }
 
@@ -629,6 +653,9 @@
       } catch (e) {
         /* ignore */
       }
+      if (quill.root) quill.root.scrollTop = 0;
+    } else {
+      pinActivePageTop();
     }
     syncing = false;
     reflowActive(true);
@@ -907,6 +934,9 @@
     getJoinedHtml: function () {
       var html = joinedHtml();
       return stripLayout(html);
+    },
+    getPageCount: function () {
+      return pageHtmls.length || 1;
     },
     getActiveQuill: function () {
       return quill;

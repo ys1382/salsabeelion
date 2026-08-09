@@ -56,6 +56,21 @@
 
   function restoreResumePosition() {
     if (!quill || !doc) return;
+    // After multi-page split, full-doc caret/scroll maps wrong and clips page tops.
+    if (
+      global.LoreKeeperDocPageBoxes &&
+      LoreKeeperDocPageBoxes.getPageCount &&
+      LoreKeeperDocPageBoxes.getPageCount() > 1
+    ) {
+      if (quill.root) quill.root.scrollTop = 0;
+      if (quill.container) quill.container.scrollTop = 0;
+      try {
+        quill.setSelection(0, 0, "silent");
+      } catch (e) {
+        /* ignore */
+      }
+      return;
+    }
     var canvas = document.getElementById("docCanvas");
     // Prefer saved canvas scroll when present — don't yank the reader back to the caret.
     if (canvas && typeof doc.lastScrollTop === "number" && doc.lastScrollTop > 0) {
