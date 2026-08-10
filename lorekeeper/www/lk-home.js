@@ -104,6 +104,8 @@
     rememberNoteEditorHome();
     var panel = document.getElementById("noteEditorPanel");
     if (!panel || !siloKey) return false;
+    // Full screen hides other panels; nesting under a silo would blank the editor.
+    if (document.body.classList.contains("lk-note-fullscreen")) return false;
     var section = findSiloSectionByKey(siloKey);
     if (!section) return false;
     var notesWrap = section.querySelector(".lk-silo-notes");
@@ -477,8 +479,16 @@
     });
 
     refreshAskSiloOptions(built);
-    if (editorWasOpen && keepParkKey) {
+    // Keep the editor at page root while full screen — re-parking under a silo
+    // blanks the screen because those panels are display:none in that mode.
+    if (
+      editorWasOpen &&
+      keepParkKey &&
+      !document.body.classList.contains("lk-note-fullscreen")
+    ) {
       parkNoteEditorInSilo(keepParkKey);
+    } else if (editorWasOpen && keepParkKey) {
+      parkedNoteSiloKey = keepParkKey;
     }
   }
 
