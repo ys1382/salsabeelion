@@ -666,6 +666,12 @@ def _has_profile_copula(sentence: str, names: list[str]) -> bool:
             s_low,
         ):
             return True
+        # Bare nature identity: "Elham is human" / "X is mortal" (no article).
+        if re.search(
+            rf"\b{n}\s+(?:is|was|are|were)\s+(?:human|mortal|immortal|fae|sentient)\b",
+            s_low,
+        ):
+            return True
         if re.search(
             rf"\b(?:protagonist|antagonist|villain|hero|heroine)\s+is\s+named\s+"
             rf"[\"“']?{n}\b",
@@ -1241,6 +1247,8 @@ def _who_is_profile_bit(bit: str, label: str, *, allow_pronoun: bool = False) ->
         _name_in_text(name, bit) for name in [label]
     ):
         return False
+    from lorekeeper_character_compose import is_who_is_cast_fact_sentence
+
     bucket = _classify_sentence(bit, [label])
     if bucket in ("role", "identity", "relationship"):
         return True
@@ -1249,6 +1257,9 @@ def _who_is_profile_bit(bit: str, label: str, *, allow_pronoun: bool = False) ->
             _has_profile_copula(bit, [label])
             or _name_led_identity(bit, [label])
             or _TRAIT_HINT.search(bit)
+            or is_overview_significance_clause(bit, label, allow_pronoun=allow_pronoun)
+            or is_opposition_cast_clause(bit, label)
+            or is_who_is_cast_fact_sentence(bit, label)
         )
     if bucket == "dialogue":
         return bool(
@@ -1267,7 +1278,10 @@ def _who_is_cast_bit_from_draft(bit: str, label: str) -> bool:
     """Draft prose: cast facts and fixed traits — not plot walkthrough."""
     from lorekeeper_character_compose import (
         cast_sentence_about_subject,
+        is_opposition_cast_clause,
         is_other_character_scene_beat,
+        is_overview_significance_clause,
+        is_who_is_cast_fact_sentence,
         label_only_as_alias_mention,
     )
 
@@ -1276,6 +1290,13 @@ def _who_is_cast_bit_from_draft(bit: str, label: str) -> bool:
     if label_only_as_alias_mention(bit, label):
         return False
     if _who_is_profile_bit(bit, label, allow_pronoun=False):
+        return True
+    # Draft situation / concealment / opposition even when profile_bit is strict.
+    if is_overview_significance_clause(bit, label, allow_pronoun=False):
+        return True
+    if is_opposition_cast_clause(bit, label):
+        return True
+    if is_who_is_cast_fact_sentence(bit, label):
         return True
     if _is_author_meta_sentence(bit, [label]) or _is_plot_arc_clause(bit):
         return False

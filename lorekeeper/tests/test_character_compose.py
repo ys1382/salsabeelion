@@ -1208,6 +1208,62 @@ class CharacterComposeTests(unittest.TestCase):
         )
         self.assertLess(answer.count("changes his name"), 2, msg=answer)
 
+    def test_who_is_concealment_and_opposition_from_notes(self):
+        entries = [
+            _entry(
+                "n1",
+                "Character E",
+                (
+                    "Character E is the protagonist. Character E is a young woman and an author. "
+                    "Character E is human, concealing that among the fae. "
+                    "Character E is up against Lord Vex."
+                ),
+                tags=["Lantern Saga"],
+                kind="character",
+            ),
+        ]
+        res = self._ask("In Lantern Saga, who is Character E?", entries)
+        answer = (res.get("answer") or "").lower()
+        self.assertIn("protagonist", answer)
+        self.assertTrue("author" in answer or "young woman" in answer, msg=answer)
+        self.assertTrue(
+            "human" in answer or "conceal" in answer,
+            msg=answer,
+        )
+        self.assertTrue("vex" in answer or "up against" in answer, msg=answer)
+        self.assertNotIn("thinks that", answer)
+
+    def test_who_is_concealment_from_draft_when_notes_thin(self):
+        entries = [
+            _entry(
+                "n1",
+                "Protagonist Notes",
+                "Character E is the protagonist. Character E is a young woman and an author.",
+                tags=["Lantern Saga"],
+                kind="character",
+            ),
+            _entry(
+                "d1",
+                "Lantern draft",
+                (
+                    "Character E keeps her human nature concealed among the fae court. "
+                    "Character E is up against Lord Vex, who suspects she is not what she seems."
+                ),
+                tags=["Lantern Saga"],
+                kind="document",
+            ),
+        ]
+        res = self._ask("In Lantern Saga, who is Character E?", entries)
+        answer = (res.get("answer") or "").lower()
+        self.assertIn("protagonist", answer)
+        self.assertTrue(
+            "conceal" in answer or "human" in answer,
+            msg=answer,
+        )
+        self.assertTrue("vex" in answer or "up against" in answer, msg=answer)
+        self.assertNotIn("thinks that", answer)
+        # Still a cast card — not a long scene dump.
+        self.assertLess(len(answer), 900, msg=answer)
 
 if __name__ == "__main__":
     unittest.main()

@@ -284,7 +284,7 @@ Run **one row at a time** in Cursor. Don’t skip Phase 0 — it costs nothing a
 **Live bar (owner-checked — keep these shapes):**
 - **Tenebris** — Baron / Lord of Cheshire, fairy-tale (“faeble”) standing; **not** Umber’s thought-about-him POV
 - **Platinus** — protagonist, twin/brother Titanem, aka Cypher Prism → Palladiar, faction against Galloxidor; **not** birth-name rename dump
-- **Elham** — protagonist, young woman, author — accurate but **thin**; deepening is next, not rewriting accuracy
+- **Elham** — protagonist, young woman, author — accurate; deepen with concealment / opposition / draft situation when present (2026-08-10 who-is depth pass)
 
 **Regression rules for later agents:**
 - Do **not** trade this accuracy for longer answers

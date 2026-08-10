@@ -119,7 +119,16 @@ _OVERVIEW_SIGNIFICANCE_RE = re.compile(
     r"accidental(?:ly)? .{0,40}?(?:world[- ]?chang|upheaval|stumble)|"
     r"finds? (?:herself|himself|themselves) .{0,80}?(?:pulled|drawn|thrown|cast) into|"
     r"pulled into (?:a |the )?(?:waking )?dream|"
-    r"finds? (?:herself|himself|themselves) in (?:a |the )?(?:situation|dream|world)"
+    r"finds? (?:herself|himself|themselves) in (?:a |the )?(?:situation|dream|world)|"
+    # Hidden identity / concealment stakes (cast overview — not scene beats).
+    r"conceal(?:s|ed|ing)? .{0,60}?(?:human|true|real|identity|nature)|"
+    r"(?:human|true|real) (?:nature|identity).{0,40}?conceal(?:s|ed|ing)?|"
+    r"keeps? .{0,40}?(?:human|true|real) .{0,30}?conceal(?:s|ed|ing)?|"
+    r"hiding (?:that )?(?:she|he|they) (?:is|are) (?:human|mortal)|"
+    r"(?:is|was|are|were) human(?:\b|,).{0,80}?conceal(?:s|ed|ing)?|"
+    r"concealing that among|"
+    r"writes? under (?:a )?pen name|"
+    r"pen name"
     r")\b",
     re.I,
 )
@@ -1184,7 +1193,8 @@ def is_who_is_cast_fact_sentence(sentence: str, label: str) -> bool:
             r"protagonist|antagonist|villain|hero|heroine|main character|side character|"
             r"side antagonist|rabbit|wolf|fox|lynx|arcanist|male|female|sentient|"
             r"known|called|aka|white rabbit|from .+ wonderland|guardian|spirit|"
-            r"chosen one|destined|fated|nemesis|best friend"
+            r"chosen one|destined|fated|nemesis|best friend|"
+            r"human|mortal|fae|concealing|conceal(?:s|ed)?|pen name"
             r")\b",
             s,
             re.I,
@@ -1200,7 +1210,7 @@ def is_who_is_cast_fact_sentence(sentence: str, label: str) -> bool:
             ) and not re.search(
                 r"\b("
                 r"male|female|protagonist|antagonist|villain|hero|rabbit|wolf|fox|"
-                r"lynx|arcanist|sentient|guardian|spirit|married"
+                r"lynx|arcanist|sentient|guardian|spirit|married|human|mortal|fae"
                 r")\b",
                 s,
                 re.I,
@@ -2151,7 +2161,8 @@ def weave_who_is_gold_tone(
     else:
         sentences.append(role)
 
-    for sig in significance_lines[:2]:
+    # Keep up to three evidence-backed stakes (opposition, concealment, upheaval).
+    for sig in significance_lines[:3]:
         if sig not in sentences:
             sentences.append(sig)
 
