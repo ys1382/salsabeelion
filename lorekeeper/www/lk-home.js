@@ -128,15 +128,39 @@
     });
   }
 
-  function placeNoteEditorNearSilo(siloKey) {
+  function scrollNoteEditorIntoViewIfNeeded() {
+    var panel = document.getElementById("noteEditorPanel");
+    if (!panel || panel.hidden || typeof panel.scrollIntoView !== "function") return;
+    global.requestAnimationFrame(function () {
+      var rect = panel.getBoundingClientRect();
+      var vh = global.innerHeight || 0;
+      // Already near where the writer was looking — don't yank the page.
+      if (rect.top >= 0 && rect.top <= vh * 0.8) return;
+      if (rect.bottom > 0 && rect.top < vh) return;
+      panel.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    });
+  }
+
+  function placeNoteEditorNearSilo(siloKey, opts) {
+    opts = opts || {};
     rememberNoteEditorHome();
-    if (siloKey && parkNoteEditorInSilo(siloKey)) {
-      scrollNoteEditorIntoView();
-      return;
+    var parked = !!(siloKey && parkNoteEditorInSilo(siloKey));
+    if (!parked) {
+      restoreNoteEditorHome();
+      parkedNoteSiloKey = null;
     }
-    restoreNoteEditorHome();
-    parkedNoteSiloKey = null;
-    scrollNoteEditorIntoView();
+    if (opts.scroll === "always") scrollNoteEditorIntoView();
+    else if (opts.scroll !== false) scrollNoteEditorIntoViewIfNeeded();
+    return parked;
+  }
+
+  function focusWithoutScroll(el) {
+    if (!el || typeof el.focus !== "function") return;
+    try {
+      el.focus({ preventScroll: true });
+    } catch (err) {
+      el.focus();
+    }
   }
 
   function siloKeyForNoteId(noteId) {
@@ -699,6 +723,13 @@
           ? "Edit note"
           : "New note";
       exitNoteFullscreen();
+      var parkKey =
+        opts.siloKey ||
+        (entry && entry.id ? siloKeyForNoteId(entry.id) : "") ||
+        (opts.workTag ? siloKeyForWorkTag(opts.workTag) : "") ||
+        (tagsVal ? siloKeyForWorkTag(String(tagsVal).split(",")[0]) : "");
+      // Park while still hidden so focus cannot yank the page to the bottom slot.
+      placeNoteEditorNearSilo(parkKey, { scroll: false });
       editorPanel.hidden = false;
       setEditorStatus("");
       syncNoteFullscreenButton();
@@ -713,8 +744,9 @@
           global.LoreKeeperMobileComfort.enterNoteReadMode(bodyEl);
         }
       } else {
-        document.getElementById("noteTitle").focus();
+        focusWithoutScroll(document.getElementById("noteTitle"));
       }
+      scrollNoteEditorIntoViewIfNeeded();
       if (global.LoreKeeperSpell && LoreKeeperSpell.ensureLoaded) {
         LoreKeeperSpell.ensureLoaded().then(function () {
           LoreKeeperSpell.bindTextarea(bodyEl, document.getElementById("noteSpellFlags"));
@@ -728,12 +760,6 @@
           }
         });
       }
-      var parkKey =
-        opts.siloKey ||
-        (entry && entry.id ? siloKeyForNoteId(entry.id) : "") ||
-        (opts.workTag ? siloKeyForWorkTag(opts.workTag) : "") ||
-        (tagsVal ? siloKeyForWorkTag(String(tagsVal).split(",")[0]) : "");
-      placeNoteEditorNearSilo(parkKey);
     }
 
     openNoteEditorRef = openNoteEditor;
