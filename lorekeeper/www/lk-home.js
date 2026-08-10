@@ -683,11 +683,26 @@
         }
         return;
       }
-      document.body.classList.toggle("lk-note-fullscreen", !!on);
+      var wantOn = !!on;
+      var wasOn = document.body.classList.contains("lk-note-fullscreen");
+      if (wantOn === wasOn) {
+        syncNoteFullscreenButton();
+        return;
+      }
+      if (wantOn) {
+        // Lift out of a silo so fullscreen CSS can hide other panels without
+        // also hiding this editor (a display:none ancestor would swallow it).
+        rememberNoteEditorHome();
+        restoreNoteEditorHome();
+        document.body.classList.add("lk-note-fullscreen");
+        syncNoteFullscreenButton();
+        focusWithoutScroll(document.getElementById("noteBody"));
+        return;
+      }
+      document.body.classList.remove("lk-note-fullscreen");
       syncNoteFullscreenButton();
-      if (on) {
-        var focusEl = document.getElementById("noteBody");
-        if (focusEl) focusEl.focus();
+      if (parkedNoteSiloKey && editorPanel && !editorPanel.hidden) {
+        parkNoteEditorInSilo(parkedNoteSiloKey);
       }
     }
 
