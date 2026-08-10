@@ -125,6 +125,9 @@
       global.location.href = "./doc.html?d=" + encodeURIComponent(hit.id);
       return;
     }
+    if (global.LoreKeeperHomeTabs && typeof global.LoreKeeperHomeTabs.goTo === "function") {
+      global.LoreKeeperHomeTabs.goTo("panel-stories");
+    }
     try {
       global.dispatchEvent(
         new CustomEvent("lorekeeper-open-note", { detail: { id: hit.id } })
@@ -132,33 +135,61 @@
     } catch (err) {
       /* ignore */
     }
-    var panel = document.getElementById("noteEditorPanel");
-    if (panel && panel.scrollIntoView) {
-      panel.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
+    global.requestAnimationFrame(function () {
+      var panel = document.getElementById("noteEditorPanel");
+      if (panel && panel.scrollIntoView) {
+        panel.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    });
+  }
+
+  function setWorkspaceState(hasHits) {
+    var workspace = document.querySelector(".lk-find-workspace");
+    var emptyHint = document.getElementById("findEmptyHint");
+    if (workspace) workspace.classList.toggle("has-results", !!hasHits);
+    if (emptyHint) emptyHint.hidden = !!hasHits;
   }
 
   function renderResults(box, statusEl, result) {
     if (!box) return;
     box.innerHTML = "";
     if (!result.query) {
+      setWorkspaceState(false);
       if (statusEl) {
-        statusEl.textContent = "Type a word or phrase to look through documents and notes.";
+        statusEl.textContent = "Type a word or phrase — matching notes and documents appear here.";
         statusEl.hidden = false;
       }
       return;
     }
     if (!result.hits.length) {
+      setWorkspaceState(false);
       if (statusEl) {
-        statusEl.textContent = "No matches in your documents or notes.";
+        statusEl.textContent = "No matches in your documents or notes for “" + result.query + "”.";
         statusEl.hidden = false;
+      }
+      var emptyHint = document.getElementById("findEmptyHint");
+      if (emptyHint) {
+        emptyHint.hidden = false;
+        emptyHint.textContent =
+          "Nothing matched that search. Try another word or phrase — only notes and drafts that contain it show up.";
       }
       return;
     }
+    setWorkspaceState(true);
+    var noteCount = 0;
+    var docCount = 0;
+    result.hits.forEach(function (hit) {
+      if (hit.type === "note") noteCount += 1;
+      else docCount += 1;
+    });
+    var parts = [];
+    if (noteCount) parts.push(noteCount + " note" + (noteCount === 1 ? "" : "s"));
+    if (docCount) parts.push(docCount + " document" + (docCount === 1 ? "" : "s"));
     var label =
-      result.hits.length +
-      " match" +
-      (result.hits.length === 1 ? "" : "es") +
+      parts.join(" · ") +
+      " matching \u201c" +
+      result.query +
+      "\u201d" +
       (result.truncated ? " (showing first " + MAX_HITS + ")" : "");
     if (statusEl) {
       statusEl.textContent = label;

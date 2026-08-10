@@ -888,6 +888,9 @@
       });
     }
     global.addEventListener("lorekeeper-open-note", function (e) {
+      if (global.LoreKeeperHomeTabs && typeof global.LoreKeeperHomeTabs.goTo === "function") {
+        global.LoreKeeperHomeTabs.goTo("panel-stories");
+      }
       var d = (e && e.detail) || {};
       if (d.id) {
         openNoteEditor(d.id, { siloKey: d.siloKey || "" });

@@ -1,8 +1,10 @@
 /**
- * LoreKeeper home — Ask / Idea spinner / Word help tabs (Halalit-style).
+ * LoreKeeper home — Stories / Find / Ask / Idea spinner / Word help / Feedback (Halalit-style site tabs).
  */
 (function (global) {
   var TAB_META = [
+    { btn: "tab-btn-stories", panel: "panel-stories", hash: "" },
+    { btn: "tab-btn-find", panel: "panel-find", hash: "#find" },
     { btn: "tab-btn-ask", panel: "panel-ask", hash: "#ask" },
     { btn: "tab-btn-spinner", panel: "panel-spinner", hash: "#spinner" },
     { btn: "tab-btn-word-help", panel: "panel-word-help", hash: "#word-help" },
@@ -21,6 +23,18 @@
       if (TAB_META[i].panel === panelId) return i;
     }
     return 0;
+  }
+
+  function focusFindInput() {
+    var findBox = document.getElementById("findBox");
+    if (!findBox || typeof findBox.focus !== "function") return;
+    global.requestAnimationFrame(function () {
+      try {
+        findBox.focus({ preventScroll: true });
+      } catch (e1) {
+        findBox.focus();
+      }
+    });
   }
 
   function selectTab(index, opts) {
@@ -65,6 +79,8 @@
           askQ.scrollIntoView({ block: "nearest", behavior: "smooth" });
         });
       }
+    } else if (cur && cur.panel === "panel-find" && !opts.skipScroll) {
+      focusFindInput();
     }
 
     try {
@@ -79,7 +95,7 @@
     var lf = lastFocus();
     var focus = lf && lf.get ? lf.get() : null;
 
-    if (!h || h === "#") {
+    if (!h || h === "#" || h === "#stories" || h === "#home") {
       if (focus && focus.place === "word-help") {
         selectTab(tabIndexForPanel("panel-word-help"), { resumeScroll: true, skipScroll: true });
         return;
@@ -92,7 +108,9 @@
       return;
     }
 
-    if (h === "#spinner" || h === "#idea-spinner") {
+    if (h === "#find" || h === "#search") {
+      selectTab(tabIndexForPanel("panel-find"), { userPick: true });
+    } else if (h === "#spinner" || h === "#idea-spinner") {
       selectTab(tabIndexForPanel("panel-spinner"));
     } else if (h === "#word-help" || h === "#thesaurus") {
       selectTab(tabIndexForPanel("panel-word-help"), { userPick: true });
@@ -106,7 +124,7 @@
   }
 
   function init() {
-    var nav = document.querySelector(".lk-tools-tabs");
+    var nav = document.querySelector(".lk-site-tabs");
     if (!nav || nav.dataset.lkBound === "1") return;
     nav.dataset.lkBound = "1";
     for (var t = 0; t < TAB_META.length; t++) {
