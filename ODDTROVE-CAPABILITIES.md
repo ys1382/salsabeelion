@@ -20,6 +20,7 @@ Last updated: 2026-07-17
 - **2026-06-26 — Maestro's Odyssey:** Community board size — can’t get it right; asking Cursor to fix it made it **worse**.
 - **2026-06-26 — Maestro's Odyssey:** Table collision — probably as good as Cursor can get **for now**; revisit later (not fully solved).
 - **2026-06-26 — LoreKeeper:** Page bleed and extra fonts — can’t stop the bleed or add more font options yet with Cursor.
+- **2026-08-09 — LoreKeeper:** Document **page split** (real stacked pages / Google Docs–style overflow) — tall growing page is OK for now; multi-page split kept failing (cutoff, top-of-chapter clip, scroll/caret). Rolled back. **Needs more work than Cursor solo**; don’t retry the same page-box/paginate loop without a new agreed approach.
 - **2026-06-26 — Maestro's Odyssey:** Environment layout — can’t seem to fix anymore: stepping stones don’t line up in front of the door, sidewalk isn’t extended enough, and a café sign keeps getting placed wrong again.
 - **2026-06-26 — Maestro's Odyssey:** Hijabi character — seems impossible to fix with current knowledge and tools; **on hold:** man in kufi and thobe (wait to fix again).
 
@@ -219,7 +220,7 @@ Last updated: 2026-07-17
 
 ### Bane of Extinction (`baneOfExtinction/` → public quiet beta `/bane-of-extinction/`)
 
-**Is:** Family walk / wildlife-learning game (Pokémon Go–style motivation, real organisms). **Public quiet beta** on Odd Trove — **Odd Trove Google sign-in required** (app gate). Roadmap: [`baneOfExtinction/BANE-OF-EXTINCTION-ROADMAP-AND-TODO.md`](baneOfExtinction/BANE-OF-EXTINCTION-ROADMAP-AND-TODO.md).
+**Is:** Wildlife-learning game (real organisms; Pokémon Go–style motivation planned for a later Wildlife Walk rebuild). **Public quiet beta** on Odd Trove — **Odd Trove Google sign-in required** (app gate). Roadmap: [`baneOfExtinction/BANE-OF-EXTINCTION-ROADMAP-AND-TODO.md`](baneOfExtinction/BANE-OF-EXTINCTION-ROADMAP-AND-TODO.md).
 
 **Can do now:**
 - Browse **wildlife codex** on desktop or phone after Google sign-in — Claude callouts; demos use CC0 cutouts
@@ -230,7 +231,6 @@ Last updated: 2026-07-17
 - **Fact pools** — different callouts each Load from a local pool; Claude refills when the pool runs low (NatureServe CC BY + USGS US-RIIS CC0 credited for range/status)
 - **Fact book** — callout facts collected into an account-synced book (Splash Aquapedia–style progress). Soft `n / ~x` totals until curated packs. **Fact levels** (Curious notice → Neighbor kindness → Species wonder → Field learner) are **separate from mission levels**; kinds unlock with learning commitment (notice → help → wonder)
 - **Phone wildlife camera scan** — `/bane-of-extinction/wildlife-scan.html` (EcoLens: Gemini + Claude ID + life stage; **living neighbors, natural nonliving** — rocks, minerals, empty shells, fossils — **and everyday outdoor manufactured categories** — plastic bottles/bags/packaging, asphalt, pavement, concrete, glass bottles, metal cans, curbs — category names only, never brands; still refuse cars/vehicles, phones, indoor furniture; confirm **This looks right** / **Not this** / **Google this**; photo held in memory only until confirm, dry guesses, leave, or idle wipe; then Gemini semi-realistic still; facts follow the confirmed find — **geology-style** for rocks/minerals/empty shells; **Objects-lane** for manufactured categories (hope/agency lean); **while-you-wait** rotating generic eco wisdom — justice / small daily help / systems+agency — not species trivia)
-- **Wildlife Walk** — `/bane-of-extinction/walk.html` (separate top tab; **on/off setting**; timer + soft notice prompts; buddy pick/feed with real-species foods; care streak; fact-book progress unlocks buddy motions; on-screen walker + buddy; **learned stills** placed on the trail — not moving crowd AI; **no camera / no GPS** on this page — EcoLens stays separate)
 - Claude facts via `/bane-of-extinction/api/` (shared `anthropic.key` + Halalit Gemini env on server) — player-world tone, one small-help tip per set, one wonder fact; geology lane for natural nonliving; **garden focus** toggle splits garden-world eco facts (seed dispersal, grower kindness) vs walk/wild eco facts; device remembers recent fact text so rescans can stay fresh (no photo retention); **later Loads** deepen exactly one prior fact, rotating which prior set the hook comes from
 - **Looking-at places** — Halalit-style favorite places on device; facts + browse lists follow chosen region/habitat (optional compare); season from date; **no GPS**
 - Codex still caption: **conservation status** when possible + **native range** + **elsewhere** (USGS **US-RIIS** CC0 for U.S. introduced/invasive when latin matches; else NatureServe exotic + soft caution; no compare place required; no IUCN)
@@ -243,13 +243,13 @@ Last updated: 2026-07-17
 
 **Cannot do without new work:**
 - Permanent curated art library beyond per-account learned stills
-- Richer Wildlife Walk buddy art / skeletal animation (v1 is CSS bob + still trail critters)
+- **Wildlife Walk** (on-screen trail + buddy / notice prompts) — **off live 2026-08-10**; rebuild from roadmap **Your additions → 2026-07-24** only when owner asks
 - Full visual packs for non-ant missions (story cards only until art catches up)
 - Perfect organism-only segmentation (best-effort framing coach for now)
 - Full video / Live Photo of the raw camera frame (out of scope; subtle idle on the generated still only)
 - PoGo-quality 3D / skeletal buddy animation — web CSS/JS can do simple idle, slide-walk, state swaps from stills/sprites; not rich game-engine locomotion
 
-**Parked / not building:** Trail Guide (Akinator yes/no ID) — EcoLens is the ID path (roadmap 2026-07-23).
+**Parked / not building:** Trail Guide (Akinator yes/no ID) — EcoLens is the ID path (roadmap 2026-07-23). **Wildlife Walk** — removed from live; design parked on roadmap (not deleted from planning).
 
 **Not:** Climatic Mysteries. Path **`/bane/`** still redirects to Climatic Mysteries — do not reuse it.
 

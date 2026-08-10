@@ -1,12 +1,12 @@
 # Bane of Extinction — roadmap & todo
 
 **Working title:** Bane of Extinction (for now).  
-**Status:** Public quiet beta on Odd Trove. **Google sign-in required** (app gate). EcoLens + wildlife codex + **Wildlife Walk v1** shipped (2026-07-24). **Trail Guide (Akinator yes/no) is parked — not building** (pre-EcoLens idea).  
+**Status:** Public quiet beta on Odd Trove. **Google sign-in required** (app gate). EcoLens + wildlife codex + neighborhood missions live. **Wildlife Walk** — **off live** (removed 2026-08-10); design + v1 details parked below for a later rebuild. **Trail Guide (Akinator yes/no) is parked — not building** (pre-EcoLens idea).  
 **Live URL:** https://oddtrove.art/bane-of-extinction/ (hub public card; Odd Trove Google SSO)  
 **Owner’s Office:** `/bane-of-extinction/office.html` — player accounts, private feedback, new sign-ups switch (never other players’ learns).  
 **Related Cursor plan:** `.cursor/plans/wildlife_walk_game_17209669.plan.md` (keep in sync when possible).
 
-**What it is:** A family-friendly, conservation-minded walk game with Pokémon Go–style motivation (walk, buddy, streaks, collection) aimed at **real wildlife** — without bothering animals. Players **learn** organisms into a **wildlife codex** — never “catch” them.
+**What it is:** A family-friendly, conservation-minded wildlife-learning game with Pokémon Go–style motivation (notice, buddy, streaks, collection) aimed at **real wildlife** — without bothering animals. Players **learn** organisms into a **wildlife codex** — never “catch” them. **Wildlife Walk** (on-screen trail + buddy) is **not on the live site** right now — see **Your additions → 2026-07-24**.
 
 **North star:** Learn the living neighborhood without bothering it.
 
@@ -172,7 +172,7 @@ After the still “freezes” on the codex card:
 - [x] Handheld gate messaging (camera later; desktop = codex)
 - [x] Codex callout panel direction (Claude facts; organism + evidence; no Wikipedia)
 - [x] California poppy stub (`poppy.html` + Claude `/api/callouts`; Watermelon Heaven optional)
-- [x] Core loop: walk → optional place → notice prompts → EcoLens ID → codex → buddy/streak (**v1 shipped 2026-07-24** — Wildlife Walk tab; timer + notice cards + feed + facts→buddy motions + still learned trail; no GPS; no camera on walk page)
+- [ ] Core loop: walk → optional place → notice prompts → EcoLens ID → codex → buddy/streak — **Wildlife Walk off live 2026-08-10**; rebuild later from **Your additions → 2026-07-24** (EcoLens → codex path still live without Walk)
 - [x] ~~Trail Guide engine~~ — **parked / not building** (pre-EcoLens; EcoLens is the ID path)
 - [ ] Size-first disambiguation on EcoLens (crow vs raven as test case)
 - [ ] Ethics / non-invasive onboarding copy
@@ -200,7 +200,7 @@ After the still “freezes” on the codex card:
 1. ~~Owner-only shell + empty codex~~ **shipped**
 2. ~~California poppy Claude callout stub~~ **shipped** (`poppy.html`)
 3. ~~EcoLens camera + stylize + confirm~~ **shipped**
-4. ~~Walk + buddy + streak~~ **v1 shipped 2026-07-24** (`walk.html` — timer + notice prompts + feed + facts unlock buddy motions + learned stills on trail; partner codes later)
+4. Walk + buddy + streak — **off live 2026-08-10** (was `walk.html` v1; rebuild later from parked section below)
 5. Codex from IDs (blueprint reveal; curated stills OK) — largely shipped; keep polishing  
 6. Ethics onboarding  
 7. Optional: a few test QR trail stops  
@@ -216,6 +216,7 @@ After the still “freezes” on the codex card:
 - [ ] More regional packs beyond first biome
 - [ ] Partner nature-place **codes** (Seymour-style; permissions first) — gym equivalents later
 - [ ] Optional pedometer / steps (no GPS) — only if owner wants distance-ish later
+- [ ] **Wildlife Walk** rebuild (Pokémon Go–style on-screen trail + buddy) — **off live**; full design + former v1 details in **Your additions → 2026-07-24**
 
 ---
 
@@ -225,9 +226,11 @@ Owner pins from chat go here.
 
 ### 2026-07-24 — walk / buddy / learned VR trail (call this up in a new agent)
 
+**Live status (2026-08-10):** **Removed from the live site completely** (nav, hub copy, and files `walk.html` / `bane-walk.js` / `bane-walk.css` deleted). EcoLens, codex, missions, accounts stay. Rebuild only when the owner asks — use this section + the former v1 snapshot below; do **not** treat Walk as shipped.
+
 **Intent (owner):** PoGo-style motivation **without** GPS, gym pins, or chasing wildlife. IRL play is often **stopped and noticing**; on-screen you + buddy keep walking. Learning is the win — cheating with online pictures is boring and still teaches.
 
-**Locked design (not built yet):**
+**Locked design (rebuild to this):**
 
 - **No distance / no GPS** — walk timer + soft **notice prompts** every few minutes (street trees, forest tree, lake/water, sky, shade, etc.). Tap what fits or skip. Quiet/curious cadence. Not “walk to this pin.”
 - **Out-and-about without tracking** — prompts ask habitat/place noticing, not animal hunts. Optional EcoLens when they choose. Backyard garden counts; variety of organisms naturally encourages moving sometimes, but standing to look is valid play.
@@ -237,22 +240,25 @@ Owner pins from chat go here.
 - **Learned VR trail / map** — when they scan/learn a tree (etc.), the on-screen walk gains a **proper stylized look** of that organism somewhere on the trail. **Not** everything present IRL — only what they took time to learn. Codex stills / illustrated presence; never raw camera frames; no wildlife GPS pins.
 - **Partner “gym” equivalents (later)** — participating nature places (e.g. Seymour Marine Discovery Center) may give **codes**, not photo hunts. Permissions first; gyms honestly later.
 
-**Already shipped (reuse — do not rebuild):** EcoLens + privacy; wildlife codex + learned shelf; fact book + fact levels; place lens (no GPS); neighborhood missions; quiet beta + Google sign-in; **Wildlife Walk v1** (`/bane-of-extinction/walk.html`) — on/off setting, timer, notice cards, buddy feed, fact→motion unlocks, still learned critters on trail (no camera on that page).
+**Already live elsewhere (reuse — do not rebuild for Walk):** EcoLens + privacy; wildlife codex + learned shelf; fact book + fact levels; place lens (no GPS); neighborhood missions; quiet beta + Google sign-in.
 
-**Not yet — polish / later:**
+**Former v1 (shipped 2026-07-24, removed from live 2026-08-10) — rebuild checklist / snapshot:**
 
-- [x] Walk session UI — start/stop timer; quiet vs curious prompt cadence
-- [x] Soft notice cards (habitat/place taps; skip OK; no photo required)
-- [x] Buddy pick + feed with real-species food lists
-- [x] Daily / walk streak (care or notice today)
-- [x] Wire fact-book progress → unlock buddy facts; behavior-tagged facts → buddy motion states (idle / walk / run / eat / rest)
-- [x] On-screen walk scene: avatar + buddy moving; place learned organisms as **still** stylized presence along the trail
+Was at `/bane-of-extinction/walk.html` with `bane-walk.js` + `bane-walk.css`. Device key: `bane_wildlife_walk_v1`. **No camera / no getUserMedia on Walk** (EcoLens stays separate). **No GPS.**
+
+- [ ] Separate top tab + **on/off setting** (off by default; turn off stops an active session)
+- [ ] Walk session UI — start/stop timer; quiet (~5 min) vs curious (~3 min) notice cadence
+- [ ] Soft notice cards (habitat/place taps; skip OK; no photo required) — trees, water, light overhead, ground edge, soft sound
+- [ ] Buddy pick + feed with real-species food lists — California ground squirrel, American crow, mule deer, Anna’s hummingbird
+- [ ] Stats: walk time, care streak, notices today, fact-book progress
+- [ ] Wire fact-book progress → unlock buddy facts; behavior-tagged facts → buddy motion states (`idle` / `walk` / `run` / `eat` / `stand` / `rest`; idle+walk always on)
+- [ ] On-screen walk scene: CSS bob walker + buddy; place learned organisms as **still** stylized presence along the trail (from codex learned shelf — not moving crowd AI)
 - [ ] Richer buddy art / more motion polish (still CSS/2D only)
 - [ ] Later: partner-site codes (permissions); optional steps/pedometer only if owner reopens
 
-**Do NOT:** GPS path tracking; map pins on wildlife/nests; require gym visits for core prizes; force camera for every notice prompt; rebuild Trail Guide; treat online-photo “cheats” as a crisis (learning still wins).
+**Do NOT:** GPS path tracking; map pins on wildlife/nests; require gym visits for core prizes; force camera for every notice prompt; rebuild Trail Guide; treat online-photo “cheats” as a crisis (learning still wins); put Walk back on live without owner OK.
 
-**Agent cue:** Owner says “BoE walk loop,” “buddy VR trail,” “notice prompts,” or “call up walk/buddy from roadmap” → read this section.
+**Agent cue:** Owner says “BoE walk loop,” “Wildlife Walk,” “buddy VR trail,” “notice prompts,” or “call up walk/buddy from roadmap” → read this section.
 
 ### 2026-07-21 — status / native / invasive captions (call this up in a new agent)
 
