@@ -5,7 +5,31 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
   <title>Document — LoreKeeper</title>
   <link rel="stylesheet" href="./vendor/quill/1.3.7/dist/quill.snow.css" />
-  <link rel="stylesheet" href="./lk-shared.css?v=103" />
+  <link rel="stylesheet" href="./lk-shared.css?v=104" />
+  <script>
+    /* Show “Loading…” only if open takes a beat — paper stays visible. */
+    (function () {
+      var revealMs = 220;
+      var timer = setTimeout(function () {
+        if (document.body.classList.contains("lk-doc-ready")) return;
+        var el = document.getElementById("docLoading");
+        if (!el || el.classList.contains("is-error")) return;
+        el.hidden = false;
+        el.classList.add("is-visible");
+      }, revealMs);
+      var obs = new MutationObserver(function () {
+        if (!document.body.classList.contains("lk-doc-ready")) return;
+        clearTimeout(timer);
+        var el = document.getElementById("docLoading");
+        if (el && !el.classList.contains("is-error")) {
+          el.hidden = true;
+          el.classList.remove("is-visible");
+        }
+        obs.disconnect();
+      });
+      obs.observe(document.body, { attributes: true, attributeFilter: ["class"] });
+    })();
+  </script>
 </head>
 <body class="lk-page-doc">
   <div class="lk-wrap lk-doc-wrap">
@@ -238,7 +262,7 @@
           <button type="button" class="lk-btn secondary" id="docDismissStaleBtn">Keep editing here</button>
         </div>
         <div class="lk-doc-canvas" id="docCanvas">
-          <div class="lk-doc-loading" id="docLoading" aria-live="polite">
+          <div class="lk-doc-loading" id="docLoading" aria-live="polite" hidden>
             <p>Loading document…</p>
           </div>
           <div class="lk-doc-sheet lk-margin-normal" id="docSheet">
@@ -259,6 +283,6 @@
       </main>
     </div>
   </div>
-  <script src="./lk-doc-bootstrap.js?v=19"></script>
+  <script src="./lk-doc-bootstrap.js?v=20"></script>
 </body>
 </html>

@@ -258,7 +258,10 @@
   function setDocEditorReady() {
     document.body.classList.add("lk-doc-ready");
     var loading = document.getElementById("docLoading");
-    if (loading) loading.hidden = true;
+    if (loading && !loading.classList.contains("is-error")) {
+      loading.hidden = true;
+      loading.classList.remove("is-visible");
+    }
   }
 
   function showDocLoadError(message, backHref) {
@@ -269,6 +272,7 @@
       message +
       (backHref ? ' <a href="' + backHref + '">← Back to documents</a>' : "") +
       "</p>";
+    loading.classList.add("is-error", "is-visible");
     loading.hidden = false;
   }
 
@@ -1324,69 +1328,100 @@
   Promise.all([
     LoreKeeperDocuments.ready,
     LoreKeeperAccountStorage.waitForData
-      ? LoreKeeperAccountStorage.waitForData({ content: true })
+      ? LoreKeeperAccountStorage.waitForData()
       : LoreKeeperDocuments.ready,
   ]).then(function () {
     if (!LoreKeeperAccountStorage.isSignedIn()) {
       LoreKeeperAccountStorage.ensureSignedIn();
       return;
     }
-    var id = docIdFromUrl();
-    var raw = LoreKeeperDocuments.load().filter(function (d) {
-      return d.id === id;
-    })[0];
-    if (!raw) {
-      showDocLoadError("That document wasn’t found.", "./index.html");
-      global.setTimeout(function () {
-        global.location.href = "./index.html";
-      }, 2800);
-      return;
+
+    function findRawDoc(id) {
+      return LoreKeeperDocuments.load().filter(function (d) {
+        return d.id === id;
+      })[0];
     }
-    var wasLegacy = raw.bodyFormat !== "html" || (raw.pages && raw.pages.length);
-    doc = LoreKeeperDocuments.migrateToFlow(raw);
-    doc = LoreKeeperDocuments.pageDefaults(doc);
-    if (LoreKeeperDocuments.normalizeBodyHtml) {
-      doc.bodyHtml = LoreKeeperDocuments.normalizeBodyHtml(doc.bodyHtml);
-    }
-    if (isEmptyHtml(doc.bodyHtml)) {
-      var snap = LoreKeeperDocuments.latestSnapshot(doc.id);
-      if (snap && !isEmptyHtml(snap.bodyHtml)) {
-        doc.bodyHtml = snap.bodyHtml;
-        doc.bodyHtmlBackup = snap.bodyHtml;
-        doc.bodyHtmlBackupAt = snap.at || Date.now();
+
+    function openRawDoc(raw) {
+      var wasLegacy = raw.bodyFormat !== "html" || (raw.pages && raw.pages.length);
+      doc = LoreKeeperDocuments.migrateToFlow(raw);
+      doc = LoreKeeperDocuments.pageDefaults(doc);
+      if (LoreKeeperDocuments.normalizeBodyHtml) {
+        doc.bodyHtml = LoreKeeperDocuments.normalizeBodyHtml(doc.bodyHtml);
+      }
+      if (isEmptyHtml(doc.bodyHtml)) {
+        var snap = LoreKeeperDocuments.latestSnapshot(doc.id);
+        if (snap && !isEmptyHtml(snap.bodyHtml)) {
+          doc.bodyHtml = snap.bodyHtml;
+          doc.bodyHtmlBackup = snap.bodyHtml;
+          doc.bodyHtmlBackupAt = snap.at || Date.now();
+        }
+      }
+      if (doc.bodyHtmlBackup && isEmptyHtml(doc.bodyHtml) && !isEmptyHtml(doc.bodyHtmlBackup)) {
+        doc.bodyHtml = doc.bodyHtmlBackup;
+      }
+      if (wasLegacy && !isEmptyHtml(doc.bodyHtml)) {
+        LoreKeeperDocuments.save(doc);
+        LoreKeeperAccountStorage.flush();
+      }
+      LoreKeeperDocuments.setLastDocId(doc.id);
+      document.getElementById("docTitle").value = doc.title || "";
+      document.getElementById("docWork").value = doc.workTag || "";
+      if (!quill) initQuill();
+      if (!quill) {
+        showDocLoadError("Editor didn’t load — try a hard refresh.", "./index.html");
+        return;
+      }
+      loadDocIntoEditor();
+      bindMeta();
+      if (global.LoreKeeperDocCollab) LoreKeeperDocCollab.markLoaded(doc);
+      initDocCollab();
+      updateDocHistoryUi();
+      if (global.LoreKeeperSiteFeedback) {
+        global.LoreKeeperSiteFeedback.init({
+          sendBtnId: "docFeedbackSend",
+          textId: "docFeedbackText",
+          statusId: "docFeedbackStatus",
+          source: "documents",
+          metaFn: function () {
+            return { docId: doc && doc.id, docTitle: doc && doc.title };
+          },
+        });
+      }
+      // Refresh from server in the background; stale banner if another device won.
+      if (LoreKeeperAccountStorage.loadContent) {
+        LoreKeeperAccountStorage.loadContent().then(function () {
+          if (!doc || dirty || loading) return;
+          var fresh = LoreKeeperDocuments.find(doc.id);
+          if (!fresh || !fresh.updatedAt) return;
+          if (fresh.updatedAt > (doc.updatedAt || 0) + 400) {
+            showStaleBanner();
+          }
+        });
       }
     }
-    if (doc.bodyHtmlBackup && isEmptyHtml(doc.bodyHtml) && !isEmptyHtml(doc.bodyHtmlBackup)) {
-      doc.bodyHtml = doc.bodyHtmlBackup;
-    }
-    if (wasLegacy && !isEmptyHtml(doc.bodyHtml)) {
-      LoreKeeperDocuments.save(doc);
-      LoreKeeperAccountStorage.flush();
-    }
-    LoreKeeperDocuments.setLastDocId(doc.id);
-    document.getElementById("docTitle").value = doc.title || "";
-    document.getElementById("docWork").value = doc.workTag || "";
-    if (!quill) initQuill();
-    if (!quill) {
-      showDocLoadError("Editor didn’t load — try a hard refresh.", "./index.html");
+
+    var id = docIdFromUrl();
+    var raw = findRawDoc(id);
+    if (raw) {
+      openRawDoc(raw);
       return;
     }
-    loadDocIntoEditor();
-    bindMeta();
-    if (global.LoreKeeperDocCollab) LoreKeeperDocCollab.markLoaded(doc);
-    initDocCollab();
-    updateDocHistoryUi();
-    if (global.LoreKeeperSiteFeedback) {
-      global.LoreKeeperSiteFeedback.init({
-        sendBtnId: "docFeedbackSend",
-        textId: "docFeedbackText",
-        statusId: "docFeedbackStatus",
-        source: "documents",
-        metaFn: function () {
-          return { docId: doc && doc.id, docTitle: doc && doc.title };
-        },
-      });
-    }
+    // First open on this device — wait for full content once, then retry.
+    var contentWait = LoreKeeperAccountStorage.waitForData
+      ? LoreKeeperAccountStorage.waitForData({ content: true })
+      : Promise.resolve();
+    return contentWait.then(function () {
+      raw = findRawDoc(id);
+      if (!raw) {
+        showDocLoadError("That document wasn’t found.", "./index.html");
+        global.setTimeout(function () {
+          global.location.href = "./index.html";
+        }, 2800);
+        return;
+      }
+      openRawDoc(raw);
+    });
   });
   global.LoreKeeperDocRestore = {
     getDocId: function () {

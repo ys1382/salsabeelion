@@ -996,6 +996,17 @@ a { color: var(--accent); }
   justify-content: center;
   padding: 1.5rem;
   pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.18s ease, visibility 0.18s ease;
+}
+.lk-doc-loading.is-visible,
+.lk-doc-loading.is-error {
+  opacity: 1;
+  visibility: visible;
+}
+.lk-doc-loading.is-error {
+  pointer-events: auto;
 }
 .lk-doc-loading p {
   margin: 0;
@@ -1010,11 +1021,14 @@ a { color: var(--accent); }
 .lk-doc-loading a {
   pointer-events: auto;
 }
-body.lk-doc-ready .lk-doc-loading {
+body.lk-doc-ready .lk-doc-loading:not(.is-error) {
   display: none;
 }
-body.lk-page-doc:not(.lk-doc-ready) .lk-doc-sheet {
-  visibility: hidden;
+/* Keep the cream page visible while scripts/data catch up — no blank grey void. */
+body.lk-page-doc:not(.lk-doc-ready) #docEditor {
+  min-height: 11in;
+  background: #f7f4ef;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
 }
 .lk-mobile-writing-back {
   font-family: system-ui, "Segoe UI", sans-serif;
