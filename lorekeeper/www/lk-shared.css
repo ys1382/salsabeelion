@@ -372,6 +372,10 @@ a { color: var(--accent); }
 .lk-silo-add-note {
   margin-top: 0.45rem;
 }
+.lk-silo-notes #noteEditorPanel.lk-note-editor-inline {
+  margin-top: 0.75rem;
+  margin-bottom: 0.15rem;
+}
 .lk-silo-filter-toolbar {
   margin-top: 0.35rem;
 }

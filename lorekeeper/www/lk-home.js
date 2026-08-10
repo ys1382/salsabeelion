@@ -53,12 +53,109 @@
 
   var openNoteEditorRef = null;
   var refreshSilosRef = null;
+  var noteEditorHomeParent = null;
+  var noteEditorHomeNext = null;
+  var parkedNoteSiloKey = null;
 
   function noteMatchesFilter(note, kind, q) {
     if (kind && note.kind !== kind) return false;
     if (!q) return true;
     var hay = ((note.title || "") + " " + (note.body || "") + " " + (note.tags || []).join(" ")).toLowerCase();
     return hay.indexOf(q) !== -1;
+  }
+
+  function rememberNoteEditorHome() {
+    var panel = document.getElementById("noteEditorPanel");
+    if (!panel || noteEditorHomeParent) return;
+    noteEditorHomeParent = panel.parentNode;
+    noteEditorHomeNext = panel.nextSibling;
+  }
+
+  function restoreNoteEditorHome() {
+    var panel = document.getElementById("noteEditorPanel");
+    if (!panel || !noteEditorHomeParent) return;
+    if (panel.parentNode === noteEditorHomeParent) {
+      panel.classList.remove("lk-note-editor-inline");
+      return;
+    }
+    if (noteEditorHomeNext && noteEditorHomeNext.parentNode === noteEditorHomeParent) {
+      noteEditorHomeParent.insertBefore(panel, noteEditorHomeNext);
+    } else {
+      noteEditorHomeParent.appendChild(panel);
+    }
+    panel.classList.remove("lk-note-editor-inline");
+  }
+
+  function findSiloSectionByKey(siloKey) {
+    var list = document.getElementById("siloList");
+    if (!list || !siloKey) return null;
+    var sections = list.querySelectorAll(".lk-silo");
+    for (var i = 0; i < sections.length; i++) {
+      if (sections[i].getAttribute("data-silo-key") === siloKey) return sections[i];
+    }
+    return null;
+  }
+
+  function parkNoteEditorInSilo(siloKey) {
+    rememberNoteEditorHome();
+    var panel = document.getElementById("noteEditorPanel");
+    if (!panel || !siloKey) return false;
+    var section = findSiloSectionByKey(siloKey);
+    if (!section) return false;
+    var notesWrap = section.querySelector(".lk-silo-notes");
+    if (!notesWrap) return false;
+    var noteList = notesWrap.querySelector(".lk-entry-list");
+    if (noteList) {
+      if (noteList.nextSibling) notesWrap.insertBefore(panel, noteList.nextSibling);
+      else notesWrap.appendChild(panel);
+    } else {
+      notesWrap.appendChild(panel);
+    }
+    panel.classList.add("lk-note-editor-inline");
+    parkedNoteSiloKey = siloKey;
+    return true;
+  }
+
+  function scrollNoteEditorIntoView() {
+    var panel = document.getElementById("noteEditorPanel");
+    if (!panel || panel.hidden || typeof panel.scrollIntoView !== "function") return;
+    global.requestAnimationFrame(function () {
+      panel.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    });
+  }
+
+  function placeNoteEditorNearSilo(siloKey) {
+    rememberNoteEditorHome();
+    if (siloKey && parkNoteEditorInSilo(siloKey)) {
+      scrollNoteEditorIntoView();
+      return;
+    }
+    restoreNoteEditorHome();
+    parkedNoteSiloKey = null;
+    scrollNoteEditorIntoView();
+  }
+
+  function siloKeyForNoteId(noteId) {
+    if (!noteId || !global.LoreKeeperSilos) return "";
+    var built = LoreKeeperSilos.buildSilos(LoreKeeperDocuments.loadSorted(), LoreKeeperEntries.load());
+    var cards = (built.silos || []).concat(built.randomIdeas ? [built.randomIdeas] : []);
+    for (var i = 0; i < cards.length; i++) {
+      var siloNotes = (cards[i] && cards[i].notes) || [];
+      for (var j = 0; j < siloNotes.length; j++) {
+        if (siloNotes[j] && siloNotes[j].id === noteId) return cards[i].key || "";
+      }
+    }
+    return "";
+  }
+
+  function siloKeyForWorkTag(workTag) {
+    var raw = String(workTag || "").trim();
+    if (!raw) return "";
+    if (global.LoreKeeperWorkMembership && global.LoreKeeperWorkMembership.normalizeWorkKey) {
+      var normalized = global.LoreKeeperWorkMembership.normalizeWorkKey(raw);
+      if (normalized) return normalized;
+    }
+    return raw.toLowerCase().replace(/\s+/g, " ");
   }
 
   function renderSilos() {
@@ -77,6 +174,12 @@
     var cards = built.silos.slice();
     cards.push(built.randomIdeas);
     cards = applyPinnedDocOrder(cards, pinDocIdFromFocus());
+
+    var editorPanelLive = document.getElementById("noteEditorPanel");
+    var editorWasOpen = !!(editorPanelLive && !editorPanelLive.hidden);
+    var keepParkKey = parkedNoteSiloKey;
+    rememberNoteEditorHome();
+    restoreNoteEditorHome();
 
     list.innerHTML = "";
     var storyCount = built.silos.length;
@@ -196,7 +299,7 @@
             escapeHtml(e.title || "Untitled") +
             "</strong>";
           btn.addEventListener("click", function () {
-            if (openNoteEditorRef) openNoteEditorRef(e.id);
+            if (openNoteEditorRef) openNoteEditorRef(e.id, { siloKey: silo.key });
           });
           li.appendChild(btn);
           noteList.appendChild(li);
@@ -210,7 +313,7 @@
         addBtn.className = "lk-btn secondary lk-silo-add-note";
         addBtn.textContent = "Add note to this story";
         addBtn.addEventListener("click", function () {
-          if (openNoteEditorRef) openNoteEditorRef(null, { workTag: silo.title });
+          if (openNoteEditorRef) openNoteEditorRef(null, { workTag: silo.title, siloKey: silo.key });
         });
         notesWrap.appendChild(addBtn);
       }
@@ -220,6 +323,9 @@
     });
 
     refreshAskSiloOptions(built);
+    if (editorWasOpen && keepParkKey) {
+      parkNoteEditorInSilo(keepParkKey);
+    }
   }
 
   function refreshAskSiloOptions(built) {
@@ -461,6 +567,12 @@
           }
         });
       }
+      var parkKey =
+        opts.siloKey ||
+        (entry && entry.id ? siloKeyForNoteId(entry.id) : "") ||
+        (opts.workTag ? siloKeyForWorkTag(opts.workTag) : "") ||
+        (tagsVal ? siloKeyForWorkTag(String(tagsVal).split(",")[0]) : "");
+      placeNoteEditorNearSilo(parkKey);
     }
 
     openNoteEditorRef = openNoteEditor;
@@ -476,6 +588,8 @@
       }
       editorPanel.hidden = true;
       editingId = null;
+      restoreNoteEditorHome();
+      parkedNoteSiloKey = null;
     }
 
     function scheduleCloseAfterSave() {
@@ -564,13 +678,14 @@
     global.addEventListener("lorekeeper-open-note", function (e) {
       var d = (e && e.detail) || {};
       if (d.id) {
-        openNoteEditor(d.id);
-        if (editorPanel && editorPanel.scrollIntoView) {
-          editorPanel.scrollIntoView({ behavior: "smooth", block: "start" });
-        }
+        openNoteEditor(d.id, { siloKey: d.siloKey || "" });
         return;
       }
-      openNoteEditor(null, { quickJot: !!d.quickJot, workTag: d.workTag || "" });
+      openNoteEditor(null, {
+        quickJot: !!d.quickJot,
+        workTag: d.workTag || "",
+        siloKey: d.siloKey || (d.workTag ? siloKeyForWorkTag(d.workTag) : ""),
+      });
     });
     if (noteFullscreenBtn) {
       noteFullscreenBtn.addEventListener("click", function () {
