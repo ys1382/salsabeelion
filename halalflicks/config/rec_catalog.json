@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "note": "Owner-curated recommendation pool only. Do not auto-add Flickcheck fine results. Link out only — nothing streams here. Parent-flag notes stay visible; discretion/reject titles stay out. Holiday rule: titles centered on Christmas or other non-Muslim religious holidays are off this list (Christmas-in-the-title usually out; stories that merely include a holiday scene may differ). Actor rule: never add films starring The Rock (Dwayne Johnson) — owner reject. Slice-of-life kids TV often includes Christian-holiday episodes — parental flag even when the series is otherwise OK.",
+  "note": "Owner-curated recommendation pool only. Do not auto-add Flickcheck fine results. Link out only — nothing streams here. Parent-flag notes stay visible; discretion/reject titles stay out. Holiday rule: titles centered on Christmas or other non-Muslim religious holidays are off this list (Christmas-in-the-title usually out; stories that merely include a holiday scene may differ). Actor rule: never add films starring The Rock (Dwayne Johnson) — owner reject. Slice-of-life kids TV often includes Christian-holiday episodes — parental flag even when the series is otherwise OK. Rating rule: R or TV-MA titles are never added to Recommend.",
   "movies": [
     {
       "title": "The Many Adventures of Winnie the Pooh",
@@ -1670,6 +1670,123 @@
         "kids_movie",
         "animals",
         "comedy",
+        "friendship"
+      ]
+    },
+    {
+      "title": "Peter Rabbit 2: The Runaway",
+      "year": "2021",
+      "note": "Owner OK — hand-vet.",
+      "themes": [
+        "kids_movie",
+        "animals",
+        "adventure",
+        "comedy",
+        "family"
+      ]
+    },
+    {
+      "title": "The Secret Life of Pets 2",
+      "year": "2019",
+      "note": "Owner OK — fine.",
+      "themes": [
+        "illumination",
+        "kids_movie",
+        "animals",
+        "comedy",
+        "friendship"
+      ]
+    },
+    {
+      "title": "Peter Rabbit",
+      "year": "2018",
+      "note": "Owner OK — fine.",
+      "themes": [
+        "kids_movie",
+        "animals",
+        "comedy",
+        "adventure",
+        "family"
+      ]
+    },
+    {
+      "title": "Gnomeo & Juliet",
+      "year": "2011",
+      "note": "Owner OK — fine.",
+      "themes": [
+        "kids_movie",
+        "comedy",
+        "garden",
+        "friendship"
+      ]
+    },
+    {
+      "title": "Happy Feet Two",
+      "year": "2011",
+      "note": "Owner OK — fine.",
+      "themes": [
+        "kids_movie",
+        "penguins",
+        "music",
+        "family",
+        "adventure"
+      ]
+    },
+    {
+      "title": "Happy Feet",
+      "year": "2006",
+      "note": "Owner OK — fine.",
+      "themes": [
+        "kids_movie",
+        "penguins",
+        "music",
+        "friendship",
+        "adventure"
+      ]
+    },
+    {
+      "title": "Open Season 2",
+      "year": "2008",
+      "note": "Owner OK — fine.",
+      "themes": [
+        "kids_movie",
+        "animals",
+        "comedy",
+        "friendship"
+      ]
+    },
+    {
+      "title": "Open Season 3",
+      "year": "2010",
+      "note": "Owner OK — fine.",
+      "themes": [
+        "kids_movie",
+        "animals",
+        "comedy",
+        "friendship"
+      ]
+    },
+    {
+      "title": "Escape from Planet Earth",
+      "year": "2013",
+      "note": "Owner OK with flag — brief gross joke.",
+      "themes": [
+        "kids_movie",
+        "aliens",
+        "comedy",
+        "adventure",
+        "family"
+      ]
+    },
+    {
+      "title": "TMNT",
+      "year": "2007",
+      "note": "Owner OK — fine (2007 animated).",
+      "themes": [
+        "kids_movie",
+        "ninjas",
+        "adventure",
+        "action",
         "friendship"
       ]
     }

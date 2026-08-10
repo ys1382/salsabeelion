@@ -2365,6 +2365,411 @@
       "year": "1999",
       "rec_ok": false,
       "note": "Owner: parent discretion — episode where the protagonist gets drunk on ice cream; when the squirrel girl is at home she is often wearing a bikini. TV series. No auto-recommend."
+    },
+    {
+      "title": "PAW Patrol: The Movie",
+      "year": "2021",
+      "rec_ok": false,
+      "note": "Owner parked (film) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Rubble & Crew",
+      "year": "2023",
+      "rec_ok": false,
+      "note": "Owner parked (tv) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Tom & Jerry",
+      "year": "2021",
+      "rec_ok": false,
+      "note": "Owner parked (film) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Kamp Koral: SpongeBob's Under Years",
+      "year": "2021",
+      "rec_ok": false,
+      "note": "Owner parked (tv) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Peter Rabbit 2: The Runaway",
+      "year": "2021",
+      "rec_ok": true,
+      "note": "Owner hand-vet: OK / recommend."
+    },
+    {
+      "title": "The Patrick Star Show",
+      "year": "2021",
+      "rec_ok": false,
+      "note": "Owner parked (tv) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Extinct",
+      "year": "2021",
+      "rec_ok": false,
+      "note": "Owner parked (film) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Middlemost Post",
+      "year": "2021",
+      "rec_ok": false,
+      "note": "Owner parked (tv) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Rumble",
+      "year": "2021",
+      "rec_ok": false,
+      "note": "Owner parked (film) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "It's Pony",
+      "year": "2020",
+      "rec_ok": false,
+      "note": "Owner parked (tv) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Seal Team",
+      "year": "2021",
+      "rec_ok": false,
+      "note": "Owner parked (film) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Glitch Techs",
+      "year": "2020",
+      "rec_ok": false,
+      "note": "Owner parked (tv) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Scoob!",
+      "year": "2020",
+      "rec_ok": false,
+      "note": "Owner parked (film) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Star vs. the Forces of Evil",
+      "year": "2015",
+      "rec_ok": false,
+      "note": "Owner parked (tv) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "The Addams Family 2",
+      "year": "2021",
+      "rec_ok": false,
+      "note": "Owner reject: fanservice — Mother Addams outfit."
+    },
+    {
+      "title": "Wander Over Yonder",
+      "year": "2013",
+      "rec_ok": false,
+      "note": "Owner parked (tv) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Wonder Park",
+      "year": "2019",
+      "rec_ok": false,
+      "note": "Owner reject: brief moment where a child is dropped off by same-sex parents."
+    },
+    {
+      "title": "Kick Buttowski: Suburban Daredevil",
+      "year": "2010",
+      "rec_ok": false,
+      "note": "Owner reject: show name is a crude joke — rest of series undoubtedly has crude humor. TV series."
+    },
+    {
+      "title": "Playmobil: The Movie",
+      "year": "2019",
+      "rec_ok": false,
+      "note": "Owner parked (film) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Danny Phantom",
+      "year": "2004",
+      "rec_ok": false,
+      "note": "Owner reject: multiple instances of fanservice; nemesis’s weird obsession with a married woman. TV series."
+    },
+    {
+      "title": "The Secret Life of Pets 2",
+      "year": "2019",
+      "rec_ok": true,
+      "note": "Owner hand-vet: fine / recommend."
+    },
+    {
+      "title": "The Casagrandes",
+      "year": "2019",
+      "rec_ok": false,
+      "note": "Owner parked (tv) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "UglyDolls",
+      "year": "2019",
+      "rec_ok": false,
+      "note": "Owner parked (film) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "The Loud House",
+      "year": "2016",
+      "rec_ok": false,
+      "note": "Owner parked (tv) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Sherlock Gnomes",
+      "year": "2018",
+      "rec_ok": false,
+      "note": "Owner parked (film) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "ChalkZone",
+      "year": "2002",
+      "rec_ok": false,
+      "note": "Owner parked (tv) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "The Grinch",
+      "year": "2018",
+      "rec_ok": false,
+      "note": "Owner automatic reject: Christian holiday (holiday rule)."
+    },
+    {
+      "title": "The Adventures of Jimmy Neutron: Boy Genius",
+      "year": "2002",
+      "rec_ok": false,
+      "note": "Owner parked (tv) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Peter Rabbit",
+      "year": "2018",
+      "rec_ok": true,
+      "note": "Owner hand-vet: fine / recommend."
+    },
+    {
+      "title": "My Life as a Teenage Robot",
+      "year": "2003",
+      "rec_ok": false,
+      "note": "Owner parked (tv) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Gnomeo & Juliet",
+      "year": "2011",
+      "rec_ok": true,
+      "note": "Owner hand-vet: fine / recommend."
+    },
+    {
+      "title": "Hey Arnold!",
+      "year": "1996",
+      "rec_ok": false,
+      "note": "Owner parked (tv) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Happy Feet Two",
+      "year": "2011",
+      "rec_ok": true,
+      "note": "Owner hand-vet: fine / recommend."
+    },
+    {
+      "title": "Rocket Power",
+      "year": "1999",
+      "rec_ok": false,
+      "note": "Owner parked (tv) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Happy Feet",
+      "year": "2006",
+      "rec_ok": true,
+      "note": "Owner hand-vet: fine / recommend."
+    },
+    {
+      "title": "As Told by Ginger",
+      "year": "2000",
+      "rec_ok": false,
+      "note": "Owner parked (tv) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Barnyard",
+      "year": "2006",
+      "rec_ok": false,
+      "note": "Owner parked (film) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "CatDog",
+      "year": "1998",
+      "rec_ok": false,
+      "note": "Owner parked (tv) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Open Season 2",
+      "year": "2008",
+      "rec_ok": true,
+      "note": "Owner hand-vet: fine / recommend."
+    },
+    {
+      "title": "Rugrats",
+      "year": "1991",
+      "rec_ok": false,
+      "note": "Owner parked (tv) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Open Season 3",
+      "year": "2010",
+      "rec_ok": true,
+      "note": "Owner hand-vet: fine / recommend."
+    },
+    {
+      "title": "All Grown Up!",
+      "year": "2003",
+      "rec_ok": false,
+      "note": "Owner idk / parked (tv) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Surf's Up 2: WaveMania",
+      "year": "2017",
+      "rec_ok": false,
+      "note": "Owner idk / parked (film) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "The Wild Thornberrys",
+      "year": "1998",
+      "rec_ok": false,
+      "note": "Owner idk / parked (tv) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Free Birds",
+      "year": "2013",
+      "rec_ok": false,
+      "note": "Owner idk / parked (film) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "The Angry Beavers",
+      "year": "1997",
+      "rec_ok": false,
+      "note": "Owner idk / parked (tv) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Escape from Planet Earth",
+      "year": "2013",
+      "rec_ok": true,
+      "note": "Owner: fine with flag — brief gross joke."
+    },
+    {
+      "title": "Rocko's Modern Life",
+      "year": "1993",
+      "rec_ok": false,
+      "note": "Owner parked (tv) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Space Chimps",
+      "year": "2008",
+      "rec_ok": false,
+      "note": "Owner parked (film) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Aaahh!!! Real Monsters",
+      "year": "1994",
+      "rec_ok": false,
+      "note": "Owner parked (tv) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Delgo",
+      "year": "2008",
+      "rec_ok": false,
+      "note": "Owner parked (film) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Doug",
+      "year": "1991",
+      "rec_ok": false,
+      "note": "Owner parked (tv) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Fly Me to the Moon",
+      "year": "2008",
+      "rec_ok": false,
+      "note": "Owner parked (film) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Pepper Ann",
+      "year": "1997",
+      "rec_ok": false,
+      "note": "Owner parked (tv) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Battle for Terra",
+      "year": "2007",
+      "rec_ok": false,
+      "note": "Owner parked (film) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Fillmore!",
+      "year": "2002",
+      "rec_ok": false,
+      "note": "Owner parked (tv) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "TMNT",
+      "year": "2007",
+      "rec_ok": true,
+      "note": "Owner hand-vet: fine / recommend. (2007 animated feature.)"
+    },
+    {
+      "title": "Lloyd in Space",
+      "year": "2001",
+      "rec_ok": false,
+      "note": "Owner parked (tv) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Everyone's Hero",
+      "year": "2006",
+      "rec_ok": false,
+      "note": "Owner parked (film) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Teacher's Pet",
+      "year": "2000",
+      "rec_ok": false,
+      "note": "Owner parked (tv) — do not re-ask until owner asks.",
+      "parked": true
     }
   ]
 }

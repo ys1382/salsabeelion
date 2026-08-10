@@ -1,0 +1,2484 @@
+{
+  "version": 1,
+  "note": "Every title already offered in a HalalFlicks owner vet batch. NEVER re-offer unless owner explicitly asks (e.g. unpark / ask again). Read this + parked.json before building any new batch. Update this file every time a new batch is shown.",
+  "titles": [
+    {
+      "title": "102 Dalmatians",
+      "year": "2000",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "A Bug's Life",
+      "year": "1998",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "A Minecraft Movie",
+      "year": "2025",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "A Monster in Paris",
+      "year": "2011",
+      "kind": "film",
+      "note": "Mixed batch G — shown."
+    },
+    {
+      "title": "Aaahh!!! Real Monsters",
+      "year": "1994",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Abominable",
+      "year": "2019",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Aladdin",
+      "year": "1992",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Aladdin",
+      "year": "2019",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Alice in Wonderland",
+      "year": "1951",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Alice's Wonderland Bakery",
+      "year": "2022",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "All Dogs Go to Heaven",
+      "year": "1989",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "All Grown Up!",
+      "year": "2003",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Alma's Way",
+      "year": "2021",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Almost Naked Animals",
+      "year": "2011",
+      "kind": "tv",
+      "note": "Mixed batch G — shown."
+    },
+    {
+      "title": "Alpha and Omega",
+      "year": "2010",
+      "kind": "film",
+      "note": "Mixed batch G — shown."
+    },
+    {
+      "title": "Amphibia",
+      "year": "2019",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Arthur",
+      "year": "1996",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "As Told by Ginger",
+      "year": "2000",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Astro Boy",
+      "year": "2009",
+      "kind": "film",
+      "note": "Mixed batch G — shown."
+    },
+    {
+      "title": "Atlantis: The Lost Empire",
+      "year": "2001",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Avatar: The Last Airbender",
+      "year": "2005",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Back to the Future",
+      "year": "1985",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Bambi",
+      "year": "1942",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Barnyard",
+      "year": "2006",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Batman: The Animated Series",
+      "year": "1992",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Battle for Terra",
+      "year": "2007",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Baymax!",
+      "year": "2022",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Beauty and the Beast",
+      "year": "1991",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Beauty and the Beast: The Enchanted Christmas",
+      "year": "1997",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Bee Movie",
+      "year": "2007",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Big City Greens",
+      "year": "2018",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Big Hero 6",
+      "year": "2014",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Blaze and the Monster Machines",
+      "year": "2014",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Bluey",
+      "year": "2018",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Bolt",
+      "year": "2008",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Brave",
+      "year": "2012",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Bubble Guppies",
+      "year": "2011",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Captain Underpants: The First Epic Movie",
+      "year": "2017",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Cars",
+      "year": "2006",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Cars 2",
+      "year": "2011",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Cars 3",
+      "year": "2017",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Casper",
+      "year": "1995",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Castle in the Sky",
+      "year": "1986",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "CatDog",
+      "year": "1998",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "ChalkZone",
+      "year": "2002",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Charlie and the Chocolate Factory",
+      "year": "2005",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Charlotte's Web",
+      "year": "2006",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Chicken for Linda!",
+      "year": "2023",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Chicken Little",
+      "year": "2005",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Chicken Run",
+      "year": "2000",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Chip 'n Dale: Rescue Rangers",
+      "year": "1989",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Christopher Robin",
+      "year": "2018",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Cinderella",
+      "year": "1950",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Clifford the Big Red Dog",
+      "year": "2000",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Cloudy with a Chance of Meatballs",
+      "year": "2009",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Cloudy with a Chance of Meatballs 2",
+      "year": "2013",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Coco",
+      "year": "2017",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Coraline",
+      "year": "2009",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Craig of the Creek",
+      "year": "2018",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Curious George",
+      "year": "2006",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Cyberchase",
+      "year": "2002",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Daniel Tiger's Neighborhood",
+      "year": "2012",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Danny Phantom",
+      "year": "2004",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Darkwing Duck",
+      "year": "1991",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "DC League of Super-Pets",
+      "year": "2022",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Delgo",
+      "year": "2008",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Despicable Me",
+      "year": "2010",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Despicable Me 2",
+      "year": "2013",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Despicable Me 3",
+      "year": "2017",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Despicable Me 4",
+      "year": "2024",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Dog Man",
+      "year": "2025",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Donkey Hodie",
+      "year": "2021",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Dora and the Lost City of Gold",
+      "year": "2019",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Dora the Explorer",
+      "year": "2000",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Doug",
+      "year": "1991",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "DuckTales",
+      "year": "2017",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "DuckTales",
+      "year": "1987",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Dumbo",
+      "year": "1941",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "E.T. the Extra-Terrestrial",
+      "year": "1982",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Elemental",
+      "year": "2023",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Elio",
+      "year": "2025",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Encanto",
+      "year": "2021",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Epic",
+      "year": "2013",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Ernest & Celestine",
+      "year": "2012",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Escape from Planet Earth",
+      "year": "2013",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Eureka!",
+      "year": "2022",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Everyone's Hero",
+      "year": "2006",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Extinct",
+      "year": "2021",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Fantastic Mr. Fox",
+      "year": "2009",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Ferdinand",
+      "year": "2017",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Fillmore!",
+      "year": "2002",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Finding Dory",
+      "year": "2016",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Finding Nemo",
+      "year": "2003",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Firebuds",
+      "year": "2022",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Fireman Sam",
+      "year": "1987",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Fish Hooks",
+      "year": "2010",
+      "kind": "tv",
+      "note": "Mixed batch G — shown."
+    },
+    {
+      "title": "Fixed",
+      "year": "2025",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Fly Me to the Moon",
+      "year": "2008",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Frankenweenie",
+      "year": "2012",
+      "kind": "film",
+      "note": "Mixed batch G — shown."
+    },
+    {
+      "title": "Free Birds",
+      "year": "2013",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "From Up on Poppy Hill",
+      "year": "2011",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Frozen",
+      "year": "2013",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Frozen II",
+      "year": "2019",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Gabby's Dollhouse",
+      "year": "2021",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Generator Rex",
+      "year": "2010",
+      "kind": "tv",
+      "note": "Mixed batch G — shown."
+    },
+    {
+      "title": "Glitch Techs",
+      "year": "2020",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Gnomeo & Juliet",
+      "year": "2011",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Go, Diego, Go!",
+      "year": "2005",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Gravity Falls",
+      "year": "2012",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Hailey's On It!",
+      "year": "2023",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Hamster & Gretel",
+      "year": "2022",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Handy Manny",
+      "year": "2006",
+      "kind": "tv",
+      "note": "Mixed batch G — shown."
+    },
+    {
+      "title": "Happy Feet",
+      "year": "2006",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Happy Feet Two",
+      "year": "2011",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Harold and the Purple Crayon",
+      "year": "2024",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Harry Potter and the Chamber of Secrets",
+      "year": "2002",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Harry Potter and the Deathly Hallows – Part 1",
+      "year": "2010",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Harry Potter and the Deathly Hallows – Part 2",
+      "year": "2011",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Harry Potter and the Goblet of Fire",
+      "year": "2005",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Harry Potter and the Half-Blood Prince",
+      "year": "2009",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Harry Potter and the Order of the Phoenix",
+      "year": "2007",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Harry Potter and the Prisoner of Azkaban",
+      "year": "2004",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Harry Potter and the Sorcerer's Stone",
+      "year": "2001",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Hercules",
+      "year": "1997",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Hey Arnold!",
+      "year": "1996",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Higglytown Heroes",
+      "year": "2004",
+      "kind": "tv",
+      "note": "Mixed batch G — shown."
+    },
+    {
+      "title": "Home",
+      "year": "2015",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Home Alone",
+      "year": "1990",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Home Alone 2: Lost in New York",
+      "year": "1992",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Hook",
+      "year": "1991",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Hop",
+      "year": "2011",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Horton Hears a Who!",
+      "year": "2008",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Hotel Transylvania",
+      "year": "2012",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Hotel Transylvania 2",
+      "year": "2015",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Hotel Transylvania 3: Summer Vacation",
+      "year": "2018",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "How to Train Your Dragon",
+      "year": "2010",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "How to Train Your Dragon 2",
+      "year": "2014",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "How to Train Your Dragon: The Hidden World",
+      "year": "2019",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Howl's Moving Castle",
+      "year": "2004",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Ice Age",
+      "year": "2002",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Ice Age: Continental Drift",
+      "year": "2012",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Ice Age: Dawn of the Dinosaurs",
+      "year": "2009",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Ice Age: The Meltdown",
+      "year": "2006",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "In Your Dreams",
+      "year": "2025",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Incredibles 2",
+      "year": "2018",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Inside Out",
+      "year": "2015",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Isle of Dogs",
+      "year": "2018",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "It's Pony",
+      "year": "2020",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Iwájú",
+      "year": "2024",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Jake and the Never Land Pirates",
+      "year": "2011",
+      "kind": "tv",
+      "note": "Mixed batch G — shown."
+    },
+    {
+      "title": "Jumanji",
+      "year": "1995",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Jumanji: Welcome to the Jungle",
+      "year": "2017",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Justice League",
+      "year": "2001",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Kamp Koral: SpongeBob's Under Years",
+      "year": "2021",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Kensuke's Kingdom",
+      "year": "2023",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Kick Buttowski: Suburban Daredevil",
+      "year": "2010",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Kiff",
+      "year": "2023",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Kiki's Delivery Service",
+      "year": "1989",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Kim Possible",
+      "year": "2002",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Klaus",
+      "year": "2019",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Kubo and the Two Strings",
+      "year": "2016",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Kung Fu Panda",
+      "year": "2008",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Kung Fu Panda 2",
+      "year": "2011",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Kung Fu Panda 3",
+      "year": "2016",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Labyrinth",
+      "year": "1986",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Lady and the Tramp",
+      "year": "1955",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Legend of the Guardians: The Owls of Ga'Hoole",
+      "year": "2010",
+      "kind": "film",
+      "note": "Mixed batch G — shown."
+    },
+    {
+      "title": "Lemony Snicket's A Series of Unfortunate Events",
+      "year": "2004",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Leo",
+      "year": "2023",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Lightyear",
+      "year": "2022",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Lilo & Stitch",
+      "year": "2002",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Lilo & Stitch",
+      "year": "2025",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Little Einsteins",
+      "year": "2005",
+      "kind": "tv",
+      "note": "Mixed batch G — shown."
+    },
+    {
+      "title": "Lloyd in Space",
+      "year": "2001",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Luca",
+      "year": "2021",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Madagascar",
+      "year": "2005",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Madagascar 3: Europe's Most Wanted",
+      "year": "2012",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Madagascar: Escape 2 Africa",
+      "year": "2008",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Mars Needs Moms",
+      "year": "2011",
+      "kind": "film",
+      "note": "Mixed batch G — shown."
+    },
+    {
+      "title": "Mary Poppins",
+      "year": "1964",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Matilda",
+      "year": "1996",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Maya & Miguel",
+      "year": "2004",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Megamind",
+      "year": "2010",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Memoir of a Snail",
+      "year": "2024",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Mickey Mouse Funhouse",
+      "year": "2021",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Middlemost Post",
+      "year": "2021",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Migration",
+      "year": "2023",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Minions",
+      "year": "2015",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Miraculous: Ladybug & Cat Noir, The Movie",
+      "year": "2023",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Missing Link",
+      "year": "2019",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Mister Rogers' Neighborhood",
+      "year": "1968",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Moana",
+      "year": "2016",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Moana 2",
+      "year": "2024",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Molly of Denali",
+      "year": "2019",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Monsters University",
+      "year": "2013",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Monsters vs. Aliens",
+      "year": "2009",
+      "kind": "film",
+      "note": "Mixed batch G — shown."
+    },
+    {
+      "title": "Monsters, Inc.",
+      "year": "2001",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Moon Girl and Devil Dinosaur",
+      "year": "2023",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Mr. Peabody & Sherman",
+      "year": "2014",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Mufasa: The Lion King",
+      "year": "2024",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Mulan",
+      "year": "1998",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Mulan",
+      "year": "2020",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "My Life as a Teenage Robot",
+      "year": "2003",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "My Little Pony: Friendship Is Magic",
+      "year": "2010",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "My Neighbor Totoro",
+      "year": "1988",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "National Treasure",
+      "year": "2004",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Nature Cat",
+      "year": "2015",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Nausicaä of the Valley of the Wind",
+      "year": "1984",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Ne Zha 2",
+      "year": "2025",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Nimona",
+      "year": "2023",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Octonauts",
+      "year": "2010",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Odd Squad",
+      "year": "2014",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "One Hundred and One Dalmatians",
+      "year": "1961",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "One Hundred and One Dalmatians",
+      "year": "1996",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Onward",
+      "year": "2020",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Open Season",
+      "year": "2006",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Open Season 2",
+      "year": "2008",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Open Season 3",
+      "year": "2010",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Orion and the Dark",
+      "year": "2024",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Over the Hedge",
+      "year": "2006",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Over the Moon",
+      "year": "2020",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Paddington",
+      "year": "2014",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Paddington 2",
+      "year": "2017",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "ParaNorman",
+      "year": "2012",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Paw Patrol",
+      "year": "2013",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "PAW Patrol: The Mighty Movie",
+      "year": "2023",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "PAW Patrol: The Movie",
+      "year": "2021",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Peppa Pig",
+      "year": "2004",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Pepper Ann",
+      "year": "1997",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Peter Pan",
+      "year": "1953",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Peter Rabbit",
+      "year": "2018",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Peter Rabbit 2: The Runaway",
+      "year": "2021",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Phineas and Ferb",
+      "year": "2007",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Piece by Piece",
+      "year": "2024",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Pinocchio",
+      "year": "1940",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Planes",
+      "year": "2013",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Planes: Fire & Rescue",
+      "year": "2014",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Planet 51",
+      "year": "2009",
+      "kind": "film",
+      "note": "Mixed batch G — shown."
+    },
+    {
+      "title": "Plankton: The Movie",
+      "year": "2025",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Playmobil: The Movie",
+      "year": "2019",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Pokémon Detective Pikachu",
+      "year": "2019",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Ponyo",
+      "year": "2008",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Pooh's Grand Adventure: The Search for Christopher Robin",
+      "year": "1997",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Porco Rosso",
+      "year": "1992",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Primos",
+      "year": "2024",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Princess Mononoke",
+      "year": "1997",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Pupstruction",
+      "year": "2023",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Puss in Boots",
+      "year": "2011",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Puss in Boots: The Last Wish",
+      "year": "2022",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Ralph Breaks the Internet",
+      "year": "2018",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Rango",
+      "year": "2011",
+      "kind": "film",
+      "note": "Mixed batch G — shown."
+    },
+    {
+      "title": "Ratatouille",
+      "year": "2007",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Raya and the Last Dragon",
+      "year": "2021",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Recess",
+      "year": "1997",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Regular Show",
+      "year": "2010",
+      "kind": "tv",
+      "note": "Mixed batch G — shown."
+    },
+    {
+      "title": "Rio",
+      "year": "2011",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Rio 2",
+      "year": "2014",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Rise of the Guardians",
+      "year": "2012",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Robin Hood",
+      "year": "1973",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Rocket Power",
+      "year": "1999",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Rocko's Modern Life",
+      "year": "1993",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Ron's Gone Wrong",
+      "year": "2021",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Rosie's Rules",
+      "year": "2022",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Rubble & Crew",
+      "year": "2023",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Ruby Gillman, Teenage Kraken",
+      "year": "2023",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Rugrats",
+      "year": "1991",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Rumble",
+      "year": "2021",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Sailor Moon R: The Movie",
+      "year": "1993",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Scoob!",
+      "year": "2020",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Seal Team",
+      "year": "2021",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Sesame Street",
+      "year": "1969",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Shaun the Sheep Movie",
+      "year": "2015",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Sherlock Gnomes",
+      "year": "2018",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Shrek",
+      "year": "2001",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Shrek 2",
+      "year": "2004",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Shrek Forever After",
+      "year": "2010",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Shrek the Third",
+      "year": "2007",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Sing",
+      "year": "2016",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Sing 2",
+      "year": "2021",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Sirocco and the Kingdom of Winds",
+      "year": "2023",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Sleeping Beauty",
+      "year": "1959",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Smallfoot",
+      "year": "2018",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Smurfs",
+      "year": "2025",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Sonic the Hedgehog",
+      "year": "2020",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Sonic the Hedgehog 2",
+      "year": "2022",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Sonic the Hedgehog 3",
+      "year": "2024",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Soul",
+      "year": "2020",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Space Chimps",
+      "year": "2008",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Spellbound",
+      "year": "2024",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Spider-Man: Across the Spider-Verse",
+      "year": "2023",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Spider-Man: Into the Spider-Verse",
+      "year": "2018",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Spidey and His Amazing Friends",
+      "year": "2021",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Spies in Disguise",
+      "year": "2019",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Spirited Away",
+      "year": "2001",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "SpongeBob SquarePants",
+      "year": "1999",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Spy Kids",
+      "year": "2001",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Spy Kids 2: The Island of Lost Dreams",
+      "year": "2002",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Spy Kids 3-D: Game Over",
+      "year": "2003",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Spy Kids: All the Time in the World",
+      "year": "2011",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Star vs. the Forces of Evil",
+      "year": "2015",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Star Wars: Young Jedi Adventures",
+      "year": "2023",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Storks",
+      "year": "2016",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Strange World",
+      "year": "2022",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "SuperKitties",
+      "year": "2023",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Superman: The Animated Series",
+      "year": "1996",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Surf's Up 2: WaveMania",
+      "year": "2017",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "TaleSpin",
+      "year": "1990",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Tangled",
+      "year": "2010",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Tarzan",
+      "year": "1999",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Teacher's Pet",
+      "year": "2000",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Team Umizoomi",
+      "year": "2010",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Teen Titans",
+      "year": "2003",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Teenage Mutant Ninja Turtles: Mutant Mayhem",
+      "year": "2023",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "That Christmas",
+      "year": "2024",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "The Addams Family 2",
+      "year": "2021",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "The Adventures of Jimmy Neutron: Boy Genius",
+      "year": "2002",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "The Adventures of Tintin",
+      "year": "2011",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "The Amazing World of Gumball",
+      "year": "2011",
+      "kind": "tv",
+      "note": "Mixed batch G — shown."
+    },
+    {
+      "title": "The Angry Beavers",
+      "year": "1997",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "The Aristocats",
+      "year": "1970",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "The Backyardigans",
+      "year": "2004",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "The Bad Guys",
+      "year": "2022",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "The Bad Guys 2",
+      "year": "2025",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "The Boss Baby",
+      "year": "2017",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "The Boy and the Heron",
+      "year": "2023",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "The Casagrandes",
+      "year": "2019",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "The Cat Returns",
+      "year": "2002",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "The Creature Cases",
+      "year": "2022",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "The Croods",
+      "year": "2013",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "The Day the Earth Blew Up: A Looney Tunes Movie",
+      "year": "2025",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "The Emoji Movie",
+      "year": "2017",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "The Emperor's New Groove",
+      "year": "2000",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "The Fairly OddParents",
+      "year": "2001",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "The Flintstones in Viva Rock Vegas",
+      "year": "2000",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "The Garfield Movie",
+      "year": "2024",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "The Girl Who Leapt Through Time",
+      "year": "2006",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "The Good Dinosaur",
+      "year": "2015",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "The Grinch",
+      "year": "2018",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "The Incredibles",
+      "year": "2004",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "The Iron Giant",
+      "year": "1999",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "The Jungle Book",
+      "year": "1967",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "The Jungle Book",
+      "year": "2016",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "The Karate Kid",
+      "year": "1984",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "The Karate Kid Part II",
+      "year": "1986",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "The Karate Kid Part III",
+      "year": "1989",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "The Land Before Time",
+      "year": "1988",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "The Legend of Korra",
+      "year": "2012",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "The Lego Batman Movie",
+      "year": "2017",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "The Lego Movie",
+      "year": "2014",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "The Lego Movie 2: The Second Part",
+      "year": "2019",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "The Lego Ninjago Movie",
+      "year": "2017",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "The Lion King",
+      "year": "1994",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "The Little Mermaid",
+      "year": "1989",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "The Little Mermaid",
+      "year": "2023",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "The Lorax",
+      "year": "2012",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "The Loud House",
+      "year": "2016",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "The Magic School Bus",
+      "year": "1994",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "The Many Adventures of Winnie the Pooh",
+      "year": "1977",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "The Mitchells vs. the Machines",
+      "year": "2021",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "The NeverEnding Story",
+      "year": "1984",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "The Parent Trap",
+      "year": "1998",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "The Patrick Star Show",
+      "year": "2021",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "The Prince of Egypt",
+      "year": "1998",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "The Princess and the Frog",
+      "year": "2009",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "The Princess Diaries",
+      "year": "2001",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "The Secret Garden",
+      "year": "1993",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "The Secret Life of Pets",
+      "year": "2016",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "The Secret Life of Pets 2",
+      "year": "2019",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "The Secret of NIMH",
+      "year": "1982",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "The Spiderwick Chronicles",
+      "year": "2008",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "The Star",
+      "year": "2017",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "The Super Mario Bros. Movie",
+      "year": "2023",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "The Tale of the Princess Kaguya",
+      "year": "2013",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "The Tigger Movie",
+      "year": "2000",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "The Wild Thornberrys",
+      "year": "1998",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "The Willoughbys",
+      "year": "2020",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "The Wind Rises",
+      "year": "2013",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "The Wizard of Oz",
+      "year": "1939",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Thelma the Unicorn",
+      "year": "2024",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Thomas & Friends",
+      "year": "1984",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "ThunderCats",
+      "year": "2011",
+      "kind": "tv",
+      "note": "Mixed batch G — shown."
+    },
+    {
+      "title": "TMNT",
+      "year": "2007",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Tom & Jerry",
+      "year": "2021",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Toy Story",
+      "year": "1995",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Toy Story 2",
+      "year": "1999",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Toy Story 3",
+      "year": "2010",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Toy Story 4",
+      "year": "2019",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Transformers One",
+      "year": "2024",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Trolls",
+      "year": "2016",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Trolls World Tour",
+      "year": "2020",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Turning Red",
+      "year": "2022",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "UglyDolls",
+      "year": "2019",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Under the Boardwalk",
+      "year": "2023",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Up",
+      "year": "2009",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Vivo",
+      "year": "2021",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "WALL-E",
+      "year": "2008",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Wander Over Yonder",
+      "year": "2013",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "We Bare Bears",
+      "year": "2015",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Whisper of the Heart",
+      "year": "1995",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Wild Kratts",
+      "year": "2011",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Willy Wonka & the Chocolate Factory",
+      "year": "1971",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Winnie the Pooh",
+      "year": "2011",
+      "kind": "film",
+      "note": "Mixed batch G — shown."
+    },
+    {
+      "title": "Wish",
+      "year": "2023",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Wolf Children",
+      "year": "2012",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Wolfwalkers",
+      "year": "2020",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Wonder Park",
+      "year": "2019",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Wonder Pets!",
+      "year": "2006",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Wonka",
+      "year": "2023",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "WordGirl",
+      "year": "2007",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Work It Out Wombats!",
+      "year": "2023",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Wreck-It Ralph",
+      "year": "2012",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Xavier Riddle and the Secret Museum",
+      "year": "2019",
+      "kind": "tv",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    },
+    {
+      "title": "Zootopia",
+      "year": "2016",
+      "kind": "film",
+      "note": "Shown in owner HalalFlicks vet batch — do not re-offer."
+    }
+  ]
+}

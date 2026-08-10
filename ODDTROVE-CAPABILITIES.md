@@ -161,6 +161,8 @@ Last updated: 2026-07-17
 
 **Needs owner:** Hand-vet list growth; rec catalog titles; rename if desired.
 
+**Owner vet batches:** Before offering titles, always read `halalflicks/config/vet_shown.json` and `halalflicks/config/parked.json` — never re-offer shown/parked titles across chats. Rule: `.cursor/rules/halalflicks-vet-no-repeat.mdc`.
+
 ---
 
 ### HalaLyrics (`halalyrics/www/` → public `/halalyrics/`)

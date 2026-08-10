@@ -1,0 +1,31 @@
+---
+description: HalalFlicks owner movie/TV vet batches — never re-offer titles already shown
+alwaysApply: false
+---
+
+# HalalFlicks vet batches — no repeats across chats
+
+**When** the owner is doing **HalalFlicks / Halalflicks movie or TV vet batches** (ok / reject / parent discretion / park / idk):
+
+## Before offering any new batch
+
+1. **Read** `halalflicks/config/vet_shown.json` — every title already shown in a vet batch.
+2. **Read** `halalflicks/config/parked.json` — owner-parked (including idk treated as park).
+3. **Read** `halalflicks/config/hand_vetted.json` — already decided titles.
+4. **Do not** put any of those titles in a new batch unless the owner **explicitly** asks (e.g. “unpark DuckTales”, “ask me about Shrek again”).
+
+## After each batch is shown
+
+Append every offered title to `halalflicks/config/vet_shown.json` **in the same turn** (even if unanswered yet). Update `parked.json` when they say park/idk. Update `hand_vetted.json` + `rec_catalog.json` for ok/reject/discretion.
+
+**Before ending the chat:** ask the owner to **commit** the HalalFlicks config JSON (and related rule/roadmap edits) so the next unrelated agent does not get a +changes chip.
+
+## Batch shape (owner process)
+
+- Mixed batches: **10 films + 10 series**, newest first; newer releases jump the queue.
+- One clean numbered list only — no draft/rewrite duplicates in the same reply.
+- Catalog rules: holiday-centered reject; The Rock never recommend; Harry Potter series reject (author); **R / TV-MA never recommend**; slice-of-life kids TV may have Christian-holiday episodes (flag).
+
+## Why this exists
+
+Chat memory alone re-offered titles across conversations. These JSON files are the durable source of truth.

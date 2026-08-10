@@ -91,9 +91,9 @@ Titles already shown in chat vet batches — **do not re-ask** unless the owner 
 
 **TV batch 2 (shown):** Octonauts; Paw Patrol; Dora the Explorer; Go, Diego, Go!; Peppa Pig; Daniel Tiger’s Neighborhood; Sesame Street; Mister Rogers’ Neighborhood; Curious George; Clifford the Big Red Dog; Cyberchase; WordGirl; Maya & Miguel; The Backyardigans; Wonder Pets!; Bubble Guppies; Team Umizoomi; Blaze and the Monster Machines; Thomas & Friends; Fireman Sam.
 
-**Owner process (pinned):** Titles the owner **parks** are written to `config/parked.json` + hand_vetted (`parked: true`) and **must not be re-offered** until the owner asks. Mixed movie+TV batches from here: **10 films + 10 series**, newest first; when newer releases appear, they go to the top.
+**Owner process (pinned):** Titles the owner **parks** (or **idk**) go to `config/parked.json` + hand_vetted (`parked: true`) and **must not be re-offered** until the owner asks. **Every title shown** in a vet batch is appended to `config/vet_shown.json` the same turn — agents must read `vet_shown.json` + `parked.json` before any new batch (see `.cursor/rules/halalflicks-vet-no-repeat.mdc`). Mixed movie+TV batches: **10 films + 10 series**, newest first; when newer releases appear, they go to the top. One clean list per reply.
 
-**Catalog rules:** Holidays (non-Muslim religious holiday–centered titles off list); slice-of-life kids TV often has Christian-holiday episodes (parental flag); The Rock; Harry Potter series (author).
+**Catalog rules:** Holidays (non-Muslim religious holiday–centered titles off list); slice-of-life kids TV often has Christian-holiday episodes (parental flag); The Rock; Harry Potter series (author); **R or TV-MA never recommended**.
 
 **Mixed batch A (shown):** Dog Man; Iwájú; Thelma the Unicorn; Young Jedi Adventures; Spellbound; SuperKitties; Harold and the Purple Crayon; Work It Out Wombats!; Transformers One; Moon Girl and Devil Dinosaur; Piece by Piece; The Creature Cases; Mufasa; Hamster & Gretel; Leo; Gabby’s Dollhouse; Under the Boardwalk; Spidey and His Amazing Friends; Chicken for Linda!; Donkey Hodie.
 
@@ -101,6 +101,14 @@ Titles already shown in chat vet batches — **do not re-ask** unless the owner 
 
 **Mixed batch C (shown):** PAW Patrol: The Mighty Movie; Firebuds; DC League of Super-Pets; Alice’s Wonderland Bakery; Ron’s Gone Wrong; Eureka!; The Willoughbys; Rosie’s Rules; Over the Moon; Xavier Riddle; Spies in Disguise; Odd Squad; Missing Link; Nature Cat; Smallfoot; Molly of Denali; Ferdinand; The Fairly OddParents; The Secret Life of Pets; SpongeBob SquarePants.
 
-**Logged reject / no auto-rec:** See `config/hand_vetted.json`. Parked registry: `config/parked.json`.
+**Mixed batch D (shown):** PAW Patrol: The Movie; Rubble & Crew; Tom & Jerry (2021); Kamp Koral; Peter Rabbit 2; The Patrick Star Show; Extinct; Middlemost Post; Rumble; It’s Pony; Seal Team; Glitch Techs; Scoob!; Star vs. the Forces of Evil; The Addams Family 2; Wander Over Yonder; Wonder Park; Kick Buttowski; Playmobil: The Movie; Danny Phantom.
+
+**Mixed batch E (shown):** The Secret Life of Pets 2; The Casagrandes; UglyDolls; The Loud House; Sherlock Gnomes; ChalkZone; The Grinch (2018); Jimmy Neutron series; Peter Rabbit (2018); My Life as a Teenage Robot; Gnomeo & Juliet; Hey Arnold!; Happy Feet Two; Rocket Power; Happy Feet; As Told by Ginger; Barnyard; CatDog; Open Season 2; Rugrats.
+
+**Mixed batch F (shown):** Open Season 3; All Grown Up!; Surf’s Up 2; The Wild Thornberrys; Free Birds; The Angry Beavers; Escape from Planet Earth; Rocko’s Modern Life; Space Chimps; Aaahh!!! Real Monsters; Delgo; Doug; Fly Me to the Moon; Pepper Ann; Battle for Terra; Fillmore!; TMNT (2007); Lloyd in Space; Everyone’s Hero; Teacher’s Pet.
+
+**Mixed batch G (shown):** Monsters vs. Aliens; The Amazing World of Gumball; Planet 51; Regular Show; Astro Boy; Fish Hooks; Alpha and Omega; Generator Rex; Legend of the Guardians; Jake and the Never Land Pirates; Rango; ThunderCats (2011); Winnie the Pooh (2011); Almost Naked Animals; Mars Needs Moms; Higglytown Heroes; A Monster in Paris; Little Einsteins; Frankenweenie; Handy Manny.
+
+**Logged reject / no auto-rec:** See `config/hand_vetted.json`. Parked registry: `config/parked.json`. Shown registry: `config/vet_shown.json`.
 
 ---

@@ -277,6 +277,24 @@ Run **one row at a time** in Cursor. Don’t skip Phase 0 — it costs nothing a
 
 ## Your additions
 
+### Ask who-is accuracy milestone (pinned 2026-08-10) — **do not regress**
+
+**Checkpoint shipped** (~`4a80e37` and related who-is work): “Who is X?” answers are **on-subject and accurate** from notes + draft — librarian only, no inventing.
+
+**Live bar (owner-checked — keep these shapes):**
+- **Tenebris** — Baron / Lord of Cheshire, fairy-tale (“faeble”) standing; **not** Umber’s thought-about-him POV
+- **Platinus** — protagonist, twin/brother Titanem, aka Cypher Prism → Palladiar, faction against Galloxidor; **not** birth-name rename dump
+- **Elham** — protagonist, young woman, author — accurate but **thin**; deepening is next, not rewriting accuracy
+
+**Regression rules for later agents:**
+- Do **not** trade this accuracy for longer answers
+- Still reject knower POV (“X thinks that Y…”), rename infodumps as the whole card, and unrelated scene scraps
+- Next goal (separate task): **more depth** for every character (Etherei cast-card bar) **without** breaking the accuracy bar above
+
+### Document page split (needs more than Cursor — 2026-08-09)
+
+- [ ] **Real Google Docs–style page split** — stacked letter pages, whole lines to the next page, no gap bleed, no top/bottom chop. Tall growing page works for now (full draft + word count). Multi-page split was tried and rolled back (clipping, scroll/caret issues). **Needs more work; probably more than Cursor alone** (pair programming / deeper editor work). Do not treat as a small Cursor-only follow-up until a new approach is agreed.
+
 ### Ask confirm-sources (retired as default UI 2026-07-20)
 
 - [x] **Ask confirm-sources** — preview/confirm checkbox step shipped 2026-07-19; **default Ask now answers in one step** (no tick list). Backend preview/confirm still exists for tests; home + doc Ask no longer call it.
