@@ -12,6 +12,10 @@
   var spinnerReady = false;
   var wordHelpReady = false;
 
+  function lastFocus() {
+    return global.LoreKeeperLastFocus || null;
+  }
+
   function tabIndexForPanel(panelId) {
     for (var i = 0; i < TAB_META.length; i++) {
       if (TAB_META[i].panel === panelId) return i;
@@ -19,7 +23,8 @@
     return 0;
   }
 
-  function selectTab(index) {
+  function selectTab(index, opts) {
+    opts = opts || {};
     if (typeof index !== "number" || index < 0 || index >= TAB_META.length) index = 0;
     for (var i = 0; i < TAB_META.length; i++) {
       var b = document.getElementById(TAB_META[i].btn);
@@ -44,7 +49,16 @@
         global.LoreKeeperWordHelp.init();
       }
     }
-    if (cur && cur.panel === "panel-ask") {
+
+    var lf = lastFocus();
+    if (opts.userPick && lf) {
+      if (cur && cur.panel === "panel-ask") lf.setAsk();
+      if (cur && cur.panel === "panel-word-help") lf.setWordHelp();
+    }
+
+    if (opts.resumeScroll && lf && cur) {
+      lf.scrollPanelToBottom(cur.panel);
+    } else if (cur && cur.panel === "panel-ask" && !opts.skipScroll) {
       var askQ = document.getElementById("askQuestion");
       if (askQ && typeof askQ.scrollIntoView === "function") {
         global.requestAnimationFrame(function () {
@@ -52,6 +66,7 @@
         });
       }
     }
+
     try {
       var tail = cur ? cur.hash || "" : "";
       var u = window.location.pathname + window.location.search + tail;
@@ -61,11 +76,33 @@
 
   function applyHash() {
     var h = (window.location.hash || "").toLowerCase();
-    if (h === "#spinner" || h === "#idea-spinner") selectTab(tabIndexForPanel("panel-spinner"));
-    else if (h === "#word-help" || h === "#thesaurus") selectTab(tabIndexForPanel("panel-word-help"));
-    else if (h === "#feedback") selectTab(tabIndexForPanel("panel-feedback"));
-    else if (h === "#ask" || h === "") selectTab(tabIndexForPanel("panel-ask"));
-    else selectTab(0);
+    var lf = lastFocus();
+    var focus = lf && lf.get ? lf.get() : null;
+
+    if (!h || h === "#") {
+      if (focus && focus.place === "word-help") {
+        selectTab(tabIndexForPanel("panel-word-help"), { resumeScroll: true, skipScroll: true });
+        return;
+      }
+      if (focus && focus.place === "ask") {
+        selectTab(tabIndexForPanel("panel-ask"), { resumeScroll: true, skipScroll: true });
+        return;
+      }
+      selectTab(0, { skipScroll: true });
+      return;
+    }
+
+    if (h === "#spinner" || h === "#idea-spinner") {
+      selectTab(tabIndexForPanel("panel-spinner"));
+    } else if (h === "#word-help" || h === "#thesaurus") {
+      selectTab(tabIndexForPanel("panel-word-help"), { userPick: true });
+    } else if (h === "#feedback") {
+      selectTab(tabIndexForPanel("panel-feedback"));
+    } else if (h === "#ask") {
+      selectTab(tabIndexForPanel("panel-ask"), { userPick: true });
+    } else {
+      selectTab(0);
+    }
   }
 
   function init() {
@@ -77,7 +114,7 @@
         var btn = document.getElementById(TAB_META[idx].btn);
         if (!btn) return;
         btn.addEventListener("click", function () {
-          selectTab(idx);
+          selectTab(idx, { userPick: true });
         });
       })(t);
     }
@@ -88,7 +125,7 @@
   global.LoreKeeperHomeTabs = {
     init: init,
     goTo: function (panelId) {
-      selectTab(tabIndexForPanel(panelId));
+      selectTab(tabIndexForPanel(panelId), { userPick: true });
     },
   };
 })(typeof window !== "undefined" ? window : this);

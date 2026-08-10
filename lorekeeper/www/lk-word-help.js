@@ -71,6 +71,9 @@
         status.hidden = false;
         return;
       }
+      if (global.LoreKeeperLastFocus && global.LoreKeeperLastFocus.setWordHelp) {
+        global.LoreKeeperLastFocus.setWordHelp();
+      }
       status.textContent = "Looking up wording…";
       status.className = "lk-status";
       status.hidden = false;

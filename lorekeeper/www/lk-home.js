@@ -1,6 +1,46 @@
 (function (global) {
   function openDoc(id) {
+    if (id && global.LoreKeeperLastFocus && global.LoreKeeperLastFocus.setDoc) {
+      global.LoreKeeperLastFocus.setDoc(id);
+    }
     global.location.href = "./doc.html?d=" + encodeURIComponent(id);
+  }
+
+  function pinDocIdFromFocus() {
+    var lf = global.LoreKeeperLastFocus;
+    if (!lf || !lf.get) return "";
+    var focus = lf.get();
+    if (!focus || focus.place !== "doc" || !focus.docId) return "";
+    return focus.docId;
+  }
+
+  function applyPinnedDocOrder(cards, pinDocId) {
+    if (!pinDocId || !cards || !cards.length) return cards;
+    var next = cards.slice();
+    for (var i = 0; i < next.length; i++) {
+      var silo = next[i];
+      var docs = (silo && silo.docs) || [];
+      var docIdx = -1;
+      for (var j = 0; j < docs.length; j++) {
+        if (docs[j] && docs[j].id === pinDocId) {
+          docIdx = j;
+          break;
+        }
+      }
+      if (docIdx < 0) continue;
+      var reorderedDocs = docs.slice();
+      var pinned = reorderedDocs.splice(docIdx, 1)[0];
+      reorderedDocs.unshift(pinned);
+      var pinnedSilo = {};
+      for (var key in silo) {
+        if (Object.prototype.hasOwnProperty.call(silo, key)) pinnedSilo[key] = silo[key];
+      }
+      pinnedSilo.docs = reorderedDocs;
+      next.splice(i, 1);
+      next.unshift(pinnedSilo);
+      return next;
+    }
+    return cards;
   }
 
   function escapeHtml(s) {
@@ -36,6 +76,7 @@
     var built = LoreKeeperSilos.buildSilos(docs, notes);
     var cards = built.silos.slice();
     cards.push(built.randomIdeas);
+    cards = applyPinnedDocOrder(cards, pinDocIdFromFocus());
 
     list.innerHTML = "";
     var storyCount = built.silos.length;
@@ -736,6 +777,9 @@
         askStatus.hidden = false;
         return;
       }
+      if (global.LoreKeeperLastFocus && global.LoreKeeperLastFocus.setAsk) {
+        global.LoreKeeperLastFocus.setAsk();
+      }
       var askOpts = { includeDocuments: true, scope: scope };
       var pending = loadAskContinue();
       if (pending) askOpts.askContinue = pending;
@@ -804,6 +848,13 @@
         statusId: "homeFeedbackStatus",
         source: "site",
       });
+    }
+    if (pinDocIdFromFocus()) {
+      global.scrollTo(0, 0);
+      var stories = document.querySelector(".lk-panel");
+      if (stories && typeof stories.scrollIntoView === "function") {
+        stories.scrollIntoView({ block: "start", behavior: "auto" });
+      }
     }
   });
 })(typeof window !== "undefined" ? window : this);

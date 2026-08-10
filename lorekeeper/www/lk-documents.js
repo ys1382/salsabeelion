@@ -365,6 +365,9 @@
     var Store = global.LoreKeeperAccountStorage;
     if (!Store || !Store.isSignedIn()) return;
     Store.setItem(LAST_DOC_KEY, id || "");
+    if (id && global.LoreKeeperLastFocus && global.LoreKeeperLastFocus.setDoc) {
+      global.LoreKeeperLastFocus.setDoc(id);
+    }
   }
 
   function getLastDocId() {
