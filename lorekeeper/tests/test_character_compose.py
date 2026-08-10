@@ -1265,5 +1265,45 @@ class CharacterComposeTests(unittest.TestCase):
         # Still a cast card — not a long scene dump.
         self.assertLess(len(answer), 900, msg=answer)
 
+    def test_who_is_so_now_conceal_and_appositive_protagonist(self):
+        """Live-shaped phrasing: appositive role note + 'So now X has to conceal…' draft."""
+        entries = [
+            _entry(
+                "n1",
+                "Authors' Role",
+                (
+                    "Authors write with pens. The protagonist, Character E, is central to "
+                    "the realm's stories. But they are not capital-A Authors."
+                ),
+                tags=["Lantern Saga"],
+                kind="species",
+            ),
+            _entry(
+                "d1",
+                "Lantern draft",
+                (
+                    "Premise: Character E is a young woman and an author. "
+                    "So now Character E has to conceal her identity as human among Authors. "
+                    "I'm thinking that the main antagonist might be Character V."
+                ),
+                tags=["Lantern Saga"],
+                kind="document",
+            ),
+        ]
+        res = self._ask("In Lantern Saga, who is Character E?", entries)
+        answer = (res.get("answer") or "").lower()
+        self.assertIn("protagonist", answer)
+        self.assertTrue(
+            "conceal" in answer or "human" in answer,
+            msg=answer,
+        )
+        self.assertTrue(
+            "young woman" in answer or "author" in answer,
+            msg=answer,
+        )
+        # Planning voice about the antagonist must not leak.
+        self.assertNotIn("i'm thinking", answer)
+        self.assertNotIn("i am thinking", answer)
+
 if __name__ == "__main__":
     unittest.main()

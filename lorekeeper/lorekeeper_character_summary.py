@@ -927,6 +927,8 @@ def _bits_for_character(entry: dict[str, Any], names: list[str]) -> list[str]:
             bits.append(f"{label} is the {title_role.group(1).lower()}.")
 
     def _keep_bit(sentence: str) -> list[str]:
+        from lorekeeper_character_compose import normalize_premise_cast_line
+
         cleaned = strip_inline_author_asides(sentence) or sentence
         if is_rename_infodump_clause(cleaned, label) or is_rename_infodump_clause(
             sentence, label
@@ -935,13 +937,28 @@ def _bits_for_character(entry: dict[str, Any], names: list[str]) -> list[str]:
             if compressed:
                 return compressed
             return []
+        # Appositive role: "The protagonist, Elham, …"
+        appos = re.search(
+            rf"\b(?:the\s+)?(protagonist|antagonist|main character),\s*"
+            rf"{re.escape(label)}\b",
+            cleaned,
+            re.I,
+        )
+        if appos and label:
+            return [f"{label} is the {appos.group(1).lower()}."]
         if _who_is_profile_bit(cleaned, label, allow_pronoun=is_sheet):
-            from lorekeeper_character_compose import normalize_premise_cast_line
-
             cleaned = normalize_premise_cast_line(cleaned, label)
             return [cleaned if len(cleaned) >= 12 else sentence]
         if _who_is_profile_bit(sentence, label, allow_pronoun=is_sheet):
             return [sentence]
+        # Draft prose: keep cast/overview stakes even when not "Name is…" copula.
+        kind = str(entry.get("kind") or "")
+        if kind == "document" or "#p" in str(entry.get("id") or ""):
+            if _who_is_cast_bit_from_draft(cleaned, label) or _who_is_cast_bit_from_draft(
+                sentence, label
+            ):
+                cleaned = normalize_premise_cast_line(cleaned, label)
+                return [cleaned if len(cleaned) >= 12 else sentence]
         return []
 
     if is_sheet:
@@ -1193,17 +1210,20 @@ def _who_is_profile_bit(bit: str, label: str, *, allow_pronoun: bool = False) ->
     from lorekeeper_character_compose import is_overview_significance_clause
 
     # Overview / upheaval-reason stakes first — may share "sets in motion" phrasing.
+    # Trust overview's own about-subject check (covers "So now Elham has to conceal…").
     if is_overview_significance_clause(bit, label, allow_pronoun=allow_pronoun):
-        if cast_sentence_about_subject(bit, label, allow_pronoun=allow_pronoun) or (
-            allow_pronoun
-            and re.match(r"^(?:He|She)\b", bit, re.I)
-            and not label_only_as_alias_mention(bit, label)
-        ):
-            return True
-        return False
+        return True
     from lorekeeper_character_compose import is_opposition_cast_clause
 
     if is_opposition_cast_clause(bit, label):
+        return True
+    # "The protagonist, Elham, …" appositive role — not "Elham is…".
+    if re.search(
+        rf"\b(?:the\s+)?(?:protagonist|antagonist|main character),\s*"
+        rf"{re.escape(label)}\b",
+        bit,
+        re.I,
+    ):
         return True
     if not cast_sentence_about_subject(bit, label, allow_pronoun=allow_pronoun):
         # Own-sheet fragments: "Married to X", "Grey-skinned arcanist", "He is brother…"
