@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
   <title>LoreKeeper</title>
-  <link rel="stylesheet" href="./lk-shared.css?v=103" />
+  <link rel="stylesheet" href="./lk-shared.css?v=104" />
 </head>
 <body class="lk-page-home">
   <div class="lk-wrap">
@@ -35,6 +35,8 @@
           <option value="">All note types</option>
         </select>
         <input type="search" id="searchBox" placeholder="Filter notes in these lists…" autocomplete="off" />
+        <button type="button" class="lk-btn secondary" id="expandAllNotesBtn" title="Open every story’s notes to the short scroll list">Expand all</button>
+        <button type="button" class="lk-btn secondary" id="collapseAllNotesBtn" title="Hide every story’s note list">Collapse all</button>
       </div>
       <p class="lk-status" id="libraryStatus"></p>
       <div id="siloList" class="lk-silo-list" aria-live="polite"></div>
@@ -238,6 +240,6 @@
   <script src="./lk-mobile-jot.js?v=1"></script>
   <script src="./lk-bt-keyboard.js?v=1"></script>
   <script src="./lk-mobile-handoff.js?v=1"></script>
-  <script src="./lk-home.js?v=60"></script>
+  <script src="./lk-home.js?v=61"></script>
 </body>
 </html>

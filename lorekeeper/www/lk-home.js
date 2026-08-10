@@ -53,6 +53,10 @@
 
   var openNoteEditorRef = null;
   var refreshSilosRef = null;
+  var NOTES_LIST_PREF_KEY = "lk-silo-notes-list-v1";
+  var NOTES_MODE_CLOSED = "closed";
+  var NOTES_MODE_OPEN = "open";
+  var NOTES_MODE_FULL = "full";
   var noteEditorHomeParent = null;
   var noteEditorHomeNext = null;
   var parkedNoteSiloKey = null;
@@ -158,6 +162,82 @@
     return raw.toLowerCase().replace(/\s+/g, " ");
   }
 
+  function loadNotesListPrefs() {
+    try {
+      var raw = global.localStorage.getItem(NOTES_LIST_PREF_KEY);
+      if (!raw) return { modes: {}, touched: false };
+      var parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed !== "object") return { modes: {}, touched: false };
+      var modes = parsed.modes && typeof parsed.modes === "object" ? parsed.modes : {};
+      return { modes: modes, touched: !!parsed.touched };
+    } catch (e) {
+      return { modes: {}, touched: false };
+    }
+  }
+
+  function saveNotesListPrefs(prefs) {
+    try {
+      global.localStorage.setItem(
+        NOTES_LIST_PREF_KEY,
+        JSON.stringify({
+          modes: (prefs && prefs.modes) || {},
+          touched: !!(prefs && prefs.touched),
+        })
+      );
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
+  function normalizeNotesMode(mode) {
+    if (mode === NOTES_MODE_CLOSED || mode === NOTES_MODE_FULL) return mode;
+    return NOTES_MODE_OPEN;
+  }
+
+  function defaultOpenSiloKey(cards) {
+    var pinDocId = pinDocIdFromFocus();
+    if (pinDocId && cards && cards.length) {
+      for (var i = 0; i < cards.length; i++) {
+        var silo = cards[i];
+        var docs = (silo && silo.docs) || [];
+        for (var j = 0; j < docs.length; j++) {
+          if (docs[j] && docs[j].id === pinDocId) return silo.key || "";
+        }
+      }
+    }
+    if (cards && cards.length && cards[0] && !cards[0].isRandom) return cards[0].key || "";
+    return cards && cards[0] ? cards[0].key || "" : "";
+  }
+
+  function notesModeForSilo(prefs, siloKey, defaultOpenKey) {
+    if (prefs.modes && Object.prototype.hasOwnProperty.call(prefs.modes, siloKey)) {
+      return normalizeNotesMode(prefs.modes[siloKey]);
+    }
+    if (!prefs.touched) {
+      return siloKey && siloKey === defaultOpenKey ? NOTES_MODE_OPEN : NOTES_MODE_CLOSED;
+    }
+    return NOTES_MODE_OPEN;
+  }
+
+  function setNotesMode(siloKey, mode) {
+    if (!siloKey) return;
+    var prefs = loadNotesListPrefs();
+    prefs.modes[siloKey] = normalizeNotesMode(mode);
+    prefs.touched = true;
+    saveNotesListPrefs(prefs);
+  }
+
+  function setAllNotesModes(keys, mode) {
+    var prefs = loadNotesListPrefs();
+    var nextMode = normalizeNotesMode(mode);
+    if (nextMode === NOTES_MODE_FULL) nextMode = NOTES_MODE_OPEN;
+    (keys || []).forEach(function (key) {
+      if (key) prefs.modes[key] = nextMode;
+    });
+    prefs.touched = true;
+    saveNotesListPrefs(prefs);
+  }
+
   function renderSilos() {
     var list = document.getElementById("siloList");
     var status = document.getElementById("libraryStatus");
@@ -200,6 +280,9 @@
         : "") +
       (noteCount ? " · " + noteCount + " note" + (noteCount === 1 ? "" : "s") : "");
 
+    var notesPrefs = loadNotesListPrefs();
+    var defaultOpenKey = defaultOpenSiloKey(cards);
+
     cards.forEach(function (silo) {
       var filteredNotes = (silo.notes || []).filter(function (n) {
         return noteMatchesFilter(n, kind, q);
@@ -214,9 +297,12 @@
         if (!filteredDocs.length && !filteredNotes.length) return;
       }
 
+      var siloKey = silo.key || "";
+      var notesMode = notesModeForSilo(notesPrefs, siloKey, defaultOpenKey);
+
       var section = document.createElement("section");
       section.className = "lk-silo" + (silo.isRandom ? " is-random" : "");
-      section.setAttribute("data-silo-key", silo.key || "");
+      section.setAttribute("data-silo-key", siloKey);
 
       var heading = document.createElement("h3");
       heading.className = "lk-silo-title";
@@ -267,13 +353,57 @@
       }
 
       var notesWrap = document.createElement("div");
-      notesWrap.className = "lk-silo-notes";
+      notesWrap.className =
+        "lk-silo-notes" +
+        (notesMode === NOTES_MODE_CLOSED ? " is-collapsed" : "") +
+        (notesMode === NOTES_MODE_FULL ? " is-full" : "");
+      notesWrap.setAttribute("data-notes-mode", notesMode);
+
+      var notesHead = document.createElement("div");
+      notesHead.className = "lk-silo-notes-head";
+
       var notesHeading = document.createElement("h4");
       notesHeading.className = "lk-silo-notes-title";
       notesHeading.textContent = silo.isRandom
-        ? "Notes"
+        ? "Notes (" + filteredNotes.length + ")"
         : "Notes for this story (" + filteredNotes.length + ")";
-      notesWrap.appendChild(notesHeading);
+      notesHead.appendChild(notesHeading);
+
+      var toggleBtn = document.createElement("button");
+      toggleBtn.type = "button";
+      toggleBtn.className = "lk-silo-notes-toggle";
+      var notesOpen = notesMode !== NOTES_MODE_CLOSED;
+      toggleBtn.setAttribute("aria-expanded", notesOpen ? "true" : "false");
+      toggleBtn.textContent = notesOpen ? "Hide notes" : "Show notes";
+      toggleBtn.addEventListener("click", function () {
+        var next = notesMode === NOTES_MODE_CLOSED ? NOTES_MODE_OPEN : NOTES_MODE_CLOSED;
+        setNotesMode(siloKey, next);
+        renderSilos();
+      });
+      notesHead.appendChild(toggleBtn);
+      notesWrap.appendChild(notesHead);
+
+      if (notesOpen && filteredNotes.length) {
+        var fullBtn = document.createElement("button");
+        fullBtn.type = "button";
+        fullBtn.className = "lk-btn secondary lk-silo-notes-full-btn";
+        if (notesMode === NOTES_MODE_FULL) {
+          fullBtn.textContent = "Show short list";
+          fullBtn.title = "Back to the short scroll list";
+          fullBtn.addEventListener("click", function () {
+            setNotesMode(siloKey, NOTES_MODE_OPEN);
+            renderSilos();
+          });
+        } else {
+          fullBtn.textContent = "Expand to full list";
+          fullBtn.title = "Show every note for this story (no scroll box)";
+          fullBtn.addEventListener("click", function () {
+            setNotesMode(siloKey, NOTES_MODE_FULL);
+            renderSilos();
+          });
+        }
+        notesWrap.appendChild(fullBtn);
+      }
 
       var noteList = document.createElement("ul");
       noteList.className = "lk-entry-list";
@@ -326,6 +456,37 @@
     if (editorWasOpen && keepParkKey) {
       parkNoteEditorInSilo(keepParkKey);
     }
+  }
+
+  function collectRenderedSiloKeys() {
+    var list = document.getElementById("siloList");
+    if (!list) return [];
+    var keys = [];
+    list.querySelectorAll("[data-silo-key]").forEach(function (el) {
+      var key = el.getAttribute("data-silo-key") || "";
+      if (key && keys.indexOf(key) === -1) keys.push(key);
+    });
+    return keys;
+  }
+
+  function expandAllNotesLists() {
+    var prefs = loadNotesListPrefs();
+    var keys = Object.keys(prefs.modes || {});
+    collectRenderedSiloKeys().forEach(function (k) {
+      if (keys.indexOf(k) === -1) keys.push(k);
+    });
+    setAllNotesModes(keys, NOTES_MODE_OPEN);
+    renderSilos();
+  }
+
+  function collapseAllNotesLists() {
+    var prefs = loadNotesListPrefs();
+    var keys = Object.keys(prefs.modes || {});
+    collectRenderedSiloKeys().forEach(function (k) {
+      if (keys.indexOf(k) === -1) keys.push(k);
+    });
+    setAllNotesModes(keys, NOTES_MODE_CLOSED);
+    renderSilos();
   }
 
   function refreshAskSiloOptions(built) {
@@ -720,6 +881,10 @@
     });
     filterKind.addEventListener("change", renderSilos);
     searchBox.addEventListener("input", renderSilos);
+    var expandAllNotesBtn = document.getElementById("expandAllNotesBtn");
+    var collapseAllNotesBtn = document.getElementById("collapseAllNotesBtn");
+    if (expandAllNotesBtn) expandAllNotesBtn.addEventListener("click", expandAllNotesLists);
+    if (collapseAllNotesBtn) collapseAllNotesBtn.addEventListener("click", collapseAllNotesLists);
     document.getElementById("exportNotesBtn").addEventListener("click", function () {
       var blob = new Blob([LoreKeeperEntries.exportJson()], { type: "application/json" });
       var a = document.createElement("a");
