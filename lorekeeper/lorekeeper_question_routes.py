@@ -30,8 +30,9 @@ _STORY_POSITION_Q = re.compile(
 )
 
 # "left off … main draft / plot / chapter" — resume even when phrasing skips older templates.
+# Also tolerate common typo "leave of" / "left of".
 _STORY_POSITION_LEFT_OFF_META = re.compile(
-    r"\bleft off\b.{0,80}\b("
+    r"\b(?:left|leave) off?\b.{0,80}\b("
     r"main draft|the draft|in terms of plot|the plot|story|chapter"
     r")\b",
     re.I | re.S,

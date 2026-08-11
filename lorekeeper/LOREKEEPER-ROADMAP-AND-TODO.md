@@ -312,16 +312,23 @@ Run **one row at a time** in Cursor. Don’t skip Phase 0 — it costs nothing a
 
 ### Plot relation / plot summary accuracy — timing (pinned 2026-08-10; owner opened plot work 2026-08-11)
 
-**Owner note (2026-08-11):** Who-is **accuracy** is parked as good enough for now (gold sample above). Owner is working **plot summary accuracy** in another agent. Who-is **voice/hook** upgrade stays later — do not mix it into the plot pass.
+**Owner note (2026-08-11):** Who-is **accuracy** is parked as good enough for now (gold sample above). Writing-next / leave-off plot work continues in this pass. Who-is **voice/hook** upgrade stays later — do not mix it into the plot pass.
 
-**Still careful:** Shared Ask brain (recall + compose + ranking/focus) means plot work can fight who-is scrubbing. Prefer plot as its **own** pass; do **not** loosen who-is “no plot dump” guards to make plot answers look better. Do **not** regress the Tenebris gold sample.
+**Leave-off / main-draft plot — accuracy milestone (pinned 2026-08-11):** Owner checked **100% accurate** for:
+
+- Q: *Where did I leave of[f] in the main draft in terms of plot?*
+- Gold shape: short **planning brief** of the **latest draft beat** — formal librarian voice (engaging, not novel prose); who is doing what to whom; active stakes / what the focal character thinks awaits them; mistaken beliefs marked wrong when notes say so; short just-before lead-in (capture, brothers outstripped, destination, escape attempts) — **not** sensory fluff (e.g. paws off the ground) and **not** an infodump.
+- Do **not** regress to fake work titles (“Nothing is tagged ‘The Main Draft…’”) or scrap dumps.
+- Typo tolerance: “leave of” / “left of” should still route as leave-off when paired with main draft / plot.
+
+**Still careful:** Shared Ask brain (recall + compose + ranking/focus) means plot work can fight who-is scrubbing. Prefer plot as its **own** pass; do **not** loosen who-is “no plot dump” guards to make plot answers look better. Do **not** regress the Tenebris gold sample **or** this leave-off gold shape.
 
 **When tightening plot:**
 1. Keep who-is accuracy pins intact (spot-check “Who is Tenebris?” if compose/focus changes).
 2. Open plot from Owner’s Office corrections (playbook Phase 1) — not a broad character-card rewrite.
 3. Exception only if owner insists: one tiny correction that clearly routes as relationship / plot-span / summary and does **not** edit character-card compose unless required.
 
-**Already in place for later:** relationship / situation / plot-span helpers; playbook intent for “How are A and B related?”
+**Already in place for later:** relationship / situation / plot-span helpers; playbook intent for “How are A and B related?”; leave-off routing fix for “main draft / in terms of plot” (`1cbe607`).
 
 ### Document page split (needs more than Cursor — 2026-08-09)
 

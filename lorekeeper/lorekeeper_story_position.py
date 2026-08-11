@@ -116,8 +116,18 @@ def _usable_sentences(
     return kept
 
 
+_RESUME_NOTE_SIGNAL = re.compile(
+    r"\b("
+    r"fear|afraid|dread|eaten|incorrect|wrong|actually|mistaken|believes?|"
+    r"escape|flee|outran|outstrip|brother|sister|captured|brought|taking|"
+    r"manor|building|castle|estate|destination|intends?"
+    r")\b",
+    re.I,
+)
+
+
 def _tail_sentences_for_answer(pages: list[tuple[int, int, str, dict[str, Any]]]) -> list[str]:
-    """Anchor on the final saved page; add brief context from the page before it."""
+    """Anchor on the final saved page; add brief just-before context from prior pages."""
     if not pages:
         return []
 
@@ -127,9 +137,13 @@ def _tail_sentences_for_answer(pages: list[tuple[int, int, str, dict[str, Any]]]
         return []
 
     context: list[str] = []
+    # Immediate prior page only by default — avoids dumping older setup.
     if len(pages) >= 2:
-        prev_body = pages[-2][2]
-        context = _usable_sentences(prev_body, min_len=20)[-2:]
+        context = _usable_sentences(pages[-2][2], min_len=20)[-3:]
+    # One more prior page only when it carries capture/stakes/escape signals.
+    if len(pages) >= 3 and _RESUME_NOTE_SIGNAL.search(pages[-3][2]):
+        earlier = _usable_sentences(pages[-3][2], min_len=20)[-2:]
+        context = earlier + context
 
     combined = context + anchor
     deduped: list[str] = []
@@ -140,7 +154,7 @@ def _tail_sentences_for_answer(pages: list[tuple[int, int, str, dict[str, Any]]]
             continue
         seen.add(key)
         deduped.append(sentence)
-    return deduped[-6:]
+    return deduped[-8:]
 
 
 _CONCEPT_NOTE_WORDS = frozenset(
@@ -282,10 +296,16 @@ def draft_tail_prompt_block(entries: list[dict[str, Any]], question: str) -> str
     pages = _collect_draft_pages(scope)
     if not pages:
         return ""
-    tail = pages[-3:]
+    # Slightly wider window so "just before" capture / brothers / escape can appear.
+    tail = pages[-5:]
     lines: list[str] = []
     for pos, (_updated, page_idx, body, entry) in enumerate(tail):
-        label = "LATEST" if pos == len(tail) - 1 else f"page {page_idx}"
+        if pos == len(tail) - 1:
+            label = "LATEST"
+        elif pos == len(tail) - 2:
+            label = "JUST_BEFORE"
+        else:
+            label = f"earlier page {page_idx}"
         title = str(entry.get("title") or "Draft").strip()
         lines.append(f"[{label}] {title}\n{body[:4000]}")
     name_block = ""
@@ -297,10 +317,58 @@ def draft_tail_prompt_block(entries: list[dict[str, Any]], question: str) -> str
             + "\n".join(f"- {name}" for name in names)
             + "\n\n"
         )
+    note_block = resume_related_note_block(entries, question)
     return (
         f"{name_block}"
-        "Latest saved draft tail (summarize the LATEST block — situational summary, not quotes):\n\n"
+        f"{note_block}"
+        "Draft tail for a planning brief (focus on LATEST; use JUST_BEFORE only for "
+        "immediate lead-in — capture, destination, sacrifice/outstrip, escape attempts; "
+        "skip sensory fluff; formal librarian voice; not novel prose):\n\n"
         + "\n\n".join(lines)
+        + "\n\n"
+    )
+
+
+def resume_related_note_block(entries: list[dict[str, Any]], question: str) -> str:
+    """Short note snippets tied to cast in the latest beat (stakes, corrections, lead-in)."""
+    names = named_characters_in_draft_tail(entries, question)
+    if not names:
+        return ""
+    scope = _entries_for_work(entries, question)
+    name_lower = {n.lower() for n in names}
+    scored: list[tuple[int, str, str]] = []
+    for entry in scope:
+        if not isinstance(entry, dict):
+            continue
+        kind = str(entry.get("kind") or "").lower()
+        eid = str(entry.get("id") or "")
+        if kind == "document" or "#p" in eid:
+            continue
+        title = str(entry.get("title") or "").strip()
+        body = str(entry.get("body") or "").strip()
+        if not body and not title:
+            continue
+        blob = f"{title}\n{body}"
+        blob_l = blob.lower()
+        if not any(n in blob_l for n in name_lower):
+            continue
+        score = 2 if _RESUME_NOTE_SIGNAL.search(blob) else 0
+        if any(n == title.lower() for n in name_lower):
+            score += 1
+        if score <= 0:
+            continue
+        excerpt = re.sub(r"\s+", " ", blob).strip()
+        if len(excerpt) > 700:
+            excerpt = excerpt[:697].rstrip() + "…"
+        scored.append((score, title or "Note", excerpt))
+    if not scored:
+        return ""
+    scored.sort(key=lambda row: (-row[0], row[1].lower()))
+    lines = [f"- {title}: {excerpt}" for _score, title, excerpt in scored[:3]]
+    return (
+        "Related notes for this beat (use for stakes, mistaken beliefs marked wrong, "
+        "destination names, brothers/escape — do not dump full cast cards):\n"
+        + "\n".join(lines)
         + "\n\n"
     )
 
@@ -317,7 +385,7 @@ def build_story_position_answer(
     if not pages:
         return None, []
 
-    tail_pages = pages[-3:]
+    tail_pages = pages[-5:]
     sentences = _tail_sentences_for_answer(tail_pages)
     ids: list[str] = []
     for _updated, _idx, _body, entry in tail_pages:
@@ -328,7 +396,7 @@ def build_story_position_answer(
     if not sentences:
         return None, ids
 
-    lead = f"From the latest draft you've saved{where}, the story currently stands roughly here:\n\n"
+    lead = f"Planning brief — current draft position{where}:\n\n"
     body = " ".join(sentences)
     if not body.endswith((".", "!", "?", "…")):
         body += "."
@@ -347,7 +415,7 @@ def ranked_draft_tail_rows(
     pages = _collect_draft_pages(scope)
     if not pages:
         return []
-    tail = pages[-5:]
+    tail = pages[-6:]
     rows: list[dict[str, Any]] = []
     for pos, (_updated, _idx, _body, entry) in enumerate(tail):
         eid = str(entry.get("id") or "")
@@ -362,4 +430,34 @@ def ranked_draft_tail_rows(
                 "body": str(entry.get("body") or "")[:8000],
             }
         )
+    # Boost short related notes for stakes / corrections when present.
+    names = {n.lower() for n in named_characters_in_draft_tail(entries, question)}
+    if names:
+        for entry in scope:
+            if not isinstance(entry, dict):
+                continue
+            kind = str(entry.get("kind") or "").lower()
+            eid = str(entry.get("id") or "")
+            if kind == "document" or "#p" in eid:
+                continue
+            blob = f"{entry.get('title') or ''} {entry.get('body') or ''}"
+            if not any(n in blob.lower() for n in names):
+                continue
+            if not _RESUME_NOTE_SIGNAL.search(blob):
+                continue
+            if any(r.get("id") == eid for r in rows):
+                continue
+            rows.append(
+                {
+                    "id": eid,
+                    "title": str(entry.get("title") or "Note"),
+                    "kind": str(entry.get("kind") or "note"),
+                    "kindLabel": kind_label(str(entry.get("kind") or "note")),
+                    "score": 94,
+                    "excerpt": str(entry.get("body") or "")[:400],
+                    "body": str(entry.get("body") or "")[:4000],
+                }
+            )
+            if len(rows) >= 10:
+                break
     return rows

@@ -60,20 +60,30 @@ Rules (non-negotiable):
 - End with a blank line then exactly: — From your notes only. Nothing invented."""
 
 _STORY_POSITION = """
-This asks where the draft currently stands — summarize the LATEST beat only (highest page / last source).
+This asks where the writer left off in the MAIN DRAFT — answer as a short PLANNING BRIEF so they can decide what to write next.
 
-- One short paragraph in reference voice — a situational summary, NOT a quote dump from the draft
-- State who is doing, weighing, or about to do what, regarding whom, and what pressure or deadline is live
-  (e.g. "Etherei is now considering whether to confront Mira and Cassian before they catch on.")
-- When the latest beat is a chase, confrontation, escape, or similar, say who is pursuing/fleeing whom and the reason the draft gives — still only from sources
-- When the latest draft or the cast-names list names people by proper name, use those names —
-  do not replace them with "they", "the others", "two characters", or role-only labels
-- Do not treat worldbuilding concepts, note titles, factions, or places as character names —
-  keep those as concepts (e.g. "the Predator-Prey situation", "the Gate"), separate from cast
-- Synthesize only what the latest draft tail sources support — do not invent motives, plans, or events
-- Do not recap earlier chapters or the prologue unless one short phrase orients the reader
-- No bullet lists
-- Never invent a work title from phrasing like "main draft" or "in terms of plot"
+VOICE (required):
+- Formal, professional, engaging librarian — like a calm story-position memo
+- NOT the novel's narrative voice, NOT close-third immersion, NOT prose imitation
+- Prefer "Character A is being taken to …" / "A believes …" over sensory scene painting
+- Skip decorative or bodily-detail beats (e.g. paws/feet not touching the ground, grit of the path) unless that detail is the only way a fact is stated
+
+LENGTH: one tight paragraph (occasionally two short ones). Never a bullet list. Never an infodump or chapter recap.
+
+WHAT TO INCLUDE (only if sources support it — invent nothing):
+1. NOW — who is acting on whom, where they are headed, and what the active pressure is
+2. STAKES / BELIEF — what the focal character thinks awaits them (e.g. fear of being eaten); if notes or draft mark that belief as wrong or incomplete, say so plainly in librarian voice
+3. JUST BEFORE — one or two sentences of immediate lead-in only: capture, who caught whom, why they outran or sacrificed for others, escape attempts still in play
+4. Destination / building names exactly as the draft or notes name them
+
+WHAT TO OMIT:
+- Earlier chapters, prologue, and unrelated subplot
+- Quote dumps and dialogue mash
+- Full cast cards or relationship essays
+- Invented next beats or advice about what to write
+- Fake work titles from phrasing like "main draft" or "in terms of plot"
+
+Use proper names from the cast list and sources. Concepts/places stay concepts — not people.
 """
 
 _SUMMARIZE = """

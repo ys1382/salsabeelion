@@ -230,6 +230,86 @@ class StoryPositionAnswerTests(unittest.TestCase):
         self.assertIn("character a", low)
         self.assertIn("character b", low)
 
+    def test_leave_off_prompt_includes_just_before_and_stakes_notes(self) -> None:
+        """Planning brief: prior capture + mistaken-fear note, not sensory-only latest beat."""
+        from lorekeeper_story_position import draft_tail_prompt_block
+
+        doc_id = "doc-capture"
+        tag = "Project Alpha"
+        entries = [
+            {
+                "id": doc_id,
+                "title": tag,
+                "body": "setup",
+                "tags": [tag],
+                "kind": "document",
+                "updatedAt": 300,
+            },
+            {
+                "id": f"{doc_id}#p0",
+                "title": tag,
+                "body": (
+                    "Character A outstripped his brothers so they would not be caught "
+                    "with him, believing Character B would eat them all."
+                ),
+                "tags": [tag],
+                "kind": "document",
+                "parentDocId": doc_id,
+                "updatedAt": 300,
+            },
+            {
+                "id": f"{doc_id}#p1",
+                "title": tag,
+                "body": (
+                    "Character B captured Character A and carried him toward the Baron's manor. "
+                    "Character A tried once to twist free and failed."
+                ),
+                "tags": [tag],
+                "kind": "document",
+                "parentDocId": doc_id,
+                "updatedAt": 300,
+            },
+            {
+                "id": f"{doc_id}#p2",
+                "title": tag,
+                "body": (
+                    "Character A's paws were not even touching the ground as Character B "
+                    "continued down the path, and Character A dreaded what awaited him."
+                ),
+                "tags": [tag],
+                "kind": "document",
+                "parentDocId": doc_id,
+                "updatedAt": 300,
+            },
+            {
+                "id": "note-a",
+                "title": "Character A",
+                "body": (
+                    "Character A fears he will be eaten. That fear is incorrect — "
+                    "Character B is taking him to the Baron, not as prey."
+                ),
+                "tags": [tag],
+                "kind": "character",
+            },
+            {
+                "id": "note-b",
+                "title": "Character B",
+                "body": "Character B is a wolf escort, not a simple predator meal.",
+                "tags": [tag],
+                "kind": "character",
+            },
+        ]
+        q = "In Project Alpha, where did I leave off in the main draft in terms of plot?"
+        block = draft_tail_prompt_block(entries, q)
+        self.assertIn("[LATEST]", block)
+        self.assertIn("[JUST_BEFORE]", block)
+        self.assertIn("outstripped his brothers", block)
+        self.assertIn("Baron's manor", block)
+        self.assertIn("Related notes for this beat", block)
+        self.assertIn("fear is incorrect", block.lower())
+        self.assertIn("planning brief", block.lower())
+        self.assertIn("formal librarian", block.lower())
+
 
 if __name__ == "__main__":
     unittest.main()
