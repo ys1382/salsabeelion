@@ -279,6 +279,10 @@ Run **one row at a time** in Cursor. Don’t skip Phase 0 — it costs nothing a
 
 ## Your additions
 
+### Ask who-is voice / hook tone (pinned 2026-08-11) — **later upgrade**
+
+- [ ] **Voice-only pass on who-is** — keep every fact in the **Tenebris gold sample** (accuracy milestone below); soften rhythm so it feels more like the owner’s earlier essay-hook middle voice (engaging, not encyclopedia / too-factual stacks). Still librarian-only: restate notes + main draft; never invent. Do **not** trade accuracy for tone. Parked while owner works **plot summary accuracy** in a separate agent.
+
 ### Ask opt-in “include writing tasks” (pinned 2026-08-11) — **later upgrade**
 
 - [ ] **Opt-in checkbox: include writing tasks** — when on, Ask/cast cards may surface honest “not fully developed yet” work items that belong on that card (e.g. Dijon–Tenebris relationship still thin). Off by default; never invent tasks; librarian-only from notes/gaps. Do not build until character who-is voice/accuracy bar is stable.
@@ -288,30 +292,34 @@ Run **one row at a time** in Cursor. Don’t skip Phase 0 — it costs nothing a
 **Checkpoint shipped** (~`4e38d6c` and related who-is work): “Who is X?” answers are **on-subject and accurate** from notes + draft — librarian only, no inventing.
 
 **Live bar (owner-checked — keep these shapes):**
-- **Tenebris** (owner Q/R/E success 2026-08-10 evening; heritage/Dijon-load refresh 2026-08-11) — essay-hook continuous prose (not choppy stacks); main antagonist; Baron of Cheshire; Cheshire Cat from Alice in Wonderland; Etherei fascination when noted; Dijon third cousin with cold-on-surface / few-cats-without-grudge / both-care, plus **staying out of Court politics (unbeknownst to him) loads Dijon**; Court disgust + unrealized influence linked; mixed parentage + not entirely of this world; mother from here; father a Domestic Cat from another realm with Faeble still open — **never** “parent stock”; **cold shoulder from other cats for outsider father** when noted; faeble social rank; **not** Umber POV; **not** Dijon cousin twice; **not** unnamed-parent scraps
+- **Tenebris** (owner **very accurate** Ask success 2026-08-11 afternoon; prior pins 2026-08-10/11) — treat the following live answer as the **gold who-is sample** (essay-hook, librarian only, do not regress):
+
+  > In Smoke And Mirrors, Tenebris is the main antagonist, Baron of Cheshire, and the Cheshire Cat from Alice in Wonderland, with Etherei as the subject of his fascination. Duke Dijon is his third cousin, with whom he shares a relationship that is cold on the surface but more complicated — Duke Dijon is among the few cats he does not grudge, and both care; unbeknownst to him, his staying out of Court politics leaves Duke Dijon with a heavier load. His mother is from here, but his father is a Domestic Cat from another realm, with whether he is a Faeble too still open — and other cats gave him the cold shoulder because that father was an outsider. He is personally disgusted by Predator Court politics, and does not realize how much political influence he holds. He has mixed parentage, and is not entirely of this world. Lord Tenebris of Cheshire is a faeble with social rank — not a king or emperor.
+
+  Must keep: role/open first; Etherei fascination when noted; Dijon third cousin + cold-on-surface / few-cats-without-grudge / both-care + **Court-load (unbeknownst)**; mother here + father Domestic Cat from another realm + Faeble still open — **never** “parent stock”; cold shoulder for outsider father; Court disgust + unrealized influence; mixed parentage + not entirely of this world; faeble social rank. **Not** Umber POV; **not** Dijon cousin twice; **not** unnamed-parent scraps; **not** choppy short stacks.
 - **Platinus** — protagonist, twin/brother Titanem, aka Cypher Prism → Palladiar, faction against Galloxidor; **not** birth-name rename dump
 - **Elham** — protagonist, young woman, author — accurate; deepen with concealment / opposition / draft situation when present (2026-08-10 who-is depth pass)
 
-**Owner voice target (essay-hook sample, 2026-08-10 — librarian only):** Prefer professional engaging middle voice like: *In Smoke And Mirrors, Tenebris is the main antagonist, with Etherei as his quarry… He is also known as the Baron of Cheshire and Lord Tenebris of Cheshire… faeble / Cheshire Cat from Alice in Wonderland… Court politics / presence when draft+notes support… mixed parentage / mother here / father Domestic Cat still open… Duke Dijon third cousin with rivalry-care (both care).* Restate only what notes + main draft support; never invent missing beats or writing-task gaps unless written or the opt-in writing-tasks checkbox ships later.
+**Owner voice target (essay-hook — librarian only):** Facts must match the **Tenebris gold sample** above. **Tone/hook warmth** (less encyclopedia, more engaging middle voice like the owner’s earlier sample) is a **later upgrade** — see “Ask who-is voice / hook tone” above. Restate only what notes + main draft support; never invent missing beats or writing-task gaps unless written or the opt-in writing-tasks checkbox ships later.
 
 **Regression rules for later agents:**
 - Do **not** trade this accuracy for longer answers
 - Still reject knower POV (“X thinks that Y…”), rename infodumps as the whole card, and unrelated scene scraps
-- Treat the **Tenebris** card above as the current depth+accuracy baseline for standing relations, fairy-tale origin, parents, antagonist/quarry, and draft+notes politics stance when present
+- Treat the **Tenebris gold sample** above as the current depth+accuracy baseline for standing relations, fairy-tale origin, parents, antagonist/fascination, Dijon clarifying, cold-shoulder heritage, and draft+notes politics stance when present
 - Who-is must use **main draft + notes** for standing cast facts — not notes-only
 - Essay-hook **order**: lead with role/open (“In Work, Name is…”); parents late — never mother/father first
-- Next goal (separate task): bring other cast cards up to that same bar **without** breaking the accuracy pins above
+- Next goals (separate tasks): (1) voice/hook upgrade without losing the gold sample; (2) bring other cast cards up to that same accuracy bar **without** breaking the pins above
 
-### Plot relation accuracy — timing (pinned 2026-08-10) — **Not yet**
+### Plot relation / plot summary accuracy — timing (pinned 2026-08-10; owner opened plot work 2026-08-11)
 
-**Verdict:** Do **not** open a plot-relation Ask accuracy pass while character-card depth is still in flight. Shared Ask brain (recall + character compose + ranking/focus) means parallel “richer plot” work can fight who-is scrubbing and reintroduce plot bleed.
+**Owner note (2026-08-11):** Who-is **accuracy** is parked as good enough for now (gold sample above). Owner is working **plot summary accuracy** in another agent. Who-is **voice/hook** upgrade stays later — do not mix it into the plot pass.
 
-**When to start (then only):**
-1. Character depth lands or is explicitly parked (who-is + Etherei depth bar stable).
-2. Owner spot-checks a few who-is questions so the milestone above still holds.
-3. Open plot as its **own** pass from Owner’s Office corrections (playbook Phase 1) — not a broad compose rewrite.
+**Still careful:** Shared Ask brain (recall + compose + ranking/focus) means plot work can fight who-is scrubbing. Prefer plot as its **own** pass; do **not** loosen who-is “no plot dump” guards to make plot answers look better. Do **not** regress the Tenebris gold sample.
 
-**Do not:** loosen who-is “no plot dump” guards to make plot answers look better. Exception only if owner insists: one tiny correction that clearly routes as relationship / plot-span and does **not** edit character-card compose.
+**When tightening plot:**
+1. Keep who-is accuracy pins intact (spot-check “Who is Tenebris?” if compose/focus changes).
+2. Open plot from Owner’s Office corrections (playbook Phase 1) — not a broad character-card rewrite.
+3. Exception only if owner insists: one tiny correction that clearly routes as relationship / plot-span / summary and does **not** edit character-card compose unless required.
 
 **Already in place for later:** relationship / situation / plot-span helpers; playbook intent for “How are A and B related?”
 
