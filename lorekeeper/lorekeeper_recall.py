@@ -1113,23 +1113,40 @@ def recall_from_user_data(
             work_hints = set(scope_hints)
             strict_work = scope_strict or bool(scope_doc_id)
             # Known explicit work titles refine scope; junk never wipes doc/work scope.
-            if explicit and not is_notes_not_in_draft_question(question):
+            # Leave-off / notes-vs-draft ignore question "in …" meta as a second work.
+            if (
+                explicit
+                and not is_notes_not_in_draft_question(question)
+                and not is_story_position_question(question)
+            ):
                 work_hints = explicit | set(scope_hints)
                 strict_work = True
         elif scope_doc_id and scope_strict:
             # Already filtered to this document; keep corpus as-is.
             work_hints = set()
             strict_work = True
-        elif explicit:
+        elif explicit and not is_story_position_question(question):
             work_hints = explicit
             strict_work = True
         elif work_hints:
             strict_work = False
 
-        # Notes-vs-draft: trust the scoped work title; ignore meta phrases from the question.
-        if is_notes_not_in_draft_question(question) and scope_work:
+        # Notes-vs-draft / leave-off: trust the scoped work title; ignore meta phrases
+        # like "in the main draft in terms of plot" mistaken for a work title.
+        if (
+            is_notes_not_in_draft_question(question)
+            or is_story_position_question(question)
+        ) and scope_work:
             work_hints = {scope_work.strip()}
             strict_work = True
+        elif is_story_position_question(question):
+            work_hints = prefer_known_work_hints(
+                work_hints, known_works, drop_unknown=True
+            )
+            if not work_hints:
+                strict_work = bool(scope_doc_id and scope_strict)
+            else:
+                strict_work = True
 
         disambiguation = check_work_disambiguation(
             question,

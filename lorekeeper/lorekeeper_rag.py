@@ -65,6 +65,7 @@ This asks where the draft currently stands — summarize the LATEST beat only (h
 - One short paragraph in reference voice — a situational summary, NOT a quote dump from the draft
 - State who is doing, weighing, or about to do what, regarding whom, and what pressure or deadline is live
   (e.g. "Etherei is now considering whether to confront Mira and Cassian before they catch on.")
+- When the latest beat is a chase, confrontation, escape, or similar, say who is pursuing/fleeing whom and the reason the draft gives — still only from sources
 - When the latest draft or the cast-names list names people by proper name, use those names —
   do not replace them with "they", "the others", "two characters", or role-only labels
 - Do not treat worldbuilding concepts, note titles, factions, or places as character names —
@@ -72,6 +73,7 @@ This asks where the draft currently stands — summarize the LATEST beat only (h
 - Synthesize only what the latest draft tail sources support — do not invent motives, plans, or events
 - Do not recap earlier chapters or the prologue unless one short phrase orients the reader
 - No bullet lists
+- Never invent a work title from phrasing like "main draft" or "in terms of plot"
 """
 
 _SUMMARIZE = """

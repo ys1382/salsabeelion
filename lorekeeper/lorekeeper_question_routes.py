@@ -15,16 +15,26 @@ _WHAT_Q = re.compile(
 
 _STORY_POSITION_Q = re.compile(
     r"\b("
-    r"where i left off|where the story (?:is|stands|left off)|"
+    r"where (?:have i left|did i leave|i left) off|"
+    r"where the story (?:is|stands|left off)|"
     r"what(?:'s|\s+is)\s+going on(?: in the story| where i left off| now)?|"
     r"what is going on where i left off|"
     r"summarize what(?:'s|\s+is)\s+going on|"
     r"what(?:'s|\s+is)\s+the story so far|story so far\b|"
     r"current (?:state|point) (?:of the story|in the story)|"
-    r"pick up where i left off|left off in the story|"
-    r"where did i leave off|story so far at the end"
+    r"pick up where i left off|"
+    r"left off in the (?:story|main draft|draft)|"
+    r"story so far at the end"
     r")\b",
     re.I,
+)
+
+# "left off … main draft / plot / chapter" — resume even when phrasing skips older templates.
+_STORY_POSITION_LEFT_OFF_META = re.compile(
+    r"\bleft off\b.{0,80}\b("
+    r"main draft|the draft|in terms of plot|the plot|story|chapter"
+    r")\b",
+    re.I | re.S,
 )
 
 
@@ -41,7 +51,10 @@ def is_what_question(question: str) -> bool:
 
 
 def is_story_position_question(question: str) -> bool:
-    return bool(_STORY_POSITION_Q.search(question or ""))
+    q = question or ""
+    if _STORY_POSITION_Q.search(q):
+        return True
+    return bool(_STORY_POSITION_LEFT_OFF_META.search(q))
 
 
 _PORTRAIT_HINT = re.compile(

@@ -29,6 +29,14 @@ class QuestionRouteTests(unittest.TestCase):
         self.assertTrue(is_story_position_question(q))
         self.assertEqual(route_question(q), "resume")
 
+    def test_where_have_i_left_off_main_draft_plot_is_resume(self) -> None:
+        q = "Where have I left off in the main draft in terms of plot?"
+        self.assertTrue(is_story_position_question(q))
+        self.assertEqual(route_question(q), "resume")
+        from lorekeeper_reliability import primary_work_hints
+
+        self.assertFalse(primary_work_hints(q))
+
     def test_summarize_whats_going_on_is_resume_not_person(self) -> None:
         q = "In Cities Of Rust For Me, summarize what's going on"
         self.assertTrue(is_story_position_question(q))

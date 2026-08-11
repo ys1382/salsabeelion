@@ -176,6 +176,60 @@ class StoryPositionAnswerTests(unittest.TestCase):
         self.assertIn("herald", answer)
         self.assertIn("fell silent", answer)
 
+    def test_left_off_main_draft_plot_not_fake_work_title(self) -> None:
+        """Owner regression: meta 'main draft / plot' must not become a work title."""
+        os.environ["LOREKEEPER_RAG"] = "0"
+        doc_id = "doc-chase"
+        tag = "Project Alpha"
+        entries = [
+            {
+                "id": doc_id,
+                "title": tag,
+                "body": "Earlier calm setup in the manor.",
+                "tags": [tag],
+                "kind": "document",
+                "updatedAt": 200,
+            },
+            {
+                "id": f"{doc_id}#p0",
+                "title": tag,
+                "body": "Earlier calm setup in the manor.",
+                "tags": [tag],
+                "kind": "document",
+                "parentDocId": doc_id,
+                "updatedAt": 200,
+            },
+            {
+                "id": f"{doc_id}#p1",
+                "title": tag,
+                "body": (
+                    "Character A sprinted through the alley while Character B closed the gap. "
+                    "The chase was for the stolen seal; Character A was tiring and Character B "
+                    "still had the longer stride."
+                ),
+                "tags": [tag],
+                "kind": "document",
+                "parentDocId": doc_id,
+                "updatedAt": 200,
+            },
+        ]
+        q = "Where have I left off in the main draft in terms of plot?"
+        res = recall_from_user_data(
+            q,
+            {"lorekeeper_entries_v1": __import__("json").dumps(entries)},
+            scope={"mode": "work", "workTitle": tag},
+        )
+        self.assertTrue(res.get("ok"))
+        answer = str(res.get("answer") or "")
+        low = answer.lower()
+        self.assertNotIn("nothing is tagged", low)
+        self.assertNotIn("the main draft in terms of plot", low)
+        self.assertEqual(res.get("questionKind"), "resume")
+        self.assertIn("chase", low)
+        self.assertIn("stolen seal", low)
+        self.assertIn("character a", low)
+        self.assertIn("character b", low)
+
 
 if __name__ == "__main__":
     unittest.main()

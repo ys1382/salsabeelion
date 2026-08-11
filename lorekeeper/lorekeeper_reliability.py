@@ -37,10 +37,13 @@ _JUNK_WORK_HINT = re.compile(
     r"all\s+notes?\b|"
     r"that\s+\w+|"
     r"this\s+\w+|"
-    r"the\s+(?:look|expression|face|scene|beat|moment|main\s+document|draft)\b|"
+    r"the\s+(?:look|expression|face|scene|beat|moment|main\s+document|main\s+draft|draft)\b|"
     r"expression\b|look\b|face\b|"
     r".*\btouched\s+upon\b|"
-    r".*\bmain\s+document\b"
+    r".*\bmain\s+document\b|"
+    r".*\bmain\s+draft\b|"
+    r".*\bin\s+terms\s+of\b|"
+    r".*\bterms\s+of\s+plot\b"
     r")",
     re.I,
 )
@@ -348,11 +351,15 @@ def _collapse_work_hint_set(question: str, hints: set[str], entries: list[dict[s
 
 
 def prefer_known_work_hints(
-    hints: set[str], known_works: list[str]
+    hints: set[str], known_works: list[str], *, drop_unknown: bool = False
 ) -> set[str]:
-    """Keep only hints that match a known work tag when any such match exists."""
+    """Keep only hints that match a known work tag when any such match exists.
+
+    When drop_unknown is True, unmatched hints are discarded (used for leave-off
+    so meta phrases never become fake project titles).
+    """
     if not hints or not known_works:
-        return set(hints or ())
+        return set() if drop_unknown else set(hints or ())
     matched: set[str] = set()
     for hint in hints:
         for work in known_works:
@@ -362,7 +369,9 @@ def prefer_known_work_hints(
             if _hint_matches_tag(hint, wl) or work_tags_are_typo_variants(hint, wl):
                 matched.add(wl.lower())
                 break
-    return matched if matched else set(hints)
+    if matched:
+        return matched
+    return set() if drop_unknown else set(hints)
 
 
 def extract_work_hints(question: str, entries: list[dict[str, Any]]) -> set[str]:
