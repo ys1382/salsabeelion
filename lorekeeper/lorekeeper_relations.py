@@ -847,6 +847,230 @@ def _line_for_pair_fact(fact: dict[str, Any], a: str, b: str) -> str:
     return ""
 
 
+_CAST_OTHER_NAME = rf"(?:{CHAR}|{PROPER}|Duke\s+{PROPER}|Lord\s+{PROPER}|Lady\s+{PROPER})"
+_PLOT_BLEED_NEAR_RELATION = re.compile(
+    r"(?i)\b("
+    r"surveillance|travel companions|but anyway|at some point later|"
+    r"keeping (?:his|her|their) ['\"]?guest['\"]?|badly injured|first POV|"
+    r"arrives? at some point"
+    r")\b"
+)
+_RELATION_UNCERTAIN = re.compile(
+    r"(?i)\b("
+    r"may or may not|whether or not|not (?:yet )?decided|undecided|"
+    r"open question|potentially|maybe|might be|unclear|"
+    r"actually (?:cousins?|related)|whether .{0,40}cousins?"
+    r")\b"
+)
+
+
+def who_is_standing_relation_lines(
+    label: str, entries: list[dict[str, Any]], *, limit: int = 4
+) -> list[str]:
+    """
+    Cast-card standing ties for who-is: cousin / ally / co-conspirator,
+    including honest uncertainty when notes leave kinship open.
+
+    Keeps letter/standing phrasing ("esteemed cousin") and relationship notes.
+    Skips plot-bleed windows (surveillance, guest, POV sequence).
+    """
+    label = (label or "").strip()
+    if not label or not entries:
+        return []
+
+    lines: list[str] = []
+    seen: set[str] = set()
+    bad_other = {
+        "character",
+        "cousin",
+        "esteemed",
+        "second",
+        "ally",
+        "allies",
+        "the",
+        "his",
+        "her",
+        "their",
+        "exact",
+        "orphaned",
+        "outcast",
+        "terrified",
+        "responsibility",
+        "look",
+        "open",
+        "question",
+        "kinship",
+        "framing",
+        "notes",
+        "possible",
+    }
+
+    def _add(line: str) -> None:
+        line = re.sub(r"\s+", " ", (line or "").strip())
+        if not line:
+            return
+        key = line.lower()[:120]
+        if key in seen:
+            return
+        seen.add(key)
+        lines.append(line if line.endswith((".", "!", "?")) else line + ".")
+
+    def _other_ok(name: str) -> bool:
+        name = _clean_name(name)
+        if not name or _name_key(name) == _name_key(label):
+            return False
+        core = re.sub(
+            r"^(?:Duke|Lord|Lady|Duchess|Baron|Baroness)\s+",
+            "",
+            name,
+            flags=re.I,
+        ).strip()
+        if len(core) < 3 or core.lower() in bad_other:
+            return False
+        # Reject lowercase-leading junk and verb-like tokens.
+        if core[:1].islower():
+            return False
+        return True
+
+    def _title_partner(title: str) -> str | None:
+        # "Duke Dijon and Lord Tenebris" / "Duke Dijon vs Character T"
+        for pat in (
+            rf"\b(Duke|Lord|Lady)\s+({PROPER})\b.{{0,40}}"
+            rf"(?:and|vs\.?|versus)\b.{{0,20}}\b{re.escape(label)}\b",
+            rf"\b{re.escape(label)}\b.{{0,40}}(?:and|vs\.?|versus)\b.{{0,20}}"
+            rf"\b(Duke|Lord|Lady)\s+({PROPER})\b",
+            rf"\b(Duke|Lord|Lady)\s+({PROPER})\b.{{0,40}}\b{re.escape(label)}\b",
+            rf"\b{re.escape(label)}\b.{{0,40}}\b(Duke|Lord|Lady)\s+({PROPER})\b",
+        ):
+            m = re.search(pat, title, re.I)
+            if not m:
+                continue
+            if m.lastindex and m.lastindex >= 2:
+                other = _clean_name(f"{m.group(1)} {m.group(2)}")
+            else:
+                continue
+            if _other_ok(other):
+                return other
+        return None
+
+    def _prefer_entry(entry: dict[str, Any]) -> int:
+        kind = str(entry.get("kind") or "").lower()
+        if kind == "relationship":
+            return 0
+        if kind in {"character", "politics", "note", "event"}:
+            return 1
+        if kind == "document":
+            return 3
+        return 2
+
+    ranked = sorted(
+        [e for e in entries if isinstance(e, dict)],
+        key=_prefer_entry,
+    )
+
+    for entry in ranked:
+        if len(lines) >= limit:
+            break
+        title = str(entry.get("title") or "")
+        body = str(entry.get("body") or "")
+        if not body.strip() and not title.strip():
+            continue
+        blob = f"{title}\n{body}"
+        kind = str(entry.get("kind") or "").lower()
+        mentions_label = bool(re.search(rf"\b{re.escape(label)}\b", blob, re.I))
+        if not mentions_label and kind != "document":
+            continue
+
+        uncertain_here = bool(_RELATION_UNCERTAIN.search(blob)) or bool(
+            re.search(r"[\"']cousin[\"']", blob, re.I)
+        )
+        partner = _title_partner(title)
+
+        # Relationship / character notes: title partner + cousin/ally keywords.
+        if kind in {"relationship", "character", "politics", "note", "event"} and partner:
+            if _PLOT_BLEED_NEAR_RELATION.search(body) and not re.search(
+                r"\b(?:cousin|ally|allies|co-?conspir)\b", body, re.I
+            ):
+                pass
+            else:
+                if re.search(r"\bsecond\s+cousin\b", body, re.I):
+                    if uncertain_here:
+                        _add(
+                            f"Your notes treat {partner} as a possible second cousin to "
+                            f"{label}, with open questions about how exact that kinship is"
+                        )
+                    else:
+                        _add(f"{label} is {partner}'s second cousin")
+                elif re.search(r"\bcousin\b", body, re.I):
+                    if uncertain_here or re.search(r"[\"']cousin[\"']", body, re.I):
+                        _add(
+                            f"{label} refers to {partner} as cousin in your notes "
+                            f"(kinship framing left open)"
+                        )
+                    else:
+                        _add(f"{label} is {partner}'s cousin")
+                if re.search(
+                    r"\b(?:all(?:y|ies)|co-?conspirators?|political (?:ally|allies))\b",
+                    body,
+                    re.I,
+                ) and not re.search(r"\b(?:hunt|prey|secure an ally)\b", body, re.I):
+                    _add(
+                        f"{partner} is an ally or close political counterpart to {label} "
+                        f"in your notes"
+                    )
+
+        # Draft / letters: tight "esteemed cousin" greetings only.
+        for m in re.finditer(
+            rf"(?:to\s+my|my|your|his|her|their)\s+esteemed\s+cousin\s+"
+            rf"({_CAST_OTHER_NAME})\b",
+            body,
+            re.I,
+        ):
+            span_start = max(0, m.start() - 40)
+            span_end = min(len(body), m.end() + 40)
+            span = body[span_start:span_end]
+            if _PLOT_BLEED_NEAR_RELATION.search(span):
+                continue
+            other = _clean_name(m.group(1))
+            if not _other_ok(other):
+                continue
+            if _name_key(other) == _name_key(label):
+                if partner:
+                    _add(
+                        f"{partner} is called {label}'s esteemed cousin in your notes"
+                    )
+                continue
+            # Speaker is label if label appears near the greeting or in the title.
+            near = body[max(0, m.start() - 120) : m.end() + 80]
+            if re.search(rf"\b{re.escape(label)}\b", title + near, re.I) or (
+                partner and _name_key(other) == _name_key(partner)
+            ):
+                _add(f"{label} calls {other} his esteemed cousin")
+            elif partner and _name_key(other) == _name_key(
+                re.sub(r"^(?:Duke|Lord|Lady)\s+", "", partner, flags=re.I)
+            ):
+                _add(f"{label} calls {partner} his esteemed cousin")
+
+    return lines[:limit]
+
+
+def merge_who_is_relationship_lines(
+    label: str, entries: list[dict[str, Any]]
+) -> list[str]:
+    """Plain extractable kin lines plus who-is standing/uncertain relation harvest."""
+    out: list[str] = []
+    seen: set[str] = set()
+    for line in plain_relationship_lines_for(label, entries) + who_is_standing_relation_lines(
+        label, entries
+    ):
+        key = re.sub(r"\s+", " ", line.lower())[:120]
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(line)
+    return out[:10]
+
+
 def answer_relationship_between(
     question: str, entries: list[dict[str, Any]]
 ) -> tuple[str, list[str]] | None:

@@ -881,7 +881,14 @@ def _kinship_shape_sentence(sentence: str, label: str) -> bool:
     lab = re.escape(label)
     patterns = (
         rf"^{lab}\s+is\s+(?:(?:younger|older|twin)\s+)?(?:brother|sister|son|daughter)\s+to\s+.+$",
+        rf"^{lab}\s+is\s+(?:.+?'s\s+)?(?:second\s+)?cousin\b.+$",
         rf"^{lab}\s+is\s+(?:married|engaged)\s+to\s+.+$",
+        rf"^{lab}\s+calls?\s+.+\s+(?:his|her|their)\s+(?:esteemed\s+)?cousin\b.+$",
+        rf"^.+\s+is\s+called\s+{lab}'s\s+(?:esteemed\s+)?cousin\b.+$",
+        rf"^Your notes treat\s+.+\s+as\s+a\s+possible\s+(?:second\s+)?cousin\s+to\s+{lab}\b.+$",
+        rf"^{lab}\s+refers to\s+.+\s+as\s+cousin\b.+$",
+        rf"^{lab}\s+refers to\s+(?:his|her|their)\s+['\"]?cousin['\"]?\s+.+$",
+        rf"^.+\s+is\s+an\s+ally\b.{{0,80}}{lab}\b.+$",
         rf"^{lab}\s+is\s+(?:the\s+)?(?:subject|quarry)\s+of\s+.+$",
         rf"^{lab}\s+is\s+(?:the\s+)?(?:son|daughter|child)\s+of\s+.+$",
         rf"^{lab}\s+is\s+(?:(?:also|better)\s+)?known\s+(?:as|to|by)\b.+$",
@@ -1121,6 +1128,14 @@ def is_who_is_cast_fact_sentence(sentence: str, label: str) -> bool:
     ):
         return False
 
+    # Librarian honesty gaps on who-is cast cards.
+    if re.match(
+        r"^Your notes don't yet (?:spell out|pin a clear cast role)\b",
+        s,
+        re.I,
+    ):
+        return True
+
     # Pinned gold-tone woven card (role + type/family in one sentence).
     if _is_gold_tone_cast_sentence(s, label):
         return True
@@ -1138,6 +1153,16 @@ def is_who_is_cast_fact_sentence(sentence: str, label: str) -> bool:
         return True
     # Short formal awareness status (nuance / unspoken line) — not faction dumps.
     if is_formal_awareness_status_clause(s, label):
+        return True
+
+    # Ally / standing counterpart lines naming the subject mid-sentence.
+    if re.search(
+        rf"\b(ally|allies|co-?conspirator|close political counterpart)\b.{{0,60}}"
+        rf"\b{re.escape(label)}\b|"
+        rf"\b{re.escape(label)}\b.{{0,60}}\b(ally|allies|co-?conspirator)\b",
+        s,
+        re.I,
+    ) and len(s) <= 220 and not _PLOT_SEQUENCE_RE.search(s):
         return True
 
     if not re.search(rf"\b{re.escape(label)}\b", s, re.I):
@@ -1554,7 +1579,8 @@ def _clause_adds_profile(clause: str, label: str) -> bool:
         r"\b(married|engaged|brother|sister|mother|father|son|daughter|guardian|spirit|"
         r"husband|wife|spouse|cousin|grey|gray|arcanist|elf|villain|hero|species|"
         r"subject of|quarry|raised by|rabbit|preyfolk|known as|known to|buck|doe|"
-        r"white rabbit|fairytale)\b",
+        r"white rabbit|fairytale|ally|allies|co-?conspir|esteemed cousin|"
+        r"political counterpart|your notes treat|refers to)\b",
         s,
         re.I,
     ):
@@ -1700,6 +1726,9 @@ def compose_character_reference(
             continue
         clause = _to_reference_clause(line, label)
         if clause and _clause_adds_profile(clause, label):
+            # Who-is: only standing cast ties — not long "responsibility to look out…" scraps.
+            if facet is None and not is_who_is_cast_fact_sentence(clause, label):
+                continue
             rel_clauses.append(clause)
 
     for tie in brief.get("ties") or []:
@@ -1722,10 +1751,12 @@ def compose_character_reference(
         if clause not in lead and clause not in rel_clauses:
             if re.search(
                 r"\b(married|spouse|brother|sister|son|daughter|subject of|quarry|"
-                r"known as|known to|buck|doe)\b",
+                r"known as|known to|buck|doe|cousin|ally|esteemed cousin)\b",
                 clause,
                 re.I,
             ):
+                if facet is None and not is_who_is_cast_fact_sentence(clause, label):
+                    continue
                 rel_clauses.append(clause)
             else:
                 lead.append(clause)
@@ -1738,10 +1769,22 @@ def compose_character_reference(
             if clause and clause not in lead and clause not in rel_clauses:
                 lead.append(clause)
 
+    # Stated standing relations (cousin/ally harvest) first so they are not crowded out.
+    stated_first: list[str] = []
     for line in stated_relationships or []:
         clause = _to_reference_clause(line, label)
-        if clause and clause not in rel_clauses and _clause_adds_profile(clause, label):
-            rel_clauses.append(clause)
+        if clause and _clause_adds_profile(clause, label):
+            if facet is None and not is_who_is_cast_fact_sentence(clause, label):
+                # Ally lines that mention label mid-sentence — still allow.
+                if not re.search(
+                    r"\b(cousin|ally|allies|co-?conspir|esteemed cousin|your notes treat)\b",
+                    clause,
+                    re.I,
+                ):
+                    continue
+            if clause not in stated_first and clause not in rel_clauses:
+                stated_first.append(clause)
+    rel_clauses = stated_first + [c for c in rel_clauses if c not in stated_first]
 
     for line in dialogue[:2]:
         if _skip_planning_line(line, label):
@@ -1760,7 +1803,10 @@ def compose_character_reference(
         woven = weave_who_is_gold_tone(label, work_title, lead, rel_clauses)
         if woven:
             body = smooth_who_is_prose(label, woven)
-            return f"{label}\n\n{body}\n\n{_FOOTER_REFERENCE}"
+            out = f"{label}\n\n{body}\n\n{_FOOTER_REFERENCE}"
+            return append_who_is_cast_card_gaps(
+                label, out, relation_lines=list(stated_relationships or []) + rel_clauses
+            )
 
     paragraphs: list[str] = []
     if facet == "appearance":
@@ -1783,7 +1829,12 @@ def compose_character_reference(
 
     body = "\n\n".join(paragraphs)
     body = smooth_who_is_prose(label, body)
-    return f"{label}\n\n{body}\n\n{_FOOTER_REFERENCE}"
+    out = f"{label}\n\n{body}\n\n{_FOOTER_REFERENCE}"
+    if facet is None:
+        out = append_who_is_cast_card_gaps(
+            label, out, relation_lines=list(stated_relationships or []) + rel_clauses
+        )
+    return out
 
 
 def who_is_has_close_ties(answer: str) -> bool:
@@ -2034,7 +2085,9 @@ def weave_who_is_gold_tone(
         if re.search(
             r"\b("
             r"sister|father|mother|widow|raised|parent|subject of|quarry|married|"
-            r"nemesis|best friend|closest friend|cousin|father to|mother to"
+            r"nemesis|best friend|closest friend|cousin|father to|mother to|"
+            r"esteemed cousin|ally|allies|co-?conspir|refers to|your notes treat|"
+            r"possible (?:second )?cousin|calls?\b"
             r")\b",
             c,
             re.I,
@@ -2351,7 +2404,7 @@ def weave_who_is_gold_tone(
         if clause not in sentences:
             sentences.append(clause)
 
-    for c in other_family[:2]:
+    for c in other_family[:3]:
         clause = c if c.endswith((".", "!", "?")) else c + "."
         if clause not in sentences:
             sentences.append(clause)
@@ -2823,6 +2876,77 @@ def compose_character_gap_reference(
         has_clear_facts=False,
     )
     return format_two_part_character_answer(label, "", unclear)
+
+
+def append_who_is_cast_card_gaps(
+    label: str,
+    answer: str,
+    *,
+    relation_lines: list[str] | None = None,
+) -> str:
+    """
+    After a who-is cast card, name empty slots that belong on the card when
+    notes never filled them — librarian honesty, not invented canon.
+    """
+    label = (label or "").strip()
+    text = (answer or "").strip()
+    if not label or not text:
+        return answer
+    body, footer = text, ""
+    for mark in ("\n\n— From your notes only", "\n\n— "):
+        if mark in text:
+            body, footer = text.split(mark, 1)
+            footer = mark + footer
+            break
+    body = body.strip()
+    inspect = re.sub(rf"^{re.escape(label)}\s*\n+", "", body, count=1, flags=re.I).strip()
+    low = inspect.lower()
+    if not inspect or len(inspect) < 20:
+        return answer
+    if re.search(r"couldn'?t find|not enough|unclear from your notes", low):
+        return answer
+
+    gaps: list[str] = []
+    has_rel = bool(
+        relation_lines
+        or re.search(
+            r"\b("
+            r"brother|sister|cousin|father|mother|parent|married|spouse|"
+            r"ally|allies|co-?conspir|son of|daughter of|child of|"
+            r"esteemed cousin|your notes treat|refers to"
+            r")\b",
+            low,
+            re.I,
+        )
+    )
+    has_role = bool(
+        re.search(
+            r"\b("
+            r"protagonist|antagonist|main character|side character|"
+            r"baron|lord of|lady |duke |duchess|matriarch|villain|hero"
+            r")\b",
+            low,
+            re.I,
+        )
+    )
+    if not has_rel and not re.search(
+        r"don'?t yet spell out .{0,40}relations", low, re.I
+    ):
+        gaps.append(
+            f"Your notes don't yet spell out {label}'s close relations for a cast card."
+        )
+    if not has_role and not re.search(r"don'?t yet pin a clear cast role", low, re.I):
+        gaps.append(
+            f"Your notes don't yet pin a clear cast role for {label} "
+            f"(protagonist, antagonist, titled standing, etc.)."
+        )
+    if not gaps:
+        return answer
+    gap_block = " ".join(gaps[:2])
+    merged = f"{body.rstrip()}\n\n{gap_block}"
+    if footer:
+        return merged + (footer if footer.startswith("\n") else f"\n\n{footer}")
+    return f"{merged}\n\n{_FOOTER_REFERENCE}"
 
 
 def cast_answer_is_thin(answer: str, label: str) -> bool:

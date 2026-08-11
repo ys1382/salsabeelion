@@ -1333,6 +1333,72 @@ class CharacterComposeTests(unittest.TestCase):
         self.assertNotIn("surveillance", scrubbed)
         self.assertNotIn("but anyway", scrubbed)
 
+    def test_who_is_keeps_standing_cousin_not_plot_bleed(self):
+        """Dijon cousin / ally standing stays; surveillance walkthrough stays out."""
+        entries = [
+            _entry(
+                "n1",
+                "Character T",
+                "Character T is Baron of Cheshire. Lord Character T is a Fairy Tale character, or faeble.",
+                kind="character",
+                tags=["Ashford Saga"],
+            ),
+            _entry(
+                "r1",
+                "Duke Dijon and Lord Character T",
+                (
+                    "Character T refers to his 'cousin' Dijon. "
+                    "Kinship may or may not be exact; open question."
+                ),
+                kind="relationship",
+                tags=["Ashford Saga"],
+            ),
+            _entry(
+                "r2",
+                "Duke Dijon vs Character T",
+                (
+                    "Character T looks out for his second cousin Dijon who may or may not "
+                    "have been orphaned. They are allies in court politics. "
+                    "But anyway, Dijon arrives at some point later under surveillance."
+                ),
+                kind="relationship",
+                tags=["Ashford Saga"],
+            ),
+            _entry(
+                "d1",
+                "Ashford draft",
+                (
+                    "To my esteemed cousin Dijon, Character T wrote carefully. "
+                    "But anyway, Dijon arrives at some point later under close surveillance."
+                ),
+                kind="document",
+                tags=["Ashford Saga"],
+            ),
+        ]
+        res = self._ask("In Ashford Saga, who is Character T?", entries)
+        answer = (res.get("answer") or "").lower()
+        self.assertIn("baron", answer)
+        self.assertIn("dijon", answer)
+        self.assertTrue("cousin" in answer, msg=answer)
+        self.assertNotIn("surveillance", answer)
+        self.assertNotIn("but anyway", answer)
+
+    def test_who_is_mentions_relation_gap_when_none_written(self):
+        entries = [
+            _entry(
+                "n1",
+                "Character Z",
+                "Character Z is the protagonist. Character Z is a young woman.",
+                kind="character",
+                tags=["Zeta Saga"],
+            ),
+        ]
+        res = self._ask("In Zeta Saga, who is Character Z?", entries)
+        answer = (res.get("answer") or "").lower()
+        self.assertIn("protagonist", answer)
+        self.assertIn("relations", answer)
+        self.assertIn("don't yet", answer)
+
     def test_who_is_formalizes_concealment_as_identity(self):
         from lorekeeper_character_compose import formalize_who_is_sentence, smooth_who_is_prose
 

@@ -12,7 +12,7 @@ from lorekeeper_inference import (
     collect_brother_names,
     family_chain_in_body,
 )
-from lorekeeper_relations import plain_relationship_lines_for
+from lorekeeper_relations import merge_who_is_relationship_lines, plain_relationship_lines_for
 from lorekeeper_character_compose import (
     append_unclear_section,
     character_unclear_body,
@@ -21,6 +21,7 @@ from lorekeeper_character_compose import (
     compose_character_reference,
     compose_coverage_gap,
     compose_coverage_summary,
+    append_who_is_cast_card_gaps,
     cast_answer_is_thin,
     is_audit_question,
     is_coverage_question,
@@ -1646,7 +1647,7 @@ def _build_character_summary(
                 ]
                 return composed, source_ids[:8]
 
-    stated_rels = plain_relationship_lines_for(query_names[0], scope)
+    stated_rels = merge_who_is_relationship_lines(query_names[0], scope)
     brief = build_character_brief(query_names[0], scope) if not fast_recall else {}
 
     if not fast_recall:
