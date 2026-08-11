@@ -134,6 +134,7 @@ _OVERVIEW_SIGNIFICANCE_RE = re.compile(
 )
 
 # Type/reason of upheaval (Predator–Preyfolk rediscovery / sentience), not POV dumps.
+# Do NOT match bare "sentience" / "level of sentience" in plot beats (surveillance Q&A).
 _UPHEAVAL_REASON_RE = re.compile(
     r"\b("
     r"rediscover(?:y|s|ed|ing)?|"
@@ -141,7 +142,9 @@ _UPHEAVAL_REASON_RE = re.compile(
     r"sentient.{0,60}?(?:predators?|preyfolk|prey folk)|"
     r"preyfolk (?:are|were) (?:also |just as )?sentient|"
     r"just as sentient|"
-    r"(?:same level of )?sentience|"
+    r"(?:same level of )?sentience as (?:predators?|preyfolk|prey folk)|"
+    r"(?:rediscover(?:y|s|ed|ing)?|upheaval|reveal).{0,60}?sentien|"
+    r"sentien(?:ce|t).{0,60}?(?:rediscover|upheaval|preyfolk|predators?)|"
     r"reveal that .{0,40}?preyfolk|"
     r"upheaval (?:because|from|due to|over|about)|"
     r"(?:because|due to|from) .{0,60}?upheaval|"
@@ -167,6 +170,10 @@ _CLOSE_TIE_RE = re.compile(
 _PLOT_SEQUENCE_RE = re.compile(
     r"\b("
     r"right after|soon after|just after|not long after|"
+    r"at some point later|arrives? at some point|"
+    r"but anyway|"
+    r"under (?:close )?surveillance|keeping (?:his|her|their) ['\"]?guest['\"]?|"
+    r"travel companions|asking about the latter|"
     r"next (?:POV|section|chapter|scene|beat)|"
     r"switches? to .{0,48}(?:POV|point of view)|"
     r"(?:his|her|their) next POV|"
@@ -190,6 +197,9 @@ _PLOT_SEQUENCE_RE = re.compile(
 _WHO_IS_BLOAT_RE = re.compile(
     r"(?i)("
     r"\bnot long after\b|\bso right now\b|\bright now,?\s+"
+    r"|\bbut anyway\b|\bat some point later\b|\barrives? at some point\b"
+    r"|\bunder (?:close )?surveillance\b|\btravel companions\b"
+    r"|\basking about the latter\b|\bkeeping (?:his|her|their) ['\"]?guest['\"]?\b"
     r"|\bis aware\b|\bare aware\b|\baware that\b|\breflects? on\b"
     r"|\bmentions? (?:his|her|their|the) theory\b|\btheory that\b"
     r"|\bbackground\s*:"
@@ -2289,10 +2299,58 @@ def formalize_who_is_sentence(sentence: str, label: str) -> str:
     if not s or not label:
         return s
 
-    # Drop leading "So Name," / "So Name "
+    # Drop leading "So Name," / "So Name " / "So now Name" / "now Name"
+    s = re.sub(rf"^So\s+now\s+{re.escape(label)}\s*,?\s*", f"{label} ", s, count=1, flags=re.I)
+    s = re.sub(rf"^Now\s+{re.escape(label)}\s*,?\s*", f"{label} ", s, count=1, flags=re.I)
     s = re.sub(rf"^So\s+{re.escape(label)}\s*,\s*", f"{label} ", s, count=1, flags=re.I)
     s = re.sub(rf"^So\s+{re.escape(label)}\s+", f"{label} ", s, count=1, flags=re.I)
     s = re.sub(r"^So\s+,?\s*", "", s, count=1, flags=re.I)
+
+    # Concealment as cast identity (not "current undercover status" voice).
+    # "Name has to conceal her identity … as a human and … an Author"
+    # → "Name conceals that she is human and an Author."
+    m_conceal = re.match(
+        rf"^{re.escape(label)}\s+has to conceal\s+(.+)$",
+        s,
+        re.I,
+    )
+    if m_conceal:
+        rest = m_conceal.group(1).strip().rstrip(".")
+        human = bool(re.search(r"\bhuman\b", rest, re.I))
+        author = bool(re.search(r"\bauthors?\b", rest, re.I))
+        bits: list[str] = []
+        if human and author:
+            bits.append("human and an Author")
+        elif human:
+            bits.append("human")
+        elif author:
+            bits.append("an Author")
+        if bits:
+            pronoun = "she"
+            if re.search(r"\bhis\b|\bhe\b", rest, re.I) and not re.search(
+                r"\bher\b|\bshe\b", rest, re.I
+            ):
+                pronoun = "he"
+            s = f"{label} conceals that {pronoun} is {' and '.join(bits)}."
+            return s
+        s = re.sub(
+            rf"^{re.escape(label)}\s+has to conceal\b",
+            f"{label} conceals",
+            s,
+            count=1,
+            flags=re.I,
+        )
+        s = re.sub(
+            r"\bin order to not be discovered as\b",
+            "as",
+            s,
+            count=1,
+            flags=re.I,
+        )
+        s = re.sub(r"\bsubsequently,?\s*", "", s, flags=re.I)
+        if not s.endswith((".", "!", "?")):
+            s += "."
+        return s
 
     # "Name, by being discovered …, just set in motion …"
     # → "By being discovered …, Name has already set in motion …"
@@ -2390,6 +2448,33 @@ def smooth_who_is_prose(label: str, body: str) -> str:
             )
             s = formalize_who_is_sentence(s, label)
             kept.append(s)
+        # Drop near-duplicate role lines ("X is a young woman." then "X is a young woman and an author.")
+        if len(kept) >= 2:
+            deduped: list[str] = []
+            for s in kept:
+                core = re.sub(rf"^{re.escape(label)}\s+is\s+(?:an?\s+)?", "", s, count=1, flags=re.I)
+                core = core.rstrip(".").strip().lower()
+                subsumed = False
+                for j, other in enumerate(deduped):
+                    other_core = re.sub(
+                        rf"^{re.escape(label)}\s+is\s+(?:an?\s+)?",
+                        "",
+                        other,
+                        count=1,
+                        flags=re.I,
+                    )
+                    other_core = other_core.rstrip(".").strip().lower()
+                    if core and other_core and (
+                        core in other_core or other_core in core
+                    ):
+                        # Keep the longer / richer line.
+                        if len(s) > len(other):
+                            deduped[j] = s
+                        subsumed = True
+                        break
+                if not subsumed:
+                    deduped.append(s)
+            kept = deduped
         if gender and kept:
             has_kin_sex = any(
                 re.search(

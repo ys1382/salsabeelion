@@ -1305,5 +1305,55 @@ class CharacterComposeTests(unittest.TestCase):
         self.assertNotIn("i'm thinking", answer)
         self.assertNotIn("i am thinking", answer)
 
+    def test_who_is_scrubs_tenebris_style_plot_bleed(self):
+        from lorekeeper_answer_focus import scrub_who_is_plot_walkthrough
+        from lorekeeper_character_compose import (
+            formalize_who_is_sentence,
+            is_who_is_cast_fact_sentence,
+            who_is_answer_has_bloat,
+        )
+
+        mid = (
+            "But anyway, Dijon arrives at some point later, Character T is keeping his "
+            "'guest' under close surveillance and asking about the latter's level of "
+            "sentience, the latter's travel companions, and who else is like Character E."
+        )
+        self.assertFalse(is_who_is_cast_fact_sentence(mid, "Character T"))
+        self.assertTrue(who_is_answer_has_bloat(mid))
+        bad = (
+            "Character T is Baron of Cheshire. " + mid + " "
+            "Lord Character T of Cheshire is a Fairy Tale character, or 'faeble.'"
+        )
+        scrubbed = scrub_who_is_plot_walkthrough(
+            bad, question="In Ashford Saga, who is Character T?"
+        ).lower()
+        self.assertIn("baron", scrubbed)
+        self.assertTrue("faeble" in scrubbed or "fairy" in scrubbed, msg=scrubbed)
+        self.assertNotIn("dijon", scrubbed)
+        self.assertNotIn("surveillance", scrubbed)
+        self.assertNotIn("but anyway", scrubbed)
+
+    def test_who_is_formalizes_concealment_as_identity(self):
+        from lorekeeper_character_compose import formalize_who_is_sentence, smooth_who_is_prose
+
+        raw = (
+            "now Character E has to conceal her identity in order to not be discovered "
+            "as a human and subsequently, an Author."
+        )
+        formal = formalize_who_is_sentence(raw, "Character E").lower()
+        self.assertIn("conceal", formal)
+        self.assertIn("human", formal)
+        self.assertTrue("author" in formal, msg=formal)
+        self.assertNotIn("has to conceal", formal)
+        self.assertNotIn("in order to not be discovered", formal)
+        body = (
+            "Character E is the protagonist. Character E is a young woman. "
+            "Character E is a young woman and an author. " + raw
+        )
+        smooth = smooth_who_is_prose("Character E", body).lower()
+        self.assertEqual(smooth.count("young woman"), 1, msg=smooth)
+        self.assertIn("conceal", smooth)
+        self.assertNotIn("has to conceal", smooth)
+
 if __name__ == "__main__":
     unittest.main()
