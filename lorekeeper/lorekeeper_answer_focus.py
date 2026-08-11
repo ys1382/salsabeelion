@@ -280,9 +280,18 @@ def trim_off_topic_sentences(question: str, answer: str, *, allow_broad: bool) -
             kept.append(s)
             continue
         if is_who_is_question(question) and re.search(
-            r"\b(protagonist|antagonist|married|brother|sister|role|guardian)\b", low
+            r"\b("
+            r"protagonist|antagonist|married|brother|sister|role|guardian|"
+            r"mother|father|cousin|quarry|baron|lord|lady|duke|duchess|"
+            r"faeble|fairy[- ]?tale|conceal(?:s|ed|ing)?|known as|young woman|young man|"
+            r"parent stock|kinship|subject of|rivalry-care|both care|"
+            r"refuses to associate|larger politics|underestimates|"
+            r"political nuance|unspoken line|not yet fully aware|rediscovery"
+            r")\b",
+            low,
         ):
             kept.append(s)
+            continue
     if not kept:
         return answer
     if len(kept) >= len([x for x in sentences if x.strip()]):
@@ -638,6 +647,9 @@ def scrub_who_is_plot_walkthrough(body: str, *, question: str = "") -> str:
         # Librarian cast-card gaps / open parent sketches — keep on who-is.
         if re.match(
             r"^Your notes don't yet (?:spell out|pin a clear cast role)\b|"
+            r"^Notes don't yet (?:spell out|pin a clear cast role)\b|"
+            r"^Close relations for .+ aren't spelled out yet\.?$|"
+            r"^A clear cast role for .+ isn't pinned yet\b|"
             r"^Your notes (?:sketch|say|leave)\b.+\b(?:father|mother)\b",
             s,
             re.I,
@@ -645,10 +657,27 @@ def scrub_who_is_plot_walkthrough(body: str, *, question: str = "") -> str:
             kept.append(s)
             continue
         if label and re.match(
-            rf"^{re.escape(label)}'s\s+(?:father|mother)\s+is\s+noted\b",
+            rf"^(?:{re.escape(label)}'s|His|Her)\s+(?:father|mother)\s+is\b",
             s,
             re.I,
         ):
+            kept.append(s)
+            continue
+        if re.match(r"^(?:He|She)\s+conceals\b", s, re.I):
+            kept.append(s)
+            continue
+        if re.match(r"^(?:He|She)\s+is\s+(?:also\s+)?known\s+as\b", s, re.I):
+            kept.append(s)
+            continue
+        if re.match(r"^(?:He|She)\s+leads\b", s, re.I):
+            kept.append(s)
+            continue
+        if re.search(r"\b(?:his|her)\s+(?:second\s+)?cousin\b", s, re.I) and re.search(
+            r"\b(?:may be|calls|kinship)\b", s, re.I
+        ):
+            kept.append(s)
+            continue
+        if re.search(r"\bis\s+(?:his|her)\s+quarry\b", s, re.I):
             kept.append(s)
             continue
         # Drop everything else — awareness, plot, background dumps.
@@ -693,31 +722,42 @@ def scrub_who_is_plot_walkthrough(body: str, *, question: str = "") -> str:
             ):
                 stakesish.append(s)
             elif re.match(
-                rf"^{re.escape(label)}\s+(?:is|was)\b",
+                rf"^(?:{re.escape(label)}|He|She)\s+(?:is|was)\b",
                 s,
                 re.I,
             ) and re.search(
                 r"\b("
                 r"protagonist|antagonist|villain|hero|baron|lord|lady|"
                 r"cheshire cat|white rabbit|from (?:alice in )?wonderland|"
-                r"main character|side character"
+                r"main character|side character|young woman|young man|author"
                 r")\b",
                 s,
                 re.I,
             ):
                 # Role / title / fairy-tale origin — identity, not a kin "tie".
                 identityish.append(s)
+            elif re.match(
+                rf"^(?:{re.escape(label)}|He|She)\s+conceals\b",
+                s,
+                re.I,
+            ) or (
+                re.search(r"\bconceals?\b", s, re.I)
+                and re.search(r"\b(human|author|identity|fae)\b", s, re.I)
+            ):
+                stakesish.append(s)
             elif re.search(
                 r"\b(brother|sister|father|mother|parent|married|subject of|quarry|"
                 r"known|rival|up against|nemesis|opposed|cousin|ally|allies|"
                 r"co-?conspir|esteemed cousin|refers to|your notes treat|"
                 r"don'?t yet spell out|don'?t yet pin a clear cast role|"
-                r"father|mother|kinship is left open|parent stock|hunts?\b)\b",
+                r"Notes don't yet|rivalry-care|both care|"
+                r"refuses to associate|larger politics|underestimates|"
+                r"father|mother|kinship is left open|kinship remains open|parent stock|hunts?\b)\b",
                 s,
                 re.I,
             ):
                 tiesish.append(s)
-            elif re.match(rf"^{re.escape(label)}\s+(?:is|was)\b", s, re.I):
+            elif re.match(rf"^(?:{re.escape(label)}|He|She)\s+(?:is|was)\b", s, re.I):
                 identityish.append(s)
             else:
                 other.append(s)
@@ -743,15 +783,24 @@ def scrub_who_is_plot_walkthrough(body: str, *, question: str = "") -> str:
                 return (0, len(s))
             if re.search(r"\b(subject of|quarry|hunts?\b|nemesis)\b", low):
                 return (1, len(s))
-            if re.search(r"\bsecond cousin\b", low):
-                return (2, len(s))
+            if re.search(
+                r"\b(?:first|second|third)\s+cousin\b|rivalry-care|"
+                r"refuses to associate|underestimates",
+                low,
+            ):
+                return (
+                    2,
+                    -len(s)
+                    if re.search(r"rivalry-care|refuses to associate|underestimates", low)
+                    else len(s),
+                )
             if re.search(r"\bcousin\b", low):
                 return (3, len(s))
             return (4, len(s))
 
         tiesish.sort(key=_tie_rank)
         # Kin/stakes before long rename dumps.
-        ordered = identityish[:4] + tiesish[:5] + stakesish[:3] + other[:1] + renameish[:1]
+        ordered = identityish[:4] + tiesish[:6] + stakesish[:3] + other[:1] + renameish[:1]
         kept = ordered or kept[:5]
     else:
         kept = kept[:4]

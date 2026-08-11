@@ -889,6 +889,8 @@ def who_is_standing_relation_lines(
         "cousin",
         "esteemed",
         "second",
+        "third",
+        "first",
         "ally",
         "allies",
         "the",
@@ -985,8 +987,24 @@ def who_is_standing_relation_lines(
         if not mentions_label and kind != "document":
             continue
 
-        uncertain_here = bool(_RELATION_UNCERTAIN.search(blob)) or bool(
-            re.search(r"[\"']cousin[\"']", blob, re.I)
+        uncertain_here = bool(_RELATION_UNCERTAIN.search(blob))
+        # Kinship-open only when the hedge is about being cousins/related —
+        # not orphan hedges, and not mere quoted "cousin" when a degree is stated.
+        has_degree = bool(re.search(r"\b(?:first|second|third)\s+cousins?\b", blob, re.I))
+        uncertain_cousin = bool(
+            re.search(
+                r"(?:"
+                r"may or may not be (?:his |her |their )?(?:first|second|third )?cousin|"
+                r"whether (?:they |he |she ).{0,40}cousin|"
+                r"don'?t know if .{0,60}related|"
+                r"i still don'?t know if .{0,40}related|"
+                r"kinship may or may not"
+                r")",
+                blob,
+                re.I,
+            )
+        ) or (
+            bool(re.search(r"[\"']cousin[\"']", blob, re.I)) and not has_degree
         )
         partner = _title_partner(title)
 
@@ -997,16 +1015,20 @@ def who_is_standing_relation_lines(
             ):
                 pass
             else:
-                if re.search(r"\bsecond\s+cousin\b", body, re.I):
-                    if uncertain_here:
+                deg_m = re.search(
+                    r"\b(first|second|third)\s+cousins?\b", body, re.I
+                )
+                if deg_m:
+                    degree = deg_m.group(1).lower()
+                    if uncertain_cousin:
                         _add(
-                            f"{partner} may be {label}'s second cousin — "
+                            f"{partner} may be {label}'s {degree} cousin — "
                             f"that kinship is left open"
                         )
                     else:
-                        _add(f"{label} is {partner}'s second cousin")
+                        _add(f"{partner} is {label}'s {degree} cousin")
                 elif re.search(r"\bcousin\b", body, re.I):
-                    if uncertain_here or re.search(r"[\"']cousin[\"']", body, re.I):
+                    if uncertain_cousin:
                         _add(
                             f"{label} calls {partner} cousin, though that kinship is left open"
                         )
@@ -1018,8 +1040,88 @@ def who_is_standing_relation_lines(
                     re.I,
                 ) and not re.search(r"\b(?:hunt|prey|secure an ally)\b", body, re.I):
                     _add(f"{partner} is an ally or close political counterpart to {label}")
+                # Rivalry-care / complicated bond texture (librarian restatement).
+                if re.search(
+                    r"\b("
+                    r"rivalry[- ]?care|complicated (?:relationship|attachment|bond)|"
+                    r"does care|both care|looks? out for|attachment to one another"
+                    r")\b",
+                    body,
+                    re.I,
+                ):
+                    _add(
+                        f"{label} and {partner} share a complicated rivalry-care bond "
+                        f"— different in temperament, but both care"
+                    )
 
-        # Draft / letters: only first-person greetings ("To my esteemed cousin X").
+        # Body-stated degree cousins even when the title has no "Duke X and Y" partner.
+        if kind in {"relationship", "character", "politics", "note", "event"} and mentions_label:
+            for m in re.finditer(
+                rf"\b(?:Duke|Lord|Lady|Duchess|Baron|Baroness)\s+({PROPER})\s+"
+                rf"is\s+the\s+(first|second|third)\s+cousin\s+of\s+"
+                rf"(?:Duke|Lord|Lady|Duchess|Baron|Baroness)\s+{re.escape(label)}\b|"
+                rf"\b{re.escape(label)}\s+and\s+(?:Duke\s+|Lord\s+|Lady\s+)?({PROPER})\s+"
+                rf"are\s+(first|second|third)\s+cousins?\b|"
+                rf"\b(?:Duke\s+|Lord\s+|Lady\s+)?({PROPER})\s+and\s+{re.escape(label)}\s+"
+                rf"are\s+(first|second|third)\s+cousins?\b",
+                body,
+                re.I,
+            ):
+                groups = [g for g in m.groups() if g]
+                if len(groups) < 2:
+                    continue
+                degree = groups[-1].lower()
+                other_raw = groups[0]
+                if other_raw.lower() in {"first", "second", "third"}:
+                    continue
+                other = _clean_name(other_raw)
+                if not _other_ok(other):
+                    near = m.group(0)
+                    titled = re.search(
+                        rf"\b((?:Duke|Lord|Lady)\s+{re.escape(other_raw)})\b",
+                        near,
+                        re.I,
+                    )
+                    if titled:
+                        other = _clean_name(titled.group(1))
+                if not _other_ok(other):
+                    continue
+                if uncertain_cousin:
+                    _add(
+                        f"{other} may be {label}'s {degree} cousin — "
+                        f"that kinship is left open"
+                    )
+                else:
+                    _add(f"{other} is {label}'s {degree} cousin")
+
+            care_other = partner
+            if not care_other:
+                for m in re.finditer(
+                    rf"\b(?:Duke|Lord|Lady)\s+({PROPER})\b",
+                    body,
+                    re.I,
+                ):
+                    cand = _clean_name(m.group(0))
+                    if _other_ok(cand) and re.search(
+                        r"\b(rivalry[- ]?care|complicated (?:relationship|attachment)|"
+                        r"does care|both care|looks? out for)\b",
+                        body,
+                        re.I,
+                    ):
+                        care_other = cand
+                        break
+            if care_other and re.search(
+                r"\b("
+                r"rivalry[- ]?care|complicated (?:relationship|attachment|bond)|"
+                r"does care|both care|looks? out for|attachment to one another"
+                r")\b",
+                body,
+                re.I,
+            ):
+                _add(
+                    f"{label} and {care_other} share a complicated rivalry-care bond "
+                    f"— different in temperament, but both care"
+                )
         # Never treat "your esteemed cousin {label} suspects…" as label calling anyone.
         for m in re.finditer(
             rf"(?:to\s+my|my)\s+esteemed\s+cousin\s+({_CAST_OTHER_NAME})\b",
@@ -1066,6 +1168,81 @@ def who_is_standing_relation_lines(
             _harvest_figure_origin(label, title, body, kind, _add)
 
     _harvest_opposition_standing(label, entries, _add)
+    _harvest_politics_stance(label, entries, _add)
+
+    # Prefer firm degree cousin over thin call/may-be; one care line; prefer titled names.
+    firm_degree = [
+        x
+        for x in lines
+        if re.search(
+            rf"^.+\s+is\s+{re.escape(label)}'s\s+(?:first|second|third)\s+cousin",
+            x,
+            re.I,
+        )
+    ]
+    if firm_degree:
+        # Prefer "Duke Dijon is …" over bare "Dijon is …"
+        titled = [x for x in firm_degree if re.search(r"\b(?:Duke|Lord|Lady)\b", x, re.I)]
+        keep_firm = titled[0] if titled else firm_degree[0]
+        lines = [
+            x
+            for x in lines
+            if x == keep_firm
+            or not re.search(
+                r"\b(?:first|second|third)\s+cousin\b|"
+                rf"^{re.escape(label)}\s+calls\s+.+\bcousin\b|"
+                r"\bmay be\b.+\bcousin\b|"
+                r"\besteemed cousin\b",
+                x,
+                re.I,
+            )
+        ]
+    care_lines = [x for x in lines if re.search(r"rivalry-care bond", x, re.I)]
+    if len(care_lines) > 1:
+        keep_care = care_lines[0]
+        lines = [
+            x for x in lines if x == keep_care or not re.search(r"rivalry-care bond", x, re.I)
+        ]
+    politics_lines = [
+        x
+        for x in lines
+        if re.search(
+            r"refuses to associate with larger politics at Court|"
+            r"underestimates (?:his|her) own presence",
+            x,
+            re.I,
+        )
+    ]
+    # Keep at most one refusal + one presence line.
+    if politics_lines:
+        keep_refusal = next(
+            (
+                x
+                for x in politics_lines
+                if re.search(r"refuses to associate with larger politics", x, re.I)
+            ),
+            None,
+        )
+        keep_presence = next(
+            (
+                x
+                for x in politics_lines
+                if re.search(r"underestimates (?:his|her) own presence", x, re.I)
+            ),
+            None,
+        )
+        keep_set = {x for x in (keep_refusal, keep_presence) if x}
+        lines = [
+            x
+            for x in lines
+            if x in keep_set
+            or not re.search(
+                r"refuses to associate with larger politics at Court|"
+                r"underestimates (?:his|her) own presence",
+                x,
+                re.I,
+            )
+        ]
 
     return lines[:limit]
 
@@ -1213,6 +1390,76 @@ def _harvest_open_parent_notes(
         add_line(f"{label}'s mother is from here")
 
 
+def _harvest_politics_stance(
+    label: str,
+    entries: list[dict[str, Any]],
+    add_line,
+) -> None:
+    """
+    Standing politics stance from notes + main draft (not plot walkthrough).
+
+    Librarian restatement only — refusal of Court politics, underestimating presence.
+    """
+    label = (label or "").strip()
+    if not label or not entries:
+        return
+
+    seen_docs: set[str] = set()
+    for entry in entries:
+        if not isinstance(entry, dict):
+            continue
+        eid = str(entry.get("id") or "")
+        # Prefer full document body once; skip paragraph shards.
+        if "#p" in eid:
+            continue
+        kind = str(entry.get("kind") or "").lower()
+        title = str(entry.get("title") or "")
+        body = str(entry.get("body") or "")
+        if not body.strip():
+            continue
+        blob = f"{title}\n{body}"
+        if kind == "document":
+            if eid in seen_docs:
+                continue
+            seen_docs.add(eid)
+
+        # Draft first-person Court refusal near this cast name.
+        for m in re.finditer(
+            r"refusal to associate (?:myself|himself|herself|themselves)\s+"
+            r"with the larger politics at Court",
+            body,
+            re.I,
+        ):
+            window = body[max(0, m.start() - 420) : min(len(body), m.end() + 120)]
+            if not re.search(rf"\b{re.escape(label)}\b", window, re.I):
+                continue
+            add_line(
+                f"{label} refuses to associate with larger politics at Court"
+            )
+            break
+
+        # Note-stated underestimation of presence / political weight.
+        if not re.search(rf"\b{re.escape(label)}\b", blob, re.I):
+            continue
+        if re.search(
+            r"underestimates (?:his|her|their) own presence",
+            body,
+            re.I,
+        ):
+            add_line(f"{label} underestimates his own presence")
+        if re.search(
+            r"\b("
+            r"disgusted by (?:too much )?politics|"
+            r"more (?:political )?sway than (?:he|she|they) realizes|"
+            r"holds? (?:a lot of )?weight.{0,80}intimidat"
+            r")\b",
+            body,
+            re.I | re.S,
+        ) and re.search(r"underestimates (?:his|her|their) own presence", body, re.I):
+            # Already covered by presence line; avoid inventing "disgusted".
+            pass
+
+
 def _harvest_opposition_standing(
     label: str,
     entries: list[dict[str, Any]],
@@ -1343,25 +1590,58 @@ def merge_who_is_relationship_lines(
             for x in out
             if not re.search(rf"^{re.escape(label)}\s+is\s+from\s+wonderland\.?$", x, re.I)
         ]
-    # Prefer one cousin line: keep second-cousin / may-be over thinner call/refer lines.
-    secondish = [
+    # Prefer one cousin line: firm degree > may-be > thin call/refer.
+    firm_degree = [
         x
         for x in out
-        if re.search(r"\bsecond cousin\b|\bmay be\b.+\bcousin\b", x, re.I)
+        if re.search(r"\bis\s+\w.+\s+(?:first|second|third)\s+cousin\b", x, re.I)
+        or re.search(
+            rf"^.+\s+is\s+{re.escape(label)}'s\s+(?:first|second|third)\s+cousin",
+            x,
+            re.I,
+        )
     ]
-    if secondish:
+    if firm_degree:
         out = [
             x
             for x in out
             if not re.search(
+                r"\bmay be\b.+\bcousin\b|"
                 rf"^{re.escape(label)}\s+calls\s+.+\bcousin\b|"
                 rf"\brefers to\b.+\bcousin\b|"
-                rf"\bcalls\b.+\bcousin, though that kinship is left open|"
                 rf"\besteemed cousin\b",
                 x,
                 re.I,
             )
         ]
+    else:
+        degreeish = [
+            x
+            for x in out
+            if re.search(
+                r"\b(?:first|second|third)\s+cousin\b|\bmay be\b.+\bcousin\b",
+                x,
+                re.I,
+            )
+        ]
+        if degreeish:
+            out = [
+                x
+                for x in out
+                if not re.search(
+                    rf"^{re.escape(label)}\s+calls\s+.+\bcousin\b|"
+                    rf"\brefers to\b.+\bcousin\b|"
+                    rf"\bcalls\b.+\bcousin, though that kinship is left open|"
+                    rf"\besteemed cousin\b",
+                    x,
+                    re.I,
+                )
+            ]
+    # One rivalry-care line is enough.
+    care_lines = [x for x in out if re.search(r"rivalry-care bond", x, re.I)]
+    if len(care_lines) > 1:
+        keep_care = care_lines[0]
+        out = [x for x in out if x == keep_care or not re.search(r"rivalry-care bond", x, re.I)]
     return out[:10]
 
 

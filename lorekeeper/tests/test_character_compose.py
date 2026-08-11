@@ -1420,6 +1420,71 @@ class CharacterComposeTests(unittest.TestCase):
             msg=lines,
         )
 
+    def test_who_is_pulls_court_politics_from_draft_and_care_from_notes(self):
+        entries = [
+            _entry(
+                "n1",
+                "Character T Notes",
+                (
+                    "Character T is the main antagonist and Baron of Cheshire. "
+                    "He is the Cheshire Cat from Alice in Wonderland."
+                ),
+                kind="character",
+                tags=["Ashford Saga"],
+            ),
+            _entry(
+                "r1",
+                "Character E and Lord Character T",
+                (
+                    "Character E is aware that the Cheshire Cat does not yet want him dead. "
+                    "The Cat sees the hunt as a game."
+                ),
+                kind="relationship",
+                tags=["Ashford Saga"],
+            ),
+            _entry(
+                "r2",
+                "Duke Dijon vs Character T",
+                (
+                    "Duke Dijon is Character T's third cousin. They share a complicated "
+                    "rivalry-care bond — different in temperament, but both care. "
+                    "Character T underestimates his own presence in the room."
+                ),
+                kind="relationship",
+                tags=["Ashford Saga"],
+            ),
+            _entry(
+                "p1",
+                "Protagonist Notes",
+                "Character E is the protagonist of Ashford Saga.",
+                kind="note",
+                tags=["Ashford Saga"],
+            ),
+            _entry(
+                "d1",
+                "Ashford Storywriting Draft",
+                (
+                    "the Kingdom to which Character T belongs. I can only hope that my "
+                    "refusal to associate myself with the larger politics at Court has "
+                    "avoided any further alienation than my mere existence."
+                ),
+                kind="document",
+                tags=["Ashford Saga"],
+            ),
+        ]
+        res = self._ask("In Ashford Saga, who is Character T?", entries)
+        answer = (res.get("answer") or "")
+        body = re.split(r"\n—\s*From your notes", answer, maxsplit=1)[0].lower()
+        self.assertIn("antagonist", body, msg=answer)
+        self.assertIn("character e", body, msg=answer)
+        self.assertTrue("quarry" in body, msg=answer)
+        self.assertIn("third cousin", body, msg=answer)
+        self.assertTrue("both care" in body or "rivalry-care" in body, msg=answer)
+        self.assertIn("larger politics at court", body, msg=answer)
+        self.assertIn("underestimates", body, msg=answer)
+        self.assertNotIn("fascinat", body)
+        self.assertNotIn("disgust", body)
+
     def test_who_is_surfaces_open_father_notes(self):
         entries = [
             _entry(

@@ -279,19 +279,27 @@ Run **one row at a time** in Cursor. Don’t skip Phase 0 — it costs nothing a
 
 ## Your additions
 
-### Ask who-is accuracy milestone (pinned 2026-08-10) — **do not regress**
+### Ask opt-in “include writing tasks” (pinned 2026-08-11) — **later upgrade**
 
-**Checkpoint shipped** (~`4a80e37` and related who-is work): “Who is X?” answers are **on-subject and accurate** from notes + draft — librarian only, no inventing.
+- [ ] **Opt-in checkbox: include writing tasks** — when on, Ask/cast cards may surface honest “not fully developed yet” work items that belong on that card (e.g. Dijon–Tenebris relationship still thin). Off by default; never invent tasks; librarian-only from notes/gaps. Do not build until character who-is voice/accuracy bar is stable.
+
+### Ask who-is accuracy milestone (pinned 2026-08-10, deepened 2026-08-10 evening) — **do not regress**
+
+**Checkpoint shipped** (~`4e38d6c` and related who-is work): “Who is X?” answers are **on-subject and accurate** from notes + draft — librarian only, no inventing.
 
 **Live bar (owner-checked — keep these shapes):**
-- **Tenebris** — Baron / Lord of Cheshire, fairy-tale (“faeble”) standing; **not** Umber’s thought-about-him POV
+- **Tenebris** (owner Q/R/E success 2026-08-10 evening; kinship/care/politics refresh 2026-08-11) — main antagonist; Baron of Cheshire; Cheshire Cat from Alice in Wonderland; mother from here; Etherei as quarry (essay open may fold quarry into the antagonist line); Duke Dijon is third cousin; rivalry-care bond (both care); **Court politics stance from main draft** (refuses larger politics at Court) + note-backed presence underestimation when present; faeble social rank (not king/emperor; not entirely of this world); father Domestic Cat parent stock with Faeble question left open; **not** Umber’s thought-about-him POV; **not** Dijon cousin said twice; **not** librarian “sketched as / your notes” stacks; **do not invent** “fascination / Avi / disgusted” unless a note or draft states those words
 - **Platinus** — protagonist, twin/brother Titanem, aka Cypher Prism → Palladiar, faction against Galloxidor; **not** birth-name rename dump
 - **Elham** — protagonist, young woman, author — accurate; deepen with concealment / opposition / draft situation when present (2026-08-10 who-is depth pass)
+
+**Owner voice target (essay-hook sample, 2026-08-10 — librarian only):** Prefer professional engaging middle voice like: *In Smoke And Mirrors, Tenebris is the main antagonist, with Etherei as his quarry… He is also known as the Baron of Cheshire and Lord Tenebris of Cheshire… faeble / Cheshire Cat from Alice in Wonderland… Court politics / presence when draft+notes support… mixed parentage / mother here / father Domestic Cat still open… Duke Dijon third cousin with rivalry-care (both care).* Restate only what notes + main draft support; never invent missing beats (fascination, Avi, “disgusted,” writing-task gaps) unless written or the opt-in writing-tasks checkbox ships later.
 
 **Regression rules for later agents:**
 - Do **not** trade this accuracy for longer answers
 - Still reject knower POV (“X thinks that Y…”), rename infodumps as the whole card, and unrelated scene scraps
-- Next goal (separate task): **more depth** for every character (Etherei cast-card bar) **without** breaking the accuracy bar above
+- Treat the **Tenebris** card above as the current depth+accuracy baseline for standing relations, fairy-tale origin, parents, antagonist/quarry, and draft+notes politics stance when present
+- Who-is must use **main draft + notes** for standing cast facts — not notes-only
+- Next goal (separate task): bring other cast cards up to that same bar **without** breaking the accuracy pins above
 
 ### Plot relation accuracy — timing (pinned 2026-08-10) — **Not yet**
 

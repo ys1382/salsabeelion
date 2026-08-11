@@ -1330,6 +1330,17 @@ def _who_is_cast_bit_from_draft(bit: str, label: str) -> bool:
         re.I,
     ):
         return False
+    # Standing politics stance in draft dialogue / nearby narration.
+    if re.search(
+        r"\b("
+        r"refusal to associate .{0,40}larger politics at Court|"
+        r"refuses to associate with larger politics at Court|"
+        r"underestimates (?:his|her|their) own presence"
+        r")\b",
+        bit,
+        re.I,
+    ) and any(_name_in_text(name, bit) for name in [label]):
+        return True
     if not any(_name_in_text(name, bit) for name in [label]):
         return False
     if not cast_sentence_about_subject(bit, label, allow_pronoun=False):

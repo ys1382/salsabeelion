@@ -883,15 +883,26 @@ def _kinship_shape_sentence(sentence: str, label: str) -> bool:
         rf"^{lab}\s+is\s+(?:(?:younger|older|twin)\s+)?(?:brother|sister|son|daughter)\s+to\s+.+$",
         rf"^{lab}\s+is\s+(?:.+?'s\s+)?(?:second\s+)?cousin\b.+$",
         rf"^{lab}\s+is\s+(?:married|engaged)\s+to\s+.+$",
+        rf"^(?:He|She)\s+is\s+(?:married|engaged)\s+to\s+.+$",
         rf"^{lab}\s+calls?\s+.+\s+(?:his|her|their)\s+(?:esteemed\s+)?cousin\b.+$",
         rf"^.+\s+is\s+called\s+{lab}'s\s+(?:esteemed\s+)?cousin\b.+$",
         rf"^{lab}\s+is\s+(?:the\s+)?(?:Cheshire Cat|White Rabbit)\b.+$",
         rf"^{lab}\s+is\s+from\s+Wonderland\.?$",
         rf"^{lab}\s+calls\s+.+\s+cousin,\s+though that kinship is left open\.?$",
-        rf"^.+\s+may be\s+{lab}'s\s+(?:second\s+)?cousin\s+—\s+that kinship is left open\.?$",
+        rf"^{lab}\s+calls\s+.+\s+cousin,\s+though that kinship remains open\.?$",
+        rf"^.+\s+may be\s+{lab}'s\s+(?:first|second|third)\s+cousin\s+[—–\-]\s+that kinship is left open\.?$",
+        rf"^.+\s+may be\s+{lab}'s\s+(?:first|second|third)\s+cousin,\s+though that kinship remains open\.?$",
+        rf"^.+\s+may be\s+(?:his|her)\s+(?:first|second|third)\s+cousin,\s+though that kinship remains open\.?$",
+        rf"^.+\s+is\s+{lab}'s\s+(?:first|second|third)\s+cousin\.?$",
+        rf"^.+\s+is\s+(?:his|her)\s+(?:first|second|third)\s+cousin\.?$",
+        rf"^(?:He|She)\s+and\s+.+\s+share\s+a\s+complicated\s+rivalry-care bond\b.+$",
+        rf"^{lab}\s+and\s+.+\s+share\s+a\s+complicated\s+rivalry-care bond\b.+$",
+        rf"^.+\s+and\s+{lab}\s+share\s+a\s+complicated\s+rivalry-care bond\b.+$",
         rf"^{lab}'s\s+father\s+is\s+(?:sketched|noted|left open)\b.+$",
         rf"^{lab}'s\s+father\s+is\s+.+\s+parent stock\b.+$",
+        rf"^(?:His|Her)\s+father\s+is\s+.+\s+parent stock\b.+$",
         rf"^{lab}'s\s+mother\s+is\s+from\s+here\.?$",
+        rf"^(?:His|Her)\s+mother\s+is\s+from\s+here\.?$",
         rf"^Your notes treat\s+.+\s+as\s+a\s+possible\s+(?:second\s+)?cousin\s+to\s+{lab}\b.+$",
         rf"^Your notes (?:sketch|say|leave)\s+{lab}'s\s+(?:father|mother)\b.+$",
         rf"^{lab}'s\s+(?:father|mother)\s+is\s+noted\b.+$",
@@ -899,8 +910,19 @@ def _kinship_shape_sentence(sentence: str, label: str) -> bool:
         rf"^{lab}\s+refers to\s+(?:his|her|their)\s+['\"]?cousin['\"]?\s+.+$",
         rf"^.+\s+is\s+an\s+ally\b.{{0,80}}{lab}\b.+$",
         rf"^{lab}\s+is\s+(?:the\s+)?(?:subject|quarry)\s+of\s+.+$",
+        rf"^(?:He|She)\s+is\s+(?:the\s+)?(?:subject|quarry)\s+of\s+.+$",
         rf"^.+\s+is\s+the\s+quarry\s+of\s+{lab}\b.+$",
+        rf"^.+\s+is\s+{lab}'s\s+quarry\.?$",
+        rf"^.+\s+is\s+(?:his|her)\s+quarry\.?$",
+        rf"^{lab}\s+refuses to associate with larger politics at Court\.?$",
+        rf"^(?:He|She)\s+refuses to associate with larger politics at Court\.?$",
+        rf"^{lab}\s+underestimates (?:his|her) own presence\.?$",
+        rf"^(?:He|She)\s+underestimates (?:his|her) own presence\.?$",
         rf"^{lab}\s+is\s+the\s+(?:main\s+)?(?:antagonist|villain)\b.+$",
+        rf"^(?:He|She)\s+is\s+the\s+(?:main\s+)?(?:antagonist|villain)\b.+$",
+        rf"^{lab}\s+is\s+(?:the\s+)?(?:main\s+)?protagonist\b.+$",
+        rf"^(?:He|She)\s+is\s+(?:the\s+)?(?:main\s+)?protagonist\b.+$",
+        rf"^(?:He|She)\s+is\s+(?:the\s+)?(?:Cheshire Cat|White Rabbit)\b.+$",
         rf"^{lab}\s+is\s+(?:the\s+)?(?:son|daughter|child)\s+of\s+.+$",
         rf"^{lab}\s+is\s+(?:(?:also|better)\s+)?known\s+(?:as|to|by)\b.+$",
         rf"^(?:He|She)\s+is\s+(?:(?:also|better)\s+)?known\s+(?:as|to|by)\b.+$",
@@ -910,6 +932,11 @@ def _kinship_shape_sentence(sentence: str, label: str) -> bool:
         rf"^{lab}\s+is\s+(?:the\s+)?(?:nemesis|arch[- ]?enemy|best friend|closest friend)\s+of\s+.+$",
         rf"^{lab}\s+is\s+(?:a\s+)?rival\s+(?:to|of)\s+.+$",
         rf"^{lab}\s+is\s+up against\s+.+$",
+        rf"^(?:He|She)\s+is\s+up against\s+.+$",
+        rf"^{lab}\s+conceals\b.+$",
+        rf"^(?:He|She)\s+conceals\b.+$",
+        rf"^{lab}\s+is\s+a\s+young (?:woman|man)\b.+$",
+        rf"^(?:He|She)\s+is\s+a\s+young (?:woman|man)\b.+$",
         rf"^{lab}\s+is\s+(?:father|mother|mentor)\s+to\s+.+$",
         rf"^(?:He|She)\s+is\s+(?:father|mother|mentor)\s+to\s+.+$",
         rf"^(?:He|She)\s+is\s+(?:the\s+)?(?:nemesis|best friend)\s+of\s+.+$",
@@ -1566,6 +1593,15 @@ def _clause_adds_profile(clause: str, label: str) -> bool:
         return False
     if re.search(rf"\b{re.escape(label)}\s+(?:is|was|are|were)\b", s, re.I):
         return True
+    # "Name and Partner share a … bond"
+    if re.search(
+        rf"\b{re.escape(label)}\s+and\b.{{0,60}}\b("
+        r"share|shares|have|has|rivalry-care|both care|attachment|looks? out for"
+        r")\b",
+        s,
+        re.I,
+    ):
+        return True
     # "Lord Tenebris of Cheshire is…" when asked label is Tenebris.
     if re.search(
         rf"\b(?:Lord|Lady|Duke|Duchess|Baron|Baroness|Sir|Dame)\s+"
@@ -1593,7 +1629,9 @@ def _clause_adds_profile(clause: str, label: str) -> bool:
         r"husband|wife|spouse|cousin|grey|gray|arcanist|elf|villain|hero|species|"
         r"subject of|quarry|raised by|rabbit|preyfolk|known as|known to|buck|doe|"
         r"white rabbit|fairytale|ally|allies|co-?conspir|esteemed cousin|"
-        r"political counterpart|your notes treat|refers to)\b",
+        r"political counterpart|your notes treat|refers to|"
+        r"rivalry-care|both care|complicated (?:relationship|attachment|bond)|"
+        r"refuses to associate|larger politics at Court|underestimates (?:his|her) own presence)\b",
         s,
         re.I,
     ):
@@ -2135,8 +2173,10 @@ def weave_who_is_gold_tone(
             r"sister|father|mother|widow|raised|parent|subject of|quarry|married|"
             r"nemesis|best friend|closest friend|cousin|father to|mother to|"
             r"esteemed cousin|ally|allies|co-?conspir|refers to|your notes treat|"
-            r"possible (?:second )?cousin|calls?\b|father|mother|parent stock|"
-            r"kinship is left open|sketched as|cheshire cat|wonderland"
+            r"possible (?:first|second|third )?cousin|calls?\b|father|mother|parent stock|"
+            r"kinship is left open|kinship remains open|sketched as|cheshire cat|wonderland|"
+            r"rivalry-care|both care|"
+            r"refuses to associate|larger politics at Court|underestimates (?:his|her) own presence"
             r")\b",
             c,
             re.I,
@@ -2230,9 +2270,22 @@ def weave_who_is_gold_tone(
         if not base.endswith((".", "!", "?")):
             base += "."
 
+    # Essay-hook open only when a titled seat is already folded in —
+    # avoids "Baron of Cheshire of WorkTitle". Plain protagonist/antagonist
+    # cards keep the existing "of WorkTitle" trail.
     if work_title and work_title.lower() not in base.lower():
         if re.search(r"\b(protagonist|antagonist|main character)\b", base, re.I):
-            base = base.rstrip(".") + f" of {work_title}."
+            if re.search(
+                rf"\b(?:Baron|Lord|Lady|Duke|Duchess|Baroness)\s+of\b",
+                base,
+                re.I,
+            ):
+                if re.match(rf"^{re.escape(label)}\s+is\b", base, re.I) and not re.match(
+                    r"^In\s+", base, re.I
+                ):
+                    base = f"In {work_title}, {base}"
+            else:
+                base = base.rstrip(".") + f" of {work_title}."
 
     # Fold a short significance phrase into the role line when possible.
     if significance_lines and re.search(
@@ -2402,6 +2455,28 @@ def weave_who_is_gold_tone(
                 f"{role_core}, {kin_for_open[0]}, and "
                 + ", and ".join(kin_for_open[1:])
             )
+
+    # Essay-hook open: fold quarry into antagonist line when notes support it
+    # ("…main antagonist, with Etherei as his quarry") — never invent "fascination".
+    folded_quarry: set[str] = set()
+    if re.search(r"\b(antagonist|villain)\b", role_core, re.I):
+        for c in list(other_family):
+            qm = re.search(
+                rf"^(.+?)\s+is\s+(?:the\s+quarry\s+of\s+{re.escape(label)}|"
+                rf"{re.escape(label)}'s\s+quarry|(?:his|her)\s+quarry)\.?$",
+                c.strip(),
+                re.I,
+            )
+            if not qm:
+                continue
+            qname = qm.group(1).strip()
+            if not qname or qname.lower() in role_core.lower():
+                continue
+            role_core = role_core.rstrip(".") + f", with {qname} as his quarry"
+            folded_quarry.add(c.lower())
+            other_family = [x for x in other_family if x.lower() not in folded_quarry]
+            break
+
     sentences.append(role_core + ".")
 
     # Second sentence: aka + faction / opposition — still natural, not stacked cards.
@@ -2500,7 +2575,26 @@ def weave_who_is_gold_tone(
         if clause not in sentences:
             sentences.append(clause)
 
-    for c in other_family[:4]:
+    # Prefer quarry / care / degree-cousin standing before thinner kin scraps.
+    def _other_family_rank(line: str) -> tuple[int, int]:
+        low = (line or "").lower()
+        if re.search(r"\b(?:quarry|subject of|hunts?)\b", low):
+            return (0, -len(line))
+        if re.search(r"rivalry-care|both care", low):
+            return (1, -len(line))
+        if re.search(
+            r"refuses to associate|larger politics at Court|underestimates",
+            low,
+        ):
+            return (2, -len(line))
+        if re.search(r"\b(?:first|second|third)\s+cousin\b", low):
+            return (3, -len(line))
+        if re.search(r"\bcousin\b", low):
+            return (4, -len(line))
+        return (5, -len(line))
+
+    other_family_sorted = sorted(other_family, key=_other_family_rank)
+    for c in other_family_sorted[:6]:
         clause = c if c.endswith((".", "!", "?")) else c + "."
         if clause not in sentences:
             sentences.append(clause)
@@ -2607,25 +2701,25 @@ def formalize_who_is_sentence(sentence: str, label: str) -> str:
     s = re.sub(rf"^So\s+{re.escape(label)}\s+", f"{label} ", s, count=1, flags=re.I)
     s = re.sub(r"^So\s+,?\s*", "", s, count=1, flags=re.I)
 
-    # Soften leftover librarian scaffolding into middle-voice cast prose.
+    # Soften leftover librarian scaffolding into essay-hook middle voice.
     s = re.sub(
-        rf"^Your notes treat\s+(.+?)\s+as\s+a\s+possible\s+(second\s+cousin)\s+to\s+"
+        rf"^Your notes treat\s+(.+?)\s+as\s+a\s+possible\s+((?:first|second|third)\s+cousin)\s+to\s+"
         rf"{re.escape(label)}\b.*$",
-        rf"\1 may be {label}'s \2 — that kinship is left open.",
+        rf"\1 may be {label}'s \2, though that kinship remains open.",
         s,
         count=1,
         flags=re.I,
     )
     s = re.sub(
         rf"^{re.escape(label)}\s+refers to\s+(?:his|her|their)\s+['\"]?cousin['\"]?\s+(.+?)\.?$",
-        rf"{label} calls \1 cousin, though that kinship is left open.",
+        rf"{label} calls \1 cousin, though that kinship remains open.",
         s,
         count=1,
         flags=re.I,
     )
     s = re.sub(
         rf"^{re.escape(label)}\s+refers to\s+(.+?)\s+as\s+cousin\s+in your notes.*$",
-        rf"{label} calls \1 cousin, though that kinship is left open.",
+        rf"{label} calls \1 cousin, though that kinship remains open.",
         s,
         count=1,
         flags=re.I,
@@ -2633,7 +2727,7 @@ def formalize_who_is_sentence(sentence: str, label: str) -> str:
     s = re.sub(
         rf"^Your notes sketch\s+{re.escape(label)}'s\s+father\s+as\s+(.+?)\s+parent stock,?\s*"
         rf"with open questions.*$",
-        rf"{label}'s father is \1 parent stock; whether he is a Faeble too is left open.",
+        rf"{label}'s father is \1 parent stock, with whether he is a Faeble too still open.",
         s,
         count=1,
         flags=re.I,
@@ -2641,7 +2735,7 @@ def formalize_who_is_sentence(sentence: str, label: str) -> str:
     s = re.sub(
         rf"^{re.escape(label)}'s\s+father\s+is\s+sketched\s+as\s+(.+?)\s+parent stock;\s*"
         rf"notes leave open whether he is a Faeble too\.?$",
-        rf"{label}'s father is \1 parent stock; whether he is a Faeble too is left open.",
+        rf"{label}'s father is \1 parent stock, with whether he is a Faeble too still open.",
         s,
         count=1,
         flags=re.I,
@@ -2655,11 +2749,93 @@ def formalize_who_is_sentence(sentence: str, label: str) -> str:
     )
     s = re.sub(
         rf"^Your notes leave\s+{re.escape(label)}'s\s+father\s+open.*$",
-        rf"{label}'s father is left open, including whether he is a Faeble too.",
+        rf"{label}'s father remains open, including whether he is a Faeble too.",
         s,
         count=1,
         flags=re.I,
     )
+    # Already-middle-voice openers: firm essay rhythm without inventing.
+    s = re.sub(
+        rf"^(.+?)\s+may be\s+{re.escape(label)}'s\s+((?:first|second|third)\s+cousin)\s+[—–\-]\s+"
+        rf"that kinship is left open\.?$",
+        rf"\1 may be {label}'s \2, though that kinship remains open.",
+        s,
+        count=1,
+        flags=re.I,
+    )
+    s = re.sub(
+        rf"^(.+?)\s+is\s+{re.escape(label)}'s\s+((?:first|second|third)\s+cousin)\.?$",
+        rf"\1 is {label}'s \2.",
+        s,
+        count=1,
+        flags=re.I,
+    )
+    s = re.sub(
+        rf"^{re.escape(label)}\s+and\s+(.+?)\s+share\s+a\s+complicated\s+rivalry-care bond\s+[—–\-]\s+"
+        rf"different in temperament,\s+but both care\.?$",
+        rf"{label} and \1 share a complicated rivalry-care bond — different in temperament, but both care.",
+        s,
+        count=1,
+        flags=re.I,
+    )
+    s = re.sub(
+        rf"^{re.escape(label)}\s+refuses to associate with larger politics at Court\.?$",
+        rf"{label} refuses to associate with larger politics at Court.",
+        s,
+        count=1,
+        flags=re.I,
+    )
+    s = re.sub(
+        rf"^{re.escape(label)}\s+underestimates (?:his|her) own presence\.?$",
+        rf"{label} underestimates his own presence.",
+        s,
+        count=1,
+        flags=re.I,
+    )
+    s = re.sub(
+        rf"^Your notes treat\s+(.+?)\s+as\s+a\s+possible\s+((?:first|second|third)\s+cousin)\s+to\s+"
+        rf"{re.escape(label)}\b.*$",
+        rf"\1 may be {label}'s \2, though that kinship remains open.",
+        s,
+        count=1,
+        flags=re.I,
+    )
+    s = re.sub(
+        rf"^{re.escape(label)}'s\s+father\s+is\s+(.+?)\s+parent stock;\s*"
+        rf"whether he is a Faeble too is left open\.?$",
+        rf"{label}'s father is \1 parent stock, with whether he is a Faeble too still open.",
+        s,
+        count=1,
+        flags=re.I,
+    )
+    # "Etherei is the quarry of Tenebris" → "Etherei is Tenebris's quarry."
+    s = re.sub(
+        rf"^(.+?)\s+is\s+the\s+quarry\s+of\s+{re.escape(label)}\.?$",
+        rf"\1 is {label}'s quarry.",
+        s,
+        count=1,
+        flags=re.I,
+    )
+    s = re.sub(
+        rf"^{re.escape(label)}\s+is\s+the\s+quarry\s+of\s+(.+?)\.?$",
+        rf"{label} is \1's quarry.",
+        s,
+        count=1,
+        flags=re.I,
+    )
+    # Drop meta rename scrap that restates the card title.
+    if re.match(
+        rf'^The protagonist is named ["\']?{re.escape(label)}\.?["\']?\.?$',
+        s,
+        re.I,
+    ):
+        return ""
+    if re.match(
+        rf'^The (?:main\s+)?(?:antagonist|character) is named ["\']?{re.escape(label)}\.?["\']?\.?$',
+        s,
+        re.I,
+    ):
+        return ""
 
     # Compress titled faeble / political standing into one clear beat.
     m_pol = re.match(
@@ -2819,10 +2995,18 @@ def smooth_who_is_prose(label: str, body: str) -> str:
                 flags=re.I,
             )
             s = formalize_who_is_sentence(s, label)
+            if not s.strip():
+                continue
             kept.append(s)
         # One cousin standing line is enough — keep second-cousin / may-be over thinner call lines.
         has_rich_cousin = any(
-            re.search(r"\bsecond cousin\b|\bmay be\b.+\bcousin\b", s, re.I) for s in kept
+            re.search(
+                r"\b(?:first|second|third)\s+cousin\b|\bmay be\b.+\bcousin\b|"
+                r"rivalry-care bond",
+                s,
+                re.I,
+            )
+            for s in kept
         )
         if has_rich_cousin:
             kept = [
@@ -2927,8 +3111,136 @@ def smooth_who_is_prose(label: str, body: str) -> str:
                         )
                         if not has_identity:
                             kept.append(f"{label} is {gender}.")
+        kept = _essay_hook_who_is_sentences(label, kept)
         out_parts.append(" ".join(kept) if kept else part)
     return "\n\n".join(p for p in out_parts if p.strip())
+
+
+def _infer_who_is_pronoun(label: str, sentences: list[str]) -> str | None:
+    """He/she from wording already on the card — never invent gender."""
+    blob = " ".join(sentences)
+    has_he = bool(re.search(r"(?<![A-Za-z])(?:he|his|him)\b", blob, re.I))
+    has_she = bool(re.search(r"(?<![A-Za-z])(?:she|her|hers)\b", blob, re.I))
+    # "her" in "mother" false positive is unlikely; still prefer title cues when mixed.
+    if has_he and not has_she:
+        return "he"
+    if has_she and not has_he:
+        return "she"
+    if re.search(
+        rf"\b(?:Baron|Lord|Duke|King|Prince)\s+{re.escape(label)}\b|"
+        rf"\b{re.escape(label)}\s+is\s+(?:a\s+|the\s+)?(?:Baron|Lord|Duke)\b",
+        blob,
+        re.I,
+    ):
+        return "he"
+    if re.search(
+        rf"\b(?:Baroness|Lady|Duchess|Queen|Princess)\s+{re.escape(label)}\b|"
+        rf"\b{re.escape(label)}\s+is\s+(?:a\s+|the\s+)?(?:Baroness|Lady|Duchess)\b|"
+        rf"\b{re.escape(label)}\s+is\s+a\s+young woman\b",
+        blob,
+        re.I,
+    ):
+        return "she"
+    if re.search(
+        rf"\b{re.escape(label)}\b.{{0,60}}\b(?:twin\s+)?brother\b|"
+        rf"\byounger twin brother\b",
+        blob,
+        re.I,
+    ):
+        return "he"
+    if re.search(
+        rf"\b{re.escape(label)}\b.{{0,60}}\b(?:twin\s+)?sister\b|"
+        rf"\byoung woman\b",
+        blob,
+        re.I,
+    ):
+        return "she"
+    gender = re.search(rf"\b{re.escape(label)}\s+is\s+(male|female)\b", blob, re.I)
+    if gender:
+        return "he" if gender.group(1).lower() == "male" else "she"
+    return None
+
+
+def _essay_hook_who_is_sentences(label: str, sentences: list[str]) -> list[str]:
+    """
+    Light essay-hook polish: prefer pronouns after the open,
+    keep every fact — never invent. Keep parent lines separate so scrub
+    still recognizes them as cast-card facts.
+    """
+    kept = [s for s in sentences if (s or "").strip()]
+    if len(kept) < 2:
+        return kept
+
+    pronoun = _infer_who_is_pronoun(label, kept)
+    if not pronoun or len(kept) < 2:
+        return kept
+
+    poss = "his" if pronoun == "he" else "her"
+    out: list[str] = [kept[0]]
+    for s in kept[1:]:
+        if not re.match(rf"^{re.escape(label)}\b", s, re.I):
+            s2 = re.sub(
+                rf"^(.+?)\s+is\s+{re.escape(label)}'s\s+quarry\.?$",
+                rf"\1 is {poss} quarry.",
+                s,
+                count=1,
+                flags=re.I,
+            )
+            # "Duke Dijon may be Label's third cousin…"
+            s2 = re.sub(
+                rf"\b{re.escape(label)}'s\s+((?:first|second|third)\s+cousin)\b",
+                rf"{poss} \1",
+                s2,
+                count=1,
+                flags=re.I,
+            )
+            out.append(s2)
+            continue
+        # Skip pronoun rewrite on rivalry-care pair lines.
+        if re.search(r"rivalry-care bond", s, re.I):
+            out.append(s)
+            continue
+        s2 = re.sub(
+            rf"^{re.escape(label)}'s\s+",
+            f"{poss.capitalize()} ",
+            s,
+            count=1,
+            flags=re.I,
+        )
+        if re.match(rf"^{re.escape(label)}\b", s2, re.I):
+            s2 = re.sub(
+                rf"^{re.escape(label)}\s+is\s+",
+                f"{pronoun.capitalize()} is ",
+                s2,
+                count=1,
+                flags=re.I,
+            )
+        if re.match(rf"^{re.escape(label)}\b", s2, re.I):
+            s2 = re.sub(
+                rf"^{re.escape(label)}\s+conceals\s+",
+                f"{pronoun.capitalize()} conceals ",
+                s2,
+                count=1,
+                flags=re.I,
+            )
+        if re.match(rf"^{re.escape(label)}\b", s2, re.I):
+            s2 = re.sub(
+                rf"^{re.escape(label)}\s+calls\s+",
+                f"{pronoun.capitalize()} calls ",
+                s2,
+                count=1,
+                flags=re.I,
+            )
+        if re.match(rf"^{re.escape(label)}\b", s2, re.I):
+            s2 = re.sub(
+                rf"^{re.escape(label)}\s+leads\s+",
+                f"{pronoun.capitalize()} leads ",
+                s2,
+                count=1,
+                flags=re.I,
+            )
+        out.append(s2)
+    return out
 
 
 def character_unclear_body(
@@ -3097,7 +3409,7 @@ def append_who_is_cast_card_gaps(
             r"brother|sister|cousin|father|mother|parent|married|spouse|"
             r"ally|allies|co-?conspir|son of|daughter of|child of|"
             r"esteemed cousin|your notes treat|refers to|father|mother|"
-            r"kinship is left open|cheshire cat|wonderland"
+            r"kinship is left open|kinship remains open|cheshire cat|wonderland"
             r")\b",
             low,
             re.I,
@@ -3114,14 +3426,20 @@ def append_who_is_cast_card_gaps(
         )
     )
     if not has_rel and not re.search(
-        r"don'?t yet spell out .{0,40}relations", low, re.I
+        r"don'?t yet spell out .{0,40}relations|close relations aren'?t spelled out",
+        low,
+        re.I,
     ):
         gaps.append(
-            f"Your notes don't yet spell out {label}'s close relations for a cast card."
+            f"Notes don't yet spell out close relations for {label}."
         )
-    if not has_role and not re.search(r"don'?t yet pin a clear cast role", low, re.I):
+    if not has_role and not re.search(
+        r"don'?t yet pin a clear cast role|clear cast role isn'?t pinned|don'?t yet spell out",
+        low,
+        re.I,
+    ):
         gaps.append(
-            f"Your notes don't yet pin a clear cast role for {label} "
+            f"Notes don't yet pin a clear cast role for {label} "
             f"(protagonist, antagonist, titled standing, etc.)."
         )
     if not gaps:
