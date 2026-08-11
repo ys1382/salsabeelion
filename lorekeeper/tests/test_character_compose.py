@@ -1484,6 +1484,14 @@ class CharacterComposeTests(unittest.TestCase):
         self.assertIn("underestimates", body, msg=answer)
         self.assertNotIn("fascinat", body)
         self.assertNotIn("disgust", body)
+        # Essay-hook order: role open first — never lead with mother/father.
+        lead = re.split(r"(?<=[.!?])\s+", body.strip(), maxsplit=1)[0]
+        self.assertRegex(
+            lead,
+            r"^(in ashford saga,\s*)?character t is the main antagonist",
+            msg=f"lead={lead!r}\n{answer}",
+        )
+        self.assertNotRegex(lead, r"^(his|her)\s+(mother|father)\b")
 
     def test_who_is_surfaces_open_father_notes(self):
         entries = [

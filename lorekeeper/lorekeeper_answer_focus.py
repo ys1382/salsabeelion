@@ -721,6 +721,21 @@ def scrub_who_is_plot_walkthrough(body: str, *, question: str = "") -> str:
                 re.I,
             ):
                 stakesish.append(s)
+            # Essay-hook open: "In Work, Name is the main antagonist… with X as his quarry"
+            # must stay identity — never drop into ties just because "quarry" appears.
+            elif re.match(
+                rf"^In\s+.{{1,80}}?,\s*{re.escape(label)}\s+is\b",
+                s,
+                re.I,
+            ) and re.search(
+                r"\b("
+                r"protagonist|antagonist|villain|hero|baron|lord|lady|"
+                r"cheshire cat|white rabbit|main character"
+                r")\b",
+                s,
+                re.I,
+            ):
+                identityish.append(s)
             elif re.match(
                 rf"^(?:{re.escape(label)}|He|She)\s+(?:is|was)\b",
                 s,
@@ -761,9 +776,10 @@ def scrub_who_is_plot_walkthrough(body: str, *, question: str = "") -> str:
                 identityish.append(s)
             else:
                 other.append(s)
-        # Prefer role/species identity lines over thin scraps.
+        # Essay open / antagonist role first; never lead with parents.
         identityish.sort(
             key=lambda s: (
+                0 if re.match(r"^In\s+", s, re.I) else 1,
                 0
                 if re.search(
                     r"\b(protagonist|antagonist|main antagonist|villain|"
@@ -776,30 +792,25 @@ def scrub_who_is_plot_walkthrough(body: str, *, question: str = "") -> str:
                 len(s),
             )
         )
-        # Parents / quarry before duplicate cousin wordings so mother is not cut.
+        # Essay voice: care / politics / cousin before parents (parents kept, not cut, but late).
         def _tie_rank(s: str) -> tuple[int, int]:
-            low = s.lower()
-            if re.search(r"\b(father|mother|parent stock)\b", low):
-                return (0, len(s))
+            low = (s or "").lower()
+            if re.search(r"rivalry-care|both care", low):
+                return (0, -len(s))
+            if re.search(r"refuses to associate|larger politics|underestimates", low):
+                return (1, -len(s))
+            if re.search(r"\b(?:first|second|third)\s+cousin\b", low):
+                return (2, len(s))
             if re.search(r"\b(subject of|quarry|hunts?\b|nemesis)\b", low):
-                return (1, len(s))
-            if re.search(
-                r"\b(?:first|second|third)\s+cousin\b|rivalry-care|"
-                r"refuses to associate|underestimates",
-                low,
-            ):
-                return (
-                    2,
-                    -len(s)
-                    if re.search(r"rivalry-care|refuses to associate|underestimates", low)
-                    else len(s),
-                )
-            if re.search(r"\bcousin\b", low):
                 return (3, len(s))
-            return (4, len(s))
+            if re.search(r"\bcousin\b", low):
+                return (4, len(s))
+            if re.search(r"\b(father|mother|parent stock)\b", low):
+                return (5, len(s))
+            return (6, len(s))
 
         tiesish.sort(key=_tie_rank)
-        # Kin/stakes before long rename dumps.
+        # Identity open → standing ties → faeble/stakes → scraps. Parents ride in ties (rank 5).
         ordered = identityish[:4] + tiesish[:6] + stakesish[:3] + other[:1] + renameish[:1]
         kept = ordered or kept[:5]
     else:

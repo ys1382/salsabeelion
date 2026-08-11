@@ -299,6 +299,7 @@ Run **one row at a time** in Cursor. Don’t skip Phase 0 — it costs nothing a
 - Still reject knower POV (“X thinks that Y…”), rename infodumps as the whole card, and unrelated scene scraps
 - Treat the **Tenebris** card above as the current depth+accuracy baseline for standing relations, fairy-tale origin, parents, antagonist/quarry, and draft+notes politics stance when present
 - Who-is must use **main draft + notes** for standing cast facts — not notes-only
+- Essay-hook **order**: lead with role/open (“In Work, Name is…”); parents late — never mother/father first
 - Next goal (separate task): bring other cast cards up to that same bar **without** breaking the accuracy pins above
 
 ### Plot relation accuracy — timing (pinned 2026-08-10) — **Not yet**

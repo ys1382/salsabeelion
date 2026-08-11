@@ -3196,9 +3196,16 @@ def _essay_hook_who_is_sentences(label: str, sentences: list[str]) -> list[str]:
             )
             out.append(s2)
             continue
-        # Skip pronoun rewrite on rivalry-care pair lines.
+        # Rivalry-care pair lines: "He and Duke Dijon share…"
         if re.search(r"rivalry-care bond", s, re.I):
-            out.append(s)
+            s2 = re.sub(
+                rf"^{re.escape(label)}\s+and\s+",
+                f"{pronoun.capitalize()} and ",
+                s,
+                count=1,
+                flags=re.I,
+            )
+            out.append(s2)
             continue
         s2 = re.sub(
             rf"^{re.escape(label)}'s\s+",
@@ -3235,6 +3242,22 @@ def _essay_hook_who_is_sentences(label: str, sentences: list[str]) -> list[str]:
             s2 = re.sub(
                 rf"^{re.escape(label)}\s+leads\s+",
                 f"{pronoun.capitalize()} leads ",
+                s2,
+                count=1,
+                flags=re.I,
+            )
+        if re.match(rf"^{re.escape(label)}\b", s2, re.I):
+            s2 = re.sub(
+                rf"^{re.escape(label)}\s+refuses\s+",
+                f"{pronoun.capitalize()} refuses ",
+                s2,
+                count=1,
+                flags=re.I,
+            )
+        if re.match(rf"^{re.escape(label)}\b", s2, re.I):
+            s2 = re.sub(
+                rf"^{re.escape(label)}\s+underestimates\s+",
+                f"{pronoun.capitalize()} underestimates ",
                 s2,
                 count=1,
                 flags=re.I,
