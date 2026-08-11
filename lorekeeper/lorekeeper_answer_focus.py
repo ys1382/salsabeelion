@@ -545,6 +545,13 @@ _SOURCES_META = re.compile(
     r"(?:that\s+)?",
     re.I,
 )
+# Model sometimes echoes retrieval tags like "SOURCE 9 makes clear…"
+_SOURCE_LABEL_VERB = re.compile(
+    r"\[?\s*SOURCE\s+\d+\s*\]?\s*"
+    r"(?:makes?\s+clear|states?|shows?|indicates?|says?|notes?)\s*(?:that\s+)?",
+    re.I,
+)
+_SOURCE_LABEL_BARE = re.compile(r"\[?\s*SOURCE\s+\d+\s*\]?", re.I)
 _SAME_TWO_CHARS = re.compile(
     r"\b(?:this is |that this is )?(?:the )?relationship between (?:the )?same two characters\b[^.?!]*[.?!]?\s*",
     re.I,
@@ -570,6 +577,10 @@ def scrub_rag_artifacts(question: str, answer: str, *, allow_broad: bool) -> str
     body = _INVENTED_EQUIV.sub("", body)
     body = _DESPITE_BIO.sub("", body)
     body = _SOURCES_META.sub("", body)
+    body = _SOURCE_LABEL_VERB.sub("notes make clear ", body)
+    body = _SOURCE_LABEL_BARE.sub("", body)
+    body = re.sub(r"\s{2,}", " ", body)
+    body = re.sub(r"\s+([,;:.])", r"\1", body)
     body = _SAME_TWO_CHARS.sub("", body)
     body = _FALSE_ARC_GAP.sub("", body)
     body = re.sub(r"^[a-z]", lambda m: m.group(0).upper(), body.strip(), count=1) if body.strip() else body

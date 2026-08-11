@@ -366,7 +366,8 @@ def resume_related_note_block(entries: list[dict[str, Any]], question: str) -> s
     scored.sort(key=lambda row: (-row[0], row[1].lower()))
     lines = [f"- {title}: {excerpt}" for _score, title, excerpt in scored[:3]]
     return (
-        "Related notes for this beat (use for stakes, mistaken beliefs marked wrong, "
+        "Related notes for this beat (use for stakes and belief corrections — "
+        "mirror notes: incorrect when wrong, incomplete/partly right when they say so; "
         "destination names, brothers/escape — do not dump full cast cards):\n"
         + "\n".join(lines)
         + "\n\n"

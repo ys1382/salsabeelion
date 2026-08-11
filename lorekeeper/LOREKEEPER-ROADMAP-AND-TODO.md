@@ -317,7 +317,7 @@ Run **one row at a time** in Cursor. Don’t skip Phase 0 — it costs nothing a
 **Leave-off / main-draft plot — accuracy milestone (pinned 2026-08-11):** Owner checked **100% accurate** for:
 
 - Q: *Where did I leave of[f] in the main draft in terms of plot?*
-- Gold shape: short **planning brief** of the **latest draft beat** — formal librarian voice (engaging, not novel prose); who is doing what to whom; active stakes / what the focal character thinks awaits them; mistaken beliefs marked wrong when notes say so; short just-before lead-in (capture, brothers outstripped, destination, escape attempts) — **not** sensory fluff (e.g. paws off the ground) and **not** an infodump.
+- Gold shape: short **planning brief** of the **latest draft beat** — formal librarian voice (engaging, not novel prose); who is doing what to whom; active stakes / what the focal character thinks awaits them; belief corrections **mirrored from notes** (incorrect when notes say wrong; incomplete/partly right when notes say they’re right to fear X but wrong about the form); short just-before lead-in (capture, brothers outstripped, destination, escape attempts) — **not** sensory fluff, **not** an infodump, **never** leaked `SOURCE N` labels.
 - Do **not** regress to fake work titles (“Nothing is tagged ‘The Main Draft…’”) or scrap dumps.
 - Typo tolerance: “leave of” / “left of” should still route as leave-off when paired with main draft / plot.
 

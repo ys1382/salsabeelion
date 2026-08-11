@@ -143,6 +143,21 @@ class AnswerFocusTests(unittest.TestCase):
             body.endswith((".", "!", "?", "…")) or "grey eyes" in body.lower()
         )
 
+    def test_scrub_source_label_leak(self):
+        from lorekeeper_answer_focus import scrub_rag_artifacts
+
+        raw = (
+            'His working fear is punishment; SOURCE 9 makes clear this belief is '
+            "incorrect, as the Baron intends guest reception instead.\n\n"
+            "— From your notes only. Nothing invented."
+        )
+        q = "Where did I leave off in the main draft in terms of plot?"
+        cleaned = scrub_rag_artifacts(q, raw, allow_broad=True)
+        self.assertNotIn("SOURCE 9", cleaned)
+        self.assertNotIn("SOURCE", cleaned)
+        self.assertIn("notes make clear", cleaned.lower())
+        self.assertIn("incorrect", cleaned.lower())
+
 
 if __name__ == "__main__":
     unittest.main()
