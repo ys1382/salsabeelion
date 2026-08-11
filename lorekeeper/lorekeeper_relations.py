@@ -847,7 +847,10 @@ def _line_for_pair_fact(fact: dict[str, Any], a: str, b: str) -> str:
     return ""
 
 
-_CAST_OTHER_NAME = rf"(?:{CHAR}|{PROPER}|Duke\s+{PROPER}|Lord\s+{PROPER}|Lady\s+{PROPER})"
+_CAST_OTHER_NAME = (
+    r"(?:Character\s+[A-Za-z0-9]+|Duke\s+[A-Z][a-z]{2,}|Lord\s+[A-Z][a-z]{2,}|"
+    r"Lady\s+[A-Z][a-z]{2,}|[A-Z][a-z]{2,}(?:\s+[A-Z][a-z]{2,})?)"
+)
 _PLOT_BLEED_NEAR_RELATION = re.compile(
     r"(?i)\b("
     r"surveillance|travel companions|but anyway|at some point later|"
@@ -859,13 +862,14 @@ _RELATION_UNCERTAIN = re.compile(
     r"(?i)\b("
     r"may or may not|whether or not|not (?:yet )?decided|undecided|"
     r"open question|potentially|maybe|might be|unclear|"
-    r"actually (?:cousins?|related)|whether .{0,40}cousins?"
+    r"actually (?:cousins?|related)|whether .{0,40}cousins?|"
+    r"I don'?t think I want|don'?t think I want|left open|still deciding"
     r")\b"
 )
 
 
 def who_is_standing_relation_lines(
-    label: str, entries: list[dict[str, Any]], *, limit: int = 4
+    label: str, entries: list[dict[str, Any]], *, limit: int = 6
 ) -> list[str]:
     """
     Cast-card standing ties for who-is: cousin / ally / co-conspirator,
@@ -1019,12 +1023,11 @@ def who_is_standing_relation_lines(
                         f"in your notes"
                     )
 
-        # Draft / letters: tight "esteemed cousin" greetings only.
+        # Draft / letters: only first-person greetings ("To my esteemed cousin X").
+        # Never treat "your esteemed cousin {label} suspects…" as label calling anyone.
         for m in re.finditer(
-            rf"(?:to\s+my|my|your|his|her|their)\s+esteemed\s+cousin\s+"
-            rf"({_CAST_OTHER_NAME})\b",
+            rf"(?:to\s+my|my)\s+esteemed\s+cousin\s+({_CAST_OTHER_NAME})\b",
             body,
-            re.I,
         ):
             span_start = max(0, m.start() - 40)
             span_end = min(len(body), m.end() + 40)
@@ -1035,23 +1038,101 @@ def who_is_standing_relation_lines(
             if not _other_ok(other):
                 continue
             if _name_key(other) == _name_key(label):
-                if partner:
-                    _add(
-                        f"{partner} is called {label}'s esteemed cousin in your notes"
-                    )
                 continue
-            # Speaker is label if label appears near the greeting or in the title.
             near = body[max(0, m.start() - 120) : m.end() + 80]
-            if re.search(rf"\b{re.escape(label)}\b", title + near, re.I) or (
-                partner and _name_key(other) == _name_key(partner)
+            title_from_label = bool(
+                re.search(
+                    rf"(?:from|by|letter).{{0,40}}\b{re.escape(label)}\b|"
+                    rf"\b{re.escape(label)}\b.{{0,40}}(?:letter|wrote|writes)",
+                    title,
+                    re.I,
+                )
+            )
+            if (
+                re.search(rf"\b{re.escape(label)}\b", near, re.I)
+                or title_from_label
+                or (
+                    partner
+                    and _name_key(other)
+                    == _name_key(
+                        re.sub(r"^(?:Duke|Lord|Lady)\s+", "", partner, flags=re.I)
+                    )
+                )
             ):
                 _add(f"{label} calls {other} his esteemed cousin")
-            elif partner and _name_key(other) == _name_key(
-                re.sub(r"^(?:Duke|Lord|Lady)\s+", "", partner, flags=re.I)
-            ):
-                _add(f"{label} calls {partner} his esteemed cousin")
+
+        # Open / potential parents from character notes (not draft scene "dad" asides).
+        if kind in {"character", "note", "politics"} and mentions_label:
+            _harvest_open_parent_notes(label, body, _add, uncertain_here)
 
     return lines[:limit]
+
+
+def _harvest_open_parent_notes(
+    label: str,
+    body: str,
+    add_line,
+    uncertain_entry: bool,
+) -> None:
+    """Cast-card parent slots from notes, including open preferences."""
+    # "his father, who was the Domestic Cat species parent"
+    m = re.search(
+        rf"(?:his|her|their)\s+father,?\s+who\s+was\s+(?:the\s+)?"
+        rf"([A-Za-z][A-Za-z \-]{{2,40}}?)\s+species\s+parent\b|"
+        rf"(?:his|her|their)\s+father\s+was\s+(?:a\s+|the\s+)?"
+        rf"([A-Za-z][A-Za-z \-]{{2,40}}?)(?:\s+species)?\b",
+        body,
+        re.I,
+    )
+    species = None
+    if m:
+        species = (m.group(1) or m.group(2) or "").strip()
+        species = re.sub(r"\s+", " ", species)
+        species = re.sub(
+            r"\b(from|but|and|who|was|the|himself|actually)\b.*$",
+            "",
+            species,
+            flags=re.I,
+        ).strip(" ,.")
+    # Preference: father should not be a Faeble alongside him.
+    not_faeble = bool(
+        re.search(
+            rf"(?:don'?t think I want|do not want|don'?t want).{{0,40}}"
+            rf"(?:his|her|their)\s+father.{{0,40}}(?:faeble|fairy[- ]?tale)|"
+            rf"father.{{0,40}}(?:not|shouldn'?t).{{0,20}}(?:be\s+a\s+)?faeble|"
+            rf"father to be a Faeble",
+            body,
+            re.I | re.S,
+        )
+    )
+    mother_here = bool(
+        re.search(
+            r"(?:his|her|their)\s+mother\s+is\s+from\s+here\b",
+            body,
+            re.I,
+        )
+    )
+    if species and len(species) >= 3 and species.lower() not in {
+        "no",
+        "not",
+        "the",
+        "from",
+        "here",
+    }:
+        if not_faeble or uncertain_entry:
+            add_line(
+                f"Your notes sketch {label}'s father as {species} parent stock, "
+                f"with open questions (including not wanting him as a Faeble alongside {label})"
+            )
+        else:
+            add_line(f"{label}'s father is noted as {species} parent stock")
+    elif not_faeble:
+        add_line(
+            f"Your notes leave {label}'s father open, including not wanting him "
+            f"as a Faeble alongside {label}"
+        )
+    if mother_here:
+        add_line(f"Your notes say {label}'s mother is from here")
 
 
 def merge_who_is_relationship_lines(

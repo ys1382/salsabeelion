@@ -635,9 +635,17 @@ def scrub_who_is_plot_walkthrough(body: str, *, question: str = "") -> str:
         if is_who_is_cast_fact_sentence(s, label):
             kept.append(s)
             continue
-        # Librarian cast-card gaps (missing relations / role) — keep on who-is.
+        # Librarian cast-card gaps / open parent sketches — keep on who-is.
         if re.match(
-            r"^Your notes don't yet (?:spell out|pin a clear cast role)\b",
+            r"^Your notes don't yet (?:spell out|pin a clear cast role)\b|"
+            r"^Your notes (?:sketch|say|leave)\b.+\b(?:father|mother)\b",
+            s,
+            re.I,
+        ):
+            kept.append(s)
+            continue
+        if label and re.match(
+            rf"^{re.escape(label)}'s\s+(?:father|mother)\s+is\s+noted\b",
             s,
             re.I,
         ):
@@ -677,7 +685,8 @@ def scrub_who_is_plot_walkthrough(body: str, *, question: str = "") -> str:
                 r"\b(brother|sister|father|mother|parent|married|subject of|quarry|"
                 r"known|rival|up against|nemesis|opposed|cousin|ally|allies|"
                 r"co-?conspir|esteemed cousin|refers to|your notes treat|"
-                r"don'?t yet spell out|don'?t yet pin a clear cast role)\b",
+                r"don'?t yet spell out|don'?t yet pin a clear cast role|"
+                r"father|mother)\b",
                 s,
                 re.I,
             ):

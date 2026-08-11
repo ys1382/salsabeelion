@@ -886,6 +886,8 @@ def _kinship_shape_sentence(sentence: str, label: str) -> bool:
         rf"^{lab}\s+calls?\s+.+\s+(?:his|her|their)\s+(?:esteemed\s+)?cousin\b.+$",
         rf"^.+\s+is\s+called\s+{lab}'s\s+(?:esteemed\s+)?cousin\b.+$",
         rf"^Your notes treat\s+.+\s+as\s+a\s+possible\s+(?:second\s+)?cousin\s+to\s+{lab}\b.+$",
+        rf"^Your notes (?:sketch|say|leave)\s+{lab}'s\s+(?:father|mother)\b.+$",
+        rf"^{lab}'s\s+(?:father|mother)\s+is\s+noted\b.+$",
         rf"^{lab}\s+refers to\s+.+\s+as\s+cousin\b.+$",
         rf"^{lab}\s+refers to\s+(?:his|her|their)\s+['\"]?cousin['\"]?\s+.+$",
         rf"^.+\s+is\s+an\s+ally\b.{{0,80}}{lab}\b.+$",
@@ -1128,9 +1130,11 @@ def is_who_is_cast_fact_sentence(sentence: str, label: str) -> bool:
     ):
         return False
 
-    # Librarian honesty gaps on who-is cast cards.
+    # Librarian honesty gaps / open parent sketches on who-is cast cards.
     if re.match(
-        r"^Your notes don't yet (?:spell out|pin a clear cast role)\b",
+        r"^Your notes don't yet (?:spell out|pin a clear cast role)\b|"
+        r"^Your notes (?:sketch|say|leave)\b.+\b(?:father|mother)\b|"
+        rf"^{re.escape(label)}'s\s+(?:father|mother)\s+is\s+noted\b",
         s,
         re.I,
     ):
@@ -1986,10 +1990,18 @@ def weave_who_is_gold_tone(
                 )
             continue
         # Titled world-origin / fairy-tale standing (Lord X of Y is …).
+        # Do not swallow parent/kin open notes that merely mention Faeble.
         if re.search(
             rf"^(?:Lord|Lady|Duke|Duchess|Baron|Baroness)\s+{re.escape(label)}\b|"
             rf"\b{re.escape(label)}\s+is\s+(?:a\s+)?(?:Baron|Lord|Lady)\b|"
             r"\b(fairy[- ]?tale|faeble|not entirely of this world)\b",
+            c,
+            re.I,
+        ) and not re.search(
+            r"\b("
+            r"father|mother|parent stock|cousin|esteemed cousin|"
+            r"your notes (?:sketch|say|leave|treat)|refers to"
+            r")\b",
             c,
             re.I,
         ):
@@ -2087,7 +2099,7 @@ def weave_who_is_gold_tone(
             r"sister|father|mother|widow|raised|parent|subject of|quarry|married|"
             r"nemesis|best friend|closest friend|cousin|father to|mother to|"
             r"esteemed cousin|ally|allies|co-?conspir|refers to|your notes treat|"
-            r"possible (?:second )?cousin|calls?\b"
+            r"possible (?:second )?cousin|calls?\b|father|mother|parent stock"
             r")\b",
             c,
             re.I,
@@ -2404,7 +2416,7 @@ def weave_who_is_gold_tone(
         if clause not in sentences:
             sentences.append(clause)
 
-    for c in other_family[:3]:
+    for c in other_family[:4]:
         clause = c if c.endswith((".", "!", "?")) else c + "."
         if clause not in sentences:
             sentences.append(clause)
@@ -2913,7 +2925,7 @@ def append_who_is_cast_card_gaps(
             r"\b("
             r"brother|sister|cousin|father|mother|parent|married|spouse|"
             r"ally|allies|co-?conspir|son of|daughter of|child of|"
-            r"esteemed cousin|your notes treat|refers to"
+            r"esteemed cousin|your notes treat|refers to|father|mother"
             r")\b",
             low,
             re.I,

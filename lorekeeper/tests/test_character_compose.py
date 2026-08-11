@@ -1382,6 +1382,64 @@ class CharacterComposeTests(unittest.TestCase):
         self.assertTrue("cousin" in answer, msg=answer)
         self.assertNotIn("surveillance", answer)
         self.assertNotIn("but anyway", answer)
+        self.assertNotIn("tenebris suspects", answer)
+        self.assertNotRegex(answer, r"(?i)calls\s+tenebris\s+suspects")
+
+    def test_who_is_rejects_your_esteemed_cousin_self_mangle(self):
+        from lorekeeper_relations import who_is_standing_relation_lines
+
+        entries = [
+            _entry(
+                "d1",
+                "Ashford draft",
+                (
+                    "especially if their smallest is still injured, as your esteemed "
+                    "cousin Character T suspects. He shifts. "
+                    "To my esteemed cousin Dijon, Character T wrote carefully."
+                ),
+                kind="document",
+                tags=["Ashford Saga"],
+            ),
+            _entry(
+                "n1",
+                "Character T",
+                "Character T is Baron of Cheshire.",
+                kind="character",
+                tags=["Ashford Saga"],
+            ),
+        ]
+        lines = who_is_standing_relation_lines("Character T", entries)
+        joined = " ".join(lines).lower()
+        self.assertNotIn("character t suspects", joined)
+        self.assertNotIn("calls character t", joined)
+        self.assertTrue(
+            any("dijon" in ln.lower() and "esteemed" in ln.lower() for ln in lines),
+            msg=lines,
+        )
+
+    def test_who_is_surfaces_open_father_notes(self):
+        entries = [
+            _entry(
+                "n1",
+                "Character T Notes",
+                (
+                    "Character T is Baron of Cheshire. His mother is from here, but his "
+                    "father, who was the Domestic Cat species parent from elsewhere, "
+                    "passed coat colors. I don't think I want his father to be a Faeble "
+                    "alongside him."
+                ),
+                kind="character",
+                tags=["Ashford Saga"],
+            ),
+        ]
+        res = self._ask("In Ashford Saga, who is Character T?", entries)
+        answer = (res.get("answer") or "").lower()
+        self.assertIn("baron", answer)
+        self.assertTrue("father" in answer, msg=answer)
+        self.assertTrue(
+            "domestic cat" in answer or "faeble" in answer or "open" in answer,
+            msg=answer,
+        )
 
     def test_who_is_mentions_relation_gap_when_none_written(self):
         entries = [
