@@ -112,7 +112,6 @@ _IDENTITY_CLAIM = re.compile(
     r"((?:[\w'-]+\s+){0,4}"
     r"(?:lynx|rabbit|wolf|fox|cat|dog|bear|eagle|hawk|owl|raven|crow|"
     r"mouse|rat|deer|bird|feline|canine|sentinel|creature|beast)s?)\b",
-    re.I,
 )
 
 
@@ -289,6 +288,7 @@ def trim_off_topic_sentences(question: str, answer: str, *, allow_broad: bool) -
             r"from another realm|does not grudge|among the few|"
             r"refuses to associate|larger politics|underestimates|"
             r"political influence|does not realize|"
+            r"cold shoulder|heavier load|outsider|"
             r"political nuance|unspoken line|not yet fully aware|rediscovery"
             r")\b",
             low,
@@ -772,6 +772,7 @@ def scrub_who_is_plot_walkthrough(body: str, *, question: str = "") -> str:
                 r"cold on the surface|fascination|disgusted|mixed parentage|"
                 r"refuses to associate|larger politics|underestimates|"
                 r"political influence|does not realize|"
+                r"cold shoulder|heavier load|outsider|"
                 r"father|mother|kinship is left open|kinship remains open|parent stock|hunts?\b)\b",
                 s,
                 re.I,
@@ -800,11 +801,12 @@ def scrub_who_is_plot_walkthrough(body: str, *, question: str = "") -> str:
         # Essay voice: care / politics / cousin before parents (parents kept, not cut, but late).
         def _tie_rank(s: str) -> tuple[int, int]:
             low = (s or "").lower()
-            if re.search(r"rivalry-care|both care|cold on the surface", low):
+            if re.search(r"rivalry-care|both care|cold on the surface|heavier load", low):
                 return (0, -len(s))
             if re.search(
                 r"disgusted|refuses to associate|underestimates|"
-                r"political influence|does not realize|fascination|mixed parentage",
+                r"political influence|does not realize|fascination|mixed parentage|"
+                r"cold shoulder",
                 low,
             ):
                 return (1, -len(s))
@@ -814,7 +816,7 @@ def scrub_who_is_plot_walkthrough(body: str, *, question: str = "") -> str:
                 return (3, len(s))
             if re.search(r"\bcousin\b", low):
                 return (4, len(s))
-            if re.search(r"\b(father|mother|parent stock)\b", low):
+            if re.search(r"\b(father|mother|parent stock|outsider)\b", low):
                 return (5, len(s))
             return (6, len(s))
 
@@ -870,12 +872,40 @@ def scrub_unsupported_identity_claims(
         s = sentence.strip()
         if not s:
             continue
+        # Heritage / parentage cast facts are not hybrid identity claims.
+        if re.search(
+            r"\b(?:his|her|their)\s+(?:father|mother)\s+is\b|"
+            r"\bmixed parentage\b|"
+            r"\bcold shoulder\b|"
+            r"\bfrom another realm\b|"
+            r"\boutsider\b",
+            s,
+            re.I,
+        ):
+            kept.append(s)
+            continue
         m = _IDENTITY_CLAIM.search(s)
         if not m:
             kept.append(s)
             continue
         name = m.group(1).strip().lower()
         species = m.group(2).strip().lower()
+        if name in {
+            "father",
+            "mother",
+            "brother",
+            "sister",
+            "cousin",
+            "son",
+            "daughter",
+            "parent",
+            "parents",
+            "husband",
+            "wife",
+            "spouse",
+        }:
+            kept.append(s)
+            continue
         if _supported(name, species):
             kept.append(s)
     if not kept:

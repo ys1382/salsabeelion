@@ -906,6 +906,14 @@ def _kinship_shape_sentence(sentence: str, label: str) -> bool:
         rf"^(?:He|She)\s+is\s+personally disgusted by Predator Court politics\b.+$",
         rf"^{lab}\s+has\s+mixed parentage\.?$",
         rf"^(?:He|She)\s+has\s+mixed parentage\.?$",
+        rf"^(?:He|She)\s+has\s+mixed parentage,\s+and is not entirely of this world\.?$",
+        rf"^(?:He|She)\s+has\s+mixed parentage\b.+$",
+        rf"^{lab}\s+has\s+mixed parentage\b.+$",
+        rf"^(?:His|Her)\s+mother\s+is\s+from\s+here,\s+but\s+(?:his|her)\s+father\b.+$",
+        rf"^.+\s+is\s+(?:his|her)\s+(?:first|second|third)\s+cousin,\s+with whom\b.+$",
+        rf"^(?:He|She)\s+was given the cold shoulder\b.+$",
+        rf"^{lab}\s+was given the cold shoulder\b.+$",
+        rf"^(?:Lord|Lady|Duke|Baron)\s+{lab}\b.+\bfaeble\b.+$",
         rf"^{lab}'s\s+father\s+is\s+(?:sketched|noted|left open)\b.+$",
         rf"^{lab}'s\s+father\s+is\s+(?:a\s+)?.+\s+parent stock\b.+$",
         rf"^(?:His|Her)\s+father\s+is\s+(?:a\s+)?.+\s+parent stock\b.+$",
@@ -1012,7 +1020,8 @@ def _is_gold_tone_cast_sentence(sentence: str, label: str) -> bool:
         re.search(
             r"\b("
             r"known to the fairytale|known to the fairy[- ]tale|fairytale world|"
-            r"known as|also known as|white rabbit"
+            r"known as|also known as|white rabbit|cheshire cat|baron of|"
+            r"subject of (?:his|her) fascination"
             r")\b",
             s,
             re.I,
@@ -1064,12 +1073,15 @@ def _kinship_targets_plausible(sentence: str, label: str) -> bool:
     ):
         phrases.append(m.group(1).strip(" ,"))
     for m in re.finditer(
-        r"\b(?:married|engaged|subject|quarry|nemesis|best friend|closest friend|"
-        r"father|mother|mentor)\s+(?:of|to)\s+(.+?)(?:\.|$)",
+        r"\b(?:married|engaged|nemesis|best friend|closest friend|"
+        r"father|mother|mentor)\s+(?:of|to)\s+(.+?)(?:\.|$)|"
+        r"\b(?:subject|quarry)\s+of\s+(?!his\s+fascination|her\s+fascination)(.+?)(?:\.|$)",
         s,
         re.I,
     ):
-        phrases.append(m.group(1).strip(" ,"))
+        tail = (m.group(1) or m.group(2) or "").strip(" ,")
+        if tail:
+            phrases.append(tail)
     if not phrases:
         m = re.search(
             r"\b(?:brother|sister|son|daughter|married|engaged|subject|quarry|child)\s+"
@@ -1197,7 +1209,17 @@ def is_who_is_cast_fact_sentence(sentence: str, label: str) -> bool:
         return True
 
     # Kinship / standing — short shapes only; validate name targets.
+    # Role / origin opens that match kinship shapes still count as cast facts.
     if _kinship_shape_sentence(s, label):
+        if re.search(
+            r"\b(protagonist|antagonist|main character|cheshire cat|white rabbit|"
+            r"faeble|mixed parentage|disgusted by|cold on the surface|"
+            r"from another realm|third cousin|second cousin|first cousin|"
+            r"cold shoulder|heavier load)\b",
+            s,
+            re.I,
+        ):
+            return True
         return _kinship_targets_plausible(s, label)
 
     # Plain overview stakes (chosen one / upheaval / crossing worlds).
@@ -1652,6 +1674,7 @@ def _clause_adds_profile(clause: str, label: str) -> bool:
         r"disgusted by Predator Court politics|"
         r"does not realize how much political influence|"
         r"mixed parentage|"
+        r"cold shoulder|outsider|heavier load|"
         r"underestimates (?:his|her) own presence)\b",
         s,
         re.I,
@@ -2203,6 +2226,7 @@ def weave_who_is_gold_tone(
             r"disgusted by Predator Court politics|"
             r"does not realize how much political influence|"
             r"mixed parentage|"
+            r"cold shoulder|outsider|heavier load|"
             r"underestimates (?:his|her) own presence"
             r")\b",
             c,
@@ -2633,7 +2657,7 @@ def weave_who_is_gold_tone(
         if re.search(
             r"disgusted by Predator Court politics|refuses to associate|"
             r"larger politics|does not realize how much political|"
-            r"underestimates|mixed parentage|fascination",
+            r"underestimates|mixed parentage|fascination|cold shoulder|heavier load",
             low,
         ):
             return (1, -len(line))
@@ -2643,7 +2667,9 @@ def weave_who_is_gold_tone(
             return (3, -len(line))
         if re.search(r"\bcousin\b", low):
             return (4, -len(line))
-        return (5, -len(line))
+        if re.search(r"\b(?:father|mother|outsider|another realm)\b", low):
+            return (5, -len(line))
+        return (6, -len(line))
 
     other_family_sorted = sorted(other_family, key=_other_family_rank)
     for c in other_family_sorted[:8]:
@@ -3344,8 +3370,14 @@ def _essay_flow_join_sentences(label: str, sentences: list[str]) -> list[str]:
         if cm:
             other = cm.group(1)
             degree = cm.group(2)
-            # Subject of the card → "he"; keep partner named.
+            # Subject of the card → "he"; keep partner named in the care clause.
             care_core = re.sub(rf"\b{re.escape(label)}\b", "he", care_core)
+            care_core = re.sub(
+                r"\bunbeknownst to he\b",
+                "unbeknownst to him",
+                care_core,
+                flags=re.I,
+            )
             if re.search(r"among the few cats|both care|does not grudge", care_core, re.I):
                 joined = (
                     f"{other} is his {degree}, with whom he shares a relationship "
@@ -3362,6 +3394,32 @@ def _essay_flow_join_sentences(label: str, sentences: list[str]) -> list[str]:
                 kept.insert(1, joined)
             else:
                 kept.append(joined)
+
+    # Cold shoulder → fold into mother/father heritage when present.
+    si, shoulder = _take(
+        lambda s: re.search(r"\bcold shoulder\b", s, re.I)
+        and not re.match(
+            r"^(?:His|Her)\s+mother\s+is\s+from\s+here,\s+but\s+(?:his|her)\s+father\b",
+            s,
+            re.I,
+        )
+    )
+    if shoulder and si is not None:
+        pi, parents = _take(
+            lambda s: re.match(
+                r"^(?:His|Her)\s+mother\s+is\s+from\s+here,\s+but\s+(?:his|her)\s+father\b",
+                s,
+                re.I,
+            )
+            and not re.search(r"\bcold shoulder\b", s, re.I)
+        )
+        if parents and pi is not None:
+            joined = (
+                f"{parents.rstrip('.')} — and other cats gave him the cold shoulder "
+                f"because that father was an outsider."
+            )
+            kept = [s for j, s in enumerate(kept) if j not in {si, pi}]
+            kept.append(joined)
 
     # Mixed parentage + "not entirely of this world" faeble line.
     xi, mixed = _take(

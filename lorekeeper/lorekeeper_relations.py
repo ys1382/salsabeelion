@@ -1053,6 +1053,26 @@ def who_is_standing_relation_lines(
                     body,
                     re.I,
                 ):
+                    court_load = bool(
+                        re.search(
+                            rf"\b("
+                            rf"unbeknownst to\s+{re.escape(label)}|"
+                            r"unbeknownst to (?:him|her)|"
+                            r"political pressure increasing upon|"
+                            r"weight of the crown|"
+                            r"heavier (?:political )?load|"
+                            r"decision ultimately resulted in the political pressure"
+                            r")\b",
+                            body,
+                            re.I,
+                        )
+                    )
+                    load_tail = (
+                        f"; unbeknownst to {label}, his staying out of Court politics "
+                        f"leaves {partner} with a heavier load"
+                        if court_load
+                        else ""
+                    )
                     if re.search(
                         r"\b("
                         r"does not have a grudge|doesn'?t have a grudge|"
@@ -1066,11 +1086,13 @@ def who_is_standing_relation_lines(
                             f"{label} and {partner} share a relationship that is cold "
                             f"on the surface but more complicated — {partner} is among "
                             f"the few cats {label} does not grudge, and both care"
+                            f"{load_tail}"
                         )
                     else:
                         _add(
                             f"{label} and {partner} share a relationship that is cold "
                             f"on the surface but more complicated — both care"
+                            f"{load_tail}"
                         )
                 elif re.search(
                     r"\b("
@@ -1248,12 +1270,13 @@ def who_is_standing_relation_lines(
             r"underestimates (?:his|her) own presence|"
             r"disgusted by Predator Court politics|"
             r"does not realize how much political influence|"
-            r"mixed parentage",
+            r"mixed parentage|"
+            r"cold shoulder",
             x,
             re.I,
         )
     ]
-    # Keep at most one linked politics line + optional mixed-parentage line.
+    # Keep at most one linked politics line + mixed-parentage + cold-shoulder.
     if politics_lines:
         keep_politics = next(
             (
@@ -1272,7 +1295,11 @@ def who_is_standing_relation_lines(
             (x for x in politics_lines if re.search(r"mixed parentage", x, re.I)),
             None,
         )
-        keep_set = {x for x in (keep_politics, keep_mixed) if x}
+        keep_shoulder = next(
+            (x for x in politics_lines if re.search(r"cold shoulder", x, re.I)),
+            None,
+        )
+        keep_set = {x for x in (keep_politics, keep_mixed, keep_shoulder) if x}
         lines = [
             x
             for x in lines
@@ -1282,7 +1309,8 @@ def who_is_standing_relation_lines(
                 r"underestimates (?:his|her) own presence|"
                 r"disgusted by Predator Court politics|"
                 r"does not realize how much political influence|"
-                r"mixed parentage",
+                r"mixed parentage|"
+                r"cold shoulder",
                 x,
                 re.I,
             )
@@ -1557,6 +1585,7 @@ def _harvest_politics_stance(
     saw_refusal = False
     saw_mixed = False
     saw_presence = False
+    saw_cold_shoulder = False
 
     seen_docs: set[str] = set()
     for entry in entries:
@@ -1621,6 +1650,24 @@ def _harvest_politics_stance(
         if re.search(r"\bmixed parentage\b", body, re.I):
             saw_mixed = True
 
+        if re.search(
+            r"\b("
+            r"given the cold shoulder|"
+            r"cold shoulder while (?:he|she|they) was growing|"
+            r"essentially given the cold shoulder"
+            r")\b",
+            body,
+            re.I,
+        ) and re.search(
+            r"\b("
+            r"father|mixed parentage|outsider|"
+            r"from this realm|from the realm|another realm"
+            r")\b",
+            body,
+            re.I,
+        ):
+            saw_cold_shoulder = True
+
     # Prefer one linked politics sentence when notes support both beats.
     if saw_disgust and saw_unrealized:
         add_line(
@@ -1648,6 +1695,11 @@ def _harvest_politics_stance(
 
     if saw_mixed:
         add_line(f"{label} has mixed parentage")
+    if saw_cold_shoulder:
+        add_line(
+            f"{label} was given the cold shoulder by other cats "
+            f"because his father was an outsider from another realm"
+        )
 
 
 def _harvest_opposition_standing(
@@ -1854,12 +1906,47 @@ def merge_who_is_relationship_lines(
                     re.I,
                 )
             ]
-    # One rivalry-care line is enough.
-    care_lines = [x for x in out if re.search(r"rivalry-care bond", x, re.I)]
+    # One rivalry-care / cold-surface line is enough.
+    care_lines = [
+        x
+        for x in out
+        if re.search(r"rivalry-care bond|cold on the surface", x, re.I)
+    ]
     if len(care_lines) > 1:
-        keep_care = care_lines[0]
-        out = [x for x in out if x == keep_care or not re.search(r"rivalry-care bond", x, re.I)]
-    return out[:10]
+        keep_care = next(
+            (x for x in care_lines if re.search(r"cold on the surface", x, re.I)),
+            care_lines[0],
+        )
+        out = [
+            x
+            for x in out
+            if x == keep_care
+            or not re.search(r"rivalry-care bond|cold on the surface", x, re.I)
+        ]
+
+    # Keep cast-critical heritage / Dijon / politics ahead of thinner scraps.
+    def _merge_rank(line: str) -> tuple[int, int]:
+        low = (line or "").lower()
+        if re.search(r"antagonist|protagonist|cheshire cat|white rabbit|baron", low):
+            return (0, -len(line))
+        if re.search(r"cold on the surface|rivalry-care|heavier load", low):
+            return (1, -len(line))
+        if re.search(
+            r"disgusted|refuses to associate|political influence|mixed parentage|"
+            r"cold shoulder",
+            low,
+        ):
+            return (2, -len(line))
+        if re.search(r"\b(?:first|second|third)\s+cousin\b", low):
+            return (3, -len(line))
+        if re.search(r"\b(?:father|mother|another realm|outsider)\b", low):
+            return (4, -len(line))
+        if re.search(r"\b(?:subject of|quarry|fascination)\b", low):
+            return (5, -len(line))
+        return (6, len(line))
+
+    out = sorted(out, key=_merge_rank)
+    return out[:12]
 
 
 def answer_relationship_between(
