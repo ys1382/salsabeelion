@@ -907,10 +907,16 @@ def _kinship_shape_sentence(sentence: str, label: str) -> bool:
         rf"^{lab}\s+has\s+mixed parentage\.?$",
         rf"^(?:He|She)\s+has\s+mixed parentage\.?$",
         rf"^{lab}'s\s+father\s+is\s+(?:sketched|noted|left open)\b.+$",
-        rf"^{lab}'s\s+father\s+is\s+.+\s+parent stock\b.+$",
-        rf"^(?:His|Her)\s+father\s+is\s+.+\s+parent stock\b.+$",
+        rf"^{lab}'s\s+father\s+is\s+(?:a\s+)?.+\s+parent stock\b.+$",
+        rf"^(?:His|Her)\s+father\s+is\s+(?:a\s+)?.+\s+parent stock\b.+$",
+        rf"^{lab}'s\s+father\s+is\s+(?:a\s+)?.+?(?:from another realm)?(?:, with whether he is a Faeble too still open)?\.?$",
+        rf"^(?:His|Her)\s+father\s+is\s+(?:a\s+)?.+?(?:from another realm)?(?:, with whether he is a Faeble too still open)?\.?$",
         rf"^{lab}'s\s+mother\s+is\s+from\s+here\.?$",
         rf"^(?:His|Her)\s+mother\s+is\s+from\s+here\.?$",
+        rf"^(?:His|Her)\s+mother\s+is\s+from\s+here,\s+but\s+(?:his|her)\s+father\b.+$",
+        rf"^{lab}\s+and\s+.+\s+share\s+a\s+relationship that is cold on the surface\b.+$",
+        rf"^(?:He|She)\s+and\s+.+\s+share\s+a\s+relationship that is cold on the surface\b.+$",
+        rf"^.+\s+is\s+(?:his|her)\s+(?:first|second|third)\s+cousin,\s+with whom\b.+$",
         rf"^Your notes treat\s+.+\s+as\s+a\s+possible\s+(?:second\s+)?cousin\s+to\s+{lab}\b.+$",
         rf"^Your notes (?:sketch|say|leave)\s+{lab}'s\s+(?:father|mother)\b.+$",
         rf"^{lab}'s\s+(?:father|mother)\s+is\s+noted\b.+$",
@@ -2773,7 +2779,7 @@ def formalize_who_is_sentence(sentence: str, label: str) -> str:
     s = re.sub(
         rf"^Your notes sketch\s+{re.escape(label)}'s\s+father\s+as\s+(.+?)\s+parent stock,?\s*"
         rf"with open questions.*$",
-        rf"{label}'s father is \1 parent stock, with whether he is a Faeble too still open.",
+        rf"{label}'s father is a \1, with whether he is a Faeble too still open.",
         s,
         count=1,
         flags=re.I,
@@ -2781,7 +2787,7 @@ def formalize_who_is_sentence(sentence: str, label: str) -> str:
     s = re.sub(
         rf"^{re.escape(label)}'s\s+father\s+is\s+sketched\s+as\s+(.+?)\s+parent stock;\s*"
         rf"notes leave open whether he is a Faeble too\.?$",
-        rf"{label}'s father is \1 parent stock, with whether he is a Faeble too still open.",
+        rf"{label}'s father is a \1, with whether he is a Faeble too still open.",
         s,
         count=1,
         flags=re.I,
@@ -2882,7 +2888,33 @@ def formalize_who_is_sentence(sentence: str, label: str) -> str:
     s = re.sub(
         rf"^{re.escape(label)}'s\s+father\s+is\s+(.+?)\s+parent stock;\s*"
         rf"whether he is a Faeble too is left open\.?$",
-        rf"{label}'s father is \1 parent stock, with whether he is a Faeble too still open.",
+        rf"{label}'s father is a \1, with whether he is a Faeble too still open.",
+        s,
+        count=1,
+        flags=re.I,
+    )
+    s = re.sub(
+        rf"^{re.escape(label)}'s\s+father\s+is\s+(.+?)\s+parent stock\.?$",
+        rf"{label}'s father is a \1.",
+        s,
+        count=1,
+        flags=re.I,
+    )
+    s = re.sub(r"\bparent stock\b", "", s, flags=re.I)
+    s = re.sub(r"\s{2,}", " ", s).strip()
+    s = re.sub(
+        rf"^{re.escape(label)}'s\s+father\s+is\s+a\s+a\s+",
+        rf"{label}'s father is a ",
+        s,
+        count=1,
+        flags=re.I,
+    )
+    s = re.sub(
+        rf"^{re.escape(label)}\s+and\s+(.+?)\s+share\s+a\s+relationship that is cold on the surface\s+"
+        rf"but more complicated\s+[—–\-]\s+(.+?)\s+is among the few cats\s+"
+        rf"{re.escape(label)}\s+does not grudge,\s+and both care\.?$",
+        rf"{label} and \1 share a relationship that is cold on the surface but more complicated — "
+        rf"\2 is among the few cats {label} does not grudge, and both care.",
         s,
         count=1,
         flags=re.I,
@@ -3191,6 +3223,7 @@ def smooth_who_is_prose(label: str, body: str) -> str:
                         if not has_identity:
                             kept.append(f"{label} is {gender}.")
         kept = _essay_hook_who_is_sentences(label, kept)
+        kept = _essay_flow_join_sentences(label, kept)
         out_parts.append(" ".join(kept) if kept else part)
     return "\n\n".join(p for p in out_parts if p.strip())
 
@@ -3240,11 +3273,146 @@ def _infer_who_is_pronoun(label: str, sentences: list[str]) -> str | None:
     return None
 
 
+def _essay_flow_join_sentences(label: str, sentences: list[str]) -> list[str]:
+    """
+    Join related short cast facts into essay-hook rhythm — never invent facts.
+    """
+    kept = [re.sub(r"\s+", " ", (s or "").strip()) for s in sentences if (s or "").strip()]
+    if len(kept) < 2:
+        return kept
+
+    def _take(pred):
+        for i, s in enumerate(kept):
+            if pred(s):
+                return i, s
+        return None, None
+
+    # Mother + father → one parentage sentence.
+    mi, mother = _take(lambda s: re.match(r"^(?:His|Her)\s+mother\s+is\s+from\s+here\.?$", s, re.I))
+    fi, father = _take(
+        lambda s: re.match(r"^(?:His|Her)\s+father\s+is\b", s, re.I)
+        and not re.search(r"\bmother\b", s, re.I)
+    )
+    if mother and father and mi is not None and fi is not None:
+        father_core = re.sub(
+            r"^(?:His|Her)\s+father\s+is\s+",
+            "",
+            father.rstrip("."),
+            count=1,
+            flags=re.I,
+        )
+        poss = "His" if mother.lower().startswith("his") else "Her"
+        joined = f"{poss} mother is from here, but {poss.lower()} father is {father_core}."
+        kept = [s for j, s in enumerate(kept) if j not in {mi, fi}]
+        # Place parents after Dijon / politics when possible — append for now.
+        kept.append(joined)
+
+    # Cousin + Dijon care → one clarifying kinship sentence.
+    ci, cousin = _take(
+        lambda s: re.search(r"\b(?:first|second|third)\s+cousin\b", s, re.I)
+        and not re.search(r"cold on the surface|rivalry-care|both care", s, re.I)
+    )
+    di, dijon = _take(
+        lambda s: re.search(r"cold on the surface|rivalry-care bond|both care", s, re.I)
+    )
+    if cousin and dijon and ci is not None and di is not None:
+        # "Duke Dijon is his third cousin" + care line
+        cm = re.match(
+            r"^((?:Duke|Lord|Lady)\s+\w+|\w+)\s+is\s+(?:his|her)\s+"
+            r"((?:first|second|third)\s+cousin)\.?$",
+            cousin,
+            re.I,
+        )
+        care_core = dijon.rstrip(".")
+        care_core = re.sub(
+            r"^(?:He|She)\s+and\s+(?:Duke|Lord|Lady)?\s*\w+\s+share\s+a\s+"
+            r"relationship that is cold on the surface but more complicated\s+[—–\-]\s*",
+            "",
+            care_core,
+            count=1,
+            flags=re.I,
+        )
+        care_core = re.sub(
+            rf"^(?:He|She|{re.escape(label)})\s+and\s+.+\s+share\s+a\s+"
+            r"(?:complicated\s+rivalry-care bond|relationship that is cold on the surface)"
+            r".*?[—–\-]\s*",
+            "",
+            care_core,
+            count=1,
+            flags=re.I,
+        )
+        if cm:
+            other = cm.group(1)
+            degree = cm.group(2)
+            # Subject of the card → "he"; keep partner named.
+            care_core = re.sub(rf"\b{re.escape(label)}\b", "he", care_core)
+            if re.search(r"among the few cats|both care|does not grudge", care_core, re.I):
+                joined = (
+                    f"{other} is his {degree}, with whom he shares a relationship "
+                    f"that is cold on the surface but more complicated — {care_core}."
+                )
+            else:
+                joined = (
+                    f"{other} is his {degree}, with whom he shares a relationship "
+                    f"that is cold on the surface but more complicated — both care."
+                )
+            kept = [s for j, s in enumerate(kept) if j not in {ci, di}]
+            # Insert after opening / faeble when possible: after first sentence.
+            if kept:
+                kept.insert(1, joined)
+            else:
+                kept.append(joined)
+
+    # Mixed parentage + "not entirely of this world" faeble line.
+    xi, mixed = _take(
+        lambda s: re.match(r"^(?:He|She)\s+has\s+mixed parentage\.?$", s, re.I)
+    )
+    ri, realm = _take(
+        lambda s: re.search(r"not entirely of this world", s, re.I)
+        and re.search(r"faeble|social rank", s, re.I)
+    )
+    if mixed and realm and xi is not None and ri is not None:
+        realm_core = realm.rstrip(".")
+        # "Lord X is a faeble…" → keep titled subject after mixed clause.
+        if re.match(r"^(?:Lord|Lady|Duke|Baron)\b", realm_core, re.I):
+            joined = (
+                f"{mixed.rstrip('.')}, and is not entirely of this world. {realm_core}."
+            )
+            # Avoid doubling "not entirely"
+            if re.search(r"not entirely of this world", mixed, re.I):
+                joined = f"{mixed.rstrip('.')}. {realm_core}."
+            else:
+                # Pull not-entirely into the mixed sentence; keep rank clause.
+                rank = re.sub(
+                    r",?\s*and not entirely of this world",
+                    "",
+                    realm_core,
+                    count=1,
+                    flags=re.I,
+                )
+                joined = (
+                    f"{mixed.rstrip('.')}, and is not entirely of this world. {rank}."
+                )
+        else:
+            joined = f"{mixed.rstrip('.')}, and is not entirely of this world."
+            kept = [s for j, s in enumerate(kept) if j not in {xi, ri}]
+            kept.append(joined)
+            return [re.sub(r"\s{2,}", " ", x).strip() for x in kept if x.strip()]
+        kept = [s for j, s in enumerate(kept) if j not in {xi, ri}]
+        # After open is best.
+        if kept:
+            kept.insert(min(1, len(kept)), joined)
+        else:
+            kept.append(joined)
+
+    return [re.sub(r"\s{2,}", " ", x).strip() for x in kept if x.strip()]
+
+
 def _essay_hook_who_is_sentences(label: str, sentences: list[str]) -> list[str]:
     """
     Light essay-hook polish: prefer pronouns after the open,
     keep every fact — never invent. Keep parent lines separate so scrub
-    still recognizes them as cast-card facts.
+    still recognizes them as cast-card facts before essay-flow joins them.
     """
     kept = [s for s in sentences if (s or "").strip()]
     if len(kept) < 2:

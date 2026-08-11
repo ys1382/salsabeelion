@@ -286,6 +286,7 @@ def trim_off_topic_sentences(question: str, answer: str, *, allow_broad: bool) -
             r"faeble|fairy[- ]?tale|conceal(?:s|ed|ing)?|known as|young woman|young man|"
             r"parent stock|kinship|subject of|rivalry-care|both care|"
             r"cold on the surface|fascination|disgusted|mixed parentage|"
+            r"from another realm|does not grudge|among the few|"
             r"refuses to associate|larger politics|underestimates|"
             r"political influence|does not realize|"
             r"political nuance|unspoken line|not yet fully aware|rediscovery"

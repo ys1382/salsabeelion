@@ -1053,10 +1053,25 @@ def who_is_standing_relation_lines(
                     body,
                     re.I,
                 ):
-                    _add(
-                        f"{label} and {partner} share a relationship that is cold "
-                        f"on the surface but more complicated — both care"
-                    )
+                    if re.search(
+                        r"\b("
+                        r"does not have a grudge|doesn'?t have a grudge|"
+                        r"few fellow Cats|amongst the few|"
+                        r"did not look down|never because he looked down"
+                        r")\b",
+                        body,
+                        re.I,
+                    ):
+                        _add(
+                            f"{label} and {partner} share a relationship that is cold "
+                            f"on the surface but more complicated — {partner} is among "
+                            f"the few cats {label} does not grudge, and both care"
+                        )
+                    else:
+                        _add(
+                            f"{label} and {partner} share a relationship that is cold "
+                            f"on the surface but more complicated — both care"
+                        )
                 elif re.search(
                     r"\b("
                     r"rivalry[- ]?care|complicated (?:relationship|attachment|bond)|"
@@ -1176,13 +1191,13 @@ def who_is_standing_relation_lines(
                 _add(f"{label} calls {other} his esteemed cousin")
 
         # Open / potential parents from character notes (not draft scene "dad" asides).
-        if kind in {"character", "note", "politics"} and mentions_label:
-            _harvest_open_parent_notes(label, body, _add, uncertain_here)
+        # Aggregated once after the loop — see _harvest_parent_standing.
 
         # Fairy-tale / named-figure origin (Cheshire Cat, White Rabbit, Wonderland).
         if mentions_label or kind in {"character", "note", "visual", "politics"}:
             _harvest_figure_origin(label, title, body, kind, _add)
 
+    _harvest_parent_standing(label, entries, _add)
     _harvest_opposition_standing(label, entries, _add)
     _harvest_politics_stance(label, entries, _add)
 
@@ -1389,70 +1404,138 @@ def _harvest_figure_origin(
         add_line(f"{label} is from Wonderland")
 
 
-def _harvest_open_parent_notes(
+def _harvest_parent_standing(
     label: str,
-    body: str,
+    entries: list[dict[str, Any]],
     add_line,
-    uncertain_entry: bool,
 ) -> None:
-    """Cast-card parent slots from notes, including open preferences."""
-    # "his father, who was the Domestic Cat species parent"
-    m = re.search(
-        rf"(?:his|her|their)\s+father,?\s+who\s+was\s+(?:the\s+)?"
-        rf"([A-Za-z][A-Za-z \-]{{2,40}}?)\s+species\s+parent\b|"
-        rf"(?:his|her|their)\s+father\s+was\s+(?:a\s+|the\s+)?"
-        rf"([A-Za-z][A-Za-z \-]{{2,40}}?)(?:\s+species)?\b",
-        body,
-        re.I,
-    )
-    species = None
-    if m:
-        species = (m.group(1) or m.group(2) or "").strip()
-        species = re.sub(r"\s+", " ", species)
-        species = re.sub(
-            r"\b(from|but|and|who|was|the|himself|actually)\b.*$",
-            "",
-            species,
-            flags=re.I,
-        ).strip(" ,.")
-    # Preference: father should not be a Faeble alongside him.
-    not_faeble = bool(
-        re.search(
+    """Aggregate mother/father standing across notes — natural wording, no 'stock'."""
+    label = (label or "").strip()
+    if not label or not entries:
+        return
+
+    species: str | None = None
+    not_faeble = False
+    mother_here = False
+    other_realm = False
+    uncertain_any = False
+
+    for entry in entries:
+        if not isinstance(entry, dict):
+            continue
+        if "#p" in str(entry.get("id") or ""):
+            continue
+        kind = str(entry.get("kind") or "").lower()
+        if kind not in {"character", "note", "politics", "relationship"}:
+            continue
+        title = str(entry.get("title") or "")
+        body = str(entry.get("body") or "")
+        blob = f"{title}\n{body}"
+        if not re.search(rf"\b{re.escape(label)}\b", blob, re.I):
+            continue
+        uncertain_any = uncertain_any or bool(_RELATION_UNCERTAIN.search(blob))
+
+        m = re.search(
+            rf"(?:his|her|their)\s+father,?\s+who\s+was\s+(?:the\s+)?"
+            rf"([A-Za-z][A-Za-z \-]{{2,40}}?)\s+species\s+parent\b|"
+            rf"(?:his|her|their)\s+father\s+was\s+(?:a\s+|the\s+)?"
+            rf"([A-Za-z][A-Za-z \-]{{2,40}}?)(?:\s+species)?\b|"
+            rf"\bfather\s+is\s+a\s+(Domestic\s+Cat|[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\b",
+            body,
+            re.I,
+        )
+        if m and not species:
+            raw = (m.group(1) or m.group(2) or m.group(3) or "").strip()
+            raw = re.sub(r"\s+", " ", raw)
+            raw = re.sub(
+                r"\b(from|but|and|who|was|the|himself|actually)\b.*$",
+                "",
+                raw,
+                flags=re.I,
+            ).strip(" ,.")
+            if raw and len(raw) >= 3 and raw.lower() not in {
+                "no",
+                "not",
+                "the",
+                "from",
+                "here",
+            }:
+                species = raw
+
+        if re.search(
             rf"(?:don'?t think I want|do not want|don'?t want).{{0,40}}"
             rf"(?:his|her|their)\s+father.{{0,40}}(?:faeble|fairy[- ]?tale)|"
             rf"father.{{0,40}}(?:not|shouldn'?t).{{0,20}}(?:be\s+a\s+)?faeble|"
             rf"father to be a Faeble",
             body,
             re.I | re.S,
-        )
-    )
-    mother_here = bool(
-        re.search(
+        ):
+            not_faeble = True
+
+        if re.search(
             r"(?:his|her|their)\s+mother\s+is\s+from\s+here\b",
             body,
             re.I,
-        )
-    )
-    if species and len(species) >= 3 and species.lower() not in {
-        "no",
-        "not",
-        "the",
-        "from",
-        "here",
-    }:
-        if not_faeble or uncertain_entry:
+        ):
+            mother_here = True
+
+        if re.search(
+            r"\b("
+            r"father wasn'?t even from (?:the )?realm|"
+            r"father wasn'?t from this realm|"
+            r"father.{0,60}from another (?:realm|dimension)|"
+            r"father.{0,60}not even from (?:the )?realm|"
+            r"wasn'?t even from the realm to which"
+            r")\b",
+            body,
+            re.I | re.S,
+        ):
+            other_realm = True
+
+    if species:
+        species_bit = species if species.lower().startswith(("a ", "an ")) else f"a {species}"
+        # Avoid "a Domestic Cat" double-a if species already includes article — handled above.
+        if species.lower().startswith("domestic "):
+            species_bit = f"a {species}"
+        if other_realm and (not_faeble or uncertain_any):
             add_line(
-                f"{label}'s father is {species} parent stock; "
-                f"whether he is a Faeble too is left open"
+                f"{label}'s father is {species_bit} from another realm, "
+                f"with whether he is a Faeble too still open"
+            )
+        elif other_realm:
+            add_line(f"{label}'s father is {species_bit} from another realm")
+        elif not_faeble or uncertain_any:
+            add_line(
+                f"{label}'s father is {species_bit}, "
+                f"with whether he is a Faeble too still open"
             )
         else:
-            add_line(f"{label}'s father is {species} parent stock")
+            add_line(f"{label}'s father is {species_bit}")
+    elif other_realm and (not_faeble or uncertain_any):
+        add_line(
+            f"{label}'s father is from another realm, "
+            f"with whether he is a Faeble too still open"
+        )
     elif not_faeble:
         add_line(
             f"{label}'s father is left open, including whether he is a Faeble too"
         )
     if mother_here:
         add_line(f"{label}'s mother is from here")
+
+
+def _harvest_open_parent_notes(
+    label: str,
+    body: str,
+    add_line,
+    uncertain_entry: bool,
+) -> None:
+    """Backward-compatible single-body parent harvest — prefers natural wording."""
+    _harvest_parent_standing(
+        label,
+        [{"kind": "character", "title": label, "body": body, "id": "local"}],
+        add_line,
+    )
 
 
 def _harvest_politics_stance(

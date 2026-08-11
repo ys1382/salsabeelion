@@ -1519,6 +1519,7 @@ class CharacterComposeTests(unittest.TestCase):
             "domestic cat" in answer or "faeble" in answer or "open" in answer,
             msg=answer,
         )
+        self.assertNotIn("parent stock", answer)
         self.assertNotIn("your notes sketch", answer)
 
     def test_who_is_includes_fairy_tale_origin_and_clean_standing(self):
