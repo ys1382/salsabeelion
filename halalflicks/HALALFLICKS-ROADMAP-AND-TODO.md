@@ -109,6 +109,8 @@ Titles already shown in chat vet batches — **do not re-ask** unless the owner 
 
 **Mixed batch G (shown):** Monsters vs. Aliens; The Amazing World of Gumball; Planet 51; Regular Show; Astro Boy; Fish Hooks; Alpha and Omega; Generator Rex; Legend of the Guardians; Jake and the Never Land Pirates; Rango; ThunderCats (2011); Winnie the Pooh (2011); Almost Naked Animals; Mars Needs Moms; Higglytown Heroes; A Monster in Paris; Little Einsteins; Frankenweenie; Handy Manny.
 
+**Mixed batch H (shown):** Chicken Run: Dawn of the Nugget; The Owl House; Trolls Band Together; Rise of the TMNT; The Magician’s Elephant; OK K.O.!; The Monkey King; Unikitty!; The Croods: A New Age; Clarence; The Son of Bigfoot; Breadwinners; Leap!; Steven Universe; The Angry Birds Movie; Uncle Grandpa; Rock Dog; Teen Titans Go!; Norm of the North; Sanjay and Craig.
+
 **Logged reject / no auto-rec:** See `config/hand_vetted.json`. Parked registry: `config/parked.json`. Shown registry: `config/vet_shown.json`.
 
 ---

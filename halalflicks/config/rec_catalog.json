@@ -1789,6 +1789,119 @@
         "action",
         "friendship"
       ]
+    },
+    {
+      "title": "Monsters vs. Aliens",
+      "year": "2009",
+      "note": "Owner OK — hand-vet.",
+      "themes": [
+        "kids_movie",
+        "aliens",
+        "comedy",
+        "adventure"
+      ]
+    },
+    {
+      "title": "Planet 51",
+      "year": "2009",
+      "note": "Owner OK — hand-vet.",
+      "themes": [
+        "kids_movie",
+        "aliens",
+        "comedy",
+        "adventure"
+      ]
+    },
+    {
+      "title": "Astro Boy",
+      "year": "2009",
+      "note": "Owner OK — hand-vet.",
+      "themes": [
+        "kids_movie",
+        "robots",
+        "adventure",
+        "friendship"
+      ]
+    },
+    {
+      "title": "Legend of the Guardians: The Owls of Ga'Hoole",
+      "year": "2010",
+      "note": "Owner OK — hand-vet.",
+      "themes": [
+        "kids_movie",
+        "owls",
+        "adventure",
+        "fantasy"
+      ]
+    },
+    {
+      "title": "Rango",
+      "year": "2011",
+      "note": "Owner OK — hand-vet.",
+      "themes": [
+        "kids_movie",
+        "western",
+        "comedy",
+        "adventure"
+      ]
+    },
+    {
+      "title": "Winnie the Pooh",
+      "year": "2011",
+      "note": "Owner OK — hand-vet.",
+      "themes": [
+        "disney",
+        "kids_movie",
+        "pooh",
+        "friendship",
+        "comfort"
+      ]
+    },
+    {
+      "title": "Little Einsteins",
+      "year": "2005",
+      "note": "Owner OK — hand-vet.",
+      "themes": [
+        "kids_show",
+        "tv_series",
+        "preschool",
+        "music",
+        "learning"
+      ]
+    },
+    {
+      "title": "Frankenweenie",
+      "year": "2012",
+      "note": "Owner OK — hand-vet.",
+      "themes": [
+        "kids_movie",
+        "dogs",
+        "friendship",
+        "halloween_light"
+      ]
+    },
+    {
+      "title": "Handy Manny",
+      "year": "2006",
+      "note": "Owner OK — hand-vet.",
+      "themes": [
+        "kids_show",
+        "tv_series",
+        "preschool",
+        "tools",
+        "community"
+      ]
+    },
+    {
+      "title": "The Son of Bigfoot",
+      "year": "2017",
+      "note": "Owner OK — hand-vet.",
+      "themes": [
+        "kids_movie",
+        "comedy",
+        "family",
+        "adventure"
+      ]
     }
   ]
 }

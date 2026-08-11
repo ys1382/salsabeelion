@@ -2770,6 +2770,265 @@
       "rec_ok": false,
       "note": "Owner parked (tv) — do not re-ask until owner asks.",
       "parked": true
+    },
+    {
+      "title": "Monsters vs. Aliens",
+      "year": "2009",
+      "rec_ok": true,
+      "note": "Owner hand-vet: OK / recommend."
+    },
+    {
+      "title": "Planet 51",
+      "year": "2009",
+      "rec_ok": true,
+      "note": "Owner hand-vet: OK / recommend."
+    },
+    {
+      "title": "Astro Boy",
+      "year": "2009",
+      "rec_ok": true,
+      "note": "Owner hand-vet: OK / recommend."
+    },
+    {
+      "title": "Legend of the Guardians: The Owls of Ga'Hoole",
+      "year": "2010",
+      "rec_ok": true,
+      "note": "Owner hand-vet: OK / recommend."
+    },
+    {
+      "title": "Rango",
+      "year": "2011",
+      "rec_ok": true,
+      "note": "Owner hand-vet: OK / recommend."
+    },
+    {
+      "title": "Winnie the Pooh",
+      "year": "2011",
+      "rec_ok": true,
+      "note": "Owner hand-vet: OK / recommend."
+    },
+    {
+      "title": "Little Einsteins",
+      "year": "2005",
+      "rec_ok": true,
+      "note": "Owner hand-vet: OK / recommend. TV series."
+    },
+    {
+      "title": "Frankenweenie",
+      "year": "2012",
+      "rec_ok": true,
+      "note": "Owner hand-vet: OK / recommend."
+    },
+    {
+      "title": "Handy Manny",
+      "year": "2006",
+      "rec_ok": true,
+      "note": "Owner hand-vet: OK / recommend. TV series."
+    },
+    {
+      "title": "The Son of Bigfoot",
+      "year": "2017",
+      "rec_ok": true,
+      "note": "Owner hand-vet: OK / recommend."
+    },
+    {
+      "title": "The Amazing World of Gumball",
+      "year": "2011",
+      "rec_ok": false,
+      "note": "Owner reject: has adult stuff throughout. TV series."
+    },
+    {
+      "title": "The Owl House",
+      "year": "2020",
+      "rec_ok": false,
+      "note": "Owner reject: LGBTQ; probably children out of wedlock. TV series."
+    },
+    {
+      "title": "Rise of the Teenage Mutant Ninja Turtles",
+      "year": "2018",
+      "rec_ok": false,
+      "note": "Owner reject: LGBTQ; also kids gross humor. TV series."
+    },
+    {
+      "title": "The Croods: A New Age",
+      "year": "2020",
+      "rec_ok": false,
+      "note": "Owner reject: immodesty (plot otherwise clean)."
+    },
+    {
+      "title": "Breadwinners",
+      "year": "2014",
+      "rec_ok": false,
+      "note": "Owner reject: butchering of Islamic representation. TV series."
+    },
+    {
+      "title": "Steven Universe",
+      "year": "2013",
+      "rec_ok": false,
+      "note": "Owner reject: very much LGBTQ-centered. TV series."
+    },
+    {
+      "title": "The Angry Birds Movie",
+      "year": "2016",
+      "rec_ok": false,
+      "note": "Owner reject: a lot of gross and some adult humor."
+    },
+    {
+      "title": "Teen Titans Go!",
+      "year": "2013",
+      "rec_ok": false,
+      "note": "Owner reject: a lot of crude humor. TV series."
+    },
+    {
+      "title": "Leap!",
+      "year": "2016",
+      "rec_ok": false,
+      "note": "Owner: parent discretion — focused on ballet (immodesty issues) plus focus on girls’ ability to dance. No auto-recommend."
+    },
+    {
+      "title": "Uncle Grandpa",
+      "year": "2013",
+      "rec_ok": false,
+      "note": "Owner: parent discretion — very disturbing in general to watch. TV series. No auto-recommend."
+    },
+    {
+      "title": "Regular Show",
+      "year": "2010",
+      "rec_ok": false,
+      "note": "Owner parked (tv) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Fish Hooks",
+      "year": "2010",
+      "rec_ok": false,
+      "note": "Owner parked (tv) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Alpha and Omega",
+      "year": "2010",
+      "rec_ok": false,
+      "note": "Owner parked (film) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Generator Rex",
+      "year": "2010",
+      "rec_ok": false,
+      "note": "Owner parked (tv) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Jake and the Never Land Pirates",
+      "year": "2011",
+      "rec_ok": false,
+      "note": "Owner parked (tv) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "ThunderCats",
+      "year": "2011",
+      "rec_ok": false,
+      "note": "Owner parked (tv) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Almost Naked Animals",
+      "year": "2011",
+      "rec_ok": false,
+      "note": "Owner reject: beachwear / almost-naked presentation. TV series. (Was parked; upgraded to reject.)"
+    },
+    {
+      "title": "Mars Needs Moms",
+      "year": "2011",
+      "rec_ok": false,
+      "note": "Owner parked (film) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Higglytown Heroes",
+      "year": "2004",
+      "rec_ok": false,
+      "note": "Owner parked (tv) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "A Monster in Paris",
+      "year": "2011",
+      "rec_ok": false,
+      "note": "Owner parked (film) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Chicken Run: Dawn of the Nugget",
+      "year": "2023",
+      "rec_ok": false,
+      "note": "Owner parked (film) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Trolls Band Together",
+      "year": "2023",
+      "rec_ok": false,
+      "note": "Owner parked (film) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "The Magician's Elephant",
+      "year": "2023",
+      "rec_ok": false,
+      "note": "Owner parked (film) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "OK K.O.! Let's Be Heroes",
+      "year": "2017",
+      "rec_ok": false,
+      "note": "Owner parked (tv) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "The Monkey King",
+      "year": "2023",
+      "rec_ok": false,
+      "note": "Owner parked (film) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Unikitty!",
+      "year": "2017",
+      "rec_ok": false,
+      "note": "Owner parked (tv) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Clarence",
+      "year": "2014",
+      "rec_ok": false,
+      "note": "Owner parked (tv) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Rock Dog",
+      "year": "2016",
+      "rec_ok": false,
+      "note": "Owner parked (film) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Norm of the North",
+      "year": "2016",
+      "rec_ok": false,
+      "note": "Owner parked (film) — do not re-ask until owner asks.",
+      "parked": true
+    },
+    {
+      "title": "Sanjay and Craig",
+      "year": "2013",
+      "rec_ok": false,
+      "note": "Owner parked (tv) — do not re-ask until owner asks.",
+      "parked": true
     }
   ]
 }

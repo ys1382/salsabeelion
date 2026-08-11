@@ -161,7 +161,7 @@ Last updated: 2026-07-17
 
 **Needs owner:** Hand-vet list growth; rec catalog titles; rename if desired.
 
-**Owner vet batches:** Before offering titles, always read `halalflicks/config/vet_shown.json` and `halalflicks/config/parked.json` — never re-offer shown/parked titles across chats. Rule: `.cursor/rules/halalflicks-vet-no-repeat.mdc`.
+**Owner vet batches:** Before offering titles, always read `halalflicks/config/vet_shown.json` and `halalflicks/config/parked.json` — never re-offer shown/parked titles across chats. Rule: `.cursor/rules/halalflicks-vet-no-repeat.mdc`. After showing a batch or logging decisions, **commit the vet config JSON same turn** via `bash halalflicks/scripts/commit-vet-config.sh` (standing owner OK for that path only).
 
 ---
 

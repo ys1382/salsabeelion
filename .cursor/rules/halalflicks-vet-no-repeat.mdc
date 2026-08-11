@@ -16,16 +16,36 @@ alwaysApply: false
 
 ## After each batch is shown
 
-Append every offered title to `halalflicks/config/vet_shown.json` **in the same turn** (even if unanswered yet). Update `parked.json` when they say park/idk. Update `hand_vetted.json` + `rec_catalog.json` for ok/reject/discretion.
+1. Append every offered title to `halalflicks/config/vet_shown.json` **in the same turn** (even if unanswered yet).
+2. **Commit immediately** (same turn) — standing owner OK for this path only. Run:
 
-**Before ending the chat:** ask the owner to **commit** the HalalFlicks config JSON (and related rule/roadmap edits) so the next unrelated agent does not get a +changes chip.
+```bash
+bash halalflicks/scripts/commit-vet-config.sh "HalalFlicks vet: record shown batch <label>"
+```
+
+## After owner decisions (ok / reject / park / discretion / idk)
+
+1. Update `parked.json` when they say park/idk. Update `hand_vetted.json` + `rec_catalog.json` for ok/reject/discretion.
+2. **Commit immediately** (same turn) — do **not** ask again. Run:
+
+```bash
+bash halalflicks/scripts/commit-vet-config.sh "HalalFlicks vet: log owner decisions for <batch>"
+```
+
+### Commit scope (script enforces)
+
+**Always stage if changed:** `hand_vetted.json`, `parked.json`, `vet_shown.json`, `rec_catalog.json`.
+
+**Also if touched this turn:** `halalflicks/HALALFLICKS-ROADMAP-AND-TODO.md`, `.cursor/rules/halalflicks-vet-no-repeat.mdc`.
+
+**Never** in these auto-commits: `halalflicks/www/`, deploy scripts, unrelated repo files. Local commit only — no push unless the owner says push.
 
 ## Batch shape (owner process)
 
 - Mixed batches: **10 films + 10 series**, newest first; newer releases jump the queue.
 - One clean numbered list only — no draft/rewrite duplicates in the same reply.
-- Catalog rules: holiday-centered reject; The Rock never recommend; Harry Potter series reject (author); **R / TV-MA never recommend**; slice-of-life kids TV may have Christian-holiday episodes (flag).
+- Catalog rules: holiday-centered reject; The Rock never recommend; Harry Potter series reject (author); **R / TV-MA never recommend**; slice-of-life kids TV may have Christian-holiday episodes (flag). Anime and TV-MA stay off Recommend unless the owner hand-vets a specific title themselves.
 
 ## Why this exists
 
-Chat memory alone re-offered titles across conversations. These JSON files are the durable source of truth.
+Chat memory alone re-offered titles across conversations. These JSON files are the durable source of truth. Same-turn commits keep new agent chats from inheriting a dirty HalalFlicks changes chip.
