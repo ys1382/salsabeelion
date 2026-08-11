@@ -721,12 +721,12 @@ def compress_rename_infodump_to_cast_lines(sentence: str, label: str) -> list[st
         r"changes?\s+(?:his|her|their)\s+name\s+to\s+"
         r"([A-Z][\w'-]+(?:\s+[A-Z][\w'-]+)?)",
         s,
-        re.I,
     )
-    # Drop parenthetical alternatives after a name.
+    # Drop parenthetical alternatives after a name; never keep trailing lowercase glue.
     cleaned_akas: list[str] = []
     for aka in akas:
         aka = re.split(r"\s*\(", aka, maxsplit=1)[0].strip()
+        aka = re.sub(r"\s+(?:when|after|before|and|then|as|to)\b.*$", "", aka, flags=re.I).strip()
         if aka and aka.lower() != label.lower() and aka not in cleaned_akas:
             cleaned_akas.append(aka)
     if len(cleaned_akas) == 1:
@@ -736,14 +736,15 @@ def compress_rename_infodump_to_cast_lines(sentence: str, label: str) -> list[st
             f"{label} is also known as {cleaned_akas[0]} and later {cleaned_akas[-1]}."
         )
     m = re.search(
-        r"(?:leader of (?:his|her|their) faction\s+)?against\s+"
-        r"([A-Z][\w-]+)(?:'s)?\s+faction",
+        r"(?:leader of (?:his|her|their) faction\s+against|"
+        r"faction against|"
+        r"against)\s+"
+        r"([A-Z][\w'-]+(?:\s+[A-Z0-9])?)(?:'s)?(?:\s+faction)?",
         s,
-        re.I,
     )
     if m:
-        rival = m.group(1).strip()
-        if rival.lower() != label.lower():
+        rival = m.group(1).strip().rstrip("'s").rstrip("'")
+        if rival.lower() not in {label.lower(), "when", "after", "before"}:
             out.append(f"{label} leads a faction against {rival}.")
     return out[:4]
 
@@ -1850,6 +1851,7 @@ def weave_who_is_gold_tone(
         )
 
     brothers: list[str] = []
+    twin_brother_keys: set[str] = set()
     seen_b: set[str] = set()
     rich_brother_lines: list[str] = []
     named_parents: list[str] = []
@@ -1862,15 +1864,18 @@ def weave_who_is_gold_tone(
 
     def _brother_tail(c: str) -> str | None:
         for pat in (
-            rf"^{re.escape(label)}\s+is\s+(?:(?:younger|older|twin)\s+)*brother to\s+(.+?)\.?$",
-            rf"^{re.escape(label)}\s*[—–\-:,]\s*(?:(?:younger|older|twin)\s+)*brother to\s+(.+?)\.?$",
-            rf"^(?:(?:younger|older|twin)\s+)*brother to\s+(.+?)\.?$",
+            rf"^{re.escape(label)}\s+is\s+(?:also\s+)?(?:(?:younger|older|twin)\s+)*brother to\s+(.+?)\.?$",
+            rf"^{re.escape(label)}\s*[—–\-:,]\s*(?:also\s+)?(?:(?:younger|older|twin)\s+)*brother to\s+(.+?)\.?$",
+            rf"^(?:also\s+)?(?:(?:younger|older|twin)\s+)*brother to\s+(.+?)\.?$",
             rf"^{re.escape(label)}\s+is\s+(?:a\s+)?younger twin(?:\s+brother)?\s+to\s+(.+?)\.?$",
         ):
             m = re.search(pat, c, re.I)
             if m:
                 return m.group(1).strip()
         return None
+
+    def _clause_marks_twin(c: str) -> bool:
+        return bool(re.search(r"\btwin\b", c or "", re.I))
 
     def _normalize_standing(c: str) -> str:
         standing = c
@@ -1989,6 +1994,7 @@ def weave_who_is_gold_tone(
             continue
         tail = _brother_tail(c)
         if tail is not None:
+            twinish = _clause_marks_twin(c)
             # Keep rich standing lines (Rabbits of Death / Pinocchio, etc.).
             if re.search(
                 r"\b(from|rabbits? of death|pinocchio|alice|wonderland|death)\b",
@@ -2017,9 +2023,13 @@ def weave_who_is_gold_tone(
                     continue
                 key = name.lower()
                 if key in seen_b:
+                    if twinish:
+                        twin_brother_keys.add(key)
                     continue
                 seen_b.add(key)
                 brothers.append(name)
+                if twinish:
+                    twin_brother_keys.add(key)
             continue
         if re.search(
             r"\b("
@@ -2198,15 +2208,40 @@ def weave_who_is_gold_tone(
         ).rstrip(".")
         kin_bits.append(bro_core)
     elif brothers:
-        if len(brothers) == 1:
-            kin_bits.append(f"younger brother to {brothers[0]}")
-        elif len(brothers) == 2:
-            kin_bits.append(
-                f"younger brother to {brothers[0]} and {brothers[1]}"
-            )
+        twin_bros = [b for b in brothers if b.lower() in twin_brother_keys]
+        other_bros = [b for b in brothers if b.lower() not in twin_brother_keys]
+        if twin_bros and not other_bros:
+            if len(twin_bros) == 1:
+                kin_bits.append(f"younger twin brother to {twin_bros[0]}")
+            elif len(twin_bros) == 2:
+                kin_bits.append(
+                    f"younger twin brother to {twin_bros[0]} and {twin_bros[1]}"
+                )
+            else:
+                joined = ", ".join(twin_bros[:-1]) + f", and {twin_bros[-1]}"
+                kin_bits.append(f"younger twin brother to {joined}")
+        elif other_bros and not twin_bros:
+            if len(other_bros) == 1:
+                kin_bits.append(f"younger brother to {other_bros[0]}")
+            elif len(other_bros) == 2:
+                kin_bits.append(
+                    f"brother to {other_bros[0]} and {other_bros[1]}"
+                )
+            else:
+                joined = ", ".join(other_bros[:-1]) + f", and {other_bros[-1]}"
+                kin_bits.append(f"brother to {joined}")
         else:
-            joined = ", ".join(brothers[:-1]) + f", and {brothers[-1]}"
-            kin_bits.append(f"younger brother to {joined}")
+            # Twin kin first, then additional brothers (e.g. reveal link).
+            if len(twin_bros) == 1:
+                kin_bits.append(f"younger twin brother to {twin_bros[0]}")
+            elif twin_bros:
+                joined = ", ".join(twin_bros[:-1]) + f", and {twin_bros[-1]}"
+                kin_bits.append(f"younger twin brother to {joined}")
+            if len(other_bros) == 1:
+                kin_bits.append(f"also brother to {other_bros[0]}")
+            elif other_bros:
+                joined = ", ".join(other_bros[:-1]) + f", and {other_bros[-1]}"
+                kin_bits.append(f"also brother to {joined}")
 
     if kin_bits:
         first = kin_bits[0]
@@ -2214,11 +2249,22 @@ def weave_who_is_gold_tone(
             first_out = f"the {first}"
         else:
             first_out = first
+        # Prefer "Label is …" over "He is …" so who-is scrub keeps kinship.
         if len(kin_bits) == 1:
-            sentences.append(f"He is {first_out}.")
+            sentences.append(f"{label} is {first_out}.")
         else:
-            rest = ", and " + ", and ".join(kin_bits[1:])
-            sentences.append(f"He is {first_out}{rest}.")
+            also_bits = [b for b in kin_bits[1:] if b.startswith("also ")]
+            other_bits = [b for b in kin_bits[1:] if not b.startswith("also ")]
+            if other_bits and not also_bits:
+                rest = ", and " + ", and ".join(other_bits)
+                sentences.append(f"{label} is {first_out}{rest}.")
+            else:
+                sentences.append(f"{label} is {first_out}.")
+                for bit in other_bits + also_bits:
+                    if bit.startswith("also "):
+                        sentences.append(f"{label} is {bit}.")
+                    else:
+                        sentences.append(f"{label} is {bit}.")
 
     for c in other_family[:2]:
         clause = c if c.endswith((".", "!", "?")) else c + "."

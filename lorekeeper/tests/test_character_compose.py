@@ -1355,5 +1355,63 @@ class CharacterComposeTests(unittest.TestCase):
         self.assertIn("conceal", smooth)
         self.assertNotIn("has to conceal", smooth)
 
+    def test_who_is_preserves_twin_and_alias_brother_reveal(self):
+        entries = [
+            _entry(
+                "n1",
+                "Protagonist: Character P",
+                'The protagonist is named "Character P."',
+                kind="character",
+                tags=["Rust Saga"],
+            ),
+            _entry(
+                "n2",
+                "Names",
+                (
+                    "Character P is the birth name of the protagonist, then he changes his name "
+                    "to Cypher Prism, then to Palladiar when he becomes the leader of his "
+                    "faction against Character G."
+                ),
+                kind="character",
+                tags=["Rust Saga"],
+            ),
+            _entry(
+                "n3",
+                "Prism/Character P, Character Q/Character G",
+                (
+                    "Twins can combine. This leads to the eventual reveal that Character G "
+                    "and Prism are brothers."
+                ),
+                kind="event",
+                tags=["Rust Saga"],
+            ),
+            _entry(
+                "d1",
+                "Rust draft",
+                (
+                    "one of the twins, the protagonist's elder brother Character Q, forces his "
+                    "way out, and then pulls his younger twin, Character P, after himself."
+                ),
+                kind="document",
+                tags=["Rust Saga"],
+            ),
+        ]
+        res = self._ask("In Rust Saga, who is Character P?", entries)
+        answer = (res.get("answer") or "").lower()
+        self.assertIn("protagonist", answer)
+        self.assertTrue("twin" in answer, msg=answer)
+        self.assertTrue("character q" in answer or "q" in answer, msg=answer)
+        self.assertTrue(
+            "character g" in answer or "gallox" in answer or "brother to" in answer,
+            msg=answer,
+        )
+        self.assertTrue(
+            "faction" in answer or "against" in answer or "palladiar" in answer or "cypher" in answer,
+            msg=answer,
+        )
+        # Do not invent "seconds" or "neither knows" when not written.
+        self.assertNotIn("seconds", answer)
+        self.assertNotIn("neither", answer)
+
 if __name__ == "__main__":
     unittest.main()

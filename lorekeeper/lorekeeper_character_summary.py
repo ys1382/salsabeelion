@@ -1805,6 +1805,7 @@ def _explicit_who_is_cast_lines_from_drafts(
     from lorekeeper_character_compose import (
         is_opposition_cast_clause,
         is_overview_significance_clause,
+        is_plausible_cast_person_name,
         is_who_is_cast_fact_sentence,
     )
 
@@ -1831,6 +1832,45 @@ def _explicit_who_is_cast_lines_from_drafts(
             if bare and bare not in query_names:
                 query_names.append(bare)
 
+    # Include aka / later names so "Galloxidor and Prism are brothers" hits Platinus.
+    try:
+        from lorekeeper_aliases import expand_name_list
+
+        expanded = expand_name_list(query_names, scope)
+        for n in expanded:
+            if n and n not in query_names:
+                query_names.append(n)
+    except Exception:
+        pass
+    # Rename dumps often aren't in alias facts yet — scrape "changes name to X".
+    for entry in scope:
+        if not isinstance(entry, dict):
+            continue
+        body = normalize_corpus_text(str(entry.get("body") or ""))
+        for m in re.finditer(
+            r"changes?\s+(?:his|her|their)\s+name\s+to\s+"
+            r"([A-Z][\w'-]+(?:\s+[A-Z][\w'-]+)?)",
+            body,
+        ):
+            aka = re.sub(
+                r"\s+(?:when|after|before|and|then|as|to)\b.*$",
+                "",
+                m.group(1).strip(),
+                flags=re.I,
+            ).strip()
+            if not aka or aka in query_names:
+                continue
+            query_names.append(aka)
+            parts = aka.split()
+            if len(parts) >= 2 and parts[-1] not in query_names:
+                query_names.append(parts[-1])
+    # Last token of multi-word aliases already on the list.
+    for n in list(query_names):
+        parts = str(n or "").split()
+        if len(parts) >= 2 and parts[-1] not in query_names:
+            if parts[-1][:1].isupper() and len(parts[-1]) >= 3:
+                query_names.append(parts[-1])
+
     lines: list[str] = []
     seen: set[str] = set()
 
@@ -1844,27 +1884,51 @@ def _explicit_who_is_cast_lines_from_drafts(
         seen.add(key)
         lines.append(line)
 
+    name_alt = "|".join(re.escape(n) for n in query_names)
+    cast_name = (
+        r"[A-Za-z][a-z]{2,}(?:\s+(?:[A-Za-z][a-z]{2,}|[A-Z0-9]))?"
+    )
+
     for entry in scope:
-        if not _is_draft_entry(entry):
+        if not isinstance(entry, dict):
             continue
         body = normalize_corpus_text(str(entry.get("body") or ""))
-        # Twin / elder-brother beats buried in birth scenes.
-        cast_name = (
-            r"[A-Za-z][a-z]{2,}(?:\s+(?:[A-Za-z][a-z]{2,}|[A-Z0-9]))?"
-        )
+        if not body:
+            continue
+        # Twin / elder-brother beats — notes or draft.
         for m in re.finditer(
             rf"elder brother\s+({cast_name}).{{0,160}}younger twin,?\s+"
-            rf"(?:{'|'.join(re.escape(n) for n in query_names)})\b",
+            rf"(?:{name_alt})\b",
             body,
             re.I | re.S,
         ):
             bro = m.group(1).strip()
             if bro.lower() != label.lower() and bro.lower() != "character":
                 _add(f"{label} is younger twin brother to {bro}.")
+        # "Galloxidor and Prism are brothers" / "eventual reveal that … are brothers"
         for m in re.finditer(
-            rf"\b({cast_name})\s+and\s+(?:{'|'.join(re.escape(n) for n in query_names)})\s+"
+            rf"(?:(?:eventual\s+)?reveal that\s+)?"
+            rf"(?:({cast_name})\s+and\s+(?:{name_alt})|"
+            rf"(?:{name_alt})\s+and\s+({cast_name}))\s+"
+            rf"are brothers\b",
+            body,
+            re.I,
+        ):
+            other = (m.group(1) or m.group(2) or "").strip()
+            if (
+                other
+                and other.lower() != label.lower()
+                and other.lower() != "character"
+                and is_plausible_cast_person_name(other)
+            ):
+                _add(f"{label} is also brother to {other}.")
+        if not _is_draft_entry(entry):
+            continue
+        # Draft sentence harvest below (role / opposition / overview stakes).
+        for m in re.finditer(
+            rf"\b({cast_name})\s+and\s+(?:{name_alt})\s+"
             rf"are brothers\b|"
-            rf"\b(?:{'|'.join(re.escape(n) for n in query_names)})\s+and\s+({cast_name})\s+"
+            rf"\b(?:{name_alt})\s+and\s+({cast_name})\s+"
             rf"are brothers\b",
             body,
             re.I,
@@ -1891,7 +1955,9 @@ def _explicit_who_is_cast_lines_from_drafts(
             if re.search(
                 r"\b("
                 r"tries? not to|trying not to|not to dwell|doesn'?t want to dwell|"
-                r"no doubt views|daring to demonstrate"
+                r"no doubt views|daring to demonstrate|"
+                r"kills? the medic|forces? (?:his|her|their) way out|"
+                r"pulls? (?:his|her|their) younger twin"
                 r")\b",
                 cleaned,
                 re.I,
