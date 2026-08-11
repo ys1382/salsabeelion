@@ -79,6 +79,7 @@ _store_mtime: float = 0.0
 DOCUMENTS_KEY = "lorekeeper_documents_v1"
 NOTIFY_PREFS_KEY = "lorekeeper_notify_prefs_v1"
 DOCUMENT_BACKUPS_KEY = "lorekeeper_document_backups_v1"
+NOTE_BACKUPS_KEY = "lorekeeper_note_backups_v1"
 DOC_META_FIELDS = (
     "id",
     "title",
@@ -143,22 +144,26 @@ def _user_data_for_profile(data: dict[str, Any], profile: str) -> dict[str, Any]
         for key, value in (data or {}).items():
             if key == DOCUMENTS_KEY:
                 out[key] = _documents_list_meta(value)
-            elif key == DOCUMENT_BACKUPS_KEY:
+            elif key in (DOCUMENT_BACKUPS_KEY, NOTE_BACKUPS_KEY):
                 continue
             else:
                 out[key] = value
         return out
     if profile == "heavy":
-        backups = (data or {}).get(DOCUMENT_BACKUPS_KEY)
-        if backups is None:
-            return {}
-        return {DOCUMENT_BACKUPS_KEY: backups}
+        out: dict[str, Any] = {}
+        if DOCUMENT_BACKUPS_KEY in (data or {}):
+            out[DOCUMENT_BACKUPS_KEY] = data[DOCUMENT_BACKUPS_KEY]
+        if NOTE_BACKUPS_KEY in (data or {}):
+            out[NOTE_BACKUPS_KEY] = data[NOTE_BACKUPS_KEY]
+        return out
     if profile == "content":
         out: dict[str, Any] = {}
         if DOCUMENTS_KEY in (data or {}):
             out[DOCUMENTS_KEY] = data[DOCUMENTS_KEY]
         if DOCUMENT_BACKUPS_KEY in (data or {}):
             out[DOCUMENT_BACKUPS_KEY] = data[DOCUMENT_BACKUPS_KEY]
+        if NOTE_BACKUPS_KEY in (data or {}):
+            out[NOTE_BACKUPS_KEY] = data[NOTE_BACKUPS_KEY]
         return out
     return dict(data or {})
 

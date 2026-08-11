@@ -93,6 +93,9 @@
       }
       var list = LoreKeeperEntries.upsertInList(LoreKeeperEntries.load(), prep.entry);
       LoreKeeperEntries.save(list);
+      if (LoreKeeperEntries.rememberBackup) {
+        LoreKeeperEntries.rememberBackup(prep.entry);
+      }
       LoreKeeperAccountStorage.flush().then(function () {
         var msg = 'Saved — on your <a href="./index.html">home notes</a> list.';
         if (prep.fixedCount) {

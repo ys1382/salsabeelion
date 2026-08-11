@@ -155,6 +155,7 @@ Run on your owner account. Check when true for **two weeks**:
 - [x] **30. Recovery drill** — Restore store from backup once; accounts + docs recover cleanly.
 - [x] **31. Account delete + export** — export-before-delete on `account.html`; `POST /auth/delete-account`; owner account protected.
 - [x] **32. Storage meta in Owner’s Office (optional)** — Last sync / backup age / export reminder — meta only.
+- [x] **Note restore backups (2026-08-10)** — Per-note snapshots like documents (`lorekeeper_note_backups_v1`); Restore last backup on home note editor.
 
 #### Tier C — Google Docs parity (out of scope for v1)
 

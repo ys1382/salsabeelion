@@ -653,6 +653,54 @@
       });
     }
 
+    function updateNoteBackupUi() {
+      var block = document.getElementById("noteBackupBlock");
+      var hint = document.getElementById("noteBackupHint");
+      var btn = document.getElementById("restoreNoteBackupBtn");
+      if (!block || !hint || !btn) return;
+      block.hidden = true;
+      hint.textContent = "";
+      btn.disabled = true;
+      if (!editingId || !LoreKeeperEntries.restorableSnapshot) return;
+      var current = {
+        kind: document.getElementById("noteKind").value,
+        title: document.getElementById("noteTitle").value,
+        body: document.getElementById("noteBody").value,
+        tags: LoreKeeperEntries.parseTags(document.getElementById("noteTags").value),
+      };
+      var restorable = LoreKeeperEntries.restorableSnapshot(editingId, current);
+      if (!restorable || !restorable.snap) return;
+      var when = LoreKeeperEntries.formatWhen(restorable.snap.at) || "an earlier save";
+      hint.textContent = "Older version from " + when + ".";
+      block.hidden = false;
+      btn.disabled = false;
+    }
+
+    function restoreNoteFromBackup() {
+      if (!editingId || !LoreKeeperEntries.restorableSnapshot) return;
+      var current = {
+        kind: document.getElementById("noteKind").value,
+        title: document.getElementById("noteTitle").value,
+        body: document.getElementById("noteBody").value,
+        tags: LoreKeeperEntries.parseTags(document.getElementById("noteTags").value),
+      };
+      var restorable = LoreKeeperEntries.restorableSnapshot(editingId, current);
+      if (!restorable || !restorable.snap) {
+        setEditorStatus("No older backup found for this note.", false);
+        updateNoteBackupUi();
+        return;
+      }
+      var snap = restorable.snap;
+      var when = LoreKeeperEntries.formatWhen(snap.at) || "earlier";
+      if (!confirm("Restore the version from " + when + "? This replaces what is in the editor.")) return;
+      document.getElementById("noteKind").value = snap.kind || "note";
+      document.getElementById("noteTitle").value = snap.title || "";
+      document.getElementById("noteBody").value = snap.body || "";
+      document.getElementById("noteTags").value = Array.isArray(snap.tags) ? snap.tags.join(", ") : "";
+      setEditorStatus("Restored from " + when + " — click Save to keep it.", true);
+      updateNoteBackupUi();
+    }
+
     function setEditorStatus(msg, ok) {
       editorStatus.textContent = msg || "";
       editorStatus.className = "lk-status" + (ok ? " ok" : ok === false ? " err" : "");
@@ -785,6 +833,7 @@
           }
         });
       }
+      updateNoteBackupUi();
     }
 
     openNoteEditorRef = openNoteEditor;
@@ -852,6 +901,9 @@
       }
       var list = LoreKeeperEntries.upsertInList(LoreKeeperEntries.load(), prep.entry);
       LoreKeeperEntries.save(list);
+      if (LoreKeeperEntries.rememberBackup) {
+        LoreKeeperEntries.rememberBackup(prep.entry);
+      }
       var msg = "Saved.";
       if (prep.fixedCount) {
         msg =
@@ -867,6 +919,7 @@
       }
       renderSilos();
       updateNoteSyncBanner();
+      updateNoteBackupUi();
       scheduleCloseAfterSave();
       LoreKeeperAccountStorage.flush().then(function () {
         refreshSaveSyncStatus();
@@ -915,6 +968,16 @@
     });
     document.getElementById("cancelNoteBtn").addEventListener("click", closeNoteEditor);
     document.getElementById("saveNoteBtn").addEventListener("click", saveNote);
+    var restoreNoteBackupBtn = document.getElementById("restoreNoteBackupBtn");
+    if (restoreNoteBackupBtn) {
+      restoreNoteBackupBtn.addEventListener("click", restoreNoteFromBackup);
+    }
+    ["noteKind", "noteTitle", "noteBody", "noteTags"].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener("input", updateNoteBackupUi);
+      el.addEventListener("change", updateNoteBackupUi);
+    });
     if (retryNoteSyncBtn) retryNoteSyncBtn.addEventListener("click", retryNoteSync);
     if (noteSyncRetryBtn) noteSyncRetryBtn.addEventListener("click", retryNoteSync);
     global.addEventListener("lorekeeper-sync-failed", updateNoteSyncBanner);

@@ -831,7 +831,8 @@ a { color: var(--accent); }
   width: 100%;
   margin-top: 0.75rem;
 }
-.lk-doc-backup {
+.lk-doc-backup,
+.lk-note-backup {
   margin-top: 0.65rem;
 }
 .lk-backup-hint {

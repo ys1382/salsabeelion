@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
   <title>LoreKeeper</title>
-  <link rel="stylesheet" href="./lk-shared.css?v=106" />
+  <link rel="stylesheet" href="./lk-shared.css?v=107" />
 </head>
 <body class="lk-page-home">
   <div class="lk-wrap">
@@ -99,6 +99,10 @@
           <button type="button" class="lk-btn secondary" id="cancelNoteBtn">Cancel</button>
           <button type="button" class="lk-btn secondary lk-note-fullscreen-btn" id="noteFullscreenBtn" aria-pressed="false" title="Full screen">Full screen</button>
           <button type="button" class="lk-btn secondary" id="deleteNoteBtn">Delete</button>
+        </div>
+        <div class="lk-note-backup" id="noteBackupBlock" hidden>
+          <p class="muted lk-backup-hint" id="noteBackupHint"></p>
+          <button type="button" class="lk-btn secondary lk-restore-backup" id="restoreNoteBackupBtn">Restore last backup</button>
         </div>
         <p class="lk-status" id="noteEditorStatus"></p>
         <button type="button" class="lk-btn secondary lk-sync-retry" id="retryNoteSyncBtn" hidden>Retry sync</button>
@@ -237,7 +241,7 @@
   <script src="./lk-auth-gate.js?v=3"></script>
   <script src="./lk-last-focus.js?v=1"></script>
   <script src="./lk-documents.js?v=55"></script>
-  <script src="./lk-entries.js?v=4"></script>
+  <script src="./lk-entries.js?v=5"></script>
   <script src="./lk-work-membership.js?v=2"></script>
   <script src="./lk-silos.js?v=3"></script>
   <script src="./lk-find.js?v=2"></script>
@@ -257,6 +261,6 @@
   <script src="./lk-mobile-jot.js?v=1"></script>
   <script src="./lk-bt-keyboard.js?v=1"></script>
   <script src="./lk-mobile-handoff.js?v=1"></script>
-  <script src="./lk-home.js?v=65"></script>
+  <script src="./lk-home.js?v=66"></script>
 </body>
 </html>
