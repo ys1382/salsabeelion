@@ -885,6 +885,12 @@ def _kinship_shape_sentence(sentence: str, label: str) -> bool:
         rf"^{lab}\s+is\s+(?:married|engaged)\s+to\s+.+$",
         rf"^{lab}\s+calls?\s+.+\s+(?:his|her|their)\s+(?:esteemed\s+)?cousin\b.+$",
         rf"^.+\s+is\s+called\s+{lab}'s\s+(?:esteemed\s+)?cousin\b.+$",
+        rf"^{lab}\s+is\s+(?:the\s+)?(?:Cheshire Cat|White Rabbit)\b.+$",
+        rf"^{lab}\s+is\s+from\s+Wonderland\.?$",
+        rf"^{lab}\s+calls\s+.+\s+cousin,\s+though that kinship is left open\.?$",
+        rf"^.+\s+may be\s+{lab}'s\s+(?:second\s+)?cousin\s+—\s+that kinship is left open\.?$",
+        rf"^{lab}'s\s+father\s+is\s+(?:sketched|noted|left open)\b.+$",
+        rf"^{lab}'s\s+mother\s+is\s+from\s+here\.?$",
         rf"^Your notes treat\s+.+\s+as\s+a\s+possible\s+(?:second\s+)?cousin\s+to\s+{lab}\b.+$",
         rf"^Your notes (?:sketch|say|leave)\s+{lab}'s\s+(?:father|mother)\b.+$",
         rf"^{lab}'s\s+(?:father|mother)\s+is\s+noted\b.+$",
@@ -2012,10 +2018,12 @@ def weave_who_is_gold_tone(
                 )
             continue
         if re.search(
-            r"\b(known as|known to|known by|also known|fairytale world|fairy[- ]tale world)\b",
+            r"\b(known as|known to|known by|also known|fairytale world|fairy[- ]tale world|"
+            r"cheshire cat|white rabbit from|from (?:alice in )?wonderland|"
+            r"is the (?:cheshire cat|white rabbit))\b",
             c,
             re.I,
-        ) and not re.search(r"\b(subject of|quarry)\b", c, re.I):
+        ) and not re.search(r"\b(subject of|quarry|father|mother|cousin)\b", c, re.I):
             line = _strip_male_female_role(c)
             if line not in alias_lines:
                 alias_lines.append(line if line.endswith((".", "!", "?")) else line + ".")
@@ -2099,7 +2107,8 @@ def weave_who_is_gold_tone(
             r"sister|father|mother|widow|raised|parent|subject of|quarry|married|"
             r"nemesis|best friend|closest friend|cousin|father to|mother to|"
             r"esteemed cousin|ally|allies|co-?conspir|refers to|your notes treat|"
-            r"possible (?:second )?cousin|calls?\b|father|mother|parent stock"
+            r"possible (?:second )?cousin|calls?\b|father|mother|parent stock|"
+            r"kinship is left open|sketched as|cheshire cat|wonderland"
             r")\b",
             c,
             re.I,
@@ -2223,11 +2232,22 @@ def weave_who_is_gold_tone(
         a
         for a in alias_lines
         if re.search(
-            r"\b(fairytale|fairy[- ]tale|white rabbit from|wonderland)\b",
+            r"\b(fairytale|fairy[- ]tale|white rabbit from|wonderland|cheshire cat|"
+            r"alice in wonderland)\b",
             a,
             re.I,
         )
     ]
+    # Prefer named figure + tale over bare "from Wonderland".
+    fairytale_aliases.sort(
+        key=lambda a: (
+            0
+            if re.search(r"\b(cheshire cat|white rabbit)\b.*\b(alice|wonderland)\b", a, re.I)
+            else 1
+            if re.search(r"\b(cheshire cat|white rabbit|alice in wonderland)\b", a, re.I)
+            else 2
+        )
+    )
     other_aliases = [a for a in alias_lines if a not in fairytale_aliases]
 
     kin_bits: list[str] = []
@@ -2522,6 +2542,62 @@ def formalize_who_is_sentence(sentence: str, label: str) -> str:
     s = re.sub(rf"^So\s+{re.escape(label)}\s*,\s*", f"{label} ", s, count=1, flags=re.I)
     s = re.sub(rf"^So\s+{re.escape(label)}\s+", f"{label} ", s, count=1, flags=re.I)
     s = re.sub(r"^So\s+,?\s*", "", s, count=1, flags=re.I)
+
+    # Soften leftover librarian scaffolding into middle-voice cast prose.
+    s = re.sub(
+        rf"^Your notes treat\s+(.+?)\s+as\s+a\s+possible\s+(second\s+cousin)\s+to\s+"
+        rf"{re.escape(label)}\b.*$",
+        rf"\1 may be {label}'s \2 — that kinship is left open.",
+        s,
+        count=1,
+        flags=re.I,
+    )
+    s = re.sub(
+        rf"^{re.escape(label)}\s+refers to\s+(.+?)\s+as\s+cousin\s+in your notes.*$",
+        rf"{label} calls \1 cousin, though that kinship is left open.",
+        s,
+        count=1,
+        flags=re.I,
+    )
+    s = re.sub(
+        rf"^Your notes sketch\s+{re.escape(label)}'s\s+father\s+as\s+(.+?)\s+parent stock,?\s*"
+        rf"with open questions.*$",
+        rf"{label}'s father is sketched as \1 parent stock; notes leave open whether he is a Faeble too.",
+        s,
+        count=1,
+        flags=re.I,
+    )
+    s = re.sub(
+        rf"^Your notes say\s+{re.escape(label)}'s\s+mother\s+is\s+from\s+here\.?$",
+        rf"{label}'s mother is from here.",
+        s,
+        count=1,
+        flags=re.I,
+    )
+    s = re.sub(
+        rf"^Your notes leave\s+{re.escape(label)}'s\s+father\s+open.*$",
+        rf"{label}'s father is left open, including whether he is a Faeble too.",
+        s,
+        count=1,
+        flags=re.I,
+    )
+
+    # Compress titled faeble / political standing into one clear beat.
+    m_pol = re.match(
+        rf"^(?:Lord|Lady)\s+{re.escape(label)}\s+of\s+([A-Z][\w'-]+)\s+is\s+"
+        rf"(?:probably\s+)?not entirely of this world;\s*"
+        rf".{{0,40}}not the king or emperor.{{0,40}}"
+        rf"(?:Fairy Tale character|faeble).{{0,80}}social rank",
+        s,
+        re.I | re.S,
+    )
+    if m_pol:
+        place = m_pol.group(1)
+        s = (
+            f"Lord {label} of {place} is a faeble with social rank — "
+            f"not a king or emperor, and not entirely of this world."
+        )
+        return s
 
     # Concealment as cast identity (not "current undercover status" voice).
     # "Name has to conceal her identity … as a human and … an Author"
@@ -2925,7 +3001,8 @@ def append_who_is_cast_card_gaps(
             r"\b("
             r"brother|sister|cousin|father|mother|parent|married|spouse|"
             r"ally|allies|co-?conspir|son of|daughter of|child of|"
-            r"esteemed cousin|your notes treat|refers to|father|mother"
+            r"esteemed cousin|your notes treat|refers to|father|mother|"
+            r"kinship is left open|cheshire cat|wonderland"
             r")\b",
             low,
             re.I,

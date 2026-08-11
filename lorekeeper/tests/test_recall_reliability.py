@@ -126,12 +126,44 @@ class RecallReliabilityTests(unittest.TestCase):
         self.assertEqual(len(scoped), 1)
         self.assertEqual(scoped[0]["id"], "e1")
 
-    def test_work_named_detection(self):
-        self.assertTrue(work_named_in_question("In Ashford Saga, who is M?"))
-        self.assertFalse(work_named_in_question("Who is Character M?"))
-        self.assertTrue(
-            work_named_in_question("Can you tell me my Smoke and Mirrors task list?")
-        )
+    def test_who_is_does_not_treat_character_tag_as_work(self):
+        """Personal character tags must not shrink who-is to that tag alone."""
+        from lorekeeper_reliability import explicit_work_hints, extract_work_hints
+
+        entries = [
+            _entry(
+                "e1",
+                "Protagonist Notes",
+                (
+                    "Character E crosses into the home dimension of the Cheshire Cat, "
+                    "who, in this story, is named Lord Character T."
+                ),
+                tags=["Ashford Saga", "Character E"],
+                kind="note",
+            ),
+            _entry(
+                "e2",
+                "Character T from Wonderland",
+                "Character T is Baron of Cheshire.",
+                tags=["Ashford Saga", "Character T"],
+                kind="visual",
+            ),
+            _entry(
+                "e3",
+                "Character T",
+                "Character T is Baron of Cheshire.",
+                tags=["Ashford Saga", "Character T"],
+                kind="character",
+            ),
+        ]
+        known = ["Ashford Saga", "Character T", "Character E"]
+        bare = "Who is Character T?"
+        self.assertEqual(explicit_work_hints(bare, known, entries), set())
+        self.assertNotIn("character t", extract_work_hints(bare, entries))
+        res = self._ask(bare, entries)
+        answer = (res.get("answer") or "").lower()
+        self.assertNotIn("more than one project", answer)
+        self.assertIn("cheshire", answer)
 
     def test_leading_work_title_detection(self):
         from lorekeeper_reliability import explicit_work_hints, work_named_in_question

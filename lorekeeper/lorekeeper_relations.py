@@ -1000,16 +1000,15 @@ def who_is_standing_relation_lines(
                 if re.search(r"\bsecond\s+cousin\b", body, re.I):
                     if uncertain_here:
                         _add(
-                            f"Your notes treat {partner} as a possible second cousin to "
-                            f"{label}, with open questions about how exact that kinship is"
+                            f"{partner} may be {label}'s second cousin — "
+                            f"that kinship is left open"
                         )
                     else:
                         _add(f"{label} is {partner}'s second cousin")
                 elif re.search(r"\bcousin\b", body, re.I):
                     if uncertain_here or re.search(r"[\"']cousin[\"']", body, re.I):
                         _add(
-                            f"{label} refers to {partner} as cousin in your notes "
-                            f"(kinship framing left open)"
+                            f"{label} calls {partner} cousin, though that kinship is left open"
                         )
                     else:
                         _add(f"{label} is {partner}'s cousin")
@@ -1018,10 +1017,7 @@ def who_is_standing_relation_lines(
                     body,
                     re.I,
                 ) and not re.search(r"\b(?:hunt|prey|secure an ally)\b", body, re.I):
-                    _add(
-                        f"{partner} is an ally or close political counterpart to {label} "
-                        f"in your notes"
-                    )
+                    _add(f"{partner} is an ally or close political counterpart to {label}")
 
         # Draft / letters: only first-person greetings ("To my esteemed cousin X").
         # Never treat "your esteemed cousin {label} suspects…" as label calling anyone.
@@ -1065,7 +1061,88 @@ def who_is_standing_relation_lines(
         if kind in {"character", "note", "politics"} and mentions_label:
             _harvest_open_parent_notes(label, body, _add, uncertain_here)
 
+        # Fairy-tale / named-figure origin (Cheshire Cat, White Rabbit, Wonderland).
+        if mentions_label or kind in {"character", "note", "visual", "politics"}:
+            _harvest_figure_origin(label, title, body, kind, _add)
+
     return lines[:limit]
+
+
+def _harvest_figure_origin(
+    label: str,
+    title: str,
+    body: str,
+    kind: str,
+    add_line,
+) -> None:
+    """Named fairy-tale figure / realm when notes state it for this subject."""
+    blob = f"{title}\n{body}"
+    # "Cheshire Cat, who, in this story, is named Lord Tenebris"
+    if re.search(
+        rf"\bCheshire\s+Cat\b.{{0,120}}?\b(?:named|called)\s+(?:Lord\s+|Lady\s+)?"
+        rf"{re.escape(label)}\b|"
+        rf"\b(?:named|called)\s+(?:Lord\s+|Lady\s+)?{re.escape(label)}\b.{{0,80}}"
+        rf"\bCheshire\s+Cat\b|"
+        rf"\b(?:Lord\s+|Lady\s+)?{re.escape(label)}\b.{{0,60}}\bis\s+the\s+Cheshire\s+Cat\b|"
+        rf"\bCheshire\s+Cat\b.{{0,40}}\b(?:CC\s+)?Baron\s+of\s+Cheshire\b.{{0,40}}"
+        rf"{re.escape(label)}\b|"
+        rf"\b{re.escape(label)}\b.{{0,40}}\b(?:CC\s+)?Baron\s+of\s+Cheshire\b.{{0,60}}"
+        rf"Cheshire\s+Cat\b",
+        blob,
+        re.I | re.S,
+    ):
+        if re.search(r"\bAlice\s+in\s+Wonderland\b|\bWonderland\b", blob, re.I):
+            add_line(
+                f"{label} is the Cheshire Cat from Alice in Wonderland"
+            )
+        else:
+            add_line(f"{label} is the Cheshire Cat")
+        return
+    # White Rabbit / other named figure from a tale.
+    m = re.search(
+        rf"\b{re.escape(label)}\b.{{0,80}}\b(White Rabbit|Cheshire Cat)\b.{{0,40}}"
+        rf"from\s+(Alice\s+in\s+Wonderland|Wonderland)\b|"
+        rf"\b(White Rabbit|Cheshire Cat)\s+from\s+(Alice\s+in\s+Wonderland|Wonderland)\b"
+        rf".{{0,80}}\b{re.escape(label)}\b|"
+        rf"\b{re.escape(label)}\b.{{0,60}}\bthe\s+(White Rabbit)\s+from\s+"
+        rf"(Alice\s+in\s+Wonderland)\b",
+        blob,
+        re.I | re.S,
+    )
+    if m:
+        figure = next(
+            (
+                g
+                for g in m.groups()
+                if g and g.lower() not in {"alice in wonderland", "wonderland"}
+            ),
+            None,
+        )
+        tale = next(
+            (
+                g
+                for g in m.groups()
+                if g and g.lower() in {"alice in wonderland", "wonderland"}
+            ),
+            None,
+        )
+        if figure and tale:
+            tale_out = (
+                "Alice in Wonderland"
+                if "alice" in tale.lower()
+                else "Wonderland"
+            )
+            add_line(f"{label} is the {figure} from {tale_out}")
+            return
+    # Title cues: "Tenebris from Wonderland to Current Realm"
+    if re.search(
+        rf"\b{re.escape(label)}\s+from\s+Wonderland\b|"
+        rf"\bfrom\s+Wonderland\b.{{0,40}}\b{re.escape(label)}\b",
+        title,
+        re.I,
+    ):
+        # Prefer a named figure line if we already have one; title alone is fallback.
+        add_line(f"{label} is from Wonderland")
 
 
 def _harvest_open_parent_notes(
@@ -1121,18 +1198,17 @@ def _harvest_open_parent_notes(
     }:
         if not_faeble or uncertain_entry:
             add_line(
-                f"Your notes sketch {label}'s father as {species} parent stock, "
-                f"with open questions (including not wanting him as a Faeble alongside {label})"
+                f"{label}'s father is sketched as {species} parent stock; "
+                f"notes leave open whether he is a Faeble too"
             )
         else:
             add_line(f"{label}'s father is noted as {species} parent stock")
     elif not_faeble:
         add_line(
-            f"Your notes leave {label}'s father open, including not wanting him "
-            f"as a Faeble alongside {label}"
+            f"{label}'s father is left open, including whether he is a Faeble too"
         )
     if mother_here:
-        add_line(f"Your notes say {label}'s mother is from here")
+        add_line(f"{label}'s mother is from here")
 
 
 def merge_who_is_relationship_lines(
@@ -1147,8 +1223,27 @@ def merge_who_is_relationship_lines(
         key = re.sub(r"\s+", " ", line.lower())[:120]
         if key in seen:
             continue
+        # Drop bare "from Wonderland" when a richer figure/tale line exists.
+        if re.search(rf"^{re.escape(label)}\s+is\s+from\s+wonderland\.?$", line, re.I):
+            if any(
+                re.search(r"\b(cheshire cat|white rabbit|alice in wonderland)\b", x, re.I)
+                for x in out
+            ):
+                continue
         seen.add(key)
         out.append(line)
+    # If both figure and bare wonderland were added in one pass, drop bare.
+    rich = [
+        x
+        for x in out
+        if re.search(r"\b(cheshire cat|white rabbit|alice in wonderland)\b", x, re.I)
+    ]
+    if rich:
+        out = [
+            x
+            for x in out
+            if not re.search(rf"^{re.escape(label)}\s+is\s+from\s+wonderland\.?$", x, re.I)
+        ]
     return out[:10]
 
 

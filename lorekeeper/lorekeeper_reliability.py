@@ -265,12 +265,25 @@ def _hints_from_leading_work_tag(question: str, known_works: list[str]) -> set[s
     return {w.lower() for w in collapsed}
 
 
+def _who_is_subject_names(question: str) -> set[str]:
+    """Who-is targets are character subjects — never treat them as work titles."""
+    try:
+        from lorekeeper_character_summary import character_targets, is_who_is_question
+
+        if not is_who_is_question(question):
+            return set()
+        return {str(n).strip().lower() for n in character_targets(question) if str(n).strip()}
+    except Exception:
+        return set()
+
+
 def _hints_from_known_work_anywhere(question: str, known_works: list[str]) -> set[str]:
     """'summarize Cities Of Rust For Me' / 'summary of Ashford Saga' — title anywhere."""
     q = (question or "").strip()
     if not q or not known_works:
         return set()
     ql = q.lower()
+    subjects = _who_is_subject_names(question)
     # Longest titles first so "Cities Of Rust For Me" wins over "Cities Of Rust".
     ordered = sorted(
         (str(w or "").strip() for w in known_works if str(w or "").strip()),
@@ -282,6 +295,9 @@ def _hints_from_known_work_anywhere(question: str, known_works: list[str]) -> se
         if len(wl) <= 2:
             continue
         wlow = wl.lower()
+        # "Who is Tenebris?" must not scope to a personal tag named Tenebris.
+        if wlow in subjects or any(s in wlow or wlow in s for s in subjects if len(s) > 2):
+            continue
         idx = ql.find(wlow)
         if idx < 0:
             continue
@@ -308,6 +324,14 @@ def explicit_work_hints(
     hints = set(primary_work_hints(question))
     hints.update(_hints_from_leading_work_tag(question, known_works))
     hints.update(_hints_from_known_work_anywhere(question, known_works))
+    subjects = _who_is_subject_names(question)
+    if subjects:
+        hints = {
+            h
+            for h in hints
+            if h not in subjects
+            and not any(s in h or h in s for s in subjects if len(s) > 2)
+        }
     return _collapse_work_hint_set(question, hints, entries)
 
 
@@ -386,8 +410,12 @@ def extract_work_hints(question: str, entries: list[dict[str, Any]]) -> set[str]
             tag_hits.append(title_base)
         for tag in entry.get("tags") or []:
             raw = str(tag).strip()
-            if len(raw) > 2 and work_tag_in_question(raw, question):
-                tag_hits.append(raw)
+            if len(raw) <= 2 or not work_tag_in_question(raw, question):
+                continue
+            # Character-name tags are subjects, not story titles.
+            if raw.lower() in subject_names:
+                continue
+            tag_hits.append(raw)
     if tag_hits:
         collapsed = collapse_near_duplicate_work_tags(question, tag_hits)
         hints.update(w.lower() for w in collapsed)

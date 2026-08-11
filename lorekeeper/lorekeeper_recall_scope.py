@@ -7,10 +7,12 @@ from typing import Any
 
 from lorekeeper_character_summary import character_targets
 from lorekeeper_reliability import (
+    cluster_same_project_tags,
     collapse_near_duplicate_work_tags,
     entries_mentioning_targets,
     entry_matches_work,
     work_named_in_question,
+    work_tags_are_typo_variants,
 )
 
 ENTRIES_KEY = "lorekeeper_entries_v1"
@@ -94,21 +96,103 @@ def distinct_work_tags(entries: list[dict[str, Any]]) -> list[str]:
     return ordered
 
 
+def _cast_label_tags(entries: list[dict[str, Any]]) -> set[str]:
+    """Character / species entry titles used as tags — not story projects."""
+    labels: set[str] = set()
+    for entry in entries:
+        if not isinstance(entry, dict):
+            continue
+        kind = str(entry.get("kind") or "").lower()
+        if kind not in {"character", "species", "relationship"}:
+            continue
+        title = str(entry.get("title") or "").split(" / ")[0].strip().lower()
+        if len(title) > 2:
+            labels.add(title)
+            # "Lord Tenebris" / "Tenebris Notes" → also "tenebris"
+            for part in re.split(r"\s+", title):
+                part = part.strip(" .,:;!?\"'").lower()
+                if len(part) > 2 and part not in {"lord", "lady", "duke", "notes", "and", "the"}:
+                    labels.add(part)
+    return labels
+
+
 def _works_mentioning_targets(
     entries: list[dict[str, Any]], targets: list[str]
 ) -> list[str]:
-    """Work tags where every target appears in at least one entry."""
+    """Story projects where every target appears — not cast/faction personal tags."""
     if not targets:
         return []
-    hits: list[str] = []
+    target_keys = {str(t).strip().lower() for t in targets if str(t).strip()}
+    cast_labels = _cast_label_tags(entries) | target_keys
+    mention_entries = entries_mentioning_targets(entries, targets)
+    if not mention_entries:
+        return []
+    mention_ids = {str(e.get("id") or "") for e in mention_entries}
+
+    raw_hits: list[str] = []
     for work in distinct_work_tags(entries):
-        work_hint = {work.lower()}
+        wlow = work.lower()
+        if wlow in cast_labels or wlow in target_keys:
+            continue
+        if any(work_tags_are_typo_variants(work, t) for t in targets):
+            continue
+        work_hint = {wlow}
         scoped = [e for e in entries if entry_matches_work(e, work_hint)]
         if not scoped:
             continue
-        if all(entries_mentioning_targets(scoped, [t]) for t in targets):
-            hits.append(work)
-    return hits
+        if not all(entries_mentioning_targets(scoped, [t]) for t in targets):
+            continue
+        # Skip tags that only ride along on notes already tagged to another project.
+        sole = 0
+        for entry in scoped:
+            if str(entry.get("id") or "") not in mention_ids:
+                continue
+            tags = [
+                str(t).strip()
+                for t in (entry.get("tags") or [])
+                if str(t).strip() and len(str(t).strip()) > 2
+            ]
+            other = [
+                t
+                for t in tags
+                if t.lower() != wlow
+                and t.lower() not in cast_labels
+                and t.lower() not in target_keys
+                and not work_tags_are_typo_variants(t, work)
+            ]
+            if not other:
+                sole += 1
+        if sole == 0:
+            continue
+        raw_hits.append(work)
+
+    if not raw_hits:
+        return []
+
+    # Collapse Smoke & Mirrors / Smoke and Mirrors style duplicates.
+    clusters = cluster_same_project_tags(raw_hits)
+    scored: list[tuple[int, str]] = []
+    for cluster in clusters:
+        best = ""
+        best_n = -1
+        for work in cluster:
+            n = sum(
+                1
+                for e in mention_entries
+                if entry_matches_work(e, {work.lower()})
+            )
+            if n > best_n or (n == best_n and len(work) > len(best)):
+                best_n = n
+                best = work
+        if best:
+            scored.append((best_n, best))
+    scored.sort(key=lambda x: (-x[0], -len(x[1])))
+    if not scored:
+        return []
+    # One clear home project — don't ask which story when cast tags / tiny side tags remain.
+    if len(scored) >= 2 and scored[0][0] >= max(5, 5 * scored[1][0]):
+        return [scored[0][1]]
+    return [w for _, w in scored]
 
 
 def _format_work_list(works: list[str]) -> str:

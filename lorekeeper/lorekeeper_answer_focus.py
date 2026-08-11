@@ -686,7 +686,7 @@ def scrub_who_is_plot_walkthrough(body: str, *, question: str = "") -> str:
                 r"known|rival|up against|nemesis|opposed|cousin|ally|allies|"
                 r"co-?conspir|esteemed cousin|refers to|your notes treat|"
                 r"don'?t yet spell out|don'?t yet pin a clear cast role|"
-                r"father|mother)\b",
+                r"father|mother|kinship is left open|cheshire cat|wonderland)\b",
                 s,
                 re.I,
             ):

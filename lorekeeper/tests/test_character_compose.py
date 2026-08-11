@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import re
 import unittest
 
 from lorekeeper_character_compose import (
@@ -1384,6 +1385,8 @@ class CharacterComposeTests(unittest.TestCase):
         self.assertNotIn("but anyway", answer)
         self.assertNotIn("tenebris suspects", answer)
         self.assertNotRegex(answer, r"(?i)calls\s+tenebris\s+suspects")
+        self.assertNotIn("your notes treat", answer)
+        self.assertNotIn("refers to", answer)
 
     def test_who_is_rejects_your_esteemed_cousin_self_mangle(self):
         from lorekeeper_relations import who_is_standing_relation_lines
@@ -1440,6 +1443,52 @@ class CharacterComposeTests(unittest.TestCase):
             "domestic cat" in answer or "faeble" in answer or "open" in answer,
             msg=answer,
         )
+        self.assertNotIn("your notes sketch", answer)
+
+    def test_who_is_includes_fairy_tale_origin_and_clean_standing(self):
+        entries = [
+            _entry(
+                "n1",
+                "Protagonist Notes",
+                (
+                    "Character E is the White Rabbit from Alice in Wonderland. "
+                    "He crosses into the home dimension of the Cheshire Cat, who, "
+                    "in this story, is named Lord Character T or CC Baron of Cheshire."
+                ),
+                kind="note",
+                tags=["Ashford Saga"],
+            ),
+            _entry(
+                "t1",
+                "Lord Character T",
+                (
+                    "Lord Character T of Cheshire is probably not entirely of this world; "
+                    "he's not the king or emperor, but his status as a Fairy Tale character, "
+                    "or 'faeble,' grants him a certain social rank somehow."
+                ),
+                kind="politics",
+                tags=["Ashford Saga"],
+            ),
+            _entry(
+                "t2",
+                "Character T Notes",
+                "Character T is Baron of Cheshire.",
+                kind="character",
+                tags=["Ashford Saga"],
+            ),
+        ]
+        res = self._ask("In Ashford Saga, who is Character T?", entries)
+        answer = (res.get("answer") or "")
+        body = re.split(r"\n—\s*From your notes", answer, maxsplit=1)[0].lower()
+        self.assertIn("cheshire", body)
+        self.assertTrue(
+            "wonderland" in body or "alice" in body,
+            msg=answer,
+        )
+        self.assertTrue("baron" in body or "faeble" in body or "rank" in body, msg=answer)
+        self.assertNotIn("somehow", body)
+        self.assertNotIn("your notes treat", body)
+        self.assertNotIn("your notes sketch", body)
 
     def test_who_is_mentions_relation_gap_when_none_written(self):
         entries = [
