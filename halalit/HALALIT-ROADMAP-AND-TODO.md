@@ -170,11 +170,9 @@ Bring these into planning and design so they are not dropped across sessions.
 
 ### Book Quest — prose vs comic adaptations (owner Aug 2026)
 
-Pin only — decide scope later; not built yet.
-
-- [ ] **Original vs graphic adaptation note** — For titles whose **prose originals** you’ve hand-vetted, Book Quest should clarify that a **graphic novel / comic adaptation is not always modest** even when the original book was. Keep the line short. Example concern: swimsuit / outfit panels in some *Cupcake Diaries* graphics (*Emma All Stirred Up*) that the prose didn’t show; not every adaptation does this (*Anne of Green Gables* graphic was fine in owner scope). Mean the **original prose edition** when recommending, not “the comic plot is wrong.”
-- **Draft site line (reader-facing):** “This pick is the original book. A graphic novel remake of the same story isn’t always as modest — preview that edition separately if that’s what you’re getting.”
-- **Open decisions:** which titles get the line; whether *Cupcake Diaries* stays off Book Quest (current: parent discretion / romance-heavy, won’t auto-recommend) or joins with this note; Bookcheck-only vs Book Quest blurb vs both.
+- [x] **Original vs graphic adaptation note** — Book Quest end pick appends the site line for hand-vetted **prose** titles that also have graphic remakes (`proseGraphicAdaptationMatch` in `halalit-curated-shelf-warnings.js`). Skips when the title is already a graphic/comic edition. Seed list: Anne of Green Gables, To Kill a Mockingbird, Enola Holmes, Cupcake Diaries, Sweet Valley Twins, Baby-Sitters Club, Charlotte’s Web, A Wrinkle in Time, The Hobbit (extend the list as you hand-vet more).
+- **Site line (reader-facing):** “This pick is the original book. A graphic novel remake of the same story isn’t always as modest — preview that edition separately if that’s what you’re getting.”
+- **Still open:** *Cupcake Diaries* stays off auto-recommend (parent discretion); Bookcheck blurb for the same list not shipped yet (Book Quest only for now).
 
 ### AI vet batch logged (Jun 2026)
 

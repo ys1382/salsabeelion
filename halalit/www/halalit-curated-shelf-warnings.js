@@ -4270,6 +4270,51 @@
   var PARENT_NOTE_LABEL = "Notes for parents";
 
   /**
+   * Book Quest — prose originals you’ve hand-vetted that also have graphic novel remakes.
+   * Site line means the original book; remakes aren’t always as modest (outfit panels, etc.).
+   * Skip when the looked-up / recommended title is already a graphic/comic edition.
+   */
+  var PROSE_GRAPHIC_ADAPTATION_SITE_LINE =
+    "This pick is the original book. A graphic novel remake of the same story isn’t always as modest — preview that edition separately if that’s what you’re getting.";
+
+  var PROSE_WITH_GRAPHIC_ADAPTATION = [
+    { titleRe: /\banne of green gables\b/i },
+    { titleRe: /\bto kill a mockingbird\b/i },
+    { titleRe: /\benola holmes\b/i },
+    { titleRe: /\bcupcake diaries\b/i },
+    { titleRe: /\bsweet valley twins\b/i },
+    { titleRe: /\bbaby[- ]?sitters? club\b/i },
+    { titleRe: /\bcharlotte'?s web\b/i },
+    { titleRe: /\ba wrinkle in time\b/i },
+    { titleRe: /\bthe hobbit\b/i },
+  ];
+
+  var GRAPHIC_EDITION_TITLE_RE = /\bgraphic\b|\bcomic\b|\bmanga\b/i;
+
+  /**
+   * @param {string} title
+   * @param {string} [author]
+   * @returns {{ label: string, detail: string, siteLine: string }|null}
+   */
+  function proseGraphicAdaptationMatch(title, author) {
+    var tl = norm(title);
+    var al = norm(author);
+    if (!tl) return null;
+    if (GRAPHIC_EDITION_TITLE_RE.test(tl)) return null;
+    for (var i = 0; i < PROSE_WITH_GRAPHIC_ADAPTATION.length; i++) {
+      var w = PROSE_WITH_GRAPHIC_ADAPTATION[i];
+      if (!w.titleRe.test(tl)) continue;
+      if (w.authorRe && al && !w.authorRe.test(al)) continue;
+      return {
+        label: "Original book vs graphic remake",
+        detail: PROSE_GRAPHIC_ADAPTATION_SITE_LINE,
+        siteLine: PROSE_GRAPHIC_ADAPTATION_SITE_LINE,
+      };
+    }
+    return null;
+  }
+
+  /**
    * Advisory only — this title is clean; same author’s other books may not be (shown as WARNING in Bookcheck).
    */
   var AUTHOR_OTHER_WORKS_NOTES = [
@@ -4817,6 +4862,9 @@
     parentNoteMatch: parentNoteMatch,
     parentNoteLabel: PARENT_NOTE_LABEL,
     parentNotes: PARENT_NOTES,
+    proseGraphicAdaptationMatch: proseGraphicAdaptationMatch,
+    proseGraphicAdaptationSiteLine: PROSE_GRAPHIC_ADAPTATION_SITE_LINE,
+    proseWithGraphicAdaptation: PROSE_WITH_GRAPHIC_ADAPTATION,
     authorOtherWorksMatch: authorOtherWorksMatch,
     authorOtherWorksLabel: AUTHOR_OTHER_WORKS_LABEL,
     authorOtherWorksNotes: AUTHOR_OTHER_WORKS_NOTES,

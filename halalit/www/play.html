@@ -668,7 +668,7 @@
   <script src="./halalit-designer-gate.js"></script>
   <script src="./halalit-personal-library.js"></script>
   <script src="./halalit-want-to-read.js"></script>
-  <script src="./halalit-curated-shelf-warnings.js?v=20260702a"></script>
+  <script src="./halalit-curated-shelf-warnings.js?v=20260811a"></script>
   <script src="./halalit-catalog-pins.js?v=20260626e"></script>
   <script src="./halalit-cover-thumb.js?v=20260623b"></script>
   <script src="./halalit-family-shelf-policy.js?v=20260605t"></script>
@@ -2722,20 +2722,33 @@
         var b = ec.bold;
         var s = ec.social;
         var l = ec.lone;
-        function pick(html, genreKey) {
+        function pick(html, genreKey, titlePlain) {
           var shelfKey = readerGenre || genreKey;
           var gLabel = shelfKey ? GENRE_LABELS[shelfKey] || shelfKey : "your chosen shelf";
           var nfNote =
             shelfKey === "nonfiction" && nonfictionTrack
               ? " <span class=\"muted\">(Matched to the nonfiction field you chose in Book Quest.)</span>"
               : "";
+          var adaptNote = "";
+          var Curated = window.HalalitCuratedShelfWarnings;
+          if (
+            Curated &&
+            typeof Curated.proseGraphicAdaptationMatch === "function" &&
+            titlePlain
+          ) {
+            var adapt = Curated.proseGraphicAdaptationMatch(titlePlain, "");
+            if (adapt && adapt.siteLine) {
+              adaptNote = " <span class=\"muted\">" + adapt.siteLine + "</span>";
+            }
+          }
           return (
             "Your next read: " +
             html +
             " <span class=\"muted\">(Hand-picked for your reader age band; this title sits on the " +
             gLabel +
             " shelf you named at the desk.)</span>" +
-            nfNote
+            nfNote +
+            adaptNote
           );
         }
         var bucket;
@@ -2759,7 +2772,7 @@
         }
         return {
           line: v.line,
-          pick: pick(v.book, v.genre),
+          pick: pick(v.book, v.genre, v.titlePlain),
           bookId: v.id,
           titlePlain: v.titlePlain,
           aspects: v.aspects,
