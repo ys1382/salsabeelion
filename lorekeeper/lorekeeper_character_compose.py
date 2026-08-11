@@ -890,6 +890,7 @@ def _kinship_shape_sentence(sentence: str, label: str) -> bool:
         rf"^{lab}\s+calls\s+.+\s+cousin,\s+though that kinship is left open\.?$",
         rf"^.+\s+may be\s+{lab}'s\s+(?:second\s+)?cousin\s+—\s+that kinship is left open\.?$",
         rf"^{lab}'s\s+father\s+is\s+(?:sketched|noted|left open)\b.+$",
+        rf"^{lab}'s\s+father\s+is\s+.+\s+parent stock\b.+$",
         rf"^{lab}'s\s+mother\s+is\s+from\s+here\.?$",
         rf"^Your notes treat\s+.+\s+as\s+a\s+possible\s+(?:second\s+)?cousin\s+to\s+{lab}\b.+$",
         rf"^Your notes (?:sketch|say|leave)\s+{lab}'s\s+(?:father|mother)\b.+$",
@@ -898,6 +899,8 @@ def _kinship_shape_sentence(sentence: str, label: str) -> bool:
         rf"^{lab}\s+refers to\s+(?:his|her|their)\s+['\"]?cousin['\"]?\s+.+$",
         rf"^.+\s+is\s+an\s+ally\b.{{0,80}}{lab}\b.+$",
         rf"^{lab}\s+is\s+(?:the\s+)?(?:subject|quarry)\s+of\s+.+$",
+        rf"^.+\s+is\s+the\s+quarry\s+of\s+{lab}\b.+$",
+        rf"^{lab}\s+is\s+the\s+(?:main\s+)?(?:antagonist|villain)\b.+$",
         rf"^{lab}\s+is\s+(?:the\s+)?(?:son|daughter|child)\s+of\s+.+$",
         rf"^{lab}\s+is\s+(?:(?:also|better)\s+)?known\s+(?:as|to|by)\b.+$",
         rf"^(?:He|She)\s+is\s+(?:(?:also|better)\s+)?known\s+(?:as|to|by)\b.+$",
@@ -1921,6 +1924,7 @@ def weave_who_is_gold_tone(
     significance_lines: list[str] = []
     extras_from_rel: list[str] = []
     orphan_lines: list[str] = []
+    role_from_rel: list[str] = []
     gender_word: str | None = None
 
     def _brother_tail(c: str) -> str | None:
@@ -1979,6 +1983,19 @@ def weave_who_is_gold_tone(
             if not _is_gold_tone_cast_sentence(c, label):
                 orphan_lines.append(_strip_male_female_role(c))
             continue
+        # Cast role from standing harvest — before opposition/significance buckets.
+        if re.search(
+            rf"^{re.escape(label)}\s+is\s+the\s+(?:main\s+)?(?:antagonist|villain)\b|"
+            rf"^{re.escape(label)}\s+is\s+(?:a|the)\s+(?:main\s+)?(?:antagonist|villain)\b",
+            c,
+            re.I,
+        ):
+            line = _strip_male_female_role(c)
+            if line not in role_from_rel:
+                role_from_rel.append(
+                    line if line.endswith((".", "!", "?")) else line + "."
+                )
+            continue
         if is_overview_significance_clause(c, label) and not re.search(
             r"\b(brother to|sister to|son of|daughter of)\b", c, re.I
         ):
@@ -2006,7 +2023,8 @@ def weave_who_is_gold_tone(
         ) and not re.search(
             r"\b("
             r"father|mother|parent stock|cousin|esteemed cousin|"
-            r"your notes (?:sketch|say|leave|treat)|refers to"
+            r"your notes (?:sketch|say|leave|treat)|refers to|"
+            r"antagonist|villain"
             r")\b",
             c,
             re.I,
@@ -2103,6 +2121,16 @@ def weave_who_is_gold_tone(
                     twin_brother_keys.add(key)
             continue
         if re.search(
+            rf"^.+\s+is\s+the\s+quarry\s+of\s+{re.escape(label)}\b|"
+            rf"^{re.escape(label)}\s+hunts\s+.+$",
+            c,
+            re.I,
+        ):
+            line = _normalize_standing(c)
+            if line not in other_family:
+                other_family.append(line)
+            continue
+        if re.search(
             r"\b("
             r"sister|father|mother|widow|raised|parent|subject of|quarry|married|"
             r"nemesis|best friend|closest friend|cousin|father to|mother to|"
@@ -2134,6 +2162,7 @@ def weave_who_is_gold_tone(
         or alias_lines
         or other_family
         or significance_lines
+        or role_from_rel
     )
     if not has_identity_slots:
         return ""
@@ -2141,7 +2170,7 @@ def weave_who_is_gold_tone(
     base = next(
         (
             c
-            for c in lead
+            for c in role_from_rel + list(lead)
             if re.search(r"\b(protagonist|antagonist|main character)\b", c, re.I)
         ),
         None,
@@ -2169,6 +2198,25 @@ def weave_who_is_gold_tone(
         return ""
 
     base = _strip_male_female_role(base)
+    # Fold titled standing (Baron of X) into antagonist / protagonist opening.
+    if re.search(r"\b(antagonist|protagonist|villain|main character)\b", base, re.I):
+        for c in lead:
+            if c == base:
+                continue
+            m = re.match(
+                rf"^{re.escape(label)}\s+is\s+"
+                rf"((?:a\s+|the\s+)?(?:Baron|Lord|Lady|Duke|Duchess|Baroness)\b.+)$",
+                c,
+                re.I,
+            )
+            if not m:
+                continue
+            title_bit = m.group(1).rstrip(".")
+            if title_bit.lower() not in base.lower():
+                # "the main antagonist, Baron of Cheshire"
+                base = base.rstrip(".") + f", {title_bit}."
+            break
+
     # Drop orphan appositive from a role+raised-by gold dump when better slots exist.
     if is_orphan_life_summary(base) and (
         named_parents or alias_lines or rich_brother_lines or significance_lines
@@ -2207,11 +2255,19 @@ def weave_who_is_gold_tone(
     for c in lead:
         if c == base or _gender_only(c):
             continue
+        # Already folded into antagonist/protagonist opening (Baron of …).
+        if re.search(r"\b(antagonist|protagonist|villain)\b", base, re.I) and re.match(
+            rf"^{re.escape(label)}\s+is\s+(?:a\s+|the\s+)?(?:Baron|Lord|Lady|Duke)\b",
+            c,
+            re.I,
+        ):
+            continue
         if (
             c in other_family
             or c in alias_lines
             or c in named_parents
             or c in significance_lines
+            or c in role_from_rel
         ):
             continue
         if is_orphan_life_summary(c):
@@ -2318,7 +2374,15 @@ def weave_who_is_gold_tone(
             flags=re.I,
         ).rstrip(".")
         if alias_core.lower() not in role_core.lower():
-            role_core = f"{role_core}, but is {alias_core}"
+            # Title + fairy-tale figure folded into the opening cast line.
+            if re.match(r"^(?:the\s+)?(?:cheshire cat|white rabbit)\b", alias_core, re.I):
+                if re.search(r"\band\b", role_core, re.I):
+                    # "…antagonist and Baron of Cheshire, and the Cheshire Cat…"
+                    role_core = f"{role_core}, and {alias_core}"
+                else:
+                    role_core = f"{role_core} and {alias_core}"
+            else:
+                role_core = f"{role_core}, and is {alias_core}"
 
     kin_for_open: list[str] = []
     for bit in kin_bits:
@@ -2553,6 +2617,13 @@ def formalize_who_is_sentence(sentence: str, label: str) -> str:
         flags=re.I,
     )
     s = re.sub(
+        rf"^{re.escape(label)}\s+refers to\s+(?:his|her|their)\s+['\"]?cousin['\"]?\s+(.+?)\.?$",
+        rf"{label} calls \1 cousin, though that kinship is left open.",
+        s,
+        count=1,
+        flags=re.I,
+    )
+    s = re.sub(
         rf"^{re.escape(label)}\s+refers to\s+(.+?)\s+as\s+cousin\s+in your notes.*$",
         rf"{label} calls \1 cousin, though that kinship is left open.",
         s,
@@ -2562,7 +2633,15 @@ def formalize_who_is_sentence(sentence: str, label: str) -> str:
     s = re.sub(
         rf"^Your notes sketch\s+{re.escape(label)}'s\s+father\s+as\s+(.+?)\s+parent stock,?\s*"
         rf"with open questions.*$",
-        rf"{label}'s father is sketched as \1 parent stock; notes leave open whether he is a Faeble too.",
+        rf"{label}'s father is \1 parent stock; whether he is a Faeble too is left open.",
+        s,
+        count=1,
+        flags=re.I,
+    )
+    s = re.sub(
+        rf"^{re.escape(label)}'s\s+father\s+is\s+sketched\s+as\s+(.+?)\s+parent stock;\s*"
+        rf"notes leave open whether he is a Faeble too\.?$",
+        rf"{label}'s father is \1 parent stock; whether he is a Faeble too is left open.",
         s,
         count=1,
         flags=re.I,
@@ -2741,6 +2820,22 @@ def smooth_who_is_prose(label: str, body: str) -> str:
             )
             s = formalize_who_is_sentence(s, label)
             kept.append(s)
+        # One cousin standing line is enough — keep second-cousin / may-be over thinner call lines.
+        has_rich_cousin = any(
+            re.search(r"\bsecond cousin\b|\bmay be\b.+\bcousin\b", s, re.I) for s in kept
+        )
+        if has_rich_cousin:
+            kept = [
+                s
+                for s in kept
+                if not re.search(
+                    rf"^{re.escape(label)}\s+calls\s+.+\bcousin\b|"
+                    rf"^{re.escape(label)}\s+refers to\b.+\bcousin\b|"
+                    rf"\besteemed cousin\b",
+                    s,
+                    re.I,
+                )
+            ]
         # Drop near-duplicate role lines ("X is a young woman." then "X is a young woman and an author.")
         if len(kept) >= 2:
             deduped: list[str] = []

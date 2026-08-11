@@ -1490,6 +1490,64 @@ class CharacterComposeTests(unittest.TestCase):
         self.assertNotIn("your notes treat", body)
         self.assertNotIn("your notes sketch", body)
 
+    def test_who_is_keeps_mother_antagonist_and_dedupes_cousin(self):
+        entries = [
+            _entry(
+                "p1",
+                "Protagonist Notes",
+                (
+                    "Character E is the protagonist of the story, the White Rabbit from "
+                    "Alice in Wonderland. He crosses into the home dimension of the "
+                    "Cheshire Cat, who, in this story, is named Lord Character T."
+                ),
+                kind="note",
+                tags=["Ashford Saga"],
+            ),
+            _entry(
+                "r1",
+                "Character E and Lord Character T",
+                (
+                    "Character E is aware that the Cheshire Cat does not yet want him dead. "
+                    "The Cat sees the hunt as a game."
+                ),
+                kind="relationship",
+                tags=["Ashford Saga"],
+            ),
+            _entry(
+                "t1",
+                "Character T Notes",
+                (
+                    "Character T is Baron of Cheshire. His mother is from here, but his "
+                    "father, who was the Domestic Cat species parent, I don't think I want "
+                    "his father to be a Faeble too. Duke Dijon may or may not be his "
+                    "second cousin."
+                ),
+                kind="character",
+                tags=["Ashford Saga"],
+            ),
+            _entry(
+                "d1",
+                "Duke Dijon and Lord Character T",
+                (
+                    "Duke Dijon is the second cousin of Lord Character T. Whether they "
+                    "are actually cousins is left open. Dijon may feel less of the main "
+                    "antagonist."
+                ),
+                kind="relationship",
+                tags=["Ashford Saga"],
+            ),
+        ]
+        res = self._ask("In Ashford Saga, who is Character T?", entries)
+        answer = (res.get("answer") or "")
+        body = re.split(r"\n—\s*From your notes", answer, maxsplit=1)[0].lower()
+        self.assertIn("mother", body, msg=answer)
+        self.assertIn("antagonist", body, msg=answer)
+        self.assertIn("character e", body, msg=answer)
+        self.assertTrue("quarry" in body or "hunt" in body, msg=answer)
+        self.assertLessEqual(body.count("cousin"), 1, msg=answer)
+        self.assertNotIn("sketched as", body)
+        self.assertNotIn(", but is ", body)
+
     def test_who_is_mentions_relation_gap_when_none_written(self):
         entries = [
             _entry(

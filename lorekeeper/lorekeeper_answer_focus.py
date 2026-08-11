@@ -682,11 +682,37 @@ def scrub_who_is_plot_walkthrough(body: str, *, question: str = "") -> str:
             ):
                 stakesish.append(s)
             elif re.search(
+                r"\b(faeble|fairy[- ]?tale character|not entirely of this world|social rank)\b",
+                s,
+                re.I,
+            ) and re.search(
+                rf"\b{re.escape(label)}\b|"
+                rf"^(?:Lord|Lady|Duke|Duchess|Baron|Baroness)\s+{re.escape(label)}\b",
+                s,
+                re.I,
+            ):
+                stakesish.append(s)
+            elif re.match(
+                rf"^{re.escape(label)}\s+(?:is|was)\b",
+                s,
+                re.I,
+            ) and re.search(
+                r"\b("
+                r"protagonist|antagonist|villain|hero|baron|lord|lady|"
+                r"cheshire cat|white rabbit|from (?:alice in )?wonderland|"
+                r"main character|side character"
+                r")\b",
+                s,
+                re.I,
+            ):
+                # Role / title / fairy-tale origin — identity, not a kin "tie".
+                identityish.append(s)
+            elif re.search(
                 r"\b(brother|sister|father|mother|parent|married|subject of|quarry|"
                 r"known|rival|up against|nemesis|opposed|cousin|ally|allies|"
                 r"co-?conspir|esteemed cousin|refers to|your notes treat|"
                 r"don'?t yet spell out|don'?t yet pin a clear cast role|"
-                r"father|mother|kinship is left open|cheshire cat|wonderland)\b",
+                r"father|mother|kinship is left open|parent stock|hunts?\b)\b",
                 s,
                 re.I,
             ):
@@ -700,7 +726,8 @@ def scrub_who_is_plot_walkthrough(body: str, *, question: str = "") -> str:
             key=lambda s: (
                 0
                 if re.search(
-                    r"\b(protagonist|antagonist|rabbit|wolf|fox|lynx|arcanist|white rabbit)\b",
+                    r"\b(protagonist|antagonist|main antagonist|villain|"
+                    r"cheshire cat|white rabbit|baron|rabbit|wolf|fox|lynx|arcanist)\b",
                     s,
                     re.I,
                 )
@@ -709,8 +736,22 @@ def scrub_who_is_plot_walkthrough(body: str, *, question: str = "") -> str:
                 len(s),
             )
         )
+        # Parents / quarry before duplicate cousin wordings so mother is not cut.
+        def _tie_rank(s: str) -> tuple[int, int]:
+            low = s.lower()
+            if re.search(r"\b(father|mother|parent stock)\b", low):
+                return (0, len(s))
+            if re.search(r"\b(subject of|quarry|hunts?\b|nemesis)\b", low):
+                return (1, len(s))
+            if re.search(r"\bsecond cousin\b", low):
+                return (2, len(s))
+            if re.search(r"\bcousin\b", low):
+                return (3, len(s))
+            return (4, len(s))
+
+        tiesish.sort(key=_tie_rank)
         # Kin/stakes before long rename dumps.
-        ordered = identityish[:4] + tiesish[:4] + stakesish[:3] + other[:1] + renameish[:1]
+        ordered = identityish[:4] + tiesish[:5] + stakesish[:3] + other[:1] + renameish[:1]
         kept = ordered or kept[:5]
     else:
         kept = kept[:4]

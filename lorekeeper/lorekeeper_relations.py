@@ -869,7 +869,7 @@ _RELATION_UNCERTAIN = re.compile(
 
 
 def who_is_standing_relation_lines(
-    label: str, entries: list[dict[str, Any]], *, limit: int = 6
+    label: str, entries: list[dict[str, Any]], *, limit: int = 10
 ) -> list[str]:
     """
     Cast-card standing ties for who-is: cousin / ally / co-conspirator,
@@ -1065,6 +1065,8 @@ def who_is_standing_relation_lines(
         if mentions_label or kind in {"character", "note", "visual", "politics"}:
             _harvest_figure_origin(label, title, body, kind, _add)
 
+    _harvest_opposition_standing(label, entries, _add)
+
     return lines[:limit]
 
 
@@ -1198,17 +1200,114 @@ def _harvest_open_parent_notes(
     }:
         if not_faeble or uncertain_entry:
             add_line(
-                f"{label}'s father is sketched as {species} parent stock; "
-                f"notes leave open whether he is a Faeble too"
+                f"{label}'s father is {species} parent stock; "
+                f"whether he is a Faeble too is left open"
             )
         else:
-            add_line(f"{label}'s father is noted as {species} parent stock")
+            add_line(f"{label}'s father is {species} parent stock")
     elif not_faeble:
         add_line(
             f"{label}'s father is left open, including whether he is a Faeble too"
         )
     if mother_here:
         add_line(f"{label}'s mother is from here")
+
+
+def _harvest_opposition_standing(
+    label: str,
+    entries: list[dict[str, Any]],
+    add_line,
+) -> None:
+    """Quarry / main-antagonist standing when notes name the opposition."""
+    from lorekeeper_cast_roles import label_has_antagonist_signal
+
+    note_blob = "\n".join(
+        f"{e.get('title') or ''}\n{e.get('body') or ''}"
+        for e in entries
+        if isinstance(e, dict) and str(e.get("kind") or "").lower() != "document"
+    )
+    if not note_blob.strip():
+        return
+
+    # Named quarry from relationship titles like "Etherei and Lord Tenebris".
+    quarry: str | None = None
+    for entry in entries:
+        if not isinstance(entry, dict):
+            continue
+        kind = str(entry.get("kind") or "").lower()
+        title = str(entry.get("title") or "")
+        body = str(entry.get("body") or "")
+        if kind not in {"relationship", "character", "note", "politics", "plot", "event"}:
+            continue
+        if not re.search(rf"\b{re.escape(label)}\b", f"{title}\n{body}", re.I):
+            continue
+        m = re.match(
+            rf"^({_CAST_OTHER_NAME})\s+and\s+(?:Lord\s+|Lady\s+|Duke\s+)?"
+            rf"{re.escape(label)}\s*$|"
+            rf"^(?:Lord\s+|Lady\s+|Duke\s+)?{re.escape(label)}\s+and\s+"
+            rf"({_CAST_OTHER_NAME})\s*$",
+            title.strip(),
+            re.I,
+        )
+        if not m:
+            continue
+        other = _clean_name(m.group(1) or m.group(2) or "")
+        if not other or _name_key(other) == _name_key(label):
+            continue
+        if re.search(
+            r"\b(hunt|hunting|quarry|prey|capture|does not yet want him dead|"
+            r"doesn'?t want him dead|white rabbit)\b",
+            body,
+            re.I,
+        ):
+            quarry = other
+            break
+    if quarry:
+        add_line(f"{quarry} is the quarry of {label}")
+
+    # Writer cast someone as protagonist while this label hunts them / opposes them.
+    protag = None
+    for entry in entries:
+        if not isinstance(entry, dict):
+            continue
+        body = str(entry.get("body") or "")
+        title = str(entry.get("title") or "")
+        blob = f"{title}\n{body}"
+        m = re.search(
+            rf"\b({_CAST_OTHER_NAME})\s+is\s+the\s+protagonist\b|"
+            rf"\bthe\s+protagonist\s+is\s+({_CAST_OTHER_NAME})\b",
+            blob,
+            re.I | re.S,
+        )
+        if not m and re.search(r"\bprotagonist\s+notes?\b", title, re.I):
+            m = re.search(
+                rf"^({_CAST_OTHER_NAME})\s+is\s+(?:the\s+)?protagonist\b",
+                body.strip(),
+                re.I,
+            )
+        if not m:
+            continue
+        cand = _clean_name(next(g for g in m.groups() if g))
+        if cand and _name_key(cand) != _name_key(label):
+            protag = cand
+            break
+
+    ant_signal = label_has_antagonist_signal(label, note_blob)
+    if quarry and protag and _name_key(quarry) == _name_key(protag):
+        add_line(f"{label} is the main antagonist")
+    elif ant_signal and (quarry or protag) and re.search(
+        r"\bmain antagonist\b",
+        note_blob,
+        re.I,
+    ):
+        add_line(f"{label} is the main antagonist")
+    elif quarry and ant_signal and re.search(
+        rf"\b{re.escape(label)}\b.{{0,100}}\b(?:hunt|hunting|quarry|capture)\b|"
+        rf"\b(?:hunt|hunting|quarry|capture)\b.{{0,100}}\b{re.escape(label)}\b",
+        note_blob,
+        re.I | re.S,
+    ):
+        add_line(f"{label} is the main antagonist")
 
 
 def merge_who_is_relationship_lines(
@@ -1243,6 +1342,25 @@ def merge_who_is_relationship_lines(
             x
             for x in out
             if not re.search(rf"^{re.escape(label)}\s+is\s+from\s+wonderland\.?$", x, re.I)
+        ]
+    # Prefer one cousin line: keep second-cousin / may-be over thinner call/refer lines.
+    secondish = [
+        x
+        for x in out
+        if re.search(r"\bsecond cousin\b|\bmay be\b.+\bcousin\b", x, re.I)
+    ]
+    if secondish:
+        out = [
+            x
+            for x in out
+            if not re.search(
+                rf"^{re.escape(label)}\s+calls\s+.+\bcousin\b|"
+                rf"\brefers to\b.+\bcousin\b|"
+                rf"\bcalls\b.+\bcousin, though that kinship is left open|"
+                rf"\besteemed cousin\b",
+                x,
+                re.I,
+            )
         ]
     return out[:10]
 
