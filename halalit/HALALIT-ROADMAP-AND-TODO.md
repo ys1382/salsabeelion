@@ -168,6 +168,13 @@ Bring these into planning and design so they are not dropped across sessions.
 
 ## Your additions
 
+### Book Quest — prose vs comic adaptations (owner Aug 2026)
+
+Pin only — decide scope later; not built yet.
+
+- [ ] **Original vs graphic adaptation note** — For titles whose **prose originals** you’ve hand-vetted, Book Quest should clarify that a **graphic novel / comic adaptation is not always modest** even when the original book was. Keep the line short. Example concern: swimsuit / outfit panels in some *Cupcake Diaries* graphics (*Emma All Stirred Up*) that the prose didn’t show; not every adaptation does this (*Anne of Green Gables* graphic was fine in owner scope). Mean the **original prose edition** when recommending, not “the comic plot is wrong.”
+- **Open decisions:** which titles get the line; whether *Cupcake Diaries* stays off Book Quest (current: parent discretion / romance-heavy, won’t auto-recommend) or joins with this note; Bookcheck-only vs Book Quest blurb vs both.
+
 ### AI vet batch logged (Jun 2026)
 
 - [x] **AI staging live on Bookcheck (Jun 2026)** — `HALALIT-AI-VET-STAGING.md` → `halalit-ai-vet-staging.js`; banners: *AI likely okay — not hand-checked*, *AI flagged for review — not hand-checked*, *AI likely rejection — not manually checked*. Hand-vet always wins.
