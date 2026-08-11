@@ -25,7 +25,7 @@
 - [x] Google login for new accounts (Jul 2026) — spare/junk Google encouraged; legacy password sign-in kept
 - [x] Idea spinner — user-filled word banks, private nudge prompts (`spinner.html`)
 - [x] Home writer tools tabs — Ask · Idea spinner · Word help (Halalit-style); `spinner.html` redirects to `#spinner`
-- [x] **Site tabs on home** — Stories · Find · Ask · Idea spinner · Word help · Feedback (top-level like Halalit; Find is its own full tab with matching results)
+- [x] **Site tabs on home** — Stories · Find · Idea spinner · Word help · Feedback (top-level like Halalit; Ask stays on Stories; Find is its own full tab with matching results)
 
 ---
 

@@ -4,20 +4,19 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
   <title>LoreKeeper</title>
-  <link rel="stylesheet" href="./lk-shared.css?v=105" />
+  <link rel="stylesheet" href="./lk-shared.css?v=106" />
 </head>
 <body class="lk-page-home">
   <div class="lk-wrap">
     <p class="header-nav"><a href="https://oddtrove.art/">← Odd Trove</a></p>
     <h1>LoreKeeper <span class="muted" style="font-size:0.5em;font-weight:500;vertical-align:0.18em">beta</span></h1>
-    <p class="lk-lead"><strong>Stories</strong> keep their main draft and notes together — one silo per project. Undecided scraps land in <strong>Random ideas</strong>. Use the tabs for <strong>Find</strong>, <strong>Ask</strong>, <strong>Idea spinner</strong>, and <strong>Word help</strong>.</p>
+    <p class="lk-lead"><strong>Stories</strong> keep their main draft and notes together — one silo per project. Undecided scraps land in <strong>Random ideas</strong>. <strong>Ask</strong> lives on Stories. Use the other tabs for <strong>Find</strong>, <strong>Idea spinner</strong>, and <strong>Word help</strong>.</p>
     <p class="lk-auth-bar" id="lkAuthBar"></p>
     <p class="lk-privacy">Private to your account. Not shared with other writers. Your drafts live on the server — not in the public website code.</p>
 
     <nav class="lk-site-tabs" role="tablist" aria-label="LoreKeeper sections">
       <button type="button" class="lk-site-tab" role="tab" id="tab-btn-stories" aria-controls="panel-stories" aria-selected="true">Stories</button>
       <button type="button" class="lk-site-tab" role="tab" id="tab-btn-find" aria-controls="panel-find" aria-selected="false" tabindex="-1">Find</button>
-      <button type="button" class="lk-site-tab" role="tab" id="tab-btn-ask" aria-controls="panel-ask" aria-selected="false" tabindex="-1">Ask LoreKeeper</button>
       <button type="button" class="lk-site-tab" role="tab" id="tab-btn-spinner" aria-controls="panel-spinner" aria-selected="false" tabindex="-1">Idea spinner</button>
       <button type="button" class="lk-site-tab" role="tab" id="tab-btn-word-help" aria-controls="panel-word-help" aria-selected="false" tabindex="-1">Word help</button>
       <button type="button" class="lk-site-tab" role="tab" id="tab-btn-feedback" aria-controls="panel-feedback" aria-selected="false" tabindex="-1">Feedback</button>
@@ -104,36 +103,8 @@
         <p class="lk-status" id="noteEditorStatus"></p>
         <button type="button" class="lk-btn secondary lk-sync-retry" id="retryNoteSyncBtn" hidden>Retry sync</button>
       </div>
-    </div>
 
-    <div id="panel-find" class="lk-site-panel" role="tabpanel" aria-labelledby="tab-btn-find" hidden>
-      <div class="lk-panel lk-find-panel">
-        <h2 class="lk-panel-title">Find in your writing</h2>
-        <p class="muted lk-section-lead">
-          Plain search through <strong>documents and notes</strong> on this account — look up a name, phrase, or scrap. Matching notes and drafts show below. Not Ask, not AI.
-        </p>
-        <div class="lk-find-workspace">
-          <div class="lk-toolbar lk-find-toolbar">
-            <input
-              type="search"
-              id="findBox"
-              class="lk-find-input"
-              placeholder="e.g. a character name, a place, a line you remember…"
-              autocomplete="off"
-              aria-label="Find in documents and notes"
-            />
-            <button type="button" class="lk-btn" id="findBtn">Find</button>
-          </div>
-          <p class="lk-status lk-find-status" id="findStatus" aria-live="polite">Type a word or phrase — matching notes and documents appear here.</p>
-          <h3 class="lk-panel-subtitle lk-find-results-heading" id="findResultsHeading">Matching notes &amp; documents</h3>
-          <ul class="lk-find-results" id="findResults" aria-live="polite" aria-labelledby="findResultsHeading"></ul>
-          <p class="muted lk-find-empty-hint" id="findEmptyHint">Nothing here yet. Search something you’ve written — only hits that contain that word or phrase show up.</p>
-        </div>
-      </div>
-    </div>
-
-    <div id="panel-ask" class="lk-site-panel" role="tabpanel" aria-labelledby="tab-btn-ask" hidden>
-      <div class="lk-panel">
+      <div class="lk-panel" id="panel-ask">
         <h2 class="lk-panel-title">Ask LoreKeeper</h2>
         <p class="muted lk-ask-lead">
           Pick <strong>one story</strong> (or Random ideas). Ask only reads that silo’s draft and notes — not the rest of your account.
@@ -167,6 +138,32 @@
         </div>
         <div class="lk-ask-answer" id="askAnswer" hidden></div>
         <ul class="lk-ask-sources" id="askSources" hidden aria-label="Sources"></ul>
+      </div>
+    </div>
+
+    <div id="panel-find" class="lk-site-panel" role="tabpanel" aria-labelledby="tab-btn-find" hidden>
+      <div class="lk-panel lk-find-panel">
+        <h2 class="lk-panel-title">Find in your writing</h2>
+        <p class="muted lk-section-lead">
+          Plain search through <strong>documents and notes</strong> on this account — look up a name, phrase, or scrap. Matching notes and drafts show below. Not Ask, not AI.
+        </p>
+        <div class="lk-find-workspace">
+          <div class="lk-toolbar lk-find-toolbar">
+            <input
+              type="search"
+              id="findBox"
+              class="lk-find-input"
+              placeholder="e.g. a character name, a place, a line you remember…"
+              autocomplete="off"
+              aria-label="Find in documents and notes"
+            />
+            <button type="button" class="lk-btn" id="findBtn">Find</button>
+          </div>
+          <p class="lk-status lk-find-status" id="findStatus" aria-live="polite">Type a word or phrase — matching notes and documents appear here.</p>
+          <h3 class="lk-panel-subtitle lk-find-results-heading" id="findResultsHeading">Matching notes &amp; documents</h3>
+          <ul class="lk-find-results" id="findResults" aria-live="polite" aria-labelledby="findResultsHeading"></ul>
+          <p class="muted lk-find-empty-hint" id="findEmptyHint">Nothing here yet. Search something you’ve written — only hits that contain that word or phrase show up.</p>
+        </div>
       </div>
     </div>
 
@@ -252,7 +249,7 @@
   <script src="./lk-spinner-store.js?v=1"></script>
   <script src="./lk-spinner.js?v=8"></script>
   <script src="./lk-word-help.js?v=3"></script>
-  <script src="./lk-home-tabs.js?v=4"></script>
+  <script src="./lk-home-tabs.js?v=5"></script>
   <script src="./lk-mobile-comfort.js?v=5"></script>
   <script src="./lk-writing-glossary.js?v=1"></script>
   <script src="./lk-mobile-accessory.js?v=3"></script>

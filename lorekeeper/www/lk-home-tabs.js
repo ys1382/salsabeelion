@@ -1,11 +1,11 @@
 /**
- * LoreKeeper home — Stories / Find / Ask / Idea spinner / Word help / Feedback (Halalit-style site tabs).
+ * LoreKeeper home — Stories / Find / Idea spinner / Word help / Feedback (Halalit-style site tabs).
+ * Ask LoreKeeper lives on the Stories page (not its own top tab).
  */
 (function (global) {
   var TAB_META = [
     { btn: "tab-btn-stories", panel: "panel-stories", hash: "" },
     { btn: "tab-btn-find", panel: "panel-find", hash: "#find" },
-    { btn: "tab-btn-ask", panel: "panel-ask", hash: "#ask" },
     { btn: "tab-btn-spinner", panel: "panel-spinner", hash: "#spinner" },
     { btn: "tab-btn-word-help", panel: "panel-word-help", hash: "#word-help" },
     { btn: "tab-btn-feedback", panel: "panel-feedback", hash: "#feedback" },
@@ -33,6 +33,27 @@
         findBox.focus({ preventScroll: true });
       } catch (e1) {
         findBox.focus();
+      }
+    });
+  }
+
+  function scrollToAsk(opts) {
+    opts = opts || {};
+    var askQ = document.getElementById("askQuestion");
+    var askPanel = document.getElementById("panel-ask");
+    var target = askQ || askPanel;
+    if (!target || typeof target.scrollIntoView !== "function") return;
+    global.requestAnimationFrame(function () {
+      target.scrollIntoView({
+        block: opts.block || "nearest",
+        behavior: opts.behavior || "smooth",
+      });
+      if (opts.focus && askQ && typeof askQ.focus === "function") {
+        try {
+          askQ.focus({ preventScroll: true });
+        } catch (e1) {
+          askQ.focus();
+        }
       }
     });
   }
@@ -66,28 +87,38 @@
 
     var lf = lastFocus();
     if (opts.userPick && lf) {
-      if (cur && cur.panel === "panel-ask") lf.setAsk();
       if (cur && cur.panel === "panel-word-help") lf.setWordHelp();
+      if (opts.markAsk && cur && cur.panel === "panel-stories") lf.setAsk();
     }
 
     if (opts.resumeScroll && lf && cur) {
-      lf.scrollPanelToBottom(cur.panel);
-    } else if (cur && cur.panel === "panel-ask" && !opts.skipScroll) {
-      var askQ = document.getElementById("askQuestion");
-      if (askQ && typeof askQ.scrollIntoView === "function") {
-        global.requestAnimationFrame(function () {
-          askQ.scrollIntoView({ block: "nearest", behavior: "smooth" });
-        });
+      if (opts.scrollAsk || (lf.get && lf.get() && lf.get().place === "ask")) {
+        scrollToAsk({ behavior: "auto", block: "end" });
+      } else {
+        lf.scrollPanelToBottom(cur.panel);
       }
+    } else if (opts.scrollAsk && cur && cur.panel === "panel-stories" && !opts.skipScroll) {
+      scrollToAsk({ focus: true });
     } else if (cur && cur.panel === "panel-find" && !opts.skipScroll) {
       focusFindInput();
     }
 
     try {
-      var tail = cur ? cur.hash || "" : "";
+      var tail = opts.hashOverride != null ? opts.hashOverride : cur ? cur.hash || "" : "";
       var u = window.location.pathname + window.location.search + tail;
       window.history.replaceState({}, "", u);
     } catch (e1) {}
+  }
+
+  function goToAsk(opts) {
+    opts = opts || {};
+    selectTab(tabIndexForPanel("panel-stories"), {
+      userPick: true,
+      markAsk: true,
+      scrollAsk: true,
+      hashOverride: "#ask",
+      skipScroll: !!opts.skipScroll,
+    });
   }
 
   function applyHash() {
@@ -101,7 +132,7 @@
         return;
       }
       if (focus && focus.place === "ask") {
-        selectTab(tabIndexForPanel("panel-ask"), { resumeScroll: true, skipScroll: true });
+        selectTab(0, { resumeScroll: true, skipScroll: true, scrollAsk: true, hashOverride: "#ask" });
         return;
       }
       selectTab(0, { skipScroll: true });
@@ -117,7 +148,7 @@
     } else if (h === "#feedback") {
       selectTab(tabIndexForPanel("panel-feedback"));
     } else if (h === "#ask") {
-      selectTab(tabIndexForPanel("panel-ask"), { userPick: true });
+      goToAsk();
     } else {
       selectTab(0);
     }
@@ -143,7 +174,12 @@
   global.LoreKeeperHomeTabs = {
     init: init,
     goTo: function (panelId) {
+      if (panelId === "panel-ask") {
+        goToAsk();
+        return;
+      }
       selectTab(tabIndexForPanel(panelId), { userPick: true });
     },
+    goToAsk: goToAsk,
   };
 })(typeof window !== "undefined" ? window : this);
