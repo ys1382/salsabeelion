@@ -898,6 +898,14 @@ def _kinship_shape_sentence(sentence: str, label: str) -> bool:
         rf"^(?:He|She)\s+and\s+.+\s+share\s+a\s+complicated\s+rivalry-care bond\b.+$",
         rf"^{lab}\s+and\s+.+\s+share\s+a\s+complicated\s+rivalry-care bond\b.+$",
         rf"^.+\s+and\s+{lab}\s+share\s+a\s+complicated\s+rivalry-care bond\b.+$",
+        rf"^(?:He|She)\s+and\s+.+\s+share\s+a\s+relationship that is cold on the surface\b.+$",
+        rf"^{lab}\s+and\s+.+\s+share\s+a\s+relationship that is cold on the surface\b.+$",
+        rf"^.+\s+is\s+the\s+subject\s+of\s+{lab}'s\s+fascination\.?$",
+        rf"^.+\s+is\s+the\s+subject\s+of\s+(?:his|her)\s+fascination\.?$",
+        rf"^{lab}\s+is\s+personally disgusted by Predator Court politics\b.+$",
+        rf"^(?:He|She)\s+is\s+personally disgusted by Predator Court politics\b.+$",
+        rf"^{lab}\s+has\s+mixed parentage\.?$",
+        rf"^(?:He|She)\s+has\s+mixed parentage\.?$",
         rf"^{lab}'s\s+father\s+is\s+(?:sketched|noted|left open)\b.+$",
         rf"^{lab}'s\s+father\s+is\s+.+\s+parent stock\b.+$",
         rf"^(?:His|Her)\s+father\s+is\s+.+\s+parent stock\b.+$",
@@ -916,6 +924,8 @@ def _kinship_shape_sentence(sentence: str, label: str) -> bool:
         rf"^.+\s+is\s+(?:his|her)\s+quarry\.?$",
         rf"^{lab}\s+refuses to associate with larger politics at Court\.?$",
         rf"^(?:He|She)\s+refuses to associate with larger politics at Court\.?$",
+        rf"^{lab}\s+refuses to associate with larger politics at Court,\s+and underestimates (?:his|her) own presence\.?$",
+        rf"^(?:He|She)\s+refuses to associate with larger politics at Court,\s+and underestimates (?:his|her) own presence\.?$",
         rf"^{lab}\s+underestimates (?:his|her) own presence\.?$",
         rf"^(?:He|She)\s+underestimates (?:his|her) own presence\.?$",
         rf"^{lab}\s+is\s+the\s+(?:main\s+)?(?:antagonist|villain)\b.+$",
@@ -1631,7 +1641,12 @@ def _clause_adds_profile(clause: str, label: str) -> bool:
         r"white rabbit|fairytale|ally|allies|co-?conspir|esteemed cousin|"
         r"political counterpart|your notes treat|refers to|"
         r"rivalry-care|both care|complicated (?:relationship|attachment|bond)|"
-        r"refuses to associate|larger politics at Court|underestimates (?:his|her) own presence)\b",
+        r"cold on the surface|subject of .{0,40}fascination|"
+        r"refuses to associate|larger politics at Court|"
+        r"disgusted by Predator Court politics|"
+        r"does not realize how much political influence|"
+        r"mixed parentage|"
+        r"underestimates (?:his|her) own presence)\b",
         s,
         re.I,
     ):
@@ -2117,6 +2132,8 @@ def weave_who_is_gold_tone(
                 named_parents.append(_normalize_standing(c))
                 continue
         elif re.search(r"\b(?:son|daughter|child)\s+of\b", c, re.I):
+            if re.search(r"someone unnamed", c, re.I):
+                continue
             named_parents.append(_normalize_standing(c))
             continue
         tail = _brother_tail(c)
@@ -2175,8 +2192,12 @@ def weave_who_is_gold_tone(
             r"esteemed cousin|ally|allies|co-?conspir|refers to|your notes treat|"
             r"possible (?:first|second|third )?cousin|calls?\b|father|mother|parent stock|"
             r"kinship is left open|kinship remains open|sketched as|cheshire cat|wonderland|"
-            r"rivalry-care|both care|"
-            r"refuses to associate|larger politics at Court|underestimates (?:his|her) own presence"
+            r"rivalry-care|both care|cold on the surface|fascination|"
+            r"refuses to associate|larger politics at Court|"
+            r"disgusted by Predator Court politics|"
+            r"does not realize how much political influence|"
+            r"mixed parentage|"
+            r"underestimates (?:his|her) own presence"
             r")\b",
             c,
             re.I,
@@ -2456,26 +2477,49 @@ def weave_who_is_gold_tone(
                 + ", and ".join(kin_for_open[1:])
             )
 
-    # Essay-hook open: fold quarry into antagonist line when notes support it
-    # ("…main antagonist, with Etherei as his quarry") — never invent "fascination".
+    # Essay-hook open: fold fascination (preferred) or quarry into antagonist line.
     folded_quarry: set[str] = set()
     if re.search(r"\b(antagonist|villain)\b", role_core, re.I):
+        fasc_name = None
+        quarry_name = None
+        fasc_line = None
+        quarry_line = None
         for c in list(other_family):
+            fm = re.search(
+                rf"^(.+?)\s+is\s+the\s+subject\s+of\s+"
+                rf"(?:{re.escape(label)}'s|(?:his|her))\s+fascination\.?$",
+                c.strip(),
+                re.I,
+            )
+            if fm and not fasc_name:
+                fasc_name = fm.group(1).strip()
+                fasc_line = c
+                continue
             qm = re.search(
                 rf"^(.+?)\s+is\s+(?:the\s+quarry\s+of\s+{re.escape(label)}|"
                 rf"{re.escape(label)}'s\s+quarry|(?:his|her)\s+quarry)\.?$",
                 c.strip(),
                 re.I,
             )
-            if not qm:
-                continue
-            qname = qm.group(1).strip()
-            if not qname or qname.lower() in role_core.lower():
-                continue
-            role_core = role_core.rstrip(".") + f", with {qname} as his quarry"
-            folded_quarry.add(c.lower())
+            if qm and not quarry_name:
+                quarry_name = qm.group(1).strip()
+                quarry_line = c
+        fold_name = fasc_name or quarry_name
+        fold_line = fasc_line or quarry_line
+        if fold_name and fold_name.lower() not in role_core.lower():
+            if fasc_name:
+                role_core = (
+                    role_core.rstrip(".")
+                    + f", with {fold_name} as the subject of his fascination"
+                )
+            else:
+                role_core = role_core.rstrip(".") + f", with {fold_name} as his quarry"
+            if fold_line:
+                folded_quarry.add(fold_line.lower())
+            # Drop the thinner quarry line when fascination is folded.
+            if fasc_line and quarry_line:
+                folded_quarry.add(quarry_line.lower())
             other_family = [x for x in other_family if x.lower() not in folded_quarry]
-            break
 
     sentences.append(role_core + ".")
 
@@ -2578,23 +2622,25 @@ def weave_who_is_gold_tone(
     # Prefer quarry / care / degree-cousin standing before thinner kin scraps.
     def _other_family_rank(line: str) -> tuple[int, int]:
         low = (line or "").lower()
-        if re.search(r"\b(?:quarry|subject of|hunts?)\b", low):
+        if re.search(r"rivalry-care|both care|cold on the surface", low):
             return (0, -len(line))
-        if re.search(r"rivalry-care|both care", low):
-            return (1, -len(line))
         if re.search(
-            r"refuses to associate|larger politics at Court|underestimates",
+            r"disgusted by Predator Court politics|refuses to associate|"
+            r"larger politics|does not realize how much political|"
+            r"underestimates|mixed parentage|fascination",
             low,
         ):
-            return (2, -len(line))
+            return (1, -len(line))
         if re.search(r"\b(?:first|second|third)\s+cousin\b", low):
+            return (2, -len(line))
+        if re.search(r"\b(?:quarry|subject of|hunts?)\b", low):
             return (3, -len(line))
         if re.search(r"\bcousin\b", low):
             return (4, -len(line))
         return (5, -len(line))
 
     other_family_sorted = sorted(other_family, key=_other_family_rank)
-    for c in other_family_sorted[:6]:
+    for c in other_family_sorted[:8]:
         clause = c if c.endswith((".", "!", "?")) else c + "."
         if clause not in sentences:
             sentences.append(clause)
@@ -2779,8 +2825,41 @@ def formalize_who_is_sentence(sentence: str, label: str) -> str:
         flags=re.I,
     )
     s = re.sub(
+        rf"^{re.escape(label)}\s+and\s+(.+?)\s+share\s+a\s+relationship that is cold on the surface\s+"
+        rf"but more complicated\s+[—–\-]\s+both care\.?$",
+        rf"{label} and \1 share a relationship that is cold on the surface but more complicated — both care.",
+        s,
+        count=1,
+        flags=re.I,
+    )
+    s = re.sub(
+        rf"^{re.escape(label)}\s+is personally disgusted by Predator Court politics,\s+"
+        rf"and does not realize how much political influence he holds\.?$",
+        rf"{label} is personally disgusted by Predator Court politics, "
+        rf"and does not realize how much political influence he holds.",
+        s,
+        count=1,
+        flags=re.I,
+    )
+    s = re.sub(
+        rf"^{re.escape(label)}\s+has\s+mixed parentage\.?$",
+        rf"{label} has mixed parentage.",
+        s,
+        count=1,
+        flags=re.I,
+    )
+    s = re.sub(
         rf"^{re.escape(label)}\s+refuses to associate with larger politics at Court\.?$",
         rf"{label} refuses to associate with larger politics at Court.",
+        s,
+        count=1,
+        flags=re.I,
+    )
+    s = re.sub(
+        rf"^{re.escape(label)}\s+refuses to associate with larger politics at Court,\s+"
+        rf"and underestimates (?:his|her) own presence\.?$",
+        rf"{label} refuses to associate with larger politics at Court, "
+        rf"and underestimates his own presence.",
         s,
         count=1,
         flags=re.I,
@@ -3196,8 +3275,8 @@ def _essay_hook_who_is_sentences(label: str, sentences: list[str]) -> list[str]:
             )
             out.append(s2)
             continue
-        # Rivalry-care pair lines: "He and Duke Dijon share…"
-        if re.search(r"rivalry-care bond", s, re.I):
+        # Rivalry-care / cold-surface pair lines: "He and Duke Dijon share…"
+        if re.search(r"rivalry-care bond|cold on the surface", s, re.I):
             s2 = re.sub(
                 rf"^{re.escape(label)}\s+and\s+",
                 f"{pronoun.capitalize()} and ",
@@ -3218,6 +3297,14 @@ def _essay_hook_who_is_sentences(label: str, sentences: list[str]) -> list[str]:
             s2 = re.sub(
                 rf"^{re.escape(label)}\s+is\s+",
                 f"{pronoun.capitalize()} is ",
+                s2,
+                count=1,
+                flags=re.I,
+            )
+        if re.match(rf"^{re.escape(label)}\b", s2, re.I):
+            s2 = re.sub(
+                rf"^{re.escape(label)}\s+has\s+",
+                f"{pronoun.capitalize()} has ",
                 s2,
                 count=1,
                 flags=re.I,

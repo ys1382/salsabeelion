@@ -285,7 +285,9 @@ def trim_off_topic_sentences(question: str, answer: str, *, allow_broad: bool) -
             r"mother|father|cousin|quarry|baron|lord|lady|duke|duchess|"
             r"faeble|fairy[- ]?tale|conceal(?:s|ed|ing)?|known as|young woman|young man|"
             r"parent stock|kinship|subject of|rivalry-care|both care|"
+            r"cold on the surface|fascination|disgusted|mixed parentage|"
             r"refuses to associate|larger politics|underestimates|"
+            r"political influence|does not realize|"
             r"political nuance|unspoken line|not yet fully aware|rediscovery"
             r")\b",
             low,
@@ -766,7 +768,9 @@ def scrub_who_is_plot_walkthrough(body: str, *, question: str = "") -> str:
                 r"co-?conspir|esteemed cousin|refers to|your notes treat|"
                 r"don'?t yet spell out|don'?t yet pin a clear cast role|"
                 r"Notes don't yet|rivalry-care|both care|"
+                r"cold on the surface|fascination|disgusted|mixed parentage|"
                 r"refuses to associate|larger politics|underestimates|"
+                r"political influence|does not realize|"
                 r"father|mother|kinship is left open|kinship remains open|parent stock|hunts?\b)\b",
                 s,
                 re.I,
@@ -795,9 +799,13 @@ def scrub_who_is_plot_walkthrough(body: str, *, question: str = "") -> str:
         # Essay voice: care / politics / cousin before parents (parents kept, not cut, but late).
         def _tie_rank(s: str) -> tuple[int, int]:
             low = (s or "").lower()
-            if re.search(r"rivalry-care|both care", low):
+            if re.search(r"rivalry-care|both care|cold on the surface", low):
                 return (0, -len(s))
-            if re.search(r"refuses to associate|larger politics|underestimates", low):
+            if re.search(
+                r"disgusted|refuses to associate|underestimates|"
+                r"political influence|does not realize|fascination|mixed parentage",
+                low,
+            ):
                 return (1, -len(s))
             if re.search(r"\b(?:first|second|third)\s+cousin\b", low):
                 return (2, len(s))
@@ -811,7 +819,7 @@ def scrub_who_is_plot_walkthrough(body: str, *, question: str = "") -> str:
 
         tiesish.sort(key=_tie_rank)
         # Identity open → standing ties → faeble/stakes → scraps. Parents ride in ties (rank 5).
-        ordered = identityish[:4] + tiesish[:6] + stakesish[:3] + other[:1] + renameish[:1]
+        ordered = identityish[:4] + tiesish[:8] + stakesish[:3] + other[:1] + renameish[:1]
         kept = ordered or kept[:5]
     else:
         kept = kept[:4]

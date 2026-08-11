@@ -1438,7 +1438,11 @@ def inference_reference_lines_for(
             add(t)
 
     for tie in brief.get("ties") or []:
-        add(_tie_reference_line(label, str(tie)))
+        t = str(tie)
+        # Scene vocatives without a named addressee are not standing cast facts.
+        if re.search(r"someone unnamed in scene", t, re.I):
+            continue
+        add(_tie_reference_line(label, t))
 
     return lines[:10]
 

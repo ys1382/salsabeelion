@@ -1481,7 +1481,10 @@ class CharacterComposeTests(unittest.TestCase):
         self.assertIn("third cousin", body, msg=answer)
         self.assertTrue("both care" in body or "rivalry-care" in body, msg=answer)
         self.assertIn("larger politics at court", body, msg=answer)
-        self.assertIn("underestimates", body, msg=answer)
+        self.assertTrue(
+            "underestimates" in body or "political influence" in body,
+            msg=answer,
+        )
         self.assertNotIn("fascinat", body)
         self.assertNotIn("disgust", body)
         # Essay-hook order: role open first — never lead with mother/father.

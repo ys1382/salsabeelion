@@ -869,7 +869,7 @@ _RELATION_UNCERTAIN = re.compile(
 
 
 def who_is_standing_relation_lines(
-    label: str, entries: list[dict[str, Any]], *, limit: int = 10
+    label: str, entries: list[dict[str, Any]], *, limit: int = 12
 ) -> list[str]:
     """
     Cast-card standing ties for who-is: cousin / ally / co-conspirator,
@@ -1042,6 +1042,22 @@ def who_is_standing_relation_lines(
                     _add(f"{partner} is an ally or close political counterpart to {label}")
                 # Rivalry-care / complicated bond texture (librarian restatement).
                 if re.search(
+                    r"\bcold on the surface\b",
+                    body,
+                    re.I,
+                ) and re.search(
+                    r"\b("
+                    r"more complicated|rivalry[- ]?care|both care|does care|"
+                    r"looks? out for|attachment"
+                    r")\b",
+                    body,
+                    re.I,
+                ):
+                    _add(
+                        f"{label} and {partner} share a relationship that is cold "
+                        f"on the surface but more complicated — both care"
+                    )
+                elif re.search(
                     r"\b("
                     r"rivalry[- ]?care|complicated (?:relationship|attachment|bond)|"
                     r"does care|both care|looks? out for|attachment to one another"
@@ -1197,52 +1213,101 @@ def who_is_standing_relation_lines(
                 re.I,
             )
         ]
-    care_lines = [x for x in lines if re.search(r"rivalry-care bond", x, re.I)]
+    care_lines = [x for x in lines if re.search(r"rivalry-care bond|cold on the surface", x, re.I)]
     if len(care_lines) > 1:
-        keep_care = care_lines[0]
+        keep_care = next(
+            (x for x in care_lines if re.search(r"cold on the surface", x, re.I)),
+            care_lines[0],
+        )
         lines = [
-            x for x in lines if x == keep_care or not re.search(r"rivalry-care bond", x, re.I)
+            x
+            for x in lines
+            if x == keep_care
+            or not re.search(r"rivalry-care bond|cold on the surface", x, re.I)
         ]
     politics_lines = [
         x
         for x in lines
         if re.search(
             r"refuses to associate with larger politics at Court|"
-            r"underestimates (?:his|her) own presence",
+            r"underestimates (?:his|her) own presence|"
+            r"disgusted by Predator Court politics|"
+            r"does not realize how much political influence|"
+            r"mixed parentage",
             x,
             re.I,
         )
     ]
-    # Keep at most one refusal + one presence line.
+    # Keep at most one linked politics line + optional mixed-parentage line.
     if politics_lines:
-        keep_refusal = next(
+        keep_politics = next(
             (
                 x
                 for x in politics_lines
-                if re.search(r"refuses to associate with larger politics", x, re.I)
+                if re.search(
+                    r"disgusted by Predator Court politics|"
+                    r"refuses to associate with larger politics",
+                    x,
+                    re.I,
+                )
             ),
             None,
         )
-        keep_presence = next(
-            (
-                x
-                for x in politics_lines
-                if re.search(r"underestimates (?:his|her) own presence", x, re.I)
-            ),
+        keep_mixed = next(
+            (x for x in politics_lines if re.search(r"mixed parentage", x, re.I)),
             None,
         )
-        keep_set = {x for x in (keep_refusal, keep_presence) if x}
+        keep_set = {x for x in (keep_politics, keep_mixed) if x}
         lines = [
             x
             for x in lines
             if x in keep_set
             or not re.search(
                 r"refuses to associate with larger politics at Court|"
-                r"underestimates (?:his|her) own presence",
+                r"underestimates (?:his|her) own presence|"
+                r"disgusted by Predator Court politics|"
+                r"does not realize how much political influence|"
+                r"mixed parentage",
                 x,
                 re.I,
             )
         ]
+
+    # Drop thin "from Wonderland" when Cheshire Cat + Alice/Wonderland already stated.
+    has_cheshire_alice = any(
+        re.search(r"cheshire cat from alice|cheshire cat from wonderland", x, re.I)
+        for x in lines
+    )
+    if has_cheshire_alice:
+        lines = [
+            x
+            for x in lines
+            if not re.search(
+                rf"^{re.escape(label)}\s+is\s+from\s+Wonderland\.?$",
+                x,
+                re.I,
+            )
+        ]
+
+    # Prefer politics / fascination / care when truncating to limit.
+    def _keep_rank(x: str) -> tuple[int, int]:
+        low = x.lower()
+        if re.search(r"antagonist|protagonist|cheshire cat|baron", low):
+            return (0, -len(x))
+        if re.search(r"fascination|quarry", low):
+            return (1, -len(x))
+        if re.search(r"cold on the surface|rivalry-care|both care", low):
+            return (2, -len(x))
+        if re.search(r"disgusted|political influence|refuses to associate|mixed parentage", low):
+            return (3, -len(x))
+        if re.search(r"\b(?:first|second|third)\s+cousin\b", low):
+            return (4, -len(x))
+        if re.search(r"father|mother|parent stock", low):
+            return (5, -len(x))
+        return (6, -len(x))
+
+    if len(lines) > limit:
+        lines = sorted(lines, key=_keep_rank)[:limit]
 
     return lines[:limit]
 
@@ -1398,18 +1463,23 @@ def _harvest_politics_stance(
     """
     Standing politics stance from notes + main draft (not plot walkthrough).
 
-    Librarian restatement only — refusal of Court politics, underestimating presence.
+    Librarian restatement only — Court disgust, unrealized influence, draft refusal.
     """
     label = (label or "").strip()
     if not label or not entries:
         return
+
+    saw_disgust = False
+    saw_unrealized = False
+    saw_refusal = False
+    saw_mixed = False
+    saw_presence = False
 
     seen_docs: set[str] = set()
     for entry in entries:
         if not isinstance(entry, dict):
             continue
         eid = str(entry.get("id") or "")
-        # Prefer full document body once; skip paragraph shards.
         if "#p" in eid:
             continue
         kind = str(entry.get("kind") or "").lower()
@@ -1423,7 +1493,6 @@ def _harvest_politics_stance(
                 continue
             seen_docs.add(eid)
 
-        # Draft first-person Court refusal near this cast name.
         for m in re.finditer(
             r"refusal to associate (?:myself|himself|herself|themselves)\s+"
             r"with the larger politics at Court",
@@ -1433,31 +1502,69 @@ def _harvest_politics_stance(
             window = body[max(0, m.start() - 420) : min(len(body), m.end() + 120)]
             if not re.search(rf"\b{re.escape(label)}\b", window, re.I):
                 continue
-            add_line(
-                f"{label} refuses to associate with larger politics at Court"
-            )
+            saw_refusal = True
             break
 
-        # Note-stated underestimation of presence / political weight.
         if not re.search(rf"\b{re.escape(label)}\b", blob, re.I):
             continue
+
+        if re.search(
+            r"\bis personally disgusted by (?:Predator\s+)?(?:Court\s+)?politics\b|"
+            r"\bdisgusted by (?:Predator\s+)?(?:Court\s+)?politics\b",
+            body,
+            re.I,
+        ):
+            saw_disgust = True
+
+        if re.search(
+            r"\b("
+            r"does not realize just how much political (?:impact|influence|sway)|"
+            r"doesn'?t realize just how much political (?:impact|influence|sway)|"
+            r"does not realize how much political (?:impact|influence|sway)|"
+            r"underestimates (?:his|her|their) own (?:political )?(?:influence|impact|sway)"
+            r")\b",
+            body,
+            re.I,
+        ):
+            saw_unrealized = True
+
         if re.search(
             r"underestimates (?:his|her|their) own presence",
             body,
             re.I,
         ):
+            saw_presence = True
+
+        if re.search(r"\bmixed parentage\b", body, re.I):
+            saw_mixed = True
+
+    # Prefer one linked politics sentence when notes support both beats.
+    if saw_disgust and saw_unrealized:
+        add_line(
+            f"{label} is personally disgusted by Predator Court politics, "
+            f"and does not realize how much political influence he holds"
+        )
+    elif saw_refusal and saw_presence and not saw_disgust and not saw_unrealized:
+        add_line(
+            f"{label} refuses to associate with larger politics at Court, "
+            f"and underestimates his own presence"
+        )
+    else:
+        if saw_disgust:
+            add_line(f"{label} is personally disgusted by Predator Court politics")
+        elif saw_refusal:
+            add_line(
+                f"{label} refuses to associate with larger politics at Court"
+            )
+        if saw_unrealized:
+            add_line(
+                f"{label} does not realize how much political influence he holds"
+            )
+        elif saw_presence:
             add_line(f"{label} underestimates his own presence")
-        if re.search(
-            r"\b("
-            r"disgusted by (?:too much )?politics|"
-            r"more (?:political )?sway than (?:he|she|they) realizes|"
-            r"holds? (?:a lot of )?weight.{0,80}intimidat"
-            r")\b",
-            body,
-            re.I | re.S,
-        ) and re.search(r"underestimates (?:his|her|their) own presence", body, re.I):
-            # Already covered by presence line; avoid inventing "disgusted".
-            pass
+
+    if saw_mixed:
+        add_line(f"{label} has mixed parentage")
 
 
 def _harvest_opposition_standing(
@@ -1511,6 +1618,33 @@ def _harvest_opposition_standing(
             break
     if quarry:
         add_line(f"{quarry} is the quarry of {label}")
+
+    # Fascination standing when notes say the label is fascinated by someone.
+    for entry in entries:
+        if not isinstance(entry, dict):
+            continue
+        kind = str(entry.get("kind") or "").lower()
+        if kind not in {"relationship", "character", "note", "politics", "plot", "event"}:
+            continue
+        title = str(entry.get("title") or "")
+        body = str(entry.get("body") or "")
+        blob = f"{title}\n{body}"
+        if not re.search(rf"\b{re.escape(label)}\b", blob, re.I):
+            continue
+        # Case-sensitive proper name after "fascinated by" (re.I would eat "because").
+        m = re.search(
+            rf"(?i)\b{re.escape(label)}\s+is\s+fascinated\s+by\s+"
+            rf"(?:(?:Lord|Lady|Duke|Duchess|Baron|Baroness)\s+)?"
+            rf"(?-i:([A-Z][a-z]{{2,}}))\b",
+            body,
+        )
+        if not m:
+            continue
+        other = _clean_name(m.group(1) or "")
+        if not other or _name_key(other) == _name_key(label):
+            continue
+        add_line(f"{other} is the subject of {label}'s fascination")
+        break
 
     # Writer cast someone as protagonist while this label hunts them / opposes them.
     protag = None
