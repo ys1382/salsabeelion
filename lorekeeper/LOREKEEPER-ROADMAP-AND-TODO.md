@@ -293,6 +293,19 @@ Run **one row at a time** in Cursor. Don’t skip Phase 0 — it costs nothing a
 - Still reject knower POV (“X thinks that Y…”), rename infodumps as the whole card, and unrelated scene scraps
 - Next goal (separate task): **more depth** for every character (Etherei cast-card bar) **without** breaking the accuracy bar above
 
+### Plot relation accuracy — timing (pinned 2026-08-10) — **Not yet**
+
+**Verdict:** Do **not** open a plot-relation Ask accuracy pass while character-card depth is still in flight. Shared Ask brain (recall + character compose + ranking/focus) means parallel “richer plot” work can fight who-is scrubbing and reintroduce plot bleed.
+
+**When to start (then only):**
+1. Character depth lands or is explicitly parked (who-is + Etherei depth bar stable).
+2. Owner spot-checks a few who-is questions so the milestone above still holds.
+3. Open plot as its **own** pass from Owner’s Office corrections (playbook Phase 1) — not a broad compose rewrite.
+
+**Do not:** loosen who-is “no plot dump” guards to make plot answers look better. Exception only if owner insists: one tiny correction that clearly routes as relationship / plot-span and does **not** edit character-card compose.
+
+**Already in place for later:** relationship / situation / plot-span helpers; playbook intent for “How are A and B related?”
+
 ### Document page split (needs more than Cursor — 2026-08-09)
 
 - [ ] **Real Google Docs–style page split** — stacked letter pages, whole lines to the next page, no gap bleed, no top/bottom chop. Tall growing page works for now (full draft + word count). Multi-page split was tried and rolled back (clipping, scroll/caret issues). **Needs more work; probably more than Cursor alone** (pair programming / deeper editor work). Do not treat as a small Cursor-only follow-up until a new approach is agreed.

@@ -2164,27 +2164,6 @@ def weave_who_is_gold_tone(
         )
     ]
     other_aliases = [a for a in alias_lines if a not in fairytale_aliases]
-    if fairytale_aliases:
-        alias = fairytale_aliases[0]
-        role_core = role.rstrip(".")
-        alias_core = re.sub(
-            rf"^{re.escape(label)}\s+is\s+",
-            "",
-            alias,
-            count=1,
-            flags=re.I,
-        ).rstrip(".")
-        if alias_core.lower() not in role_core.lower():
-            sentences.append(f"{role_core}, but is {alias_core}.")
-        else:
-            sentences.append(role)
-    else:
-        sentences.append(role)
-
-    # Keep up to three evidence-backed stakes (opposition, concealment, upheaval).
-    for sig in significance_lines[:3]:
-        if sig not in sentences:
-            sentences.append(sig)
 
     kin_bits: list[str] = []
     if named_parents:
@@ -2231,7 +2210,6 @@ def weave_who_is_gold_tone(
                 joined = ", ".join(other_bros[:-1]) + f", and {other_bros[-1]}"
                 kin_bits.append(f"brother to {joined}")
         else:
-            # Twin kin first, then additional brothers (e.g. reveal link).
             if len(twin_bros) == 1:
                 kin_bits.append(f"younger twin brother to {twin_bros[0]}")
             elif twin_bros:
@@ -2243,35 +2221,137 @@ def weave_who_is_gold_tone(
                 joined = ", ".join(other_bros[:-1]) + f", and {other_bros[-1]}"
                 kin_bits.append(f"also brother to {joined}")
 
-    if kin_bits:
-        first = kin_bits[0]
-        if first.startswith(("son ", "daughter ", "child ")):
-            first_out = f"the {first}"
-        else:
-            first_out = first
-        # Prefer "Label is …" over "He is …" so who-is scrub keeps kinship.
-        if len(kin_bits) == 1:
-            sentences.append(f"{label} is {first_out}.")
-        else:
-            also_bits = [b for b in kin_bits[1:] if b.startswith("also ")]
-            other_bits = [b for b in kin_bits[1:] if not b.startswith("also ")]
-            if other_bits and not also_bits:
-                rest = ", and " + ", and ".join(other_bits)
-                sentences.append(f"{label} is {first_out}{rest}.")
-            else:
-                sentences.append(f"{label} is {first_out}.")
-                for bit in other_bits + also_bits:
-                    if bit.startswith("also "):
-                        sentences.append(f"{label} is {bit}.")
-                    else:
-                        sentences.append(f"{label} is {bit}.")
+    # Opening cast sentence: role (+ fairytale alias) + kinship folded in.
+    role_core = role.rstrip(".")
+    if fairytale_aliases:
+        alias = fairytale_aliases[0]
+        alias_core = re.sub(
+            rf"^{re.escape(label)}\s+is\s+",
+            "",
+            alias,
+            count=1,
+            flags=re.I,
+        ).rstrip(".")
+        if alias_core.lower() not in role_core.lower():
+            role_core = f"{role_core}, but is {alias_core}"
 
-    for c in other_family[:2]:
-        clause = c if c.endswith((".", "!", "?")) else c + "."
+    kin_for_open: list[str] = []
+    for bit in kin_bits:
+        if bit.startswith(("son ", "daughter ", "child ")):
+            kin_for_open.append(f"the {bit}")
+        else:
+            kin_for_open.append(bit)
+    if kin_for_open:
+        if len(kin_for_open) == 1:
+            role_core = f"{role_core}, {kin_for_open[0]}"
+        elif len(kin_for_open) == 2 and kin_for_open[1].startswith("also "):
+            role_core = (
+                f"{role_core}, {kin_for_open[0]}, and {kin_for_open[1]}"
+            )
+        else:
+            role_core = (
+                f"{role_core}, {kin_for_open[0]}, and "
+                + ", and ".join(kin_for_open[1:])
+            )
+    sentences.append(role_core + ".")
+
+    # Second sentence: aka + faction / opposition — still natural, not stacked cards.
+    trail_bits: list[str] = []
+    for c in other_aliases[:1]:
+        aka_core = re.sub(
+            rf"^{re.escape(label)}\s+is\s+",
+            "",
+            c.rstrip("."),
+            count=1,
+            flags=re.I,
+        )
+        if aka_core and aka_core.lower() not in role_core.lower():
+            trail_bits.append(aka_core)
+    faction_bits: list[str] = []
+    remain_sig: list[str] = []
+    for sig in significance_lines[:3]:
+        if re.search(
+            r"\b(faction against|up against|opposed by|rival)\b",
+            sig,
+            re.I,
+        ):
+            core = re.sub(
+                rf"^{re.escape(label)}\s+(?:is\s+|leads?\s+)?",
+                "",
+                sig.rstrip("."),
+                count=1,
+                flags=re.I,
+            )
+            # "leads a faction against X" / "up against X"
+            if re.match(r"^(?:a\s+)?faction against\b", core, re.I):
+                faction_bits.append(f"leads {core}" if not core.lower().startswith("leads") else core)
+            elif re.match(r"^leads?\s+", core, re.I):
+                faction_bits.append(core)
+            else:
+                faction_bits.append(core)
+        else:
+            remain_sig.append(sig)
+    for c in extras[:2]:
+        if re.search(r"\bfaction against\b", c, re.I):
+            core = re.sub(
+                rf"^{re.escape(label)}\s+(?:is\s+|leads?\s+)?",
+                "",
+                c.rstrip("."),
+                count=1,
+                flags=re.I,
+            )
+            if re.match(r"^(?:a\s+)?faction against\b", core, re.I):
+                faction_bits.append(f"leads {core}")
+            elif core not in faction_bits:
+                faction_bits.append(core if core.lower().startswith("leads") else f"leads {core}")
+    # Deduplicate faction
+    seen_f: set[str] = set()
+    faction_clean: list[str] = []
+    for f in faction_bits:
+        key = f.lower()[:80]
+        if key in seen_f:
+            continue
+        seen_f.add(key)
+        faction_clean.append(f)
+    faction_bits = faction_clean[:1]
+
+    if trail_bits or faction_bits:
+        clauses: list[str] = []
+        for bit in trail_bits:
+            if re.match(r"^(?:also known|known as|known to|known by)\b", bit, re.I):
+                clauses.append(f"{label} is {bit}")
+            else:
+                clauses.append(f"{label} is {bit}")
+        for bit in faction_bits:
+            if re.match(r"^leads?\b", bit, re.I):
+                clauses.append(f"{label} {bit}")
+            elif re.match(r"^(?:a\s+)?faction against\b", bit, re.I):
+                clauses.append(f"{label} leads {bit}")
+            else:
+                clauses.append(f"{label} {bit}")
+        if len(clauses) == 1:
+            sentences.append(clauses[0] + ".")
+        elif len(clauses) == 2:
+            # "Platinus is also known as X, and leads a faction against Y."
+            second = clauses[1]
+            second = re.sub(
+                rf"^{re.escape(label)}\s+",
+                "",
+                second,
+                count=1,
+                flags=re.I,
+            )
+            sentences.append(f"{clauses[0]}, and {second}.")
+        else:
+            sentences.append(" ".join(c if c.endswith(".") else c + "." for c in clauses))
+
+    # Extra stakes (concealment / upheaval) as one more short sentence each, max 2.
+    for sig in remain_sig[:2]:
+        clause = sig if sig.endswith((".", "!", "?")) else sig + "."
         if clause not in sentences:
             sentences.append(clause)
 
-    for c in other_aliases[:1]:
+    for c in other_family[:2]:
         clause = c if c.endswith((".", "!", "?")) else c + "."
         if clause not in sentences:
             sentences.append(clause)
@@ -2279,8 +2359,34 @@ def weave_who_is_gold_tone(
     # Species extras when fairytale alias does not already carry White Rabbit identity.
     if not fairytale_aliases:
         for c in extras[:2]:
+            if re.search(r"\bfaction against\b", c, re.I):
+                continue
             clause = c if c.endswith((".", "!", "?")) else c + "."
             if clause not in sentences and not is_orphan_life_summary(clause):
+                sp = re.sub(
+                    rf"^{re.escape(label)}\s+is\s+",
+                    "",
+                    clause.rstrip("."),
+                    count=1,
+                    flags=re.I,
+                ).strip()
+                sp = re.sub(r"^(?:an?\s+)", "", sp, count=1, flags=re.I)
+                if (
+                    len(sentences) == 1
+                    and len(sp) < 60
+                    and re.search(
+                        r"\b(rabbit|wolf|fox|lynx|arcanist|sentient)\b",
+                        sp,
+                        re.I,
+                    )
+                ):
+                    if sp.lower() in sentences[0].lower():
+                        continue
+                    if gender_word and not re.search(rf"\b{gender_word}\b", sp, re.I):
+                        sp = f"{gender_word} {sp}"
+                    sentences[0] = sentences[0].rstrip(".") + f", a {sp}."
+                    gender_word = None
+                    continue
                 sentences.append(clause)
 
     # Orphan fallback only when no named parents / rich brother standing.
@@ -2551,8 +2657,40 @@ def smooth_who_is_prose(label: str, body: str) -> str:
                         woven = True
                         break
                 if not woven:
-                    # Prefer dropping bare gender over "X is male." or male protagonist.
-                    pass
+                    # Fold into ", a wolf" appositive even when the line also names a role.
+                    for i, s in enumerate(kept):
+                        if re.search(rf"\b{gender}\b", s, re.I):
+                            woven = True
+                            break
+                        m_sp = re.search(
+                            r",\s*(?:an?\s+)?(wolf|rabbit|fox|lynx|arcanist)\b",
+                            s,
+                            re.I,
+                        )
+                        if m_sp:
+                            kept[i] = (
+                                s[: m_sp.start()]
+                                + f", a {gender} {m_sp.group(1).lower()}"
+                                + s[m_sp.end() :]
+                            )
+                            woven = True
+                            break
+                    if not woven:
+                        # Prefer dropping bare gender over a trailing "X is male."
+                        # when the card already has role / known-as identity.
+                        has_identity = any(
+                            re.search(
+                                r"\b("
+                                r"protagonist|antagonist|known as|white rabbit|"
+                                r"baron|lord|lady|duke|duchess"
+                                r")\b",
+                                s,
+                                re.I,
+                            )
+                            for s in kept
+                        )
+                        if not has_identity:
+                            kept.append(f"{label} is {gender}.")
         out_parts.append(" ".join(kept) if kept else part)
     return "\n\n".join(p for p in out_parts if p.strip())
 

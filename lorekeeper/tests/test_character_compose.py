@@ -1412,6 +1412,52 @@ class CharacterComposeTests(unittest.TestCase):
         # Do not invent "seconds" or "neither knows" when not written.
         self.assertNotIn("seconds", answer)
         self.assertNotIn("neither", answer)
+        # Natural cast card — not a stack of "X is… X is…" telegrams.
+        self.assertLessEqual(answer.lower().count("character p is"), 3, msg=answer)
+        self.assertRegex(
+            answer,
+            r"(?i)character p is the protagonist[^.]{0,160}twin",
+            msg=answer,
+        )
+
+    def test_who_is_alias_brother_reveal_stays_on_subject(self):
+        """Other cast members' rename dumps must not attach to this who-is."""
+        entries = [
+            _entry(
+                "n1",
+                "Protagonist: Character E",
+                'The protagonist is named "Character E." Character E is a young woman.',
+                kind="character",
+                tags=["Rust Saga"],
+            ),
+            _entry(
+                "n2",
+                "Names",
+                (
+                    "Character P is the birth name of the protagonist, then he changes his name "
+                    "to Cypher Prism, then to Palladiar when he becomes the leader of his "
+                    "faction against Character G."
+                ),
+                kind="character",
+                tags=["Rust Saga"],
+            ),
+            _entry(
+                "n3",
+                "Prism/Character P",
+                (
+                    "This leads to the eventual reveal that Character G and Prism are brothers."
+                ),
+                kind="event",
+                tags=["Rust Saga"],
+            ),
+        ]
+        res = self._ask("In Rust Saga, who is Character E?", entries)
+        answer = (res.get("answer") or "").lower()
+        self.assertIn("character e", answer)
+        self.assertNotIn("brother to character g", answer)
+        self.assertNotIn("prism", answer)
+        self.assertNotIn("palladiar", answer)
+
 
 if __name__ == "__main__":
     unittest.main()

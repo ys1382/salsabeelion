@@ -1842,11 +1842,19 @@ def _explicit_who_is_cast_lines_from_drafts(
                 query_names.append(n)
     except Exception:
         pass
-    # Rename dumps often aren't in alias facts yet — scrape "changes name to X".
+    # Rename dumps often aren't in alias facts yet — scrape "changes name to X"
+    # only from entries that mention this subject (never other cast members' renames).
+    subject_keys = [n for n in names if n and str(n).strip()]
     for entry in scope:
         if not isinstance(entry, dict):
             continue
         body = normalize_corpus_text(str(entry.get("body") or ""))
+        if not body or not subject_keys:
+            continue
+        if not any(
+            re.search(rf"\b{re.escape(str(n))}\b", body, re.I) for n in subject_keys
+        ):
+            continue
         for m in re.finditer(
             r"changes?\s+(?:his|her|their)\s+name\s+to\s+"
             r"([A-Z][\w'-]+(?:\s+[A-Z][\w'-]+)?)",
