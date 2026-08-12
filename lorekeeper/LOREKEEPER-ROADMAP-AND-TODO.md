@@ -318,23 +318,23 @@ Run **one row at a time** in Cursor. Don’t skip Phase 0 — it costs nothing a
 **Writing-next task list Ask — accuracy + completeness + draft-timeline seats + voice (pinned 2026-08-11 night; plan-recall tone 2026-08-12):** Owner checked **really good** for Etherei cast task list (gold sample below). Do **not** regress this bar.
 
 - Q: *Give me the task list for Etherei.* (story silo / search-in = Smoke and Mirrors)
-- **Gold sample (keep this shape — plan-recall voice mirroring the writer's intent; clarifiers + seats; staggered You… openers; one vision beat):**
+- **Gold sample (keep this shape — plan-recall voice; clarifiers; seats as follow-on sentences not parentheses; staggered You… openers; one vision beat):**
 
   > Here's a short task list for Smoke and Mirrors about etherei — write-next items from your notes that aren't on the page yet:
   >
-  > • For the chase scene, your plan was to keep it swift, not hasty — he deliberately outruns his brothers before the Wolf takes him (during the Serias capture chase).
+  > • For the chase scene, your plan was to keep it swift, not hasty — he deliberately outruns his brothers before the Wolf takes him. Your plan was for this to take place during the Serias capture chase.
   >
-  > • You wanted his brothers to find out Etherei is ticklish — so they can make him swear never to sacrifice himself that way again (after brothers rescue Etherei from Serias).
+  > • You wanted his brothers to find out Etherei is ticklish — so they can make him swear never to sacrifice himself that way again. Your plan was for this reveal to take place shortly after brothers rescue Etherei from Serias.
   >
-  > • For the vision beat, your notes call for showing Etherei's albino-rabbit vision trouble — a reveal even Etherei and his brothers have not faced yet (at the Cheshire Cat’s quarters, after Etherei is captured).
+  > • For the vision beat, your notes call for showing Etherei's albino-rabbit vision trouble — a reveal even Etherei and his brothers have not faced yet. Your plan was for this reveal to take place at the Cheshire Cat’s quarters, after Etherei is captured.
   >
-  > • For Obsidian's flashback, you meant to open further secrets about Etherei and Obsidian — a different childhood memory with more about both still to open (during the chase after Etherei spots Serias).
+  > • For Obsidian's flashback, you meant to open further secrets about Etherei and Obsidian — a different childhood memory with more about both still to open. Your plan was for this to take place during the chase after Etherei spots Serias.
   >
-  > • For Stygian's flashback, you meant to open something surprising about Etherei and Stygian — an early-childhood fracture that surprises about both of them (during the chase after Etherei spots Serias).
+  > • For Stygian's flashback, you meant to open something surprising about Etherei and Stygian — an early-childhood fracture that surprises about both of them. Your plan was for this to take place during the chase after Etherei spots Serias.
   >
   > — Short write-next tasks restated from your notes vs draft only. Nothing invented. Continuity sticky-notes, later-book setup, and standing lore stay out unless you ask for a later book. Name a topic for a tighter list, or ask again for more.
 
-- Must keep: Etherei-centered write-next; chase craft; ticklish + albino vision when unused; twin flashback polish with edit seat + draft-timeline seat; one clarifier when notes say why; blank lines; one vision family; **plan-recall** tone (you wanted / you were planning / for the … your plan was / for … flashback, you meant) — **not** commands, **not** mellow Let/Have/Bring out; **stagger You… openers** (≥2 non-You lines before the next You…); no inventing; leave-off + Tenebris who-is untouched.
+- Must keep: Etherei-centered write-next; chase craft; ticklish + albino vision when unused; twin flashback polish with edit seat + draft-timeline seat; one clarifier when notes say why; blank lines; one vision family; **plan-recall** tone; **seats as follow-on sentences** (“Your plan was for this reveal to take place shortly after…”) — **not** parentheses; stagger You… openers; mirror note seats (e.g. Serias when notes say Serias); no inventing; leave-off + Tenebris who-is untouched.
 - Rules still in force: line-level ownership; later-book off current lists; librarian restates; seats + clarifiers from notes only.
 
 **Follow-ups for a future agent (this gold already includes completeness + location + plan-recall voice):**
@@ -345,12 +345,21 @@ Run **one row at a time** in Cursor. Don’t skip Phase 0 — it costs nothing a
 - [x] Clarifiers + warm tone (2026-08-11 late) — superseded by plan-recall
 - [x] Plan-recall tone (2026-08-12): mirror writer's plan; stagger You… openers; scene-led For… lines between
 - [x] Draft-foothold reminders (2026-08-12): (1) soft **Update your notes?** when draft already has a beat but a related note still reads like setup-only; (2) task-list prefers threads the draft already introduces and quiets pure-future scenes with no foothold (e.g. facing the music at Tenebris before that scene begins)
+- [x] Seat sentences (2026-08-12): timeline seats as follow-on “Your plan was for this reveal to take place…” — not parentheses; still mirrors notes
 
 ### Draft-foothold note reminders (pinned 2026-08-12) — **shipped v0 on writing-next**
 
 - [x] **Update your notes?** — only when the main draft already has a foothold on the beat (e.g. flashback already on the page) and a related note still reads like the whole beat is only planned. Soft reminder; never invents the new plan; skip pure-future scenes not yet introduced.
 - [x] **Task-list upgrade** — prefer unused notes for threads the draft is already introducing; do not surface pure-future scene notes (e.g. facing the music at Tenebris) until the draft begins that scene.
 - [ ] Later deepen: note-vs-draft seat conflicts beyond flashback setup; optional Ask for “which seats look stale?”
+
+### Thin draft / catch-up gather Ask (pinned 2026-08-12) — **later**
+
+**Need:** For main drafts + notes that don’t have a lot of progress yet (owner example: *The Waking Dream* draft and its notes) — especially after time away, and when the writer has several main drafts and can’t work them all at once — Ask should **gather what is already there** so they can see the work they’ve done and decide where to go next.
+
+- [ ] **Catch-up / “what have I got so far?” Ask** — librarian-only restatement of notes + draft for a named work (or the open doc): cast, beats, open questions, planned scraps — enough to reorient, not a novel rewrite. Never invent. Useful when material is thin or the writer hasn’t looked in a while.
+- [ ] Tone: planning brief / orientation (not who-is encyclopedia, not write-next task list alone). May complement leave-off when the draft is short, and complement notes-not-in-draft / writing-next when they want “what exists” before “what’s next.”
+- [ ] Multi-draft awareness: work-scoped (story silo / search-in / named work) so one thin draft doesn’t mix with another.
 
 **Leave-off / main-draft plot — accuracy milestone (pinned 2026-08-11; gold sample updated same day):** Owner checked **excellent** for leave-off planning brief.
 

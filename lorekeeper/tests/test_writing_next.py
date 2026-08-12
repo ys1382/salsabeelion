@@ -836,6 +836,8 @@ class WritingNextAnswerTests(unittest.TestCase):
         self.assertIn("for obsidian's flashback, you meant to", low)
         self.assertIn("for stygian's flashback, you meant to", low)
         self.assertRegex(low, r"you (wanted|were planning)")
+        self.assertIn("your plan was for this", low)
+        self.assertNotRegex(answer, r"• .+\([^)]*(?:during|after|at the)[^)]*\)")
         self.assertIn("—", answer)
         self.assertNotIn("find a way to write", low)
         self.assertNotIn("let the chase", low)

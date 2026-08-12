@@ -27,7 +27,7 @@ MAX_TASK_ITEMS = 8
 # If the ranked list is small, show all instead of hiding 1–4 behind "…and N more".
 SOFT_SHOW_ALL_MAX = 12
 _MAX_TASK_LINE = 160
-_MAX_TASK_LINE_WITH_SEAT = 300
+_MAX_TASK_LINE_WITH_SEAT = 360
 _MAX_CLARIFIER = 90
 
 _TASK_LIST_Q = re.compile(
@@ -1068,30 +1068,64 @@ def extract_draft_timeline_seat(
     return candidates[0][1]
 
 
+def format_seat_as_plan_sentence(seat: str) -> str:
+    """
+    Turn a short timeline seat into a plan-recall follow-on sentence.
+    No parentheses — e.g. 'Your plan was for this reveal to take place shortly after…'
+    """
+    seat_s = re.sub(r"\s+", " ", (seat or "").strip().rstrip("."))
+    if not seat_s:
+        return ""
+    if re.match(r"^your plan was for\b", seat_s, re.I):
+        out = seat_s[0].upper() + seat_s[1:] if seat_s else seat_s
+        return out if out.endswith(".") else out + "."
+
+    low = seat_s.lower()
+    # after … → shortly after … (owner example shape)
+    if low.startswith("after "):
+        return (
+            "Your plan was for this reveal to take place shortly "
+            f"{seat_s[0].lower() + seat_s[1:]}."
+        )
+    if low.startswith("during "):
+        return f"Your plan was for this to take place {seat_s[0].lower() + seat_s[1:]}."
+    if low.startswith("at the ") or low.startswith("at "):
+        return (
+            "Your plan was for this reveal to take place "
+            f"{seat_s[0].lower() + seat_s[1:]}."
+        )
+    if low.startswith("hinted "):
+        return f"Your plan was for this to be {seat_s[0].lower() + seat_s[1:]}."
+    return f"Your plan was for this to take place {seat_s[0].lower() + seat_s[1:]}."
+
+
 def attach_timeline_seat(task_line: str, seat: str) -> str:
-    """Append a short draft-timeline seat without inventing."""
-    s = (task_line or "").strip()
+    """Append a draft-timeline seat as a follow-on sentence (not parentheses)."""
+    s = (task_line or "").strip().rstrip(".")
     seat_s = re.sub(r"\s+", " ", (seat or "").strip().rstrip("."))
     if not s or not seat_s:
-        return s
+        return (task_line or "").strip()
     if seat_s.lower() in s.lower():
-        return s
-    # Avoid stacking near-duplicate "during … flashback" seats.
+        return s + "."
+    # Avoid stacking near-duplicate flashback seats.
     if re.search(r"\bduring\b.+\bflashback\b", s, re.I) and re.search(
         r"\bduring\b.+\bflashback\b", seat_s, re.I
     ):
-        # Prefer keeping flashback owner; add chase seat if different.
         if re.search(r"chase|spots serias", seat_s, re.I) and not re.search(
             r"chase|spots serias", s, re.I
         ):
-            base = s.rstrip(".")
-            out = f"{base} ({seat_s})."
-            return out if len(out) <= _MAX_TASK_LINE_WITH_SEAT else s
-        return s
-    base = s.rstrip(".")
-    out = f"{base} ({seat_s})."
+            seat_sentence = format_seat_as_plan_sentence(seat_s)
+            out = f"{s}. {seat_sentence}"
+            return out if len(out) <= _MAX_TASK_LINE_WITH_SEAT else s + "."
+        return s + "."
+    seat_sentence = format_seat_as_plan_sentence(seat_s)
+    if not seat_sentence:
+        return s + "."
+    if seat_sentence.lower().rstrip(".") in s.lower():
+        return s + "."
+    out = f"{s}. {seat_sentence}"
     if len(out) > _MAX_TASK_LINE_WITH_SEAT:
-        return s
+        return s + "."
     return out
 
 
@@ -1683,33 +1717,47 @@ def restate_as_task_line(
 
 
 def _split_task_bullet_parts(bullet: str) -> tuple[str, str, str]:
-    """Split densified bullet into (core, clarifier, seat)."""
-    s = (bullet or "").strip().rstrip(".")
+    """Split densified bullet into (core, clarifier, seat sentence-or-raw)."""
+    raw = (bullet or "").strip()
     seat = ""
-    clarifier = ""
-    m = re.search(r"\s*\(([^)]+)\)\s*$", s)
+    body = raw.rstrip(".")
+    m = re.search(
+        r"^(.*?)\.\s+(Your plan was for .+)$",
+        raw.rstrip("."),
+        re.I | re.S,
+    )
     if m:
-        seat = m.group(1).strip()
-        s = s[: m.start()].rstrip()
-    if " — " in s:
-        core, clarifier = s.split(" — ", 1)
+        body = m.group(1).strip()
+        seat = m.group(2).strip().rstrip(".")
+    else:
+        # Legacy parentheses seats (pre-sentence format).
+        m2 = re.search(r"\s*\(([^)]+)\)\s*$", body)
+        if m2:
+            seat = m2.group(1).strip()
+            body = body[: m2.start()].rstrip()
+    clarifier = ""
+    if " — " in body:
+        core, clarifier = body.split(" — ", 1)
         clarifier = clarifier.strip()
     else:
-        core = s
+        core = body
     return core.strip(), clarifier, seat
 
 
 def _join_task_bullet_parts(core: str, clarifier: str, seat: str) -> str:
-    """Reassemble framed core + clarifier + seat."""
+    """Reassemble framed core + clarifier + seat sentence (no parentheses)."""
     s = (core or "").strip().rstrip(".")
     if not s:
         return ""
     if clarifier:
         s = f"{s} — {clarifier.strip().rstrip('.')}"
+    s = s + "."
     if seat:
-        s = f"{s} ({seat.strip().rstrip('.')})"
-    if s[-1] not in ".!?\"'”’":
-        s = s + "."
+        seat_s = seat.strip().rstrip(".")
+        if not re.match(r"^your plan was for\b", seat_s, re.I):
+            seat_s = format_seat_as_plan_sentence(seat_s).rstrip(".")
+        if seat_s:
+            s = f"{s} {seat_s}."
     return s
 
 
@@ -1927,8 +1975,15 @@ def answer_writing_next_task_list(
         if not bullet:
             continue
         key = _normalize(bullet)
-        # Dedupe on core task (ignore parenthetical timeline seat).
-        core_key = _normalize(re.sub(r"\([^)]*\)\s*\.?$", "", bullet))
+        # Dedupe on core task (ignore seat sentence / legacy parentheses).
+        core_for_key = re.sub(
+            r"\.\s+Your plan was for .+$",
+            "",
+            bullet,
+            flags=re.I | re.S,
+        )
+        core_for_key = re.sub(r"\([^)]*\)\s*\.?$", "", core_for_key)
+        core_key = _normalize(core_for_key)
         if not key or key in seen_restate or core_key in seen_restate:
             continue
         if _is_vision_family_task(bullet):
