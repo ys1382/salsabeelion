@@ -2650,27 +2650,29 @@ def weave_who_is_gold_tone(
         if clause not in sentences:
             sentences.append(clause)
 
-    # Prefer quarry / care / degree-cousin standing before thinner kin scraps.
+    # Prefer cousin/care, then parents, then politics — gold essay-hook order.
     def _other_family_rank(line: str) -> tuple[int, int]:
         low = (line or "").lower()
         if re.search(r"rivalry-care|both care|cold on the surface", low):
             return (0, -len(line))
+        if re.search(r"\b(?:first|second|third)\s+cousin\b", low):
+            return (1, -len(line))
+        if re.search(r"\b(?:father|mother|outsider|another realm|cold shoulder)\b", low):
+            return (2, -len(line))
         if re.search(
             r"disgusted by Predator Court politics|refuses to associate|"
             r"larger politics|does not realize how much political|"
-            r"underestimates|mixed parentage|fascination|cold shoulder|heavier load",
+            r"underestimates|fascination|heavier load",
             low,
         ):
-            return (1, -len(line))
-        if re.search(r"\b(?:first|second|third)\s+cousin\b", low):
-            return (2, -len(line))
-        if re.search(r"\b(?:quarry|subject of|hunts?)\b", low):
             return (3, -len(line))
-        if re.search(r"\bcousin\b", low):
+        if re.search(r"\bmixed parentage\b", low):
             return (4, -len(line))
-        if re.search(r"\b(?:father|mother|outsider|another realm)\b", low):
+        if re.search(r"\b(?:quarry|subject of|hunts?)\b", low):
             return (5, -len(line))
-        return (6, -len(line))
+        if re.search(r"\bcousin\b", low):
+            return (6, -len(line))
+        return (7, -len(line))
 
     other_family_sorted = sorted(other_family, key=_other_family_rank)
     for c in other_family_sorted[:8]:
@@ -3106,12 +3108,124 @@ def formalize_who_is_sentence(sentence: str, label: str) -> str:
     return s
 
 
+def strip_who_is_cast_card_header(text: str, label: str) -> str:
+    """
+    Drop the lone cast-card title line so it cannot glue onto the open.
+
+    Compose returns \"Name\\n\\nIn Work, Name is…\". Whitespace collapse
+    turns that into \"Name In Work, Name is…\", which then fails identity
+    matching and lets Dijon/parents float first.
+    """
+    text = (text or "").strip()
+    label = (label or "").strip()
+    if not text or not label:
+        return text
+    # Title on its own line (or with blank lines).
+    text = re.sub(
+        rf"^{re.escape(label)}\s*\n+",
+        "",
+        text,
+        count=1,
+        flags=re.I,
+    ).strip()
+    # Already collapsed: "Name In Work," or "Name Name is"
+    text = re.sub(
+        rf"^{re.escape(label)}\s+(?=In\s+)",
+        "",
+        text,
+        count=1,
+        flags=re.I,
+    ).strip()
+    text = re.sub(
+        rf"^{re.escape(label)}\s+(?={re.escape(label)}\s+is\b)",
+        "",
+        text,
+        count=1,
+        flags=re.I,
+    ).strip()
+    # Garbled open left mid-card: "Name In Work, Name is" → "In Work, Name is"
+    text = re.sub(
+        rf"(?:^|(?<=[.!?]\s)){re.escape(label)}\s+(In\s+[^,]{{1,80}},\s*)"
+        rf"{re.escape(label)}\s+is\b",
+        r"\1" + label + " is",
+        text,
+        count=1,
+        flags=re.I,
+    )
+    return text.strip()
+
+
+def _order_who_is_gold_sentences(label: str, sentences: list[str]) -> list[str]:
+    """
+    Essay-hook order: role/open → cousin/care → parents → politics →
+    mixed parentage → faeble/rank → rest. Never invent; only reorder.
+    """
+    kept = [s for s in sentences if (s or "").strip()]
+    if len(kept) < 2:
+        return kept
+    label = (label or "").strip()
+
+    def rank(s: str) -> tuple[int, int, int]:
+        low = (s or "").lower()
+        # 0 — role / work open
+        if re.match(rf"^In\s+.{{1,80}}?,\s*{re.escape(label)}\s+is\b", s, re.I):
+            return (0, 0, 0)
+        if re.match(rf"^{re.escape(label)}\s+is\b", s, re.I) and re.search(
+            r"\b(main\s+antagonist|antagonist|protagonist|main character|"
+            r"cheshire cat|white rabbit|baron of)\b",
+            s,
+            re.I,
+        ):
+            return (0, 1, 0)
+        # 1 — Dijon / cousin + care
+        if re.search(
+            r"cold on the surface|rivalry-care|both care|heavier load|"
+            r"few cats .*(?:does not|do not) grudge",
+            low,
+        ):
+            return (1, 0, 0)
+        if re.search(r"\b(?:first|second|third)\s+cousin\b", low):
+            return (1, 1, 0)
+        # 2 — parents / heritage (before Court politics)
+        if re.search(r"\b(mother|father)\b", low) and not re.search(
+            r"mixed parentage", low
+        ):
+            return (2, 0, 0)
+        if re.search(r"\bcold shoulder\b", low):
+            return (2, 1, 0)
+        # 3 — Court politics stance
+        if re.search(
+            r"disgusted|political influence|does not realize|"
+            r"refuses to associate|larger politics|underestimates",
+            low,
+        ):
+            return (3, 0, 0)
+        # 4 — mixed parentage / not-entirely (before titled faeble rank)
+        if re.search(r"mixed parentage", low):
+            return (4, 0, 0)
+        if re.match(r"^(?:He|She)\s+is\s+not entirely of this world\.?$", s, re.I):
+            return (4, 1, 0)
+        # 5 — titled faeble / social rank closer
+        if re.search(r"\b(faeble|social rank)\b", low) and re.match(
+            r"^(?:Lord|Lady|Duke|Duchess|Baron|Baroness)\b", s, re.I
+        ):
+            return (5, 0, 0)
+        if re.search(r"\b(faeble|social rank|not entirely of this world)\b", low):
+            return (5, 1, 0)
+        return (6, 0, 0)
+
+    indexed = list(enumerate(kept))
+    indexed.sort(key=lambda it: (*rank(it[1]), it[0]))
+    return [s for _, s in indexed]
+
+
 def smooth_who_is_prose(label: str, body: str) -> str:
     """Drop bare gender when kin signals sex; formalize stakes; never invent facts."""
     text = (body or "").strip()
     label = (label or "").strip()
     if not text or not label:
         return text
+    text = strip_who_is_cast_card_header(text, label)
     parts = text.split("\n\n")
     out_parts: list[str] = []
     for part in parts:
@@ -3456,7 +3570,10 @@ def _essay_flow_join_sentences(label: str, sentences: list[str]) -> list[str]:
             joined = f"{mixed.rstrip('.')}, and is not entirely of this world."
             kept = [s for j, s in enumerate(kept) if j not in {xi, ri}]
             kept.append(joined)
-            return [re.sub(r"\s{2,}", " ", x).strip() for x in kept if x.strip()]
+            cleaned_early = [
+                re.sub(r"\s{2,}", " ", x).strip() for x in kept if x.strip()
+            ]
+            return _order_who_is_gold_sentences(label, cleaned_early)
         kept = [s for j, s in enumerate(kept) if j not in {xi, ri}]
         # After open is best.
         if kept:
@@ -3464,7 +3581,8 @@ def _essay_flow_join_sentences(label: str, sentences: list[str]) -> list[str]:
         else:
             kept.append(joined)
 
-    return [re.sub(r"\s{2,}", " ", x).strip() for x in kept if x.strip()]
+    cleaned = [re.sub(r"\s{2,}", " ", x).strip() for x in kept if x.strip()]
+    return _order_who_is_gold_sentences(label, cleaned)
 
 
 def _essay_hook_who_is_sentences(label: str, sentences: list[str]) -> list[str]:

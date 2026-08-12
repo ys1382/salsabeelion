@@ -1766,6 +1766,92 @@ class CharacterComposeTests(unittest.TestCase):
         self.assertNotIn("prism", answer)
         self.assertNotIn("palladiar", answer)
 
+    def test_who_is_restores_gold_order_after_title_glue(self):
+        """Cast-card title must not glue onto the open or float Dijon first."""
+        from lorekeeper_answer_focus import focus_ask_response, scrub_rag_artifacts
+        from lorekeeper_character_compose import (
+            smooth_who_is_prose,
+            strip_who_is_cast_card_header,
+        )
+
+        gold_body = (
+            "In Smoke And Mirrors, Tenebris is the main antagonist, Baron of Cheshire, "
+            "and the Cheshire Cat from Alice in Wonderland, with Etherei as the subject "
+            "of his fascination. Duke Dijon is his third cousin, with whom he shares a "
+            "relationship that is cold on the surface but more complicated — Duke Dijon "
+            "is among the few cats he does not grudge, and both care; unbeknownst to him, "
+            "his staying out of Court politics leaves Duke Dijon with a heavier load. "
+            "His mother is from here, but his father is a Domestic Cat from another realm, "
+            "with whether he is a Faeble too still open — and other cats gave him the cold "
+            "shoulder because that father was an outsider. He is personally disgusted by "
+            "Predator Court politics, and does not realize how much political influence "
+            "he holds. He has mixed parentage, and is not entirely of this world. "
+            "Lord Tenebris of Cheshire is a faeble with social rank — not a king or emperor."
+        )
+        # Compose shape: title line + body + footer
+        card = f"Tenebris\n\n{gold_body}\n\n— From your notes."
+        stripped = strip_who_is_cast_card_header(card, "Tenebris")
+        self.assertTrue(
+            stripped.lower().startswith("in smoke and mirrors"),
+            msg=stripped[:120],
+        )
+        self.assertFalse(
+            re.match(r"^tenebris\s+in\s+smoke", stripped, re.I),
+            msg=stripped[:120],
+        )
+
+        # Owner regression: Dijon/parents first + garbled open mid-card
+        scrambled = (
+            "Duke Dijon is his third cousin, with whom he shares a relationship that is "
+            "cold on the surface but more complicated — Duke Dijon is among the few cats "
+            "he does not grudge, and both care; unbeknownst to him, his staying out of "
+            "Court politics leaves Duke Dijon with a heavier load. His mother is from "
+            "here, but his father is a Domestic Cat from another realm, with whether he "
+            "is a Faeble too still open — and other cats gave him the cold shoulder "
+            "because that father was an outsider. Tenebris In Smoke And Mirrors, "
+            "Tenebris is the main antagonist, Baron of Cheshire, and the Cheshire Cat "
+            "from Alice in Wonderland, with Etherei as the subject of his fascination. "
+            "He is personally disgusted by Predator Court politics, and does not realize "
+            "how much political influence he holds. He has mixed parentage, and is not "
+            "entirely of this world. Lord Tenebris of Cheshire is a faeble with social "
+            "rank — not a king or emperor."
+        )
+        fixed = smooth_who_is_prose("Tenebris", scrambled)
+        lead = re.split(r"(?<=[.!?])\s+", fixed.strip(), maxsplit=1)[0]
+        self.assertRegex(
+            lead,
+            r"^In Smoke And Mirrors,\s*Tenebris is the main antagonist",
+            msg=f"lead={lead!r}\n{fixed}",
+        )
+        self.assertNotRegex(lead, r"^Duke Dijon\b")
+        self.assertNotRegex(lead, r"^(His|Her)\s+(mother|father)\b")
+        self.assertNotIn("Tenebris In Smoke", fixed)
+
+        q = "In Smoke And Mirrors, who is Tenebris?"
+        focused = focus_ask_response(
+            q,
+            {"ok": True, "answer": card, "questionKind": "who", "sources": []},
+        )
+        out = (focused.get("answer") or "")
+        body = re.split(r"\n—\s*From your notes", out, maxsplit=1)[0]
+        body = re.sub(r"^Tenebris\s*\n+", "", body, count=1, flags=re.I).strip()
+        lead2 = re.split(r"(?<=[.!?])\s+", body.strip(), maxsplit=1)[0]
+        self.assertRegex(
+            lead2,
+            r"^In Smoke And Mirrors,\s*Tenebris is the main antagonist",
+            msg=f"lead={lead2!r}\n{out}",
+        )
+        # Scrub path alone must also strip title before collapse
+        scrubbed = scrub_rag_artifacts(q, card, allow_broad=False)
+        scrub_body = re.split(r"\n—\s*From your notes", scrubbed, maxsplit=1)[0]
+        self.assertNotRegex(scrub_body, r"(?i)^Tenebris\s+In\s+Smoke")
+        scrub_lead = re.split(r"(?<=[.!?])\s+", scrub_body.strip(), maxsplit=1)[0]
+        self.assertRegex(
+            scrub_lead,
+            r"^In Smoke And Mirrors,\s*Tenebris is the main antagonist",
+            msg=f"scrub_lead={scrub_lead!r}\n{scrubbed}",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

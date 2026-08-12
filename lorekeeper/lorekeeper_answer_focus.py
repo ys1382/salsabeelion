@@ -17,6 +17,7 @@ from lorekeeper_character_compose import (
     is_rename_infodump_clause,
     is_who_is_cast_fact_sentence,
     smooth_who_is_prose,
+    strip_who_is_cast_card_header,
     who_is_answer_has_bloat,
     who_is_answer_has_upheaval_reason,
 )
@@ -583,6 +584,13 @@ def scrub_rag_artifacts(question: str, answer: str, *, allow_broad: bool) -> str
     body = _SOURCES_META.sub("", body)
     body = _SOURCE_LABEL_VERB.sub("notes make clear ", body)
     body = _SOURCE_LABEL_BARE.sub("", body)
+    # Who-is: strip cast-card title BEFORE whitespace collapse, or
+    # "Name\n\nIn Work, Name is…" becomes "Name In Work, Name is…"
+    # and Dijon/parents steal the lead.
+    if is_who_is_question(question):
+        labels_early = character_targets(question)
+        if labels_early:
+            body = strip_who_is_cast_card_header(body, labels_early[0])
     body = re.sub(r"\s{2,}", " ", body)
     body = re.sub(r"\s+([,;:.])", r"\1", body)
     body = _SAME_TWO_CHARS.sub("", body)
@@ -628,13 +636,7 @@ def scrub_who_is_plot_walkthrough(body: str, *, question: str = "") -> str:
     label = labels[0] if labels else ""
     # Drop the lone title line ("Etherei\n\n…") so it cannot glue onto the first fact.
     if label:
-        text = re.sub(
-            rf"^{re.escape(label)}\s*\n+",
-            "",
-            text,
-            count=1,
-            flags=re.I,
-        ).strip()
+        text = strip_who_is_cast_card_header(text, label)
     # Split by paragraphs first, then sentence ends / semicolons.
     sentences: list[str] = []
     for block in re.split(r"\n+", text):
@@ -813,30 +815,31 @@ def scrub_who_is_plot_walkthrough(body: str, *, question: str = "") -> str:
                 len(s),
             )
         )
-        # Essay voice: care / politics / cousin before parents (parents kept, not cut, but late).
+        # Essay voice (gold): care/cousin → parents → politics → mixed; faeble in stakes last.
         def _tie_rank(s: str) -> tuple[int, int]:
             low = (s or "").lower()
             if re.search(r"rivalry-care|both care|cold on the surface|heavier load", low):
                 return (0, -len(s))
+            if re.search(r"\b(?:first|second|third)\s+cousin\b", low):
+                return (1, len(s))
+            if re.search(r"\b(father|mother|parent stock|outsider|cold shoulder)\b", low):
+                return (2, len(s))
             if re.search(
                 r"disgusted|refuses to associate|underestimates|"
-                r"political influence|does not realize|fascination|mixed parentage|"
-                r"cold shoulder",
+                r"political influence|does not realize|fascination",
                 low,
             ):
-                return (1, -len(s))
-            if re.search(r"\b(?:first|second|third)\s+cousin\b", low):
-                return (2, len(s))
-            if re.search(r"\b(subject of|quarry|hunts?\b|nemesis)\b", low):
-                return (3, len(s))
-            if re.search(r"\bcousin\b", low):
+                return (3, -len(s))
+            if re.search(r"\bmixed parentage\b", low):
                 return (4, len(s))
-            if re.search(r"\b(father|mother|parent stock|outsider)\b", low):
+            if re.search(r"\b(subject of|quarry|hunts?\b|nemesis)\b", low):
                 return (5, len(s))
-            return (6, len(s))
+            if re.search(r"\bcousin\b", low):
+                return (6, len(s))
+            return (7, len(s))
 
         tiesish.sort(key=_tie_rank)
-        # Identity open → standing ties → faeble/stakes → scraps. Parents ride in ties (rank 5).
+        # Identity open → standing ties → faeble/stakes → scraps.
         ordered = identityish[:4] + tiesish[:8] + stakesish[:3] + other[:1] + renameish[:1]
         kept = ordered or kept[:5]
     else:
