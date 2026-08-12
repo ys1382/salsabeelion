@@ -78,6 +78,21 @@ _SOFTER_SIDE_SIGNAL = re.compile(
     re.I,
 )
 
+# How the antagonist would see / use / fear the protagonist — reusable stakes class.
+_ANTAGONIST_STAKES_SIGNAL = re.compile(
+    r"\b("
+    r"valuable\s+asset|dangerous\s+threat|asset\s+or\s+(?:a\s+)?threat|"
+    r"(?:asset|threat)\s+or\s+(?:a\s+)?(?:valuable\s+)?(?:asset|threat)|"
+    r"see(?:s|n)?\s+(?:her|him|them)\s+as|"
+    r"view(?:s|ed)?\s+(?:her|him|them|that\s+knowledge)\s+as|"
+    r"could\s+be\s+(?:either\s+)?(?:a\s+)?(?:very\s+)?(?:valuable|dangerous)|"
+    r"profound\s+violation|unearned\s+(?:intimacy|knowledge)|"
+    r"threat\s+or\s+a\s+tool|tool\s+or\s+a\s+threat|"
+    r"recognize(?:s|d)?\s+that\s+she|in\s+his\s+eyes"
+    r")\b",
+    re.I,
+)
+
 _ORIGIN_SIGNAL = re.compile(
     r"\b("
     r"before\s+(?:this\s+)?(?:adventure|journey|trip|mission)|"
@@ -169,6 +184,8 @@ CATCHUP_GOLD_BASELINE_MARKERS = (
     "way out of that domain",
     "softer side",
     "not without a soul",
+    "valuable asset",
+    "dangerous threat",
 )
 
 
@@ -472,11 +489,12 @@ def collect_catchup_gather(
         "scraps": _near_dedupe_items(_collect_planned_scraps(entries))[:MAX_SCRAPS],
         "boss": _collect_signal_notes(entries, _ANTAGONIST_SIGNAL, limit=4),
         "softer": _collect_signal_notes(entries, _SOFTER_SIDE_SIGNAL, limit=4),
+        "stakes": _collect_signal_notes(entries, _ANTAGONIST_STAKES_SIGNAL, limit=5),
         "origin": _collect_signal_notes(entries, _ORIGIN_SIGNAL, limit=4),
         "entry": _collect_signal_notes(entries, _ENTRY_SIGNAL, limit=5),
         "cant_leave": _collect_signal_notes(entries, _CANT_LEAVE_SIGNAL, limit=4),
     }
-    # Draft claims that look like origin/entry/can't-leave/softer also count.
+    # Draft claims that look like origin/entry/can't-leave/softer/stakes also count.
     for row in sections["beats"]:
         line = str(row.get("line") or "")
         if _ORIGIN_SIGNAL.search(line):
@@ -487,12 +505,15 @@ def collect_catchup_gather(
             sections["boss"].append(row)
         if _SOFTER_SIDE_SIGNAL.search(line):
             sections["softer"].append(row)
+        if _ANTAGONIST_STAKES_SIGNAL.search(line):
+            sections["stakes"].append(row)
         if _CANT_LEAVE_SIGNAL.search(line):
             sections["cant_leave"].append(row)
     sections["origin"] = _near_dedupe_items(sections["origin"])[:4]
     sections["entry"] = _near_dedupe_items(sections["entry"])[:5]
     sections["boss"] = _near_dedupe_items(sections["boss"])[:4]
     sections["softer"] = _near_dedupe_items(sections["softer"])[:4]
+    sections["stakes"] = _near_dedupe_items(sections["stakes"])[:5]
     sections["cant_leave"] = _near_dedupe_items(sections["cant_leave"])[:4]
     return sections, has_notes, has_draft
 
@@ -519,6 +540,11 @@ def catchup_prompt_block(entries: list[dict[str, Any]], question: str = "") -> s
         (
             "softer",
             "ANTAGONIST SOFTER SIDE / SOUL / INNER DIMENSION (must-keep when present)",
+        ),
+        (
+            "stakes",
+            "ANTAGONIST STAKES ABOUT HER — asset vs threat / how he would see her "
+            "(must-keep when present; mine notes)",
         ),
         (
             "entry",
@@ -565,6 +591,7 @@ def compose_catchup_gather(
     beats = sections.get("beats") or []
     boss = sections.get("boss") or []
     softer = sections.get("softer") or []
+    stakes = sections.get("stakes") or []
     origin = sections.get("origin") or []
     entry = sections.get("entry") or []
     cant_leave = sections.get("cant_leave") or []
@@ -575,6 +602,7 @@ def compose_catchup_gather(
         or beats
         or boss
         or softer
+        or stakes
         or origin
         or entry
         or cant_leave
@@ -628,6 +656,11 @@ def compose_catchup_gather(
             parts.append(line if line.endswith((".", "!", "?", "…")) else line + ".")
     # Softer side / soul — must-keep when saved (gold-pin: don't drop).
     for row in softer[:2]:
+        line = str(row.get("line") or "").strip()
+        if line and _normalize(line) not in _normalize(" ".join(parts)):
+            parts.append(line if line.endswith((".", "!", "?", "…")) else line + ".")
+    # Antagonist stakes about her — asset/threat class; must-keep when saved.
+    for row in stakes[:3]:
         line = str(row.get("line") or "").strip()
         if line and _normalize(line) not in _normalize(" ".join(parts)):
             parts.append(line if line.endswith((".", "!", "?", "…")) else line + ".")
@@ -688,6 +721,7 @@ def answer_catchup_gather(
         "cant_leave",
         "boss",
         "softer",
+        "stakes",
         "origin",
         "cast",
         "open",

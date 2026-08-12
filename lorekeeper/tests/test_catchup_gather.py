@@ -97,6 +97,8 @@ class CatchupGoldBaselineTests(unittest.TestCase):
         self.assertIn("cannot simply leave", low)
         self.assertIn("softer side", low)
         self.assertIn("not without a soul", low)
+        self.assertIn("valuable asset", low)
+        self.assertIn("dangerous threat", low)
         self.assertIn("from your notes only", low)
 
 
@@ -107,7 +109,9 @@ class CatchupAnswerTests(unittest.TestCase):
                 "n_boss",
                 "Vesper",
                 "Vesper is the mafia-esque boss of the domain — main antagonist. "
-                "He is not without a soul; a softer side of him once existed or may still exist.",
+                "He is not without a soul; a softer side of him once existed or may still exist. "
+                "He would recognize that she could either be a very valuable asset or a "
+                "very dangerous threat.",
             ),
             _entry(
                 "n_origin",
@@ -153,6 +157,8 @@ class CatchupAnswerTests(unittest.TestCase):
         self.assertTrue(answer_looks_at_or_above_catchup_baseline(ans), ans)
         self.assertIn("vesper", low)
         self.assertIn("softer side", low)
+        self.assertIn("valuable asset", low)
+        self.assertIn("dangerous threat", low)
         self.assertIn("human world", low)
         self.assertIn("finch", low)
         self.assertIn("premise", low)
