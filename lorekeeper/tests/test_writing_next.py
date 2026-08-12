@@ -933,5 +933,107 @@ class WritingNextAnswerTests(unittest.TestCase):
         self.assertEqual(low.count("albino-rabbit vision"), 1)
 
 
+    def test_etherei_writing_next_gold_shape_locked(self):
+        """
+        Owner-locked Etherei writing-next gold shape (2026-08-12).
+        Fixture documents the gold sample; synthetic Ask must keep must-keep beats,
+        plan-recall seats as sentences (not parentheses), and one vision family.
+        """
+        from pathlib import Path
+
+        gold_path = (
+            Path(__file__).resolve().parent
+            / "fixtures"
+            / "etherei_writing_next_gold.txt"
+        )
+        gold = gold_path.read_text(encoding="utf-8")
+        self.assertIn("For the chase scene, your plan was", gold)
+        self.assertIn("You wanted his brothers to find out Etherei is ticklish", gold)
+        self.assertIn("albino-rabbit vision trouble", gold)
+        self.assertIn("For Obsidian's flashback, you meant to", gold)
+        self.assertIn("For Stygian's flashback, you meant to", gold)
+        self.assertIn(
+            "Your plan was for this reveal to take place shortly after brothers "
+            "rescue Etherei from Serias",
+            gold,
+        )
+        self.assertNotRegex(gold, r"\([^)]*(?:during|after|at the)[^)]*\)")
+
+        entries = [
+            _entry(
+                "n1",
+                "Etherei's age",
+                "So I'm thinking his brothers force him into kicking back after they "
+                "catch up to Serias and rescue Etherei. Note: I was thinking the "
+                '"never again" thing could include discovering that Etherei is '
+                "ticklish and that's how they get him to swear never to do that "
+                "again. Ever.",
+            ),
+            _entry(
+                "n2",
+                "Etherei's Eyesight",
+                "Tenebris mentions that Etherei, as an albino, might have trouble "
+                "with his eyesight.",
+            ),
+            _entry(
+                "n3",
+                "Etherei's Blurry Sight Revealed",
+                "None of the characters, including Ethie himself, realize that he "
+                "has trouble with his eyesight when he's not wearing glasses. So "
+                "i'm thinking that's a revelation that happens at the Cheshire "
+                "Cat's quarters, after Etherei is captured.",
+            ),
+            _entry(
+                "n4",
+                "Etherei Captured: More Notes",
+                "When Serias shows up, Etherei begins to run faster--deliberately "
+                "outrunning both his brothers and the Wolf. He keeps running for a "
+                "bit (find a way to write the chase swiftly but not hastily) and "
+                "then the Wolf scoops him up.",
+            ),
+            _entry(
+                "n5",
+                "POV order",
+                "As Stygian is giving chase, he begins having a fractured/shattered "
+                "flashback regarding Etherei getting in trouble during Ethie's early "
+                "childhood, a flashback that reveals something surprising about "
+                "Etherei and about Stygian.\n"
+                "Obsidian has a fractured-shattered flashback similar to Stygian's, "
+                "but different memory and reveals additional secrets about Etherei "
+                "and Obsidian himself.\n"
+                "POV Order of Events after Etherei spots Serias.",
+            ),
+            _entry(
+                "d1",
+                "Draft",
+                "Obsidian staggered as a fractured flashback of childhood hit him. "
+                "Stygian also broke into a shattered flashback on the chase. "
+                "Etherei ran the mountain path from Serias.",
+                kind="document",
+            ),
+        ]
+        res = recall_from_user_data(
+            "In Smoke and Mirrors, task list for Etherei",
+            {"lorekeeper_entries_v1": json.dumps(entries)},
+        )
+        answer = res.get("answer") or ""
+        low = answer.lower()
+        for needle in (
+            "chase",
+            "ticklish",
+            "albino-rabbit vision",
+            "obsidian's flashback",
+            "stygian's flashback",
+            "your plan was for this",
+            "cheshire",
+            "serias",
+        ):
+            self.assertIn(needle, low)
+        self.assertNotRegex(
+            answer, r"• .+\([^)]*(?:during|after|at the)[^)]*\)"
+        )
+        self.assertEqual(low.count("albino-rabbit vision"), 1)
+
+
 if __name__ == "__main__":
     unittest.main()

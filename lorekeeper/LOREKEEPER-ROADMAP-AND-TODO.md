@@ -315,10 +315,10 @@ Run **one row at a time** in Cursor. Don’t skip Phase 0 — it costs nothing a
 
 **Owner note (2026-08-11):** Who-is **accuracy** is parked as good enough for now (gold sample above). Writing-next / leave-off plot work continues in this pass. Who-is **voice/hook** upgrade stays later — do not mix it into the plot pass.
 
-**Writing-next task list Ask — accuracy + completeness + draft-timeline seats + voice (pinned 2026-08-11 night; plan-recall tone 2026-08-12):** Owner checked **really good** for Etherei cast task list (gold sample below). Do **not** regress this bar.
+**Writing-next task list Ask — accuracy + completeness + draft-timeline seats + voice (pinned 2026-08-11 night; plan-recall + seat sentences locked 2026-08-12):** Owner gold for Etherei cast task list (sample below). **Do not regress this bar.** Machine lock: `lorekeeper/tests/fixtures/etherei_writing_next_gold.txt` + `test_etherei_writing_next_gold_shape_locked`.
 
 - Q: *Give me the task list for Etherei.* (story silo / search-in = Smoke and Mirrors)
-- **Gold sample (keep this shape — plan-recall voice; clarifiers; seats as follow-on sentences not parentheses; staggered You… openers; one vision beat):**
+- **Gold sample (owner-locked shape 2026-08-12 — plan-recall voice; clarifiers; seats as follow-on sentences not parentheses; staggered You… openers; one vision beat):**
 
   > Here's a short task list for Smoke and Mirrors about etherei — write-next items from your notes that aren't on the page yet:
   >
@@ -335,7 +335,7 @@ Run **one row at a time** in Cursor. Don’t skip Phase 0 — it costs nothing a
   > — Short write-next tasks restated from your notes vs draft only. Nothing invented. Continuity sticky-notes, later-book setup, and standing lore stay out unless you ask for a later book. Name a topic for a tighter list, or ask again for more.
 
 - Must keep: Etherei-centered write-next; chase craft; ticklish + albino vision when unused; twin flashback polish with edit seat + draft-timeline seat; one clarifier when notes say why; blank lines; one vision family; **plan-recall** tone; **seats as follow-on sentences** (“Your plan was for this reveal to take place shortly after…”) — **not** parentheses; stagger You… openers; mirror note seats (e.g. Serias when notes say Serias); no inventing; leave-off + Tenebris who-is untouched.
-- Rules still in force: line-level ownership; later-book off current lists; librarian restates; seats + clarifiers from notes only.
+- **Do not** edit `etherei_writing_next_gold.txt` or soften `test_etherei_writing_next_gold_shape_locked` without owner OK in that conversation.
 
 **Follow-ups for a future agent (this gold already includes completeness + location + plan-recall voice):**
 - [x] Completeness: unused Etherei facts still missing from lists when present in notes
