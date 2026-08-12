@@ -634,6 +634,42 @@ class WritingNextAnswerTests(unittest.TestCase):
         self.assertIn("chase", answer)
         self.assertRegex(answer, r"serias|capture")
 
+    def test_collapses_duplicate_vision_and_glasses_bullets(self):
+        entries = [
+            _entry(
+                "n1",
+                "Etherei's Eyesight",
+                "Also, I think Etherei lost his glasses by the events of this book.\n"
+                "Tenebris will give him a proper pair at some point after Etherei "
+                "is brought in by the Wolf.",
+            ),
+            _entry(
+                "n2",
+                "Etherei's Blurry Sight Revealed",
+                "None of the characters, including Ethie himself, realize that he "
+                "has trouble with his eyesight when he's not wearing glasses. So "
+                "i'm thinking that's a revelation that happens at the Cheshire "
+                "Cat's quarters, after Etherei is captured.",
+            ),
+            _entry(
+                "d1",
+                "Draft",
+                "Etherei ran the mountain path.",
+                kind="document",
+            ),
+        ]
+        res = recall_from_user_data(
+            "In Smoke and Mirrors, task list for Etherei",
+            {"lorekeeper_entries_v1": json.dumps(entries)},
+        )
+        answer = (res.get("answer") or "").lower()
+        vision_hits = answer.count("albino-rabbit vision") + answer.count(
+            "without glasses and struggling"
+        )
+        self.assertEqual(vision_hits, 1)
+        self.assertIn("quarters", answer)
+        self.assertNotIn("without glasses and struggling", answer)
+
     def test_local_only_no_rag(self):
         entries = [
             _entry("n1", "Idea", "A secret tunnel under the glass market."),

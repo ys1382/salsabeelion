@@ -1350,6 +1350,30 @@ def compose_writing_next_task_list(
     return "\n".join(lines)
 
 
+def _is_vision_family_task(bullet: str) -> bool:
+    """True for Etherei eyesight / glasses write-next restates (same beat family)."""
+    k = _normalize(bullet or "")
+    return bool(
+        re.search(
+            r"albino-rabbit vision|hard time seeing|"
+            r"without glasses and struggling|lost-glasses|poorer eyesight",
+            k,
+        )
+    )
+
+
+def _vision_seat_preference(bullet: str) -> int:
+    """Higher = better seat for the vision reveal (Cheshire quarters wins)."""
+    k = _normalize(bullet or "")
+    if "cheshire" in k or "quarters" in k:
+        return 100
+    if "ironwillow" in k:
+        return 50
+    if "wolf" in k or "tenebris" in k:
+        return 40
+    return 60
+
+
 def answer_writing_next_task_list(
     entries: list[dict[str, Any]],
     *,
@@ -1403,7 +1427,8 @@ def answer_writing_next_task_list(
     # Restate first so incomplete long scraps don't consume the soft cap.
     restatable: list[dict[str, str]] = []
     seen_restate: set[str] = set()
-    has_vision_bullet = False
+    vision_idx: int | None = None
+    vision_rank = -1
     for row in ranked:
         bullet = restate_as_task_line(
             str(row.get("line") or ""),
@@ -1416,10 +1441,21 @@ def answer_writing_next_task_list(
         core_key = _normalize(re.sub(r"\([^)]*\)\s*\.?$", "", bullet))
         if not key or key in seen_restate or core_key in seen_restate:
             continue
-        if "albino-rabbit vision" in core_key or "albino-rabbit vision" in key:
-            if has_vision_bullet:
-                continue
-            has_vision_bullet = True
+        if _is_vision_family_task(bullet):
+            rank = _vision_seat_preference(bullet)
+            if vision_idx is None:
+                restatable.append(row)
+                vision_idx = len(restatable) - 1
+                vision_rank = rank
+                seen_restate.add(key)
+                seen_restate.add(core_key)
+            elif rank > vision_rank:
+                # Prefer Cheshire-quarters vision seat over glasses/Wolf twin.
+                restatable[vision_idx] = row
+                vision_rank = rank
+                seen_restate.add(key)
+                seen_restate.add(core_key)
+            continue
         seen_restate.add(key)
         seen_restate.add(core_key)
         restatable.append(row)
