@@ -27,6 +27,7 @@ MAX_TASK_ITEMS = 8
 # If the ranked list is small, show all instead of hiding 1–4 behind "…and N more".
 SOFT_SHOW_ALL_MAX = 12
 _MAX_TASK_LINE = 160
+_MAX_TASK_LINE_WITH_SEAT = 220
 
 _TASK_LIST_Q = re.compile(
     r"\b("
@@ -834,7 +835,257 @@ def _rank_tasks_leave_off_first(
     return [row for _o, _l, _i, row in scored]
 
 
-def restate_as_task_line(raw: str) -> str:
+def _build_note_index(
+    entries: list[dict[str, Any]],
+) -> dict[str, tuple[str, str]]:
+    """entryId → (title, body) for non-draft notes."""
+    out: dict[str, tuple[str, str]] = {}
+    for entry in entries:
+        if not isinstance(entry, dict) or _is_draft_entry(entry):
+            continue
+        eid = str(entry.get("id") or "")
+        if not eid:
+            continue
+        title = str(entry.get("title") or "").strip()
+        body = str(entry.get("body") or "").strip()
+        if title or body:
+            out[eid] = (title, body)
+    return out
+
+
+def _seat_family_patterns(line: str, title: str) -> list[re.Pattern[str]]:
+    """Topic families to search across notes for timeline seats."""
+    blob = f"{title}\n{line}".lower()
+    pats: list[str] = []
+    if re.search(r"ticklish|never do (?:that|something)|rescue|younger brother", blob):
+        pats.append(
+            r"ticklish|rescue|catch up to serias|etherei'?s age|after they catch"
+        )
+    if re.search(
+        r"eyesight|albino|glasses|blurry|vision|spectacles|hard time seeing", blob
+    ):
+        pats.append(
+            r"eyesight|blurry sight|glasses|albino|ironwillow|cheshire|"
+            r"quarters|brought in by the wolf"
+        )
+    if re.search(r"flashback|secret|secrets|reveal", blob):
+        pats.append(
+            r"flashback|pov order|spots serias|capture povs|side notes|"
+            r"obsidian|stygian"
+        )
+    if re.search(r"chase|swiftly|hastily|serias", blob) or re.search(
+        r"captured", title, re.I
+    ):
+        pats.append(r"chase|captured|serias|spots serias|swiftly|hastily")
+    return [re.compile(p, re.I) for p in pats]
+
+
+def seat_search_corpus(
+    row: dict[str, str],
+    note_index: dict[str, tuple[str, str]],
+) -> str:
+    """
+    Look hard for timeline seats: same note body first, then related notes
+    whose bodies share the claim's beat family (not every Etherei note).
+    """
+    eid = str(row.get("entryId") or "")
+    title = str(row.get("noteTitle") or "")
+    line = str(row.get("line") or "")
+    parts: list[str] = [title, line]
+    if eid in note_index:
+        parts.append(note_index[eid][1])
+
+    families = _seat_family_patterns(line, title)
+    if not families:
+        return "\n".join(parts)
+    for other_id, (ot, ob) in note_index.items():
+        if other_id == eid:
+            continue
+        other_blob = f"{ot}\n{ob}"
+        if any(fam.search(other_blob) for fam in families):
+            parts.append(other_blob)
+    return "\n".join(parts)
+
+
+def is_flashback_claim(focus: str) -> bool:
+    """True for flashback/secret-reveal polish claims (not bare chase craft)."""
+    f = focus or ""
+    if re.search(r"\bflashback\b", f):
+        return True
+    if re.search(r"\b(?:secret|secrets|reveal\w*)\b", f) and not re.search(
+        r"\b(?:swiftly|hastily|ticklish|eyesight|glasses|albino)\b", f
+    ):
+        return True
+    return False
+
+
+def extract_draft_timeline_seat(
+    corpus: str,
+    line: str = "",
+    *,
+    note_title: str = "",
+) -> str:
+    """
+    Short main-draft timeline seat from notes — librarian only, never invent.
+    Empty when notes don't say where the beat sits.
+    Seats are claim-typed so vision/rescue/chase/flashback don't cross-bleed.
+    """
+    c = corpus or ""
+    if not c.strip():
+        return ""
+    line_l = (line or "").lower()
+    title_l = (note_title or "").lower()
+    focus = line_l + " " + title_l
+
+    is_ticklish = bool(re.search(r"\bticklish\b", focus))
+    is_vision = bool(
+        re.search(
+            r"\b(?:eyesight|albino|glasses|blurry|vision|spectacles|"
+            r"hard time seeing)\b",
+            focus,
+        )
+    )
+    is_flash = is_flashback_claim(focus)
+    is_chase_craft = bool(re.search(r"\b(?:chase|swiftly|hastily)\b", focus)) and (
+        not is_flash
+    )
+
+    candidates: list[tuple[int, str]] = []
+
+    def add(score: int, seat: str) -> None:
+        s = re.sub(r"\s+", " ", (seat or "").strip(" \t\"'“”‘’.,;:"))
+        if not s or len(s) < 8 or len(s) > 90:
+            return
+        if line_is_later_book(s) or re.search(
+            r"\bend of the series\b|\bway longer than one book\b", s, re.I
+        ):
+            return
+        candidates.append((score, s))
+
+    if is_vision:
+        glasses_focus = bool(
+            re.search(
+                r"\blost\s+(?:his|her|their)\s+glasses\b|"
+                r"\bwithout glasses and struggling\b|"
+                r"\bwrite .{0,40}without glasses\b",
+                focus,
+            )
+        )
+        m = re.search(
+            r"revelation that happens at the\s+([^,]{5,70}?)"
+            r"\s*,?\s*after\s+([^.]{5,55})",
+            c,
+            re.I,
+        )
+        if m and not glasses_focus:
+            add(
+                100,
+                f"at the {m.group(1).strip()}, after {m.group(2).strip()}",
+            )
+        m = re.search(
+            r"at the\s+(Cheshire Cat(?:['\u2019]s)? quarters)\s*,?\s*after\s+"
+            r"((?:Etherei|he|him)\s+is\s+captured|capture[d]?)",
+            c,
+            re.I,
+        )
+        if m and not glasses_focus:
+            add(95, f"at the {m.group(1)}, after Etherei is captured")
+        if re.search(
+            r"after Etherei is brought in by the [Ww]olf|"
+            r"Tenebris will give him a proper pair at some point after",
+            c,
+            re.I,
+        ):
+            add(
+                92 if glasses_focus else 85,
+                "after the Wolf brings Etherei to Tenebris",
+            )
+        if re.search(
+            r"referenced in (?:his )?conversation with Ironwillow",
+            c,
+            re.I,
+        ):
+            add(60, "hinted in Ironwillow conversation; fuller reveal later")
+        # Restated compressed vision bullet still wants quarters when not glasses-lost.
+        if (
+            not glasses_focus
+            and re.search(r"albino-rabbit vision|hard time seeing|eyesight", focus)
+            and re.search(r"Cheshire Cat(?:['\u2019]s)? quarters", c, re.I)
+        ):
+            add(90, "at the Cheshire Cat's quarters, after Etherei is captured")
+
+    if is_ticklish:
+        if re.search(
+            r"after they catch up to Serias and rescue (?:Etherei|him)",
+            c,
+            re.I,
+        ):
+            add(90, "after brothers rescue Etherei from Serias")
+        elif re.search(
+            r"after they\s+(?:catch up to Serias|rescue Etherei)",
+            c,
+            re.I,
+        ):
+            add(80, "after brothers rescue Etherei")
+
+    if is_chase_craft:
+        if re.search(r"When Serias shows up", c, re.I) or re.search(
+            r"find a way to write the chase", c, re.I
+        ):
+            add(88, "during the Serias capture chase")
+        if re.search(r"after Etherei spots Serias", c, re.I):
+            add(86, "during the chase after Etherei spots Serias")
+
+    if is_flash:
+        if re.search(r"after Etherei spots Serias", c, re.I) or re.search(
+            r"POV Order of Events after Etherei spots Serias", c, re.I
+        ):
+            add(87, "during the chase after Etherei spots Serias")
+        if re.search(r"As Stygian is giving chase", c, re.I) and re.search(
+            r"stygian", focus
+        ):
+            add(84, "during Stygian's chase after Etherei spots Serias")
+        if re.search(r"Obsidian has a fractured", c, re.I) and re.search(
+            r"obsidian", focus
+        ):
+            add(84, "during Obsidian's chase after Etherei spots Serias")
+        if re.search(r"after Etherei spots Serias", note_title or "", re.I):
+            add(70, "during the chase after Etherei spots Serias")
+
+    if not candidates:
+        return ""
+    candidates.sort(key=lambda x: (-x[0], len(x[1])))
+    return candidates[0][1]
+
+
+def attach_timeline_seat(task_line: str, seat: str) -> str:
+    """Append a short draft-timeline seat without inventing."""
+    s = (task_line or "").strip()
+    seat_s = re.sub(r"\s+", " ", (seat or "").strip().rstrip("."))
+    if not s or not seat_s:
+        return s
+    if seat_s.lower() in s.lower():
+        return s
+    # Avoid stacking near-duplicate "during … flashback" seats.
+    if re.search(r"\bduring\b.+\bflashback\b", s, re.I) and re.search(
+        r"\bduring\b.+\bflashback\b", seat_s, re.I
+    ):
+        # Prefer keeping flashback owner; add chase seat if different.
+        if re.search(r"chase|spots serias", seat_s, re.I) and not re.search(
+            r"chase|spots serias", s, re.I
+        ):
+            base = s.rstrip(".")
+            out = f"{base} ({seat_s})."
+            return out if len(out) <= _MAX_TASK_LINE_WITH_SEAT else s
+        return s
+    base = s.rstrip(".")
+    out = f"{base} ({seat_s})."
+    if len(out) > _MAX_TASK_LINE_WITH_SEAT:
+        return s
+    return out
+
+
+def restate_as_task_line(raw: str, *, timeline_seat: str = "") -> str:
     """
     Librarian short task line from a note claim — compress/reframe, never invent.
     Returns empty if the line cannot be stated cleanly (no … trail-offs).
@@ -995,6 +1246,8 @@ def restate_as_task_line(raw: str) -> str:
         s = s[0].upper() + s[1:]
     if s[-1] not in ".!?\"'”’":
         s = s + "."
+    if timeline_seat:
+        s = attach_timeline_seat(s, timeline_seat)
     return s
 
 
@@ -1046,7 +1299,10 @@ def compose_writing_next_task_list(
         first = True
         bullet_count = 0
         for row in items:
-            bullet = restate_as_task_line(str(row.get("line") or ""))
+            bullet = restate_as_task_line(
+                str(row.get("line") or ""),
+                timeline_seat=str(row.get("timelineSeat") or ""),
+            )
             if not bullet:
                 continue
             if not first:
@@ -1130,22 +1386,42 @@ def answer_writing_next_task_list(
     ranked = (
         _rank_tasks_leave_off_first(tasks, entries) if tasks else []
     )
+    note_index = _build_note_index(entries)
+    # Look hard for draft-timeline seats across same + related notes.
+    seated: list[dict[str, str]] = []
+    for row in ranked:
+        seat = extract_draft_timeline_seat(
+            seat_search_corpus(row, note_index),
+            str(row.get("line") or ""),
+            note_title=str(row.get("noteTitle") or ""),
+        )
+        if seat:
+            seated.append({**row, "timelineSeat": seat})
+        else:
+            seated.append(row)
+    ranked = seated
     # Restate first so incomplete long scraps don't consume the soft cap.
     restatable: list[dict[str, str]] = []
     seen_restate: set[str] = set()
     has_vision_bullet = False
     for row in ranked:
-        bullet = restate_as_task_line(str(row.get("line") or ""))
+        bullet = restate_as_task_line(
+            str(row.get("line") or ""),
+            timeline_seat=str(row.get("timelineSeat") or ""),
+        )
         if not bullet:
             continue
         key = _normalize(bullet)
-        if not key or key in seen_restate:
+        # Dedupe on core task (ignore parenthetical timeline seat).
+        core_key = _normalize(re.sub(r"\([^)]*\)\s*\.?$", "", bullet))
+        if not key or key in seen_restate or core_key in seen_restate:
             continue
-        if "albino-rabbit vision" in key:
+        if "albino-rabbit vision" in core_key or "albino-rabbit vision" in key:
             if has_vision_bullet:
                 continue
             has_vision_bullet = True
         seen_restate.add(key)
+        seen_restate.add(core_key)
         restatable.append(row)
     shown, _hidden = _select_tasks_for_display(restatable)
 

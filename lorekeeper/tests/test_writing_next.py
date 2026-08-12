@@ -584,6 +584,56 @@ class WritingNextAnswerTests(unittest.TestCase):
         self.assertTrue("stygian" in answer or "obsidian" in answer)
         self.assertIn("secret", answer)
 
+    def test_tasks_include_draft_timeline_seats_from_related_notes(self):
+        entries = [
+            _entry(
+                "n1",
+                "Etherei's age",
+                "So I'm thinking his brothers force him into kicking back after they "
+                "catch up to Serias and rescue Etherei. Note: I was thinking the "
+                '"never again" thing could include discovering that Etherei is '
+                "ticklish.",
+            ),
+            _entry(
+                "n2",
+                "Etherei's Eyesight",
+                "Tenebris mentions that Etherei, as an albino, might have trouble "
+                "with his eyesight.",
+            ),
+            _entry(
+                "n3",
+                "Etherei's Blurry Sight Revealed",
+                "None of the characters, including Ethie himself, realize that he "
+                "has trouble with his eyesight when he's not wearing glasses. So "
+                "i'm thinking that's a revelation that happens at the Cheshire "
+                "Cat's quarters, after Etherei is captured.",
+            ),
+            _entry(
+                "n4",
+                "Etherei Captured: More Notes",
+                "When Serias shows up, Etherei begins to run faster. He keeps "
+                "running for a bit (find a way to write the chase swiftly but not "
+                "hastily) and then the Wolf scoops him up.",
+            ),
+            _entry(
+                "d1",
+                "Draft",
+                "Etherei ran the mountain path. Obsidian and Stygian followed later.",
+                kind="document",
+            ),
+        ]
+        res = recall_from_user_data(
+            "In Smoke and Mirrors, task list for Etherei",
+            {"lorekeeper_entries_v1": json.dumps(entries)},
+        )
+        answer = (res.get("answer") or "").lower()
+        self.assertIn("ticklish", answer)
+        self.assertRegex(answer, r"rescue|serias")
+        self.assertTrue("eyesight" in answer or "vision" in answer or "albino" in answer)
+        self.assertRegex(answer, r"cheshire|quarters|captured|capture")
+        self.assertIn("chase", answer)
+        self.assertRegex(answer, r"serias|capture")
+
     def test_local_only_no_rag(self):
         entries = [
             _entry("n1", "Idea", "A secret tunnel under the glass market."),
