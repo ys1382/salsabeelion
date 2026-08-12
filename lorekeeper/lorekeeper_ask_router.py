@@ -281,6 +281,7 @@ def local_ask_plan(question: str) -> AskPlan | None:
     from lorekeeper_loose_ends import is_flagged_fix_question, is_planned_gap_question
     from lorekeeper_notes_vs_draft import is_notes_not_in_draft_question
     from lorekeeper_writing_next import is_writing_next_task_list_question
+    from lorekeeper_catchup_gather import is_catchup_gather_question
     from lorekeeper_question_routes import (
         extract_what_subject,
         is_character_portrait_question,
@@ -385,6 +386,16 @@ def local_ask_plan(question: str) -> AskPlan | None:
             pipeline="rag_summarize",
             answer_model="haiku",
             question_kind="notes_not_in_draft",
+            section=section_raw,
+            router_engine="local",
+        )
+
+    if is_catchup_gather_question(q):
+        return AskPlan(
+            intent="catchup_gather",
+            pipeline="rag_summarize",
+            answer_model="haiku",
+            question_kind="catchup_gather",
             section=section_raw,
             router_engine="local",
         )

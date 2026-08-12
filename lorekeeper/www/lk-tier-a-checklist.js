@@ -15,6 +15,7 @@
       "<tr><td>How are A and B related?</td><td>Relationship only</td><td>relationship</td></tr>" +
       "<tr><td>What does Elara know…?</td><td>POV knowledge</td><td>knowledge</td></tr>" +
       "<tr><td>Where did I leave off?</td><td>Latest draft state</td><td>story_resume</td></tr>" +
+      "<tr><td>What have I got so far? / Catch me up</td><td>Cast, beats, open Qs, planned scraps</td><td>catchup_gather</td></tr>" +
       "<tr><td>What happens in the prologue?</td><td>Section summary</td><td>summarize_story</td></tr>" +
       "</tbody></table>" +
       "<p class='muted lk-playbook-table-note'>Repo reference: <code>LOREKEEPER-ASK-QUALITY-PLAYBOOK.md</code></p>";

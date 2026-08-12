@@ -124,6 +124,7 @@ def wants_broad_answer(question: str, *, question_kind: str = "") -> bool:
         "flagged_fix",
         "notes_not_in_draft",
         "writing_next",
+        "catchup_gather",
     ):
         return True
     if question_kind == "relationship":
@@ -135,9 +136,12 @@ def wants_broad_answer(question: str, *, question_kind: str = "") -> bool:
         return True
     from lorekeeper_notes_vs_draft import is_notes_not_in_draft_question
     from lorekeeper_writing_next import is_writing_next_task_list_question
+    from lorekeeper_catchup_gather import is_catchup_gather_question
 
-    if is_notes_not_in_draft_question(question) or is_writing_next_task_list_question(
-        question
+    if (
+        is_notes_not_in_draft_question(question)
+        or is_writing_next_task_list_question(question)
+        or is_catchup_gather_question(question)
     ):
         return True
     if is_character_portrait_question(question):
@@ -963,7 +967,7 @@ def focus_ask_response(
     if result.get("askIntent") in ("character_portrait", "summarize_story", "story_resume"):
         allow_broad = True
     # Compare/tag lists must stay intact — never trim bullets as off-topic.
-    if kind in ("notes_not_in_draft", "planned_gaps", "flagged_fix", "writing_next"):
+    if kind in ("notes_not_in_draft", "planned_gaps", "flagged_fix", "writing_next", "catchup_gather"):
         allow_broad = True
         out = dict(result)
         sources = result.get("sources")

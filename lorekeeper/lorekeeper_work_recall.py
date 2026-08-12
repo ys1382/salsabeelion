@@ -19,6 +19,10 @@ from lorekeeper_writing_next import (
     answer_writing_next_task_list,
     is_writing_next_task_list_question,
 )
+from lorekeeper_catchup_gather import (
+    answer_catchup_gather,
+    is_catchup_gather_question,
+)
 from lorekeeper_knowledge_pov import build_knowledge_pov_answer, is_knowledge_pov_question
 from lorekeeper_question_routes import is_story_position_question, is_what_question
 from lorekeeper_story_position import build_story_position_answer
@@ -59,6 +63,7 @@ QuestionKind = Literal[
     "flagged_fix",
     "notes_not_in_draft",
     "writing_next",
+    "catchup_gather",
     "fallback",
 ]
 RecallMode = Literal["full", "brief"]
@@ -78,6 +83,7 @@ PIPELINE_KINDS = frozenset(
         "flagged_fix",
         "notes_not_in_draft",
         "writing_next",
+        "catchup_gather",
     }
 )
 
@@ -91,6 +97,8 @@ def route_question(question: str) -> QuestionKind:
         return "writing_next"
     if is_notes_not_in_draft_question(question):
         return "notes_not_in_draft"
+    if is_catchup_gather_question(question):
+        return "catchup_gather"
     if is_knowledge_pov_question(question):
         return "knowledge"
     if is_relationship_between_question(question):
@@ -244,13 +252,23 @@ def answer_for_work(
     """Compose a work-scoped answer for who / topic / coverage / relationship questions."""
     kind = route_question(question)
 
-    if kind in ("planned_gaps", "flagged_fix", "notes_not_in_draft", "writing_next"):
+    if kind in (
+        "planned_gaps",
+        "flagged_fix",
+        "notes_not_in_draft",
+        "writing_next",
+        "catchup_gather",
+    ):
         if kind == "planned_gaps":
             answer, source_ids = answer_planned_gaps(scoped, work_hints=work_hints)
         elif kind == "flagged_fix":
             answer, source_ids = answer_flagged_fixes(scoped, work_hints=work_hints)
         elif kind == "writing_next":
             answer, source_ids = answer_writing_next_task_list(
+                scoped, work_hints=work_hints, question=question
+            )
+        elif kind == "catchup_gather":
+            answer, source_ids = answer_catchup_gather(
                 scoped, work_hints=work_hints, question=question
             )
         else:
@@ -261,7 +279,7 @@ def answer_for_work(
             "summarizable" if source_ids else "nothing_saved"
         )
         # Honest empty compare (no notes / no draft) still counts as answered.
-        if kind in ("notes_not_in_draft", "writing_next") and answer.strip():
+        if kind in ("notes_not_in_draft", "writing_next", "catchup_gather") and answer.strip():
             material_state = "summarizable"
         ranked = _ranked_from_source_ids(
             scoped,

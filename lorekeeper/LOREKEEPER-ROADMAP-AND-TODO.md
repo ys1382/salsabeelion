@@ -353,13 +353,14 @@ Run **one row at a time** in Cursor. Don’t skip Phase 0 — it costs nothing a
 - [x] **Task-list upgrade** — prefer unused notes for threads the draft is already introducing; do not surface pure-future scene notes (e.g. facing the music at Tenebris) until the draft begins that scene.
 - [ ] Later deepen: note-vs-draft seat conflicts beyond flashback setup; optional Ask for “which seats look stale?”
 
-### Thin draft / catch-up gather Ask (pinned 2026-08-12) — **later**
+### Thin draft / catch-up gather Ask (pinned 2026-08-12) — **shipped v0**
 
 **Need:** For main drafts + notes that don’t have a lot of progress yet (owner example: *The Waking Dream* draft and its notes) — especially after time away, and when the writer has several main drafts and can’t work them all at once — Ask should **gather what is already there** so they can see the work they’ve done and decide where to go next.
 
-- [ ] **Catch-up / “what have I got so far?” Ask** — librarian-only restatement of notes + draft for a named work (or the open doc): cast, beats, open questions, planned scraps — enough to reorient, not a novel rewrite. Never invent. Useful when material is thin or the writer hasn’t looked in a while.
-- [ ] Tone: planning brief / orientation (not who-is encyclopedia, not write-next task list alone). May complement leave-off when the draft is short, and complement notes-not-in-draft / writing-next when they want “what exists” before “what’s next.”
-- [ ] Multi-draft awareness: work-scoped (story silo / search-in / named work) so one thin draft doesn’t mix with another.
+- [x] **Catch-up / “what have I got so far?” Ask** — librarian-only restatement of notes + draft for a named work (or the open doc): cast, beats, open questions, planned scraps — enough to reorient, not a novel rewrite. Never invent. Useful when material is thin or the writer hasn’t looked in a while. (`lorekeeper_catchup_gather.py`; synthetic tests in `tests/test_catchup_gather.py`)
+- [x] Tone: planning brief / orientation (not who-is encyclopedia, not write-next task list alone). Complements leave-off when the draft is short, and notes-not-in-draft / writing-next when they want “what exists” before “what’s next.”
+- [x] Multi-draft awareness: work-scoped (story silo / search-in / named work) so one thin draft doesn’t mix with another.
+- [ ] Later deepen from Owner’s Office “It got this wrong” — lock an owner gold sample when the shape feels right.
 
 **Leave-off / main-draft plot — accuracy milestone (pinned 2026-08-11; gold sample updated same day):** Owner checked **excellent** for leave-off planning brief.
 

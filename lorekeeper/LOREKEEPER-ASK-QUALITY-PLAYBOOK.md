@@ -38,6 +38,7 @@ Optional: work tags on notes, one facet per question, coverage wording only when
 | How are A and B related? | Relationship only | relationship |
 | What does Elara know about …? | POV knowledge | knowledge |
 | Where did I leave off? | Latest draft state | story_resume |
+| What have I got so far? / Catch me up | Orientation brief: cast, beats, open Qs, planned scraps | catchup_gather |
 | What happens in the prologue? | Prologue-scoped summary | summarize_story |
 | What’s in my notes but not in the main document? | Note lines not clearly in the draft | notes_not_in_draft |
 | Task list / what should I write next? | Short bullets: notes not yet in draft (capped; topic filter) | writing_next |

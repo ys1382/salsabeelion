@@ -31,6 +31,7 @@ from lorekeeper_rag import RAG_VERSION, answer_with_rag, rag_enabled
 from lorekeeper_knowledge_pov import awareness_parts, is_awareness_question, is_knowledge_pov_question
 from lorekeeper_notes_vs_draft import is_notes_not_in_draft_question
 from lorekeeper_writing_next import is_writing_next_task_list_question
+from lorekeeper_catchup_gather import is_catchup_gather_question
 from lorekeeper_question_routes import is_story_position_question
 from lorekeeper_section_scope import (
     extract_section_hints,
@@ -777,12 +778,12 @@ def local_pipeline_skips_rag(
             return False
         return len(answer.strip()) > 100
 
-    if kind in ("planned_gaps", "flagged_fix", "notes_not_in_draft", "writing_next"):
+    if kind in ("planned_gaps", "flagged_fix", "notes_not_in_draft", "writing_next", "catchup_gather"):
         return bool(answer.strip())
 
     # Prefer pipeline kind when local compare/tag routes already composed.
     pipe_kind = str(local_pipeline.get("questionKind") or "")
-    if pipe_kind in ("planned_gaps", "flagged_fix", "notes_not_in_draft", "writing_next"):
+    if pipe_kind in ("planned_gaps", "flagged_fix", "notes_not_in_draft", "writing_next", "catchup_gather"):
         return bool(answer.strip())
 
     if kind in ("who", "knowledge") or is_who_is_question(question) or is_knowledge_pov_question(
@@ -936,8 +937,10 @@ def recall_from_user_data(
         scope_work = str(scope.get("workTitle") or "").strip()
         scope_doc_id = str(scope.get("documentId") or "").strip()
     # Notes-vs-draft / writing-next need every note for the work, not only notes linked to the open doc.
-    if is_notes_not_in_draft_question(question) or is_writing_next_task_list_question(
-        question
+    if (
+        is_notes_not_in_draft_question(question)
+        or is_writing_next_task_list_question(question)
+        or is_catchup_gather_question(question)
     ):
         scope_mode = "work"
     # Who-is / character overview: companion notes for the story matter as much as
@@ -963,6 +966,7 @@ def recall_from_user_data(
         (
             is_notes_not_in_draft_question(question)
             or is_writing_next_task_list_question(question)
+            or is_catchup_gather_question(question)
             or is_who_is_question(question)
         )
         and not scope_work
@@ -1086,6 +1090,28 @@ def recall_from_user_data(
         scope_strict = False
 
     if not entries:
+        if is_catchup_gather_question(question):
+            from lorekeeper_catchup_gather import answer_catchup_gather
+
+            work_hints_empty = {scope_work} if scope_work else set()
+            catchup_answer, _catchup_ids = answer_catchup_gather(
+                [], work_hints=work_hints_empty, question=question
+            )
+            return _finish(
+                {
+                    "ok": True,
+                    "answer": catchup_answer,
+                    "sources": [],
+                    "materialState": "nothing_saved",
+                    "mode": recall_mode,
+                    "questionKind": "catchup_gather",
+                    "askIntent": "catchup_gather",
+                    "recallVersion": RECALL_VERSION,
+                    "recallEngine": "local",
+                    "recallScope": "floaters" if floaters_only else "",
+                    "entryCount": 0,
+                }
+            )
         return _finish({
             "ok": True,
             "answer": format_nothing_saved(question, set()),
@@ -1125,6 +1151,7 @@ def recall_from_user_data(
                 explicit
                 and not is_notes_not_in_draft_question(question)
                 and not is_writing_next_task_list_question(question)
+                and not is_catchup_gather_question(question)
                 and not is_story_position_question(question)
             ):
                 work_hints = explicit | set(scope_hints)
@@ -1137,6 +1164,7 @@ def recall_from_user_data(
             is_story_position_question(question)
             or is_writing_next_task_list_question(question)
             or is_notes_not_in_draft_question(question)
+            or is_catchup_gather_question(question)
         ):
             work_hints = explicit
             strict_work = True
@@ -1148,6 +1176,7 @@ def recall_from_user_data(
         if (
             is_notes_not_in_draft_question(question)
             or is_writing_next_task_list_question(question)
+            or is_catchup_gather_question(question)
             or is_story_position_question(question)
         ) and scope_work:
             work_hints = {scope_work.strip()}
@@ -1308,7 +1337,7 @@ def recall_from_user_data(
     )
     # Tag/compare routes are local-only — never skip to RAG (Haiku used to steal them).
     local_only_kinds = frozenset(
-        {"planned_gaps", "flagged_fix", "notes_not_in_draft", "writing_next"}
+        {"planned_gaps", "flagged_fix", "notes_not_in_draft", "writing_next", "catchup_gather"}
     )
     routed_kind = route_question(question)
     skip_local = (
