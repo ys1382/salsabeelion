@@ -91,14 +91,12 @@ class CatchupGoldBaselineTests(unittest.TestCase):
         self.assertNotRegex(gold, r"(?mi)^Cast\s*$")
         self.assertNotRegex(gold, r"(?mi)^Draft so far\s*$")
         self.assertLess(gold.count("•"), 2)
-        # Density floor of the locked “perfect” premise catch-up sample.
-        self.assertGreaterEqual(len(gold), 1400)
-        self.assertIn("brought her", low)
+        # Density floor of the locked premise catch-up sample.
+        self.assertGreaterEqual(len(gold), 1600)
         self.assertIn("cannot simply leave", low)
         self.assertIn("softer side", low)
-        self.assertIn("not without a soul", low)
-        self.assertIn("valuable asset", low)
-        self.assertIn("dangerous threat", low)
+        self.assertIn("dangerous asset", low)
+        self.assertIn("sparrow", low)
         self.assertIn("from your notes only", low)
 
 

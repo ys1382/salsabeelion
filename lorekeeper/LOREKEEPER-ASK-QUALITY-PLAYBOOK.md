@@ -32,7 +32,7 @@ When you say a live answer is the **gold / baseline / never-worse** bar:
 
 Same spirit for leave-off / who-is / writing-next golds: raising voice must not erase locked must-keeps.
 
-**Catch-up gold (premise / thin draft — locked 2026-08-12):** Owner checked **perfect** for *Get me caught up with this story* on a premise-heavy early draft. Fixture: `tests/fixtures/catchup_waking_dream_gold.txt`. Bar is orientation for “what have I got / why am I here / why can’t I leave,” not a full plotted novel recap.
+**Catch-up gold (premise / thin draft — locked 2026-08-12 evening):** Owner checked **fine — keep it** for *Get me caught up with this story* on premise-heavy early drafts (e.g. *The Waking Dream*). Fixture: `tests/fixtures/catchup_waking_dream_gold.txt`. Bar is orientation for what exists / why here / why can’t leave / how antagonist would see her — not a full plotted novel recap.
 
 ---
 

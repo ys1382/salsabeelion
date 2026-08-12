@@ -174,18 +174,21 @@ _FOOTER = (
 
 # Owner gold baseline markers — premise / thin-draft catch-up (locked 2026-08-12).
 CATCHUP_GOLD_BASELINE_MARKERS = (
-    "fall",
+    "falling",
     "author",
-    "sparrow",
-    "brought her",
-    "cannot simply leave",
     "registered",
     "paranoia",
-    "way out of that domain",
-    "softer side",
+    "cannot simply leave",
+    "way out without being caught",
+    "capricorn",
+    "silver",
+    "heart",
     "not without a soul",
-    "valuable asset",
-    "dangerous threat",
+    "softer side",
+    "dangerous asset",
+    "threat",
+    "sparrow",
+    "take her somewhere",
 )
 
 
