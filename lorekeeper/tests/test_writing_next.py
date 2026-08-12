@@ -438,6 +438,71 @@ class WritingNextAnswerTests(unittest.TestCase):
         self.assertEqual(len(shown2), MAX_TASK_ITEMS)
         self.assertEqual(hidden2, len(ranked_over) - MAX_TASK_ITEMS)
 
+    def test_drops_other_cast_attitude_from_etherei_list(self):
+        entries = [
+            _entry(
+                "n1",
+                "Wolf",
+                "Serias respects Etherei for having picked up on his presence AND "
+                "for keeping up the chase this long.",
+            ),
+            _entry(
+                "n2",
+                "Craft",
+                "Need to write the chase swiftly but not hastily so Etherei earns "
+                "respect from the larger predator through stamina.",
+            ),
+            _entry(
+                "d1",
+                "Draft",
+                "They crossed the plaza at noon without speaking.",
+                kind="document",
+            ),
+        ]
+        res = recall_from_user_data(
+            "In Smoke and Mirrors, task list for Etherei",
+            {"lorekeeper_entries_v1": json.dumps(entries)},
+        )
+        answer = (res.get("answer") or "").lower()
+        self.assertNotIn("serias respects", answer)
+        self.assertIn("chase", answer)
+
+    def test_partly_done_flashback_keeps_secret_reveal_polish(self):
+        entries = [
+            _entry(
+                "n1",
+                "Twins",
+                "Obsidian has a fractured-shattered flashback similar to Stygian's, "
+                "but different memory and reveals additional secrets about Etherei "
+                "and Obsidian himself.",
+            ),
+            _entry(
+                "n2",
+                "Mush",
+                "I mean i mentioned some flashback stuff but i dont want to make "
+                "that the meat of this scene.",
+            ),
+            _entry(
+                "d1",
+                "Draft",
+                "Obsidian staggered as a fractured flashback of childhood hit him. "
+                "Stygian also broke into a shattered flashback on the chase.",
+                kind="document",
+            ),
+        ]
+        res = recall_from_user_data(
+            "In Smoke and Mirrors, task list for Etherei",
+            {"lorekeeper_entries_v1": json.dumps(entries)},
+        )
+        answer = (res.get("answer") or "").lower()
+        self.assertNotIn("meat of this scene", answer)
+        self.assertNotIn("i mean", answer)
+        self.assertIn("secret", answer)
+        # Should not push "do the whole flashback" as if unwritten.
+        self.assertNotRegex(
+            answer, r"obsidian has a fractured-shattered flashback similar"
+        )
+
     def test_local_only_no_rag(self):
         entries = [
             _entry("n1", "Idea", "A secret tunnel under the glass market."),

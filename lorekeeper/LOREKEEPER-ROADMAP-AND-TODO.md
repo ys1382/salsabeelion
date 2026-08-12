@@ -321,9 +321,8 @@ Run **one row at a time** in Cursor. Don’t skip Phase 0 — it costs nothing a
 - Keep: dramatizable unused gaps (chase craft, flashbacks to write, secret bitterness you might *show*, untouched mysteries)
 - Drop: continuity sticky-notes, author musings, mid-trail-off scraps, soft standing lore
 - Drop **later-book / eventual far-horizon** lines from the current list when the note says so (e.g. “doesn’t happen until a later book”); only surface those when the ask is later-book scoped
-- Soft-show all when ≤12 items; blank line between bullets; never ship `…` mid-cut bullets
-- Classic *notes not in draft* phrasing stays its own route
-- Do **not** regress leave-off gold or Tenebris who-is while tuning this
+- Cast topics (`task list for Etherei`): Etherei-centered write-next only — drop other-cast attitude musings (e.g. Serias respects Etherei) and author mush
+- Partly drafted beats: if a flashback is already in the draft, keep only unused leftover polish (e.g. secret-reveals), not “do the flashback again”
 
 **Leave-off / main-draft plot — accuracy milestone (pinned 2026-08-11; gold sample updated same day):** Owner checked **excellent** for leave-off planning brief.
 

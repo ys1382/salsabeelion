@@ -5,13 +5,16 @@ import re
 from typing import Any
 
 from lorekeeper_notes_vs_draft import (
+    _claim_is_about_subject,
     _claim_touched_in_draft,
     _content_tokens,
     _draft_corpus,
     _is_draft_entry,
     _near_dedupe_items,
     _normalize,
+    _primary_name_token,
     _tidy_claim_line,
+    _title_is_about_subject,
     _work_phrase,
     collect_notes_not_in_draft,
     extract_after_anchors,
@@ -123,15 +126,38 @@ _CONTINUITY_STICKY = re.compile(
     r"should hint at (?:his |her |their )?knowledge|"
     r"expression should hint|"
     r"i think i mentioned|"
+    r"i mean\b|"
+    r"i mentioned some|"
+    r"don'?t want to make that the meat|"
     r"i(?:'?m| am)\s+also\s+thinking|"
     r"i(?:'?m| am)\s+thinking\s+that|"
     r"however,?\s+i\s+think|"
+    r"make sure the audience|"
+    r"audience understands?|"
+    r"even if i don'?t literally|"
     r"how (?:he|she|they|the character)\s+feels\s+until|"
     r"for (?:me|myself)\s+as\s+i\s+write|"
     r"keep(?:s|ing)?\s+(?:in\s+mind|aware)\s+when\s+writing|"
     r"stuff for me to be aware|"
     r"until a particular point|"
     r"at the present timeline"
+    r")\b",
+    re.I,
+)
+
+# Other-cast attitude toward the topic character — not that character's write-next.
+_OTHER_CAST_ATTITUDE = re.compile(
+    r"\b([A-Z][\w'-]+)\s+"
+    r"(?:respects?|admires?|resents?|fears?|hates?|loves?|trusts?|"
+    r"thinks?|feels?|believes?|wants?)\s+"
+    r"(?:that\s+)?(?:the\s+)?",
+    re.I,
+)
+
+_THEMATIC_TOPIC = re.compile(
+    r"\b("
+    r"chase|court|politics|scene|reveal|flashback|secret|power|climax|"
+    r"manor|wolf|prey|predator|dimension"
     r")\b",
     re.I,
 )
@@ -148,6 +174,7 @@ _AUTHOR_MUSING_LEAD = re.compile(
     r"however,?\s+i\s+think\b|"
     r"and\s+also\b|"
     r"also\s+something\b|"
+    r"i\s+mean\b|"
     r"i\s+think\s+i\b|"
     r"i(?:'?m| am)\s+(?:also\s+)?thinking\b"
     r")",
@@ -226,16 +253,96 @@ def extract_writing_next_topic(question: str) -> str:
     return extract_notes_not_in_draft_subject(q)
 
 
+def topic_looks_like_cast(topic: str) -> bool:
+    """True for character-ish topics (Etherei), false for chase/Court themes."""
+    t = (topic or "").strip()
+    if not t or _THEMATIC_TOPIC.search(t):
+        return False
+    toks = _normalize(t).split()
+    return 1 <= len(toks) <= 4
+
+
+def _other_cast_attitude_about_subject(line: str, subject: str) -> bool:
+    """
+    True when another named character's feeling/attitude targets the subject
+    (e.g. 'Serias respects Etherei for…') — Serias-side, not Etherei write-next.
+    """
+    s = (line or "").strip()
+    name = _primary_name_token(subject)
+    if not s or not name or len(name) < 3:
+        return False
+    m = _OTHER_CAST_ATTITUDE.match(s)
+    if not m:
+        # Also mid-line: "Meanwhile Serias respects Etherei"
+        m = re.search(
+            rf"\b([A-Z][\w'-]+)\s+"
+            rf"(?:respects?|admires?|resents?|fears?|hates?|loves?|trusts?|"
+            rf"thinks?|feels?|believes?)\s+"
+            rf"(?:that\s+)?(?:the\s+)?{re.escape(name)}\b",
+            s,
+        )
+        if not m:
+            return False
+        other = m.group(1)
+    else:
+        other = m.group(1)
+    if other.lower() == name.lower():
+        return False
+    # Attitude line must also mention the subject as object.
+    if not re.search(rf"\b{re.escape(name)}\b", s, re.I):
+        return False
+    return True
+
+
+def _craft_centers_on_subject(line: str, subject: str) -> bool:
+    """Write/chase craft that clearly involves the subject as the one being written."""
+    s = (line or "").strip()
+    name = _primary_name_token(subject)
+    if not s or not name:
+        return False
+    if not _DRAMATIZABLE.search(s):
+        return False
+    if not re.search(rf"\b{re.escape(name)}\b", s, re.I):
+        return False
+    if _other_cast_attitude_about_subject(s, subject):
+        return False
+    return True
+
+
 def filter_unused_by_topic(
     items: list[dict[str, str]], topic: str
 ) -> list[dict[str, str]]:
     """
     Keep unused claims that match the asked topic.
-    Character-style subject hits plus soft token overlap (including possessives).
+    Cast topics: Etherei as actor/focus — not mere mention or other-cast attitude.
+    Thematic topics: subject hits plus soft token overlap.
     """
     topic_s = (topic or "").strip()
     if not topic_s:
         return items
+
+    if topic_looks_like_cast(topic_s):
+        out: list[dict[str, str]] = []
+        seen: set[str] = set()
+        for row in items:
+            title = str(row.get("noteTitle") or "")
+            line = str(row.get("line") or "")
+            if _other_cast_attitude_about_subject(line, topic_s):
+                continue
+            keep = (
+                _title_is_about_subject(title, topic_s)
+                or _claim_is_about_subject(line, topic_s)
+                or _craft_centers_on_subject(line, topic_s)
+            )
+            if not keep:
+                continue
+            key = _normalize(line)[:160]
+            if not key or key in seen:
+                continue
+            seen.add(key)
+            out.append(row)
+        return out
+
     by_subject = filter_unused_by_subject(items, topic_s)
     toks = _content_tokens(topic_s)
     name_bits = [
@@ -256,15 +363,15 @@ def filter_unused_by_topic(
                 soft.append(row)
     if not by_subject and not soft:
         return []
-    seen: set[str] = set()
-    out: list[dict[str, str]] = []
+    seen2: set[str] = set()
+    out2: list[dict[str, str]] = []
     for row in by_subject + soft:
         key = _normalize(str(row.get("line") or ""))[:160]
-        if not key or key in seen:
+        if not key or key in seen2:
             continue
-        seen.add(key)
-        out.append(row)
-    return out
+        seen2.add(key)
+        out2.append(row)
+    return out2
 
 
 def _line_is_incomplete(line: str) -> bool:
@@ -382,6 +489,95 @@ def filter_already_in_draft_for_tasks(
     return out
 
 
+def _flashback_already_in_draft(line: str, draft_norm: str) -> bool:
+    """True when the draft already has this cast's flashback/memory beat."""
+    if not draft_norm or not re.search(r"\bflashback\b", line or "", re.I):
+        return False
+    if not re.search(
+        r"\b(flashback|fractured|shattered|childhood\s+memory|memory\s+of)\b",
+        draft_norm,
+        re.I,
+    ):
+        return False
+    for name in re.findall(r"\b([A-Z][\w'-]{2,})\b", line or ""):
+        low = name.lower()
+        if low in {
+            "the",
+            "and",
+            "both",
+            "as",
+            "obsidian",
+            "stygian",
+            "etherei",
+            "character",
+        }:
+            # Still check named twins / etherei against draft proximity.
+            pass
+        if low not in draft_norm:
+            continue
+        if re.search(
+            rf"\b{re.escape(low)}\b.{{0,100}}\b"
+            rf"(flashback|fractured|shattered|childhood|memory)\b",
+            draft_norm,
+        ) or re.search(
+            rf"\b(flashback|fractured|shattered|childhood|memory)\b.{{0,100}}\b"
+            rf"{re.escape(low)}\b",
+            draft_norm,
+        ):
+            return True
+    # Generic flashback language already present + this line is a flashback task.
+    return bool(
+        re.search(r"\b(fractured|shattered)\s*-?\s*flashback\b", draft_norm, re.I)
+        or re.search(r"\bflashback\b", draft_norm, re.I)
+    )
+
+
+def shrink_partly_done_flashback_line(line: str, draft_norm: str) -> str:
+    """
+    If the flashback itself is already drafted, keep only unused secret-reveal
+    polish leftover. Empty string = drop the whole line.
+    """
+    s = (line or "").strip()
+    if not s or not re.search(r"\bflashback\b", s, re.I):
+        return s
+    if not _flashback_already_in_draft(s, draft_norm):
+        return s
+    for pat in (
+        r"((?:and\s+)?reveals?\s+additional\s+secrets?\s+about[^.!]*)",
+        r"(reveal(?:s|ing)?\s+(?:a\s+)?secrets?\s+about[^.!]*)",
+        r"(reveals?\s+additional\s+secrets?[^.!]*)",
+    ):
+        m = re.search(pat, s, re.I)
+        if not m:
+            continue
+        chunk = _tidy_claim_line(m.group(1))
+        if chunk and not _claim_touched_for_task_list(chunk, draft_norm):
+            return chunk
+    # Flashback done; no clear unused reveal leftover.
+    return ""
+
+
+def filter_partly_done_flashbacks(
+    items: list[dict[str, str]],
+    entries: list[dict[str, Any]],
+) -> list[dict[str, str]]:
+    """Replace or drop flashback tasks that are already on the page."""
+    draft_norm = _normalize(_draft_corpus(entries))
+    if not draft_norm:
+        return items
+    out: list[dict[str, str]] = []
+    for row in items:
+        line = str(row.get("line") or "")
+        shrunk = shrink_partly_done_flashback_line(line, draft_norm)
+        if not shrunk:
+            continue
+        if shrunk != line:
+            out.append({**row, "line": shrunk})
+        else:
+            out.append(row)
+    return out
+
+
 def _draft_tail_token_set(entries: list[dict[str, Any]]) -> set[str]:
     try:
         from lorekeeper_story_position import (
@@ -443,7 +639,11 @@ def restate_as_task_line(raw: str) -> str:
         flags=re.I,
     ).strip()
     s = re.sub(r"^i think\s+", "", s, flags=re.I).strip()
+    s = re.sub(r"^i mean\s+", "", s, flags=re.I).strip()
+    s = re.sub(r"^i mentioned\s+", "", s, flags=re.I).strip()
     s = re.sub(r"^also\s+something\s+in\s+", "", s, flags=re.I).strip()
+    if re.search(r"don'?t want to make that the meat", s, re.I):
+        return ""
 
     # Keep first complete chunk when the note stacks clauses.
     if ";" in s and len(s) > 110:
@@ -596,7 +796,16 @@ def answer_writing_next_task_list(
 
     cleaned = _near_dedupe_items(items) if items else []
     cleaned = filter_already_in_draft_for_tasks(cleaned, entries)
+    cleaned = filter_partly_done_flashbacks(cleaned, entries)
     tasks = filter_write_next_tasks(cleaned, allow_later_book=allow_later)
+    if topic and topic_looks_like_cast(topic):
+        tasks = [
+            row
+            for row in tasks
+            if not _other_cast_attitude_about_subject(
+                str(row.get("line") or ""), topic
+            )
+        ]
     unused_but_not_tasks = bool(cleaned) and not bool(tasks)
     ranked = (
         _rank_tasks_leave_off_first(tasks, entries) if tasks else []
