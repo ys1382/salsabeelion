@@ -203,16 +203,55 @@ class WritingNextAnswerTests(unittest.TestCase):
                     "entryId": "1",
                     "noteTitle": "Court",
                     "line": "Character D cares for Character T but resents Court load.",
-                }
+                },
+                {
+                    "entryId": "2",
+                    "noteTitle": "Chase",
+                    "line": "The chase scene needs a snapped bridge rope.",
+                },
             ],
             has_notes=True,
             has_draft=True,
             topic="",
-            total_before_cap=1,
+            total_before_cap=2,
         )
         self.assertIn("Here's a short task list", out)
         self.assertIn("•", out)
         self.assertIn("write-next", out.lower())
+        # Blank line between bullets (digestible spacing).
+        self.assertRegex(out, r"• .+\n\n• ")
+
+    def test_drops_notes_already_paraphrased_in_draft(self):
+        entries = [
+            _entry(
+                "n1",
+                "Early beat",
+                "Not long after Character E mentions his theory that they are no longer "
+                "in their home dimension, he reflects on the fact that a Predator is "
+                "tracking them (it is a wolf who works for the baron).",
+            ),
+            _entry(
+                "n2",
+                "Still open",
+                "Need to write Character E's secret bitterness about the Court reveal later.",
+            ),
+            _entry(
+                "d1",
+                "Draft",
+                "Character E said they were no longer in their home dimension. "
+                "Soon after, he reflected that a Predator was tracking them — "
+                "a wolf working for the baron along the ridge.",
+                kind="document",
+            ),
+        ]
+        res = recall_from_user_data(
+            "In Smoke and Mirrors, task list for Character E",
+            {"lorekeeper_entries_v1": json.dumps(entries)},
+        )
+        answer = (res.get("answer") or "").lower()
+        self.assertNotIn("home dimension", answer)
+        self.assertNotIn("tracking them", answer)
+        self.assertIn("bitterness", answer)
 
     def test_drops_continuity_awareness_and_trailoffs(self):
         entries = [

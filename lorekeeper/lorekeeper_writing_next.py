@@ -5,7 +5,9 @@ import re
 from typing import Any
 
 from lorekeeper_notes_vs_draft import (
+    _claim_touched_in_draft,
     _content_tokens,
+    _draft_corpus,
     _is_draft_entry,
     _near_dedupe_items,
     _normalize,
@@ -103,6 +105,11 @@ _AUTHOR_MUSING_LEAD = re.compile(
     r"so\s+right\s+now\b|"
     r"so\s+the\b|"
     r"so\s+he\s+probably\b|"
+    r"so\s+i(?:'?m| am)\s+thinking\b|"
+    r"so\s+this\s+climax\b|"
+    r"so\s+the\s+chase\b|"
+    r"so\s+\w+,?\s+by\s+being\b|"
+    r"however,?\s+i\s+think\b|"
     r"and\s+also\b|"
     r"also\s+something\b|"
     r"i\s+think\s+i\b|"
@@ -258,6 +265,59 @@ def filter_write_next_tasks(
     return out
 
 
+def _claim_touched_for_task_list(claim: str, draft_norm: str) -> bool:
+    """
+    Task-list unused check: exact/near phrase match, plus paraphrase coverage
+    for distinctive note tokens (not bare cast-name bag-of-words).
+    """
+    if _claim_touched_in_draft(claim, draft_norm):
+        return True
+    content = _content_tokens(claim)
+    if len(content) < 5 or not draft_norm:
+        return False
+    draft_words = draft_norm.split()
+    if not draft_words:
+        return False
+    # Tokens that flood the draft are usually cast names — weak as proof alone.
+    from collections import Counter
+
+    freq = Counter(draft_words)
+    distinctive = [
+        t for t in content if len(t) >= 4 and freq.get(t, 0) <= 6
+    ]
+    if len(distinctive) < 4:
+        distinctive = [t for t in content if len(t) >= 4] or content
+    # Ordered 3-token distinctive phrase still in draft (paraphrase-friendly).
+    for i in range(len(distinctive) - 2):
+        phrase = " ".join(distinctive[i : i + 3])
+        if len(phrase) >= 14 and phrase in draft_norm:
+            return True
+    hits = sum(1 for t in distinctive if t in freq)
+    n = len(distinctive)
+    if n >= 6 and hits / n >= 0.65:
+        return True
+    if n >= 4 and hits / n >= 0.8:
+        return True
+    return False
+
+
+def filter_already_in_draft_for_tasks(
+    items: list[dict[str, str]],
+    entries: list[dict[str, Any]],
+) -> list[dict[str, str]]:
+    """Drop task candidates the main draft already covers (incl. paraphrase)."""
+    draft_norm = _normalize(_draft_corpus(entries))
+    if not draft_norm:
+        return items
+    out: list[dict[str, str]] = []
+    for row in items:
+        line = str(row.get("line") or "")
+        if _claim_touched_for_task_list(line, draft_norm):
+            continue
+        out.append(row)
+    return out
+
+
 def _draft_tail_token_set(entries: list[dict[str, Any]]) -> set[str]:
     try:
         from lorekeeper_story_position import (
@@ -338,10 +398,15 @@ def compose_writing_next_task_list(
             "Open or save a document for this work, then ask again."
         )
     elif items:
+        first = True
         for row in items[:MAX_TASK_ITEMS]:
             bullet = _task_bullet_line(str(row.get("line") or ""))
-            if bullet:
-                lines.append(f"• {bullet}")
+            if not bullet:
+                continue
+            if not first:
+                lines.append("")  # one blank line between bullets
+            lines.append(f"• {bullet}")
+            first = False
         shown = min(len(items), MAX_TASK_ITEMS)
         extra = max(0, int(total_before_cap) - shown)
         if extra > 0:
@@ -396,6 +461,8 @@ def answer_writing_next_task_list(
         items = filter_unused_by_after_anchors(items, anchors)
 
     cleaned = _near_dedupe_items(items) if items else []
+    # Task list: second pass so paraphrased draft beats don't count as unused.
+    cleaned = filter_already_in_draft_for_tasks(cleaned, entries)
     tasks = filter_write_next_tasks(cleaned)
     unused_but_not_tasks = bool(cleaned) and not bool(tasks)
     ranked = (
