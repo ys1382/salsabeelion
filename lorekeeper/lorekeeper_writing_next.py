@@ -1732,6 +1732,7 @@ def compose_writing_next_task_list(
     total_before_cap: int = 0,
     unused_but_not_tasks: bool = False,
     later_book_scope: bool = False,
+    update_notes_nudges: list[str] | None = None,
 ) -> str:
     """Short bullet task list — restated write-next tasks only."""
     work = _work_phrase(work_hints)
@@ -1816,6 +1817,12 @@ def compose_writing_next_task_list(
             "Nothing clear stood out as write-next tasks — clear note lines also "
             "show up in the draft by phrase match."
         )
+    if update_notes_nudges:
+        from lorekeeper_note_reminders import format_update_notes_block
+
+        block = format_update_notes_block(update_notes_nudges)
+        if block:
+            lines.append(block)
     lines.append("\n" + _FOOTER)
     return "\n".join(lines)
 
@@ -1867,6 +1874,8 @@ def answer_writing_next_task_list(
 
     cleaned = _near_dedupe_items(items) if items else []
     cleaned = filter_already_in_draft_for_tasks(cleaned, entries)
+    # Keep pre-shrink rows for update-notes nudges (full flashback setup lines).
+    nudge_source_rows = list(cleaned)
     cleaned = filter_partly_done_flashbacks(cleaned, entries)
     tasks = filter_write_next_tasks(cleaned, allow_later_book=allow_later)
     if topic and topic_looks_like_cast(topic):
@@ -1878,6 +1887,13 @@ def answer_writing_next_task_list(
             )
         ]
     unused_but_not_tasks = bool(cleaned) and not bool(tasks)
+    # Prefer beats the draft already introduces; quiet pure-future scenes.
+    from lorekeeper_note_reminders import (
+        collect_update_notes_nudges,
+        filter_tasks_by_draft_foothold,
+    )
+
+    tasks = filter_tasks_by_draft_foothold(tasks, entries) if tasks else []
     ranked = (
         _rank_tasks_leave_off_first(tasks, entries) if tasks else []
     )
@@ -1935,6 +1951,10 @@ def answer_writing_next_task_list(
         restatable.append(row)
     shown, _hidden = _select_tasks_for_display(restatable)
 
+    nudges = collect_update_notes_nudges(
+        entries, topic=topic, unused_rows=nudge_source_rows
+    )
+
     answer = compose_writing_next_task_list(
         work_hints,
         shown,
@@ -1944,6 +1964,7 @@ def answer_writing_next_task_list(
         total_before_cap=len(restatable),
         unused_but_not_tasks=unused_but_not_tasks,
         later_book_scope=allow_later,
+        update_notes_nudges=nudges,
     )
 
     source_ids: list[str] = []

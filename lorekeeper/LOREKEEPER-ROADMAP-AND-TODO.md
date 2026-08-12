@@ -344,6 +344,13 @@ Run **one row at a time** in Cursor. Don’t skip Phase 0 — it costs nothing a
 - [x] Voice densify (2026-08-11 night)
 - [x] Clarifiers + warm tone (2026-08-11 late) — superseded by plan-recall
 - [x] Plan-recall tone (2026-08-12): mirror writer's plan; stagger You… openers; scene-led For… lines between
+- [x] Draft-foothold reminders (2026-08-12): (1) soft **Update your notes?** when draft already has a beat but a related note still reads like setup-only; (2) task-list prefers threads the draft already introduces and quiets pure-future scenes with no foothold (e.g. facing the music at Tenebris before that scene begins)
+
+### Draft-foothold note reminders (pinned 2026-08-12) — **shipped v0 on writing-next**
+
+- [x] **Update your notes?** — only when the main draft already has a foothold on the beat (e.g. flashback already on the page) and a related note still reads like the whole beat is only planned. Soft reminder; never invents the new plan; skip pure-future scenes not yet introduced.
+- [x] **Task-list upgrade** — prefer unused notes for threads the draft is already introducing; do not surface pure-future scene notes (e.g. facing the music at Tenebris) until the draft begins that scene.
+- [ ] Later deepen: note-vs-draft seat conflicts beyond flashback setup; optional Ask for “which seats look stale?”
 
 **Leave-off / main-draft plot — accuracy milestone (pinned 2026-08-11; gold sample updated same day):** Owner checked **excellent** for leave-off planning brief.
 
