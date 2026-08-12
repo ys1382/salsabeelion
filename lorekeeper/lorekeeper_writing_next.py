@@ -63,8 +63,78 @@ _TOPIC_JUNK = frozenset(
 )
 
 _FOOTER = (
-    "— From your notes vs draft only. Nothing invented. "
+    "— Write-next items from your notes vs draft only. Nothing invented. "
+    "Continuity sticky-notes and standing lore stay out of this list. "
     "Name a topic for a tighter list, or ask again for more."
+)
+
+# Incomplete scraps — trail-offs, mid-clause cuts (not display truncation).
+_INCOMPLETE_TAIL = re.compile(
+    r"(?:--+|…|\.\.\.)\s*$|"
+    r"\([^)]*$|"
+    r"\b(?:and even if|or else|or so he thinks|because (?:he|she|they)|"
+    r"considering how|even while)\s*$|"
+    r"[,;:]\s*$|"
+    r"\b(?:was|were|the|a|an|to|for|that|when|if|but|and|or|of)\s*$",
+    re.I,
+)
+
+# Author continuity / awareness sticky — keep for who-is later; not task-list.
+_CONTINUITY_STICKY = re.compile(
+    r"\b("
+    r"(?:is|are|was|were|becomes?|remains?)\s+aware\s+that|"
+    r"(?:does not|doesn't|doesnt)\s+yet\s+(?:want|realize|know|understand)|"
+    r"not yet\s+(?:realize|know|understand)|"
+    r"doesn'?t\s+yet\s+realize|"
+    r"i think i mentioned|"
+    r"i(?:'?m| am)\s+also\s+thinking|"
+    r"i(?:'?m| am)\s+thinking\s+that|"
+    r"how (?:he|she|they|the character)\s+feels\s+until|"
+    r"for (?:me|myself)\s+as\s+i\s+write|"
+    r"keep(?:s|ing)?\s+(?:in\s+mind|aware)\s+when\s+writing|"
+    r"until a particular point|"
+    r"at the present timeline"
+    r")\b",
+    re.I,
+)
+
+_AUTHOR_MUSING_LEAD = re.compile(
+    r"^\s*(?:"
+    r"so\s+right\s+now\b|"
+    r"so\s+the\b|"
+    r"so\s+he\s+probably\b|"
+    r"and\s+also\b|"
+    r"also\s+something\b|"
+    r"i\s+think\s+i\b|"
+    r"i(?:'?m| am)\s+(?:also\s+)?thinking\b"
+    r")",
+    re.I,
+)
+
+# Dramatizable write-next — scene/reveal/power/conflict you might put on the page.
+_DRAMATIZABLE = re.compile(
+    r"\b("
+    r"secret|secrets|reveal|reveals|revealed|bitterness|resents?|resentment|"
+    r"power|powers|ability|abilities|condition|conditions|identity|alias|"
+    r"planned\s*:|need(?:s)?\s+to\s+(?:write|draft)|"
+    r"should\s+(?:write|draft|show|hint)|"
+    r"still\s+(?:need|have)\s+to\s+(?:write|draft)|"
+    r"chase|snapped|bridge|ritual|plot\s+beat|"
+    r"court\s+politics|political\s+pressures?|not helping|"
+    r"left (?:him|her|them) to dry|heavier load|"
+    r"scene needs|write the|dramatize|on (?:the\s+)?page|"
+    r"fascinated study|guest rather than|open gap"
+    r")\b",
+    re.I,
+)
+
+_RELATIONSHIP_TENSION = re.compile(
+    r"\b("
+    r"resents?|resentment|bitterness|grudge|cold(?:er)? on the surface|"
+    r"cares? for .{0,40} but|understands? why|"
+    r"conflict|rivalry|betrayed|abandoned"
+    r")\b",
+    re.I,
 )
 
 
@@ -129,6 +199,65 @@ def filter_unused_by_topic(
     return out
 
 
+def _line_is_incomplete(line: str) -> bool:
+    """True for mid-trail-off scraps — not usable as a task bullet."""
+    s = (line or "").strip()
+    if not s:
+        return True
+    if _INCOMPLETE_TAIL.search(s):
+        return True
+    # Em-dash / double-dash cut mid-thought (owner failure shape).
+    if re.search(r"[—–-]{2,}\s*\S*$", s) and not s.rstrip().endswith((".", "!", "?")):
+        if re.search(r"(--|—|–)\s*$", s) or "—" in s[-12:]:
+            return True
+    open_parens = s.count("(") - s.count(")")
+    if open_parens > 0:
+        return True
+    return False
+
+
+def _is_continuity_or_musing(line: str) -> bool:
+    """Author sticky / awareness continuity — not a write-next task."""
+    s = (line or "").strip()
+    if not s:
+        return True
+    if _CONTINUITY_STICKY.search(s):
+        return True
+    if _AUTHOR_MUSING_LEAD.search(s):
+        return True
+    return False
+
+
+def claim_is_write_next_task(line: str) -> bool:
+    """
+    Task-list only: dramatizable unused lore you might put on the page.
+    Drops incomplete scraps, continuity sticky-notes, and soft standing lore.
+    """
+    s = (line or "").strip()
+    if not s or _line_is_incomplete(s):
+        return False
+    dramatizable = bool(_DRAMATIZABLE.search(s) or _RELATIONSHIP_TENSION.search(s))
+    if _is_continuity_or_musing(s):
+        # Continuity wins unless the line is clearly a dramatizable deliverable
+        # that only happens to mention awareness wording.
+        return dramatizable and bool(_DRAMATIZABLE.search(s))
+    if dramatizable:
+        return True
+    return False
+
+
+def filter_write_next_tasks(
+    items: list[dict[str, str]],
+) -> list[dict[str, str]]:
+    """Keep only write-next-shaped unused claims for the task-list Ask."""
+    out: list[dict[str, str]] = []
+    for row in items:
+        line = str(row.get("line") or "")
+        if claim_is_write_next_task(line):
+            out.append(row)
+    return out
+
+
 def _draft_tail_token_set(entries: list[dict[str, Any]]) -> set[str]:
     try:
         from lorekeeper_story_position import (
@@ -183,19 +312,20 @@ def compose_writing_next_task_list(
     has_draft: bool,
     topic: str = "",
     total_before_cap: int = 0,
+    unused_but_not_tasks: bool = False,
 ) -> str:
-    """Short bullet task list — planning shape, not scrap paragraphs."""
+    """Short bullet task list — dramatizable write-next only."""
     work = _work_phrase(work_hints)
     topic_s = (topic or "").strip()
     if topic_s:
         lead = (
             f"Here's a short task list for {work} about {topic_s} — "
-            f"from your notes, not yet in the main draft:\n"
+            f"write-next items from your notes, not yet in the main draft:\n"
         )
     else:
         lead = (
             f"Here's a short task list for {work} — "
-            f"from your notes, not yet in the main draft:\n"
+            f"write-next items from your notes, not yet in the main draft:\n"
         )
     lines = [lead]
     if not has_notes:
@@ -216,19 +346,32 @@ def compose_writing_next_task_list(
         extra = max(0, int(total_before_cap) - shown)
         if extra > 0:
             lines.append(
-                f"\n…and {extra} more unused note detail(s). "
+                f"\n…and {extra} more write-next item(s). "
                 "Name a topic (chase, Court politics, …) or ask again for more."
+            )
+    elif unused_but_not_tasks:
+        if topic_s:
+            lines.append(
+                f"Notes about {topic_s} have unused lines, but none looked like "
+                "write-next tasks (reveals, scenes, powers, dramatizable conflict). "
+                "Continuity sticky-notes and standing lore are left out of this list."
+            )
+        else:
+            lines.append(
+                "Notes have unused lines, but none looked like write-next tasks "
+                "(reveals, scenes, powers, dramatizable conflict). "
+                "Continuity sticky-notes and standing lore are left out of this list."
             )
     elif topic_s:
         lines.append(
-            f"Nothing clear stood out as unused notes about {topic_s} — "
+            f"Nothing clear stood out as write-next tasks about {topic_s} — "
             "either those lines also show up in the draft by phrase match, "
             "or no notes for that topic were found."
         )
     else:
         lines.append(
-            "Nothing clear stood out as notes-only — clear note lines also show up "
-            "in the draft by phrase match."
+            "Nothing clear stood out as write-next tasks — clear note lines also "
+            "show up in the draft by phrase match."
         )
     lines.append("\n" + _FOOTER)
     return "\n".join(lines)
@@ -241,8 +384,8 @@ def answer_writing_next_task_list(
     question: str = "",
 ) -> tuple[str, list[str]]:
     """
-    Compare story notes vs main draft; return a short ranked task list.
-    Librarian only — never invents tasks.
+    Compare story notes vs main draft; return a short write-next task list.
+    Librarian only — never invents tasks. Continuity sticky-notes stay out.
     """
     items, has_notes, has_draft = collect_notes_not_in_draft(entries)
     topic = extract_writing_next_topic(question)
@@ -253,8 +396,10 @@ def answer_writing_next_task_list(
         items = filter_unused_by_after_anchors(items, anchors)
 
     cleaned = _near_dedupe_items(items) if items else []
+    tasks = filter_write_next_tasks(cleaned)
+    unused_but_not_tasks = bool(cleaned) and not bool(tasks)
     ranked = (
-        _rank_tasks_leave_off_first(cleaned, entries) if cleaned else []
+        _rank_tasks_leave_off_first(tasks, entries) if tasks else []
     )
     total = len(ranked)
     shown = ranked[:MAX_TASK_ITEMS]
@@ -266,6 +411,7 @@ def answer_writing_next_task_list(
         has_draft=has_draft,
         topic=topic,
         total_before_cap=total,
+        unused_but_not_tasks=unused_but_not_tasks,
     )
 
     source_ids: list[str] = []
@@ -277,7 +423,7 @@ def answer_writing_next_task_list(
             source_ids.append(eid)
         if len(source_ids) >= 12:
             break
-    if not source_ids and has_notes and not topic:
+    if not source_ids and has_notes and not topic and shown:
         for entry in entries:
             if (
                 isinstance(entry, dict)
