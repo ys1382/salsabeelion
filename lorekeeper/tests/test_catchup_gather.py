@@ -91,10 +91,11 @@ class CatchupGoldBaselineTests(unittest.TestCase):
         self.assertNotRegex(gold, r"(?mi)^Cast\s*$")
         self.assertNotRegex(gold, r"(?mi)^Draft so far\s*$")
         self.assertLess(gold.count("•"), 2)
-        # Density floor of the locked sample (raised 2026-08-12 afternoon).
-        self.assertGreaterEqual(len(gold), 900)
+        # Density floor of the locked “perfect” premise catch-up sample.
+        self.assertGreaterEqual(len(gold), 1400)
         self.assertIn("brought her", low)
-        self.assertIn("leave too quickly", low)
+        self.assertIn("cannot simply leave", low)
+        self.assertIn("from your notes only", low)
 
 
 class CatchupAnswerTests(unittest.TestCase):

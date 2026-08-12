@@ -147,15 +147,16 @@ _FOOTER = (
     "— Catch-up orientation from your notes and draft only. Nothing invented."
 )
 
-# Owner gold baseline markers — voice floor + must-keep entry-reason slots.
+# Owner gold baseline markers — premise / thin-draft catch-up (locked 2026-08-12).
 CATCHUP_GOLD_BASELINE_MARKERS = (
-    "fell",
+    "fall",
     "author",
-    "registration",
     "sparrow",
     "brought her",
-    "premise",
+    "cannot simply leave",
+    "registered",
     "paranoia",
+    "way out of that domain",
 )
 
 
