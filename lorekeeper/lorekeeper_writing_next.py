@@ -1350,7 +1350,7 @@ def frame_plan_recall(line: str, *, you_lead: bool, you_variant: int = 0) -> str
                 if you_variant % 2 == 0:
                     return "You wanted the chase to run swiftly, not hastily"
                 return "You were planning for the chase to run swiftly, not hastily"
-            return "For the chase scene, your plan was to keep it swift, not hastily"
+            return "For the chase scene, your plan was to keep it swift, not hasty"
         # Other chase-scene craft — keep the specific note beat.
         if you_lead:
             if you_variant % 2 == 0:

@@ -322,7 +322,7 @@ Run **one row at a time** in Cursor. Don’t skip Phase 0 — it costs nothing a
 
   > Here's a short task list for Smoke and Mirrors about etherei — write-next items from your notes that aren't on the page yet:
   >
-  > • For the chase scene, your plan was to keep it swift, not hastily — he deliberately outruns his brothers before the Wolf takes him (during the Serias capture chase).
+  > • For the chase scene, your plan was to keep it swift, not hasty — he deliberately outruns his brothers before the Wolf takes him (during the Serias capture chase).
   >
   > • You wanted his brothers to find out Etherei is ticklish — so they can make him swear never to sacrifice himself that way again (after brothers rescue Etherei from Serias).
   >
