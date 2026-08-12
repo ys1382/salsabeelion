@@ -234,7 +234,43 @@ class CatchupAnswerTests(unittest.TestCase):
         )
         self.assertNotIn("etherei", low)
 
-    def test_compose_is_continuous_brief_not_section_cards(self):
+    def test_self_check_weaves_dropped_asset_threat(self):
+        """Catch-up repairs itself when a must-keep stakes line is in notes but missing."""
+        from lorekeeper_catchup_gather import ensure_catchup_completeness
+
+        entries = [
+            _entry(
+                "n_boss",
+                "Vesper",
+                "Vesper is the main antagonist. He is not without a soul; a softer "
+                "side of him once existed. He would recognize that she could either "
+                "be a very valuable asset or a very dangerous threat.",
+            ),
+            _entry(
+                "n_entry",
+                "Entry",
+                "The Finch brought her there under the premise of taking her somewhere "
+                "she could get something she needed.",
+            ),
+            _entry(
+                "d1",
+                "Main draft",
+                "Elara is inside the antagonist domain and must conceal that she is human.",
+                kind="document",
+            ),
+        ]
+        thin = (
+            "Elara is inside the antagonist domain and must conceal that she is human. "
+            "The Finch brought her there under a premise of help.\n\n"
+            "— From your notes only. Nothing invented."
+        )
+        repaired, did = ensure_catchup_completeness(entries, thin)
+        self.assertTrue(did)
+        low = repaired.lower()
+        self.assertIn("valuable asset", low)
+        self.assertIn("dangerous threat", low)
+        self.assertIn("softer side", low)
+        self.assertIn("from your notes only", low)
         sections = {
             "cast": [
                 {

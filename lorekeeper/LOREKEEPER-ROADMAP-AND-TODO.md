@@ -385,6 +385,7 @@ Run **one row at a time** in Cursor. Don’t skip Phase 0 — it costs nothing a
 - [x] **Antagonist softer side (owner 2026-08-12)** — must-keep when saved: main antagonist is **not without a softer side** / soul / inner dimension. Raised into gold + RAG prompt + local gather; do not drop when packing Capricorn/domain stakes.
 - [x] **Antagonist asset-or-threat read (owner 2026-08-12)** — must-keep when notes support: he would recognize she could be a **very valuable asset** or a **very dangerous threat**. Raised into gold.
 - [x] **Catch-up note-reading depth (owner goal 2026-08-12)** — reusable **antagonist stakes about her** class in orientation pack + prompt (asset/threat, how he would see her, unearned knowledge as violation/tool) so similar stakes surface without the owner reporting each miss. Still librarian only; never invent. Gold-pin: don’t drop stakes-class beats that were already good.
+- [x] **Catch-up self-check (owner 2026-08-12)** — after local/RAG catch-up, compare answer to must-keep note classes (entry, softer side, antagonist stakes about her, can’t-leave); if a clear note line is missing, weave it in before showing the writer (`ensure_catchup_completeness`). No inventing.
 
 **Leave-off / main-draft plot — accuracy milestone (pinned 2026-08-11; gold sample updated same day):** Owner checked **excellent** for leave-off planning brief.
 

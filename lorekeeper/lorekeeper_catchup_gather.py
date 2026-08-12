@@ -701,6 +701,122 @@ def answer_looks_at_or_above_catchup_baseline(answer: str) -> bool:
     return True
 
 
+_MUSTKEEP_SECTION_KEYS = ("entry", "softer", "stakes", "cant_leave")
+
+
+def _claim_covered_in_answer(claim: str, answer: str) -> bool:
+    """True when the answer already restates this note claim (librarian coverage)."""
+    line = (claim or "").strip()
+    ans = (answer or "").strip()
+    if not line or not ans:
+        return False
+    ans_norm = _normalize(ans)
+    claim_norm = _normalize(line)
+    if len(claim_norm) >= 20 and claim_norm[:100] in ans_norm:
+        return True
+    toks = [t for t in claim_norm.split() if len(t) >= 4]
+    if len(toks) >= 4:
+        hits = sum(1 for t in toks[:10] if t in ans_norm)
+        if hits / min(10, len(toks)) >= 0.65:
+            return True
+    # Class-level coverage for known stakes shapes.
+    if _ANTAGONIST_STAKES_SIGNAL.search(line):
+        if (
+            ("valuable asset" in ans_norm and "dangerous threat" in ans_norm)
+            or "asset or" in ans_norm
+            or ("asset" in ans_norm and "threat" in ans_norm)
+        ):
+            return True
+    if _SOFTER_SIDE_SIGNAL.search(line):
+        if (
+            "softer side" in ans_norm
+            or "not without a soul" in ans_norm
+            or "softer dimension" in ans_norm
+        ):
+            return True
+    if _ENTRY_SIGNAL.search(line) and re.search(
+        r"\b(?:brought|took|premise|right hand|sparrow|finch)\b", ans_norm
+    ):
+        # Need more than a name drop — brought / premise / take somewhere.
+        if re.search(
+            r"\b(?:brought|premise|took (?:her|him)|take (?:her|him)|somewhere she)\b",
+            ans_norm,
+        ):
+            return True
+    if _CANT_LEAVE_SIGNAL.search(line):
+        if re.search(
+            r"\b(?:cannot simply leave|can'?t leave|leave too quickly|"
+            r"must stay|registered|unmask)\b",
+            ans_norm,
+        ):
+            return True
+    return False
+
+
+def catchup_mustkeep_gaps(
+    entries: list[dict[str, Any]], answer: str
+) -> list[dict[str, str]]:
+    """
+    Note lines in must-keep stakes classes that the answer does not yet cover.
+    Used so catch-up can self-check without the owner reporting each miss.
+    """
+    sections, has_notes, _has_draft = collect_catchup_gather(entries)
+    if not has_notes:
+        return []
+    gaps: list[dict[str, str]] = []
+    for key in _MUSTKEEP_SECTION_KEYS:
+        for row in sections.get(key) or []:
+            line = str(row.get("line") or "").strip()
+            if not line or _claim_covered_in_answer(line, answer):
+                continue
+            gaps.append(row)
+    return _near_dedupe_items(gaps)[:4]
+
+
+def weave_catchup_gaps(answer: str, gaps: list[dict[str, str]]) -> str:
+    """Restate missing must-keep note lines into the brief — invent nothing."""
+    text = (answer or "").strip()
+    if not gaps:
+        return text
+    extras: list[str] = []
+    for row in gaps:
+        line = _clip(str(row.get("line") or ""), limit=240)
+        if not line:
+            continue
+        if not line.endswith((".", "!", "?", "…")):
+            line += "."
+        extras.append(line)
+    if not extras:
+        return text
+    addendum = " ".join(extras)
+    # Preserve invent-nothing footers (local or RAG).
+    footer_re = re.compile(
+        r"\n\n— (?:Catch-up orientation from your notes and draft only\. "
+        r"Nothing invented\.|From your notes only\. Nothing invented\.)\s*$",
+        re.I,
+    )
+    m = footer_re.search(text)
+    if m:
+        body = text[: m.start()].rstrip()
+        footer = m.group(0).lstrip("\n")
+        return f"{body} {addendum}\n\n{footer}".strip()
+    return f"{text} {addendum}".strip()
+
+
+def ensure_catchup_completeness(
+    entries: list[dict[str, Any]], answer: str
+) -> tuple[str, bool]:
+    """
+    Self-check catch-up against must-keep note classes; weave gaps if needed.
+    Returns (answer, repaired).
+    """
+    gaps = catchup_mustkeep_gaps(entries, answer)
+    if not gaps:
+        return (answer or "").strip(), False
+    repaired = weave_catchup_gaps(answer, gaps)
+    return repaired, repaired != (answer or "").strip()
+
+
 def answer_catchup_gather(
     entries: list[dict[str, Any]],
     *,
@@ -713,6 +829,7 @@ def answer_catchup_gather(
     answer = compose_catchup_gather(
         work_hints, sections, has_notes=has_notes, has_draft=has_draft
     )
+    answer, _repaired = ensure_catchup_completeness(entries, answer)
     source_ids: list[str] = []
     seen: set[str] = set()
     for key in (

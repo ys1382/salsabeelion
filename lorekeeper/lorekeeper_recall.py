@@ -1289,6 +1289,30 @@ def recall_from_user_data(
                 "entryCount": len(entries),
             })
 
+    # Catch-up self-check: weave must-keep note classes Sonnet/local dropped.
+    _finish_outer = _finish
+
+    def _finish(payload: dict[str, Any]) -> dict[str, Any]:
+        if (
+            payload.get("ok")
+            and scoped
+            and (
+                is_catchup_gather_question(question)
+                or str(payload.get("questionKind") or "") == "catchup_gather"
+                or (ask_plan and ask_plan.intent == "catchup_gather")
+            )
+        ):
+            ans = str(payload.get("answer") or "")
+            if ans.strip():
+                from lorekeeper_catchup_gather import ensure_catchup_completeness
+
+                repaired, did = ensure_catchup_completeness(scoped, ans)
+                if did:
+                    payload = dict(payload)
+                    payload["answer"] = repaired
+                    payload["catchupSelfCheck"] = "repaired"
+        return _finish_outer(payload)
+
     # Confirm-sources preview: show ranked notes/draft bits before summarizing.
     # Skip for spot-check, floaters (own clarify flow), and when ids already confirmed.
     if (
