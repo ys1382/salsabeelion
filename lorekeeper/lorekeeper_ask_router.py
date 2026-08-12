@@ -280,6 +280,7 @@ def local_ask_plan(question: str) -> AskPlan | None:
     from lorekeeper_knowledge_pov import awareness_parts, is_awareness_question, is_knowledge_pov_question
     from lorekeeper_loose_ends import is_flagged_fix_question, is_planned_gap_question
     from lorekeeper_notes_vs_draft import is_notes_not_in_draft_question
+    from lorekeeper_writing_next import is_writing_next_task_list_question
     from lorekeeper_question_routes import (
         extract_what_subject,
         is_character_portrait_question,
@@ -364,6 +365,16 @@ def local_ask_plan(question: str) -> AskPlan | None:
             pipeline="rag_summarize",
             answer_model="haiku",
             question_kind=kind,
+            section=section_raw,
+            router_engine="local",
+        )
+
+    if is_writing_next_task_list_question(q):
+        return AskPlan(
+            intent="writing_next",
+            pipeline="rag_summarize",
+            answer_model="haiku",
+            question_kind="writing_next",
             section=section_raw,
             router_engine="local",
         )

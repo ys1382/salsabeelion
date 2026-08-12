@@ -29,8 +29,9 @@ _FOOTER_COVERAGE = "— Pulled from your notes only. Nothing invented."
 def is_coverage_question(question: str) -> bool:
     q = question or ""
     from lorekeeper_notes_vs_draft import is_notes_not_in_draft_question
+    from lorekeeper_writing_next import is_writing_next_task_list_question
 
-    if is_notes_not_in_draft_question(q):
+    if is_notes_not_in_draft_question(q) or is_writing_next_task_list_question(q):
         return False
     if re.search(
         r"\b("

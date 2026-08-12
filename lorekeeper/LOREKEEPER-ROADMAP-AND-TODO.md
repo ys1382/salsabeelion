@@ -314,6 +314,14 @@ Run **one row at a time** in Cursor. Don’t skip Phase 0 — it costs nothing a
 
 **Owner note (2026-08-11):** Who-is **accuracy** is parked as good enough for now (gold sample above). Writing-next / leave-off plot work continues in this pass. Who-is **voice/hook** upgrade stays later — do not mix it into the plot pass.
 
+**Writing-next task list Ask (shipped 2026-08-11 — candidate until owner golds it):**
+
+- Q shapes: *task list* / *what should I write next?* / *task list for [topic]*
+- Compare chosen story’s notes vs main draft; list unused note material only (librarian — no invented chores)
+- Shape: short bullets (cap ~8), leave-off-adjacent first, topic filter when named; “more available” footer — not a scrap paragraph dump
+- Classic *notes not in draft* phrasing stays its own route
+- Do **not** regress leave-off gold or Tenebris who-is while tuning this
+
 **Leave-off / main-draft plot — accuracy milestone (pinned 2026-08-11; gold sample updated same day):** Owner checked **excellent** for leave-off planning brief.
 
 - Q: *Where did I leave of[f] in the main draft in terms of plot?*

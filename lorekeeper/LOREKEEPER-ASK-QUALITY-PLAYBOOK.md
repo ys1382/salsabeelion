@@ -40,6 +40,8 @@ Optional: work tags on notes, one facet per question, coverage wording only when
 | Where did I leave off? | Latest draft state | story_resume |
 | What happens in the prologue? | Prologue-scoped summary | summarize_story |
 | What’s in my notes but not in the main document? | Note lines not clearly in the draft | notes_not_in_draft |
+| Task list / what should I write next? | Short bullets: notes not yet in draft (capped; topic filter) | writing_next |
+| Task list for chase / Court / reveals | Same, filtered to that topic | writing_next |
 
 ---
 
