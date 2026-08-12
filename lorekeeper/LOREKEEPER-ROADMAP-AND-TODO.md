@@ -333,8 +333,8 @@ Run **one row at a time** in Cursor. Don’t skip Phase 0 — it costs nothing a
 - Rules still in force: line-level ownership (not title-only); later-book lines stay off current lists; librarian restates (voice/tone polish is a **later** upgrade).
 
 **Follow-ups for a future agent (not this gold — accuracy first, then completeness/location):**
-- [ ] Completeness: unused Etherei facts still missing from lists when present in notes (owner examples: brothers learn he’s ticklish; albino-rabbit vision difficulty) — surface as write-next when dramatizable / unused, without bringing back mush
-- [ ] Location: restated polish bullets should name **where** the planned edit sits (e.g. during Obsidian/Stygian flashback beat) when the note says so
+- [x] Completeness: unused Etherei facts still missing from lists when present in notes (owner examples: brothers learn he’s ticklish; albino-rabbit vision difficulty) — surface as write-next when dramatizable / unused, without bringing back mush
+- [x] Location: restated polish bullets should name **where** the planned edit sits (e.g. during Obsidian/Stygian flashback beat) when the note says so
 - [ ] Voice/tone: denser task phrasing once completeness+location feel right (owner parked tone until next milestone)
 
 **Leave-off / main-draft plot — accuracy milestone (pinned 2026-08-11; gold sample updated same day):** Owner checked **excellent** for leave-off planning brief.

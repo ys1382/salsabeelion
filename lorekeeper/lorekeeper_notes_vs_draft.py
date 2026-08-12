@@ -433,6 +433,15 @@ def _claim_is_about_subject(line: str, subject: str) -> bool:
     ):
         return True
 
+    # "…that Etherei is…" / "Etherei, as an albino…"
+    if re.search(
+        rf"\bthat\s+{honor}{name_re}\s+(?:is|was|has|have|had)\b|"
+        rf"\b{honor}{name_re}\s*,\s*as\s+an?\b",
+        raw,
+        re.I,
+    ):
+        return True
+
     norm = _normalize(raw)
     words = norm.split()
     # Name early in the line → likely the focus.

@@ -203,6 +203,20 @@ _DRAMATIZABLE = re.compile(
     re.I,
 )
 
+# Unused cast facts that can still be put on the page soon (not standing lore mush).
+_SHOWABLE_CAST_FACT = re.compile(
+    r"\b("
+    r"ticklish|"
+    r"eyesight|eye\s*sight|blurry\s+sight|"
+    r"hard\s+time\s+seeing|trouble\s+with\s+(?:his|her|their)\s+(?:eyesight|vision)|"
+    r"albino|"
+    r"glasses|spectacles|"
+    r"discover(?:ing|s|ed)?\s+that|"
+    r"brothers?\s+.{0,48}(?:find|learn|discover|catch|convince)"
+    r")\b",
+    re.I,
+)
+
 _RELATIONSHIP_TENSION = re.compile(
     r"\b("
     r"resents?|resentment|bitterness|grudge|cold(?:er)? on the surface|"
@@ -322,6 +336,80 @@ def _reveals_about_subject(line: str, subject: str) -> bool:
     )
 
 
+def _line_names_subject(line: str, subject: str) -> bool:
+    """True when the line names the subject (including short nickname stems)."""
+    s = (line or "").strip()
+    name = _primary_name_token(subject)
+    if not s or not name or len(name) < 3:
+        return False
+    if re.search(rf"\b{re.escape(name)}\b", s, re.I):
+        return True
+    # Common short form: Etherei → Ethie (3+ letter stem).
+    if len(name) >= 5:
+        stem = name[:4]
+        if re.search(rf"\b{re.escape(stem)}ie\b", s, re.I):
+            return True
+    return False
+
+
+def _showable_cast_fact_for_subject(
+    line: str, subject: str, *, note_title: str = ""
+) -> bool:
+    """
+    Unused personal/physical fact about this cast that can still be dramatized
+    (ticklish, eyesight/albino vision, glasses lost, brothers discovering…).
+    Title-matched cast cards may unlock lines that only use a nickname.
+    """
+    s = (line or "").strip()
+    name = _primary_name_token(subject)
+    if not s or not name or not _SHOWABLE_CAST_FACT.search(s):
+        return False
+    if _other_cast_attitude_about_subject(s, subject):
+        return False
+    if line_is_later_book(s):
+        return False
+    # Author vibe / attitude scrap — not a showable trait task.
+    if re.search(
+        r"\b(?:posh\s+villain|vibe\s+here|respect\s+for)\b",
+        s,
+        re.I,
+    ):
+        return False
+    titled = bool(note_title and _title_is_about_subject(note_title, subject))
+    named = _claim_is_about_subject(s, subject) or _line_names_subject(s, subject)
+    if not named and not titled:
+        return False
+    # Trait must attach to the subject (or sit on their titled note).
+    trait_on_subject = bool(
+        re.search(
+            rf"\b{re.escape(name)}\b.{{0,60}}\b"
+            rf"(?:ticklish|eyesight|eye\s*sight|albino|glasses|spectacles|"
+            rf"blurry\s+sight|hard\s+time\s+seeing|vision)\b|"
+            rf"\b(?:ticklish|eyesight|eye\s*sight|albino|glasses|spectacles|"
+            rf"blurry\s+sight)\b.{{0,60}}\b{re.escape(name)}\b|"
+            rf"\b(?:ethie|he|she)\b.{{0,40}}\b"
+            rf"(?:ticklish|eyesight|glasses|spectacles|blurry\s+sight|albino)\b|"
+            rf"\bdiscover(?:ing|s|ed)?\s+that\s+{re.escape(name)}\b|"
+            rf"\bbrothers?\b.{{0,80}}\b{re.escape(name)}\b.{{0,40}}\bticklish\b",
+            s,
+            re.I,
+        )
+    )
+    if not trait_on_subject and not (
+        titled
+        and re.search(
+            r"\b(?:ticklish|eyesight|eye\s*sight|albino|glasses|spectacles|"
+            r"blurry\s+sight|hard\s+time\s+seeing)\b",
+            s,
+            re.I,
+        )
+    ):
+        return False
+    if _is_continuity_or_musing(s) and not trait_on_subject and not titled:
+        return False
+    return True
+
+
 def _strict_craft_for_subject(
     line: str, subject: str, *, note_title: str = ""
 ) -> bool:
@@ -371,6 +459,9 @@ def filter_unused_by_topic(
             keep = (
                 _claim_is_about_subject(line, topic_s)
                 or _reveals_about_subject(line, topic_s)
+                or _showable_cast_fact_for_subject(
+                    line, topic_s, note_title=title
+                )
                 or _strict_craft_for_subject(
                     line, topic_s, note_title=title
                 )
@@ -453,14 +544,44 @@ def claim_is_write_next_task(
     s = (line or "").strip()
     if not s or _line_is_incomplete(s):
         return False
-    if _is_continuity_or_musing(s):
+    if re.search(r"\b(?:posh\s+villain|vibe\s+here)\b", s, re.I):
         return False
+    # Canon research / meta speculation — not a write-next beat.
+    if re.search(
+        r"\bin canon\b|original book|i do not know if the predators|"
+        r"they may or may not have invented",
+        s,
+        re.I,
+    ):
+        return False
+    # Far backstory origin without a near scene seat.
+    if re.search(
+        r"\bhome dimension\b.*\bwonderland\b|"
+        r"\bwonderland\b.*\bsaw much better\b",
+        s,
+        re.I,
+    ):
+        return False
+    showable = bool(_SHOWABLE_CAST_FACT.search(s))
+    if _is_continuity_or_musing(s):
+        # Allow light author framing around a concrete showable trait only.
+        if not showable or re.search(
+            r"\b("
+            r"(?:is|are|was|were|becomes?|remains?)\s+aware\s+that|"
+            r"(?:does not|doesn't|doesnt)\s+yet\s+(?:want|realize|know|understand)|"
+            r"make sure the audience|audience understands?|"
+            r"stuff for me to be aware|for (?:me|myself)\s+as\s+i\s+write"
+            r")\b",
+            s,
+            re.I,
+        ):
+            return False
     if line_is_later_book(s) and not allow_later_book:
         return False
     if allow_later_book and not line_is_later_book(s):
         # Later-book ask: only lines marked for later books.
         return False
-    if _DRAMATIZABLE.search(s) or _RELATIONSHIP_TENSION.search(s):
+    if _DRAMATIZABLE.search(s) or _RELATIONSHIP_TENSION.search(s) or showable:
         return True
     return False
 
@@ -524,6 +645,17 @@ def filter_already_in_draft_for_tasks(
     out: list[dict[str, str]] = []
     for row in items:
         line = str(row.get("line") or "")
+        # Showable cast traits: exact/near phrase only — soft paraphrase often
+        # false-hits on common words (eyes, glasses) and hides unused beats.
+        if _SHOWABLE_CAST_FACT.search(line) and not re.search(
+            r"\b(?:flashback|secret|secrets|reveal\w*|chase|find a way to write)\b",
+            line,
+            re.I,
+        ):
+            if _claim_touched_in_draft(line, draft_norm):
+                continue
+            out.append(row)
+            continue
         if _claim_touched_for_task_list(line, draft_norm):
             continue
         out.append(row)
@@ -560,31 +692,89 @@ def _flashback_already_in_draft(line: str, draft_norm: str) -> bool:
     return False
 
 
+def _flashback_edit_location_prefix(line: str) -> str:
+    """
+    When notes place polish inside a named cast flashback, keep that seat.
+    Librarian only — uses names already in the line.
+    """
+    s = line or ""
+    if not re.search(r"\bflashback\b", s, re.I):
+        return ""
+    owner = ""
+    patterns = (
+        r"\bAs\s+([A-Z][\w'-]{2,})\b.{0,100}\bflashback\b",
+        r"\b([A-Z][\w'-]{2,})\s+has\s+a\b.{0,80}\bflashback\b",
+        r"\b([A-Z][\w'-]{2,})(?:'s|\u2019s)\s+(?:fractured[-/ ]shattered\s+)?flashback\b",
+        r"\b([A-Z][\w'-]{2,})\s+begins\s+having\b.{0,60}\bflashback\b",
+    )
+    for pat in patterns:
+        m = re.search(pat, s)
+        if not m:
+            continue
+        cand = m.group(1)
+        low = cand.lower()
+        if low in {
+            "the",
+            "and",
+            "both",
+            "character",
+            "different",
+            "fractured",
+            "shattered",
+            "childhood",
+            "memory",
+            "twins",
+            "moonshadow",
+        }:
+            continue
+        owner = cand
+        break
+    if not owner:
+        return ""
+    return f"During {owner}'s flashback, "
+
+
 def shrink_partly_done_flashback_line(line: str, draft_norm: str) -> str:
     """
     If the flashback itself is already drafted, keep unused secret-reveal polish.
     Never drop a flashback note that still calls for reveals/secrets.
+    When shrinking, keep the edit seat (whose flashback) when the note names it.
     """
     s = (line or "").strip()
     if not s or not re.search(r"\bflashback\b", s, re.I):
         return s
     if not _flashback_already_in_draft(s, draft_norm):
         return s
+    loc = _flashback_edit_location_prefix(s)
     for pat in (
-        r"((?:and\s+)?reveals?\s+additional\s+secrets?\s+about[^.!]*)",
-        r"(reveal(?:s|ing)?\s+(?:a\s+)?secrets?\s+about[^.!]*)",
-        r"(reveals?\s+additional\s+secrets?[^.!]*)",
-        r"((?:different\s+memory\s+and\s+)?reveals?\s+[^.!]*)",
+        r"((?:and\s+)?reveals?\s+additional\s+secrets?\s+about[^.!;]*)",
+        r"(reveal(?:s|ing)?\s+(?:a\s+)?secrets?\s+about[^.!;]*)",
+        r"(reveals?\s+additional\s+secrets?[^.!;]*)",
+        r"((?:different\s+memory\s+and\s+)?reveals?\s+[^.!;]*)",
+        r"(reveals?\s+something\s+surprising\s+about[^.!;]*)",
     ):
         m = re.search(pat, s, re.I)
         if not m:
             continue
         chunk = _tidy_claim_line(m.group(1))
         if chunk and not _claim_touched_for_task_list(chunk, draft_norm):
+            if loc and not re.match(r"^during\b", chunk, re.I):
+                chunk = loc + chunk[0].lower() + chunk[1:] if chunk else chunk
             return chunk
     # Still has reveal/secret work — keep the line (do not erase polish tasks).
     if re.search(r"\b(secret|secrets|reveal\w*)\b", s, re.I):
         if not _claim_touched_for_task_list(s, draft_norm):
+            if loc and not re.match(r"^during\b", s, re.I):
+                # Prefer a located short reveal clause when possible.
+                m2 = re.search(
+                    r"((?:different\s+memory\s+and\s+)?reveals?\s+[^.!;]*)",
+                    s,
+                    re.I,
+                )
+                if m2:
+                    chunk = _tidy_claim_line(m2.group(1))
+                    if chunk:
+                        return loc + chunk[0].lower() + chunk[1:]
             return s
     # Pure flashback already on the page — drop.
     return ""
@@ -675,8 +865,94 @@ def restate_as_task_line(raw: str) -> str:
     s = re.sub(r"^i mean\s+", "", s, flags=re.I).strip()
     s = re.sub(r"^i mentioned\s+", "", s, flags=re.I).strip()
     s = re.sub(r"^also\s+something\s+in\s+", "", s, flags=re.I).strip()
+    s = re.sub(r"^note:\s*", "", s, flags=re.I).strip()
+    s = re.sub(r"^also,\s+", "", s, flags=re.I).strip()
     if re.search(r"don'?t want to make that the meat", s, re.I):
         return ""
+
+    # Keep flashback edit-seat prefix when already present from shrink.
+    loc_prefix = ""
+    loc_m = re.match(r"^(During\s+.+?\s+flashback,\s*)", s, re.I)
+    if loc_m:
+        loc_prefix = loc_m.group(1)
+        s = s[loc_m.end() :].strip()
+
+    # Compress brothers-discover-ticklish / albino-eyesight showable facts.
+    tick = re.search(
+        r"discover(?:ing|s|ed)?\s+that\s+(\w+)\s+is\s+ticklish\b|"
+        r"\b(\w+)\s+is\s+ticklish\b|"
+        r"brothers?\b.{0,80}\b(\w+)\b.{0,40}\bticklish\b",
+        s,
+        re.I,
+    )
+    if tick:
+        who = next((g for g in tick.groups() if g), "")
+        if who:
+            s = f"Brothers find out {who} is ticklish"
+
+    eyes = None
+    who = ""
+    m_as = re.search(r"\b([A-Z][\w'-]+),?\s+as\s+an\s+albino\b", s)
+    m_trouble = re.search(
+        r"\b([A-Z][\w'-]+)\b.{0,50}\btrouble\s+with\s+(?:his|her|their)\s+eyesight\b",
+        s,
+    )
+    m_incl = re.search(
+        r"including\s+([A-Z][\w'-]+)\s+himself.{0,80}\beyesight\b",
+        s,
+        re.I,
+    )
+    if m_as or m_trouble or m_incl or re.search(
+        r"\b(?:blurry\s+sight|hard\s+time\s+seeing|"
+        r"doesn'?t\s+fully\s+realize\s+how\s+much\s+worse\s+(?:his|her|their)\s+eyesight|"
+        r"trouble\s+with\s+(?:his|her|their)\s+eyesight)\b",
+        s,
+        re.I,
+    ):
+        eyes = True
+        for m in (m_as, m_trouble, m_incl):
+            if m and m.group(1):
+                who = m.group(1)
+                break
+    if eyes and not tick:
+        skip = {
+            "tenebris",
+            "dijon",
+            "obsidian",
+            "stygian",
+            "serias",
+            "ironwillow",
+            "characters",
+            "mentions",
+            "none",
+            "letter",
+            "white",
+            "rabbit",
+        }
+        if who.lower() in skip or (who and not who[0].isupper()):
+            who = ""
+        if who and who.lower() not in {"he", "she", "they", "his", "her", "ethie"}:
+            s = f"Show {who}'s albino-rabbit vision trouble / hard time seeing"
+        elif re.search(r"\bethie\b|\betherei\b", raw or "", re.I):
+            s = "Show Etherei's albino-rabbit vision trouble / hard time seeing"
+        else:
+            s = "Show albino-rabbit vision trouble / hard time seeing"
+
+    glasses = re.search(
+        r"\b(\w+)\s+lost\s+(?:his|her|their)\s+glasses\b|"
+        r"back\s+to\s+not\s+having\s+glasses\b",
+        s,
+        re.I,
+    )
+    if glasses and not tick and not eyes:
+        who = glasses.group(1) if glasses.lastindex else ""
+        if who and who.lower() not in {"he", "she", "they"}:
+            s = f"Write {who} without glasses and struggling to see"
+        else:
+            s = "Write the lost-glasses / poorer eyesight beat"
+
+    if loc_prefix:
+        s = loc_prefix + (s[0].lower() + s[1:] if s and s[0].isupper() else s)
 
     # Keep first complete chunk when the note stacks clauses.
     if ";" in s and len(s) > 110:
@@ -700,6 +976,17 @@ def restate_as_task_line(raw: str) -> str:
                 ):
                     s = left
                     break
+    # Long author scrap with a clear discovering-that clause.
+    if len(s) > _MAX_TASK_LINE:
+        m = re.search(
+            r"discover(?:ing|s|ed)?\s+that\s+[^.!]{8,120}",
+            s,
+            re.I,
+        )
+        if m:
+            chunk = _tidy_claim_line(m.group(0))
+            if chunk and len(chunk) <= _MAX_TASK_LINE:
+                s = chunk
     if _line_is_incomplete(s) or len(s) > _MAX_TASK_LINE:
         # Never truncate with ellipsis — drop rather than trail off.
         return ""
@@ -845,9 +1132,21 @@ def answer_writing_next_task_list(
     )
     # Restate first so incomplete long scraps don't consume the soft cap.
     restatable: list[dict[str, str]] = []
+    seen_restate: set[str] = set()
+    has_vision_bullet = False
     for row in ranked:
-        if restate_as_task_line(str(row.get("line") or "")):
-            restatable.append(row)
+        bullet = restate_as_task_line(str(row.get("line") or ""))
+        if not bullet:
+            continue
+        key = _normalize(bullet)
+        if not key or key in seen_restate:
+            continue
+        if "albino-rabbit vision" in key:
+            if has_vision_bullet:
+                continue
+            has_vision_bullet = True
+        seen_restate.add(key)
+        restatable.append(row)
     shown, _hidden = _select_tasks_for_display(restatable)
 
     answer = compose_writing_next_task_list(

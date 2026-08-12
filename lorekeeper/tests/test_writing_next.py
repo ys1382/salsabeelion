@@ -503,6 +503,86 @@ class WritingNextAnswerTests(unittest.TestCase):
         self.assertNotIn("meat of this scene", answer)
         self.assertNotIn("i mean", answer)
         self.assertIn("secret", answer)
+        self.assertIn("obsidian", answer)
+        self.assertIn("flashback", answer)
+
+    def test_cast_list_includes_ticklish_and_eyesight_facts(self):
+        entries = [
+            _entry(
+                "n1",
+                "Character E's age",
+                'Note: I was thinking the "never do that again" thing could include '
+                "discovering that Etherei is ticklish and that's how they get him "
+                "to swear never to do that again.",
+            ),
+            _entry(
+                "n2",
+                "Etherei's Eyesight",
+                "Tenebris mentions that Etherei, as an albino, might in fact have "
+                "trouble with his eyesight.\n"
+                "Also, I think Etherei lost his glasses by the events of this book.",
+            ),
+            _entry(
+                "n3",
+                "Later mush",
+                "They would still be in control — not in the first book.\n"
+                "Serias respects Etherei for keeping up the chase.",
+            ),
+            _entry(
+                "d1",
+                "Draft",
+                "Etherei ran the mountain path. Obsidian and Stygian followed later.",
+                kind="document",
+            ),
+        ]
+        res = recall_from_user_data(
+            "In Smoke and Mirrors, task list for Etherei",
+            {"lorekeeper_entries_v1": json.dumps(entries)},
+        )
+        answer = (res.get("answer") or "").lower()
+        self.assertIn("ticklish", answer)
+        self.assertTrue(
+            "eyesight" in answer
+            or "vision" in answer
+            or "albino" in answer
+            or "glasses" in answer
+        )
+        self.assertNotIn("serias respects", answer)
+        self.assertNotIn("not in the first book", answer)
+        self.assertNotIn("in canon", answer)
+        self.assertNotIn("wonderland", answer)
+
+    def test_flashback_polish_names_edit_location(self):
+        entries = [
+            _entry(
+                "n1",
+                "POV order",
+                "As Stygian is giving chase, he begins having a fractured/shattered "
+                "flashback regarding Etherei getting in trouble during Ethie's early "
+                "childhood, a flashback that reveals something surprising about "
+                "Etherei and about Stygian.\n"
+                "Obsidian has a fractured-shattered flashback similar to Stygian's, "
+                "but different memory and reveals additional secrets about Etherei "
+                "and Obsidian himself.",
+            ),
+            _entry(
+                "d1",
+                "Draft",
+                "Obsidian staggered as a fractured flashback of childhood hit him. "
+                "Stygian also broke into a shattered flashback on the chase. "
+                "Etherei kept running.",
+                kind="document",
+            ),
+        ]
+        res = recall_from_user_data(
+            "In Smoke and Mirrors, task list for Etherei",
+            {"lorekeeper_entries_v1": json.dumps(entries)},
+        )
+        answer = (res.get("answer") or "").lower()
+        self.assertIn("during", answer)
+        self.assertIn("flashback", answer)
+        self.assertTrue("stygian" in answer or "obsidian" in answer)
+        self.assertIn("secret", answer)
 
     def test_local_only_no_rag(self):
         entries = [
