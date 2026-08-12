@@ -11,6 +11,7 @@ from lorekeeper_writing_next import (
     MAX_TASK_ITEMS,
     claim_is_write_next_task,
     compose_writing_next_task_list,
+    densify_task_phrasing,
     extract_writing_next_topic,
     is_writing_next_task_list_question,
     line_is_later_book,
@@ -691,6 +692,110 @@ class WritingNextAnswerTests(unittest.TestCase):
         self.assertEqual(res.get("questionKind"), "writing_next")
         self.assertEqual(res.get("recallEngine"), "local")
         self.assertIn("tunnel", (res.get("answer") or "").lower())
+
+    def test_voice_densifies_craft_vision_and_flashback_phrasing(self):
+        craft = restate_as_task_line(
+            "He keeps running (find a way to write the chase swiftly but not hastily)."
+        )
+        self.assertTrue(craft.lower().startswith("write the chase"))
+        self.assertIn("swiftly, not hastily", craft.lower())
+        self.assertNotIn("find a way", craft.lower())
+
+        vision = restate_as_task_line(
+            "Tenebris mentions that Etherei, as an albino, might have trouble "
+            "with his eyesight."
+        )
+        self.assertIn("albino-rabbit vision trouble", vision.lower())
+        self.assertNotIn("/", vision)
+
+        fb = densify_task_phrasing(
+            "During Obsidian's flashback, different memory and reveals additional "
+            "secrets about Etherei and Obsidian himself"
+        )
+        self.assertIn("reveal additional secrets about Etherei and Obsidian", fb)
+        self.assertNotIn("different memory", fb.lower())
+        self.assertNotIn("himself", fb.lower())
+
+        fb2 = densify_task_phrasing(
+            "During Stygian's flashback, reveals something surprising about "
+            "Etherei and about Stygian"
+        )
+        self.assertIn(
+            "reveal something surprising about etherei and stygian", fb2.lower()
+        )
+        self.assertNotIn("and about", fb2.lower())
+
+    def test_etherei_voice_keeps_gold_beats_with_denser_phrasing(self):
+        entries = [
+            _entry(
+                "n1",
+                "Etherei's age",
+                "So I'm thinking his brothers force him into kicking back after they "
+                "catch up to Serias and rescue Etherei. Note: I was thinking the "
+                '"never again" thing could include discovering that Etherei is '
+                "ticklish.",
+            ),
+            _entry(
+                "n2",
+                "Etherei's Eyesight",
+                "Tenebris mentions that Etherei, as an albino, might have trouble "
+                "with his eyesight.",
+            ),
+            _entry(
+                "n3",
+                "Etherei's Blurry Sight Revealed",
+                "None of the characters, including Ethie himself, realize that he "
+                "has trouble with his eyesight when he's not wearing glasses. So "
+                "i'm thinking that's a revelation that happens at the Cheshire "
+                "Cat's quarters, after Etherei is captured.",
+            ),
+            _entry(
+                "n4",
+                "Etherei Captured: More Notes",
+                "When Serias shows up, Etherei begins to run faster. He keeps "
+                "running for a bit (find a way to write the chase swiftly but not "
+                "hastily) and then the Wolf scoops him up.",
+            ),
+            _entry(
+                "n5",
+                "POV order",
+                "As Stygian is giving chase, he begins having a fractured/shattered "
+                "flashback regarding Etherei getting in trouble during Ethie's early "
+                "childhood, a flashback that reveals something surprising about "
+                "Etherei and about Stygian.\n"
+                "Obsidian has a fractured-shattered flashback similar to Stygian's, "
+                "but different memory and reveals additional secrets about Etherei "
+                "and Obsidian himself.\n"
+                "POV Order of Events after Etherei spots Serias.",
+            ),
+            _entry(
+                "d1",
+                "Draft",
+                "Obsidian staggered as a fractured flashback of childhood hit him. "
+                "Stygian also broke into a shattered flashback on the chase. "
+                "Etherei ran the mountain path.",
+                kind="document",
+            ),
+        ]
+        res = recall_from_user_data(
+            "In Smoke and Mirrors, task list for Etherei",
+            {"lorekeeper_entries_v1": json.dumps(entries)},
+        )
+        answer = res.get("answer") or ""
+        low = answer.lower()
+        self.assertIn("write the chase swiftly, not hastily", low)
+        self.assertIn("ticklish", low)
+        self.assertIn("albino-rabbit vision trouble", low)
+        self.assertIn("cheshire", low)
+        self.assertIn("during obsidian's flashback", low)
+        self.assertIn("during stygian's flashback", low)
+        self.assertIn("reveal", low)
+        self.assertNotIn("find a way to write", low)
+        self.assertNotIn("different memory", low)
+        self.assertNotIn("serias respects", low)
+        self.assertNotIn("without glasses and struggling", low)
+        # One vision family bullet only.
+        self.assertEqual(low.count("albino-rabbit vision"), 1)
 
 
 if __name__ == "__main__":

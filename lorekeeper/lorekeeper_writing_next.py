@@ -1085,6 +1085,67 @@ def attach_timeline_seat(task_line: str, seat: str) -> str:
     return out
 
 
+def densify_task_phrasing(line: str) -> str:
+    """
+    Voice-only: denser, clearer librarian task phrasing — same facts, no invent.
+    Imperative where the note already names the beat; drop scrap glue.
+    """
+    s = (line or "").strip()
+    if not s:
+        return s
+
+    # Craft note scraps → direct write task.
+    s = re.sub(
+        r"^find a way to write\b",
+        "Write",
+        s,
+        flags=re.I,
+    )
+    s = re.sub(r"\bswiftly but not hastily\b", "swiftly, not hastily", s, flags=re.I)
+
+    # Vision family: one clear phrase (no slash twin).
+    s = re.sub(
+        r"\balbino-rabbit vision trouble\s*/\s*hard time seeing\b",
+        "albino-rabbit vision trouble",
+        s,
+        flags=re.I,
+    )
+    s = re.sub(
+        r"\blost-glasses\s*/\s*poorer eyesight beat\b",
+        "lost-glasses eyesight beat",
+        s,
+        flags=re.I,
+    )
+
+    # Flashback polish: drop "different memory and", use imperative reveal.
+    s = re.sub(
+        r"\bdifferent memory and\s+(?:reveals?\s+)?",
+        "reveal ",
+        s,
+        flags=re.I,
+    )
+    s = re.sub(r"\breveals\b", "reveal", s, flags=re.I)
+    # "During X's flashback, reveal …" — keep; bare leading "reveal" OK.
+    s = re.sub(r"^reveals?\s+", "Reveal ", s, flags=re.I)
+    # After a flashback seat prefix, force imperative Reveal.
+    s = re.sub(
+        r"(During\s+.+?\s+flashback,\s*)reveal\b",
+        r"\1reveal",
+        s,
+        flags=re.I,
+    )
+    # "about X and about Y" → "about X and Y"
+    s = re.sub(r"\babout\s+(\w+)\s+and\s+about\s+", r"about \1 and ", s, flags=re.I)
+    # "… and Obsidian himself" → "… and Obsidian"
+    s = re.sub(r"\b(and\s+[A-Z][\w'-]+)\s+himself\b", r"\1", s)
+    s = re.sub(r"\b(and\s+[A-Z][\w'-]+)\s+herself\b", r"\1", s)
+
+    # Collapse doubled spaces / stray commas from compressions.
+    s = re.sub(r"\s{2,}", " ", s).strip()
+    s = re.sub(r"\s+,", ",", s)
+    return s
+
+
 def restate_as_task_line(raw: str, *, timeline_seat: str = "") -> str:
     """
     Librarian short task line from a note claim — compress/reframe, never invent.
@@ -1183,11 +1244,11 @@ def restate_as_task_line(raw: str, *, timeline_seat: str = "") -> str:
         if who.lower() in skip or (who and not who[0].isupper()):
             who = ""
         if who and who.lower() not in {"he", "she", "they", "his", "her", "ethie"}:
-            s = f"Show {who}'s albino-rabbit vision trouble / hard time seeing"
+            s = f"Show {who}'s albino-rabbit vision trouble"
         elif re.search(r"\bethie\b|\betherei\b", raw or "", re.I):
-            s = "Show Etherei's albino-rabbit vision trouble / hard time seeing"
+            s = "Show Etherei's albino-rabbit vision trouble"
         else:
-            s = "Show albino-rabbit vision trouble / hard time seeing"
+            s = "Show albino-rabbit vision trouble"
 
     glasses = re.search(
         r"\b(\w+)\s+lost\s+(?:his|her|their)\s+glasses\b|"
@@ -1200,7 +1261,7 @@ def restate_as_task_line(raw: str, *, timeline_seat: str = "") -> str:
         if who and who.lower() not in {"he", "she", "they"}:
             s = f"Write {who} without glasses and struggling to see"
         else:
-            s = "Write the lost-glasses / poorer eyesight beat"
+            s = "Write the lost-glasses eyesight beat"
 
     if loc_prefix:
         s = loc_prefix + (s[0].lower() + s[1:] if s and s[0].isupper() else s)
@@ -1241,6 +1302,8 @@ def restate_as_task_line(raw: str, *, timeline_seat: str = "") -> str:
     if _line_is_incomplete(s) or len(s) > _MAX_TASK_LINE:
         # Never truncate with ellipsis — drop rather than trail off.
         return ""
+
+    s = densify_task_phrasing(s)
 
     if s and s[0].islower():
         s = s[0].upper() + s[1:]
@@ -1355,8 +1418,9 @@ def _is_vision_family_task(bullet: str) -> bool:
     k = _normalize(bullet or "")
     return bool(
         re.search(
-            r"albino-rabbit vision|hard time seeing|"
-            r"without glasses and struggling|lost-glasses|poorer eyesight",
+            r"albino-rabbit vision|hard time seeing|vision trouble|"
+            r"without glasses and struggling|lost-glasses|poorer eyesight|"
+            r"lost-glasses eyesight",
             k,
         )
     )
