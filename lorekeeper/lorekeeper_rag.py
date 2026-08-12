@@ -107,11 +107,15 @@ WHAT TO INCLUDE when sources support it (invent nothing; omit a slot only if tru
 1. NOW — where the focal character is, active pressure, and the stakes of the current situation
 2. NAMED ANTAGONIST / BOSS — if notes or draft name the main antagonist, mafia-esque boss, or domain leader even sparsely, use that proper name and the little that is written; do not leave them as a role-only label when a name or concrete detail exists
 3. ORIGIN — where the focal character started before this adventure, when saved
-4. ENTRY — how they ended up in this adventure (who brought them, offer accepted/refused, crossing, premise), when saved
-5. Belief corrections when notes frame paranoia vs real threat — mirror the notes exactly
+4. ENTRY REASON (must-keep when saved) — why they are in the antagonist's domain / this adventure: who brought them (e.g. a named right hand / Sparrow), the offer or premise, acceptance vs refusal danger. Prefer this over only saying that person "operates nearby." Do NOT invent physical transport mechanics if unwritten — restate the saved reason for being there.
+5. CAN'T LEAVE YET (must-keep when saved) — why they cannot leave too quickly / must stay for now (suspicion, registration, exposure risk, unfinished cover). Only from sources.
+6. Belief corrections when notes frame paranoia vs real threat — mirror the notes exactly
+
+HARD RULE when upgrading density: never drop entry-reason or can't-leave-yet beats that the sources still support just to make room for newer origin/world lore. Add depth without erasing those slots.
 
 WHAT TO OMIT:
 - Invented flesh for thin notes
+- Invented transport / how-the-body-moved details when sources only give reason-for-being-there
 - Full cast-card rosters and relationship essays
 - Write-next task lists and advice about what to write
 - Any "SOURCE N" citation labels

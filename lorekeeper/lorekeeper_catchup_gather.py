@@ -85,7 +85,21 @@ _ENTRY_SIGNAL = re.compile(
     r"offer(?:ed)?|accepted|refusal|refused|how\s+she\s+(?:got|ended)|"
     r"how\s+he\s+(?:got|ended)|ended\s+up\s+in|crossed\s+(?:over|into)|"
     r"pulled\s+(?:into|through)|entered\s+(?:the|this)|"
-    r"under\s+the\s+premise|somewhere\s+she\s+could\s+get"
+    r"under\s+the\s+premise|somewhere\s+she\s+could\s+get|"
+    r"reason\s+(?:she|he|they)\s+(?:is|are|was|were)\s+there|"
+    r"why\s+(?:she|he|they)\s+(?:is|are|was|were)\s+(?:there|in)|"
+    r"winds?\s+up\s+in|right\s+hand|sparrow"
+    r")\b",
+    re.I,
+)
+
+_CANT_LEAVE_SIGNAL = re.compile(
+    r"\b("
+    r"can'?t\s+leave|cannot\s+leave|must\s+(?:not\s+)?leave|"
+    r"leave\s+too\s+quickly|can'?t\s+go\s+(?:yet|now)|"
+    r"must\s+stay|have\s+to\s+stay|dare\s+not\s+leave|"
+    r"arous(?:e|ing)\s+suspicion|slip\s+could|exposure|"
+    r"unmask|registration|flagged"
     r")\b",
     re.I,
 )
@@ -133,11 +147,14 @@ _FOOTER = (
     "— Catch-up orientation from your notes and draft only. Nothing invented."
 )
 
-# Owner gold baseline markers (2026-08-12) — never regress below this voice bar.
+# Owner gold baseline markers — voice floor + must-keep entry-reason slots.
 CATCHUP_GOLD_BASELINE_MARKERS = (
-    "inside the main antagonist",
-    "identity concealment",
+    "fell",
+    "author",
+    "registration",
     "sparrow",
+    "brought her",
+    "premise",
     "paranoia",
 )
 
@@ -153,7 +170,12 @@ def is_catchup_gather_question(question: str) -> bool:
     from lorekeeper_question_routes import is_story_position_question
     from lorekeeper_writing_next import is_writing_next_task_list_question
 
-    if is_story_position_question(q):
+    # Explicit catch-up phrasing wins over incidental "story so far" in the same ask.
+    if is_story_position_question(q) and not re.search(
+        r"\b(?:get\s+me\s+caught|catch(?:\s+me)?[\s-]?up|caught[\s-]?up)\b",
+        q,
+        re.I,
+    ):
         return False
     if is_writing_next_task_list_question(q):
         return False
@@ -437,9 +459,10 @@ def collect_catchup_gather(
         "scraps": _near_dedupe_items(_collect_planned_scraps(entries))[:MAX_SCRAPS],
         "boss": _collect_signal_notes(entries, _ANTAGONIST_SIGNAL, limit=4),
         "origin": _collect_signal_notes(entries, _ORIGIN_SIGNAL, limit=4),
-        "entry": _collect_signal_notes(entries, _ENTRY_SIGNAL, limit=4),
+        "entry": _collect_signal_notes(entries, _ENTRY_SIGNAL, limit=5),
+        "cant_leave": _collect_signal_notes(entries, _CANT_LEAVE_SIGNAL, limit=4),
     }
-    # Draft claims that look like origin/entry also count.
+    # Draft claims that look like origin/entry/can't-leave also count.
     for row in sections["beats"]:
         line = str(row.get("line") or "")
         if _ORIGIN_SIGNAL.search(line):
@@ -448,9 +471,12 @@ def collect_catchup_gather(
             sections["entry"].append(row)
         if _ANTAGONIST_SIGNAL.search(line):
             sections["boss"].append(row)
+        if _CANT_LEAVE_SIGNAL.search(line):
+            sections["cant_leave"].append(row)
     sections["origin"] = _near_dedupe_items(sections["origin"])[:4]
-    sections["entry"] = _near_dedupe_items(sections["entry"])[:4]
+    sections["entry"] = _near_dedupe_items(sections["entry"])[:5]
     sections["boss"] = _near_dedupe_items(sections["boss"])[:4]
+    sections["cant_leave"] = _near_dedupe_items(sections["cant_leave"])[:4]
     return sections, has_notes, has_draft
 
 
@@ -473,8 +499,16 @@ def catchup_prompt_block(entries: list[dict[str, Any]], question: str = "") -> s
                 lines.append(f"[{label}] ({eid})\n{excerpt}")
     for key, heading in (
         ("boss", "ANTAGONIST / BOSS NOTES (even sparse — use proper names)"),
+        (
+            "entry",
+            "ENTRY REASON — who/why they are in the domain (offer/premise/"
+            "brought-by; do NOT invent transport mechanics)",
+        ),
+        (
+            "cant_leave",
+            "CAN'T LEAVE YET — why they must stay / can't leave too quickly",
+        ),
         ("origin", "ORIGIN / BEFORE THE ADVENTURE"),
-        ("entry", "HOW THEY ENTERED THE ADVENTURE"),
         ("cast", "CAST NOTES"),
         ("open", "OPEN QUESTIONS"),
         ("scraps", "PLANNED SCRAPS"),
@@ -511,9 +545,12 @@ def compose_catchup_gather(
     boss = sections.get("boss") or []
     origin = sections.get("origin") or []
     entry = sections.get("entry") or []
+    cant_leave = sections.get("cant_leave") or []
     open_qs = sections.get("open") or []
     scraps = sections.get("scraps") or []
-    any_material = bool(cast or beats or boss or origin or entry or open_qs or scraps)
+    any_material = bool(
+        cast or beats or boss or origin or entry or cant_leave or open_qs or scraps
+    )
 
     if not has_notes and not has_draft:
         return (
@@ -545,7 +582,12 @@ def compose_catchup_gather(
         line = str(row.get("line") or "").strip()
         if line and _normalize(line) not in _normalize(" ".join(parts)):
             parts.append(line if line.endswith((".", "!", "?", "…")) else line + ".")
-    for row in entry[:2]:
+    # Entry reason before extra cast lore — never drop when saved.
+    for row in entry[:3]:
+        line = str(row.get("line") or "").strip()
+        if line and _normalize(line) not in _normalize(" ".join(parts)):
+            parts.append(line if line.endswith((".", "!", "?", "…")) else line + ".")
+    for row in cant_leave[:2]:
         line = str(row.get("line") or "").strip()
         if line and _normalize(line) not in _normalize(" ".join(parts)):
             parts.append(line if line.endswith((".", "!", "?", "…")) else line + ".")
@@ -605,7 +647,7 @@ def answer_catchup_gather(
     )
     source_ids: list[str] = []
     seen: set[str] = set()
-    for key in ("beats", "boss", "origin", "entry", "cast", "open", "scraps"):
+    for key in ("beats", "entry", "cant_leave", "boss", "origin", "cast", "open", "scraps"):
         for row in sections.get(key) or []:
             eid = str(row.get("entryId") or "").strip()
             if eid and eid not in seen:

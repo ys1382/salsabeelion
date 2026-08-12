@@ -1,0 +1,26 @@
+---
+description: LoreKeeper Ask gold pins — raise floor, never drop good beats
+globs: lorekeeper/**
+alwaysApply: false
+---
+
+# LoreKeeper Ask — pinning a gold standard / example
+
+When the owner pins a gold Ask answer (baseline, never-worse, “lock this sample”):
+
+## Do
+
+1. **Raise the floor** — newer owner-approved “even better” samples replace thinner golds when they say so.
+2. **Keep prior good beats** — if an earlier gold (or owner-checked answer) already had a must-keep beat and the notes still support it, the new gold and the next fix **must not drop it**. Especially: **entry-reason** (why they’re in this place / who brought them / offer premise), **can’t-leave-yet** pressure, named antagonist sparse facts, origin before the adventure.
+3. **Voice vs checklist** — “never worse” means both: (a) planning-brief voice/density stays at least as strong, and (b) previously good completeness slots stay covered when sources still have them.
+4. **Invent nothing** — if transport mechanics (or any beat) are unwritten, omit them; still restate saved *reason* and *can’t leave yet* when those exist.
+
+## Do not
+
+- Treat gold as voice-only and let Sonnet “upgrade” by dropping entry-reason or other already-good slots
+- Soften machine locks so a thinner answer still passes
+- Mix who-is / leave-off / writing-next golds into an unrelated pass
+
+## Catch-up specifically
+
+Must-keep when notes/draft support: NOW pressure · named boss (even sparse) · origin · **who/why they are in the antagonist domain (e.g. Sparrow offer/premise)** · **why they can’t leave too quickly** — without inventing how they were physically transported if unwritten.

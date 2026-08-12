@@ -39,6 +39,7 @@ class CatchupDetectionTests(unittest.TestCase):
     def test_catchup_phrases(self):
         phrases = [
             "Get me caught up on this work so far",
+            "Get me caught up with this story",
             "In The Waking Dream, catch me up",
             "What have I got so far for The Waking Dream?",
             "What do I already have in The Waking Dream?",
@@ -90,8 +91,10 @@ class CatchupGoldBaselineTests(unittest.TestCase):
         self.assertNotRegex(gold, r"(?mi)^Cast\s*$")
         self.assertNotRegex(gold, r"(?mi)^Draft so far\s*$")
         self.assertLess(gold.count("•"), 2)
-        # Density floor of the locked sample.
-        self.assertGreaterEqual(len(gold), 700)
+        # Density floor of the locked sample (raised 2026-08-12 afternoon).
+        self.assertGreaterEqual(len(gold), 900)
+        self.assertIn("brought her", low)
+        self.assertIn("leave too quickly", low)
 
 
 class CatchupAnswerTests(unittest.TestCase):
@@ -112,7 +115,14 @@ class CatchupAnswerTests(unittest.TestCase):
                 "n_entry",
                 "Entry",
                 "The Finch brought her there under the premise of taking her somewhere "
-                "she could get something she needed; accepting the offer was its own danger.",
+                "she could get something she needed; accepting the offer was its own danger. "
+                "That is why she winds up in Vesper's domain.",
+            ),
+            _entry(
+                "n_stay",
+                "Can't leave yet",
+                "She can't leave too quickly — leaving now would arouse suspicion from "
+                "the Finch or his leader, and a slip could unmask her.",
             ),
             _entry(
                 "d1",
@@ -129,7 +139,7 @@ class CatchupAnswerTests(unittest.TestCase):
         ) as rag:
             rag.side_effect = AssertionError("RAG disabled for this test")
             res = recall_from_user_data(
-                "Get me caught up on this work so far",
+                "Get me caught up with this story so far",
                 data,
                 scope={"mode": "work", "workTitle": "The Waking Dream"},
             )
@@ -141,6 +151,13 @@ class CatchupAnswerTests(unittest.TestCase):
         self.assertIn("vesper", low)
         self.assertIn("human world", low)
         self.assertIn("finch", low)
+        self.assertIn("premise", low)
+        self.assertTrue(
+            "can't leave" in low
+            or "cannot leave" in low
+            or "leave too quickly" in low,
+            ans,
+        )
         self.assertNotIn("SOURCE", ans)
         self.assertNotRegex(ans, r"(?mi)^Cast\s*$")
 

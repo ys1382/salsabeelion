@@ -20,6 +20,19 @@
 
 ---
 
+## Pinning a gold Ask sample (owner rule — 2026-08-12)
+
+When you say a live answer is the **gold / baseline / never-worse** bar:
+
+1. **Raise the floor** when a later answer is even better — update the fixture + roadmap.
+2. **Don’t drop entry-reason beats that were already good** — if a prior gold already had why they’re in this place, who brought them, offer/premise, or why they can’t leave yet, and notes still support it, the next gold and the next fix must keep those slots. Voice upgrades must not trade away completeness that already passed.
+3. “Never worse” = strong planning-brief voice **and** prior good completeness slots still covered when sources have them.
+4. Never invent unwritten transport (or other) mechanics; still restate saved reason-for-being-there and can’t-leave-yet.
+
+Same spirit for leave-off / who-is / writing-next golds: raising voice must not erase locked must-keeps.
+
+---
+
 ## Phase 0 — Everyday reliability (no checklist)
 
 Tier A checkboxes are retired. You do not need a two-week checkbox run.

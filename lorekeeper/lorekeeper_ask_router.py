@@ -348,6 +348,17 @@ def local_ask_plan(question: str) -> AskPlan | None:
             router_engine="local",
         )
 
+    # Catch-up before leave-off — "caught up … so far" must not steal to resume.
+    if is_catchup_gather_question(q):
+        return AskPlan(
+            intent="catchup_gather",
+            pipeline="rag_summarize",
+            answer_model="sonnet",
+            question_kind="catchup_gather",
+            section=section_raw,
+            router_engine="local",
+        )
+
     if is_story_position_question(q):
         return AskPlan(
             intent="story_resume",
@@ -386,16 +397,6 @@ def local_ask_plan(question: str) -> AskPlan | None:
             pipeline="rag_summarize",
             answer_model="haiku",
             question_kind="notes_not_in_draft",
-            section=section_raw,
-            router_engine="local",
-        )
-
-    if is_catchup_gather_question(q):
-        return AskPlan(
-            intent="catchup_gather",
-            pipeline="rag_summarize",
-            answer_model="sonnet",
-            question_kind="catchup_gather",
             section=section_raw,
             router_engine="local",
         )
