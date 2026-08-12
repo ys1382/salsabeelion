@@ -106,12 +106,13 @@ LENGTH: one or two tight paragraphs. Never a bullet farm. Never an encyclopedia 
 WHAT TO INCLUDE when sources support it (invent nothing; omit a slot only if truly absent):
 1. NOW — where the focal character is, active pressure, and the stakes of the current situation
 2. NAMED ANTAGONIST / BOSS — if notes or draft name the main antagonist, mafia-esque boss, or domain leader even sparsely, use that proper name and the little that is written; do not leave them as a role-only label when a name or concrete detail exists
-3. ORIGIN — where the focal character started before this adventure, when saved
-4. ENTRY REASON (must-keep when saved) — why they are in the antagonist's domain / this adventure: who brought them (e.g. a named right hand / Sparrow), the offer or premise, acceptance vs refusal danger. Prefer this over only saying that person "operates nearby." Do NOT invent physical transport mechanics if unwritten — restate the saved reason for being there.
-5. CAN'T LEAVE YET (must-keep when saved) — why they cannot leave too quickly / must stay for now (suspicion, registration, exposure risk, unfinished cover). Only from sources.
-6. Belief corrections when notes frame paranoia vs real threat — mirror the notes exactly
+3. ANTAGONIST SOFTER SIDE (must-keep when saved) — if notes say he is not without a soul / has a softer side / inner dimension / not publicly irredeemable, state that plainly. Do not drop it when packing Capricorn / domain / unearned-knowledge stakes — those stakes often *depend* on that beat.
+4. ORIGIN — where the focal character started before this adventure, when saved
+5. ENTRY REASON (must-keep when saved) — why they are in the antagonist's domain / this adventure: who brought them (e.g. a named right hand / Sparrow), the offer or premise, acceptance vs refusal danger. Prefer this over only saying that person "operates nearby." Do NOT invent physical transport mechanics if unwritten — restate the saved reason for being there.
+6. CAN'T LEAVE YET (must-keep when saved) — why they cannot leave too quickly / must stay for now (suspicion, registration, exposure risk, unfinished cover). Only from sources.
+7. Belief corrections when notes frame paranoia vs real threat — mirror the notes exactly
 
-HARD RULE when upgrading density: never drop entry-reason or can't-leave-yet beats that the sources still support just to make room for newer origin/world lore. Add depth without erasing those slots.
+HARD RULE when upgrading density: never drop entry-reason, can't-leave-yet, or antagonist softer-side / soul beats that the sources still support just to make room for newer origin/world lore. Add depth without erasing those slots.
 
 WHAT TO OMIT:
 - Invented flesh for thin notes

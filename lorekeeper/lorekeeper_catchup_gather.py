@@ -68,6 +68,16 @@ _ANTAGONIST_SIGNAL = re.compile(
     re.I,
 )
 
+_SOFTER_SIDE_SIGNAL = re.compile(
+    r"\b("
+    r"softer\s+side|not\s+without\s+a\s+soul|without\s+a\s+soul|"
+    r"inner\s+dimension|not\s+entirely\s+without|"
+    r"not\s+(?:publicly\s+)?irredeemable|has\s+a\s+soul|"
+    r"not\s+without\s+(?:some\s+)?(?:inner|soft)"
+    r")\b",
+    re.I,
+)
+
 _ORIGIN_SIGNAL = re.compile(
     r"\b("
     r"before\s+(?:this\s+)?(?:adventure|journey|trip|mission)|"
@@ -157,6 +167,8 @@ CATCHUP_GOLD_BASELINE_MARKERS = (
     "registered",
     "paranoia",
     "way out of that domain",
+    "softer side",
+    "not without a soul",
 )
 
 
@@ -459,11 +471,12 @@ def collect_catchup_gather(
         "open": _collect_open_questions(entries),
         "scraps": _near_dedupe_items(_collect_planned_scraps(entries))[:MAX_SCRAPS],
         "boss": _collect_signal_notes(entries, _ANTAGONIST_SIGNAL, limit=4),
+        "softer": _collect_signal_notes(entries, _SOFTER_SIDE_SIGNAL, limit=4),
         "origin": _collect_signal_notes(entries, _ORIGIN_SIGNAL, limit=4),
         "entry": _collect_signal_notes(entries, _ENTRY_SIGNAL, limit=5),
         "cant_leave": _collect_signal_notes(entries, _CANT_LEAVE_SIGNAL, limit=4),
     }
-    # Draft claims that look like origin/entry/can't-leave also count.
+    # Draft claims that look like origin/entry/can't-leave/softer also count.
     for row in sections["beats"]:
         line = str(row.get("line") or "")
         if _ORIGIN_SIGNAL.search(line):
@@ -472,11 +485,14 @@ def collect_catchup_gather(
             sections["entry"].append(row)
         if _ANTAGONIST_SIGNAL.search(line):
             sections["boss"].append(row)
+        if _SOFTER_SIDE_SIGNAL.search(line):
+            sections["softer"].append(row)
         if _CANT_LEAVE_SIGNAL.search(line):
             sections["cant_leave"].append(row)
     sections["origin"] = _near_dedupe_items(sections["origin"])[:4]
     sections["entry"] = _near_dedupe_items(sections["entry"])[:5]
     sections["boss"] = _near_dedupe_items(sections["boss"])[:4]
+    sections["softer"] = _near_dedupe_items(sections["softer"])[:4]
     sections["cant_leave"] = _near_dedupe_items(sections["cant_leave"])[:4]
     return sections, has_notes, has_draft
 
@@ -500,6 +516,10 @@ def catchup_prompt_block(entries: list[dict[str, Any]], question: str = "") -> s
                 lines.append(f"[{label}] ({eid})\n{excerpt}")
     for key, heading in (
         ("boss", "ANTAGONIST / BOSS NOTES (even sparse — use proper names)"),
+        (
+            "softer",
+            "ANTAGONIST SOFTER SIDE / SOUL / INNER DIMENSION (must-keep when present)",
+        ),
         (
             "entry",
             "ENTRY REASON — who/why they are in the domain (offer/premise/"
@@ -544,13 +564,22 @@ def compose_catchup_gather(
     cast = sections.get("cast") or []
     beats = sections.get("beats") or []
     boss = sections.get("boss") or []
+    softer = sections.get("softer") or []
     origin = sections.get("origin") or []
     entry = sections.get("entry") or []
     cant_leave = sections.get("cant_leave") or []
     open_qs = sections.get("open") or []
     scraps = sections.get("scraps") or []
     any_material = bool(
-        cast or beats or boss or origin or entry or cant_leave or open_qs or scraps
+        cast
+        or beats
+        or boss
+        or softer
+        or origin
+        or entry
+        or cant_leave
+        or open_qs
+        or scraps
     )
 
     if not has_notes and not has_draft:
@@ -594,6 +623,11 @@ def compose_catchup_gather(
             parts.append(line if line.endswith((".", "!", "?", "…")) else line + ".")
     # Named / sparse boss — never leave as invisible role-only if notes exist.
     for row in boss[:2]:
+        line = str(row.get("line") or "").strip()
+        if line and _normalize(line) not in _normalize(" ".join(parts)):
+            parts.append(line if line.endswith((".", "!", "?", "…")) else line + ".")
+    # Softer side / soul — must-keep when saved (gold-pin: don't drop).
+    for row in softer[:2]:
         line = str(row.get("line") or "").strip()
         if line and _normalize(line) not in _normalize(" ".join(parts)):
             parts.append(line if line.endswith((".", "!", "?", "…")) else line + ".")
@@ -648,7 +682,17 @@ def answer_catchup_gather(
     )
     source_ids: list[str] = []
     seen: set[str] = set()
-    for key in ("beats", "entry", "cant_leave", "boss", "origin", "cast", "open", "scraps"):
+    for key in (
+        "beats",
+        "entry",
+        "cant_leave",
+        "boss",
+        "softer",
+        "origin",
+        "cast",
+        "open",
+        "scraps",
+    ):
         for row in sections.get(key) or []:
             eid = str(row.get("entryId") or "").strip()
             if eid and eid not in seen:

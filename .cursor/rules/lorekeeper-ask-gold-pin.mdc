@@ -11,7 +11,7 @@ When the owner pins a gold Ask answer (baseline, never-worse, “lock this sampl
 ## Do
 
 1. **Raise the floor** — newer owner-approved “even better” samples replace thinner golds when they say so.
-2. **Keep prior good beats** — if an earlier gold (or owner-checked answer) already had a must-keep beat and the notes still support it, the new gold and the next fix **must not drop it**. Especially: **entry-reason** (why they’re in this place / who brought them / offer premise), **can’t-leave-yet** pressure, named antagonist sparse facts, origin before the adventure.
+2. **Keep prior good beats** — if an earlier gold (or owner-checked answer) already had a must-keep beat and the notes still support it, the new gold and the next fix **must not drop it**. Especially: **entry-reason** (why they’re in this place / who brought them / offer premise), **can’t-leave-yet** pressure, **antagonist softer side / not without a soul**, named antagonist sparse facts, origin before the adventure.
 3. **Voice vs checklist** — “never worse” means both: (a) planning-brief voice/density stays at least as strong, and (b) previously good completeness slots stay covered when sources still have them.
 4. **Invent nothing** — if transport mechanics (or any beat) are unwritten, omit them; still restate saved *reason* and *can’t leave yet* when those exist.
 
@@ -25,4 +25,4 @@ When the owner pins a gold Ask answer (baseline, never-worse, “lock this sampl
 
 **Locked gold (2026-08-12 — owner “perfect”):** premise / thin-draft catch-up for *Get me caught up with this story* — `lorekeeper/tests/fixtures/catchup_waking_dream_gold.txt`. Orientation for what exists / why they’re here / why they can’t leave — not a full plotted novel recap.
 
-Must-keep when notes/draft support: NOW pressure · named boss (even sparse) · origin · **who/why they are in the antagonist domain (e.g. Sparrow brought them)** · **cannot simply leave / registration / unmask risk** — without inventing how they were physically transported if unwritten.
+Must-keep when notes/draft support: NOW pressure · named boss (even sparse) · **antagonist softer side / not without a soul** · origin · **who/why they are in the antagonist domain (e.g. Sparrow brought them)** · **cannot simply leave / registration / unmask risk** — without inventing how they were physically transported if unwritten.
