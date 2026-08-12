@@ -27,7 +27,7 @@ FLICKCHECK_CACHE_DIR = Path(
     os.environ.get("HALALFLICKS_CACHE_DIR", _SCRIPT_DIR / "cache" / "flickcheck")
 )
 WIKI_UA = "HalalFlicks/0.1 (Odd Trove; https://oddtrove.art/halalflicks/; owner-beta)"
-CACHE_VERSION = "20260803trailer"
+CACHE_VERSION = "20260811holland"
 _CACHE: dict[str, tuple[float, dict[str, Any]]] = {}
 _CACHE_LOCK = Lock()
 _CACHE_TTL = int(os.environ.get("HALALFLICKS_CACHE_TTL", "3600"))
