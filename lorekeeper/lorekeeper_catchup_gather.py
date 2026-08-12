@@ -1,7 +1,8 @@
 """LoreKeeper — thin-draft / catch-up gather Ask (orientation brief).
 
 Librarian only: restates what the writer already saved for a named work.
-Not who-is, not leave-off alone, not write-next alone.
+Planning-brief voice (like leave-off) — not who-is cast cards, not write-next alone.
+Gold baseline: owner catch-up sample must not get worse (voice + density).
 """
 from __future__ import annotations
 
@@ -21,13 +22,16 @@ from lorekeeper_notes_vs_draft import (
 )
 
 MAX_CAST = 8
-MAX_BEATS = 6
+MAX_BEATS = 8
 MAX_OPEN = 6
 MAX_SCRAPS = 8
-_MAX_LINE = 180
+_MAX_LINE = 220
 
 _CATCHUP_Q = re.compile(
     r"\b("
+    r"get\s+me\s+caught[\s-]?up|"
+    r"caught[\s-]?up\s+(?:on|for|with)\s+(?:this\s+|my\s+|the\s+)?"
+    r"(?:work|draft|notes?|story|project)|"
     r"catch[\s-]?me[\s-]?up|"
     r"catch[\s-]?up\s+(?:on|for|with)\s+(?:this\s+|my\s+|the\s+)?"
     r"(?:work|draft|notes?|story|project)|"
@@ -52,6 +56,37 @@ _CATCHUP_Q = re.compile(
 _OPEN_Q_LINE = re.compile(
     r"(?:\?|\b(?:open\s*(?:question|q)?\s*:|unsure|not\s+sure(?:\s+yet)?|"
     r"tbd|unresolved|still\s+deciding|need\s+to\s+decide)\b)",
+    re.I,
+)
+
+_ANTAGONIST_SIGNAL = re.compile(
+    r"\b("
+    r"antagonist|villain|boss|mafia|don|capo|underboss|crime\s+lord|"
+    r"main\s+(?:antagonist|villain|boss)|higher-?ups?|his\s+leader|"
+    r"the\s+leader|domain\s+lord|overlord"
+    r")\b",
+    re.I,
+)
+
+_ORIGIN_SIGNAL = re.compile(
+    r"\b("
+    r"before\s+(?:this\s+)?(?:adventure|journey|trip|mission)|"
+    r"started\s+out|came\s+from|home\s+(?:world|realm|city|town)|"
+    r"ordinary\s+life|back\s+home|used\s+to\s+live|grew\s+up|"
+    r"from\s+(?:the\s+)?(?:human\s+)?(?:world|realm|side)|"
+    r"before\s+she\s+(?:was|got)|before\s+he\s+(?:was|got)"
+    r")\b",
+    re.I,
+)
+
+_ENTRY_SIGNAL = re.compile(
+    r"\b("
+    r"brought\s+(?:her|him|them)|took\s+(?:her|him|them)|"
+    r"offer(?:ed)?|accepted|refusal|refused|how\s+she\s+(?:got|ended)|"
+    r"how\s+he\s+(?:got|ended)|ended\s+up\s+in|crossed\s+(?:over|into)|"
+    r"pulled\s+(?:into|through)|entered\s+(?:the|this)|"
+    r"under\s+the\s+premise|somewhere\s+she\s+could\s+get"
+    r")\b",
     re.I,
 )
 
@@ -95,8 +130,15 @@ _NAME_IN_TITLE = re.compile(
 )
 
 _FOOTER = (
-    "— Catch-up orientation from your notes and draft only. Nothing invented. "
-    "Ask leave-off for latest plot position, or write-next for tasks."
+    "— Catch-up orientation from your notes and draft only. Nothing invented."
+)
+
+# Owner gold baseline markers (2026-08-12) — never regress below this voice bar.
+CATCHUP_GOLD_BASELINE_MARKERS = (
+    "inside the main antagonist",
+    "identity concealment",
+    "sparrow",
+    "paranoia",
 )
 
 
@@ -105,7 +147,6 @@ def is_catchup_gather_question(question: str) -> bool:
     q = (question or "").strip()
     if not q or not _CATCHUP_Q.search(q):
         return False
-    # Never steal locked / neighboring Ask shapes.
     from lorekeeper_character_summary import is_who_is_question
     from lorekeeper_loose_ends import is_flagged_fix_question, is_planned_gap_question
     from lorekeeper_notes_vs_draft import is_notes_not_in_draft_question
@@ -138,7 +179,6 @@ def _title_looks_like_cast(title: str) -> bool:
     if not t or t.lower() in _CAST_TITLE_JUNK:
         return False
     if "/" in t or ":" in t:
-        # "Cast / Mira" or "Mira: notes"
         tail = re.split(r"[/:]", t, maxsplit=1)[-1].strip()
         if tail and tail.lower() not in _CAST_TITLE_JUNK:
             t = tail
@@ -158,6 +198,31 @@ def _cast_label_from_title(title: str) -> str:
         if tail:
             return tail
     return t
+
+
+def _draft_pages(entries: list[dict[str, Any]]) -> list[tuple[str, str]]:
+    """(entry_id, body) for draft pages in order."""
+    pages: list[tuple[int, int, str, str]] = []
+    for entry in entries:
+        if not isinstance(entry, dict) or not _is_draft_entry(entry):
+            continue
+        body = str(entry.get("body") or "").strip()
+        if not body:
+            continue
+        eid = str(entry.get("id") or "")
+        page_idx = 0
+        if "#p" in eid:
+            try:
+                page_idx = int(eid.split("#p", 1)[1])
+            except ValueError:
+                page_idx = 0
+        try:
+            updated = int(entry.get("updatedAt") or 0)
+        except (TypeError, ValueError):
+            updated = 0
+        pages.append((updated, page_idx, eid, body))
+    pages.sort(key=lambda row: (row[0], row[1]))
+    return [(eid, body) for _u, _i, eid, body in pages]
 
 
 def _collect_cast(entries: list[dict[str, Any]]) -> list[dict[str, str]]:
@@ -187,7 +252,13 @@ def _collect_cast(entries: list[dict[str, Any]]) -> list[dict[str, str]]:
                 blurb = _clip(claim)
                 break
         if not label:
-            continue
+            # Sparse antagonist note titled by role still counts as cast.
+            if _ANTAGONIST_SIGNAL.search(title) or _ANTAGONIST_SIGNAL.search(body[:200]):
+                label = _cast_label_from_title(title) if _title_looks_like_cast(title) else title
+                if claims:
+                    blurb = _clip(claims[0])
+            else:
+                continue
         key = _normalize(label)
         if key in seen:
             continue
@@ -199,36 +270,66 @@ def _collect_cast(entries: list[dict[str, Any]]) -> list[dict[str, str]]:
     return rows
 
 
-def _collect_draft_beats(entries: list[dict[str, Any]]) -> list[dict[str, str]]:
-    draft = _draft_corpus(entries).strip()
-    if not draft:
-        return []
-    # Thin drafts: restatement of early sentences (orientation, not leave-off tail).
-    chunks = _split_claims(draft)
+def _collect_signal_notes(
+    entries: list[dict[str, Any]], signal: re.Pattern[str], *, limit: int = 4
+) -> list[dict[str, str]]:
     rows: list[dict[str, str]] = []
     seen: set[str] = set()
-    draft_id = ""
     for entry in entries:
-        if isinstance(entry, dict) and _is_draft_entry(entry):
-            draft_id = str(entry.get("id") or "")
-            break
-    for claim in chunks:
-        cleaned = _clip(claim)
-        if not _claim_is_usable(cleaned) and len(cleaned) < 24:
+        if not isinstance(entry, dict) or _is_draft_entry(entry):
             continue
-        key = _normalize(cleaned)[:120]
-        if not key or key in seen:
+        eid = str(entry.get("id") or "")
+        title = str(entry.get("title") or "").strip() or "Untitled"
+        body = str(entry.get("body") or "").strip()
+        blob = f"{title}\n{body}"
+        if not signal.search(blob):
             continue
-        seen.add(key)
-        rows.append(
-            {
-                "entryId": draft_id,
-                "noteTitle": "Main draft",
-                "line": cleaned,
-            }
-        )
-        if len(rows) >= MAX_BEATS:
-            break
+        for claim in (_split_claims(body) if body else [title])[:3]:
+            if not signal.search(claim) and not signal.search(title):
+                # Keep first claim when title alone matched.
+                if body and claim != (_split_claims(body) or [""])[0]:
+                    continue
+            cleaned = _clip(claim)
+            if len(cleaned) < 10:
+                continue
+            key = _normalize(cleaned)[:120]
+            if key in seen:
+                continue
+            seen.add(key)
+            rows.append({"entryId": eid, "noteTitle": title, "line": cleaned})
+            if len(rows) >= limit:
+                return rows
+    return rows
+
+
+def _collect_draft_beats(entries: list[dict[str, Any]]) -> list[dict[str, str]]:
+    pages = _draft_pages(entries)
+    if not pages:
+        return []
+    # Origin (early) + NOW (late) — orientation, not leave-off-only tail.
+    early = pages[:2]
+    late = pages[-2:] if len(pages) > 2 else pages
+    ordered: list[tuple[str, str]] = []
+    seen_ids: set[str] = set()
+    for eid, body in early + late:
+        if eid in seen_ids:
+            continue
+        seen_ids.add(eid)
+        ordered.append((eid, body))
+    rows: list[dict[str, str]] = []
+    seen: set[str] = set()
+    for eid, body in ordered:
+        for claim in _split_claims(body):
+            cleaned = _clip(claim)
+            if not _claim_is_usable(cleaned) and len(cleaned) < 24:
+                continue
+            key = _normalize(cleaned)[:120]
+            if not key or key in seen:
+                continue
+            seen.add(key)
+            rows.append({"entryId": eid, "noteTitle": "Main draft", "line": cleaned})
+            if len(rows) >= MAX_BEATS:
+                return rows
     return rows
 
 
@@ -287,7 +388,6 @@ def _collect_planned_scraps(entries: list[dict[str, Any]]) -> list[dict[str, str
         if len(rows) >= MAX_SCRAPS:
             return rows
 
-    # Short leftover scraps from notes titled scraps/ideas (not cast cards).
     for entry in entries:
         if not isinstance(entry, dict) or _is_draft_entry(entry):
             continue
@@ -335,18 +435,66 @@ def collect_catchup_gather(
         "beats": _collect_draft_beats(entries),
         "open": _collect_open_questions(entries),
         "scraps": _near_dedupe_items(_collect_planned_scraps(entries))[:MAX_SCRAPS],
+        "boss": _collect_signal_notes(entries, _ANTAGONIST_SIGNAL, limit=4),
+        "origin": _collect_signal_notes(entries, _ORIGIN_SIGNAL, limit=4),
+        "entry": _collect_signal_notes(entries, _ENTRY_SIGNAL, limit=4),
     }
+    # Draft claims that look like origin/entry also count.
+    for row in sections["beats"]:
+        line = str(row.get("line") or "")
+        if _ORIGIN_SIGNAL.search(line):
+            sections["origin"].append(row)
+        if _ENTRY_SIGNAL.search(line):
+            sections["entry"].append(row)
+        if _ANTAGONIST_SIGNAL.search(line):
+            sections["boss"].append(row)
+    sections["origin"] = _near_dedupe_items(sections["origin"])[:4]
+    sections["entry"] = _near_dedupe_items(sections["entry"])[:4]
+    sections["boss"] = _near_dedupe_items(sections["boss"])[:4]
     return sections, has_notes, has_draft
 
 
-def _section_block(heading: str, items: list[dict[str, str]], empty: str) -> str:
-    lines = [heading]
-    if items:
-        for row in items:
-            lines.append(f"• {_clip(str(row.get('line') or ''))}")
-    else:
-        lines.append(f"• {empty}")
-    return "\n".join(lines)
+def catchup_prompt_block(entries: list[dict[str, Any]], question: str = "") -> str:
+    """Pinned context for RAG catch-up synthesis (not shown to the writer)."""
+    _ = question
+    sections, has_notes, has_draft = collect_catchup_gather(entries)
+    if not has_notes and not has_draft:
+        return ""
+    pages = _draft_pages(entries)
+    lines: list[str] = []
+    if pages:
+        early = pages[:2]
+        late = pages[-2:] if len(pages) > 2 else pages
+        for label, bundle in (("ORIGIN / EARLY DRAFT", early), ("NOW / LATEST DRAFT", late)):
+            for eid, body in bundle:
+                excerpt = re.sub(r"\s+", " ", body).strip()
+                if len(excerpt) > 1800:
+                    excerpt = excerpt[:1797].rstrip() + "…"
+                lines.append(f"[{label}] ({eid})\n{excerpt}")
+    for key, heading in (
+        ("boss", "ANTAGONIST / BOSS NOTES (even sparse — use proper names)"),
+        ("origin", "ORIGIN / BEFORE THE ADVENTURE"),
+        ("entry", "HOW THEY ENTERED THE ADVENTURE"),
+        ("cast", "CAST NOTES"),
+        ("open", "OPEN QUESTIONS"),
+        ("scraps", "PLANNED SCRAPS"),
+    ):
+        rows = sections.get(key) or []
+        if not rows:
+            continue
+        lines.append(heading + ":")
+        for row in rows[:5]:
+            title = str(row.get("noteTitle") or "Note")
+            text = str(row.get("line") or "")
+            lines.append(f"- {title}: {text}")
+    if not lines:
+        return ""
+    return (
+        "Catch-up orientation pack (planning brief — use ONLY what is here; "
+        "invent nothing; prefer proper names over role-only labels when notes name them):\n\n"
+        + "\n\n".join(lines)
+        + "\n\n"
+    )
 
 
 def compose_catchup_gather(
@@ -356,17 +504,17 @@ def compose_catchup_gather(
     has_notes: bool,
     has_draft: bool,
 ) -> str:
+    """Local fallback — continuous planning brief (gold baseline voice), not bullet cards."""
     work = _work_phrase(work_hints)
     cast = sections.get("cast") or []
     beats = sections.get("beats") or []
+    boss = sections.get("boss") or []
+    origin = sections.get("origin") or []
+    entry = sections.get("entry") or []
     open_qs = sections.get("open") or []
     scraps = sections.get("scraps") or []
-    any_material = bool(cast or beats or open_qs or scraps)
+    any_material = bool(cast or beats or boss or origin or entry or open_qs or scraps)
 
-    head = (
-        f"Catch-up for {work} — what you already have saved "
-        f"(notes + draft; nothing invented):\n"
-    )
     if not has_notes and not has_draft:
         return (
             f"Catch-up for {work}: nothing saved yet for this work — "
@@ -381,42 +529,66 @@ def compose_catchup_gather(
         have = " and ".join(bits) if bits else "material"
         return (
             f"Catch-up for {work}: you have {have}, but nothing clear enough "
-            f"to list as cast, draft beats, open questions, or planned scraps yet. "
-            f"Add short cast notes, beat lines, `open:` questions, or `planned:` scraps.\n\n"
-            f"{_FOOTER}"
+            f"yet to restate as an orientation brief. "
+            f"Add draft prose plus short notes for cast, origin, entry path, "
+            f"or the antagonist — even sparse lines help.\n\n{_FOOTER}"
         )
 
-    parts = [
-        head,
-        _section_block(
-            "Cast",
-            cast,
-            "No clear cast notes yet.",
-        ),
-        "",
-        _section_block(
-            "Draft so far",
-            beats,
-            "No main draft prose yet."
-            if not has_draft
-            else "Draft is present but too thin to restate as clear beats.",
-        ),
-        "",
-        _section_block(
-            "Open questions",
-            open_qs,
-            "None marked (use ? or `open:` in a note).",
-        ),
-        "",
-        _section_block(
-            "Planned scraps",
-            scraps,
-            "None tagged planned / scraps yet.",
-        ),
-        "",
-        _FOOTER,
-    ]
-    return "\n".join(parts).strip()
+    parts: list[str] = []
+    # NOW from late-ish beats.
+    if beats:
+        now_bits = [str(r.get("line") or "") for r in beats[-3:] if r.get("line")]
+        if now_bits:
+            parts.append(" ".join(now_bits))
+    # Origin + entry when saved.
+    for row in origin[:2]:
+        line = str(row.get("line") or "").strip()
+        if line and _normalize(line) not in _normalize(" ".join(parts)):
+            parts.append(line if line.endswith((".", "!", "?", "…")) else line + ".")
+    for row in entry[:2]:
+        line = str(row.get("line") or "").strip()
+        if line and _normalize(line) not in _normalize(" ".join(parts)):
+            parts.append(line if line.endswith((".", "!", "?", "…")) else line + ".")
+    # Named / sparse boss — never leave as invisible role-only if notes exist.
+    for row in boss[:2]:
+        line = str(row.get("line") or "").strip()
+        if line and _normalize(line) not in _normalize(" ".join(parts)):
+            parts.append(line if line.endswith((".", "!", "?", "…")) else line + ".")
+    # Cast blurbs not already covered.
+    for row in cast[:3]:
+        line = str(row.get("line") or "").strip()
+        if line and _normalize(line) not in _normalize(" ".join(parts)):
+            parts.append(line if line.endswith((".", "!", "?", "…")) else line + ".")
+    if open_qs:
+        qlines = "; ".join(str(r.get("line") or "") for r in open_qs[:2] if r.get("line"))
+        if qlines:
+            parts.append(f"Open in your notes: {qlines}")
+    if scraps:
+        slines = "; ".join(str(r.get("line") or "") for r in scraps[:2] if r.get("line"))
+        if slines:
+            parts.append(f"Planned scraps include {slines}")
+
+    body = " ".join(p.strip() for p in parts if p.strip())
+    body = re.sub(r"\s+", " ", body).strip()
+    if body and body[-1] not in ".!?…":
+        body += "."
+    return f"{body}\n\n{_FOOTER}"
+
+
+def answer_looks_at_or_above_catchup_baseline(answer: str) -> bool:
+    """True when answer keeps continuous planning-brief voice (never worse than gold)."""
+    text = (answer or "").strip()
+    if not text:
+        return False
+    low = text.lower()
+    # Bullet / section-card dumps are a regression vs the gold baseline voice.
+    if re.search(r"(?m)^(cast|draft so far|open questions|planned scraps)\s*$", low):
+        return False
+    if text.count("•") >= 4:
+        return False
+    if len(text) < 180 and "nothing saved" not in low and "nothing clear" not in low:
+        return False
+    return True
 
 
 def answer_catchup_gather(
@@ -425,7 +597,7 @@ def answer_catchup_gather(
     work_hints: set[str],
     question: str = "",
 ) -> tuple[str, list[str]]:
-    """Work-scoped catch-up gather. question kept for API symmetry."""
+    """Work-scoped catch-up gather (local). question kept for API symmetry."""
     _ = question
     sections, has_notes, has_draft = collect_catchup_gather(entries)
     answer = compose_catchup_gather(
@@ -433,12 +605,12 @@ def answer_catchup_gather(
     )
     source_ids: list[str] = []
     seen: set[str] = set()
-    for key in ("cast", "beats", "open", "scraps"):
+    for key in ("beats", "boss", "origin", "entry", "cast", "open", "scraps"):
         for row in sections.get(key) or []:
             eid = str(row.get("entryId") or "").strip()
             if eid and eid not in seen:
                 seen.add(eid)
                 source_ids.append(eid)
-            if len(source_ids) >= 12:
+            if len(source_ids) >= 14:
                 break
     return answer, source_ids

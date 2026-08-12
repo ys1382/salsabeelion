@@ -964,7 +964,7 @@ def focus_ask_response(
         return out
     kind = str(result.get("questionKind") or "fallback")
     allow_broad = wants_broad_answer(question, question_kind=kind)
-    if result.get("askIntent") in ("character_portrait", "summarize_story", "story_resume"):
+    if result.get("askIntent") in ("character_portrait", "summarize_story", "story_resume", "catchup_gather"):
         allow_broad = True
     # Compare/tag lists must stay intact — never trim bullets as off-topic.
     if kind in ("notes_not_in_draft", "planned_gaps", "flagged_fix", "writing_next", "catchup_gather"):

@@ -778,12 +778,22 @@ def local_pipeline_skips_rag(
             return False
         return len(answer.strip()) > 100
 
-    if kind in ("planned_gaps", "flagged_fix", "notes_not_in_draft", "writing_next", "catchup_gather"):
+    if kind in ("planned_gaps", "flagged_fix", "notes_not_in_draft", "writing_next"):
+        return bool(answer.strip())
+
+    # Catch-up: prefer Sonnet RAG planning-brief voice when enabled; else local.
+    if kind == "catchup_gather" or is_catchup_gather_question(question):
+        if rag_enabled():
+            return False
         return bool(answer.strip())
 
     # Prefer pipeline kind when local compare/tag routes already composed.
     pipe_kind = str(local_pipeline.get("questionKind") or "")
-    if pipe_kind in ("planned_gaps", "flagged_fix", "notes_not_in_draft", "writing_next", "catchup_gather"):
+    if pipe_kind in ("planned_gaps", "flagged_fix", "notes_not_in_draft", "writing_next"):
+        return bool(answer.strip())
+    if pipe_kind == "catchup_gather":
+        if rag_enabled():
+            return False
         return bool(answer.strip())
 
     if kind in ("who", "knowledge") or is_who_is_question(question) or is_knowledge_pov_question(
@@ -1337,7 +1347,7 @@ def recall_from_user_data(
     )
     # Tag/compare routes are local-only — never skip to RAG (Haiku used to steal them).
     local_only_kinds = frozenset(
-        {"planned_gaps", "flagged_fix", "notes_not_in_draft", "writing_next", "catchup_gather"}
+        {"planned_gaps", "flagged_fix", "notes_not_in_draft", "writing_next"}
     )
     routed_kind = route_question(question)
     skip_local = (

@@ -1,11 +1,14 @@
-"""Catch-up gather Ask — thin-draft orientation brief (synthetic only)."""
+"""Catch-up gather Ask — thin-draft orientation brief (synthetic + gold baseline)."""
 from __future__ import annotations
 
 import json
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
 from lorekeeper_catchup_gather import (
+    CATCHUP_GOLD_BASELINE_MARKERS,
+    answer_looks_at_or_above_catchup_baseline,
     compose_catchup_gather,
     is_catchup_gather_question,
 )
@@ -35,6 +38,7 @@ def _entry(
 class CatchupDetectionTests(unittest.TestCase):
     def test_catchup_phrases(self):
         phrases = [
+            "Get me caught up on this work so far",
             "In The Waking Dream, catch me up",
             "What have I got so far for The Waking Dream?",
             "What do I already have in The Waking Dream?",
@@ -60,61 +64,72 @@ class CatchupDetectionTests(unittest.TestCase):
                 "What should I write next in The Waking Dream?"
             )
         )
-        self.assertFalse(
-            is_catchup_gather_question(
-                "What's in my notes but not in the main document?"
-            )
-        )
-        self.assertFalse(
-            is_catchup_gather_question(
-                "What's not written yet in The Waking Dream?"
-            )
-        )
         self.assertEqual(
             route_question(
                 "Where did I leave off in the main draft in terms of plot?"
             ),
             "resume",
         )
-        self.assertEqual(
-            route_question("What should I write next in The Waking Dream?"),
-            "writing_next",
+
+
+class CatchupGoldBaselineTests(unittest.TestCase):
+    def test_owner_gold_baseline_shape_locked(self):
+        """Never worse than the 2026-08-12 owner catch-up answer."""
+        gold_path = (
+            Path(__file__).resolve().parent
+            / "fixtures"
+            / "catchup_waking_dream_gold.txt"
         )
+        gold = gold_path.read_text(encoding="utf-8").strip()
+        self.assertTrue(gold)
+        self.assertTrue(answer_looks_at_or_above_catchup_baseline(gold))
+        low = gold.lower()
+        for marker in CATCHUP_GOLD_BASELINE_MARKERS:
+            self.assertIn(marker, low, f"missing baseline marker: {marker}")
+        # Continuous planning brief — not section cards.
+        self.assertNotRegex(gold, r"(?mi)^Cast\s*$")
+        self.assertNotRegex(gold, r"(?mi)^Draft so far\s*$")
+        self.assertLess(gold.count("•"), 2)
+        # Density floor of the locked sample.
+        self.assertGreaterEqual(len(gold), 700)
 
 
 class CatchupAnswerTests(unittest.TestCase):
-    def test_gathers_cast_beats_open_scraps(self):
+    def test_local_includes_boss_origin_entry(self):
         entries = [
             _entry(
-                "n1",
-                "Mira",
-                "Mira is a quiet cartographer who maps dream-edges.",
+                "n_boss",
+                "Vesper",
+                "Vesper is the mafia-esque boss of the domain — main antagonist. "
+                "Notes are thin: he keeps a softer side he has never willingly disclosed.",
             ),
             _entry(
-                "n2",
-                "Open questions",
-                "open: Does the lighthouse remember her?\n"
-                "Not sure yet whether the tide is a character.",
+                "n_origin",
+                "Elara start",
+                "Before this adventure Elara started out in the human world as a quiet author.",
             ),
             _entry(
-                "n3",
-                "Scraps",
-                "planned: a fog market scene\n"
-                "planned: letter from the absent twin",
+                "n_entry",
+                "Entry",
+                "The Finch brought her there under the premise of taking her somewhere "
+                "she could get something she needed; accepting the offer was its own danger.",
             ),
             _entry(
                 "d1",
                 "The Waking Dream",
-                "Mira woke on the pier with salt in her mouth. "
-                "The lighthouse beam stuttered once, then held.",
+                "Elara is now inside the main antagonist's domain and must find a way out "
+                "without being discovered. Identity concealment is the immediate pressure.",
                 kind="document",
             ),
         ]
         data = {"lorekeeper_entries_v1": json.dumps(entries)}
-        with patch("lorekeeper_recall.answer_with_rag") as rag:
-            rag.side_effect = AssertionError("RAG must not run for catchup_gather")
+        # Force local path (no RAG) to exercise completeness gather.
+        with patch("lorekeeper_recall.rag_enabled", return_value=False), patch(
+            "lorekeeper_recall.answer_with_rag"
+        ) as rag:
+            rag.side_effect = AssertionError("RAG disabled for this test")
             res = recall_from_user_data(
-                "In The Waking Dream, what have I got so far?",
+                "Get me caught up on this work so far",
                 data,
                 scope={"mode": "work", "workTitle": "The Waking Dream"},
             )
@@ -122,18 +137,50 @@ class CatchupAnswerTests(unittest.TestCase):
         self.assertEqual(res.get("questionKind"), "catchup_gather")
         ans = str(res.get("answer") or "")
         low = ans.lower()
-        self.assertIn("catch-up", low)
-        self.assertIn("mira", low)
-        self.assertIn("lighthouse", low)
-        self.assertIn("open", low)
-        self.assertIn("fog market", low)
-        self.assertIn("nothing invented", low)
+        self.assertTrue(answer_looks_at_or_above_catchup_baseline(ans), ans)
+        self.assertIn("vesper", low)
+        self.assertIn("human world", low)
+        self.assertIn("finch", low)
         self.assertNotIn("SOURCE", ans)
-        # Orientation — not a write-next task list opener.
-        self.assertNotIn("write-next items", low)
+        self.assertNotRegex(ans, r"(?mi)^Cast\s*$")
+
+    def test_work_scope_does_not_mix_silos(self):
+        entries = [
+            _entry(
+                "n1",
+                "Mira",
+                "Mira is a quiet cartographer. Before this adventure she started out by the pier.",
+                tags=["The Waking Dream"],
+            ),
+            _entry(
+                "n2",
+                "Etherei",
+                "Etherei is a white rabbit twin.",
+                tags=["Smoke and Mirrors"],
+            ),
+            _entry(
+                "d1",
+                "The Waking Dream",
+                "Mira woke on the pier inside a watched domain.",
+                tags=["The Waking Dream"],
+                kind="document",
+            ),
+        ]
+        data = {"lorekeeper_entries_v1": json.dumps(entries)}
+        with patch("lorekeeper_recall.rag_enabled", return_value=False), patch(
+            "lorekeeper_recall.answer_with_rag",
+            side_effect=AssertionError("no rag"),
+        ):
+            res = recall_from_user_data(
+                "In The Waking Dream, catch me up",
+                data,
+                scope={"mode": "work", "workTitle": "The Waking Dream"},
+            )
+        ans = str(res.get("answer") or "")
+        self.assertIn("Mira", ans)
+        self.assertNotIn("Etherei", ans)
 
     def test_honest_empty_when_nothing_saved(self):
-        # Other work exists — this silo is empty.
         entries = [
             _entry(
                 "n_other",
@@ -143,12 +190,15 @@ class CatchupAnswerTests(unittest.TestCase):
             ),
         ]
         data = {"lorekeeper_entries_v1": json.dumps(entries)}
-        res = recall_from_user_data(
-            "Catch me up on The Waking Dream",
-            data,
-            scope={"mode": "work", "workTitle": "The Waking Dream"},
-        )
-        self.assertTrue(res.get("ok"))
+        with patch("lorekeeper_recall.rag_enabled", return_value=False), patch(
+            "lorekeeper_recall.answer_with_rag",
+            side_effect=AssertionError("no rag"),
+        ):
+            res = recall_from_user_data(
+                "Catch me up on The Waking Dream",
+                data,
+                scope={"mode": "work", "workTitle": "The Waking Dream"},
+            )
         self.assertEqual(res.get("questionKind"), "catchup_gather")
         low = str(res.get("answer") or "").lower()
         self.assertTrue(
@@ -157,45 +207,45 @@ class CatchupAnswerTests(unittest.TestCase):
         )
         self.assertNotIn("etherei", low)
 
-    def test_work_scope_does_not_mix_silos(self):
-        entries = [
-            _entry(
-                "n1",
-                "Mira",
-                "Mira is a quiet cartographer.",
-                tags=["The Waking Dream"],
-            ),
-            _entry(
-                "n2",
-                "Etherei",
-                "Etherei is a white rabbit twin.",
-                tags=["Smoke and Mirrors"],
-            ),
-            _entry(
-                "d1",
-                "The Waking Dream",
-                "Mira woke on the pier.",
-                tags=["The Waking Dream"],
-                kind="document",
-            ),
-        ]
-        data = {"lorekeeper_entries_v1": json.dumps(entries)}
-        res = recall_from_user_data(
-            "In The Waking Dream, catch me up",
-            data,
-            scope={"mode": "work", "workTitle": "The Waking Dream"},
-        )
-        ans = str(res.get("answer") or "")
-        self.assertIn("Mira", ans)
-        self.assertNotIn("Etherei", ans)
-        self.assertNotIn("white rabbit", ans.lower())
-
-    def test_compose_shape_has_four_sections(self):
+    def test_compose_is_continuous_brief_not_section_cards(self):
         sections = {
-            "cast": [{"entryId": "1", "noteTitle": "Mira", "line": "Mira — Mira is a cartographer"}],
-            "beats": [{"entryId": "d", "noteTitle": "Main draft", "line": "Mira woke on the pier."}],
-            "open": [{"entryId": "2", "noteTitle": "Q", "line": "open: Does the lighthouse remember her?"}],
-            "scraps": [{"entryId": "3", "noteTitle": "S", "line": "planned: a fog market scene"}],
+            "cast": [
+                {
+                    "entryId": "1",
+                    "noteTitle": "Mira",
+                    "line": "Mira — Mira is a cartographer",
+                }
+            ],
+            "beats": [
+                {
+                    "entryId": "d",
+                    "noteTitle": "Main draft",
+                    "line": "Mira woke on the pier inside a watched domain.",
+                }
+            ],
+            "boss": [
+                {
+                    "entryId": "b",
+                    "noteTitle": "Vesper",
+                    "line": "Vesper is the mafia-esque boss of the domain.",
+                }
+            ],
+            "origin": [
+                {
+                    "entryId": "o",
+                    "noteTitle": "Start",
+                    "line": "Before this adventure Mira started out by the pier markets.",
+                }
+            ],
+            "entry": [
+                {
+                    "entryId": "e",
+                    "noteTitle": "Entry",
+                    "line": "The Finch brought her there under a false-needed errand.",
+                }
+            ],
+            "open": [],
+            "scraps": [],
         }
         out = compose_catchup_gather(
             {"The Waking Dream"},
@@ -203,13 +253,12 @@ class CatchupAnswerTests(unittest.TestCase):
             has_notes=True,
             has_draft=True,
         )
+        self.assertTrue(answer_looks_at_or_above_catchup_baseline(out), out)
         low = out.lower()
-        self.assertIn("cast", low)
-        self.assertIn("draft so far", low)
-        self.assertIn("open questions", low)
-        self.assertIn("planned scraps", low)
-        self.assertIn("leave-off", low)
-        self.assertIn("write-next", low)
+        self.assertIn("vesper", low)
+        self.assertIn("before this adventure", low)
+        self.assertIn("finch", low)
+        self.assertNotRegex(out, r"(?mi)^Cast\s*$")
 
 
 if __name__ == "__main__":

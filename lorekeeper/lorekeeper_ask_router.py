@@ -195,7 +195,7 @@ def _normalize_plan(data: dict[str, Any], question: str = "") -> AskPlan:
     answer_model = str(data.get("answer_model") or "sonnet").strip().lower()
     if answer_model not in ("sonnet", "haiku"):
         answer_model = "sonnet"
-    if intent in ("summarize_story", "character_portrait", "story_resume", "relationship", "coverage"):
+    if intent in ("summarize_story", "character_portrait", "story_resume", "relationship", "coverage", "catchup_gather"):
         answer_model = "sonnet"
 
     kind = str(data.get("question_kind") or "topic").strip().lower()
@@ -394,7 +394,7 @@ def local_ask_plan(question: str) -> AskPlan | None:
         return AskPlan(
             intent="catchup_gather",
             pipeline="rag_summarize",
-            answer_model="haiku",
+            answer_model="sonnet",
             question_kind="catchup_gather",
             section=section_raw,
             router_engine="local",

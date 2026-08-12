@@ -279,9 +279,30 @@ Run **one row at a time** in Cursor. Don’t skip Phase 0 — it costs nothing a
 
 ## Your additions
 
-### Ask who-is voice / hook tone (pinned 2026-08-11) — **later upgrade**
+### Ask quality bar (owner pin — change anytime) — pinned 2026-08-12
 
-- [ ] **Voice-only pass on who-is** — keep every fact in the **Tenebris gold sample** (accuracy milestone below); soften rhythm so it feels more like the owner’s earlier essay-hook middle voice (engaging, not encyclopedia / too-factual stacks). Still librarian-only: restate notes + main draft; never invent. Do **not** trade accuracy for tone. Parked while owner works **plot summary accuracy** in a separate agent.
+**Easy to revisit:** edit or delete this block if the bar changes.
+
+**Target:** Ask LoreKeeper should be **accurate most of the time**. Smooth / on-task like movie Jarvis *efficiency* for LoreKeeper only — not a chatty persona, not omniscience.
+
+**When it falls short:** soft misses only — e.g. list incomplete, or a tiny detail skipped. Everything it *does* say stays true to the notes/draft.
+
+**Hard no:** inventing canon, mixing characters/works, or flipping facts. Wrong direction / wrong person is a fail, not a soft miss.
+
+**Honest ceiling:** perfect completeness forever is not the bar; “accurate when it speaks, thin when it doesn’t” is.
+
+### Ask multi-turn + voice (owner pin — far off) — pinned 2026-08-12
+
+**Easy to revisit:** edit or delete this block if the wish changes.
+
+**Eventually want (not soon):** short back-and-forth with Ask — e.g. “OK LK, give me the list for X” — still LoreKeeper-only, librarian-only, not a long chat buddy. Plus **spoken answers** (Siri-style voice out) when that feels natural.
+
+**Feasibility note:** multi-turn scoped to one Ask thread = later product work on top of today’s recall. Voice in/out = further out (browser speech / TTS wiring). Same accuracy bar as above; never invent.
+
+### Ask who-is voice / hook tone (pinned 2026-08-11; deepened 2026-08-12) — **later upgrade**
+
+- [ ] **Voice-only pass on who-is / cast cards** — keep every fact in the **Tenebris gold sample** (accuracy milestone below); soften rhythm so it feels more like the owner’s earlier essay-hook middle voice (engaging, not encyclopedia / too-factual stacks). Still librarian-only: restate notes + main draft; never invent. Do **not** trade accuracy for tone.
+- **2026-08-12 owner note:** Catch-up gather Ask already has a **better voice** than cast cards (planning-brief / orientation density). Target for who-is: bring cast cards toward that same readable brief voice — without stealing catch-up’s job, and without regressing the Tenebris gold lock. Parked while catch-up completeness and other Ask work continue; do not mix into a catch-up fix unless the owner opens a who-is voice pass.
 
 ### Ask opt-in “include writing tasks” (pinned 2026-08-11) — **later upgrade**
 
@@ -360,7 +381,8 @@ Run **one row at a time** in Cursor. Don’t skip Phase 0 — it costs nothing a
 - [x] **Catch-up / “what have I got so far?” Ask** — librarian-only restatement of notes + draft for a named work (or the open doc): cast, beats, open questions, planned scraps — enough to reorient, not a novel rewrite. Never invent. Useful when material is thin or the writer hasn’t looked in a while. (`lorekeeper_catchup_gather.py`; synthetic tests in `tests/test_catchup_gather.py`)
 - [x] Tone: planning brief / orientation (not who-is encyclopedia, not write-next task list alone). Complements leave-off when the draft is short, and notes-not-in-draft / writing-next when they want “what exists” before “what’s next.”
 - [x] Multi-draft awareness: work-scoped (story silo / search-in / named work) so one thin draft doesn’t mix with another.
-- [ ] Later deepen from Owner’s Office “It got this wrong” — lock an owner gold sample when the shape feels right.
+- [x] **Gold BASELINE locked (2026-08-12)** — owner answer to *Get me caught up on this work so far* is the **never-worse** voice/density floor. Machine lock: `lorekeeper/tests/fixtures/catchup_waking_dream_gold.txt` + `test_owner_gold_baseline_shape_locked`. Continuous planning-brief prose (not cast-card bullets / not Cast–Draft section cards). Later answers may add completeness; they must not lose this bar.
+- [x] **Completeness pass (2026-08-12)** — when notes/draft support it, catch-up must also surface: (1) named antagonist/boss even from sparse notes (not role-only when a name/detail exists); (2) where the protagonist started before the adventure; (3) how they ended up in the adventure. Librarian only; never invent. Sonnet RAG orientation prompt + local fallback.
 
 **Leave-off / main-draft plot — accuracy milestone (pinned 2026-08-11; gold sample updated same day):** Owner checked **excellent** for leave-off planning brief.
 

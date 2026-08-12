@@ -18,6 +18,7 @@ from lorekeeper_inference import (
 )
 from lorekeeper_situation import is_situation_question, situation_blocks_for_prompt
 from lorekeeper_story_position import draft_tail_prompt_block
+from lorekeeper_catchup_gather import catchup_prompt_block, is_catchup_gather_question
 from lorekeeper_allusion import allusion_lines_for_prompt, is_allusion_question
 from lorekeeper_reliability import (
     MaterialState,
@@ -89,6 +90,34 @@ WHAT TO OMIT:
 - Any "SOURCE N" / "[SOURCE N]" citation labels in the prose
 
 Use proper names from the cast list and sources. Concepts/places stay concepts — not people.
+"""
+
+_CATCHUP_ORIENTATION = """
+This is a CATCH-UP / ORIENTATION brief for a thin or early draft — the writer is reorienting after time away.
+
+VOICE (required — never worse than a strong leave-off planning brief):
+- Formal, professional, engaging librarian — continuous prose paragraphs
+- NOT bullet sections (no Cast / Draft so far / Open questions headers)
+- NOT who-is cast cards, NOT a write-next task list, NOT novel prose imitation
+- Dense, readable orientation — like a calm memo of what is already saved
+
+LENGTH: one or two tight paragraphs. Never a bullet farm. Never an encyclopedia dump.
+
+WHAT TO INCLUDE when sources support it (invent nothing; omit a slot only if truly absent):
+1. NOW — where the focal character is, active pressure, and the stakes of the current situation
+2. NAMED ANTAGONIST / BOSS — if notes or draft name the main antagonist, mafia-esque boss, or domain leader even sparsely, use that proper name and the little that is written; do not leave them as a role-only label when a name or concrete detail exists
+3. ORIGIN — where the focal character started before this adventure, when saved
+4. ENTRY — how they ended up in this adventure (who brought them, offer accepted/refused, crossing, premise), when saved
+5. Belief corrections when notes frame paranoia vs real threat — mirror the notes exactly
+
+WHAT TO OMIT:
+- Invented flesh for thin notes
+- Full cast-card rosters and relationship essays
+- Write-next task lists and advice about what to write
+- Any "SOURCE N" citation labels
+- Mixing other story silos
+
+If material is thin, still cover the slots you can and stay honest — never invent to fill gaps.
 """
 
 _SUMMARIZE = """
@@ -275,6 +304,14 @@ def _system_for_kind(
             parts.append(_RELATIONSHIP_ARC)
         else:
             parts.append(_RELATIONSHIP_CARD)
+    elif (
+        (plan and plan.intent == "catchup_gather")
+        or question_kind == "catchup_gather"
+        or is_catchup_gather_question(question)
+    ):
+        parts.append(_CATCHUP_ORIENTATION)
+    elif (plan and plan.pipeline == "rag_resume") or question_kind == "resume" or is_story_position_question(question):
+        parts.append(_STORY_POSITION)
     elif plan and plan.pipeline == "rag_summarize":
         parts.append(_SUMMARIZE)
     elif _uses_cast_card(question, question_kind, plan):
@@ -478,6 +515,7 @@ def _build_user_prompt(
     allusion_block = ""
     draft_hint = ""
     draft_tail_block = ""
+    catchup_block = ""
     if plan and plan.intent == "character_portrait":
         kind_hint = _CHARACTER_PORTRAIT + "\n"
     elif plan and plan.intent == "narrow_fact" and is_awareness_question(question):
@@ -519,6 +557,14 @@ def _build_user_prompt(
                         )
             else:
                 kind_hint += "; answer family/kinship ties only.\n"
+    elif (
+        (plan and plan.intent == "catchup_gather")
+        or question_kind == "catchup_gather"
+        or is_catchup_gather_question(question)
+    ):
+        kind_hint = _CATCHUP_ORIENTATION + "\n"
+        if scoped_entries:
+            catchup_block = catchup_prompt_block(scoped_entries, question)
     elif plan and plan.pipeline == "rag_summarize":
         kind_hint = _SUMMARIZE + "\n"
         try:
@@ -635,6 +681,7 @@ def _build_user_prompt(
     return (
         f"{work_line}"
         f"{kind_hint}"
+        f"{catchup_block}"
         f"{draft_tail_block}"
         f"{draft_hint}"
         f"{alias_block}"
