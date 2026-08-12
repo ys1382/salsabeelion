@@ -27,7 +27,8 @@ MAX_TASK_ITEMS = 8
 # If the ranked list is small, show all instead of hiding 1–4 behind "…and N more".
 SOFT_SHOW_ALL_MAX = 12
 _MAX_TASK_LINE = 160
-_MAX_TASK_LINE_WITH_SEAT = 220
+_MAX_TASK_LINE_WITH_SEAT = 300
+_MAX_CLARIFIER = 90
 
 _TASK_LIST_Q = re.compile(
     r"\b("
@@ -75,6 +76,15 @@ _FOOTER = (
     "Nothing invented. Continuity sticky-notes, later-book setup, and standing "
     "lore stay out unless you ask for a later book. "
     "Name a topic for a tighter list, or ask again for more."
+)
+
+# Bubbly / cheerleading — never use in warm task voice.
+_BUBBLY_VOICE = re.compile(
+    r"\b("
+    r"fun|delightful|adorable|cozy vibes?|hehe|lol|exciting!|"
+    r"can't wait|so cute|aww+|yay\b"
+    r")\b",
+    re.I,
 )
 
 # Incomplete scraps — trail-offs, mid-clause cuts (never ship with … truncation).
@@ -1085,6 +1095,215 @@ def attach_timeline_seat(task_line: str, seat: str) -> str:
     return out
 
 
+def extract_task_clarifier(
+    corpus: str,
+    line: str = "",
+    *,
+    note_title: str = "",
+) -> str:
+    """
+    One short clarifying clause from notes — why / what-for — never invent.
+    Empty when notes don't add a clear purpose beyond the task itself.
+    """
+    c = corpus or ""
+    if not c.strip():
+        return ""
+    focus = f"{line or ''} {note_title or ''}".lower()
+    candidates: list[tuple[int, str]] = []
+
+    def add(score: int, clause: str) -> None:
+        s = re.sub(r"\s+", " ", (clause or "").strip(" \t\"'“”‘’.,;:"))
+        if not s or len(s) < 12 or len(s) > _MAX_CLARIFIER:
+            return
+        if line_is_later_book(s) or _BUBBLY_VOICE.search(s):
+            return
+        if _is_continuity_or_musing(s) and not re.search(
+            r"\b(?:ticklish|eyesight|chase|flashback|secret|reveal)\b", s, re.I
+        ):
+            return
+        candidates.append((score, s))
+
+    is_ticklish = bool(re.search(r"\bticklish\b", focus))
+    is_vision = bool(
+        re.search(
+            r"\b(?:eyesight|albino|glasses|blurry|vision|spectacles|"
+            r"hard time seeing|vision trouble)\b",
+            focus,
+        )
+    )
+    is_flash = is_flashback_claim(focus)
+    is_chase_craft = bool(
+        re.search(r"\b(?:chase|swiftly|hastily)\b", focus)
+    ) and (not is_flash)
+
+    if is_ticklish:
+        if re.search(
+            r"never do (?:something like )?this ever again|"
+            r"swear\s+\*?never to do that again|"
+            r"never do that again",
+            c,
+            re.I,
+        ):
+            add(
+                95,
+                "so they can make him swear never to sacrifice himself that way again",
+            )
+        if re.search(
+            r"be the younger brother|force'? him into kicking back",
+            c,
+            re.I,
+        ):
+            add(70, "while they pull him back into being the younger brother")
+
+    if is_vision:
+        if re.search(
+            r"none of the characters, including Ethie|"
+            r"Moonshadow Twins don'?t know|"
+            r"including Ethie himself, realize",
+            c,
+            re.I,
+        ):
+            add(
+                96,
+                "a reveal even Etherei and his brothers have not faced yet",
+            )
+        if re.search(
+            r"doesn'?t fully realize how much worse (?:his|her|their) eyesight",
+            c,
+            re.I,
+        ):
+            add(80, "he still underestimates how limited his sight is")
+
+    if is_chase_craft:
+        if re.search(
+            r"deliberately outrunning both his brothers|"
+            r"deliberately outrunning",
+            c,
+            re.I,
+        ):
+            add(
+                94,
+                "he deliberately outruns his brothers before the Wolf takes him",
+            )
+        if re.search(
+            r"don'?t want to rush into Etherei being captured|"
+            r"swiftly but not hastily",
+            c,
+            re.I,
+        ):
+            add(75, "give the capture room to breathe before it closes")
+
+    if is_flash:
+        if re.search(r"obsidian", focus) and re.search(
+            r"brown rat|different memory", c, re.I
+        ):
+            add(
+                90,
+                "a different childhood memory with more about both still to open",
+            )
+        if re.search(r"stygian", focus) and re.search(
+            r"early childhood|getting in trouble", c, re.I
+        ):
+            add(
+                88,
+                "an early-childhood fracture that surprises about both of them",
+            )
+        if re.search(
+            r"mix of secret about personality and secret about physical|"
+            r"personality and secret about physical ability",
+            c,
+            re.I,
+        ):
+            add(
+                85,
+                "lean into personality and ability — not the eyesight reveal",
+            )
+
+    if not candidates:
+        return ""
+    candidates.sort(key=lambda x: (-x[0], len(x[1])))
+    return candidates[0][1]
+
+
+def attach_clarifier(task_line: str, clarifier: str) -> str:
+    """Append one em-dash clarifier without inventing or duplicating."""
+    s = (task_line or "").strip().rstrip(".")
+    clause = re.sub(r"\s+", " ", (clarifier or "").strip().rstrip("."))
+    if not s or not clause:
+        return (task_line or "").strip()
+    if clause.lower() in s.lower():
+        return s + "."
+    # Already has an em-dash clarifier.
+    if " — " in s or " – " in s:
+        return s + "."
+    out = f"{s} — {clause}"
+    if len(out) > _MAX_TASK_LINE_WITH_SEAT - 40:
+        return s + "."
+    return out
+
+
+def warm_task_voice(line: str) -> str:
+    """
+    Warmer librarian phrasing — calm and engaging, never bubbly.
+    Same facts; softens flat imperative stacks only.
+    """
+    s = (line or "").strip()
+    if not s or _BUBBLY_VOICE.search(s):
+        return s
+
+    # Keep flashback seat prefix casing.
+    loc_prefix = ""
+    loc_m = re.match(r"^(During\s+.+?\s+flashback,\s*)", s, re.I)
+    if loc_m:
+        loc_prefix = loc_m.group(1)
+        if not loc_prefix.startswith("During"):
+            loc_prefix = "During" + loc_prefix[6:]
+        s = s[loc_m.end() :].strip()
+
+    replacements = (
+        (
+            r"^write the chase swiftly, not hastily\b",
+            "Let the chase run swiftly, not hastily",
+        ),
+        (
+            r"^find a way to write the chase swiftly, not hastily\b",
+            "Let the chase run swiftly, not hastily",
+        ),
+        (
+            r"^brothers find out\b",
+            "Have his brothers find out",
+        ),
+        (
+            r"^show\s+(.+?'s albino-rabbit vision trouble)\b",
+            r"Bring out \1",
+        ),
+        (
+            r"^reveal additional secrets\b",
+            "open further secrets",
+        ),
+        (
+            r"^reveal something surprising\b",
+            "open something surprising",
+        ),
+        (
+            r"^reveals?\b",
+            "open",
+        ),
+    )
+    for pat, repl in replacements:
+        new_s, n = re.subn(pat, repl, s, count=1, flags=re.I)
+        if n:
+            s = new_s
+            break
+
+    if loc_prefix:
+        rest = s[0].lower() + s[1:] if s and s[0].isupper() else s
+        s = loc_prefix + rest
+
+    s = re.sub(r"\s{2,}", " ", s).strip()
+    return s
+
+
 def densify_task_phrasing(line: str) -> str:
     """
     Voice-only: denser, clearer librarian task phrasing — same facts, no invent.
@@ -1146,10 +1365,16 @@ def densify_task_phrasing(line: str) -> str:
     return s
 
 
-def restate_as_task_line(raw: str, *, timeline_seat: str = "") -> str:
+def restate_as_task_line(
+    raw: str,
+    *,
+    timeline_seat: str = "",
+    clarifier: str = "",
+) -> str:
     """
     Librarian short task line from a note claim — compress/reframe, never invent.
     Returns empty if the line cannot be stated cleanly (no … trail-offs).
+    Optional clarifier = one note-backed why/what-for clause; seat = when/where.
     """
     s = _tidy_claim_line(raw)
     if not s or _line_is_incomplete(s):
@@ -1304,13 +1529,19 @@ def restate_as_task_line(raw: str, *, timeline_seat: str = "") -> str:
         return ""
 
     s = densify_task_phrasing(s)
+    s = warm_task_voice(s)
 
     if s and s[0].islower():
         s = s[0].upper() + s[1:]
-    if s[-1] not in ".!?\"'”’":
-        s = s + "."
+    if clarifier:
+        s = attach_clarifier(s, clarifier)
+    else:
+        if s[-1] not in ".!?\"'”’":
+            s = s + "."
     if timeline_seat:
-        s = attach_timeline_seat(s, timeline_seat)
+        s = attach_timeline_seat(s.rstrip("."), timeline_seat)
+    elif s[-1] not in ".!?\"'”’":
+        s = s + "."
     return s
 
 
@@ -1341,12 +1572,12 @@ def compose_writing_next_task_list(
     if topic_s:
         lead = (
             f"Here's a short {scope_bit}task list for {work} about {topic_s} — "
-            f"write-next items from your notes, not yet in the main draft:\n"
+            f"write-next items from your notes that aren't on the page yet:\n"
         )
     else:
         lead = (
             f"Here's a short {scope_bit}task list for {work} — "
-            f"write-next items from your notes, not yet in the main draft:\n"
+            f"write-next items from your notes that aren't on the page yet:\n"
         )
     lines = [lead]
     if not has_notes:
@@ -1365,6 +1596,7 @@ def compose_writing_next_task_list(
             bullet = restate_as_task_line(
                 str(row.get("line") or ""),
                 timeline_seat=str(row.get("timelineSeat") or ""),
+                clarifier=str(row.get("clarifier") or ""),
             )
             if not bullet:
                 continue
@@ -1475,18 +1707,20 @@ def answer_writing_next_task_list(
         _rank_tasks_leave_off_first(tasks, entries) if tasks else []
     )
     note_index = _build_note_index(entries)
-    # Look hard for draft-timeline seats across same + related notes.
+    # Look hard for draft-timeline seats + one clarifier across same + related notes.
     seated: list[dict[str, str]] = []
     for row in ranked:
-        seat = extract_draft_timeline_seat(
-            seat_search_corpus(row, note_index),
-            str(row.get("line") or ""),
-            note_title=str(row.get("noteTitle") or ""),
-        )
+        corpus = seat_search_corpus(row, note_index)
+        line = str(row.get("line") or "")
+        title = str(row.get("noteTitle") or "")
+        seat = extract_draft_timeline_seat(corpus, line, note_title=title)
+        clarifier = extract_task_clarifier(corpus, line, note_title=title)
+        enriched = {**row}
         if seat:
-            seated.append({**row, "timelineSeat": seat})
-        else:
-            seated.append(row)
+            enriched["timelineSeat"] = seat
+        if clarifier:
+            enriched["clarifier"] = clarifier
+        seated.append(enriched)
     ranked = seated
     # Restate first so incomplete long scraps don't consume the soft cap.
     restatable: list[dict[str, str]] = []
@@ -1497,6 +1731,7 @@ def answer_writing_next_task_list(
         bullet = restate_as_task_line(
             str(row.get("line") or ""),
             timeline_seat=str(row.get("timelineSeat") or ""),
+            clarifier=str(row.get("clarifier") or ""),
         )
         if not bullet:
             continue

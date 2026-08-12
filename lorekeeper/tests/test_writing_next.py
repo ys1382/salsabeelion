@@ -16,6 +16,7 @@ from lorekeeper_writing_next import (
     is_writing_next_task_list_question,
     line_is_later_book,
     restate_as_task_line,
+    warm_task_voice,
     wants_later_book_scope,
 )
 
@@ -697,7 +698,7 @@ class WritingNextAnswerTests(unittest.TestCase):
         craft = restate_as_task_line(
             "He keeps running (find a way to write the chase swiftly but not hastily)."
         )
-        self.assertTrue(craft.lower().startswith("write the chase"))
+        self.assertTrue(craft.lower().startswith("let the chase run"))
         self.assertIn("swiftly, not hastily", craft.lower())
         self.assertNotIn("find a way", craft.lower())
 
@@ -706,24 +707,114 @@ class WritingNextAnswerTests(unittest.TestCase):
             "with his eyesight."
         )
         self.assertIn("albino-rabbit vision trouble", vision.lower())
+        self.assertTrue(
+            vision.lower().startswith("bring out")
+            or "bring out" in vision.lower()
+        )
         self.assertNotIn("/", vision)
 
         fb = densify_task_phrasing(
             "During Obsidian's flashback, different memory and reveals additional "
             "secrets about Etherei and Obsidian himself"
         )
-        self.assertIn("reveal additional secrets about Etherei and Obsidian", fb)
-        self.assertNotIn("different memory", fb.lower())
-        self.assertNotIn("himself", fb.lower())
+        warmed = warm_task_voice(fb)
+        self.assertIn("open further secrets about Etherei and Obsidian", warmed)
+        self.assertNotIn("different memory", warmed.lower())
+        self.assertNotIn("himself", warmed.lower())
 
         fb2 = densify_task_phrasing(
             "During Stygian's flashback, reveals something surprising about "
             "Etherei and about Stygian"
         )
+        warmed2 = warm_task_voice(fb2)
         self.assertIn(
-            "reveal something surprising about etherei and stygian", fb2.lower()
+            "open something surprising about etherei and stygian", warmed2.lower()
         )
-        self.assertNotIn("and about", fb2.lower())
+        self.assertNotIn("and about", warmed2.lower())
+
+    def test_etherei_voice_adds_clarifiers_and_warmth(self):
+        entries = [
+            _entry(
+                "n1",
+                "Etherei's age",
+                "So I'm thinking his brothers force him into kicking back after they "
+                "catch up to Serias and rescue Etherei. Note: I was thinking the "
+                '"never again" thing could include discovering that Etherei is '
+                "ticklish and that's how they get him to swear never to do that "
+                "again. Ever.",
+            ),
+            _entry(
+                "n2",
+                "Etherei's Eyesight",
+                "Tenebris mentions that Etherei, as an albino, might have trouble "
+                "with his eyesight.",
+            ),
+            _entry(
+                "n3",
+                "Etherei's Blurry Sight Revealed",
+                "None of the characters, including Ethie himself, realize that he "
+                "has trouble with his eyesight when he's not wearing glasses. So "
+                "i'm thinking that's a revelation that happens at the Cheshire "
+                "Cat's quarters, after Etherei is captured.",
+            ),
+            _entry(
+                "n4",
+                "Etherei Captured: More Notes",
+                "When Serias shows up, Etherei begins to run faster--deliberately "
+                "outrunning both his brothers and the Wolf, but not the latter for "
+                "long. He keeps running for a bit (find a way to write the chase "
+                "swiftly but not hastily) and then the Wolf scoops him up.",
+            ),
+            _entry(
+                "n5",
+                "POV order",
+                "As Stygian is giving chase, he begins having a fractured/shattered "
+                "flashback regarding Etherei getting in trouble during Ethie's early "
+                "childhood, a flashback that reveals something surprising about "
+                "Etherei and about Stygian.\n"
+                "Obsidian has a fractured-shattered flashback similar to Stygian's, "
+                "but different memory and reveals additional secrets about Etherei "
+                "and Obsidian himself. I think the trouble is Etherei getting "
+                "attacked by brown rats.\n"
+                "POV Order of Events after Etherei spots Serias.\n"
+                "I was thinking something of a mix of secret about personality and "
+                "secret about physical ability/disadvantage, discluding Etherei's "
+                "inability to see well because that is a revelation set for a later "
+                "event.",
+            ),
+            _entry(
+                "d1",
+                "Draft",
+                "Obsidian staggered as a fractured flashback of childhood hit him. "
+                "Stygian also broke into a shattered flashback on the chase. "
+                "Etherei ran the mountain path.",
+                kind="document",
+            ),
+        ]
+        res = recall_from_user_data(
+            "In Smoke and Mirrors, task list for Etherei",
+            {"lorekeeper_entries_v1": json.dumps(entries)},
+        )
+        answer = res.get("answer") or ""
+        low = answer.lower()
+        self.assertIn("let the chase run swiftly, not hastily", low)
+        self.assertIn("deliberately outruns", low)
+        self.assertIn("ticklish", low)
+        self.assertIn("swear never", low)
+        self.assertIn("albino-rabbit vision trouble", low)
+        self.assertIn("have not faced yet", low)
+        self.assertIn("cheshire", low)
+        self.assertIn("during obsidian's flashback", low)
+        self.assertIn("during stygian's flashback", low)
+        self.assertIn("—", answer)
+        self.assertNotIn("find a way to write", low)
+        self.assertNotIn("different memory", low)
+        self.assertNotIn("serias respects", low)
+        self.assertNotIn("without glasses and struggling", low)
+        self.assertNotRegex(low, r"\b(fun|delightful|adorable|yay)\b")
+        self.assertEqual(low.count("albino-rabbit vision"), 1)
+        # Still digestible: blank line between bullets.
+        self.assertRegex(answer, r"• .+\n\n• ")
 
     def test_etherei_voice_keeps_gold_beats_with_denser_phrasing(self):
         entries = [
@@ -783,18 +874,17 @@ class WritingNextAnswerTests(unittest.TestCase):
         )
         answer = res.get("answer") or ""
         low = answer.lower()
-        self.assertIn("write the chase swiftly, not hastily", low)
+        self.assertIn("chase", low)
+        self.assertIn("swiftly, not hastily", low)
         self.assertIn("ticklish", low)
         self.assertIn("albino-rabbit vision trouble", low)
         self.assertIn("cheshire", low)
         self.assertIn("during obsidian's flashback", low)
         self.assertIn("during stygian's flashback", low)
-        self.assertIn("reveal", low)
         self.assertNotIn("find a way to write", low)
         self.assertNotIn("different memory", low)
         self.assertNotIn("serias respects", low)
         self.assertNotIn("without glasses and struggling", low)
-        # One vision family bullet only.
         self.assertEqual(low.count("albino-rabbit vision"), 1)
 
 

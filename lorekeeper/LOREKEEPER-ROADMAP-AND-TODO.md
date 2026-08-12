@@ -315,34 +315,35 @@ Run **one row at a time** in Cursor. Don’t skip Phase 0 — it costs nothing a
 
 **Owner note (2026-08-11):** Who-is **accuracy** is parked as good enough for now (gold sample above). Writing-next / leave-off plot work continues in this pass. Who-is **voice/hook** upgrade stays later — do not mix it into the plot pass.
 
-**Writing-next task list Ask — accuracy + completeness + draft-timeline seats + voice (pinned 2026-08-11 night; voice densified same night):** Owner checked **really good** for Etherei cast task list (gold sample below). Do **not** regress this bar.
+**Writing-next task list Ask — accuracy + completeness + draft-timeline seats + voice (pinned 2026-08-11 night; clarifiers + warm tone 2026-08-11 late):** Owner checked **really good** for Etherei cast task list (gold sample below). Do **not** regress this bar.
 
 - Q: *Give me the task list for Etherei.* (story silo / search-in = Smoke and Mirrors)
-- **Gold sample (keep this shape — accurate/relevant bullets + main-draft timeline seats when notes say where; one vision beat only; denser librarian phrasing):**
+- **Gold sample (keep this shape — accurate/relevant bullets + one note-backed clarifier when present + main-draft timeline seats; one vision beat only; warm librarian phrasing, not bubbly):**
 
-  > Here's a short task list for Smoke and Mirrors about etherei — write-next items from your notes, not yet in the main draft:
+  > Here's a short task list for Smoke and Mirrors about etherei — write-next items from your notes that aren't on the page yet:
   >
-  > • Write the chase swiftly, not hastily (during the Serias capture chase).
+  > • Let the chase run swiftly, not hastily — he deliberately outruns his brothers before the Wolf takes him (during the Serias capture chase).
   >
-  > • Brothers find out Etherei is ticklish (after brothers rescue Etherei from Serias).
+  > • Have his brothers find out Etherei is ticklish — so they can make him swear never to sacrifice himself that way again (after brothers rescue Etherei from Serias).
   >
-  > • Show Etherei's albino-rabbit vision trouble (at the Cheshire Cat’s quarters, after Etherei is captured).
+  > • Bring out Etherei's albino-rabbit vision trouble — a reveal even Etherei and his brothers have not faced yet (at the Cheshire Cat’s quarters, after Etherei is captured).
   >
-  > • During Obsidian's flashback, reveal additional secrets about Etherei and Obsidian (during the chase after Etherei spots Serias).
+  > • During Obsidian's flashback, open further secrets about Etherei and Obsidian — a different childhood memory with more about both still to open (during the chase after Etherei spots Serias).
   >
-  > • During Stygian's flashback, reveal something surprising about Etherei and Stygian (during the chase after Etherei spots Serias).
+  > • During Stygian's flashback, open something surprising about Etherei and Stygian — an early-childhood fracture that surprises about both of them (during the chase after Etherei spots Serias).
   >
   > — Short write-next tasks restated from your notes vs draft only. Nothing invented. Continuity sticky-notes, later-book setup, and standing lore stay out unless you ask for a later book. Name a topic for a tighter list, or ask again for more.
 
-- Must keep: Etherei-centered write-next only; chase craft OK; ticklish + albino vision when unused in notes; twin flashback **secret-reveal polish** with **edit seat** (During Obsidian’s / Stygian’s flashback) + **draft-timeline seat** when notes name it; blank line between bullets; **one** vision/glasses family bullet (prefer Cheshire-quarters seat — do not twin with “without glasses / Wolf brings him to Tenebris”); denser imperative librarian phrasing (no “find a way,” no “different memory and reveals,” no slash twin on vision); no other-cast attitude (`Serias respects…`); no later-book preyfolk musings; no invented chores or invented seats; leave-off + Tenebris who-is untouched.
-- Rules still in force: line-level ownership (not title-only); later-book lines stay off current lists; librarian restates; look across related notes for timeline seats — don’t invent.
+- Must keep: Etherei-centered write-next only; chase craft OK; ticklish + albino vision when unused in notes; twin flashback **secret-reveal polish** with **edit seat** + **draft-timeline seat** when notes name it; **one clarifying clause** from notes when purpose/what-for is written (em-dash); blank line between bullets; **one** vision/glasses family bullet (Cheshire-quarters); warmer / less flat librarian voice (**not** bubbly); no inventing; no other-cast attitude; no later-book mush; leave-off + Tenebris who-is untouched.
+- Rules still in force: line-level ownership (not title-only); later-book lines stay off current lists; librarian restates; look across related notes for seats + clarifiers — don’t invent.
 
-**Follow-ups for a future agent (this gold already includes completeness + location + voice):**
+**Follow-ups for a future agent (this gold already includes completeness + location + voice/clarifiers):**
 - [x] Completeness: unused Etherei facts still missing from lists when present in notes (owner examples: brothers learn he’s ticklish; albino-rabbit vision difficulty) — surface as write-next when dramatizable / unused, without bringing back mush
 - [x] Location: restated polish bullets should name **where** the planned edit sits (e.g. during Obsidian/Stygian flashback beat) when the note says so
 - [x] Location (2026-08-11 night): draft-timeline seats on write-next tasks when notes name the beat (rescue / capture chase / Cheshire quarters / etc.) — look across related notes; don’t invent
 - [x] Vision family dedupe: collapse albino-eyesight + lost-glasses twins; keep Cheshire-quarters seat
-- [x] Voice/tone (2026-08-11 night): denser task phrasing — imperative craft/reveal lines; drop scrap glue (“find a way,” “different memory and,” vision slash twin) without inventing or loosening filters
+- [x] Voice/tone (2026-08-11 night): denser task phrasing — imperative craft/reveal lines; drop scrap glue
+- [x] Voice/clarifiers (2026-08-11 late): warmer (not bubbly) phrasing + one note-backed clarifying clause per bullet when notes say why/what-for; still digestible one-liners
 
 **Leave-off / main-draft plot — accuracy milestone (pinned 2026-08-11; gold sample updated same day):** Owner checked **excellent** for leave-off planning brief.
 
