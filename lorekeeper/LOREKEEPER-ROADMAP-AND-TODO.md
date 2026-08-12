@@ -314,13 +314,14 @@ Run **one row at a time** in Cursor. Don’t skip Phase 0 — it costs nothing a
 
 **Owner note (2026-08-11):** Who-is **accuracy** is parked as good enough for now (gold sample above). Writing-next / leave-off plot work continues in this pass. Who-is **voice/hook** upgrade stays later — do not mix it into the plot pass.
 
-**Writing-next task list Ask (shipped 2026-08-11; filter tightened same evening — candidate until owner golds it):**
+**Writing-next task list Ask (updated 2026-08-11 evening — candidate until owner golds it):**
 
-- Q shapes: *task list* / *what should I write next?* / *task list for [topic]*
-- Compare chosen story’s notes vs main draft; list **write-next** unused material only (librarian — no invented chores)
-- Keep: dramatizable unused lore (reveals, scenes, powers/conditions, Court/chase beats, secret bitterness you might *show*)
-- Drop: continuity sticky-notes (awareness/feels-until-a-beat), author musings, mid-trail-off scraps, soft standing lore
-- Shape: short bullets (cap ~8), leave-off-adjacent first, topic filter when named
+- Q shapes: *task list* / *what should I write next?* / *task list for [topic]* / *task list for later book*
+- Compare chosen story’s notes vs main draft; list **near write-next** only (librarian restates short task lines — no note paste, no inventing)
+- Keep: dramatizable unused gaps (chase craft, flashbacks to write, secret bitterness you might *show*, untouched mysteries)
+- Drop: continuity sticky-notes, author musings, mid-trail-off scraps, soft standing lore
+- Drop **later-book / eventual far-horizon** lines from the current list when the note says so (e.g. “doesn’t happen until a later book”); only surface those when the ask is later-book scoped
+- Soft-show all when ≤12 items; blank line between bullets; never ship `…` mid-cut bullets
 - Classic *notes not in draft* phrasing stays its own route
 - Do **not** regress leave-off gold or Tenebris who-is while tuning this
 

@@ -13,6 +13,9 @@ from lorekeeper_writing_next import (
     compose_writing_next_task_list,
     extract_writing_next_topic,
     is_writing_next_task_list_question,
+    line_is_later_book,
+    restate_as_task_line,
+    wants_later_book_scope,
 )
 
 
@@ -111,7 +114,8 @@ class WritingNextAnswerTests(unittest.TestCase):
         self.assertIn("task list", answer.lower())
         self.assertIn("•", answer)
         self.assertIn("character d", answer.lower())
-        self.assertIn("predator court", answer.lower())
+        self.assertIn("resents", answer.lower())
+        self.assertIn("court", answer.lower())
         self.assertNotIn("SOURCE", answer)
 
     def test_topic_filter_keeps_chase_only(self):
@@ -233,7 +237,7 @@ class WritingNextAnswerTests(unittest.TestCase):
             _entry(
                 "n2",
                 "Still open",
-                "Need to write Character E's secret bitterness about the Court reveal later.",
+                "Need to write Character E's secret bitterness about the Court load.",
             ),
             _entry(
                 "d1",
@@ -336,6 +340,18 @@ class WritingNextAnswerTests(unittest.TestCase):
                 "Character E is known by the name Chroniker by the Cat."
             )
         )
+        self.assertFalse(
+            claim_is_write_next_task(
+                "However, I think he misunderstands the tension between Predators "
+                "and Preyfolk; he thinks that the Predators have ordered the Prey around."
+            )
+        )
+        self.assertFalse(
+            claim_is_write_next_task(
+                "Also something in Character E's expression should hint at his knowledge "
+                "that the Cat does not want him dead even while he's fleeing."
+            )
+        )
         self.assertTrue(
             claim_is_write_next_task(
                 "Character D cares for Character T but resents him for not helping "
@@ -347,6 +363,80 @@ class WritingNextAnswerTests(unittest.TestCase):
                 "The chase scene needs a snapped bridge rope over the gorge."
             )
         )
+        later = (
+            "Character E set in motion the eventual reveal that Preyfolk of this "
+            "Dimension are just like those in the other world — this does not happen "
+            "until a later book."
+        )
+        self.assertTrue(line_is_later_book(later))
+        self.assertFalse(claim_is_write_next_task(later))
+        self.assertTrue(
+            claim_is_write_next_task(later, allow_later_book=True)
+        )
+        self.assertTrue(wants_later_book_scope("task list for later book"))
+
+    def test_drops_later_book_from_current_task_list(self):
+        entries = [
+            _entry(
+                "n1",
+                "Far reveal",
+                "So Character E, by being discovered, set in motion the eventual reveal "
+                "that Preyfolk of this Dimension are just like the others — this does "
+                "not happen until a later book.",
+            ),
+            _entry(
+                "n2",
+                "Near craft",
+                "Need to write the chase swiftly but not hastily so Character E "
+                "earns respect from the larger predator through stamina.",
+            ),
+            _entry(
+                "d1",
+                "Draft",
+                "They crossed the plaza at noon without speaking.",
+                kind="document",
+            ),
+        ]
+        res = recall_from_user_data(
+            "In Smoke and Mirrors, task list for Character E",
+            {"lorekeeper_entries_v1": json.dumps(entries)},
+        )
+        answer = (res.get("answer") or "").lower()
+        self.assertNotIn("eventual reveal", answer)
+        self.assertNotIn("preyfolk of this dimension", answer)
+        self.assertIn("chase", answer)
+
+    def test_restate_has_no_ellipsis_trailoff(self):
+        long_ok = (
+            "Need to write Character E's secret bitterness about Court political "
+            "pressures after the manor arrival."
+        )
+        out = restate_as_task_line(long_ok)
+        self.assertTrue(out)
+        self.assertNotIn("…", out)
+        self.assertFalse(
+            restate_as_task_line(
+                "So Character E set in motion the eventual reveal that Preyfolk "
+                "of this Dimension are just…"
+            )
+        )
+
+    def test_soft_show_all_when_list_is_small(self):
+        from lorekeeper_writing_next import SOFT_SHOW_ALL_MAX, _select_tasks_for_display
+
+        ranked = [
+            {"entryId": str(i), "noteTitle": "n", "line": f"unique-task-line-{i}"}
+            for i in range(SOFT_SHOW_ALL_MAX)
+        ]
+        shown, hidden = _select_tasks_for_display(ranked)
+        self.assertEqual(len(shown), SOFT_SHOW_ALL_MAX)
+        self.assertEqual(hidden, 0)
+        ranked_over = ranked + [
+            {"entryId": "x", "noteTitle": "n", "line": "unique-task-line-extra"}
+        ]
+        shown2, hidden2 = _select_tasks_for_display(ranked_over)
+        self.assertEqual(len(shown2), MAX_TASK_ITEMS)
+        self.assertEqual(hidden2, len(ranked_over) - MAX_TASK_ITEMS)
 
     def test_local_only_no_rag(self):
         entries = [
