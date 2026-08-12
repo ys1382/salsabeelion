@@ -96,6 +96,9 @@ _LATER_BOOK = re.compile(
     r"(?:a\s+)?(?:later|future|next)|"
     r"not\s+until\s+(?:a\s+)?(?:later|future)\s+book|"
     r"until\s+(?:likely\s+)?a\s+later\s+book|"
+    r"not\s+(?:in|for)\s+(?:the\s+)?first\s+book|"
+    r"(?:meant|appear|appears|happens?)\s+.{0,24}(?:later\s+(?:on\s+)?(?:in\s+)?(?:the\s+)?series|later\s+book)|"
+    r"later\s+on\s+in\s+the\s+series|"
     r"later\s+in\s+the\s+series|"
     r"eventual(?:ly)?(?:\s+\([^)]*\))?\s+reveal|"
     r"set\s+in\s+motion\s+the\s+eventual|"
@@ -253,6 +256,19 @@ def extract_writing_next_topic(question: str) -> str:
     return extract_notes_not_in_draft_subject(q)
 
 
+_STRICT_CRAFT = re.compile(
+    r"\b("
+    r"need(?:s)?\s+to\s+(?:write|draft)|"
+    r"find a way to write|"
+    r"should\s+(?:write|draft)|"
+    r"still\s+(?:need|have)\s+to\s+(?:write|draft)|"
+    r"must be written|scene needs|write the|"
+    r"haven'?t specified|not yet specified"
+    r")\b",
+    re.I,
+)
+
+
 def topic_looks_like_cast(topic: str) -> bool:
     """True for character-ish topics (Etherei), false for chase/Court themes."""
     t = (topic or "").strip()
@@ -271,42 +287,63 @@ def _other_cast_attitude_about_subject(line: str, subject: str) -> bool:
     name = _primary_name_token(subject)
     if not s or not name or len(name) < 3:
         return False
-    m = _OTHER_CAST_ATTITUDE.match(s)
+    # Any OtherName <attitude> Subject — start or mid-line.
+    m = re.search(
+        rf"\b([A-Za-z][\w'-]+)\s+"
+        rf"(?:respects?|admires?|resents?|fears?|hates?|loves?|trusts?|"
+        rf"thinks?|feels?|believes?)\s+"
+        rf"(?:that\s+)?(?:the\s+)?{re.escape(name)}\b",
+        s,
+        re.I,
+    )
     if not m:
-        # Also mid-line: "Meanwhile Serias respects Etherei"
-        m = re.search(
-            rf"\b([A-Z][\w'-]+)\s+"
-            rf"(?:respects?|admires?|resents?|fears?|hates?|loves?|trusts?|"
-            rf"thinks?|feels?|believes?)\s+"
-            rf"(?:that\s+)?(?:the\s+)?{re.escape(name)}\b",
-            s,
-        )
-        if not m:
-            return False
-        other = m.group(1)
-    else:
-        other = m.group(1)
-    if other.lower() == name.lower():
         return False
-    # Attitude line must also mention the subject as object.
-    if not re.search(rf"\b{re.escape(name)}\b", s, re.I):
+    other = m.group(1)
+    if other.lower() == name.lower():
         return False
     return True
 
 
-def _craft_centers_on_subject(line: str, subject: str) -> bool:
-    """Write/chase craft that clearly involves the subject as the one being written."""
+def _reveals_about_subject(line: str, subject: str) -> bool:
+    """Twin flashback / polish that reveals secrets about the asked cast member."""
+    s = (line or "").strip()
+    name = _primary_name_token(subject)
+    if not s or not name or len(name) < 3:
+        return False
+    if not re.search(rf"\b{re.escape(name)}\b", s, re.I):
+        return False
+    return bool(
+        re.search(
+            rf"\b(?:reveal\w*|secrets?)\b.{{0,80}}\b{re.escape(name)}\b|"
+            rf"\b{re.escape(name)}\b.{{0,60}}\b(?:secret|secrets|reveal\w*)\b",
+            s,
+            re.I,
+        )
+    )
+
+
+def _strict_craft_for_subject(
+    line: str, subject: str, *, note_title: str = ""
+) -> bool:
+    """
+    Explicit write/draft craft for this cast task list.
+    Requires strict craft wording — not bare 'chase/power' keywords.
+    Name can be in the line, or the note title is this cast (chase craft on
+    Etherei's card without repeating the name).
+    """
     s = (line or "").strip()
     name = _primary_name_token(subject)
     if not s or not name:
         return False
-    if not _DRAMATIZABLE.search(s):
-        return False
-    if not re.search(rf"\b{re.escape(name)}\b", s, re.I):
+    if not _STRICT_CRAFT.search(s):
         return False
     if _other_cast_attitude_about_subject(s, subject):
         return False
-    return True
+    if re.search(rf"\b{re.escape(name)}\b", s, re.I):
+        return True
+    if note_title and _title_is_about_subject(note_title, subject):
+        return True
+    return False
 
 
 def filter_unused_by_topic(
@@ -314,8 +351,8 @@ def filter_unused_by_topic(
 ) -> list[dict[str, str]]:
     """
     Keep unused claims that match the asked topic.
-    Cast topics: Etherei as actor/focus — not mere mention or other-cast attitude.
-    Thematic topics: subject hits plus soft token overlap.
+    Cast topics: each LINE must be about the subject (not note-title alone
+    for lore dumps). Title may only unlock strict craft lines on that card.
     """
     topic_s = (topic or "").strip()
     if not topic_s:
@@ -329,10 +366,14 @@ def filter_unused_by_topic(
             line = str(row.get("line") or "")
             if _other_cast_attitude_about_subject(line, topic_s):
                 continue
+            if line_is_later_book(line):
+                continue
             keep = (
-                _title_is_about_subject(title, topic_s)
-                or _claim_is_about_subject(line, topic_s)
-                or _craft_centers_on_subject(line, topic_s)
+                _claim_is_about_subject(line, topic_s)
+                or _reveals_about_subject(line, topic_s)
+                or _strict_craft_for_subject(
+                    line, topic_s, note_title=title
+                )
             )
             if not keep:
                 continue
@@ -501,18 +542,8 @@ def _flashback_already_in_draft(line: str, draft_norm: str) -> bool:
         return False
     for name in re.findall(r"\b([A-Z][\w'-]{2,})\b", line or ""):
         low = name.lower()
-        if low in {
-            "the",
-            "and",
-            "both",
-            "as",
-            "obsidian",
-            "stygian",
-            "etherei",
-            "character",
-        }:
-            # Still check named twins / etherei against draft proximity.
-            pass
+        if low in {"the", "and", "both", "as", "character"}:
+            continue
         if low not in draft_norm:
             continue
         if re.search(
@@ -525,17 +556,14 @@ def _flashback_already_in_draft(line: str, draft_norm: str) -> bool:
             draft_norm,
         ):
             return True
-    # Generic flashback language already present + this line is a flashback task.
-    return bool(
-        re.search(r"\b(fractured|shattered)\s*-?\s*flashback\b", draft_norm, re.I)
-        or re.search(r"\bflashback\b", draft_norm, re.I)
-    )
+    # Do not treat an unrelated draft flashback as completing this note.
+    return False
 
 
 def shrink_partly_done_flashback_line(line: str, draft_norm: str) -> str:
     """
-    If the flashback itself is already drafted, keep only unused secret-reveal
-    polish leftover. Empty string = drop the whole line.
+    If the flashback itself is already drafted, keep unused secret-reveal polish.
+    Never drop a flashback note that still calls for reveals/secrets.
     """
     s = (line or "").strip()
     if not s or not re.search(r"\bflashback\b", s, re.I):
@@ -546,6 +574,7 @@ def shrink_partly_done_flashback_line(line: str, draft_norm: str) -> str:
         r"((?:and\s+)?reveals?\s+additional\s+secrets?\s+about[^.!]*)",
         r"(reveal(?:s|ing)?\s+(?:a\s+)?secrets?\s+about[^.!]*)",
         r"(reveals?\s+additional\s+secrets?[^.!]*)",
+        r"((?:different\s+memory\s+and\s+)?reveals?\s+[^.!]*)",
     ):
         m = re.search(pat, s, re.I)
         if not m:
@@ -553,7 +582,11 @@ def shrink_partly_done_flashback_line(line: str, draft_norm: str) -> str:
         chunk = _tidy_claim_line(m.group(1))
         if chunk and not _claim_touched_for_task_list(chunk, draft_norm):
             return chunk
-    # Flashback done; no clear unused reveal leftover.
+    # Still has reveal/secret work — keep the line (do not erase polish tasks).
+    if re.search(r"\b(secret|secrets|reveal\w*)\b", s, re.I):
+        if not _claim_touched_for_task_list(s, draft_norm):
+            return s
+    # Pure flashback already on the page — drop.
     return ""
 
 

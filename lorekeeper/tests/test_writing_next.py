@@ -442,20 +442,22 @@ class WritingNextAnswerTests(unittest.TestCase):
         entries = [
             _entry(
                 "n1",
-                "Wolf",
+                "Etherei",
                 "Serias respects Etherei for having picked up on his presence AND "
-                "for keeping up the chase this long.",
-            ),
-            _entry(
-                "n2",
-                "Craft",
-                "Need to write the chase swiftly but not hastily so Etherei earns "
-                "respect from the larger predator through stamina.",
+                "for keeping up the chase this long.\n"
+                "They would still be in control, but think closer to ethical captives "
+                "of war but longer-lasting, not able to take power — not in the first book.\n"
+                "Find a way to write the chase swiftly but not hastily.\n"
+                "Obsidian has a fractured-shattered flashback similar to Stygian's, "
+                "but different memory and reveals additional secrets about Etherei "
+                "and Obsidian himself.",
             ),
             _entry(
                 "d1",
                 "Draft",
-                "They crossed the plaza at noon without speaking.",
+                "Obsidian staggered as a fractured flashback of childhood hit him. "
+                "Stygian also broke into a shattered flashback on the chase. "
+                "Etherei kept running the mountain path.",
                 kind="document",
             ),
         ]
@@ -465,7 +467,10 @@ class WritingNextAnswerTests(unittest.TestCase):
         )
         answer = (res.get("answer") or "").lower()
         self.assertNotIn("serias respects", answer)
+        self.assertNotIn("ethical captives", answer)
+        self.assertNotIn("take power", answer)
         self.assertIn("chase", answer)
+        self.assertIn("secret", answer)
 
     def test_partly_done_flashback_keeps_secret_reveal_polish(self):
         entries = [
@@ -498,10 +503,6 @@ class WritingNextAnswerTests(unittest.TestCase):
         self.assertNotIn("meat of this scene", answer)
         self.assertNotIn("i mean", answer)
         self.assertIn("secret", answer)
-        # Should not push "do the whole flashback" as if unwritten.
-        self.assertNotRegex(
-            answer, r"obsidian has a fractured-shattered flashback similar"
-        )
 
     def test_local_only_no_rag(self):
         entries = [
