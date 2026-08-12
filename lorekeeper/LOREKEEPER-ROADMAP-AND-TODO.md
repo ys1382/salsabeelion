@@ -314,15 +314,28 @@ Run **one row at a time** in Cursor. Don’t skip Phase 0 — it costs nothing a
 
 **Owner note (2026-08-11):** Who-is **accuracy** is parked as good enough for now (gold sample above). Writing-next / leave-off plot work continues in this pass. Who-is **voice/hook** upgrade stays later — do not mix it into the plot pass.
 
-**Writing-next task list Ask (updated 2026-08-11 evening — candidate until owner golds it):**
+**Writing-next task list Ask — accuracy milestone (pinned 2026-08-11 evening):** Owner checked **entirely accurate and relevant** for Etherei cast task list (gold sample below). Do **not** regress this bar.
 
-- Q shapes: *task list* / *what should I write next?* / *task list for [topic]* / *task list for later book*
-- Compare chosen story’s notes vs main draft; list **near write-next** only (librarian restates short task lines — no note paste, no inventing)
-- Keep: dramatizable unused gaps (chase craft, flashbacks to write, secret bitterness you might *show*, untouched mysteries)
-- Drop: continuity sticky-notes, author musings, mid-trail-off scraps, soft standing lore
-- Drop **later-book / eventual far-horizon** lines from the current list when the note says so (e.g. “doesn’t happen until a later book”); only surface those when the ask is later-book scoped
-- Cast topics (`task list for Etherei`): Etherei-centered write-next only — drop other-cast attitude musings (e.g. Serias respects Etherei) and author mush
-- Partly drafted beats: if a flashback is already in the draft, keep only unused leftover polish (e.g. secret-reveals), not “do the flashback again”
+- Q: *Give me the task list for Etherei.* (story silo / search-in = Smoke and Mirrors)
+- **Gold sample (keep this accuracy — every bullet relevant; no Serias-attitude / preyfolk later-series / continuity mush):**
+
+  > Here's a short task list for Smoke and Mirrors about etherei — write-next items from your notes, not yet in the main draft:
+  >
+  > • Find a way to write the chase swiftly but not hastily.
+  >
+  > • Reveals something surprising about Etherei and about Stygian.
+  >
+  > • Different memory and reveals additional secrets about Etherei and Obsidian himself.
+  >
+  > — Short write-next tasks restated from your notes vs draft only. Nothing invented. Continuity sticky-notes, later-book setup, and standing lore stay out unless you ask for a later book. Name a topic for a tighter list, or ask again for more.
+
+- Must keep: Etherei-centered write-next only; chase craft OK; twin flashback **secret-reveal polish** about Etherei OK; blank line between bullets; no other-cast attitude (`Serias respects…`); no later-book preyfolk musings; no invented chores; leave-off + Tenebris who-is untouched.
+- Rules still in force: line-level ownership (not title-only); later-book lines stay off current lists; librarian restates (voice/tone polish is a **later** upgrade).
+
+**Follow-ups for a future agent (not this gold — accuracy first, then completeness/location):**
+- [ ] Completeness: unused Etherei facts still missing from lists when present in notes (owner examples: brothers learn he’s ticklish; albino-rabbit vision difficulty) — surface as write-next when dramatizable / unused, without bringing back mush
+- [ ] Location: restated polish bullets should name **where** the planned edit sits (e.g. during Obsidian/Stygian flashback beat) when the note says so
+- [ ] Voice/tone: denser task phrasing once completeness+location feel right (owner parked tone until next milestone)
 
 **Leave-off / main-draft plot — accuracy milestone (pinned 2026-08-11; gold sample updated same day):** Owner checked **excellent** for leave-off planning brief.
 
