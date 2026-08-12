@@ -1244,51 +1244,61 @@ def attach_clarifier(task_line: str, clarifier: str) -> str:
 
 def warm_task_voice(line: str) -> str:
     """
-    Warmer librarian phrasing — calm and engaging, never bubbly.
-    Same facts; softens flat imperative stacks only.
+    Deprecated path — plan-recall framing is applied via frame_plan_recall.
+    Keep as a no-op-ish densify cleanup for unit tests that still call it.
+    """
+    return plan_recall_core(line)
+
+
+def task_beat_kind(line: str) -> str:
+    """Classify a densified/core task line for plan-recall framing."""
+    s = (line or "").lower()
+    if re.search(r"\bflashback\b", s):
+        return "flashback"
+    if re.search(r"\bticklish\b", s):
+        return "ticklish"
+    if re.search(
+        r"albino-rabbit vision|vision trouble|without glasses|lost-glasses",
+        s,
+    ):
+        return "vision"
+    if re.search(r"\bchase\b|swiftly|hastily", s):
+        return "chase"
+    return "generic"
+
+
+def plan_recall_core(line: str) -> str:
+    """
+    Strip mellow/command openers down to a neutral task core (facts only).
     """
     s = (line or "").strip()
-    if not s or _BUBBLY_VOICE.search(s):
+    if not s:
         return s
 
-    # Keep flashback seat prefix casing.
     loc_prefix = ""
-    loc_m = re.match(r"^(During\s+.+?\s+flashback,\s*)", s, re.I)
+    loc_m = re.match(r"^(During\s+(.+?)\s+flashback,\s*)", s, re.I)
     if loc_m:
         loc_prefix = loc_m.group(1)
-        if not loc_prefix.startswith("During"):
-            loc_prefix = "During" + loc_prefix[6:]
         s = s[loc_m.end() :].strip()
 
+    # Undo prior soft / command voices → neutral cores.
     replacements = (
-        (
-            r"^write the chase swiftly, not hastily\b",
-            "Let the chase run swiftly, not hastily",
-        ),
-        (
-            r"^find a way to write the chase swiftly, not hastily\b",
-            "Let the chase run swiftly, not hastily",
-        ),
-        (
-            r"^brothers find out\b",
-            "Have his brothers find out",
-        ),
-        (
-            r"^show\s+(.+?'s albino-rabbit vision trouble)\b",
-            r"Bring out \1",
-        ),
-        (
-            r"^reveal additional secrets\b",
-            "open further secrets",
-        ),
-        (
-            r"^reveal something surprising\b",
-            "open something surprising",
-        ),
-        (
-            r"^reveals?\b",
-            "open",
-        ),
+        (r"^let the chase run swiftly, not hastily\b", "the chase runs swiftly, not hastily"),
+        (r"^write the chase swiftly, not hastily\b", "the chase runs swiftly, not hastily"),
+        (r"^find a way to write the chase swiftly, not hastily\b", "the chase runs swiftly, not hastily"),
+        (r"^ensure the chase runs swiftly, not hastily\b", "the chase runs swiftly, not hastily"),
+        (r"^have his brothers find out\b", "his brothers find out"),
+        (r"^brothers find out\b", "his brothers find out"),
+        (r"^show his brothers discovering\b", "his brothers find out"),
+        (r"^bring out\s+", ""),
+        (r"^show\s+", ""),
+        (r"^open further secrets\b", "further secrets"),
+        (r"^reveal additional secrets\b", "further secrets"),
+        (r"^open something surprising\b", "something surprising"),
+        (r"^reveal something surprising\b", "something surprising"),
+        (r"^open\s+", ""),
+        (r"^reveal\s+", ""),
+        (r"^write\s+", ""),
     )
     for pat, repl in replacements:
         new_s, n = re.subn(pat, repl, s, count=1, flags=re.I)
@@ -1296,12 +1306,139 @@ def warm_task_voice(line: str) -> str:
             s = new_s
             break
 
+    s = re.sub(r"\s{2,}", " ", s).strip(" ,.")
     if loc_prefix:
-        rest = s[0].lower() + s[1:] if s and s[0].isupper() else s
-        s = loc_prefix + rest
-
-    s = re.sub(r"\s{2,}", " ", s).strip()
+        # Keep owner name for flashback framing later.
+        s = loc_prefix + (s[0].lower() + s[1:] if s and s[0].isupper() else s)
     return s
+
+
+def _flashback_owner(line: str) -> str:
+    m = re.match(r"^During\s+(.+?)'s\s+flashback\b", line or "", re.I)
+    if m:
+        return m.group(1).strip()
+    m = re.match(r"^During\s+(.+?)\s+flashback\b", line or "", re.I)
+    if m:
+        return m.group(1).strip()
+    return ""
+
+
+def frame_plan_recall(line: str, *, you_lead: bool, you_variant: int = 0) -> str:
+    """
+    Mirror the writer's plan — not commands, not mellow soft opens.
+    you_lead True → starts with You…; False → scene-led (For … / Your notes…).
+    """
+    raw = (line or "").strip()
+    if not raw or _BUBBLY_VOICE.search(raw):
+        return raw
+
+    core = plan_recall_core(raw)
+    kind = task_beat_kind(core)
+    owner = _flashback_owner(core)
+
+    # Peel flashback prefix from core body.
+    body = core
+    loc_m = re.match(r"^During\s+.+?\s+flashback,\s*", body, re.I)
+    if loc_m:
+        body = body[loc_m.end() :].strip()
+    body = body[0].lower() + body[1:] if body and body[0].isupper() else body
+    body = body.rstrip(".")
+
+    if kind == "chase":
+        if re.search(r"swiftly|hastily", core, re.I):
+            if you_lead:
+                if you_variant % 2 == 0:
+                    return "You wanted the chase to run swiftly, not hastily"
+                return "You were planning for the chase to run swiftly, not hastily"
+            return "For the chase scene, your plan was to keep it swift, not hastily"
+        # Other chase-scene craft — keep the specific note beat.
+        if you_lead:
+            if you_variant % 2 == 0:
+                return f"You wanted to {body}"
+            return f"You were planning to {body}"
+        return f"For the chase scene, your notes call for {body}"
+
+    if kind == "ticklish":
+        # Normalize to "his brothers find out X is ticklish"
+        m = re.search(
+            r"(?:his )?brothers find out\s+(.+?\s+is\s+ticklish)",
+            core,
+            re.I,
+        )
+        bit = m.group(1) if m else "Etherei is ticklish"
+        if you_lead:
+            if you_variant % 2 == 0:
+                return f"You wanted his brothers to find out {bit}"
+            return f"You were planning for his brothers to find out {bit}"
+        return f"Your notes call for his brothers finding out {bit}"
+
+    if kind == "vision":
+        m = re.search(
+            r"((?:Etherei|[\w'-]+)'s albino-rabbit vision trouble|albino-rabbit vision trouble)",
+            core,
+            re.I,
+        )
+        bit = m.group(1) if m else "albino-rabbit vision trouble"
+        if you_lead:
+            if you_variant % 2 == 0:
+                return f"You wanted to bring out {bit}"
+            return f"You were planning to show {bit}"
+        return f"For the vision beat, your notes call for showing {bit}"
+
+    if kind == "flashback":
+        who = owner or "the"
+        # Always scene-led opener (does not start with You) — "you meant" sits mid-line.
+        if re.search(r"further secrets|additional secrets", body, re.I):
+            return (
+                f"For {who}'s flashback, you meant to open further secrets "
+                + re.sub(
+                    r"^(?:further secrets|additional secrets)\s*",
+                    "",
+                    body,
+                    flags=re.I,
+                ).strip()
+            )
+        if re.search(r"something surprising", body, re.I):
+            return (
+                f"For {who}'s flashback, you meant to open something surprising "
+                + re.sub(r"^something surprising\s*", "", body, flags=re.I).strip()
+            )
+        return f"For {who}'s flashback, you meant to {body}"
+
+    # Generic
+    if you_lead:
+        if you_variant % 2 == 0:
+            return f"You wanted to {body}"
+        return f"You were planning to {body}"
+    return f"Your notes call for {body}"
+
+
+def assign_plan_recall_frames(bullets: list[str]) -> list[str]:
+    """
+    Stagger You-led lines: at least two non-You openers before the next You…
+    Flashbacks always use For … you meant (non-You start).
+    Chase prefers For the chase scene, your plan was… (non-You start).
+    """
+    out: list[str] = []
+    # Allow a You-led line early when the beat fits; still enforce a 2-gap after.
+    since_you = 2
+    you_variant = 0
+    for bullet in bullets:
+        kind = task_beat_kind(plan_recall_core(bullet))
+        force_non_you = kind in {"flashback", "chase"}
+        allow_you = (not force_non_you) and since_you >= 2
+        you_lead = bool(allow_you and kind in {"ticklish", "vision", "generic"})
+
+        framed = frame_plan_recall(
+            bullet, you_lead=you_lead, you_variant=you_variant
+        )
+        if re.match(r"^you\b", framed or "", re.I):
+            since_you = 0
+            you_variant += 1
+        else:
+            since_you += 1
+        out.append(framed)
+    return out
 
 
 def densify_task_phrasing(line: str) -> str:
@@ -1529,7 +1666,7 @@ def restate_as_task_line(
         return ""
 
     s = densify_task_phrasing(s)
-    s = warm_task_voice(s)
+    # Plan-recall framing is applied in compose (needs list-wide You stagger).
 
     if s and s[0].islower():
         s = s[0].upper() + s[1:]
@@ -1541,6 +1678,37 @@ def restate_as_task_line(
     if timeline_seat:
         s = attach_timeline_seat(s.rstrip("."), timeline_seat)
     elif s[-1] not in ".!?\"'”’":
+        s = s + "."
+    return s
+
+
+def _split_task_bullet_parts(bullet: str) -> tuple[str, str, str]:
+    """Split densified bullet into (core, clarifier, seat)."""
+    s = (bullet or "").strip().rstrip(".")
+    seat = ""
+    clarifier = ""
+    m = re.search(r"\s*\(([^)]+)\)\s*$", s)
+    if m:
+        seat = m.group(1).strip()
+        s = s[: m.start()].rstrip()
+    if " — " in s:
+        core, clarifier = s.split(" — ", 1)
+        clarifier = clarifier.strip()
+    else:
+        core = s
+    return core.strip(), clarifier, seat
+
+
+def _join_task_bullet_parts(core: str, clarifier: str, seat: str) -> str:
+    """Reassemble framed core + clarifier + seat."""
+    s = (core or "").strip().rstrip(".")
+    if not s:
+        return ""
+    if clarifier:
+        s = f"{s} — {clarifier.strip().rstrip('.')}"
+    if seat:
+        s = f"{s} ({seat.strip().rstrip('.')})"
+    if s[-1] not in ".!?\"'”’":
         s = s + "."
     return s
 
@@ -1592,6 +1760,7 @@ def compose_writing_next_task_list(
     elif items:
         first = True
         bullet_count = 0
+        prepared: list[tuple[str, str, str]] = []
         for row in items:
             bullet = restate_as_task_line(
                 str(row.get("line") or ""),
@@ -1600,9 +1769,15 @@ def compose_writing_next_task_list(
             )
             if not bullet:
                 continue
+            prepared.append(_split_task_bullet_parts(bullet))
+        framed_cores = assign_plan_recall_frames([c for c, _cl, _se in prepared])
+        for framed, (_core, clarifier, seat) in zip(framed_cores, prepared):
+            out = _join_task_bullet_parts(framed, clarifier, seat)
+            if not out:
+                continue
             if not first:
                 lines.append("")  # one blank line between bullets
-            lines.append(f"• {bullet}")
+            lines.append(f"• {out}")
             first = False
             bullet_count += 1
         if first:

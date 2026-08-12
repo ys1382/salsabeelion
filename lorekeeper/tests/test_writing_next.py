@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import re
 import unittest
 from unittest.mock import patch
 
@@ -9,14 +10,16 @@ from lorekeeper_recall import recall_from_user_data
 from lorekeeper_work_recall import route_question
 from lorekeeper_writing_next import (
     MAX_TASK_ITEMS,
+    assign_plan_recall_frames,
     claim_is_write_next_task,
     compose_writing_next_task_list,
     densify_task_phrasing,
     extract_writing_next_topic,
+    frame_plan_recall,
     is_writing_next_task_list_question,
     line_is_later_book,
+    plan_recall_core,
     restate_as_task_line,
-    warm_task_voice,
     wants_later_book_scope,
 )
 
@@ -698,39 +701,65 @@ class WritingNextAnswerTests(unittest.TestCase):
         craft = restate_as_task_line(
             "He keeps running (find a way to write the chase swiftly but not hastily)."
         )
-        self.assertTrue(craft.lower().startswith("let the chase run"))
         self.assertIn("swiftly, not hastily", craft.lower())
         self.assertNotIn("find a way", craft.lower())
+        framed_chase = frame_plan_recall(craft, you_lead=False)
+        self.assertTrue(framed_chase.lower().startswith("for the chase scene"))
+        self.assertIn("your plan was", framed_chase.lower())
 
         vision = restate_as_task_line(
             "Tenebris mentions that Etherei, as an albino, might have trouble "
             "with his eyesight."
         )
         self.assertIn("albino-rabbit vision trouble", vision.lower())
-        self.assertTrue(
-            vision.lower().startswith("bring out")
-            or "bring out" in vision.lower()
-        )
         self.assertNotIn("/", vision)
+        framed_v = frame_plan_recall(vision, you_lead=True)
+        self.assertTrue(framed_v.lower().startswith("you "))
+        self.assertRegex(framed_v.lower(), r"you (wanted|were planning)")
 
         fb = densify_task_phrasing(
             "During Obsidian's flashback, different memory and reveals additional "
             "secrets about Etherei and Obsidian himself"
         )
-        warmed = warm_task_voice(fb)
-        self.assertIn("open further secrets about Etherei and Obsidian", warmed)
-        self.assertNotIn("different memory", warmed.lower())
-        self.assertNotIn("himself", warmed.lower())
+        core = plan_recall_core(fb)
+        framed = frame_plan_recall(core, you_lead=False)
+        self.assertTrue(framed.lower().startswith("for obsidian's flashback"))
+        self.assertIn("you meant to", framed.lower())
+        self.assertNotIn("different memory", framed.lower())
+        self.assertNotIn("himself", framed.lower())
 
         fb2 = densify_task_phrasing(
             "During Stygian's flashback, reveals something surprising about "
             "Etherei and about Stygian"
         )
-        warmed2 = warm_task_voice(fb2)
-        self.assertIn(
-            "open something surprising about etherei and stygian", warmed2.lower()
-        )
-        self.assertNotIn("and about", warmed2.lower())
+        framed2 = frame_plan_recall(plan_recall_core(fb2), you_lead=False)
+        self.assertTrue(framed2.lower().startswith("for stygian's flashback"))
+        self.assertIn("you meant to", framed2.lower())
+        self.assertNotIn("and about", framed2.lower())
+
+    def test_plan_recall_staggers_you_openers(self):
+        cores = [
+            "Write the chase swiftly, not hastily",
+            "Brothers find out Etherei is ticklish",
+            "Show Etherei's albino-rabbit vision trouble",
+            "During Obsidian's flashback, reveal additional secrets about Etherei "
+            "and Obsidian",
+            "During Stygian's flashback, reveal something surprising about Etherei "
+            "and Stygian",
+        ]
+        framed = assign_plan_recall_frames(cores)
+        starts_you = [bool(re.match(r"^you\b", f, re.I)) for f in framed]
+        # At least two non-You lines between any You… openers.
+        last_you = None
+        for i, is_you in enumerate(starts_you):
+            if is_you:
+                if last_you is not None:
+                    self.assertGreaterEqual(i - last_you - 1, 2)
+                last_you = i
+        joined = " ".join(framed).lower()
+        self.assertIn("for the chase scene, your plan was", joined)
+        self.assertIn("you meant to", joined)
+        self.assertTrue(any(starts_you))  # still uses some You… plan recall
 
     def test_etherei_voice_adds_clarifiers_and_warmth(self):
         entries = [
@@ -797,24 +826,38 @@ class WritingNextAnswerTests(unittest.TestCase):
         )
         answer = res.get("answer") or ""
         low = answer.lower()
-        self.assertIn("let the chase run swiftly, not hastily", low)
+        self.assertIn("for the chase scene, your plan was", low)
         self.assertIn("deliberately outruns", low)
         self.assertIn("ticklish", low)
         self.assertIn("swear never", low)
         self.assertIn("albino-rabbit vision trouble", low)
         self.assertIn("have not faced yet", low)
         self.assertIn("cheshire", low)
-        self.assertIn("during obsidian's flashback", low)
-        self.assertIn("during stygian's flashback", low)
+        self.assertIn("for obsidian's flashback, you meant to", low)
+        self.assertIn("for stygian's flashback, you meant to", low)
+        self.assertRegex(low, r"you (wanted|were planning)")
         self.assertIn("—", answer)
         self.assertNotIn("find a way to write", low)
+        self.assertNotIn("let the chase", low)
+        self.assertNotIn("have his brothers find out", low)
+        self.assertNotIn("bring out etherei", low)
         self.assertNotIn("different memory", low)
         self.assertNotIn("serias respects", low)
         self.assertNotIn("without glasses and struggling", low)
         self.assertNotRegex(low, r"\b(fun|delightful|adorable|yay)\b")
         self.assertEqual(low.count("albino-rabbit vision"), 1)
-        # Still digestible: blank line between bullets.
         self.assertRegex(answer, r"• .+\n\n• ")
+        # You-stack guard on displayed bullets.
+        starts = []
+        for line in answer.splitlines():
+            if line.startswith("• "):
+                starts.append(bool(re.match(r"• you\b", line, re.I)))
+        last = None
+        for i, is_you in enumerate(starts):
+            if is_you:
+                if last is not None:
+                    self.assertGreaterEqual(i - last - 1, 2)
+                last = i
 
     def test_etherei_voice_keeps_gold_beats_with_denser_phrasing(self):
         entries = [
@@ -875,12 +918,12 @@ class WritingNextAnswerTests(unittest.TestCase):
         answer = res.get("answer") or ""
         low = answer.lower()
         self.assertIn("chase", low)
-        self.assertIn("swiftly, not hastily", low)
+        self.assertIn("swift", low)
         self.assertIn("ticklish", low)
         self.assertIn("albino-rabbit vision trouble", low)
         self.assertIn("cheshire", low)
-        self.assertIn("during obsidian's flashback", low)
-        self.assertIn("during stygian's flashback", low)
+        self.assertIn("obsidian's flashback", low)
+        self.assertIn("stygian's flashback", low)
         self.assertNotIn("find a way to write", low)
         self.assertNotIn("different memory", low)
         self.assertNotIn("serias respects", low)
