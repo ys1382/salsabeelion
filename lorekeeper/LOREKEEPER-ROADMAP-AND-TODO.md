@@ -314,11 +314,14 @@ Run **one row at a time** in Cursor. Don’t skip Phase 0 — it costs nothing a
 
 **Owner note (2026-08-11):** Who-is **accuracy** is parked as good enough for now (gold sample above). Writing-next / leave-off plot work continues in this pass. Who-is **voice/hook** upgrade stays later — do not mix it into the plot pass.
 
-**Leave-off / main-draft plot — accuracy milestone (pinned 2026-08-11):** Owner checked **100% accurate** for:
+**Leave-off / main-draft plot — accuracy milestone (pinned 2026-08-11; gold sample updated same day):** Owner checked **excellent** for leave-off planning brief.
 
 - Q: *Where did I leave of[f] in the main draft in terms of plot?*
-- Gold shape: short **planning brief** of the **latest draft beat** — formal librarian voice (engaging, not novel prose); who is doing what to whom; active stakes / what the focal character thinks awaits them; belief corrections **mirrored from notes** (incorrect when notes say wrong; incomplete/partly right when notes say they’re right to fear X but wrong about the form); short just-before lead-in (capture, brothers outstripped, destination, escape attempts) — **not** sensory fluff, **not** an infodump, **never** leaked `SOURCE N` labels.
-- Do **not** regress to fake work titles (“Nothing is tagged ‘The Main Draft…’”) or scrap dumps.
+- **Gold sample (keep this shape — do not regress):**
+
+  > The draft leaves off with Etherei in Serias the Wolf's grasp, being carried down the mountain path after having deliberately sacrificed himself to draw the Wolf away from his brothers, Obsidian and Stygian. In the immediate lead-in, Etherei had outrun his brothers — despite a badly injured leg — by bolting sideways before they could stop him, ensuring Serias would follow him alone. The active pressure at the draft's tail is Etherei's dread of what Lord Tenebris intends for him, and his belief that Tenebris means to make a punishing example of a "White Rabbit" who dared display sentience. That belief is **incorrect**: the notes make clear Tenebris's intention is not punishment but fascinated study, and that upon arrival Etherei will be baffled to find himself treated as a guest rather than a prisoner. The destination is Tenebris's quarters, and what lies between the current moment on the mountain path and that arrival remains, per the notes, an open gap the writer has not yet drafted.
+
+- Must keep: formal planning-brief voice (not novel prose); NOW + just-before sacrifice/brothers; stakes/belief; belief framed **incorrect** when notes say so (other cases may be incomplete/partly right — mirror notes); destination; honest open gap if notes say so; **no** `SOURCE N` leaks; **no** fake work titles; **no** infodump.
 - Typo tolerance: “leave of” / “left of” should still route as leave-off when paired with main draft / plot.
 
 **Still careful:** Shared Ask brain (recall + compose + ranking/focus) means plot work can fight who-is scrubbing. Prefer plot as its **own** pass; do **not** loosen who-is “no plot dump” guards to make plot answers look better. Do **not** regress the Tenebris gold sample **or** this leave-off gold shape.
