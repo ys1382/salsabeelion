@@ -292,11 +292,11 @@ Run **one row at a time** in Cursor. Don’t skip Phase 0 — it costs nothing a
 **Checkpoint shipped** (~`4e38d6c` and related who-is work): “Who is X?” answers are **on-subject and accurate** from notes + draft — librarian only, no inventing.
 
 **Live bar (owner-checked — keep these shapes):**
-- **Tenebris** (owner **very accurate** Ask success 2026-08-11 afternoon; prior pins 2026-08-10/11) — treat the following live answer as the **gold who-is sample** (essay-hook, librarian only, do not regress):
+- **Tenebris** (owner locked **2026-08-11 night** — “fine just the way it is”; prior pins 2026-08-10/11) — treat the following live answer as the **gold who-is sample**. **Do not change wording or sentence order.** Machine lock: `lorekeeper/tests/fixtures/tenebris_who_is_gold.txt` + `test_who_is_tenebris_gold_locked` — must stay green.
 
   > In Smoke And Mirrors, Tenebris is the main antagonist, Baron of Cheshire, and the Cheshire Cat from Alice in Wonderland, with Etherei as the subject of his fascination. Duke Dijon is his third cousin, with whom he shares a relationship that is cold on the surface but more complicated — Duke Dijon is among the few cats he does not grudge, and both care; unbeknownst to him, his staying out of Court politics leaves Duke Dijon with a heavier load. His mother is from here, but his father is a Domestic Cat from another realm, with whether he is a Faeble too still open — and other cats gave him the cold shoulder because that father was an outsider. He is personally disgusted by Predator Court politics, and does not realize how much political influence he holds. He has mixed parentage, and is not entirely of this world. Lord Tenebris of Cheshire is a faeble with social rank — not a king or emperor.
 
-  Must keep: role/open first; Etherei fascination when noted; Dijon third cousin + cold-on-surface / few-cats-without-grudge / both-care + **Court-load (unbeknownst)**; mother here + father Domestic Cat from another realm + Faeble still open — **never** “parent stock”; cold shoulder for outsider father; Court disgust + unrealized influence; mixed parentage + not entirely of this world; faeble social rank. **Not** Umber POV; **not** Dijon cousin twice; **not** unnamed-parent scraps; **not** choppy short stacks.
+  Must keep: role/open first; Etherei fascination when noted; Dijon third cousin + cold-on-surface / few-cats-without-grudge / both-care + **Court-load (unbeknownst)**; mother here + father Domestic Cat from another realm + Faeble still open — **never** “parent stock”; cold shoulder for outsider father; Court disgust + unrealized influence; mixed parentage + not entirely of this world; faeble social rank. **Not** Umber POV; **not** Dijon cousin twice; **not** unnamed-parent scraps; **not** choppy short stacks. **Not** title-glue (“Tenebris In Smoke…”) or Dijon/parents leading.
 - **Platinus** — protagonist, twin/brother Titanem, aka Cypher Prism → Palladiar, faction against Galloxidor; **not** birth-name rename dump
 - **Elham** — protagonist, young woman, author — accurate; deepen with concealment / opposition / draft situation when present (2026-08-10 who-is depth pass)
 
@@ -304,10 +304,11 @@ Run **one row at a time** in Cursor. Don’t skip Phase 0 — it costs nothing a
 
 **Regression rules for later agents:**
 - Do **not** trade this accuracy for longer answers
+- Do **not** edit `tenebris_who_is_gold.txt` or soften `test_who_is_tenebris_gold_locked` without owner OK in that conversation
 - Still reject knower POV (“X thinks that Y…”), rename infodumps as the whole card, and unrelated scene scraps
-- Treat the **Tenebris gold sample** above as the current depth+accuracy baseline for standing relations, fairy-tale origin, parents, antagonist/fascination, Dijon clarifying, cold-shoulder heritage, and draft+notes politics stance when present
+- Treat the **Tenebris gold sample** above as the current depth+accuracy **and sentence-order** baseline for standing relations, fairy-tale origin, parents, antagonist/fascination, Dijon clarifying, cold-shoulder heritage, and draft+notes politics stance when present
 - Who-is must use **main draft + notes** for standing cast facts — not notes-only
-- Essay-hook **order**: lead with role/open (“In Work, Name is…”); parents late — never mother/father first
+- Essay-hook **order**: lead with role/open (“In Work, Name is…”); parents late — never mother/father first; never Dijon before the open
 - Next goals (separate tasks): (1) voice/hook upgrade without losing the gold sample; (2) bring other cast cards up to that same accuracy bar **without** breaking the pins above
 
 ### Plot relation / plot summary accuracy — timing (pinned 2026-08-10; owner opened plot work 2026-08-11)

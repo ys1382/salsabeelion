@@ -3159,6 +3159,9 @@ def _order_who_is_gold_sentences(label: str, sentences: list[str]) -> list[str]:
     """
     Essay-hook order: role/open → cousin/care → parents → politics →
     mixed parentage → faeble/rank → rest. Never invent; only reorder.
+
+    Locked against the Tenebris gold sample
+    (tests/fixtures/tenebris_who_is_gold.txt) — do not loosen without owner OK.
     """
     kept = [s for s in sentences if (s or "").strip()]
     if len(kept) < 2:

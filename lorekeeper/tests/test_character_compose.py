@@ -1766,6 +1766,98 @@ class CharacterComposeTests(unittest.TestCase):
         self.assertNotIn("prism", answer)
         self.assertNotIn("palladiar", answer)
 
+    def test_who_is_tenebris_gold_locked(self):
+        """
+        Owner-locked Tenebris who-is gold (2026-08-11 night).
+
+        Fixture is the exact live answer. Focus/scrub must not rearrange or
+        glue the cast-card title onto the open. Scrambled order must restore.
+        """
+        from pathlib import Path
+
+        from lorekeeper_answer_focus import focus_ask_response, scrub_rag_artifacts
+        from lorekeeper_character_compose import (
+            smooth_who_is_prose,
+            strip_who_is_cast_card_header,
+        )
+
+        gold_path = (
+            Path(__file__).resolve().parent
+            / "fixtures"
+            / "tenebris_who_is_gold.txt"
+        )
+        gold_body = gold_path.read_text(encoding="utf-8").strip()
+        gold_sents = [
+            s.strip() for s in re.split(r"(?<=[.!?])\s+", gold_body) if s.strip()
+        ]
+        self.assertEqual(len(gold_sents), 6, msg=gold_sents)
+        self.assertTrue(
+            gold_sents[0].startswith(
+                "In Smoke And Mirrors, Tenebris is the main antagonist"
+            )
+        )
+        self.assertTrue(gold_sents[1].startswith("Duke Dijon is his third cousin"))
+        self.assertTrue(gold_sents[2].startswith("His mother is from here"))
+        self.assertTrue(
+            gold_sents[3].startswith("He is personally disgusted by Predator Court")
+        )
+        self.assertTrue(gold_sents[4].startswith("He has mixed parentage"))
+        self.assertTrue(
+            gold_sents[5].startswith("Lord Tenebris of Cheshire is a faeble")
+        )
+
+        # Title strip must not leave "Tenebris In Smoke…"
+        card = f"Tenebris\n\n{gold_body}\n\n— From your notes."
+        stripped = strip_who_is_cast_card_header(card, "Tenebris")
+        self.assertEqual(
+            re.sub(r"\s+", " ", stripped.split("\n—")[0]).strip(),
+            gold_body,
+            msg=stripped[:200],
+        )
+
+        # Focus / scrub round-trip preserves gold wording + order
+        q = "In Smoke And Mirrors, who is Tenebris?"
+        for label, out in (
+            (
+                "focus",
+                focus_ask_response(
+                    q,
+                    {
+                        "ok": True,
+                        "answer": card,
+                        "questionKind": "who",
+                        "sources": [],
+                    },
+                ).get("answer")
+                or "",
+            ),
+            ("scrub", scrub_rag_artifacts(q, card, allow_broad=False)),
+        ):
+            body = re.split(r"\n—\s*From your notes", out, maxsplit=1)[0]
+            body = re.sub(r"^Tenebris\s*\n+", "", body, count=1, flags=re.I).strip()
+            body = re.sub(r"\s+", " ", body).strip()
+            self.assertEqual(body, gold_body, msg=f"{label}: {body[:180]!r}")
+            self.assertNotIn("Tenebris In Smoke", body)
+
+        # Scrambled Dijon/parents-first must restore gold sentence order
+        scrambled = " ".join(
+            [
+                gold_sents[1],
+                gold_sents[2],
+                "Tenebris In Smoke And Mirrors, "
+                + gold_sents[0].split(", ", 1)[1],
+                gold_sents[3],
+                gold_sents[4],
+                gold_sents[5],
+            ]
+        )
+        fixed = re.sub(r"\s+", " ", smooth_who_is_prose("Tenebris", scrambled)).strip()
+        self.assertEqual(fixed, gold_body, msg=fixed)
+        fixed_sents = [
+            s.strip() for s in re.split(r"(?<=[.!?])\s+", fixed) if s.strip()
+        ]
+        self.assertEqual(fixed_sents, gold_sents)
+
     def test_who_is_restores_gold_order_after_title_glue(self):
         """Cast-card title must not glue onto the open or float Dijon first."""
         from lorekeeper_answer_focus import focus_ask_response, scrub_rag_artifacts
@@ -1773,21 +1865,13 @@ class CharacterComposeTests(unittest.TestCase):
             smooth_who_is_prose,
             strip_who_is_cast_card_header,
         )
+        from pathlib import Path
 
         gold_body = (
-            "In Smoke And Mirrors, Tenebris is the main antagonist, Baron of Cheshire, "
-            "and the Cheshire Cat from Alice in Wonderland, with Etherei as the subject "
-            "of his fascination. Duke Dijon is his third cousin, with whom he shares a "
-            "relationship that is cold on the surface but more complicated — Duke Dijon "
-            "is among the few cats he does not grudge, and both care; unbeknownst to him, "
-            "his staying out of Court politics leaves Duke Dijon with a heavier load. "
-            "His mother is from here, but his father is a Domestic Cat from another realm, "
-            "with whether he is a Faeble too still open — and other cats gave him the cold "
-            "shoulder because that father was an outsider. He is personally disgusted by "
-            "Predator Court politics, and does not realize how much political influence "
-            "he holds. He has mixed parentage, and is not entirely of this world. "
-            "Lord Tenebris of Cheshire is a faeble with social rank — not a king or emperor."
-        )
+            Path(__file__).resolve().parent
+            / "fixtures"
+            / "tenebris_who_is_gold.txt"
+        ).read_text(encoding="utf-8").strip()
         # Compose shape: title line + body + footer
         card = f"Tenebris\n\n{gold_body}\n\n— From your notes."
         stripped = strip_who_is_cast_card_header(card, "Tenebris")
