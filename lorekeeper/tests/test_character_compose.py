@@ -508,6 +508,72 @@ class CharacterComposeTests(unittest.TestCase):
         self.assertIn("stygian", low)
         self.assertIn("tenebris", low)
         self.assertNotIn("male protagonist", low)
+        self.assertTrue(
+            "rabbit" in low or "sentient" in low,
+            msg=answer,
+        )
+        self.assertIn("younger", low)
+        # Planning-brief open: curiosity is a hook, not a lone telegram.
+        first = re.split(r"(?<=[.!?])\s+", answer.strip(), maxsplit=1)[0].lower()
+        self.assertIn("curiosity", first, msg=answer)
+        self.assertLessEqual(low.count("he is"), 1, msg=answer)
+
+    def test_who_is_voice_folds_species_sister_and_keeps_gap_last(self):
+        """Catch-up-like warmth: flowing open, not encyclopedia stacks; gaps last."""
+        entries = [
+            _entry(
+                "c1",
+                "Character Z",
+                (
+                    "Character Z is the protagonist. Character Z is a young woman. "
+                    "Character Z is an arcanist. Character Z is sister to Character B."
+                ),
+                tags=["Zeta Saga"],
+                kind="character",
+            ),
+        ]
+        res = self._ask("In Zeta Saga, who is Character Z?", entries)
+        answer = res.get("answer") or ""
+        low = answer.lower()
+        self.assertIn("protagonist", low)
+        self.assertIn("young woman", low)
+        self.assertIn("arcanist", low)
+        self.assertIn("sister", low)
+        self.assertIn("character b", low)
+        self.assertLessEqual(low.count("character z is"), 2, msg=answer)
+        if "don't yet" in low:
+            facts_end = max(
+                low.rfind("sister"),
+                low.rfind("arcanist"),
+                low.rfind("young woman"),
+            )
+            self.assertGreater(low.find("don't yet"), facts_end, msg=answer)
+
+    def test_who_is_concealment_hook_stays_after_identity(self):
+        entries = [
+            _entry(
+                "c1",
+                "Character E",
+                (
+                    "Character E is the protagonist of Ashford Saga. "
+                    "Character E is a young woman and an author. "
+                    "now Character E has to conceal her identity in order to not be "
+                    "discovered as a human and subsequently, an Author."
+                ),
+                tags=["Ashford Saga"],
+                kind="character",
+            ),
+        ]
+        res = self._ask("In Ashford Saga, who is Character E?", entries)
+        answer = res.get("answer") or ""
+        low = answer.lower()
+        self.assertIn("protagonist", low)
+        self.assertIn("conceal", low)
+        self.assertIn("human", low)
+        self.assertNotIn("has to conceal", low)
+        self.assertNotIn("in order to not be discovered", low)
+        if "don't yet" in low:
+            self.assertGreater(low.find("don't yet"), low.find("conceal"), msg=answer)
 
     def test_who_is_keeps_kinship_when_comma_follows_sibling_name(self):
         """Prose like 'Obsidian and Stygian, the Moonshadow…' must not chop at the comma."""
@@ -1654,6 +1720,7 @@ class CharacterComposeTests(unittest.TestCase):
         self.assertTrue("author" in formal, msg=formal)
         self.assertNotIn("has to conceal", formal)
         self.assertNotIn("in order to not be discovered", formal)
+        self.assertIn("discovery would reveal", formal)
         body = (
             "Character E is the protagonist. Character E is a young woman. "
             "Character E is a young woman and an author. " + raw

@@ -301,7 +301,7 @@ Run **one row at a time** in Cursor. Don’t skip Phase 0 — it costs nothing a
 
 ### Ask who-is voice / hook tone (pinned 2026-08-11; deepened 2026-08-12) — **later upgrade**
 
-- [ ] **Voice-only pass on who-is / cast cards** — keep every fact in the **Tenebris gold sample** (accuracy milestone below); soften rhythm so it feels more like the owner’s earlier essay-hook middle voice (engaging, not encyclopedia / too-factual stacks). Still librarian-only: restate notes + main draft; never invent. Do **not** trade accuracy for tone.
+- [x] **Voice-only pass on who-is / cast cards** (2026-08-12) — keep every fact in the **Tenebris gold sample** (accuracy milestone below); planning-brief warmth/drama/hook + smoother sentences like catch-up, without stealing catch-up’s job. Still librarian-only: restate notes + main draft; never invent. Do **not** trade accuracy for tone.
 - **2026-08-12 owner note:** Catch-up gather Ask already has a **better voice** than cast cards (planning-brief / orientation density). Target for who-is: bring cast cards toward that same readable brief voice — without stealing catch-up’s job, and without regressing the Tenebris gold lock. Parked while catch-up completeness and other Ask work continue; do not mix into a catch-up fix unless the owner opens a who-is voice pass.
 
 ### Ask opt-in “include writing tasks” (pinned 2026-08-11) — **later upgrade**

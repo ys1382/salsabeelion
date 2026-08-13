@@ -5,6 +5,7 @@ import re
 from typing import Any, Literal
 
 from lorekeeper_character_compose import (
+    DRAFT_VS_NOTES_DRAFT_LABEL,
     _is_plot_arc_clause,
     is_audit_question,
     is_coverage_question,
@@ -590,12 +591,17 @@ def scrub_rag_artifacts(question: str, answer: str, *, allow_broad: bool) -> str
     body = _SOURCE_LABEL_BARE.sub("", body)
     # Who-is: strip cast-card title BEFORE whitespace collapse, or
     # "Name\n\nIn Work, Name is…" becomes "Name In Work, Name is…"
-    # and Dijon/parents steal the lead.
-    if is_who_is_question(question):
+    # and Dijon/parents steal the lead. Dual draft-vs-notes layout keeps its
+    # labels and newlines — flattening glues them onto the open and drops both.
+    dual_who = is_who_is_question(question) and (
+        DRAFT_VS_NOTES_DRAFT_LABEL.lower() in body.lower()
+    )
+    if is_who_is_question(question) and not dual_who:
         labels_early = character_targets(question)
         if labels_early:
             body = strip_who_is_cast_card_header(body, labels_early[0])
-    body = re.sub(r"\s{2,}", " ", body)
+    if not dual_who:
+        body = re.sub(r"\s{2,}", " ", body)
     body = re.sub(r"\s+([,;:.])", r"\1", body)
     body = _SAME_TWO_CHARS.sub("", body)
     body = _FALSE_ARC_GAP.sub("", body)
@@ -605,7 +611,7 @@ def scrub_rag_artifacts(question: str, answer: str, *, allow_broad: bool) -> str
         if footer:
             return body + "\n\n" + footer
         return body
-    if is_who_is_question(question):
+    if is_who_is_question(question) and not dual_who:
         body = scrub_who_is_plot_walkthrough(body, question=question)
         labels = character_targets(question)
         if labels:
@@ -705,6 +711,48 @@ def scrub_who_is_plot_walkthrough(body: str, *, question: str = "") -> str:
             kept.append(s)
             continue
         # Drop everything else — awareness, plot, background dumps.
+    if kept and all(
+        re.match(
+            r"^Notes don't yet\b|^Your notes don't yet\b|"
+            r"^Close relations for\b|^A clear cast role for\b",
+            s,
+            re.I,
+        )
+        for s in kept
+    ):
+        # Honesty gaps must not wipe draft identity scraps (species appositive).
+        rescued: list[str] = []
+        for sentence in sentences:
+            s = re.sub(r"\s+", " ", sentence.strip().strip(";"))
+            if not s or (
+                label and re.fullmatch(rf"{re.escape(label)}", s, re.I)
+            ):
+                continue
+            if re.match(
+                r"^Notes don't yet\b|^Your notes don't yet\b|"
+                r"^Close relations for\b|^A clear cast role for\b",
+                s,
+                re.I,
+            ):
+                continue
+            ap = re.search(
+                rf"^{re.escape(label)}\b.{{0,120}}?,\s*"
+                rf"(an?\s+(?:grey-skinned\s+|gray-skinned\s+)?"
+                rf"(?:arcanist|rabbit|wolf|fox|lynx|guardian))\b",
+                s,
+                re.I,
+            ) if label else None
+            if ap:
+                rescued.append(f"{label} is {ap.group(1)}.")
+                continue
+            if re.search(
+                r"\b(arcanist|grey-skinned|gray-skinned|white rabbit)\b",
+                s,
+                re.I,
+            ) and label and re.search(rf"\b{re.escape(label)}\b", s, re.I):
+                rescued.append(s)
+        if rescued:
+            kept = rescued + kept
     if not kept:
         # Fall back to first subject-led identity sentence if any.
         only_incomplete = True
@@ -784,12 +832,18 @@ def scrub_who_is_plot_walkthrough(body: str, *, question: str = "") -> str:
                 and re.search(r"\b(human|author|identity|fae)\b", s, re.I)
             ):
                 stakesish.append(s)
+            elif re.match(
+                r"^Notes don't yet\b|^Your notes don't yet\b|"
+                r"^Close relations for\b|^A clear cast role for\b",
+                s,
+                re.I,
+            ):
+                other.append(s)
             elif re.search(
                 r"\b(brother|sister|father|mother|parent|married|subject of|quarry|"
                 r"known|rival|up against|nemesis|opposed|cousin|ally|allies|"
                 r"co-?conspir|esteemed cousin|refers to|your notes treat|"
-                r"don'?t yet spell out|don'?t yet pin a clear cast role|"
-                r"Notes don't yet|rivalry-care|both care|"
+                r"rivalry-care|both care|"
                 r"cold on the surface|fascination|disgusted|mixed parentage|"
                 r"refuses to associate|larger politics|underestimates|"
                 r"political influence|does not realize|"
@@ -843,8 +897,8 @@ def scrub_who_is_plot_walkthrough(body: str, *, question: str = "") -> str:
             return (7, len(s))
 
         tiesish.sort(key=_tie_rank)
-        # Identity open → standing ties → faeble/stakes → scraps.
-        ordered = identityish[:4] + tiesish[:8] + stakesish[:3] + other[:1] + renameish[:1]
+        # Identity open → standing ties → faeble/stakes → honesty gaps last.
+        ordered = identityish[:4] + tiesish[:8] + stakesish[:3] + other[:2] + renameish[:1]
         kept = ordered or kept[:5]
     else:
         kept = kept[:4]

@@ -952,6 +952,7 @@ def _kinship_shape_sentence(sentence: str, label: str) -> bool:
         rf"^(?:He|She)\s+is\s+the\s+(?:main\s+)?(?:antagonist|villain)\b.+$",
         rf"^{lab}\s+is\s+(?:the\s+)?(?:main\s+)?protagonist\b.+$",
         rf"^(?:He|She)\s+is\s+(?:the\s+)?(?:main\s+)?protagonist\b.+$",
+        rf"^In\s+.{{1,80}}?,\s*{lab}\s+is\b.+$",
         rf"^(?:He|She)\s+is\s+(?:the\s+)?(?:Cheshire Cat|White Rabbit)\b.+$",
         rf"^{lab}\s+is\s+(?:the\s+)?(?:son|daughter|child)\s+of\s+.+$",
         rf"^{lab}\s+is\s+(?:(?:also|better)\s+)?known\s+(?:as|to|by)\b.+$",
@@ -967,6 +968,12 @@ def _kinship_shape_sentence(sentence: str, label: str) -> bool:
         rf"^(?:He|She)\s+conceals\b.+$",
         rf"^{lab}\s+is\s+a\s+young (?:woman|man)\b.+$",
         rf"^(?:He|She)\s+is\s+a\s+young (?:woman|man)\b.+$",
+        rf"^{lab}\s+is\s+(?:an?\s+)?(?:sentient\s+)?(?:white\s+)?(?:rabbit|wolf|fox|lynx|arcanist)\b.+$",
+        rf"^(?:He|She)\s+is\s+(?:an?\s+)?(?:sentient\s+)?(?:white\s+)?(?:rabbit|wolf|fox|lynx|arcanist)\b.+$",
+        rf"^(?:He|She)\s+is\s+(?:the\s+)?(?:shadow\s+)?guardian\b.+$",
+        rf"^{lab}\s+is\s+(?:the\s+)?(?:shadow\s+)?guardian\b.+$",
+        rf"^{lab}\s+is\s+(?:an?\s+)?(?:young woman|young man|author)\b.+$",
+        rf"^(?:He|She)\s+is\s+(?:an?\s+)?(?:young woman|young man|author)\b.+$",
         rf"^{lab}\s+is\s+(?:father|mother|mentor)\s+to\s+.+$",
         rf"^(?:He|She)\s+is\s+(?:father|mother|mentor)\s+to\s+.+$",
         rf"^(?:He|She)\s+is\s+(?:the\s+)?(?:nemesis|best friend)\s+of\s+.+$",
@@ -1013,7 +1020,8 @@ def _is_gold_tone_cast_sentence(sentence: str, label: str) -> bool:
     s = re.sub(r"\s+", " ", (sentence or "").strip())
     if not s or not label:
         return False
-    if not re.match(rf"^{re.escape(label)}\s+is\b", s, re.I):
+    s_id = re.sub(r"^In\s+.{1,80}?,\s*", "", s, count=1)
+    if not re.match(rf"^{re.escape(label)}\s+is\b", s_id, re.I):
         return False
     if len(s) > 420:
         return False
@@ -1250,6 +1258,17 @@ def is_who_is_cast_fact_sentence(sentence: str, label: str) -> bool:
         return True
 
     if not re.search(rf"\b{re.escape(label)}\b", s, re.I):
+        # Pronoun-led species / type after essay-hook swap — still a cast fact.
+        if re.match(
+            r"^(?:He|She)\s+is\s+(?:an?\s+)?"
+            r"(?:sentient\s+)?(?:young\s+)?(?:woman|man|author|"
+            r"white\s+rabbit|rabbit|wolf|fox|lynx|arcanist|faeble|"
+            r"grey-skinned arcanist|gray-skinned arcanist|"
+            r"(?:shadow\s+)?guardian)\b",
+            s,
+            re.I,
+        ):
+            return True
         # Pronoun-led overview / kin already handled above when patterns match.
         return False
 
@@ -1297,7 +1316,11 @@ def is_who_is_cast_fact_sentence(sentence: str, label: str) -> bool:
             return True
 
     # Subject-led identity / role / species / gender / alias — NOT kinship-via-plot.
-    if re.match(rf"^{re.escape(label)}\s+(?:is|was|are|were)\b", s, re.I):
+    if re.match(
+        rf"^(?:In\s+.{{1,80}}?,\s*)?{re.escape(label)}\s+(?:is|was|are|were)\b",
+        s,
+        re.I,
+    ):
         # Long "X is …" with scene/plot language is out even if "brother" appears.
         if len(s) > 160 and not re.search(
             r"\b("
@@ -2003,8 +2026,12 @@ def weave_who_is_gold_tone(
         )
 
     brothers: list[str] = []
+    sisters: list[str] = []
     twin_brother_keys: set[str] = set()
     seen_b: set[str] = set()
+    seen_s: set[str] = set()
+    younger_brother = False
+    younger_sister = False
     rich_brother_lines: list[str] = []
     named_parents: list[str] = []
     alias_lines: list[str] = []
@@ -2021,6 +2048,17 @@ def weave_who_is_gold_tone(
             rf"^{re.escape(label)}\s*[—–\-:,]\s*(?:also\s+)?(?:(?:younger|older|twin)\s+)*brother to\s+(.+?)\.?$",
             rf"^(?:also\s+)?(?:(?:younger|older|twin)\s+)*brother to\s+(.+?)\.?$",
             rf"^{re.escape(label)}\s+is\s+(?:a\s+)?younger twin(?:\s+brother)?\s+to\s+(.+?)\.?$",
+        ):
+            m = re.search(pat, c, re.I)
+            if m:
+                return m.group(1).strip()
+        return None
+
+    def _sister_tail(c: str) -> str | None:
+        for pat in (
+            rf"^{re.escape(label)}\s+is\s+(?:also\s+)?(?:(?:younger|older|twin)\s+)*sister to\s+(.+?)\.?$",
+            rf"^{re.escape(label)}\s*[—–\-:,]\s*(?:also\s+)?(?:(?:younger|older|twin)\s+)*sister to\s+(.+?)\.?$",
+            rf"^(?:also\s+)?(?:(?:younger|older|twin)\s+)*sister to\s+(.+?)\.?$",
         ):
             m = re.search(pat, c, re.I)
             if m:
@@ -2174,6 +2212,8 @@ def weave_who_is_gold_tone(
         tail = _brother_tail(c)
         if tail is not None:
             twinish = _clause_marks_twin(c)
+            if re.search(r"\byounger\b", c, re.I) and not twinish:
+                younger_brother = True
             # Keep rich standing lines (Rabbits of Death / Pinocchio, etc.).
             if re.search(
                 r"\b(from|rabbits? of death|pinocchio|alice|wonderland|death)\b",
@@ -2210,6 +2250,26 @@ def weave_who_is_gold_tone(
                 if twinish:
                     twin_brother_keys.add(key)
             continue
+        sister_tail = _sister_tail(c)
+        if sister_tail is not None:
+            if re.search(r"\byounger\b", c, re.I):
+                younger_sister = True
+            for part in re.split(r"\s+and\s+|,\s*", sister_tail):
+                name = part.strip().rstrip(".")
+                name_m = re.search(
+                    r"\b([A-Z][a-z]{2,}(?:\s+(?:[A-Z][a-z]{2,}|[A-Z0-9]))?)\s*$",
+                    name,
+                )
+                if name_m:
+                    name = name_m.group(1)
+                if not name or not is_plausible_cast_person_name(name):
+                    continue
+                key = name.lower()
+                if key in seen_s:
+                    continue
+                seen_s.add(key)
+                sisters.append(name)
+            continue
         if re.search(
             rf"^.+\s+is\s+the\s+quarry\s+of\s+{re.escape(label)}\b|"
             rf"^{re.escape(label)}\s+hunts\s+.+$",
@@ -2245,7 +2305,8 @@ def weave_who_is_gold_tone(
                     other_family.append(_normalize_standing(c))
             continue
         if re.search(
-            r"\b(rabbit|preyfolk|wolf|fox|lynx|arcanist|sentient|guardian|grey|gray|skin)\b",
+            r"\b(rabbit|preyfolk|wolf|fox|lynx|arcanist|sentient|guardian|"
+            r"grey|gray|skin|young woman|young man|author)\b",
             c,
             re.I,
         ):
@@ -2254,6 +2315,7 @@ def weave_who_is_gold_tone(
 
     has_identity_slots = bool(
         brothers
+        or sisters
         or rich_brother_lines
         or named_parents
         or alias_lines
@@ -2327,22 +2389,30 @@ def weave_who_is_gold_tone(
         if not base.endswith((".", "!", "?")):
             base += "."
 
-    # Essay-hook open only when a titled seat is already folded in —
-    # avoids "Baron of Cheshire of WorkTitle". Plain protagonist/antagonist
-    # cards keep the existing "of WorkTitle" trail.
-    if work_title and work_title.lower() not in base.lower():
-        if re.search(r"\b(protagonist|antagonist|main character)\b", base, re.I):
-            if re.search(
-                rf"\b(?:Baron|Lord|Lady|Duke|Duchess|Baroness)\s+of\b",
-                base,
-                re.I,
+    role_seed = base
+    # Planning-brief open: "In Work, Name is the protagonist" — not "Name is … of Work".
+    if work_title and re.search(
+        r"\b(protagonist|antagonist|main character)\b", base, re.I
+    ):
+        of_m = re.match(
+            rf"^{re.escape(label)}\s+is\s+(.+?)\s+of\s+{re.escape(work_title)}\.?$",
+            base.strip(),
+            re.I,
+        )
+        in_m = re.match(
+            rf"^{re.escape(label)}\s+is\s+(.+?)\s+in\s+{re.escape(work_title)}\.?$",
+            base.strip(),
+            re.I,
+        )
+        if of_m and not re.match(r"^In\s+", base, re.I):
+            base = f"In {work_title}, {label} is {of_m.group(1).strip()}."
+        elif in_m and not re.match(r"^In\s+", base, re.I):
+            base = f"In {work_title}, {label} is {in_m.group(1).strip()}."
+        elif work_title.lower() not in base.lower():
+            if re.match(rf"^{re.escape(label)}\s+is\b", base, re.I) and not re.match(
+                r"^In\s+", base, re.I
             ):
-                if re.match(rf"^{re.escape(label)}\s+is\b", base, re.I) and not re.match(
-                    r"^In\s+", base, re.I
-                ):
-                    base = f"In {work_title}, {base}"
-            else:
-                base = base.rstrip(".") + f" of {work_title}."
+                base = f"In {work_title}, {base}"
 
     # Fold a short significance phrase into the role line when possible.
     if significance_lines and re.search(
@@ -2363,7 +2433,7 @@ def weave_who_is_gold_tone(
 
     extras: list[str] = list(extras_from_rel)
     for c in lead:
-        if c == base or _gender_only(c):
+        if c == base or c == role_seed or _gender_only(c):
             continue
         # Already folded into antagonist/protagonist opening (Baron of …).
         if re.search(r"\b(antagonist|protagonist|villain)\b", base, re.I) and re.match(
@@ -2383,6 +2453,8 @@ def weave_who_is_gold_tone(
         if is_orphan_life_summary(c):
             continue
         if _brother_tail(c) is not None:
+            continue
+        if _sister_tail(c) is not None:
             continue
         if re.search(
             r"\b(known as|known to|also known|white rabbit|fairytale)\b", c, re.I
@@ -2451,15 +2523,16 @@ def weave_who_is_gold_tone(
                 joined = ", ".join(twin_bros[:-1]) + f", and {twin_bros[-1]}"
                 kin_bits.append(f"younger twin brother to {joined}")
         elif other_bros and not twin_bros:
+            rel = "younger brother to" if younger_brother else "brother to"
             if len(other_bros) == 1:
-                kin_bits.append(f"younger brother to {other_bros[0]}")
+                kin_bits.append(f"{rel} {other_bros[0]}")
             elif len(other_bros) == 2:
                 kin_bits.append(
-                    f"brother to {other_bros[0]} and {other_bros[1]}"
+                    f"{rel} {other_bros[0]} and {other_bros[1]}"
                 )
             else:
                 joined = ", ".join(other_bros[:-1]) + f", and {other_bros[-1]}"
-                kin_bits.append(f"brother to {joined}")
+                kin_bits.append(f"{rel} {joined}")
         else:
             if len(twin_bros) == 1:
                 kin_bits.append(f"younger twin brother to {twin_bros[0]}")
@@ -2471,6 +2544,15 @@ def weave_who_is_gold_tone(
             elif other_bros:
                 joined = ", ".join(other_bros[:-1]) + f", and {other_bros[-1]}"
                 kin_bits.append(f"also brother to {joined}")
+    if sisters:
+        rel_s = "younger sister to" if younger_sister else "sister to"
+        if len(sisters) == 1:
+            kin_bits.append(f"{rel_s} {sisters[0]}")
+        elif len(sisters) == 2:
+            kin_bits.append(f"{rel_s} {sisters[0]} and {sisters[1]}")
+        else:
+            joined = ", ".join(sisters[:-1]) + f", and {sisters[-1]}"
+            kin_bits.append(f"{rel_s} {joined}")
 
     # Opening cast sentence: role (+ fairytale alias) + kinship folded in.
     role_core = role.rstrip(".")
@@ -2494,6 +2576,57 @@ def weave_who_is_gold_tone(
             else:
                 role_core = f"{role_core}, and is {alias_core}"
 
+    leftover_extras: list[str] = []
+    appos: list[str] = []
+    for c in extras:
+        if re.search(r"\bfaction against\b", c, re.I):
+            leftover_extras.append(c)
+            continue
+        sp = re.sub(
+            rf"^{re.escape(label)}\s+is\s+",
+            "",
+            c.rstrip("."),
+            count=1,
+            flags=re.I,
+        ).strip()
+        sp = re.sub(r"^(?:an?\s+)", "", sp, count=1, flags=re.I)
+        if (
+            0 < len(sp) < 60
+            and re.search(
+                r"\b(rabbit|wolf|fox|lynx|arcanist|sentient|young woman|"
+                r"young man|author|grey-skinned|gray-skinned|guardian)\b",
+                sp,
+                re.I,
+            )
+            and sp.lower() not in role_core.lower()
+        ):
+            if gender_word and not re.search(rf"\b{gender_word}\b", sp, re.I) and re.search(
+                r"\b(rabbit|wolf|fox|lynx|arcanist|sentient)\b", sp, re.I
+            ):
+                sp = f"{gender_word} {sp}"
+                gender_word = None
+            key = sp.lower()
+            if key not in {a.lower() for a in appos}:
+                appos.append(sp)
+        else:
+            leftover_extras.append(c)
+    extras = leftover_extras
+    if appos:
+        bits: list[str] = []
+        seen_ap: set[str] = set()
+        for sp in appos[:3]:
+            key = sp.lower()
+            if key in seen_ap:
+                continue
+            seen_ap.add(key)
+            if re.match(r"^(?:a|an|the)\s+", sp, re.I):
+                bits.append(sp)
+            else:
+                art = "an" if re.match(r"^[aeiou]", sp, re.I) else "a"
+                bits.append(f"{art} {sp}")
+        if bits:
+            role_core = role_core.rstrip(".") + ", " + " and ".join(bits)
+
     kin_for_open: list[str] = []
     for bit in kin_bits:
         if bit.startswith(("son ", "daughter ", "child ")):
@@ -2512,6 +2645,24 @@ def weave_who_is_gold_tone(
                 f"{role_core}, {kin_for_open[0]}, and "
                 + ", and ".join(kin_for_open[1:])
             )
+
+    # Fold standing marriage into the open — not a second telegram.
+    folded_married: set[str] = set()
+    for c in list(other_family):
+        mm = re.match(
+            rf"^{re.escape(label)}\s+is\s+married to\s+(.+?)\.?$",
+            c.strip(),
+            re.I,
+        )
+        if not mm:
+            continue
+        spouse = mm.group(1).strip()
+        if spouse and spouse.lower() not in role_core.lower():
+            role_core = role_core.rstrip(".") + f", married to {spouse}"
+            folded_married.add(c.lower())
+        break
+    if folded_married:
+        other_family = [x for x in other_family if x.lower() not in folded_married]
 
     # Essay-hook open: fold fascination (preferred) or quarry into antagonist line.
     folded_quarry: set[str] = set()
@@ -2555,6 +2706,26 @@ def weave_who_is_gold_tone(
             # Drop the thinner quarry line when fascination is folded.
             if fasc_line and quarry_line:
                 folded_quarry.add(quarry_line.lower())
+            other_family = [x for x in other_family if x.lower() not in folded_quarry]
+
+    # Protagonist hook: "subject of X's curiosity" as an em-dash, not a second telegram.
+    if not re.search(
+        r"\bsubject of\b.{0,80}\b(fascination|curiosity)\b", role_core, re.I
+    ):
+        for c in list(other_family):
+            sm = re.match(
+                rf"^{re.escape(label)}\s+is\s+the\s+subject\s+of\s+(.+?)\.?$",
+                c.strip(),
+                re.I,
+            )
+            if not sm:
+                continue
+            subj = sm.group(1).strip()
+            if subj and subj.lower() not in role_core.lower():
+                role_core = role_core.rstrip(".") + f" — the subject of {subj}"
+                folded_quarry.add(c.lower())
+            break
+        if folded_quarry:
             other_family = [x for x in other_family if x.lower() not in folded_quarry]
 
     sentences.append(role_core + ".")
@@ -3024,7 +3195,13 @@ def formalize_who_is_sentence(sentence: str, label: str) -> str:
                 r"\bher\b|\bshe\b", rest, re.I
             ):
                 pronoun = "he"
-            s = f"{label} conceals that {pronoun} is {' and '.join(bits)}."
+            core = f"{label} conceals that {pronoun} is {' and '.join(bits)}"
+            if re.search(
+                r"\b(discover(?:ed|y)?|unmask|found out|revealed as)\b", rest, re.I
+            ) and human and author:
+                s = f"{core} — discovery would reveal both."
+            else:
+                s = f"{core}."
             return s
         s = re.sub(
             rf"^{re.escape(label)}\s+has to conceal\b",
@@ -3148,13 +3325,13 @@ def strip_who_is_cast_card_header(text: str, label: str) -> str:
         count=1,
         flags=re.I,
     ).strip()
-    # Garbled open left mid-card: "Name In Work, Name is" → "In Work, Name is"
+    # Garbled open: "Name In Work, Name is" → "In Work, Name is"
+    # (start, after a sentence, or after dual-layout labels / collapsed whitespace)
     text = re.sub(
-        rf"(?:^|(?<=[.!?]\s)){re.escape(label)}\s+(In\s+[^,]{{1,80}},\s*)"
+        rf"{re.escape(label)}\s+(In\s+[^,]{{1,80}},\s*)"
         rf"{re.escape(label)}\s+is\b",
         r"\1" + label + " is",
         text,
-        count=1,
         flags=re.I,
     )
     return text.strip()
@@ -3590,7 +3767,63 @@ def _essay_flow_join_sentences(label: str, sentences: list[str]) -> list[str]:
             kept.append(joined)
 
     cleaned = [re.sub(r"\s{2,}", " ", x).strip() for x in kept if x.strip()]
+    cleaned = _join_short_identity_telegrams(label, cleaned)
     return _order_who_is_gold_sentences(label, cleaned)
+
+
+def _join_short_identity_telegrams(label: str, sentences: list[str]) -> list[str]:
+    """
+    Join consecutive short 'He is A.' / 'She is B.' stacks — never invent,
+    never merge long gold essay sentences.
+    """
+    kept = [s for s in sentences if (s or "").strip()]
+    if len(kept) < 2:
+        return kept
+    ident = re.compile(
+        rf"^(?:He|She|{re.escape(label)})\s+is\s+(.+)$",
+        re.I,
+    )
+    out: list[str] = []
+    i = 0
+    while i < len(kept):
+        s = kept[i]
+        m = ident.match(s.rstrip("."))
+        short = (
+            m
+            and len(s) < 90
+            and "—" not in s
+            and not re.search(
+                r"\b(personally disgusted|political influence|fascination|"
+                r"cold on the surface|mixed parentage|married|brother|sister|"
+                r"son of|daughter of|subject of|cousin|protagonist|antagonist|"
+                r"guardian|married to)\b",
+                s,
+                re.I,
+            )
+        )
+        if short and i + 1 < len(kept):
+            nxt = kept[i + 1]
+            m2 = ident.match(nxt.rstrip("."))
+            if (
+                m2
+                and len(nxt) < 90
+                and "—" not in nxt
+                and not re.search(
+                    r"\b(personally disgusted|political influence|fascination|"
+                    r"cold on the surface|mixed parentage|married|brother|sister|"
+                    r"son of|daughter of|subject of|cousin|protagonist|antagonist|"
+                    r"guardian|married to)\b",
+                    nxt,
+                    re.I,
+                )
+            ):
+                pred2 = m2.group(1).strip().rstrip(".")
+                out.append(f"{s.rstrip('.')} and {pred2}.")
+                i += 2
+                continue
+        out.append(s)
+        i += 1
+    return out
 
 
 def _essay_hook_who_is_sentences(label: str, sentences: list[str]) -> list[str]:
@@ -3975,6 +4208,30 @@ def cast_answer_is_thin(answer: str, label: str) -> bool:
                 return True
     if "little is spelled out yet" in low or "but little is" in low:
         return True
+    if re.search(r"notes don't yet (?:spell out|pin a clear cast role)", low):
+        facts_only = re.sub(
+            r"notes don't yet[^.]*?(?:\([^)]*\))?[^.]*\.",
+            " ",
+            body_only,
+            flags=re.I,
+        )
+        facts_only = re.sub(r"\s+", " ", facts_only).strip()
+        mentioned_only = bool(
+            re.fullmatch(
+                rf"{re.escape(label)}\s+is mentioned\b.*",
+                facts_only,
+                re.I,
+            )
+        )
+        if (not facts_only) or mentioned_only:
+            return True
+        if not has_cast_card_anchors(facts_only) and not re.search(
+            r"\b(protagonist|antagonist|married|brother|sister|arcanist|"
+            r"guardian|rabbit|young woman|author)\b",
+            facts_only,
+            re.I,
+        ):
+            return True
     if "nothing saved yet" in low and "describes" in low:
         return True
     if "too scattered to summarize" in low:
