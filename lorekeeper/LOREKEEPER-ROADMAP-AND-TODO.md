@@ -301,8 +301,8 @@ Run **one row at a time** in Cursor. Don’t skip Phase 0 — it costs nothing a
 
 ### Ask who-is voice / hook tone (pinned 2026-08-11; deepened 2026-08-12) — **later upgrade**
 
-- [x] **Voice-only pass on who-is / cast cards** (2026-08-12) — keep every fact in the **Tenebris gold sample** (accuracy milestone below); planning-brief warmth/drama/hook + smoother sentences like catch-up, without stealing catch-up’s job. Still librarian-only: restate notes + main draft; never invent. Do **not** trade accuracy for tone.
-- **2026-08-12 owner note:** Catch-up gather Ask already has a **better voice** than cast cards (planning-brief / orientation density). Target for who-is: bring cast cards toward that same readable brief voice — without stealing catch-up’s job, and without regressing the Tenebris gold lock. Parked while catch-up completeness and other Ask work continue; do not mix into a catch-up fix unless the owner opens a who-is voice pass.
+- [x] **Voice-only pass on who-is / cast cards** (2026-08-12; blurb hook 2026-08-12 evening) — keep every **fact** in the Tenebris sample (accuracy milestone below); wording may change. Target: a cast-card blurb that makes *this* character click — not a book recap, not catch-up’s job. Still librarian-only: restate notes + main draft; never invent. Do **not** trade accuracy for tone.
+- **2026-08-12 owner note:** Exact Tenebris wording is **no longer locked**. Accuracy/relevancy stays: same facts, on-subject, no inventing. Voice: exciting the way a blurb makes one character easy to get interested in.
 
 ### Ask opt-in “include writing tasks” (pinned 2026-08-11) — **later upgrade**
 
@@ -313,28 +313,28 @@ Run **one row at a time** in Cursor. Don’t skip Phase 0 — it costs nothing a
 **Checkpoint shipped** (~`4e38d6c` and related who-is work): “Who is X?” answers are **on-subject and accurate** from notes + draft — librarian only, no inventing.
 
 **Live bar (owner-checked — keep these shapes):**
-- **Tenebris** (owner locked **2026-08-11 night** — “fine just the way it is”; prior pins 2026-08-10/11) — treat the following live answer as the **gold who-is sample**. **Do not change wording or sentence order.** Machine lock: `lorekeeper/tests/fixtures/tenebris_who_is_gold.txt` + `test_who_is_tenebris_gold_locked` — must stay green.
+- **Tenebris** (fact bar; wording unlocked **2026-08-12 evening**) — keep the **same facts and relevancy**, in this beat order (role/open first; Dijon not first; parents not first). Wording may follow cast-card blurb voice. Machine lock: `lorekeeper/tests/fixtures/tenebris_who_is_gold.txt` + `test_who_is_tenebris_gold_locked` — must stay green.
 
-  > In Smoke And Mirrors, Tenebris is the main antagonist, Baron of Cheshire, and the Cheshire Cat from Alice in Wonderland, with Etherei as the subject of his fascination. Duke Dijon is his third cousin, with whom he shares a relationship that is cold on the surface but more complicated — Duke Dijon is among the few cats he does not grudge, and both care; unbeknownst to him, his staying out of Court politics leaves Duke Dijon with a heavier load. His mother is from here, but his father is a Domestic Cat from another realm, with whether he is a Faeble too still open — and other cats gave him the cold shoulder because that father was an outsider. He is personally disgusted by Predator Court politics, and does not realize how much political influence he holds. He has mixed parentage, and is not entirely of this world. Lord Tenebris of Cheshire is a faeble with social rank — not a king or emperor.
+  > In Smoke And Mirrors, Tenebris is the main antagonist — Baron of Cheshire, the Cheshire Cat from Alice in Wonderland — and Etherei is the subject of his fascination. Duke Dijon is his third cousin, with whom he shares a relationship that is cold on the surface but more complicated — Duke Dijon is among the few cats he does not grudge, and both care; unbeknownst to him, his staying out of Court politics leaves Duke Dijon with a heavier load. His mother is from here, but his father is a Domestic Cat from another realm, with whether he is a Faeble too still open — and other cats gave him the cold shoulder because that father was an outsider. He is personally disgusted by Predator Court politics — and does not realize how much political influence he holds. He has mixed parentage, and is not entirely of this world. Lord Tenebris of Cheshire is a faeble with social rank — not a king or emperor.
 
   Must keep: role/open first; Etherei fascination when noted; Dijon third cousin + cold-on-surface / few-cats-without-grudge / both-care + **Court-load (unbeknownst)**; mother here + father Domestic Cat from another realm + Faeble still open — **never** “parent stock”; cold shoulder for outsider father; Court disgust + unrealized influence; mixed parentage + not entirely of this world; faeble social rank. **Not** Umber POV; **not** Dijon cousin twice; **not** unnamed-parent scraps; **not** choppy short stacks. **Not** title-glue (“Tenebris In Smoke…”) or Dijon/parents leading.
 - **Platinus** — protagonist, twin/brother Titanem, aka Cypher Prism → Palladiar, faction against Galloxidor; **not** birth-name rename dump
 - **Elham** — protagonist, young woman, author — accurate; deepen with concealment / opposition / draft situation when present (2026-08-10 who-is depth pass)
 
-**Owner voice target (essay-hook — librarian only):** Facts must match the **Tenebris gold sample** above. **Tone/hook warmth** (less encyclopedia, more engaging middle voice like the owner’s earlier sample) is a **later upgrade** — see “Ask who-is voice / hook tone” above. Restate only what notes + main draft support; never invent missing beats or writing-task gaps unless written or the opt-in writing-tasks checkbox ships later.
+**Owner voice target (cast-card blurb — librarian only):** Facts must match the **Tenebris sample** above. Tone: a blurb that makes *this* character click — not a whole-book summary, not catch-up. Restate only what notes + main draft support; never invent missing beats or writing-task gaps unless written or the opt-in writing-tasks checkbox ships later.
 
 **Regression rules for later agents:**
-- Do **not** trade this accuracy for longer answers
-- Do **not** edit `tenebris_who_is_gold.txt` or soften `test_who_is_tenebris_gold_locked` without owner OK in that conversation
+- Do **not** trade this accuracy for longer answers or punchier wording
+- Do **not** drop Tenebris facts to sound more dramatic; the gold file is the current blurb sample, not a frozen script of every comma
 - Still reject knower POV (“X thinks that Y…”), rename infodumps as the whole card, and unrelated scene scraps
-- Treat the **Tenebris gold sample** above as the current depth+accuracy **and sentence-order** baseline for standing relations, fairy-tale origin, parents, antagonist/fascination, Dijon clarifying, cold-shoulder heritage, and draft+notes politics stance when present
+- Treat the **Tenebris sample** above as the current depth+accuracy **and beat-order** baseline for standing relations, fairy-tale origin, parents, antagonist/fascination, Dijon clarifying, cold-shoulder heritage, and draft+notes politics stance when present
 - Who-is must use **main draft + notes** for standing cast facts — not notes-only
 - Essay-hook **order**: lead with role/open (“In Work, Name is…”); parents late — never mother/father first; never Dijon before the open
-- Next goals (separate tasks): (1) voice/hook upgrade without losing the gold sample; (2) bring other cast cards up to that same accuracy bar **without** breaking the pins above
+- Next goals (separate tasks): bring other cast cards up to that same accuracy bar **without** dropping the Tenebris facts above
 
 ### Plot relation / plot summary accuracy — timing (pinned 2026-08-10; owner opened plot work 2026-08-11)
 
-**Owner note (2026-08-11):** Who-is **accuracy** is parked as good enough for now (gold sample above). Writing-next / leave-off plot work continues in this pass. Who-is **voice/hook** upgrade stays later — do not mix it into the plot pass.
+**Owner note (2026-08-11; voice opened 2026-08-12 evening):** Who-is **accuracy** stays the Tenebris fact bar above. Cast-card **blurb voice** is in progress on that same bar — do not mix it into a plot pass.
 
 **Writing-next task list Ask — accuracy + completeness + draft-timeline seats + voice (pinned 2026-08-11 night; plan-recall + seat sentences locked 2026-08-12):** Owner gold for Etherei cast task list (sample below). **Do not regress this bar.** Machine lock: `lorekeeper/tests/fixtures/etherei_writing_next_gold.txt` + `test_etherei_writing_next_gold_shape_locked`.
 
