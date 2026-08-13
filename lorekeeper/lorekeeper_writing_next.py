@@ -176,6 +176,28 @@ _THEMATIC_TOPIC = re.compile(
     re.I,
 )
 
+# Story-moment topics (chapter / scene / beat / event / capture) — not cast names.
+_MOMENT_POINTER = re.compile(
+    r"\b(?:this|the|that|current)\s+"
+    r"(?:"
+    r"chapter(?:\s+(?:\d+|one|two|three|four|five|six|seven|eight|nine|ten))?|"
+    r"scene|beat|moment|event|"
+    r"capture|captured|"
+    r"court\s+scene"
+    r")\b",
+    re.I,
+)
+_NAMED_MOMENT = re.compile(
+    r"\b("
+    r"chapter\s+(?:\d+|one|two|three|four|five|six|seven|eight|nine|ten)|"
+    r"(?:the\s+)?(?:capture|captured)(?:\s+scene|\s+chase)?|"
+    r"court\s+scene"
+    r")\b",
+    re.I,
+)
+_CAPTURE_WORD = re.compile(r"\bcaptur(?:e|ed|ing|es)\b", re.I)
+_COURT_SCENE_WORD = re.compile(r"\bcourt\b", re.I)
+
 _AUTHOR_MUSING_LEAD = re.compile(
     r"^\s*(?:"
     r"so\s+right\s+now\b|"
@@ -294,10 +316,41 @@ _STRICT_CRAFT = re.compile(
 )
 
 
-def topic_looks_like_cast(topic: str) -> bool:
-    """True for character-ish topics (Etherei), false for chase/Court themes."""
+def topic_looks_like_moment(topic: str) -> bool:
+    """
+    True for a named story moment — chapter, scene, beat, event, capture —
+    not a cast name and not a chase/politics theme list that already works.
+    """
     t = (topic or "").strip()
-    if not t or _THEMATIC_TOPIC.search(t):
+    if not t:
+        return False
+    # Chase-only lists already use the thematic filter (keep that path).
+    if re.search(r"\bchase\b", t, re.I) and not re.search(
+        r"\b(?:capture|chapter|court|moment|beat|event)\b", t, re.I
+    ):
+        return False
+    # "Predator Court politics" stays thematic, not a Court-scene moment.
+    if re.search(r"\bpolitics\b", t, re.I) and not re.search(
+        r"\b(?:scene|chapter|capture|moment|beat|event)\b", t, re.I
+    ):
+        return False
+    if _MOMENT_POINTER.search(t) or _NAMED_MOMENT.search(t):
+        return True
+    try:
+        from lorekeeper_section_scope import extract_section_hints
+
+        hints = extract_section_hints(t)
+        if hints.get("section") in {"chapter", "prologue", "act"}:
+            return True
+    except Exception:
+        pass
+    return False
+
+
+def topic_looks_like_cast(topic: str) -> bool:
+    """True for character-ish topics (Etherei), false for chase/Court/moment themes."""
+    t = (topic or "").strip()
+    if not t or _THEMATIC_TOPIC.search(t) or topic_looks_like_moment(t):
         return False
     toks = _normalize(t).split()
     return 1 <= len(toks) <= 4
@@ -445,17 +498,160 @@ def _strict_craft_for_subject(
     return False
 
 
+def _moment_kind(topic: str) -> str:
+    """capture | court_scene | chapter | current_stretch."""
+    t = _normalize(topic)
+    if re.search(r"\bcaptur", t):
+        return "capture"
+    if re.search(r"\bcourt\b", t) and re.search(r"\bscene\b", t):
+        return "court_scene"
+    if re.search(r"\bchapter\b", t) or re.search(r"\bprologue\b|\bact\b", t):
+        return "chapter"
+    return "current_stretch"
+
+
+_STRETCH_WEAK = frozenset(
+    {
+        "character",
+        "chapter",
+        "scene",
+        "moment",
+        "event",
+        "after",
+        "before",
+        "during",
+        "still",
+        "needs",
+        "write",
+        "draft",
+        "notes",
+        "about",
+        "there",
+        "their",
+        "would",
+        "could",
+        "should",
+    }
+)
+
+
+def _current_stretch_terms(entries: list[dict[str, Any]] | None) -> set[str]:
+    """Distinctive draft-tail tokens for 'this chapter / this moment'."""
+    if not entries:
+        return set()
+    tail = _draft_tail_token_set(entries)
+    return {t for t in tail if len(t) >= 5 and t not in _STRETCH_WEAK}
+
+
+def _row_moment_blob(row: dict[str, str]) -> str:
+    return f"{row.get('noteTitle') or ''} {row.get('line') or ''}"
+
+
+def _row_matches_moment(
+    row: dict[str, str],
+    *,
+    kind: str,
+    stretch_terms: set[str],
+    chapter_num: str = "",
+) -> bool:
+    """Librarian match: note text actually names or sits on that moment."""
+    blob = _row_moment_blob(row)
+    if not blob.strip():
+        return False
+    if kind == "capture":
+        return bool(_CAPTURE_WORD.search(blob))
+    if kind == "court_scene":
+        return bool(_COURT_SCENE_WORD.search(blob))
+    if kind == "chapter" and chapter_num:
+        if re.search(
+            rf"\bchapter\s+{re.escape(chapter_num)}\b", blob, re.I
+        ):
+            return True
+        # Word-number headings ("chapter two") when the ask used a digit.
+        try:
+            from lorekeeper_section_scope import _mentions_chapter
+
+            if _mentions_chapter(blob, chapter_num):
+                return True
+        except Exception:
+            pass
+        # No explicit chapter tag — current stretch if this is the open chapter.
+        if stretch_terms:
+            toks = set(_content_tokens(blob))
+            return len(toks & stretch_terms) >= 1
+        return False
+    # this scene / this moment / this beat / this event / unnumbered chapter
+    toks = set(_content_tokens(blob))
+    if stretch_terms and len(toks & stretch_terms) >= 1:
+        return True
+    return False
+
+
+def filter_unused_by_moment(
+    items: list[dict[str, str]],
+    topic: str,
+    *,
+    entries: list[dict[str, Any]] | None = None,
+    question: str = "",
+) -> list[dict[str, str]]:
+    """
+    Keep unused write-next claims for a named story moment.
+    Does not invent beats; drops notes that belong to a different stretch.
+    """
+    topic_s = (topic or "").strip()
+    if not topic_s:
+        return items
+    kind = _moment_kind(topic_s)
+    stretch_terms = _current_stretch_terms(entries)
+    chapter_num = ""
+    try:
+        from lorekeeper_section_scope import extract_section_hints
+
+        hints = extract_section_hints(f"{question} {topic_s}")
+        if hints.get("section") == "chapter":
+            chapter_num = str(hints.get("chapter") or "")
+    except Exception:
+        chapter_num = ""
+
+    matched: list[dict[str, str]] = []
+    seen: set[str] = set()
+    for row in items:
+        if not _row_matches_moment(
+            row,
+            kind=kind,
+            stretch_terms=stretch_terms,
+            chapter_num=chapter_num,
+        ):
+            continue
+        key = _normalize(str(row.get("line") or ""))[:160]
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        matched.append(row)
+    return matched
+
+
 def filter_unused_by_topic(
-    items: list[dict[str, str]], topic: str
+    items: list[dict[str, str]],
+    topic: str,
+    *,
+    entries: list[dict[str, Any]] | None = None,
+    question: str = "",
 ) -> list[dict[str, str]]:
     """
     Keep unused claims that match the asked topic.
     Cast topics: each LINE must be about the subject (not note-title alone
     for lore dumps). Title may only unlock strict craft lines on that card.
+    Moment topics: chapter / scene / beat / event / capture — not cast names.
     """
     topic_s = (topic or "").strip()
     if not topic_s:
         return items
+
+    if topic_looks_like_moment(topic_s):
+        return filter_unused_by_moment(
+            items, topic_s, entries=entries, question=question
+        )
 
     if topic_looks_like_cast(topic_s):
         out: list[dict[str, str]] = []
@@ -1062,6 +1258,24 @@ def extract_draft_timeline_seat(
         if re.search(r"after Etherei spots Serias", note_title or "", re.I):
             add(70, "during the chase after Etherei spots Serias")
 
+    # Generic librarian seats when notes name a when/where and no typed seat won.
+    if not candidates:
+        m = re.search(
+            r"\b(after\s+[\w'-]+(?:\s+[\w'-]+){0,5}\s+is\s+captured)\b",
+            c,
+            re.I,
+        )
+        if m:
+            add(48, m.group(1))
+        m = re.search(
+            r"\b((?:during|after)\s+.{8,70}?"
+            r"(?:capture[d]?|court\s+scene|chase\s+scene))\b",
+            c,
+            re.I,
+        )
+        if m:
+            add(45, m.group(1))
+
     if not candidates:
         return ""
     candidates.sort(key=lambda x: (-x[0], len(x[1])))
@@ -1441,6 +1655,10 @@ def frame_plan_recall(line: str, *, you_lead: bool, you_variant: int = 0) -> str
 
     # Generic
     if you_lead:
+        if re.match(r"^(?:the|a|an|his|her|their|this)\b", body, re.I):
+            if you_variant % 2 == 0:
+                return f"You wanted {body}"
+            return f"You were planning {body}"
         if you_variant % 2 == 0:
             return f"You wanted to {body}"
         return f"You were planning to {body}"
@@ -1578,6 +1796,20 @@ def restate_as_task_line(
     if re.search(r"don'?t want to make that the meat", s, re.I):
         return ""
 
+    # Peel a leading when/where clause into the seat (moment lists).
+    # Skip flashback "During X's flashback," — that stays an edit-seat prefix.
+    lead_m = re.match(
+        r"^((?:After|During|At the)\s[^,]{6,80}),\s+",
+        s,
+    )
+    if lead_m and not re.search(r"\bflashback\b", lead_m.group(1), re.I):
+        peeled = lead_m.group(1).strip()
+        s = s[lead_m.end() :].strip()
+        if s and s[0].islower():
+            s = s[0].upper() + s[1:]
+        if not timeline_seat:
+            timeline_seat = peeled
+
     # Keep flashback edit-seat prefix when already present from shrink.
     loc_prefix = ""
     loc_m = re.match(r"^(During\s+.+?\s+flashback,\s*)", s, re.I)
@@ -1661,6 +1893,21 @@ def restate_as_task_line(
 
     if loc_prefix:
         s = loc_prefix + (s[0].lower() + s[1:] if s and s[0].isupper() else s)
+
+    # Moment notes often name the unused beat as "still needs to be written".
+    if re.search(r"\bstill needs to be written\b", s, re.I):
+        s = re.sub(r"\bstill needs to be written\b", "", s, flags=re.I)
+        s = re.sub(r"\s{2,}", " ", s).strip(" ,")
+    else:
+        write_m = re.match(
+            r"^.+?\s+still needs to write\s+(.+)$",
+            s,
+            re.I,
+        )
+        if write_m:
+            s = write_m.group(1).strip()
+            if s and s[0].islower():
+                s = s[0].upper() + s[1:]
 
     # Keep first complete chunk when the note stacks clauses.
     if ";" in s and len(s) > 110:
@@ -1915,7 +2162,9 @@ def answer_writing_next_task_list(
     items, has_notes, has_draft = collect_notes_not_in_draft(entries)
     topic = extract_writing_next_topic(question)
     if topic:
-        items = filter_unused_by_topic(items, topic)
+        items = filter_unused_by_topic(
+            items, topic, entries=entries, question=question
+        )
     anchors = extract_after_anchors(question)
     if anchors:
         items = filter_unused_by_after_anchors(items, anchors)

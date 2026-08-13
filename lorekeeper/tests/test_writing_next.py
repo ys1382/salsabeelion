@@ -20,6 +20,8 @@ from lorekeeper_writing_next import (
     line_is_later_book,
     plan_recall_core,
     restate_as_task_line,
+    topic_looks_like_cast,
+    topic_looks_like_moment,
     wants_later_book_scope,
 )
 
@@ -86,6 +88,23 @@ class WritingNextDetectionTests(unittest.TestCase):
         q = "task list about Predator Court politics"
         self.assertIn("predator court", extract_writing_next_topic(q).lower())
 
+    def test_moment_topics_are_not_cast(self):
+        for q, expect in (
+            ("task list for this chapter", "this chapter"),
+            ("task list for this capture", "this capture"),
+            ("task list for this Court scene", "this court scene"),
+            ("task list for this moment", "this moment"),
+            ("In Smoke and Mirrors, task list for chapter 2", "chapter 2"),
+        ):
+            topic = extract_writing_next_topic(q)
+            self.assertEqual(topic.lower(), expect, msg=q)
+            self.assertTrue(topic_looks_like_moment(topic), msg=q)
+            self.assertFalse(topic_looks_like_cast(topic), msg=q)
+        self.assertTrue(topic_looks_like_cast("Etherei"))
+        self.assertTrue(topic_looks_like_cast("Character E"))
+        self.assertFalse(topic_looks_like_moment("the chase scene"))
+        self.assertFalse(topic_looks_like_moment("Predator Court politics"))
+
 
 class WritingNextAnswerTests(unittest.TestCase):
     def test_lists_unused_note_as_bullet_task(self):
@@ -150,6 +169,75 @@ class WritingNextAnswerTests(unittest.TestCase):
         self.assertEqual(res.get("questionKind"), "writing_next")
         self.assertIn("bridge rope", answer)
         self.assertNotIn("predator court", answer)
+
+    def _moment_corpus(self):
+        return [
+            _entry(
+                "n_cap",
+                "Capture beat",
+                "After Character E is captured on the mountain path, the vision "
+                "reveal still needs to be written at the manor — a reveal even "
+                "he has not faced yet.",
+            ),
+            _entry(
+                "n_court",
+                "Court",
+                "At the Court scene, Character D still needs to write the heavier "
+                "political load while Character T stays out of Predator Court duties.",
+            ),
+            _entry(
+                "n_early",
+                "Earlier chapter",
+                "In chapter 1 the lantern ritual still needs a snapped bridge rope.",
+            ),
+            _entry(
+                "d1",
+                "Draft",
+                "Chapter 2\n"
+                "Character E bolted down the mountain path. The wolf closed in.",
+                kind="document",
+            ),
+        ]
+
+    def test_capture_moment_keeps_capture_drops_court(self):
+        res = recall_from_user_data(
+            "In Smoke and Mirrors, task list for this capture",
+            {"lorekeeper_entries_v1": json.dumps(self._moment_corpus())},
+        )
+        answer = (res.get("answer") or "").lower()
+        self.assertEqual(res.get("questionKind"), "writing_next")
+        self.assertIn("task list", answer)
+        self.assertIn("captured", answer)
+        self.assertIn("vision", answer)
+        self.assertNotIn("political load", answer)
+        self.assertNotIn("lantern", answer)
+        self.assertNotIn("bridge rope", answer)
+        self.assertIn("your plan was for this", answer)
+
+    def test_court_scene_moment_keeps_court_drops_capture(self):
+        res = recall_from_user_data(
+            "In Smoke and Mirrors, task list for this Court scene",
+            {"lorekeeper_entries_v1": json.dumps(self._moment_corpus())},
+        )
+        answer = (res.get("answer") or "").lower()
+        self.assertEqual(res.get("questionKind"), "writing_next")
+        self.assertIn("court", answer)
+        self.assertIn("political", answer)
+        self.assertNotIn("vision", answer)
+        self.assertNotIn("captured", answer)
+        self.assertNotIn("lantern", answer)
+
+    def test_this_chapter_uses_current_draft_stretch(self):
+        res = recall_from_user_data(
+            "In Smoke and Mirrors, task list for this chapter",
+            {"lorekeeper_entries_v1": json.dumps(self._moment_corpus())},
+        )
+        answer = (res.get("answer") or "").lower()
+        self.assertEqual(res.get("questionKind"), "writing_next")
+        self.assertIn("task list", answer)
+        self.assertIn("captured", answer)
+        self.assertNotIn("lantern", answer)
+        self.assertNotIn("political load", answer)
 
     def test_caps_at_max_and_mentions_more(self):
         note_lines = [
