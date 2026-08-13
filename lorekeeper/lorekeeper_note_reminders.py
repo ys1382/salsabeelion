@@ -140,6 +140,8 @@ def is_unintroduced_future_scene(
 def filter_tasks_by_draft_foothold(
     items: list[dict[str, str]],
     entries: list[dict[str, Any]],
+    *,
+    allow_span_arrival: bool = False,
 ) -> list[dict[str, str]]:
     """Prefer write-next items the draft already introduces; drop pure-future scenes."""
     draft_norm, draft_tail = draft_norms(entries)
@@ -152,7 +154,22 @@ def filter_tasks_by_draft_foothold(
         if is_unintroduced_future_scene(
             line, draft_norm=draft_norm, note_title=title
         ):
-            continue
+            arrival_ok = bool(
+                allow_span_arrival
+                and re.search(
+                    r"\bupon arrival|arrives? at|during (?:the )?arrival|"
+                    r"hands? .{0,24}over",
+                    line,
+                    re.I,
+                )
+                and not re.search(
+                    r"treated as a guest|facing the music|settled",
+                    line,
+                    re.I,
+                )
+            )
+            if not arrival_ok:
+                continue
         score = foothold_score(
             line,
             draft_norm=draft_norm,

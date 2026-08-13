@@ -198,6 +198,100 @@ _NAMED_MOMENT = re.compile(
 _CAPTURE_WORD = re.compile(r"\bcaptur(?:e|ed|ing|es)\b", re.I)
 _COURT_SCENE_WORD = re.compile(r"\bcourt\b", re.I)
 
+# Between-span asks: after capture / before-or-during arrival — not chase, not after.
+_BETWEEN_SPAN_Q = re.compile(
+    r"\bbetween\s+(.+?)\s+and\s+(.+?)(?:\s*[?.!]?\s*$)",
+    re.I,
+)
+_AFTER_BEFORE_SPAN_Q = re.compile(
+    r"\bafter\s+(.+?)\s+(?:(?:and|but)\s+)?"
+    r"(?:before|until|prior to|up to)\s+(.+?)(?:\s*[?.!]?\s*$)",
+    re.I,
+)
+_SPAN_STILL_CHASE = re.compile(
+    r"\b("
+    r"during the (?:\w+\s+)?capture chase|"
+    r"during the chase|"
+    r"after .{0,40}spots |"
+    r"before the (?:wolf|[\w'-]+) takes|"
+    r"outruns? (?:his|her) brothers|"
+    r"giving chase|"
+    r"write the chase|"
+    r"chase (?:scene )?needs|"
+    r"when [\w'-]+ shows up"
+    r")\b",
+    re.I,
+)
+_SPAN_AFTER_RESCUE = re.compile(
+    r"\bafter .{0,48}rescue",
+    re.I,
+)
+_SPAN_AFTER_THERE = re.compile(
+    r"\b("
+    r"at the .{0,24}(?:quarters|manor)|"
+    r"at the (?:cheshire(?: cat)?(?:['\u2019]s)? )?quarters|"
+    r"treated as a guest|"
+    r"facing the music|"
+    r"after arrival|"
+    r"after .{0,24}(?:is|are) settled|"
+    r"once (?:he|she|they) (?:is|are) (?:there|inside|settled)"
+    r")\b",
+    re.I,
+)
+_SPAN_DURING_ARRIVAL = re.compile(
+    r"\b("
+    r"upon arrival|"
+    r"as (?:they|he|she|[\w'-]+) arrives?|"
+    r"when (?:they|he|she|[\w'-]+) arrives?|"
+    r"during (?:the )?arrival|"
+    r"arriv(?:al|es?|ing) at|"
+    r"hands? .{0,24}over"
+    r")\b",
+    re.I,
+)
+_SPAN_JOURNEY = re.compile(
+    r"\b("
+    r"being carried|carried (?:down|away|along|him|her)|"
+    r"carrying (?:him|her|etherei)|"
+    r"mountain(?:\s+path)?|"
+    r"on the way|en route|the (?:walk|trip|journey) (?:to|toward)|"
+    r"several days|"
+    r"between .{0,48}arriv|"
+    r"happens in between|in between\b|"
+    r"before (?:they |he |she )?(?:arriv|reach)|"
+    r"until (?:they |he |she )?arriv|"
+    r"open gap|off-the-page|"
+    r"not yet drafted"
+    r")\b",
+    re.I,
+)
+_SPAN_DONT_KNOW = re.compile(
+    r"\b("
+    r"i don'?t know what happens|"
+    r"idk what happens|"
+    r"not sure what happens"
+    r")\b",
+    re.I,
+)
+_SPAN_CAPTURE_DONE = re.compile(
+    r"\b("
+    r"after .{0,48}(?:is |are |gets? |getting )?captur|"
+    r"once .{0,24}captur|"
+    r"been captured|"
+    r"in (?:his|her|the) grasp|"
+    r"scooped (?:him|her)?\s*up"
+    r")\b",
+    re.I,
+)
+_SPAN_STANDING = re.compile(
+    r"\b("
+    r"court politics|growing up|does not have a grudge|"
+    r"same language|ethical captives|head to be easier|"
+    r"tone of the relationship"
+    r")\b",
+    re.I,
+)
+
 _AUTHOR_MUSING_LEAD = re.compile(
     r"^\s*(?:"
     r"so\s+right\s+now\b|"
@@ -354,6 +448,98 @@ def topic_looks_like_cast(topic: str) -> bool:
         return False
     toks = _normalize(t).split()
     return 1 <= len(toks) <= 4
+
+
+def extract_writing_next_span(question: str) -> dict[str, str] | None:
+    """
+    Between/after-until window from the ask.
+    Empty when this is not a capture→arrival (or similar) span list.
+    """
+    q = (question or "").strip()
+    if not q:
+        return None
+    m = _BETWEEN_SPAN_Q.search(q) or _AFTER_BEFORE_SPAN_Q.search(q)
+    if not m:
+        return None
+    start = re.sub(r"\s+", " ", m.group(1).strip()).strip(" \t\"'“”‘’")
+    end = re.sub(r"\s+", " ", m.group(2).strip()).strip(" \t\"'“”‘’")
+    if not start or not end:
+        return None
+    poles = f"{start} {end}"
+    if not re.search(r"\bcaptur", poles, re.I):
+        return None
+    if not re.search(r"\barriv|place|quarters|manor|mansion", end, re.I):
+        return None
+    return {
+        "start": start,
+        "end": end,
+        "kind": "capture_to_arrival",
+        "label": "the stretch between capture and arrival",
+    }
+
+
+def _span_phase_capture_to_arrival(title: str, line: str) -> str:
+    """
+    before_start | in_span | after_end | unrelated
+    in_span = after capture, before or during arrival — not after they're there.
+    """
+    title_s = title or ""
+    line_s = line or ""
+    if _SPAN_AFTER_RESCUE.search(line_s):
+        return "after_end"
+    if _SPAN_DONT_KNOW.search(line_s):
+        return "unrelated"
+    if _SPAN_STILL_CHASE.search(line_s):
+        return "before_start"
+    if re.search(
+        r"\b(?:sometime later|at some point later|arrives? sometime later)\b",
+        line_s,
+        re.I,
+    ):
+        return "after_end"
+    if _SPAN_DURING_ARRIVAL.search(line_s) and not re.search(
+        r"treated as a guest|facing the music|settled", line_s, re.I
+    ):
+        return "in_span"
+    if _SPAN_AFTER_THERE.search(line_s) and not _SPAN_JOURNEY.search(line_s):
+        return "after_end"
+    if _SPAN_JOURNEY.search(line_s):
+        return "in_span"
+    if _SPAN_STANDING.search(line_s) and not _SPAN_JOURNEY.search(line_s):
+        return "unrelated"
+    # "He's been captured" is the start pole — keep only if the line is the
+    # journey or arrival, not the scoop itself.
+    if _SPAN_CAPTURE_DONE.search(line_s) and (
+        _SPAN_JOURNEY.search(line_s) or _SPAN_DURING_ARRIVAL.search(line_s)
+    ):
+        if _SPAN_AFTER_THERE.search(line_s) and not _SPAN_JOURNEY.search(line_s):
+            return "after_end"
+        return "in_span"
+    return "unrelated"
+
+
+def filter_unused_by_span(
+    items: list[dict[str, str]], span: dict[str, str]
+) -> list[dict[str, str]]:
+    """Keep unused claims that sit in the asked window. No full-list fallback."""
+    if not items or not span:
+        return []
+    kind = str(span.get("kind") or "")
+    if kind != "capture_to_arrival":
+        return []
+    out: list[dict[str, str]] = []
+    seen: set[str] = set()
+    for row in items:
+        line = str(row.get("line") or "")
+        title = str(row.get("noteTitle") or "")
+        if _span_phase_capture_to_arrival(title, line) != "in_span":
+            continue
+        key = _normalize(line)[:160]
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        out.append(row)
+    return out
 
 
 def _other_cast_attitude_about_subject(line: str, subject: str) -> bool:
@@ -1653,15 +1839,23 @@ def frame_plan_recall(line: str, *, you_lead: bool, you_variant: int = 0) -> str
             )
         return f"For {who}'s flashback, you meant to {body}"
 
-    # Generic
+    # Generic — don't glue "You wanted to" onto musing scraps.
     if you_lead:
+        if re.match(r"^(?:now|so|ok|however|for the)\b", body, re.I):
+            return f"Your notes call for {body}"
         if re.match(r"^(?:the|a|an|his|her|their|this)\b", body, re.I):
             if you_variant % 2 == 0:
                 return f"You wanted {body}"
             return f"You were planning {body}"
-        if you_variant % 2 == 0:
-            return f"You wanted to {body}"
-        return f"You were planning to {body}"
+        if re.match(
+            r"^(?:write|show|bring|open|keep|have|let|find|reveal|draft|run)\b",
+            body,
+            re.I,
+        ):
+            if you_variant % 2 == 0:
+                return f"You wanted to {body}"
+            return f"You were planning to {body}"
+        return f"Your notes call for {body}"
     return f"Your notes call for {body}"
 
 
@@ -1793,6 +1987,8 @@ def restate_as_task_line(
     s = re.sub(r"^also\s+something\s+in\s+", "", s, flags=re.I).strip()
     s = re.sub(r"^note:\s*", "", s, flags=re.I).strip()
     s = re.sub(r"^also,\s+", "", s, flags=re.I).strip()
+    s = re.sub(r"^(?:ok\s+)?(?:so\s+)?(?:right\s+)?now,?\s+", "", s, flags=re.I).strip()
+    s = re.sub(r"^ok\s+(?:so\s+)?", "", s, flags=re.I).strip()
     if re.search(r"don'?t want to make that the meat", s, re.I):
         return ""
 
@@ -1816,6 +2012,9 @@ def restate_as_task_line(
     if loc_m:
         loc_prefix = loc_m.group(1)
         s = s[loc_m.end() :].strip()
+
+    if re.search(r"what happens in between", s, re.I):
+        s = "Write the still-open stretch between capture and arrival"
 
     # Compress brothers-discover-ticklish / albino-eyesight showable facts.
     tick = re.search(
@@ -1923,10 +2122,10 @@ def restate_as_task_line(
             s = cand
 
     if len(s) > _MAX_TASK_LINE:
-        for sep in (", but also ", ", and also ", "; ", " — ", " - "):
+        for sep in (", so ", ", but also ", ", and also ", "; ", " — ", " - "):
             if sep in s:
                 left = s.split(sep, 1)[0].strip()
-                if 40 <= len(left) <= _MAX_TASK_LINE and not _line_is_incomplete(
+                if 24 <= len(left) <= _MAX_TASK_LINE and not _line_is_incomplete(
                     left
                 ):
                     s = left
@@ -2160,14 +2359,19 @@ def answer_writing_next_task_list(
     """
     allow_later = wants_later_book_scope(question)
     items, has_notes, has_draft = collect_notes_not_in_draft(entries)
-    topic = extract_writing_next_topic(question)
-    if topic:
-        items = filter_unused_by_topic(
-            items, topic, entries=entries, question=question
-        )
-    anchors = extract_after_anchors(question)
-    if anchors:
-        items = filter_unused_by_after_anchors(items, anchors)
+    span = extract_writing_next_span(question)
+    if span:
+        items = filter_unused_by_span(items, span)
+        topic = str(span.get("label") or "")
+    else:
+        topic = extract_writing_next_topic(question)
+        if topic:
+            items = filter_unused_by_topic(
+                items, topic, entries=entries, question=question
+            )
+        anchors = extract_after_anchors(question)
+        if anchors:
+            items = filter_unused_by_after_anchors(items, anchors)
 
     cleaned = _near_dedupe_items(items) if items else []
     cleaned = filter_already_in_draft_for_tasks(cleaned, entries)
@@ -2175,6 +2379,21 @@ def answer_writing_next_task_list(
     nudge_source_rows = list(cleaned)
     cleaned = filter_partly_done_flashbacks(cleaned, entries)
     tasks = filter_write_next_tasks(cleaned, allow_later_book=allow_later)
+    if span and not tasks:
+        # Gap notes are often musing, not "find a way to write" craft lines.
+        tasks = [
+            row
+            for row in cleaned
+            if str(row.get("line") or "").strip()
+            and not _line_is_incomplete(str(row.get("line") or ""))
+            and (allow_later or not line_is_later_book(str(row.get("line") or "")))
+            and not re.search(
+                r"^\s*(?:mind you|i mean|idk|i don'?t know)\b",
+                str(row.get("line") or ""),
+                re.I,
+            )
+            and not _SPAN_DONT_KNOW.search(str(row.get("line") or ""))
+        ]
     if topic and topic_looks_like_cast(topic):
         tasks = [
             row
@@ -2190,7 +2409,17 @@ def answer_writing_next_task_list(
         filter_tasks_by_draft_foothold,
     )
 
-    tasks = filter_tasks_by_draft_foothold(tasks, entries) if tasks else []
+    tasks = (
+        filter_tasks_by_draft_foothold(
+            tasks,
+            entries,
+            allow_span_arrival=bool(
+                span and span.get("kind") == "capture_to_arrival"
+            ),
+        )
+        if tasks
+        else []
+    )
     ranked = (
         _rank_tasks_leave_off_first(tasks, entries) if tasks else []
     )

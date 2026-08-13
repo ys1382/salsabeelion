@@ -14,6 +14,7 @@ from lorekeeper_writing_next import (
     claim_is_write_next_task,
     compose_writing_next_task_list,
     densify_task_phrasing,
+    extract_writing_next_span,
     extract_writing_next_topic,
     frame_plan_recall,
     is_writing_next_task_list_question,
@@ -104,6 +105,16 @@ class WritingNextDetectionTests(unittest.TestCase):
         self.assertTrue(topic_looks_like_cast("Character E"))
         self.assertFalse(topic_looks_like_moment("the chase scene"))
         self.assertFalse(topic_looks_like_moment("Predator Court politics"))
+
+    def test_between_capture_and_arrival_is_a_span(self):
+        q = (
+            "give me the task list for what happens between the wolf capturing "
+            "Character E and the wolf's arrival at the manor."
+        )
+        span = extract_writing_next_span(q)
+        self.assertIsNotNone(span)
+        self.assertEqual(span["kind"], "capture_to_arrival")
+        self.assertEqual(extract_writing_next_topic(q), "")
 
 
 class WritingNextAnswerTests(unittest.TestCase):
@@ -238,6 +249,99 @@ class WritingNextAnswerTests(unittest.TestCase):
         self.assertIn("captured", answer)
         self.assertNotIn("lantern", answer)
         self.assertNotIn("political load", answer)
+
+    def test_between_capture_and_arrival_excludes_before_and_after(self):
+        entries = [
+            _entry(
+                "n_gap",
+                "After the capture",
+                "After Character E is captured, find a way to write the carry "
+                "down the mountain before they arrive at the manor.",
+            ),
+            _entry(
+                "n_arrive",
+                "Arrival",
+                "Upon arrival at the manor, find a way to write how the wolf "
+                "hands Character E over.",
+            ),
+            _entry(
+                "n_chase",
+                "Chase",
+                "Find a way to write the chase swiftly but not hastily "
+                "when the wolf shows up.",
+            ),
+            _entry(
+                "n_after",
+                "Quarters",
+                "After Character E is captured, the vision reveal still needs "
+                "to be written at the manor quarters.",
+            ),
+            _entry(
+                "n_rescue",
+                "Later",
+                "After they rescue Character E, brothers discover he is ticklish.",
+            ),
+            _entry(
+                "n_lore",
+                "Court",
+                "Character D resents Character T for skipping Predator Court duties.",
+            ),
+            _entry(
+                "d1",
+                "Draft",
+                "Character E was in the wolf's grasp, being carried down the "
+                "mountain path.",
+                kind="document",
+            ),
+        ]
+        res = recall_from_user_data(
+            "In Smoke and Mirrors, give me the task list for what happens "
+            "between the wolf capturing Character E and the wolf's arrival "
+            "at the manor.",
+            {"lorekeeper_entries_v1": json.dumps(entries)},
+        )
+        answer = (res.get("answer") or "").lower()
+        self.assertEqual(res.get("questionKind"), "writing_next")
+        self.assertIn("between capture and arrival", answer)
+        self.assertIn("carry", answer)
+        self.assertIn("hands", answer)
+        self.assertNotIn("swift", answer)
+        self.assertNotIn("vision", answer)
+        self.assertNotIn("ticklish", answer)
+        self.assertNotIn("predator court", answer)
+        self.assertNotIn("flashback", answer)
+
+    def test_between_span_keeps_musing_gap_notes(self):
+        entries = [
+            _entry(
+                "n_gap",
+                "After the capture",
+                "Ok so Character E has been captured. The carry down the mountain "
+                "is still off-the-page before they arrive at the manor.",
+            ),
+            _entry(
+                "n_chase",
+                "Chase",
+                "Find a way to write the chase swiftly but not hastily "
+                "when the wolf shows up.",
+            ),
+            _entry(
+                "d1",
+                "Draft",
+                "Character E was in the wolf's grasp.",
+                kind="document",
+            ),
+        ]
+        res = recall_from_user_data(
+            "In Smoke and Mirrors, give me the task list for what happens "
+            "between the wolf capturing Character E and the wolf's arrival "
+            "at the manor.",
+            {"lorekeeper_entries_v1": json.dumps(entries)},
+        )
+        answer = (res.get("answer") or "").lower()
+        self.assertIn("between capture and arrival", answer)
+        self.assertIn("carry", answer)
+        self.assertNotIn("swift", answer)
 
     def test_caps_at_max_and_mentions_more(self):
         note_lines = [
