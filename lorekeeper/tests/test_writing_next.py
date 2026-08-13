@@ -343,6 +343,78 @@ class WritingNextAnswerTests(unittest.TestCase):
         self.assertIn("carry", answer)
         self.assertNotIn("swift", answer)
 
+    def test_between_span_keeps_overnight_stop_and_grammar(self):
+        entries = [
+            _entry(
+                "n_stop",
+                "After the capture",
+                "It takes them several days, so when he stops for the night/day, "
+                "he firmly (not gently, not roughly-enough to worsen) binds "
+                "Character E's injuries -- along with his limbs in such a manner "
+                "that Character E cannot run off again.",
+            ),
+            _entry(
+                "n_fed",
+                "After the capture",
+                "He also finds a way to keep Character E fed, but whenever he "
+                "attempts to engage Character E in conversation, Character E "
+                "keeps his mouth determinedly shut and will not speak at all.",
+            ),
+            _entry(
+                "n_gap",
+                "Capture POVs",
+                "But what happens in between?",
+            ),
+            _entry(
+                "n_wonder",
+                "Canon asides",
+                "Mind you, it would be interesting to have an idea of where "
+                "Character E was going when off-the-page in another series.",
+            ),
+            _entry(
+                "n_chase",
+                "Chase",
+                "Find a way to write the chase swiftly but not hastily "
+                "when the wolf shows up.",
+            ),
+            _entry(
+                "d1",
+                "Draft",
+                "Character E was in the wolf's grasp, being carried down the "
+                "mountain path. He keeps still whenever conversation is "
+                "attempted and will not speak if he can help it.",
+                kind="document",
+            ),
+        ]
+        res = recall_from_user_data(
+            "In Smoke and Mirrors, give me the task list for what happens "
+            "between the wolf capturing Character E and the wolf's arrival "
+            "at the manor.",
+            {"lorekeeper_entries_v1": json.dumps(entries)},
+        )
+        answer = (res.get("answer") or "").lower()
+        bullets = [
+            ln.strip()
+            for ln in (res.get("answer") or "").splitlines()
+            if ln.strip().startswith("•")
+        ]
+        self.assertGreaterEqual(len(bullets), 3)
+        self.assertIn("several days", answer)
+        self.assertIn("when he stops", answer)
+        self.assertIn("injur", answer)
+        self.assertIn("fed", answer)
+        self.assertIn("mouth", answer)
+        self.assertIn("your notes say", answer)
+        self.assertNotIn("call for it takes", answer)
+        self.assertNotIn("you wanted the still-open", answer)
+        self.assertNotIn(
+            "write what happens between capture and arrival — write",
+            answer,
+        )
+        self.assertNotIn("swift", answer)
+        self.assertNotIn("mind you", answer)
+        self.assertNotIn("another series", answer)
+
     def test_caps_at_max_and_mentions_more(self):
         note_lines = [
             f"Unused plot beat number {i} about the silver lantern ritual."

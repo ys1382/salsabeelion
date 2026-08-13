@@ -256,11 +256,14 @@ _SPAN_JOURNEY = re.compile(
     r"mountain(?:\s+path)?|"
     r"on the way|en route|the (?:walk|trip|journey) (?:to|toward)|"
     r"several days|"
+    r"stops?\s+for\s+the\s+(?:night|day)|"
+    r"keep .{0,48} fed|"
+    r"mouth .{0,40}shut|"
     r"between .{0,48}arriv|"
-    r"happens in between|in between\b|"
+    r"happens in between|"
     r"before (?:they |he |she )?(?:arriv|reach)|"
     r"until (?:they |he |she )?arriv|"
-    r"open gap|off-the-page|"
+    r"open gap|"
     r"not yet drafted"
     r")\b",
     re.I,
@@ -983,13 +986,34 @@ def filter_write_next_tasks(
     items: list[dict[str, str]],
     *,
     allow_later_book: bool = False,
+    keep_span_journey: bool = False,
 ) -> list[dict[str, str]]:
     """Keep only write-next-shaped unused claims for the task-list Ask."""
     out: list[dict[str, str]] = []
+    seen: set[str] = set()
     for row in items:
         line = str(row.get("line") or "")
-        if claim_is_write_next_task(line, allow_later_book=allow_later_book):
-            out.append(row)
+        keep = claim_is_write_next_task(line, allow_later_book=allow_later_book)
+        if not keep and keep_span_journey:
+            keep = bool(
+                _SPAN_JOURNEY.search(line)
+                and not _line_is_incomplete(line)
+                and (allow_later_book or not line_is_later_book(line))
+                and not _SPAN_DONT_KNOW.search(line)
+                and not _is_continuity_or_musing(line)
+                and not re.search(
+                    r"^\s*(?:mind you|i mean|idk)\b",
+                    line,
+                    re.I,
+                )
+            )
+        if not keep:
+            continue
+        key = _normalize(line)[:160]
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        out.append(row)
     return out
 
 
@@ -1045,6 +1069,13 @@ def filter_already_in_draft_for_tasks(
             line,
             re.I,
         ):
+            if _claim_touched_in_draft(line, draft_norm):
+                continue
+            out.append(row)
+            continue
+        # Journey beats share common verbs with the draft (conversation, keep,
+        # speak). Soft paraphrase hides unused capture→arrival notes.
+        if _SPAN_JOURNEY.search(line):
             if _claim_touched_in_draft(line, draft_norm):
                 continue
             out.append(row)
@@ -1839,10 +1870,25 @@ def frame_plan_recall(line: str, *, you_lead: bool, you_variant: int = 0) -> str
             )
         return f"For {who}'s flashback, you meant to {body}"
 
+    if re.search(r"still leave this stretch open|stretch between capture and arrival is still open", core, re.I):
+        return (
+            "Your notes still leave this stretch open — write what happens "
+            "between capture and arrival"
+        )
+    if re.search(
+        r"journey takes several days|stop for the night|keeps him fed|keep him fed",
+        core,
+        re.I,
+    ):
+        said = body if body[:1].islower() else (body[0].lower() + body[1:] if body else body)
+        return f"Your notes say {said}"
+
     # Generic — don't glue "You wanted to" onto musing scraps.
     if you_lead:
         if re.match(r"^(?:now|so|ok|however|for the)\b", body, re.I):
             return f"Your notes call for {body}"
+        if re.match(r"^(?:it|they|he|she)\s+\w+", body, re.I):
+            return f"Your notes say {body}"
         if re.match(r"^(?:the|a|an|his|her|their|this)\b", body, re.I):
             if you_variant % 2 == 0:
                 return f"You wanted {body}"
@@ -1856,6 +1902,8 @@ def frame_plan_recall(line: str, *, you_lead: bool, you_variant: int = 0) -> str
                 return f"You wanted to {body}"
             return f"You were planning to {body}"
         return f"Your notes call for {body}"
+    if re.match(r"^(?:it|they|he|she)\s+\w+", body, re.I):
+        return f"Your notes say {body}"
     return f"Your notes call for {body}"
 
 
@@ -1872,6 +1920,13 @@ def assign_plan_recall_frames(bullets: list[str]) -> list[str]:
     for bullet in bullets:
         kind = task_beat_kind(plan_recall_core(bullet))
         force_non_you = kind in {"flashback", "chase"}
+        if re.search(
+            r"journey takes several days|stop for the night|keeps him fed|keep him fed|"
+            r"still leave this stretch open|stretch between capture",
+            bullet,
+            re.I,
+        ):
+            force_non_you = True
         allow_you = (not force_non_you) and since_you >= 2
         you_lead = bool(allow_you and kind in {"ticklish", "vision", "generic"})
 
@@ -1948,6 +2003,50 @@ def densify_task_phrasing(line: str) -> str:
     return s
 
 
+def _compress_span_journey_line(raw: str) -> str:
+    """
+    Librarian compress for capture→arrival journey notes — keep stop/bind/fed
+    beats that a length cap would otherwise drop. Never invents.
+    """
+    s = raw or ""
+    if re.search(r"what happens in between", s, re.I):
+        return "This stretch between capture and arrival is still open on the page"
+    days = bool(re.search(r"several days", s, re.I))
+    stop = bool(re.search(r"stops? for the (?:night|day)", s, re.I))
+    bind_inj = bool(re.search(r"binds?.{0,80}injur", s, re.I))
+    bind_limbs = bool(
+        re.search(r"\blimbs\b", s, re.I)
+        and re.search(r"cannot run|can'?t run|run off", s, re.I)
+    )
+    firmly = bool(re.search(r"\bfirmly\b", s, re.I) and re.search(r"not gently", s, re.I))
+    fed = ""
+    if re.search(r"keep .{0,48} fed", s, re.I):
+        if re.search(r"conversation|mouth .{0,40}shut|will speak", s, re.I):
+            fed = (
+                "He keeps him fed on the journey; when conversation is attempted, "
+                "he keeps his mouth shut and will not speak"
+            )
+        else:
+            fed = "He keeps him fed on the journey"
+    if days and stop:
+        out = "The journey takes several days"
+        if bind_inj or firmly:
+            out += (
+                ". When he stops for the night, he binds the injuries firmly — "
+                "not gently, and not roughly enough to worsen them"
+            )
+            if bind_limbs:
+                out += " — and binds the limbs so he cannot run off"
+        else:
+            out += ", with a stop for the night before they arrive"
+        if fed:
+            out += ". " + fed
+        return out
+    if fed:
+        return fed
+    return ""
+
+
 def restate_as_task_line(
     raw: str,
     *,
@@ -2013,8 +2112,11 @@ def restate_as_task_line(
         loc_prefix = loc_m.group(1)
         s = s[loc_m.end() :].strip()
 
-    if re.search(r"what happens in between", s, re.I):
-        s = "Write the still-open stretch between capture and arrival"
+    compressed = _compress_span_journey_line(s)
+    if compressed:
+        s = compressed
+        if timeline_seat and re.search(r"after .{0,48}captur", timeline_seat, re.I):
+            timeline_seat = ""
 
     # Compress brothers-discover-ticklish / albino-eyesight showable facts.
     tick = re.search(
@@ -2109,39 +2211,46 @@ def restate_as_task_line(
                 s = s[0].upper() + s[1:]
 
     # Keep first complete chunk when the note stacks clauses.
-    if ";" in s and len(s) > 110:
-        left = s.split(";", 1)[0].strip()
-        if len(left) >= 36 and not _line_is_incomplete(left):
-            s = left
+    if not compressed:
+        if ";" in s and len(s) > 110:
+            left = s.split(";", 1)[0].strip()
+            if len(left) >= 36 and not _line_is_incomplete(left):
+                s = left
 
-    # First sentence only when multiple.
-    parts = re.split(r"(?<=[.!?])\s+", s)
-    if parts and len(parts[0].strip()) >= 28:
-        cand = parts[0].strip()
-        if not _line_is_incomplete(cand):
-            s = cand
+        # First sentence only when multiple.
+        parts = re.split(r"(?<=[.!?])\s+", s)
+        if parts and len(parts[0].strip()) >= 28:
+            cand = parts[0].strip()
+            if not _line_is_incomplete(cand):
+                s = cand
 
-    if len(s) > _MAX_TASK_LINE:
-        for sep in (", so ", ", but also ", ", and also ", "; ", " — ", " - "):
-            if sep in s:
-                left = s.split(sep, 1)[0].strip()
-                if 24 <= len(left) <= _MAX_TASK_LINE and not _line_is_incomplete(
-                    left
+        if len(s) > _MAX_TASK_LINE:
+            for sep in (", so ", ", but also ", ", and also ", "; ", " — ", " - "):
+                if sep == ", so " and re.search(
+                    r"stops? for the (?:night|day)|binds?.{0,40}injur", s, re.I
                 ):
-                    s = left
-                    break
-    # Long author scrap with a clear discovering-that clause.
-    if len(s) > _MAX_TASK_LINE:
-        m = re.search(
-            r"discover(?:ing|s|ed)?\s+that\s+[^.!]{8,120}",
-            s,
-            re.I,
-        )
-        if m:
-            chunk = _tidy_claim_line(m.group(0))
-            if chunk and len(chunk) <= _MAX_TASK_LINE:
-                s = chunk
-    if _line_is_incomplete(s) or len(s) > _MAX_TASK_LINE:
+                    continue
+                if sep in s:
+                    left = s.split(sep, 1)[0].strip()
+                    if 24 <= len(left) <= _MAX_TASK_LINE and not _line_is_incomplete(
+                        left
+                    ):
+                        s = left
+                        break
+        # Long author scrap with a clear discovering-that clause.
+        if len(s) > _MAX_TASK_LINE:
+            m = re.search(
+                r"discover(?:ing|s|ed)?\s+that\s+[^.!]{8,120}",
+                s,
+                re.I,
+            )
+            if m:
+                chunk = _tidy_claim_line(m.group(0))
+                if chunk and len(chunk) <= _MAX_TASK_LINE:
+                    s = chunk
+    if _line_is_incomplete(s) or (
+        len(s) > (_MAX_TASK_LINE_WITH_SEAT if compressed else _MAX_TASK_LINE)
+    ):
         # Never truncate with ellipsis — drop rather than trail off.
         return ""
 
@@ -2378,7 +2487,11 @@ def answer_writing_next_task_list(
     # Keep pre-shrink rows for update-notes nudges (full flashback setup lines).
     nudge_source_rows = list(cleaned)
     cleaned = filter_partly_done_flashbacks(cleaned, entries)
-    tasks = filter_write_next_tasks(cleaned, allow_later_book=allow_later)
+    tasks = filter_write_next_tasks(
+        cleaned,
+        allow_later_book=allow_later,
+        keep_span_journey=bool(span),
+    )
     if span and not tasks:
         # Gap notes are often musing, not "find a way to write" craft lines.
         tasks = [
