@@ -24,8 +24,10 @@ _UNINTRODUCED_FUTURE_SCENE = re.compile(
     r"facing the music|"
     r"treated as a guest(?: rather than a prisoner)?|"
     r"upon arrival at|"
-    r"when (?:he|she|they|etherei|[\w'-]+) arrives? at|"
-    r"after (?:he|she|they|etherei) (?:is|are) (?:settled|received) (?:at|in)"
+    r"after arriving at|"
+    r"when (?:he|she|they|[\w'-]+) arrives? at|"
+    r"after (?:he|she|they|[\w'-]+) (?:is|are) (?:settled|received) (?:at|in)|"
+    r"once (?:he|she|they|[\w'-]+) (?:is|are) (?:inside|settled) (?:at|in)"
     r")\b",
     re.I,
 )

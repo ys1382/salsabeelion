@@ -96,6 +96,7 @@ class WritingNextDetectionTests(unittest.TestCase):
             ("task list for this Court scene", "this court scene"),
             ("task list for this moment", "this moment"),
             ("In Smoke and Mirrors, task list for chapter 2", "chapter 2"),
+            ("task list for the manor scene", "the manor scene"),
         ):
             topic = extract_writing_next_topic(q)
             self.assertEqual(topic.lower(), expect, msg=q)
@@ -115,6 +116,16 @@ class WritingNextDetectionTests(unittest.TestCase):
         self.assertIsNotNone(span)
         self.assertEqual(span["kind"], "capture_to_arrival")
         self.assertEqual(extract_writing_next_topic(q), "")
+
+    def test_after_flashback_until_manor_is_named_span(self):
+        q = (
+            "In Ashford Saga, give me the task list for what happens after "
+            "the flashback until they reach the manor."
+        )
+        span = extract_writing_next_span(q)
+        self.assertIsNotNone(span)
+        self.assertEqual(span["kind"], "named_span")
+        self.assertNotEqual(span["kind"], "capture_to_arrival")
 
 
 class WritingNextAnswerTests(unittest.TestCase):
@@ -1412,6 +1423,317 @@ class WritingNextAnswerTests(unittest.TestCase):
             answer, r"• .+\([^)]*(?:during|after|at the)[^)]*\)"
         )
         self.assertEqual(low.count("albino-rabbit vision"), 1)
+
+
+class WritingNextGeneralPathTests(unittest.TestCase):
+    """Raise the floor for non-Etherei / non-capture→arrival task lists."""
+
+    def _ashford(self, eid, title, body, *, kind="note"):
+        return _entry(
+            eid, title, body, tags=["Ashford Saga"], kind=kind
+        )
+
+    def test_other_cast_keeps_unused_beats_and_seat_sentences(self):
+        entries = [
+            self._ashford(
+                "n1",
+                "Character D",
+                "Character D deeply cares for Character T but resents him for "
+                "leaving him to dry with political pressures at Court. Your plan "
+                "was for this to take place during the Court scene.",
+            ),
+            self._ashford(
+                "n2",
+                "Character D",
+                "Need to write discovering that Character D still keeps a manor "
+                "key he never mentioned — a reveal even Character T has not faced.",
+            ),
+            self._ashford(
+                "n3",
+                "Character D",
+                "Character D is a lynx with grey fur.",
+            ),
+            self._ashford(
+                "n4",
+                "Chase",
+                "The chase scene needs a snapped bridge rope over the gorge.",
+            ),
+            self._ashford(
+                "d1",
+                "Draft",
+                "Character D walked the hall and nodded once at Character T.",
+                kind="document",
+            ),
+        ]
+        res = recall_from_user_data(
+            "In Ashford Saga, task list for Character D",
+            {"lorekeeper_entries_v1": json.dumps(entries)},
+        )
+        answer = res.get("answer") or ""
+        low = answer.lower()
+        self.assertEqual(res.get("questionKind"), "writing_next")
+        self.assertIn("resents", low)
+        self.assertIn("manor key", low)
+        self.assertNotIn("grey fur", low)
+        self.assertNotIn("snapped bridge", low)
+        self.assertIn("your plan was for this", low)
+        self.assertNotRegex(
+            answer, r"• .+\([^)]*(?:during|after|at the)[^)]*\)"
+        )
+        self.assertNotIn("call for it takes", low)
+        bullets = [
+            ln for ln in answer.splitlines() if ln.strip().startswith("•")
+        ]
+        self.assertGreaterEqual(len(bullets), 2)
+
+    def test_theme_wolf_keeps_on_topic(self):
+        entries = [
+            self._ashford(
+                "n1",
+                "The wolf",
+                "The wolf still needs a scene where he keeps Character E fed "
+                "on the way to the manor.",
+            ),
+            self._ashford(
+                "n2",
+                "Court",
+                "Character D resents Character T for skipping Predator Court duties.",
+            ),
+            self._ashford(
+                "d1",
+                "Draft",
+                "The wolf closed in along the ridge. Character E ran.",
+                kind="document",
+            ),
+        ]
+        res = recall_from_user_data(
+            "In Ashford Saga, task list for the wolf",
+            {"lorekeeper_entries_v1": json.dumps(entries)},
+        )
+        answer = (res.get("answer") or "").lower()
+        self.assertEqual(res.get("questionKind"), "writing_next")
+        self.assertIn("fed", answer)
+        self.assertNotIn("predator court", answer)
+        self.assertNotIn("what should i write next", answer)
+
+    def test_whole_work_does_not_echo_ask_and_keeps_unused(self):
+        entries = [
+            self._ashford(
+                "n1",
+                "Manor",
+                "The manor still needs a snapped gate scene before they go inside.",
+            ),
+            self._ashford(
+                "n2",
+                "Awareness",
+                "Character E is aware that Character T does not yet want him dead.",
+            ),
+            self._ashford(
+                "d1",
+                "Draft",
+                "They walked the garden path until dusk.",
+                kind="document",
+            ),
+        ]
+        q = "In Ashford Saga, what should I write next?"
+        res = recall_from_user_data(
+            q, {"lorekeeper_entries_v1": json.dumps(entries)}
+        )
+        answer = res.get("answer") or ""
+        low = answer.lower()
+        self.assertEqual(res.get("questionKind"), "writing_next")
+        self.assertIn("snapped gate", low)
+        self.assertNotIn("does not yet want him dead", low)
+        bullets = [
+            ln[2:].strip()
+            for ln in answer.splitlines()
+            if ln.strip().startswith("•")
+        ]
+        self.assertTrue(bullets)
+        for b in bullets:
+            self.assertNotIn("what should i write next", b.lower())
+            self.assertFalse(
+                re.match(r"^write what happens between", b, re.I)
+            )
+        openers = [bool(re.match(r"^you\b", b, re.I)) for b in bullets]
+        if sum(openers) >= 2:
+            last = None
+            for i, is_you in enumerate(openers):
+                if is_you:
+                    if last is not None:
+                        self.assertGreaterEqual(i - last - 1, 2)
+                    last = i
+
+    def test_later_book_list_uses_plan_recall(self):
+        entries = [
+            self._ashford(
+                "n1",
+                "Far",
+                "Character E returns to the home dimension — this does not happen "
+                "until a later book, when the manor secret is finally revealed.",
+            ),
+            self._ashford(
+                "n2",
+                "Near",
+                "Need to write the chase swiftly but not hastily so Character E "
+                "reaches the ridge.",
+            ),
+            self._ashford(
+                "d1",
+                "Draft",
+                "They walked the garden path until dusk.",
+                kind="document",
+            ),
+        ]
+        res = recall_from_user_data(
+            "In Ashford Saga, task list for later book",
+            {"lorekeeper_entries_v1": json.dumps(entries)},
+        )
+        answer = (res.get("answer") or "").lower()
+        self.assertEqual(res.get("questionKind"), "writing_next")
+        self.assertIn("home dimension", answer)
+        self.assertNotIn("swiftly", answer)
+        self.assertRegex(
+            answer, r"your notes (?:say|call for)|you wanted|you were planning"
+        )
+        self.assertNotIn("call for it takes", answer)
+
+    def test_manor_scene_moment_drops_chase(self):
+        entries = [
+            self._ashford(
+                "n1",
+                "Manor",
+                "At the manor scene, Character D still needs to write the heavier "
+                "political load while Character T stays out.",
+            ),
+            self._ashford(
+                "n2",
+                "Chase",
+                "The chase scene needs a snapped bridge rope over the gorge.",
+            ),
+            self._ashford(
+                "d1",
+                "Draft",
+                "They stood at the manor steps. Character D waited.",
+                kind="document",
+            ),
+        ]
+        res = recall_from_user_data(
+            "In Ashford Saga, task list for the manor scene",
+            {"lorekeeper_entries_v1": json.dumps(entries)},
+        )
+        answer = (res.get("answer") or "").lower()
+        self.assertEqual(res.get("questionKind"), "writing_next")
+        self.assertIn("political", answer)
+        self.assertNotIn("bridge rope", answer)
+        self.assertNotIn("what should i write next", answer)
+
+    def test_named_span_after_flashback_until_manor(self):
+        entries = [
+            self._ashford(
+                "n_walk",
+                "After the flashback",
+                "After the flashback, Character E still needs to write the quiet "
+                "walk toward the manor.",
+            ),
+            self._ashford(
+                "n_stop",
+                "After the flashback",
+                "It takes two nights, so when he stops for the night he firmly "
+                "binds Character E's injuries — along with his limbs so Character E "
+                "cannot run off again.",
+            ),
+            self._ashford(
+                "n_flash",
+                "Flashback",
+                "During Character D's flashback, reveal a childhood secret about "
+                "the manor key.",
+            ),
+            self._ashford(
+                "n_guest",
+                "Arrival",
+                "Upon arrival at the manor, Character E is treated as a guest "
+                "rather than a prisoner.",
+            ),
+            self._ashford(
+                "n_chase",
+                "Chase",
+                "The chase scene needs a snapped bridge rope over the gorge.",
+            ),
+            self._ashford(
+                "d1",
+                "Draft",
+                "Character D's flashback broke. They were already on the path.",
+                kind="document",
+            ),
+        ]
+        res = recall_from_user_data(
+            "In Ashford Saga, give me the task list for what happens after "
+            "the flashback until they reach the manor.",
+            {"lorekeeper_entries_v1": json.dumps(entries)},
+        )
+        answer = (res.get("answer") or "").lower()
+        self.assertEqual(res.get("questionKind"), "writing_next")
+        self.assertIn("walk", answer)
+        self.assertIn("your notes say", answer)
+        self.assertIn("injur", answer)
+        self.assertNotIn("call for it takes", answer)
+        self.assertNotIn("childhood secret", answer)
+        self.assertNotIn("treated as a guest", answer)
+        self.assertNotIn("bridge rope", answer)
+        self.assertNotIn("write what happens between", answer)
+
+    def test_other_work_whole_list(self):
+        entries = [
+            self._ashford(
+                "n1",
+                "Gate",
+                "The manor still needs a snapped gate scene before they go inside.",
+            ),
+            self._ashford(
+                "d1",
+                "Draft",
+                "They walked the garden until the lanterns came on.",
+                kind="document",
+            ),
+        ]
+        res = recall_from_user_data(
+            "In Ashford Saga, list my task list",
+            {"lorekeeper_entries_v1": json.dumps(entries)},
+        )
+        answer = (res.get("answer") or "").lower()
+        self.assertEqual(res.get("questionKind"), "writing_next")
+        self.assertIn("snapped gate", answer)
+        self.assertIn("ashford", answer)
+        self.assertNotIn("list my task list", answer.split("•", 1)[-1])
+
+    def test_foothold_quiets_pure_future_manor_guest(self):
+        entries = [
+            self._ashford(
+                "n1",
+                "Later",
+                "Upon arrival at the manor, Character E is treated as a guest "
+                "rather than a prisoner.",
+            ),
+            self._ashford(
+                "n2",
+                "Path",
+                "Need to write the quiet walk toward the manor after the flashback.",
+            ),
+            self._ashford(
+                "d1",
+                "Draft",
+                "They were still on the mountain path after the flashback broke.",
+                kind="document",
+            ),
+        ]
+        res = recall_from_user_data(
+            "In Ashford Saga, what should I write next?",
+            {"lorekeeper_entries_v1": json.dumps(entries)},
+        )
+        answer = (res.get("answer") or "").lower()
+        self.assertIn("walk", answer)
+        self.assertNotIn("treated as a guest", answer)
 
 
 if __name__ == "__main__":

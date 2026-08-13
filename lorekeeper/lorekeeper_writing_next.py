@@ -191,8 +191,13 @@ _NAMED_MOMENT = re.compile(
     r"\b("
     r"chapter\s+(?:\d+|one|two|three|four|five|six|seven|eight|nine|ten)|"
     r"(?:the\s+)?(?:capture|captured)(?:\s+scene|\s+chase)?|"
-    r"court\s+scene"
+    r"court\s+scene|"
+    r"(?:the|this|that|current)\s+[\w'-]+(?:\s+[\w'-]+)?\s+scene"
     r")\b",
+    re.I,
+)
+_NAMED_PLACE_SCENE = re.compile(
+    r"\b(?:the|this|that|current)\s+([\w'-]+(?:\s+[\w'-]+)?)\s+scene\b",
     re.I,
 )
 _CAPTURE_WORD = re.compile(r"\bcaptur(?:e|ed|ing|es)\b", re.I)
@@ -276,6 +281,25 @@ _SPAN_DONT_KNOW = re.compile(
     r")\b",
     re.I,
 )
+
+_SPAN_POLE_JUNK = frozenset(
+    {
+        "me",
+        "you",
+        "us",
+        "them",
+        "this",
+        "that",
+        "it",
+        "notes",
+        "the notes",
+        "my notes",
+        "draft",
+        "the draft",
+        "the document",
+        "the story",
+    }
+)
 _SPAN_CAPTURE_DONE = re.compile(
     r"\b("
     r"after .{0,48}(?:is |are |gets? |getting )?captur|"
@@ -328,7 +352,11 @@ _DRAMATIZABLE = re.compile(
     r"left (?:him|her|them) to dry|heavier load|"
     r"scene needs|write the|dramatize|on (?:the\s+)?page|"
     r"find a way to write|haven'?t specified|not yet specified|"
-    r"who killed|fascinated study|guest rather than|open gap"
+    r"who killed|fascinated study|guest rather than|open gap|"
+    r"still\s+(?:need|have|has)\s+to\s+(?:write|draft|show|open)|"
+    r"not yet (?:on the page|written|drafted)|"
+    r"haven'?t (?:written|drafted|shown)|"
+    r"needs? a scene|should show"
     r")\b",
     re.I,
 )
@@ -342,7 +370,10 @@ _SHOWABLE_CAST_FACT = re.compile(
     r"albino|"
     r"glasses|spectacles|"
     r"discover(?:ing|s|ed)?\s+that|"
-    r"brothers?\s+.{0,48}(?:find|learn|discover|catch|convince)"
+    r"brothers?\s+.{0,48}(?:find|learn|discover|catch|convince)|"
+    r"never (?:told|shown|mentioned)|"
+    r"has(?:n'?t| not) (?:told|shown|mentioned)|"
+    r"nobody (?:knows|has noticed)"
     r")\b",
     re.I,
 )
@@ -456,7 +487,7 @@ def topic_looks_like_cast(topic: str) -> bool:
 def extract_writing_next_span(question: str) -> dict[str, str] | None:
     """
     Between/after-until window from the ask.
-    Empty when this is not a capture→arrival (or similar) span list.
+    Capture→arrival stays its own kind; other after-X / until-Y uses named_span.
     """
     q = (question or "").strip()
     if not q:
@@ -468,16 +499,27 @@ def extract_writing_next_span(question: str) -> dict[str, str] | None:
     end = re.sub(r"\s+", " ", m.group(2).strip()).strip(" \t\"'“”‘’")
     if not start or not end:
         return None
+    if start.lower() in _SPAN_POLE_JUNK or end.lower() in _SPAN_POLE_JUNK:
+        return None
+    if _LATER_BOOK_QUESTION.search(start) or _LATER_BOOK_QUESTION.search(end):
+        return None
+    if len(start) < 4 or len(end) < 4:
+        return None
     poles = f"{start} {end}"
-    if not re.search(r"\bcaptur", poles, re.I):
-        return None
-    if not re.search(r"\barriv|place|quarters|manor|mansion", end, re.I):
-        return None
+    if re.search(r"\bcaptur", poles, re.I) and re.search(
+        r"\barriv|place|quarters|manor|mansion", end, re.I
+    ):
+        return {
+            "start": start,
+            "end": end,
+            "kind": "capture_to_arrival",
+            "label": "the stretch between capture and arrival",
+        }
     return {
         "start": start,
         "end": end,
-        "kind": "capture_to_arrival",
-        "label": "the stretch between capture and arrival",
+        "kind": "named_span",
+        "label": "this stretch",
     }
 
 
@@ -521,6 +563,100 @@ def _span_phase_capture_to_arrival(title: str, line: str) -> str:
     return "unrelated"
 
 
+def _span_pole_tokens(text: str) -> list[str]:
+    """Distinctive tokens from a between/after-until pole."""
+    weak = _STRETCH_WEAK | {
+        "they",
+        "them",
+        "reach",
+        "arrive",
+        "arrival",
+        "until",
+        "before",
+        "after",
+        "between",
+    }
+    return [
+        t
+        for t in _content_tokens(text)
+        if len(t) >= 4 and t not in weak
+    ]
+
+
+def _span_phase_named(
+    title: str, line: str, span: dict[str, str]
+) -> str:
+    """
+    before_start | in_span | after_end | unrelated
+    Librarian window for a generic after-X / until-Y ask.
+    """
+    title_s = title or ""
+    line_s = line or ""
+    blob_n = _normalize(f"{title_s} {line_s}")
+    start = str(span.get("start") or "")
+    end = str(span.get("end") or "")
+    start_toks = _span_pole_tokens(start)
+    end_toks = _span_pole_tokens(end)
+    if _SPAN_DONT_KNOW.search(line_s):
+        return "unrelated"
+    if _SPAN_STANDING.search(line_s) and not _SPAN_JOURNEY.search(line_s):
+        return "unrelated"
+
+    after_end = bool(
+        re.search(
+            r"\bafter\s+(?:they|he|she)\s+(?:arriv|reach)|"
+            r"\bafter arrival\b|"
+            r"\bonce (?:he|she|they) (?:is|are) (?:there|inside|settled)|"
+            r"\btreated as a guest\b|"
+            r"\bfacing the music\b",
+            line_s,
+            re.I,
+        )
+        and not _SPAN_JOURNEY.search(line_s)
+        and not _SPAN_DURING_ARRIVAL.search(line_s)
+    )
+    if after_end:
+        return "after_end"
+    if (
+        _SPAN_AFTER_THERE.search(line_s)
+        and not _SPAN_JOURNEY.search(line_s)
+        and not _SPAN_DURING_ARRIVAL.search(line_s)
+        and end_toks
+        and any(t in blob_n for t in end_toks)
+    ):
+        return "after_end"
+
+    start_is_flash = bool(re.search(r"\bflashback\b", start, re.I))
+    if start_is_flash and re.search(r"\bflashback\b", line_s, re.I):
+        if re.search(r"\bafter\s+(?:the\s+)?flashback\b", line_s, re.I):
+            return "in_span"
+        if re.search(r"\bduring\b.{0,48}\bflashback\b", line_s, re.I):
+            return "before_start"
+        if not _SPAN_JOURNEY.search(line_s):
+            return "before_start"
+
+    if re.search(r"\bbefore\b", line_s, re.I) and start_toks:
+        if any(t in blob_n for t in start_toks) and not _SPAN_JOURNEY.search(
+            line_s
+        ):
+            return "before_start"
+
+    if _SPAN_JOURNEY.search(line_s) or _SPAN_DURING_ARRIVAL.search(line_s):
+        return "in_span"
+
+    hits_start = sum(1 for t in start_toks if t in blob_n)
+    hits_end = sum(1 for t in end_toks if t in blob_n)
+    after_start = bool(re.search(r"\bafter\b", line_s, re.I) and hits_start)
+    if after_start:
+        return "in_span"
+    if hits_start and hits_end:
+        return "in_span"
+    need_start = 1 if len(start_toks) <= 2 else max(1, (len(start_toks) + 1) // 2)
+    if hits_start >= need_start:
+        return "in_span"
+    return "unrelated"
+
+
 def filter_unused_by_span(
     items: list[dict[str, str]], span: dict[str, str]
 ) -> list[dict[str, str]]:
@@ -528,14 +664,21 @@ def filter_unused_by_span(
     if not items or not span:
         return []
     kind = str(span.get("kind") or "")
-    if kind != "capture_to_arrival":
+    if kind == "capture_to_arrival":
+        phase_fn = _span_phase_capture_to_arrival
+    elif kind == "named_span":
+
+        def phase_fn(title: str, line: str) -> str:
+            return _span_phase_named(title, line, span)
+
+    else:
         return []
     out: list[dict[str, str]] = []
     seen: set[str] = set()
     for row in items:
         line = str(row.get("line") or "")
         title = str(row.get("noteTitle") or "")
-        if _span_phase_capture_to_arrival(title, line) != "in_span":
+        if phase_fn(title, line) != "in_span":
             continue
         key = _normalize(line)[:160]
         if not key or key in seen:
@@ -688,7 +831,7 @@ def _strict_craft_for_subject(
 
 
 def _moment_kind(topic: str) -> str:
-    """capture | court_scene | chapter | current_stretch."""
+    """capture | court_scene | chapter | named_scene | current_stretch."""
     t = _normalize(topic)
     if re.search(r"\bcaptur", t):
         return "capture"
@@ -696,6 +839,10 @@ def _moment_kind(topic: str) -> str:
         return "court_scene"
     if re.search(r"\bchapter\b", t) or re.search(r"\bprologue\b|\bact\b", t):
         return "chapter"
+    if _NAMED_PLACE_SCENE.search(topic or "") and not re.search(
+        r"\b(?:chase|politics)\b", t
+    ):
+        return "named_scene"
     return "current_stretch"
 
 
@@ -736,12 +883,24 @@ def _row_moment_blob(row: dict[str, str]) -> str:
     return f"{row.get('noteTitle') or ''} {row.get('line') or ''}"
 
 
+def _named_scene_terms(topic: str) -> list[str]:
+    """Place/event tokens from 'the manor scene' — not scene/the/this."""
+    t = re.sub(
+        r"\b(?:the|this|that|current|scene|beat|moment|event)\b",
+        " ",
+        topic or "",
+        flags=re.I,
+    )
+    return [tok for tok in _content_tokens(t) if len(tok) >= 4]
+
+
 def _row_matches_moment(
     row: dict[str, str],
     *,
     kind: str,
     stretch_terms: set[str],
     chapter_num: str = "",
+    topic: str = "",
 ) -> bool:
     """Librarian match: note text actually names or sits on that moment."""
     blob = _row_moment_blob(row)
@@ -769,6 +928,14 @@ def _row_matches_moment(
             toks = set(_content_tokens(blob))
             return len(toks & stretch_terms) >= 1
         return False
+    if kind == "named_scene":
+        terms = _named_scene_terms(topic)
+        if not terms:
+            return False
+        blob_n = _normalize(blob)
+        hits = sum(1 for t in terms if t in blob_n)
+        need = 1 if len(terms) <= 2 else max(1, (len(terms) + 1) // 2)
+        return hits >= need
     # this scene / this moment / this beat / this event / unnumbered chapter
     toks = set(_content_tokens(blob))
     if stretch_terms and len(toks & stretch_terms) >= 1:
@@ -810,6 +977,7 @@ def filter_unused_by_moment(
             kind=kind,
             stretch_terms=stretch_terms,
             chapter_num=chapter_num,
+            topic=topic_s,
         ):
             continue
         key = _normalize(str(row.get("line") or ""))[:160]
@@ -974,8 +1142,19 @@ def claim_is_write_next_task(
             return False
     if line_is_later_book(s) and not allow_later_book:
         return False
-    if allow_later_book and not line_is_later_book(s):
-        # Later-book ask: only lines marked for later books.
+    if allow_later_book:
+        if not line_is_later_book(s):
+            return False
+        if _DRAMATIZABLE.search(s) or _RELATIONSHIP_TENSION.search(s) or showable:
+            return True
+        # Later-book ask: keep a concrete later beat, not a bare "until later" scrap.
+        if len(s) >= 40 and re.search(
+            r"\b(?:reveal|scene|appear|happens?|show|when|after|during|"
+            r"meet|return|flashback|secret)\b",
+            s,
+            re.I,
+        ):
+            return True
         return False
     if _DRAMATIZABLE.search(s) or _RELATIONSHIP_TENSION.search(s) or showable:
         return True
@@ -1300,6 +1479,35 @@ def _seat_family_patterns(line: str, title: str) -> list[re.Pattern[str]]:
         r"captured", title, re.I
     ):
         pats.append(r"chase|captured|serias|spots serias|swiftly|hastily")
+    if not pats:
+        weak = {
+            "that",
+            "this",
+            "with",
+            "from",
+            "have",
+            "been",
+            "will",
+            "would",
+            "about",
+            "after",
+            "before",
+            "during",
+            "notes",
+            "draft",
+            "scene",
+            "write",
+            "still",
+            "needs",
+            "character",
+        }
+        toks = [
+            t
+            for t in _content_tokens(blob)
+            if len(t) >= 5 and t not in weak
+        ][:6]
+        if toks:
+            pats.append("|".join(re.escape(t) for t in toks))
     return [re.compile(p, re.I) for p in pats]
 
 
@@ -1492,6 +1700,48 @@ def extract_draft_timeline_seat(
         )
         if m:
             add(45, m.group(1))
+        m = re.search(
+            r"\b(after\s+(?:the\s+)?[A-Za-z][\w'-]{2,}"
+            r"(?:\s+[A-Za-z][\w'-]{2,}){0,2})\b",
+            c,
+            re.I,
+        )
+        if (
+            m
+            and 12 <= len(m.group(1)) <= 48
+            and not re.search(
+                r"\b(?:takes?|keeps?|binds?|finds?|reveals?)\b",
+                m.group(1),
+                re.I,
+            )
+        ):
+            add(42, m.group(1))
+        m = re.search(
+            r"\b(during\s+(?:the\s+)?[A-Za-z][\w'-]{2,}"
+            r"(?:\s+[A-Za-z][\w'-]{2,}){0,2}"
+            r"(?:\s+scene|\s+chase|\s+flashback)?)\b",
+            c,
+            re.I,
+        )
+        if m and 10 <= len(m.group(1)) <= 48:
+            add(40, m.group(1))
+        m = re.search(
+            r"\b(at the\s+[A-Za-z][\w'-]{2,}"
+            r"(?:\s+[A-Za-z][\w'-]{2,}){0,2}"
+            r"(?:'s)?(?:\s+quarters|\s+manor|\s+place|\s+scene)?)\b",
+            c,
+            re.I,
+        )
+        if m and 8 <= len(m.group(1)) <= 48:
+            add(38, m.group(1))
+        m = re.search(
+            r"\b(shortly after\s+[A-Za-z][\w'-]{2,}"
+            r"(?:\s+[A-Za-z][\w'-]{2,}){0,3})\b",
+            c,
+            re.I,
+        )
+        if m and len(m.group(1)) <= 48:
+            add(36, m.group(1).rstrip(" .,;:"))
 
     if not candidates:
         return ""
@@ -1683,6 +1933,16 @@ def extract_task_clarifier(
                 85,
                 "lean into personality and ability — not the eyesight reveal",
             )
+
+    if not candidates:
+        m = re.search(
+            r"\bso (?:that )?(?:they|he|she|the [\w'-]+) can\s+(.{12,80})",
+            c,
+            re.I,
+        )
+        if m:
+            clause = m.group(0).strip()
+            add(50, clause)
 
     if not candidates:
         return ""
@@ -1886,11 +2146,18 @@ def frame_plan_recall(line: str, *, you_lead: bool, you_variant: int = 0) -> str
         said = body if body[:1].islower() else (body[0].lower() + body[1:] if body else body)
         return f"Your notes say {said}"
 
+    finite = re.match(
+        r"^(?:it|they|he|she|"
+        r"[A-Za-z][\w'-]+(?:\s+[A-Z][\w'-]+)?)\s+"
+        r"(?:takes?|keeps?|finds?|binds?|resents?|cares?|needs?)\b",
+        body,
+    )
+
     # Generic — don't glue "You wanted to" onto musing scraps.
     if you_lead:
         if re.match(r"^(?:now|so|ok|however|for the)\b", body, re.I):
             return f"Your notes call for {body}"
-        if re.match(r"^(?:it|they|he|she)\s+\w+", body, re.I):
+        if finite or re.match(r"^(?:it|they|he|she)\s+\w+", body, re.I):
             return f"Your notes say {body}"
         if re.match(r"^(?:the|a|an|his|her|their|this)\b", body, re.I):
             if you_variant % 2 == 0:
@@ -1904,10 +2171,22 @@ def frame_plan_recall(line: str, *, you_lead: bool, you_variant: int = 0) -> str
             if you_variant % 2 == 0:
                 return f"You wanted to {body}"
             return f"You were planning to {body}"
+        if re.match(r"^[A-Z][\w'-]+(?:\s+[A-Z][\w'-]+)?\b", body):
+            if you_variant % 2 == 0:
+                return f"You wanted {body}"
+            return f"You were planning {body}"
         return f"Your notes call for {body}"
-    if re.match(r"^(?:it|they|he|she)\s+\w+", body, re.I):
+    if finite or re.match(r"^(?:it|they|he|she)\s+\w+", body, re.I):
         return f"Your notes say {body}"
-    return f"Your notes call for {body}"
+    out = f"Your notes call for {body}"
+    out = re.sub(
+        r"^Your notes call for ((?:it|he|she|they)\s+"
+        r"(?:takes?|keeps?|finds?|binds?)\b)",
+        r"Your notes say \1",
+        out,
+        flags=re.I,
+    )
+    return out
 
 
 def assign_plan_recall_frames(bullets: list[str]) -> list[str]:
@@ -2216,16 +2495,38 @@ def restate_as_task_line(
 
     # Keep first complete chunk when the note stacks clauses.
     if not compressed:
+        keep_tail = re.compile(
+            r"\b("
+            r"stops? for the (?:night|day)|"
+            r"binds?.{0,40}injur|"
+            r"keep .{0,24} fed|"
+            r"mouth .{0,24}shut|"
+            r"discover(?:ing|s|ed)? that|"
+            r"still needs? to|"
+            r"need(?:s)? to write"
+            r")\b",
+            re.I,
+        )
+
+        def _ok_split(left: str) -> bool:
+            if keep_tail.search(s) and not keep_tail.search(left):
+                return False
+            return True
+
         if ";" in s and len(s) > 110:
             left = s.split(";", 1)[0].strip()
-            if len(left) >= 36 and not _line_is_incomplete(left):
+            if (
+                len(left) >= 36
+                and not _line_is_incomplete(left)
+                and _ok_split(left)
+            ):
                 s = left
 
         # First sentence only when multiple.
         parts = re.split(r"(?<=[.!?])\s+", s)
         if parts and len(parts[0].strip()) >= 28:
             cand = parts[0].strip()
-            if not _line_is_incomplete(cand):
+            if not _line_is_incomplete(cand) and _ok_split(cand):
                 s = cand
 
         if len(s) > _MAX_TASK_LINE:
@@ -2236,8 +2537,10 @@ def restate_as_task_line(
                     continue
                 if sep in s:
                     left = s.split(sep, 1)[0].strip()
-                    if 24 <= len(left) <= _MAX_TASK_LINE and not _line_is_incomplete(
-                        left
+                    if (
+                        24 <= len(left) <= _MAX_TASK_LINE
+                        and not _line_is_incomplete(left)
+                        and _ok_split(left)
                     ):
                         s = left
                         break
@@ -2434,6 +2737,39 @@ def compose_writing_next_task_list(
     return "\n".join(lines)
 
 
+def _bullet_echoes_ask(bullet: str, question: str) -> bool:
+    """True when a restated bullet is just the Ask echoed back."""
+    b = _normalize(bullet or "")
+    if not b:
+        return False
+    if re.search(
+        r"write what happens between|"
+        r"what should i write next|"
+        r"give me the task list|"
+        r"list my task list",
+        b,
+    ):
+        return True
+    q = _normalize(question or "")
+    if not q:
+        return False
+    q_core = re.sub(
+        r"\b(?:in|for|about)\s+.+$",
+        "",
+        q,
+    )
+    q_core = re.sub(
+        r"\b(?:give me|tell me|list|task lists?|what happens|"
+        r"what should i write next|writing next)\b",
+        " ",
+        q_core,
+    )
+    q_core = re.sub(r"\s+", " ", q_core).strip()
+    if len(q_core) >= 24 and q_core in b:
+        return True
+    return False
+
+
 def _is_vision_family_task(bullet: str) -> bool:
     """True for Etherei eyesight / glasses write-next restates (same beat family)."""
     k = _normalize(bullet or "")
@@ -2531,7 +2867,18 @@ def answer_writing_next_task_list(
             tasks,
             entries,
             allow_span_arrival=bool(
-                span and span.get("kind") == "capture_to_arrival"
+                span
+                and (
+                    span.get("kind") == "capture_to_arrival"
+                    or (
+                        span.get("kind") == "named_span"
+                        and re.search(
+                            r"\barriv|reach|manor|quarters|mansion",
+                            str(span.get("end") or ""),
+                            re.I,
+                        )
+                    )
+                )
             ),
         )
         if tasks
@@ -2568,6 +2915,8 @@ def answer_writing_next_task_list(
             clarifier=str(row.get("clarifier") or ""),
         )
         if not bullet:
+            continue
+        if _bullet_echoes_ask(bullet, question):
             continue
         key = _normalize(bullet)
         # Dedupe on core task (ignore seat sentence / legacy parentheses).
