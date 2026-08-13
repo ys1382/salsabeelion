@@ -1035,7 +1035,7 @@ def _is_gold_tone_cast_sentence(sentence: str, label: str) -> bool:
             r"\b("
             r"known to the fairytale|known to the fairy[- ]tale|fairytale world|"
             r"known as|also known as|white rabbit|cheshire cat|baron of|"
-            r"subject of (?:his|her) fascination|whose fascination"
+            r"subject of (?:his|her) fascination"
             r")\b",
             s,
             re.I,
@@ -3342,8 +3342,8 @@ def _order_who_is_gold_sentences(label: str, sentences: list[str]) -> list[str]:
     Essay-hook order: role/open → cousin/care → parents → politics →
     mixed parentage → faeble/rank → rest. Never invent; only reorder.
 
-    Fact bar is the Tenebris sample (tests/fixtures/tenebris_who_is_gold.txt):
-    keep those facts and this order of beats; wording may follow blurb voice.
+    Locked against the Tenebris gold sample
+    (tests/fixtures/tenebris_who_is_gold.txt) — do not loosen without owner OK.
     """
     kept = [s for s in sentences if (s or "").strip()]
     if len(kept) < 2:
@@ -3550,7 +3550,6 @@ def smooth_who_is_prose(label: str, body: str) -> str:
                             kept.append(f"{label} is {gender}.")
         kept = _essay_hook_who_is_sentences(label, kept)
         kept = _essay_flow_join_sentences(label, kept)
-        kept = _blurb_who_is_cast_sentences(label, kept)
         out_parts.append(" ".join(kept) if kept else part)
     return "\n\n".join(p for p in out_parts if p.strip())
 
@@ -3598,98 +3597,6 @@ def _infer_who_is_pronoun(label: str, sentences: list[str]) -> str | None:
     if gender:
         return "he" if gender.group(1).lower() == "male" else "she"
     return None
-
-
-def _blurb_who_is_cast_sentences(label: str, sentences: list[str]) -> list[str]:
-    """
-    Cast-card blurb voice: same facts, a hook that makes this character
-    click — never invent, never turn the card into a book recap.
-    """
-    label = (label or "").strip()
-    kept = [re.sub(r"\s+", " ", (s or "").strip()) for s in sentences if (s or "").strip()]
-    if not kept or not label:
-        return kept
-    return [_blurb_one_who_is_sentence(label, s) for s in kept]
-
-
-def _blurb_one_who_is_sentence(label: str, sentence: str) -> str:
-    s = (sentence or "").strip()
-    if not s:
-        return s
-    s = re.sub(
-        r"^((?:He|She) is personally disgusted by .+?)(?:,| —) and does not realize\b",
-        r"\1, yet does not realize",
-        s,
-        count=1,
-        flags=re.I,
-    )
-    open_m = re.match(
-        rf"^(In\s+.{{1,80}}?,\s+)?{re.escape(label)}\s+is\s+the\s+"
-        rf"((?:main\s+)?(?:antagonist|protagonist|villain)|main character)"
-        rf"(.*)$",
-        s.rstrip("."),
-        re.I,
-    )
-    if not open_m:
-        return s
-    prefix = open_m.group(1) or ""
-    role = open_m.group(2)
-    tail = (open_m.group(3) or "").strip()
-
-    def _tidy_titles(titles: str) -> str:
-        titles = titles.strip().strip(" ,—–").strip()
-        titles = re.sub(
-            r",\s+and\s+(the\s+(?:Cheshire Cat|White Rabbit)\b)",
-            r", \1",
-            titles,
-            count=1,
-            flags=re.I,
-        )
-        return titles
-
-    if re.match(r"^ whose fascination is\b", tail, re.I):
-        return f"{prefix}{label} is the {role} {_tidy_titles(tail)}."
-
-    fasc = re.search(
-        r"(?:,\s*with\s+(.+?)\s+as\s+the\s+subject\s+of\s+(?:his|her)\s+fascination|"
-        r"\s+[—–]\s+and\s+(.+?)\s+is\s+the\s+subject\s+of\s+(?:his|her)\s+fascination)\s*$",
-        tail,
-        re.I,
-    )
-    if fasc:
-        name = (fasc.group(1) or fasc.group(2) or "").strip()
-        titles = _tidy_titles(tail[: fasc.start()])
-        if name and titles:
-            return (
-                f"{prefix}{label} is the {role} whose fascination is {name} — {titles}."
-            )
-        if name:
-            return f"{prefix}{label} is the {role} whose fascination is {name}."
-
-    quarry = re.search(
-        r",\s*with\s+(.+?)\s+as\s+(?:his|her)\s+quarry\s*$",
-        tail,
-        re.I,
-    )
-    if quarry:
-        name = quarry.group(1).strip()
-        titles = _tidy_titles(tail[: quarry.start()])
-        if name and titles:
-            return f"{prefix}{label} is the {role} whose quarry is {name} — {titles}."
-
-    if tail.startswith(",") and "—" not in tail[:8]:
-        rest = tail[1:].strip()
-        if re.search(
-            r"\b("
-            r"baron|lord|lady|duke|duchess|cheshire cat|white rabbit|"
-            r"young woman|young man|author|arcanist|rabbit|wolf|fox|lynx|"
-            r"sister|brother|married|sentient|guardian|alice|wonderland"
-            r")\b",
-            rest,
-            re.I,
-        ):
-            return f"{prefix}{label} is the {role} — {rest}."
-    return s
 
 
 def _essay_flow_join_sentences(label: str, sentences: list[str]) -> list[str]:
