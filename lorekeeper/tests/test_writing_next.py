@@ -413,6 +413,123 @@ class WritingNextAnswerTests(unittest.TestCase):
         self.assertNotIn("mind you", answer)
         self.assertNotIn("another series", answer)
 
+    def test_capture_to_arrival_writing_next_gold_shape_locked(self):
+        """
+        Owner-locked capture→arrival writing-next gold (2026-08-13).
+        Do not edit the fixture or soften this test without owner OK.
+        """
+        from pathlib import Path
+
+        gold_path = (
+            Path(__file__).resolve().parent
+            / "fixtures"
+            / "capture_to_arrival_writing_next_gold.txt"
+        )
+        gold = gold_path.read_text(encoding="utf-8")
+        self.assertIn("about the stretch between capture and arrival", gold)
+        self.assertIn(
+            "Your notes say he keeps him fed on the journey; when conversation "
+            "is attempted, he keeps his mouth shut and will not speak.",
+            gold,
+        )
+        self.assertIn(
+            "Your notes say the journey takes several days. When he stops for "
+            "the night, he binds the injuries firmly — not gently, and not "
+            "roughly enough to worsen them — and binds the limbs so he cannot "
+            "run off.",
+            gold,
+        )
+        self.assertIn(
+            "Your notes still leave the rest of this stretch unspecified.",
+            gold,
+        )
+        self.assertNotIn("write what happens between capture and arrival", gold)
+        self.assertNotIn("swift", gold.lower())
+        self.assertNotIn("ticklish", gold.lower())
+        self.assertNotIn("respect", gold.lower())
+
+        entries = [
+            _entry(
+                "n_stop",
+                "After the capture",
+                "It takes them several days, so when he stops for the night/day, "
+                "he firmly (not gently, not roughly-enough to worsen) binds "
+                "Character E's injuries -- along with his limbs in such a manner "
+                "that Character E cannot run off again.",
+            ),
+            _entry(
+                "n_fed",
+                "After the capture",
+                "He also finds a way to keep Character E fed, but whenever he "
+                "attempts to engage Character E in conversation, Character E "
+                "keeps his mouth determinedly shut and will not speak at all.",
+            ),
+            _entry(
+                "n_gap",
+                "Capture POVs",
+                "But what happens in between?",
+            ),
+            _entry(
+                "n_wonder",
+                "Canon asides",
+                "Mind you, it would be interesting to have an idea of where "
+                "Character E was going when off-the-page in another series.",
+            ),
+            _entry(
+                "n_chase",
+                "Chase",
+                "Find a way to write the chase swiftly but not hastily "
+                "when the wolf shows up.",
+            ),
+            _entry(
+                "n_respect",
+                "Capture musing",
+                "So the wolf respects Character E for keeping up the chase "
+                "this long.",
+            ),
+            _entry(
+                "d1",
+                "Draft",
+                "Character E was in the wolf's grasp, being carried down the "
+                "mountain path. He keeps still whenever conversation is "
+                "attempted and will not speak if he can help it.",
+                kind="document",
+            ),
+        ]
+        res = recall_from_user_data(
+            "In Smoke and Mirrors, give me the task list for what happens "
+            "between the wolf capturing Character E and the wolf's arrival "
+            "at the manor.",
+            {"lorekeeper_entries_v1": json.dumps(entries)},
+        )
+        answer = res.get("answer") or ""
+        low = answer.lower()
+        for needle in (
+            "keeps him fed",
+            "mouth shut",
+            "several days",
+            "when he stops for the night",
+            "rest of this stretch unspecified",
+        ):
+            self.assertIn(needle, low)
+        for banned in (
+            "write what happens between capture and arrival",
+            "swift",
+            "ticklish",
+            "mind you",
+            "respects",
+        ):
+            self.assertNotIn(banned, low)
+        bullets = [
+            ln.strip()
+            for ln in answer.splitlines()
+            if ln.strip().startswith("•")
+        ]
+        self.assertEqual(len(bullets), 3)
+        self.assertIn("fed", bullets[0].lower())
+        self.assertIn("several days", bullets[1].lower())
+        self.assertIn("unspecified", bullets[2].lower())
+
     def test_caps_at_max_and_mentions_more(self):
         note_lines = [
             f"Unused plot beat number {i} about the silver lantern ritual."

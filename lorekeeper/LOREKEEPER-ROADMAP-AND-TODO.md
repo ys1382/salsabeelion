@@ -358,6 +358,25 @@ Run **one row at a time** in Cursor. Don’t skip Phase 0 — it costs nothing a
 - Must keep: Etherei-centered write-next; chase craft; ticklish + albino vision when unused; twin flashback polish with edit seat + draft-timeline seat; one clarifier when notes say why; blank lines; one vision family; **plan-recall** tone; **seats as follow-on sentences** (“Your plan was for this reveal to take place shortly after…”) — **not** parentheses; stagger You… openers; mirror note seats (e.g. Serias when notes say Serias); no inventing; leave-off + Tenebris who-is untouched.
 - **Do not** edit `etherei_writing_next_gold.txt` or soften `test_etherei_writing_next_gold_shape_locked` without owner OK in that conversation.
 
+**Capture→arrival stretch task list — locked gold (2026-08-13):** Owner gold for *give me the task list for what happens between [capture] and [arrival at place]*. **Do not regress this bar.** Machine lock: `lorekeeper/tests/fixtures/capture_to_arrival_writing_next_gold.txt` + `test_capture_to_arrival_writing_next_gold_shape_locked`.
+
+- Q: *Give me the task list for what happens between Serias capturing Etherei and Serias's arrival at Tenebris's place.* (story silo / search-in = Smoke and Mirrors)
+- **Gold sample (owner-locked 2026-08-13 — in-window journey beats only; honest unspecified rest; no Ask echo):**
+
+  > Here's a short task list for Smoke and Mirrors about the stretch between capture and arrival — write-next items from your notes that aren't on the page yet:
+  >
+  > • Your notes say he keeps him fed on the journey; when conversation is attempted, he keeps his mouth shut and will not speak.
+  >
+  > • Your notes say the journey takes several days. When he stops for the night, he binds the injuries firmly — not gently, and not roughly enough to worsen them — and binds the limbs so he cannot run off.
+  >
+  > • Your notes still leave the rest of this stretch unspecified.
+  >
+  > — Short write-next tasks restated from your notes vs draft only. Nothing invented. Continuity sticky-notes, later-book setup, and standing lore stay out unless you ask for a later book. Name a topic for a tighter list, or ask again for more.
+
+- Must keep: stay after capture / before-or-during arrival; keep-fed + mouth shut; several days + overnight stop + bind injuries firmly (not gently, not roughly enough to worsen) + bind limbs so he cannot run off; honest “rest of this stretch unspecified”; plan-recall “Your notes say…”; no inventing the missing middle.
+- Must not: echo “write what happens between capture and arrival”; chase-before-capture; after they’re there (quarters, ticklish, rescue, Court); Serias-respect / increased-respect musing; Wonderland off-the-page asides.
+- **Do not** edit `capture_to_arrival_writing_next_gold.txt` or soften `test_capture_to_arrival_writing_next_gold_shape_locked` without owner OK in that conversation.
+
 **Follow-ups for a future agent (this gold already includes completeness + location + plan-recall voice):**
 - [x] Completeness: unused Etherei facts still missing from lists when present in notes
 - [x] Location: edit seat + draft-timeline seats

@@ -32,6 +32,8 @@ When you say a live answer is the **gold / baseline / never-worse** bar:
 
 Same spirit for leave-off / who-is / writing-next golds: raising voice must not erase locked must-keeps.
 
+**Writing-next golds:** Etherei cast list — `tests/fixtures/etherei_writing_next_gold.txt`. Capture→arrival stretch — `tests/fixtures/capture_to_arrival_writing_next_gold.txt` (locked 2026-08-13; in-window journey beats + unspecified rest; no Ask echo). Do not edit either fixture without owner OK.
+
 **Catch-up gold (premise / thin draft — locked 2026-08-12 evening):** Owner checked **fine — keep it** for *Get me caught up with this story* on premise-heavy early drafts (e.g. *The Waking Dream*). Fixture: `tests/fixtures/catchup_waking_dream_gold.txt`. Bar is orientation for what exists / why here / why can’t leave / how antagonist would see her — not a full plotted novel recap.
 
 ---
