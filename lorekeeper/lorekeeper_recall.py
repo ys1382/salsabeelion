@@ -32,6 +32,7 @@ from lorekeeper_knowledge_pov import awareness_parts, is_awareness_question, is_
 from lorekeeper_notes_vs_draft import is_notes_not_in_draft_question
 from lorekeeper_writing_next import is_writing_next_task_list_question
 from lorekeeper_catchup_gather import is_catchup_gather_question
+from lorekeeper_shaped_recall import is_when_timing_question
 from lorekeeper_question_routes import is_story_position_question
 from lorekeeper_section_scope import (
     extract_section_hints,
@@ -1311,6 +1312,21 @@ def recall_from_user_data(
                     payload = dict(payload)
                     payload["answer"] = repaired
                     payload["catchupSelfCheck"] = "repaired"
+        if (
+            payload.get("ok")
+            and scoped
+            and is_when_timing_question(question)
+        ):
+            ans = str(payload.get("answer") or "")
+            if ans.strip():
+                from lorekeeper_shaped_recall import ensure_when_timing_completeness
+
+                repaired, did = ensure_when_timing_completeness(
+                    question, scoped, ans
+                )
+                if did:
+                    payload = dict(payload)
+                    payload["answer"] = repaired
         return _finish_outer(payload)
 
     # Confirm-sources preview: show ranked notes/draft bits before summarizing.

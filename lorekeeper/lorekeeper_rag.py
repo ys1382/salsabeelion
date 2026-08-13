@@ -219,6 +219,16 @@ Summarize what is saved vs missing for the subject. Planning notes and gaps are 
 When the question asks what happens after a named beat, prioritize notes and draft lines about that later stretch — do not stop at the beat itself.
 Never invent hybrid creatures or roles (e.g. do not fuse a named sentinel with a separate birds note into a "sentinel bird"). Restate only identities the sources actually state."""
 
+_WHEN_TIMING = """
+This asks WHEN a beat happens in the work — this book vs a later book vs not specified.
+
+Rules:
+- First sentence must state the timing the sources give (later book / not this book / this book / not specified yet).
+- Do not replace the timing answer with worldbuilding, concealment lore, or a setting essay.
+- One short paragraph. Supporting context only after the timing sentence, and only if needed.
+- Invent nothing. If sources do not place the beat, say the notes leave the timing unspecified.
+"""
+
 _TOPIC_DEFAULT = """
 Answer the question directly from the sources in reference voice.
 Lead with the sentence that answers what was asked — do not bury it under cast cards, backstory, or profile sections.
@@ -333,7 +343,12 @@ def _system_for_kind(
     elif is_allusion_question(question):
         parts.append(_ALLUSION_TOPIC)
     else:
-        parts.append(_TOPIC_DEFAULT)
+        from lorekeeper_shaped_recall import is_when_timing_question
+
+        if is_when_timing_question(question) or question_kind == "when":
+            parts.append(_WHEN_TIMING)
+        else:
+            parts.append(_TOPIC_DEFAULT)
     if writer_confirmed:
         parts.append(_WRITER_CONFIRMED)
     system = "\n".join(parts)

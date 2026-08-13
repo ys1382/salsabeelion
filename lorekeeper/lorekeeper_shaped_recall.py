@@ -80,6 +80,14 @@ def _pick_sentences(
             if not cue.search(sentence):
                 continue
             score = sum(1 for t in q_tokens if len(t) > 3 and t in sentence.lower())
+            if cue is _WHEN_CUE:
+                try:
+                    from lorekeeper_writing_next import line_is_later_book
+
+                    if line_is_later_book(sentence):
+                        score += 8
+                except Exception:
+                    pass
             if score <= 0 and not cue.search(question or ""):
                 continue
             hits.append((score, eid, title, sentence))
@@ -169,3 +177,155 @@ def answer_shaped_recall(
     intro = f"What you've saved about {label}:\n\n{body}"
     intro += "\n\n— Pulled from your notes only. Nothing invented."
     return intro, ids
+
+
+_WHEN_WILL_Q = re.compile(
+    r"\bwhen\s+(?:will|do|does|did|is|are)\b",
+    re.I,
+)
+_TIMING_IN_ANSWER = re.compile(
+    r"\b("
+    r"later\s+book|future\s+book|next\s+book|first\s+book|"
+    r"this\s+book|this\s+work|later\s+in\s+the\s+series|"
+    r"not\s+a\s+plot\s+point|"
+    r"rather\s+than.{0,48}(?:this|the first)|"
+    r"unspecified|not\s+(?:yet\s+)?specified"
+    r")\b",
+    re.I,
+)
+_FOOTER_MARKS = (
+    "— From your notes only",
+    "— Pulled from your notes only",
+    "— From your notes vs draft only",
+)
+
+
+def is_when_timing_question(question: str) -> bool:
+    """True for 'when will / when do they find out' plot-placement asks."""
+    return bool(_WHEN_WILL_Q.search(question or ""))
+
+
+def _peel_footer(answer: str) -> tuple[str, str]:
+    text = (answer or "").strip()
+    for mark in _FOOTER_MARKS:
+        idx = text.find(mark)
+        if idx >= 0:
+            return text[:idx].rstrip(), text[idx:].strip()
+    return text, ""
+
+
+def _work_label(entries: list[dict[str, Any]]) -> str:
+    counts: dict[str, int] = {}
+    for entry in entries or []:
+        if not isinstance(entry, dict):
+            continue
+        for tag in entry.get("tags") or []:
+            s = str(tag).strip()
+            if s:
+                counts[s] = counts.get(s, 0) + 1
+    if not counts:
+        return ""
+    return max(counts.items(), key=lambda kv: kv[1])[0]
+
+
+def notes_mark_later_book_for_question(
+    question: str, entries: list[dict[str, Any]]
+) -> bool:
+    """True when a note about the asked beat places it in a later book."""
+    from lorekeeper_writing_next import line_is_later_book
+    from lorekeeper_notes_vs_draft import _content_tokens, _normalize
+
+    q_toks = {
+        t
+        for t in _content_tokens(question or "")
+        if len(t) >= 4
+        and t
+        not in {
+            "when",
+            "will",
+            "does",
+            "find",
+            "that",
+            "from",
+            "their",
+            "them",
+            "this",
+            "have",
+        }
+    }
+    if not q_toks:
+        return False
+    for entry in entries or []:
+        if not isinstance(entry, dict):
+            continue
+        blob = f"{entry.get('title') or ''} {entry.get('body') or ''}"
+        if not line_is_later_book(blob):
+            continue
+        norm = _normalize(blob)
+        hits = sum(1 for t in q_toks if t in norm)
+        if hits >= 1:
+            return True
+    return False
+
+
+def _timing_lead_sentence(work: str) -> str:
+    if work:
+        return (
+            "Your notes mark this as a concern for later books in the series "
+            f"rather than a plot point for {work} itself."
+        )
+    return (
+        "Your notes mark this as a concern for later books rather than "
+        "a plot point for this book."
+    )
+
+
+def ensure_when_timing_completeness(
+    question: str,
+    entries: list[dict[str, Any]],
+    answer: str,
+) -> tuple[str, bool]:
+    """
+    When-asks: lead with later-book vs this-book if notes say so.
+    Librarian only — never invents a reveal the notes do not place.
+    """
+    if not is_when_timing_question(question):
+        return (answer or "").strip(), False
+    body, footer = _peel_footer(answer)
+    if not body.strip():
+        return (answer or "").strip(), False
+    has_timing = bool(_TIMING_IN_ANSWER.search(body))
+    later = notes_mark_later_book_for_question(question, entries)
+    sentences = [
+        p.strip()
+        for p in re.split(r"(?<=[.!?])\s+", body.strip())
+        if p.strip()
+    ]
+    changed = False
+    if later and not has_timing:
+        lead = _timing_lead_sentence(_work_label(entries))
+        sentences = [lead] + [
+            s for s in sentences if _normalize_sent(s) != _normalize_sent(lead)
+        ]
+        changed = True
+    elif not later and not has_timing:
+        # Notes do not place it — keep the answer; do not invent a book.
+        return (answer or "").strip(), False
+    # Keep the timing sentence plus at most two supporting ones.
+    kept: list[str] = []
+    if sentences:
+        kept.append(sentences[0])
+        for s in sentences[1:]:
+            if len(kept) >= 3:
+                break
+            kept.append(s)
+        if len(sentences) > 3:
+            changed = True
+    out = " ".join(kept).strip()
+    if footer:
+        out = out + "\n\n" + footer
+    return out, changed or out.strip() != (answer or "").strip()
+
+
+def _normalize_sent(s: str) -> str:
+    return re.sub(r"\s+", " ", (s or "").strip().lower())
