@@ -158,6 +158,39 @@ class AnswerFocusTests(unittest.TestCase):
         self.assertIn("notes make clear", cleaned.lower())
         self.assertIn("incorrect", cleaned.lower())
 
+    def test_unglues_note_title_from_first_sentence(self):
+        from lorekeeper_answer_focus import scrub_rag_artifacts
+
+        raw = (
+            "# Ashford Saga: The Discovery of Herdfolk Sentience\n"
+            "The question of when Predators will learn that their own Herdfolk "
+            "are sentient remains unresolved in your notes — marked for a later "
+            "book rather than this one.\n\n"
+            "— From your notes only. Nothing invented."
+        )
+        q = (
+            "When will the Predators find out that the Herdfolk from their "
+            "realm are sentient?"
+        )
+        cleaned = scrub_rag_artifacts(q, raw, allow_broad=True)
+        low = cleaned.lower()
+        self.assertNotIn("sentience the question", low)
+        self.assertNotIn("#", cleaned.split("—")[0])
+        self.assertTrue(
+            cleaned.lstrip().startswith("The question of when"),
+            cleaned[:120],
+        )
+        self.assertIn("later book", low)
+        glued = (
+            "The Discovery of Herdfolk Sentience The question of when Predators "
+            "will learn that their own Herdfolk are sentient remains unresolved "
+            "in your notes.\n\n"
+            "— From your notes only. Nothing invented."
+        )
+        cleaned2 = scrub_rag_artifacts(q, glued, allow_broad=True)
+        self.assertNotIn("sentience the question", cleaned2.lower())
+        self.assertTrue(cleaned2.lstrip().startswith("The question of when"))
+
 
 if __name__ == "__main__":
     unittest.main()

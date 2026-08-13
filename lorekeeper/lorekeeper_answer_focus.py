@@ -580,6 +580,48 @@ _FALSE_ARC_GAP = re.compile(
 )
 
 
+_MD_HEADING_LINE = re.compile(r"^#+\s+.+?\s*$", re.M)
+_HEADLINE_GLUED_TO_SENTENCE = re.compile(
+    r"^(?:#+\s*)?(?:[A-Z][\w'&-]+(?:\s+[A-Z][\w'&-]+)*:\s+)?"
+    r"(?:The\s+)?[A-Z][\w'-]+"
+    r"(?:\s+(?:of|the|and|from|for|to|a|an|in)\s+[A-Z][\w'-]+"
+    r"|\s+[A-Z][\w'-]+){1,8}"
+    r"(?=\s+(?:The question\b|Your notes\b|Your draft\b))",
+)
+
+
+def _looks_like_heading_line(line: str) -> bool:
+    """True for a note/RAG title line — not a finished sentence."""
+    s = (line or "").strip()
+    if not s or len(s) > 90:
+        return False
+    if s.endswith((".", "!", "?")):
+        return False
+    if re.search(r"\bthe question of\b", s, re.I):
+        return False
+    if s.startswith(("•", "-", "—")):
+        return False
+    return bool(re.match(r"^(?:#+\s+)?[A-Z0-9]", s))
+
+
+def unglue_heading_from_open(body: str) -> str:
+    """
+    Drop a markdown/note title so it cannot glue onto the first sentence.
+    Librarian only — does not invent; keeps the sentence that follows.
+    """
+    text = (body or "").strip()
+    if not text:
+        return text
+    text = _MD_HEADING_LINE.sub("", text).strip()
+    parts = text.split("\n", 1)
+    if len(parts) == 2:
+        first, rest = parts[0].strip(), parts[1].lstrip()
+        if _looks_like_heading_line(first) and rest[:1].isupper():
+            text = rest
+    text = _HEADLINE_GLUED_TO_SENTENCE.sub("", text, count=1).strip()
+    return text
+
+
 def scrub_rag_artifacts(question: str, answer: str, *, allow_broad: bool) -> str:
     if not answer:
         return answer
@@ -601,7 +643,9 @@ def scrub_rag_artifacts(question: str, answer: str, *, allow_broad: bool) -> str
         if labels_early:
             body = strip_who_is_cast_card_header(body, labels_early[0])
     if not dual_who:
+        body = unglue_heading_from_open(body)
         body = re.sub(r"\s{2,}", " ", body)
+        body = unglue_heading_from_open(body)
     body = re.sub(r"\s+([,;:.])", r"\1", body)
     body = _SAME_TWO_CHARS.sub("", body)
     body = _FALSE_ARC_GAP.sub("", body)
