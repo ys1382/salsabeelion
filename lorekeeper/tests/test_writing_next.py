@@ -407,10 +407,8 @@ class WritingNextAnswerTests(unittest.TestCase):
         self.assertIn("your notes say", answer)
         self.assertNotIn("call for it takes", answer)
         self.assertNotIn("you wanted the still-open", answer)
-        self.assertNotIn(
-            "write what happens between capture and arrival — write",
-            answer,
-        )
+        self.assertIn("unspecified", answer)
+        self.assertNotIn("write what happens between capture and arrival", answer)
         self.assertNotIn("swift", answer)
         self.assertNotIn("mind you", answer)
         self.assertNotIn("another series", answer)

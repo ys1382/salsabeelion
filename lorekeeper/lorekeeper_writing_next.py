@@ -1870,11 +1870,14 @@ def frame_plan_recall(line: str, *, you_lead: bool, you_variant: int = 0) -> str
             )
         return f"For {who}'s flashback, you meant to {body}"
 
-    if re.search(r"still leave this stretch open|stretch between capture and arrival is still open", core, re.I):
-        return (
-            "Your notes still leave this stretch open — write what happens "
-            "between capture and arrival"
-        )
+    if re.search(
+        r"still leave (?:the rest of )?this stretch (?:open|unspecified)|"
+        r"rest of this stretch is still unspecified|"
+        r"stretch between capture and arrival is still open",
+        core,
+        re.I,
+    ):
+        return "Your notes still leave the rest of this stretch unspecified"
     if re.search(
         r"journey takes several days|stop for the night|keeps him fed|keep him fed",
         core,
@@ -1922,7 +1925,8 @@ def assign_plan_recall_frames(bullets: list[str]) -> list[str]:
         force_non_you = kind in {"flashback", "chase"}
         if re.search(
             r"journey takes several days|stop for the night|keeps him fed|keep him fed|"
-            r"still leave this stretch open|stretch between capture",
+            r"still leave (?:the rest of )?this stretch|"
+            r"rest of this stretch|stretch between capture",
             bullet,
             re.I,
         ):
@@ -2010,7 +2014,7 @@ def _compress_span_journey_line(raw: str) -> str:
     """
     s = raw or ""
     if re.search(r"what happens in between", s, re.I):
-        return "This stretch between capture and arrival is still open on the page"
+        return "The rest of this stretch is still unspecified in the notes"
     days = bool(re.search(r"several days", s, re.I))
     stop = bool(re.search(r"stops? for the (?:night|day)", s, re.I))
     bind_inj = bool(re.search(r"binds?.{0,80}injur", s, re.I))
