@@ -176,8 +176,12 @@ def _uses_cast_card(
 _WHO_CAST_CARD = """
 This is a WHO-IS question — answer as a short CHARACTER OVERVIEW for the named person only.
 
-TONE: formal but plain — not posh, not chatty, not technical. Prefer 2–4 sentences like:
-"Character M is the protagonist of Ashford Saga, the White Rabbit from Alice in Wonderland. He is the son of buck Snow Thistle and doe Ebony, and younger brother to Obsidian and Stygian. Character M is known to Character D as Chroniker. By being discovered in Wonderland by Character D, Character M has already set in motion the Predators' eventual rediscovery that the Preyfolk of their own dimension possess the same level of sentience as themselves, a rediscovery that will gradually but inevitably take place within the span of several months."
+TONE: a short cast-card blurb — exciting to read, still librarian-only. Make THIS character click the way a book blurb makes one person interesting. Not a whole-book summary. Not an encyclopedia stack of titles.
+
+Lead with role, then the hook that makes them interesting (fascination, quarry, concealment, kin) when sources state it; titles and fairy-tale known-as follow as costume, not the whole open. Prefer 2–4 flowing sentences.
+
+Example shape (invent nothing; only use names and titles the sources actually state):
+"In Zeta Saga, Character Z is the main antagonist whose fascination is Character E — Baron of the North, the Cheshire Cat from Alice in Wonderland."
 
 Never open with "So Character M," or "Also, aside from…". Prefer "By being discovered…, Character M has already set in motion…" over "just set in motion".
 

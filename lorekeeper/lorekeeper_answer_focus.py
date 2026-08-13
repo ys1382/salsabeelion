@@ -606,7 +606,9 @@ def scrub_rag_artifacts(question: str, answer: str, *, allow_broad: bool) -> str
     body = _SAME_TWO_CHARS.sub("", body)
     body = _FALSE_ARC_GAP.sub("", body)
     body = re.sub(r"^[a-z]", lambda m: m.group(0).upper(), body.strip(), count=1) if body.strip() else body
-    if allow_broad:
+    if allow_broad and not (
+        is_who_is_question(question) and not dual_who
+    ):
         body = re.sub(r"\n{3,}", "\n\n", body).strip()
         if footer:
             return body + "\n\n" + footer
@@ -616,6 +618,11 @@ def scrub_rag_artifacts(question: str, answer: str, *, allow_broad: bool) -> str
         labels = character_targets(question)
         if labels:
             body = smooth_who_is_prose(labels[0], body)
+    if allow_broad:
+        body = re.sub(r"\n{3,}", "\n\n", body).strip()
+        if footer:
+            return body + "\n\n" + footer
+        return body
     if not is_who_is_question(question) and (
         _CAST_CARD_HEADER.search(body) or "**Role" in body or "**Key Ties" in body
     ):

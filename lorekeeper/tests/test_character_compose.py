@@ -1865,12 +1865,15 @@ class CharacterComposeTests(unittest.TestCase):
             )
         )
         self.assertIn(" — ", gold_sents[0])
-        self.assertIn("Etherei is the subject of his fascination", gold_sents[0])
+        self.assertIn("whose fascination is Etherei", gold_sents[0])
+        self.assertIn("Baron of Cheshire", gold_sents[0])
+        self.assertIn("Cheshire Cat", gold_sents[0])
         self.assertTrue(gold_sents[1].startswith("Duke Dijon is his third cousin"))
         self.assertTrue(gold_sents[2].startswith("His mother is from here"))
         self.assertTrue(
             gold_sents[3].startswith("He is personally disgusted by Predator Court")
         )
+        self.assertIn("yet does not realize", gold_sents[3])
         self.assertTrue(gold_sents[4].startswith("He has mixed parentage"))
         self.assertTrue(
             gold_sents[5].startswith("Lord Tenebris of Cheshire is a faeble")
