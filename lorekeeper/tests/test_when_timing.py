@@ -7,6 +7,7 @@ import unittest
 from lorekeeper_rag import _system_for_kind
 from lorekeeper_recall import recall_from_user_data
 from lorekeeper_shaped_recall import (
+    answer_meets_when_will_gold_bar,
     ensure_when_timing_completeness,
     is_when_timing_question,
     notes_mark_later_book_for_question,
@@ -85,8 +86,12 @@ class WhenTimingTests(unittest.TestCase):
         )
         out, did = ensure_when_timing_completeness(Q, entries, essay)
         self.assertTrue(did)
+        self.assertTrue(
+            answer_meets_when_will_gold_bar(out, work="Ashford Saga"),
+            out[:240],
+        )
         low = out.lower()
-        self.assertTrue(low.startswith("your notes mark this as a concern for later"))
+        self.assertTrue(low.startswith("the notes indicate this is not happening"))
         self.assertIn("ashford saga", low)
         self.assertNotIn("parrot", low)
         self.assertNotIn("plumage", low)
@@ -118,13 +123,15 @@ class WhenTimingTests(unittest.TestCase):
         )
         out, did = ensure_when_timing_completeness(live_q, entries, essay)
         self.assertTrue(did)
-        self.assertIn("smoke and mirrors", out.lower())
+        self.assertTrue(
+            answer_meets_when_will_gold_bar(out, work="Smoke and Mirrors"),
+            out[:240],
+        )
         trimmed = trim_off_topic_sentences(live_q, out, allow_broad=False)
         self.assertTrue(
-            trimmed.lower().startswith("your notes mark"),
-            trimmed[:160],
+            answer_meets_when_will_gold_bar(trimmed, work="Smoke and Mirrors"),
+            trimmed[:240],
         )
-        self.assertIn("later book", trimmed.lower())
         focused = focus_ask_response(
             live_q,
             {
@@ -134,11 +141,12 @@ class WhenTimingTests(unittest.TestCase):
                 "sources": [],
             },
         )
-        fans = (focused.get("answer") or "").lower()
-        self.assertTrue(fans.startswith("your notes mark"), fans[:160])
-        self.assertIn("later book", fans)
-        self.assertIn("smoke and mirrors", fans)
-        self.assertNotIn("body language", fans)
+        fans = focused.get("answer") or ""
+        self.assertTrue(
+            answer_meets_when_will_gold_bar(fans, work="Smoke and Mirrors"),
+            fans[:240],
+        )
+        self.assertNotIn("body language", fans.lower())
 
     def test_drops_invented_whether_when_notes_place_later(self):
         live_q = (
@@ -163,9 +171,11 @@ class WhenTimingTests(unittest.TestCase):
         )
         out, did = ensure_when_timing_completeness(live_q, entries, essay)
         self.assertTrue(did)
+        self.assertTrue(
+            answer_meets_when_will_gold_bar(out, work="Smoke and Mirrors"),
+            out[:240],
+        )
         low = out.lower()
-        self.assertTrue(low.startswith("your notes mark this as a concern for later"))
-        self.assertIn("later book", low)
         self.assertNotIn("whether", low)
         self.assertNotIn("spell out", low)
         self.assertIn("tenebris", low)
@@ -213,10 +223,96 @@ class WhenTimingTests(unittest.TestCase):
         res = recall_from_user_data(
             Q, {"lorekeeper_entries_v1": json.dumps(entries)}
         )
-        answer = (res.get("answer") or "").lower()
+        answer = (res.get("answer") or "")
         self.assertEqual(res.get("questionKind"), "when")
-        self.assertIn("later", answer)
-        self.assertNotIn("write what happens between", answer)
+        self.assertTrue(
+            answer_meets_when_will_gold_bar(answer, work="Ashford Saga"),
+            answer[:240],
+        )
+        self.assertNotIn("write what happens between", answer.lower())
+
+    def test_preyfolk_when_will_gold_shape_locked(self):
+        """
+        Owner-locked when-will gold (2026-08-14).
+        Fixture is the live Preyfolk Ask. Other when-will questions must meet
+        this bar: short, this-book vs later-book first, no invented whether.
+        """
+        from pathlib import Path
+
+        gold_path = (
+            Path(__file__).resolve().parent
+            / "fixtures"
+            / "when_will_preyfolk_sentience_gold.txt"
+        )
+        gold = gold_path.read_text(encoding="utf-8").strip()
+        self.assertTrue(
+            answer_meets_when_will_gold_bar(gold, work="Smoke and Mirrors"),
+            gold[:240],
+        )
+        low = gold.lower()
+        self.assertIn("not happening during the events of", low)
+        self.assertIn("later books", low)
+        self.assertIn("tenebris", low)
+        self.assertIn("foundational misunderstanding", low)
+        self.assertNotIn("whether", low)
+        self.assertNotIn("body language", low)
+        body = gold.split("—")[0].strip()
+        sents = [s.strip() for s in body.split(". ") if s.strip()]
+        self.assertLessEqual(len(sents), 2)
+
+        live_q = (
+            "When will the Predators find out that the Preyfolk from their "
+            "realm are sentient?"
+        )
+        entries = [
+            _entry(
+                "n1",
+                "Preyfolk sentience",
+                "The Preyfolk sentience reveal is for future books in the series. "
+                "Tenebris and the Predators currently believe the Preyfolk of "
+                "their world lack sentience.",
+                tags=["Smoke and Mirrors"],
+            )
+        ]
+        bad = (
+            "Smoke and Mirrors does not yet spell out when—or even whether—"
+            "Predators will learn the sentience of the Preyfolk from their own realm. "
+            "Preyfolk hide their sentience with body language that mimics "
+            "non-sentient animals.\n\n"
+            "— From your notes only. Nothing invented."
+        )
+        out, did = ensure_when_timing_completeness(live_q, entries, bad)
+        self.assertTrue(did)
+        self.assertTrue(
+            answer_meets_when_will_gold_bar(out, work="Smoke and Mirrors"),
+            out[:240],
+        )
+        self.assertNotIn("whether", out.lower())
+        self.assertNotIn("body language", out.lower())
+
+    def test_other_when_will_meets_same_gold_bar(self):
+        q = "When will Character E return home?"
+        entries = [
+            _entry(
+                "n1",
+                "Return",
+                "Character E returns home — this does not happen until a later book.",
+            )
+        ]
+        essay = (
+            "Character E left the manor years ago and still writes letters. "
+            "The orchard wall is made of pale stone. "
+            "A raven keeps watch from the gate.\n\n"
+            "— From your notes only. Nothing invented."
+        )
+        out, did = ensure_when_timing_completeness(q, entries, essay)
+        self.assertTrue(did)
+        self.assertTrue(
+            answer_meets_when_will_gold_bar(out, work="Ashford Saga"),
+            out[:240],
+        )
+        self.assertNotIn("orchard", out.lower())
+        self.assertNotIn("raven", out.lower())
 
 
 if __name__ == "__main__":

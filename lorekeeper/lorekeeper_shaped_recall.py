@@ -197,6 +197,8 @@ _HAS_LATER_PLACEMENT = re.compile(
     r"\b("
     r"later\s+books?|future\s+books?|next\s+books?|"
     r"later\s+in\s+the\s+series|"
+    r"deferred to later|"
+    r"not happening during|"
     r"not\s+a\s+plot\s+point|"
     r"rather\s+than.{0,48}(?:this|the first)"
     r")\b",
@@ -212,6 +214,13 @@ _INVENTED_WHETHER = re.compile(
     r"leave(?:s)? the timing unspecified|"
     r"timing (?:is |remains )?unspecified|"
     r"unclear whether"
+    r")\b",
+    re.I,
+)
+_CONCEALMENT_LEAD = re.compile(
+    r"\b("
+    r"body language|expert at hiding|hiding their sentience|"
+    r"deeply afraid of revealing"
     r")\b",
     re.I,
 )
@@ -291,15 +300,47 @@ def notes_mark_later_book_for_question(
 
 
 def _timing_lead_sentence(work: str) -> str:
+    # Owner gold: tests/fixtures/when_will_preyfolk_sentience_gold.txt
+    # Other when-will Asks must meet that bar — do not loosen without owner OK.
     if work:
         return (
-            "Your notes mark this as a concern for later books in the series "
-            f"rather than a plot point for {work} itself."
+            "The notes indicate this is not happening during the events of "
+            f"{work} itself, but rather deferred to later books in the series."
         )
     return (
-        "Your notes mark this as a concern for later books rather than "
-        "a plot point for this book."
+        "The notes indicate this is not happening during this book itself, "
+        "but rather deferred to later books in the series."
     )
+
+
+def answer_meets_when_will_gold_bar(answer: str, *, work: str = "") -> bool:
+    """
+    True when a when-will answer is at least as good as the owner gold:
+    short, this-book vs later-book first, no invented whether, no hiding essay.
+    """
+    text = (answer or "").strip()
+    if not text:
+        return False
+    if "from your notes only" not in text.lower():
+        return False
+    body, _footer = _peel_footer(text)
+    sentences = [
+        p.strip()
+        for p in re.split(r"(?<=[.!?])\s+", body.strip())
+        if p.strip()
+    ]
+    if not (1 <= len(sentences) <= 2):
+        return False
+    first = sentences[0]
+    if not _HAS_LATER_PLACEMENT.search(first):
+        return False
+    if work and work.lower() not in first.lower():
+        return False
+    if _INVENTED_WHETHER.search(text):
+        return False
+    if _CONCEALMENT_LEAD.search(text):
+        return False
+    return True
 
 
 def ensure_when_timing_completeness(
@@ -324,7 +365,11 @@ def ensure_when_timing_completeness(
     ]
     changed = False
     if later:
-        filtered = [s for s in sentences if not _INVENTED_WHETHER.search(s)]
+        filtered = [
+            s
+            for s in sentences
+            if not _INVENTED_WHETHER.search(s) and not _CONCEALMENT_LEAD.search(s)
+        ]
         if len(filtered) != len(sentences):
             changed = True
         sentences = filtered
