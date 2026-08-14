@@ -101,7 +101,7 @@ _INCOMPLETE_TAIL = re.compile(
 # Later-book / far-horizon — only for task lists scoped to a later book.
 _LATER_BOOK = re.compile(
     r"\b("
-    r"later\s+book|future\s+book|next\s+book|another\s+book|"
+    r"later\s+books?|future\s+books?|next\s+books?|another\s+books?|"
     r"book\s+(?:two|three|2|3)|sequel|"
     r"(?:doesn'?t|does\s+not|won'?t|will\s+not)\s+happen\s+until\s+"
     r"(?:a\s+)?(?:later|future|next)|"
@@ -121,7 +121,7 @@ _LATER_BOOK = re.compile(
 
 _LATER_BOOK_QUESTION = re.compile(
     r"\b("
-    r"later\s+book|future\s+book|next\s+book|another\s+book|"
+    r"later\s+books?|future\s+books?|next\s+books?|another\s+books?|"
     r"book\s+(?:two|three|2|3)|sequel|later\s+in\s+the\s+series"
     r")\b",
     re.I,

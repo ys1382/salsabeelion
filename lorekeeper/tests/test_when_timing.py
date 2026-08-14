@@ -45,6 +45,7 @@ class WhenTimingTests(unittest.TestCase):
         self.assertIn("WHEN", system.upper())
         self.assertIn("later book", system.lower())
         self.assertIn("first sentence", system.lower())
+        self.assertNotIn("leave the timing unspecified", system.lower())
 
     def test_notes_mark_later_book(self):
         entries = [
@@ -90,6 +91,84 @@ class WhenTimingTests(unittest.TestCase):
         self.assertNotIn("parrot", low)
         self.assertNotIn("plumage", low)
         self.assertIn("from your notes only", low)
+
+    def test_focus_keeps_later_book_lead(self):
+        from lorekeeper_answer_focus import (
+            focus_ask_response,
+            trim_off_topic_sentences,
+        )
+
+        live_q = (
+            "When will the Predators find out that the Preyfolk from their "
+            "realm are sentient?"
+        )
+        entries = [
+            _entry(
+                "n1",
+                "Preyfolk sentience",
+                "The Preyfolk sentience reveal is for future books in the series.",
+                tags=["Smoke and Mirrors"],
+            )
+        ]
+        essay = (
+            "The Predators of this realm currently operate under a foundational "
+            "misunderstanding: they believe the Preyfolk are not sentient. "
+            "Preyfolk hide their sentience with body language.\n\n"
+            "— From your notes only. Nothing invented."
+        )
+        out, did = ensure_when_timing_completeness(live_q, entries, essay)
+        self.assertTrue(did)
+        self.assertIn("smoke and mirrors", out.lower())
+        trimmed = trim_off_topic_sentences(live_q, out, allow_broad=False)
+        self.assertTrue(
+            trimmed.lower().startswith("your notes mark"),
+            trimmed[:160],
+        )
+        self.assertIn("later book", trimmed.lower())
+        focused = focus_ask_response(
+            live_q,
+            {
+                "ok": True,
+                "answer": out,
+                "questionKind": "when",
+                "sources": [],
+            },
+        )
+        fans = (focused.get("answer") or "").lower()
+        self.assertTrue(fans.startswith("your notes mark"), fans[:160])
+        self.assertIn("later book", fans)
+        self.assertIn("smoke and mirrors", fans)
+        self.assertNotIn("body language", fans)
+
+    def test_drops_invented_whether_when_notes_place_later(self):
+        live_q = (
+            "When will the Predators find out that the Preyfolk from their "
+            "realm are sentient?"
+        )
+        entries = [
+            _entry(
+                "n1",
+                "Preyfolk sentience",
+                "The Preyfolk sentience reveal is for future books in the series.",
+                tags=["Smoke and Mirrors"],
+            )
+        ]
+        essay = (
+            "Smoke and Mirrors does not yet spell out when—or even whether—"
+            "Predators will learn the sentience of the Preyfolk from their own realm. "
+            "Tenebris has discovered that Preyfolk can be sentient, as proven by "
+            "Etherei, but he remains unaware that the Preyfolk native to his own "
+            "world are similarly sentient.\n\n"
+            "— From your notes only. Nothing invented."
+        )
+        out, did = ensure_when_timing_completeness(live_q, entries, essay)
+        self.assertTrue(did)
+        low = out.lower()
+        self.assertTrue(low.startswith("your notes mark this as a concern for later"))
+        self.assertIn("later book", low)
+        self.assertNotIn("whether", low)
+        self.assertNotIn("spell out", low)
+        self.assertIn("tenebris", low)
 
     def test_does_not_invent_later_book_when_notes_do_not_place_it(self):
         entries = [

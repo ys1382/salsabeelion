@@ -1312,6 +1312,7 @@ def recall_from_user_data(
                     payload = dict(payload)
                     payload["answer"] = repaired
                     payload["catchupSelfCheck"] = "repaired"
+        payload = _finish_outer(payload)
         if (
             payload.get("ok")
             and scoped
@@ -1327,7 +1328,7 @@ def recall_from_user_data(
                 if did:
                     payload = dict(payload)
                     payload["answer"] = repaired
-        return _finish_outer(payload)
+        return payload
 
     # Confirm-sources preview: show ranked notes/draft bits before summarizing.
     # Skip for spot-check, floaters (own clarify flow), and when ids already confirmed.

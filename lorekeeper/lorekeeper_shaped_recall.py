@@ -185,11 +185,33 @@ _WHEN_WILL_Q = re.compile(
 )
 _TIMING_IN_ANSWER = re.compile(
     r"\b("
-    r"later\s+book|future\s+book|next\s+book|first\s+book|"
+    r"later\s+books?|future\s+books?|next\s+books?|first\s+books?|"
     r"this\s+book|this\s+work|later\s+in\s+the\s+series|"
     r"not\s+a\s+plot\s+point|"
     r"rather\s+than.{0,48}(?:this|the first)|"
     r"unspecified|not\s+(?:yet\s+)?specified"
+    r")\b",
+    re.I,
+)
+_HAS_LATER_PLACEMENT = re.compile(
+    r"\b("
+    r"later\s+books?|future\s+books?|next\s+books?|"
+    r"later\s+in\s+the\s+series|"
+    r"not\s+a\s+plot\s+point|"
+    r"rather\s+than.{0,48}(?:this|the first)"
+    r")\b",
+    re.I,
+)
+_INVENTED_WHETHER = re.compile(
+    r"\b("
+    r"or even whether|"
+    r"whether.{0,80}(?:will ever|even happen|be discovered|will learn)|"
+    r"does not yet spell out|"
+    r"not (?:yet )?(?:spell(?:ed)? out|specified) when|"
+    r"when(?:—|,)?\s*or even whether|"
+    r"leave(?:s)? the timing unspecified|"
+    r"timing (?:is |remains )?unspecified|"
+    r"unclear whether"
     r")\b",
     re.I,
 )
@@ -294,7 +316,6 @@ def ensure_when_timing_completeness(
     body, footer = _peel_footer(answer)
     if not body.strip():
         return (answer or "").strip(), False
-    has_timing = bool(_TIMING_IN_ANSWER.search(body))
     later = notes_mark_later_book_for_question(question, entries)
     sentences = [
         p.strip()
@@ -302,25 +323,27 @@ def ensure_when_timing_completeness(
         if p.strip()
     ]
     changed = False
-    if later and not has_timing:
-        lead = _timing_lead_sentence(_work_label(entries))
-        sentences = [lead] + [
-            s for s in sentences if _normalize_sent(s) != _normalize_sent(lead)
-        ]
-        changed = True
-    elif not later and not has_timing:
+    if later:
+        filtered = [s for s in sentences if not _INVENTED_WHETHER.search(s)]
+        if len(filtered) != len(sentences):
+            changed = True
+        sentences = filtered
+        if not any(_HAS_LATER_PLACEMENT.search(s) for s in sentences):
+            lead = _timing_lead_sentence(_work_label(entries))
+            sentences = [lead] + [
+                s
+                for s in sentences
+                if _normalize_sent(s) != _normalize_sent(lead)
+            ]
+            changed = True
+    elif not _TIMING_IN_ANSWER.search(body):
         # Notes do not place it — keep the answer; do not invent a book.
         return (answer or "").strip(), False
-    # Keep the timing sentence plus at most two supporting ones.
-    kept: list[str] = []
-    if sentences:
-        kept.append(sentences[0])
-        for s in sentences[1:]:
-            if len(kept) >= 3:
-                break
-            kept.append(s)
-        if len(sentences) > 3:
-            changed = True
+    # Timing first, then at most one supporting sentence.
+    cap = 2 if later else 3
+    kept = sentences[:cap]
+    if len(sentences) > cap:
+        changed = True
     out = " ".join(kept).strip()
     if footer:
         out = out + "\n\n" + footer

@@ -226,7 +226,7 @@ Rules:
 - First sentence must state the timing the sources give (later book / not this book / this book / not specified yet).
 - Do not replace the timing answer with worldbuilding, concealment lore, or a setting essay.
 - One short paragraph. Supporting context only after the timing sentence, and only if needed.
-- Invent nothing. If sources do not place the beat, say the notes leave the timing unspecified.
+- Invent nothing. Never say the beat may never happen, or that it is unknown whether it happens. If these excerpts do not place the beat, do not guess.
 """
 
 _TOPIC_DEFAULT = """

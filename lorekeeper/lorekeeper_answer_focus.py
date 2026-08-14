@@ -280,12 +280,27 @@ def trim_off_topic_sentences(question: str, answer: str, *, allow_broad: bool) -
         return answer
     sentences = re.split(r"(?<=[.!?])\s+", rest)
     kept: list[str] = []
+    keep_timing = False
+    timing_re = None
+    try:
+        from lorekeeper_shaped_recall import (
+            _TIMING_IN_ANSWER,
+            is_when_timing_question,
+        )
+
+        keep_timing = is_when_timing_question(question)
+        timing_re = _TIMING_IN_ANSWER
+    except Exception:
+        pass
     for sentence in sentences:
         s = sentence.strip()
         if not s:
             continue
         low = s.lower()
         if any(t in low for t in terms):
+            kept.append(s)
+            continue
+        if keep_timing and timing_re is not None and timing_re.search(s):
             kept.append(s)
             continue
         if is_who_is_question(question) and re.search(
