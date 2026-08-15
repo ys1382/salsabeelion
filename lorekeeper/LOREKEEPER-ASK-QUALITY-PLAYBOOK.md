@@ -107,7 +107,7 @@ If a portrait fails but the name is hard to find in your own account in 30 secon
 
 **Spot-check set (10 questions + Run)** — pinned for later. Use real Ask + **It got this wrong** until then. Stub code: `lk-spot-check-runner.js`.
 
-**Phase 5 — Tier D** (embeddings) and **Phase 6 — public launch readiness** are pinned for later. Loose-ends Layer 2 ships owner-only; Layer 3 after launch (#25).
+**Phase 6 — public launch readiness** is pinned for later. Loose-ends Layer 2 ships owner-only; Layer 3 after launch (#25). Embeddings / Phase 5 Tier D taken down 2026-08-14 — do not build.
 
 ---
 
