@@ -29,7 +29,7 @@
     "./lk-doc-longpress.js?v=4",
     "./lk-doc-typo-jump.js?v=1",
     "./lk-doc-lore-brief.js?v=1",
-    "./lk-mobile-comfort.js?v=7",
+    "./lk-mobile-comfort.js?v=8",
     "./lk-writing-glossary.js?v=1",
     "./lk-mobile-accessory.js?v=3",
     "./lk-writing-complete.js?v=2",

@@ -72,7 +72,7 @@
     var back = document.createElement("a");
     back.className = "lk-mobile-writing-back";
     back.href = "./index.html";
-    back.textContent = "← Documents";
+    back.textContent = "← Homepage";
     writingBar.appendChild(back);
     var hint = document.createElement("span");
     hint.className = "lk-bt-keyboard-hint muted";
