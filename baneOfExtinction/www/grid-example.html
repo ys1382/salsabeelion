@@ -125,6 +125,8 @@
       font-weight: 700;
       cursor: pointer;
       font-family: system-ui, sans-serif;
+      touch-action: manipulation;
+      user-select: none;
     }
     .cell-btn:hover { background: rgba(107, 196, 138, 0.08); }
     .cell-btn.is-x { color: #e07070; }
@@ -191,8 +193,9 @@
         The board is an L: every pair of different lists meets in one square. Blank space is not a square — a list does not meet itself.
         A “did not” is an X where those two labels meet.
         A clue that ties two traits (kelp coast and oil spills) is marked where those two meet — you may not know the species yet.
-        Tap a cell for a red X, tap again to lock the match, tap again to clear.
-        The board does not copy marks onto other squares for you.
+        Tap a cell for a red X, tap again to clear.
+        Double-tap to lock a match (green circle). The rest of that row and column in the same little square get red Xs.
+        Other little squares stay as you left them — a lock on prey × place does not fill the species list.
         Tap a clue when you are done with it: one pen line, and it drops to the bottom if it was not already last.
       </p>
 
@@ -260,6 +263,7 @@
       var state = {};
       var clueUsed = [];
       var usedOrder = [];
+      var clickTimers = {};
 
       function hasSubgrid(rowCat, colCat) {
         return CAT_ORDER.indexOf(rowCat) < CAT_ORDER.indexOf(colCat);
@@ -270,10 +274,58 @@
         return catB + ":" + iB + "|" + catA + ":" + iA;
       }
 
-      function cycleMark(cur) {
-        if (cur === "x") return "yes";
-        if (cur === "yes") return "";
-        return "x";
+      function uniquenessX(rowCat, colCat, ri, ci) {
+        var j, i;
+        for (j = 0; j < N; j++) {
+          if (j !== ci && (state[cellKey(rowCat, ri, colCat, j)] || "") === "yes") return true;
+        }
+        for (i = 0; i < N; i++) {
+          if (i !== ri && (state[cellKey(rowCat, i, colCat, ci)] || "") === "yes") return true;
+        }
+        return false;
+      }
+
+      function displayMark(rowCat, colCat, ri, ci) {
+        var user = state[cellKey(rowCat, ri, colCat, ci)] || "";
+        if (user === "yes") return "yes";
+        if (user === "x") return "x";
+        if (uniquenessX(rowCat, colCat, ri, ci)) return "x";
+        return "";
+      }
+
+      function toggleX(rowCat, colCat, ri, ci) {
+        var key = cellKey(rowCat, ri, colCat, ci);
+        var cur = state[key] || "";
+        if (cur === "yes") {
+          state[key] = "";
+          return;
+        }
+        if (cur === "x") {
+          state[key] = "";
+          return;
+        }
+        if (uniquenessX(rowCat, colCat, ri, ci)) return;
+        state[key] = "x";
+      }
+
+      function lockMatch(rowCat, colCat, ri, ci) {
+        var key = cellKey(rowCat, ri, colCat, ci);
+        var j, i, other;
+        if ((state[key] || "") === "yes") {
+          state[key] = "";
+          return;
+        }
+        for (j = 0; j < N; j++) {
+          if (j === ci) continue;
+          other = cellKey(rowCat, ri, colCat, j);
+          if ((state[other] || "") === "yes") state[other] = "";
+        }
+        for (i = 0; i < N; i++) {
+          if (i === ri) continue;
+          other = cellKey(rowCat, i, colCat, ci);
+          if ((state[other] || "") === "yes") state[other] = "";
+        }
+        state[key] = "yes";
       }
 
       function markLabel(mark) {
@@ -327,8 +379,7 @@
           var tr = document.createElement("tr");
           CATS[colCat].items.forEach(function (colName, ci) {
             var td = document.createElement("td");
-            var key = cellKey(rowCat, ri, colCat, ci);
-            var mark = state[key] || "";
+            var mark = displayMark(rowCat, colCat, ri, ci);
             var btn = document.createElement("button");
             btn.type = "button";
             btn.className = "cell-btn" + (mark ? " is-" + mark : "");
@@ -339,7 +390,26 @@
                 (mark === "x" ? ", crossed out" : mark === "yes" ? ", locked match" : ", empty")
             );
             btn.addEventListener("click", function () {
-              state[key] = cycleMark(state[key] || "");
+              var key = cellKey(rowCat, ri, colCat, ci);
+              if (clickTimers[key]) {
+                clearTimeout(clickTimers[key]);
+                delete clickTimers[key];
+                return;
+              }
+              clickTimers[key] = setTimeout(function () {
+                delete clickTimers[key];
+                toggleX(rowCat, colCat, ri, ci);
+                renderBoards();
+              }, 280);
+            });
+            btn.addEventListener("dblclick", function (e) {
+              e.preventDefault();
+              var key = cellKey(rowCat, ri, colCat, ci);
+              if (clickTimers[key]) {
+                clearTimeout(clickTimers[key]);
+                delete clickTimers[key];
+              }
+              lockMatch(rowCat, colCat, ri, ci);
               renderBoards();
             });
             td.appendChild(btn);
@@ -428,7 +498,7 @@
           }
         });
         if (wrong) {
-          status.textContent = "Some locked matches are not right. A two-sided clue is marked where those two labels meet — then you still have to carry it to the other squares yourself.";
+          status.textContent = "Some locked matches are not right. A two-sided clue is marked where those two labels meet — then you still have to carry it to the other little squares yourself.";
           return;
         }
         if (missing) {
@@ -441,6 +511,10 @@
 
       document.getElementById("checkBtn").addEventListener("click", checkBoard);
       document.getElementById("resetBtn").addEventListener("click", function () {
+        Object.keys(clickTimers).forEach(function (k) {
+          clearTimeout(clickTimers[k]);
+        });
+        clickTimers = {};
         state = {};
         clueUsed = CLUES.map(function () { return false; });
         usedOrder = [];
