@@ -9,7 +9,7 @@
   <script src="bane-auth-gate.js?v=public2"></script>
   <style>
     html.auth-checking body { visibility: hidden; }
-    .grid-wrap { max-width: 52rem; }
+    .grid-wrap { max-width: 72rem; }
     .how {
       font-family: system-ui, sans-serif;
       font-size: 0.86rem;
@@ -31,8 +31,8 @@
     }
     table.logic {
       border-collapse: collapse;
-      min-width: 32rem;
-      margin-bottom: 1.15rem;
+      min-width: 48rem;
+      margin-bottom: 0.5rem;
       font-family: system-ui, sans-serif;
     }
     table.logic th,
@@ -46,27 +46,55 @@
       color: var(--muted);
       font-size: 0.72rem;
       line-height: 1.25;
-      padding: 0.4rem 0.35rem;
+      padding: 0.35rem 0.3rem;
       background: rgba(0, 0, 0, 0.22);
+    }
+    table.logic th.cat-lab {
+      color: var(--accent);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      font-size: 0.68rem;
+    }
+    table.logic th.col-lab {
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      font-weight: 500;
+      color: var(--ink);
+      height: 7.2rem;
+      min-width: 2.55rem;
+      padding: 0.45rem 0.2rem;
     }
     table.logic th.row-lab {
       text-align: left;
-      min-width: 8.5rem;
+      min-width: 7.8rem;
       color: var(--ink);
-      font-size: 0.8rem;
+      font-size: 0.78rem;
       font-weight: 500;
+      padding: 0 0.45rem;
+    }
+    table.logic th.block-row {
+      text-align: left;
+      color: var(--accent);
+      font-size: 0.68rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      padding: 0.5rem 0.45rem 0.3rem;
+      background: rgba(107, 196, 138, 0.08);
+    }
+    table.logic td.off {
+      background: rgba(0, 0, 0, 0.28);
     }
     .cell-btn {
       display: flex;
       align-items: center;
       justify-content: center;
       width: 100%;
-      min-width: 3.4rem;
-      min-height: 2.55rem;
+      min-width: 2.55rem;
+      min-height: 2.35rem;
       border: 0;
       background: transparent;
       color: transparent;
-      font-size: 1.15rem;
+      font-size: 1.05rem;
       font-weight: 700;
       cursor: pointer;
       font-family: system-ui, sans-serif;
@@ -111,12 +139,16 @@
 </head>
 <body>
   <div class="wrap grid-wrap">
+    <nav class="site-tabs" aria-label="Bane pages">
+      <a href="index.html">Home</a>
+      <a href="codex.html">Wildlife codex</a>
+      <a href="missions.html">Missions</a>
+      <a href="wildlife-scan.html">EcoLens</a>
+      <a href="account.html">Account</a>
+    </nav>
+
     <header class="hero hero--compact">
-      <p class="eyebrow">
-        <a href="index.html">← Bane of Extinction</a>
-        · <a href="office.html">Owner’s Office</a>
-      </p>
-      <h1 class="brand">Logic grid example</h1>
+      <h1 class="brand">Logic grid</h1>
       <p class="tagline">
         Owner-only draft. Species most people never stand next to — still keystones, still threatened.
         Matching teaches why they still touch a world you live in.
@@ -129,13 +161,14 @@
 
     <div id="puzzle" hidden>
       <p class="how">
-        Tap a cell for a red X (can’t be). Tap again to lock the true match. Tap again to clear.
-        You mark every cell yourself — the board does not fill the other sides for you.
-        Tap a clue when you are done with it: one pen line through it, and it drops to the bottom if it was not already last.
-        Tap again if you still need it.
+        Every pair of lists meets in its own square. A clue like “the mountain animal hunts blue sheep”
+        is marked where <em>mountains</em> meets <em>blue sheep</em> — you may not know the species yet.
+        Tap a cell for a red X, tap again to lock the match, tap again to clear.
+        The board does not copy marks onto other squares for you.
+        Tap a clue when you are done with it: one pen line, and it drops to the bottom if it was not already last.
       </p>
 
-      <div class="board-scroll" id="boards"></div>
+      <section class="board-scroll" id="boards" aria-label="Logic board"></section>
 
       <h2 class="block-title">Clues</h2>
       <ul class="clue-list" id="clueList"></ul>
@@ -149,36 +182,64 @@
   </div>
   <script>
     (function () {
-      var SPECIES = ["Snow leopard", "Sea otter", "Tube worm", "Polar bear"];
-      var BLOCKS = [
-        {
-          id: "where",
-          title: "Where they live",
-          rows: ["High mountains", "Kelp coast", "Deep-sea vents", "Arctic sea ice"],
-          answer: [0, 1, 2, 3]
+      var CATS = {
+        species: {
+          title: "Species",
+          items: ["Snow leopard", "Sea otter", "Tube worm", "Polar bear"]
         },
-        {
-          id: "threat",
+        where: {
+          title: "Where they live",
+          items: ["High mountains", "Kelp coast", "Deep-sea vents", "Arctic sea ice"],
+          short: ["Mountains", "Kelp coast", "Vents", "Sea ice"]
+        },
+        threat: {
           title: "What threatens them",
-          rows: ["Poaching", "Oil spills", "Seafloor mining", "Sea-ice loss"],
-          answer: [0, 1, 2, 3]
+          items: ["Poaching", "Oil spills", "Seafloor mining", "Sea-ice loss"],
+          short: ["Poaching", "Oil spills", "Mining", "Ice loss"]
+        },
+        prey: {
+          title: "What they eat",
+          items: ["Blue sheep", "Sea urchins", "Vent bacteria", "Seals"],
+          short: ["Blue sheep", "Urchins", "Vent bacteria", "Seals"]
         }
+      };
+      var N = 4;
+      var COL_GROUPS = ["where", "threat", "prey"];
+      var ROW_GROUPS = ["species", "prey", "threat"];
+      var PAIR_IDS = [
+        "species|where",
+        "species|threat",
+        "species|prey",
+        "prey|where",
+        "prey|threat",
+        "threat|where"
       ];
       var CLUES = [
         "The snow leopard is not threatened by oil spills.",
         "The mountain animal hunts blue sheep.",
-        "Giant tube worms live at deep-sea vents, not on sea ice.",
-        "Polar bears hunt from Arctic sea ice.",
-        "Seafloor mining threatens the vent animal, not the mountain cat.",
-        "Oil spills hit the kelp-coast animal hardest of these four."
+        "Tube worms do not hunt. They live off bacteria.",
+        "Polar bears prey on seals.",
+        "Seafloor mining threatens the vent animal.",
+        "Oil spills hit the kelp-coast animal hardest of these four.",
+        "The kelp-coast animal eats sea urchins.",
+        "The vent animal lives off bacteria.",
+        "Poaching threatens the animal that hunts blue sheep."
       ];
 
       var state = {};
       var clueUsed = [];
       var usedOrder = [];
 
-      function cellKey(blockId, row, col) {
-        return blockId + ":" + row + ":" + col;
+      function hasSubgrid(rowCat, colCat) {
+        if (rowCat === "species") return true;
+        if (rowCat === "prey") return colCat === "where" || colCat === "threat";
+        if (rowCat === "threat") return colCat === "where";
+        return false;
+      }
+
+      function cellKey(catA, iA, catB, iB) {
+        if (catA < catB) return catA + ":" + iA + "|" + catB + ":" + iB;
+        return catB + ":" + iB + "|" + catA + ":" + iA;
       }
 
       function cycleMark(cur) {
@@ -196,55 +257,88 @@
       function renderBoards() {
         var host = document.getElementById("boards");
         host.innerHTML = "";
-        BLOCKS.forEach(function (block) {
-          var title = document.createElement("h2");
-          title.className = "block-title";
-          title.textContent = block.title;
-          host.appendChild(title);
-          var table = document.createElement("table");
-          table.className = "logic";
-          var thead = document.createElement("thead");
-          var hr = document.createElement("tr");
-          hr.appendChild(document.createElement("th"));
-          SPECIES.forEach(function (name) {
+        var table = document.createElement("table");
+        table.className = "logic";
+
+        var thead = document.createElement("thead");
+        var catRow = document.createElement("tr");
+        var corner = document.createElement("th");
+        corner.rowSpan = 2;
+        catRow.appendChild(corner);
+        COL_GROUPS.forEach(function (id) {
+          var th = document.createElement("th");
+          th.className = "cat-lab";
+          th.colSpan = N;
+          th.textContent = CATS[id].title;
+          catRow.appendChild(th);
+        });
+        thead.appendChild(catRow);
+
+        var itemRow = document.createElement("tr");
+        COL_GROUPS.forEach(function (id) {
+          var shorts = CATS[id].short || CATS[id].items;
+          shorts.forEach(function (name, i) {
             var th = document.createElement("th");
+            th.className = "col-lab";
+            th.scope = "col";
             th.textContent = name;
-            hr.appendChild(th);
+            th.title = CATS[id].items[i];
+            itemRow.appendChild(th);
           });
-          thead.appendChild(hr);
-          table.appendChild(thead);
-          var tbody = document.createElement("tbody");
-          block.rows.forEach(function (rowName, ri) {
+        });
+        thead.appendChild(itemRow);
+        table.appendChild(thead);
+
+        var tbody = document.createElement("tbody");
+        ROW_GROUPS.forEach(function (rowCat) {
+          var sr = document.createElement("tr");
+          var sh = document.createElement("th");
+          sh.className = "block-row";
+          sh.colSpan = 1 + COL_GROUPS.length * N;
+          sh.textContent = CATS[rowCat].title;
+          sr.appendChild(sh);
+          tbody.appendChild(sr);
+
+          CATS[rowCat].items.forEach(function (rowName, ri) {
             var tr = document.createElement("tr");
             var lab = document.createElement("th");
             lab.className = "row-lab";
             lab.scope = "row";
             lab.textContent = rowName;
             tr.appendChild(lab);
-            SPECIES.forEach(function (_name, ci) {
-              var td = document.createElement("td");
-              var btn = document.createElement("button");
-              var key = cellKey(block.id, ri, ci);
-              var mark = state[key] || "";
-              btn.type = "button";
-              btn.className = "cell-btn" + (mark ? " is-" + mark : "");
-              btn.textContent = markLabel(mark);
-              btn.setAttribute(
-                "aria-label",
-                SPECIES[ci] + ", " + rowName + (mark === "x" ? ", crossed out" : mark === "yes" ? ", locked match" : ", empty")
-              );
-              btn.addEventListener("click", function () {
-                state[key] = cycleMark(state[key] || "");
-                renderBoards();
+            COL_GROUPS.forEach(function (colCat) {
+              var live = hasSubgrid(rowCat, colCat);
+              CATS[colCat].items.forEach(function (colName, ci) {
+                var td = document.createElement("td");
+                if (!live) {
+                  td.className = "off";
+                  tr.appendChild(td);
+                  return;
+                }
+                var key = cellKey(rowCat, ri, colCat, ci);
+                var mark = state[key] || "";
+                var btn = document.createElement("button");
+                btn.type = "button";
+                btn.className = "cell-btn" + (mark ? " is-" + mark : "");
+                btn.textContent = markLabel(mark);
+                btn.setAttribute(
+                  "aria-label",
+                  rowName + " × " + colName +
+                    (mark === "x" ? ", crossed out" : mark === "yes" ? ", locked match" : ", empty")
+                );
+                btn.addEventListener("click", function () {
+                  state[key] = cycleMark(state[key] || "");
+                  renderBoards();
+                });
+                td.appendChild(btn);
+                tr.appendChild(td);
               });
-              td.appendChild(btn);
-              tr.appendChild(td);
             });
             tbody.appendChild(tr);
           });
-          table.appendChild(tbody);
-          host.appendChild(table);
         });
+        table.appendChild(tbody);
+        host.appendChild(table);
       }
 
       function renderClues() {
@@ -282,26 +376,29 @@
         var status = document.getElementById("checkStatus");
         var missing = false;
         var wrong = false;
-        BLOCKS.forEach(function (block) {
-          SPECIES.forEach(function (_n, ci) {
-            var yesRow = -1;
+        PAIR_IDS.forEach(function (pid) {
+          var parts = pid.split("|");
+          var a = parts[0];
+          var b = parts[1];
+          for (var i = 0; i < N; i++) {
+            var yesAt = -1;
             var yesCount = 0;
-            block.rows.forEach(function (_r, ri) {
-              if ((state[cellKey(block.id, ri, ci)] || "") === "yes") {
+            for (var j = 0; j < N; j++) {
+              if ((state[cellKey(a, i, b, j)] || "") === "yes") {
                 yesCount += 1;
-                yesRow = ri;
+                yesAt = j;
               }
-            });
+            }
             if (yesCount !== 1) missing = true;
-            else if (yesRow !== block.answer[ci]) wrong = true;
-          });
+            else if (yesAt !== i) wrong = true;
+          }
         });
         if (wrong) {
-          status.textContent = "Some locked matches are not right. Leave the clues up if you still need them for the other side of the board.";
+          status.textContent = "Some locked matches are not right. A two-sided clue is marked where those two labels meet — then you still have to carry it to the other squares yourself.";
           return;
         }
         if (missing) {
-          status.textContent = "Lock one match in each column of both grids (the green dot), then check again.";
+          status.textContent = "Lock one match in each little square of the L (the green dot), then check again.";
           return;
         }
         status.textContent =
@@ -335,5 +432,6 @@
         });
     })();
   </script>
+  <script src="bane-owner-tabs.js?v=grid1"></script>
 </body>
 </html>

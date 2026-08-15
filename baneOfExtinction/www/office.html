@@ -63,8 +63,15 @@
 </head>
 <body>
   <div class="wrap office-wrap">
+    <nav class="site-tabs" aria-label="Bane pages">
+      <a href="index.html">Home</a>
+      <a href="codex.html">Wildlife codex</a>
+      <a href="missions.html">Missions</a>
+      <a href="wildlife-scan.html">EcoLens</a>
+      <a href="account.html">Account</a>
+    </nav>
+
     <header class="hero hero--compact">
-      <p class="eyebrow"><a href="index.html">← Bane of Extinction</a> · <a href="account.html">Account</a></p>
       <h1 class="brand">Owner’s Office</h1>
       <p class="tagline">Private to you. Player emails and tips only — never their scans or codex text.</p>
     </header>
@@ -74,7 +81,6 @@
     </div>
 
     <div id="office" hidden>
-      <p class="hint"><a href="grid-example.html" style="color:var(--accent)">Logic grid example</a> — owner-only draft board (far-neighbor species).</p>
       <div class="stats" id="statsRow" aria-label="Summary counts"></div>
 
       <details class="office-section" open>
@@ -231,5 +237,6 @@
         });
     })();
   </script>
+  <script src="bane-owner-tabs.js?v=grid1"></script>
 </body>
 </html>
