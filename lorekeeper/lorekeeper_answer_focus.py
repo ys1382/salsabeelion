@@ -1087,6 +1087,12 @@ def focus_ask_response(
         if isinstance(sources, list):
             out["sources"] = filter_sources_for_answer(sources, answer, question)
         return out
+    if is_audit_question(question) and answer.strip():
+        out = dict(result)
+        sources = result.get("sources")
+        if isinstance(sources, list):
+            out["sources"] = filter_sources_for_answer(sources, answer, question)
+        return out
     # Kinship stays narrow; story-arc relationship (pre/post dynamics) needs room.
     if kind == "relationship" or result.get("askIntent") == "relationship":
         from lorekeeper_relations import is_story_arc_relationship_question

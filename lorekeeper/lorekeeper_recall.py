@@ -13,6 +13,7 @@ from lorekeeper_character_summary import (
 )
 from lorekeeper_character_compose import (
     cast_answer_is_thin,
+    is_audit_question,
     who_is_answer_has_bloat,
     who_is_has_family_slots,
     who_is_overview_missing_depth,
@@ -781,6 +782,8 @@ def local_pipeline_skips_rag(
 
     if kind in ("planned_gaps", "flagged_fix", "notes_not_in_draft", "writing_next"):
         return bool(answer.strip())
+    if is_audit_question(question) and answer.strip():
+        return True
 
     # Catch-up: prefer Sonnet RAG planning-brief voice when enabled; else local.
     if kind == "catchup_gather" or is_catchup_gather_question(question):
@@ -792,6 +795,8 @@ def local_pipeline_skips_rag(
     pipe_kind = str(local_pipeline.get("questionKind") or "")
     if pipe_kind in ("planned_gaps", "flagged_fix", "notes_not_in_draft", "writing_next"):
         return bool(answer.strip())
+    if is_audit_question(question) and answer.strip():
+        return True
     if pipe_kind == "catchup_gather":
         if rag_enabled():
             return False
@@ -1401,6 +1406,7 @@ def recall_from_user_data(
             ask_plan
             and ask_plan.question_kind in local_only_kinds
         )
+        and not is_audit_question(question)
     )
     # Story-arc relationship asks need synthesis — skip the local note-dump and use RAG.
     if (

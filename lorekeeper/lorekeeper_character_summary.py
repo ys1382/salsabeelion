@@ -6,17 +6,16 @@ from typing import Any
 
 from lorekeeper_cast_roles import ROLE_TERMS, cast_role_line_about_label
 from lorekeeper_inference import (
-    audit_contradiction_lines_for,
     build_character_brief,
     brother_names_from_brief,
     collect_brother_names,
     family_chain_in_body,
 )
+from lorekeeper_note_compare import compose_note_compare_answer
 from lorekeeper_relations import merge_who_is_relationship_lines, plain_relationship_lines_for
 from lorekeeper_character_compose import (
     append_unclear_section,
     character_unclear_body,
-    compose_audit_summary,
     compose_character_gap_reference,
     compose_character_reference,
     compose_coverage_gap,
@@ -1670,13 +1669,7 @@ def _build_character_summary(
             brief = build_character_brief(query_names[0], scope)
 
     if audit and len(query_names) == 1:
-        contradictions = audit_contradiction_lines_for(query_names[0], scope)
-        source_ids = [
-            str(e.get("id"))
-            for e in scope
-            if isinstance(e, dict) and str(e.get("id") or "")
-        ]
-        return compose_audit_summary(label, contradictions), source_ids[:8]
+        return compose_note_compare_answer(label, scope)
 
     note_scope = [e for e in scope if not _is_draft_entry(e)]
     hits = _collect_hits(scope, search_names)
@@ -2531,10 +2524,9 @@ def build_gathered_answer(
         if is_coverage_question(question):
             return compose_coverage_gap(label, 0, False), []
         if is_audit_question(question):
-            contradictions = audit_contradiction_lines_for(
+            return compose_note_compare_answer(
                 label, _scope_for_character(entries, question, [label])
             )
-            return compose_audit_summary(label, contradictions), []
         return (
             compose_character_gap_reference(
                 label,

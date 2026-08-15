@@ -160,7 +160,13 @@ class InferenceTests(unittest.TestCase):
             entries,
         )
         answer = res.get("answer") or ""
-        self.assertIn("disagree", answer.lower())
+        low = answer.lower()
+        self.assertIn("this note", low)
+        self.assertIn("that note", low)
+        self.assertIn("character c", low)
+        self.assertIn("character d", low)
+        self.assertNotIn("this is what the main draft says:", low)
+        self.assertNotIn("this is what your notes say:", low)
 
     def test_whois_omits_contradictions(self):
         entries = [

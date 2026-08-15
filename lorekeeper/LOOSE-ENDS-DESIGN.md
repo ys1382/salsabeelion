@@ -42,7 +42,9 @@ No winner, no scolding, no AI rewrite. Doc page shows a rare **Update document?*
 Also still optional later:
 
 - Same-name collision checks (already partial in aliases)
-- Cross-note fact compare beyond spouse/role when both lack `planned`
+- Cross-note fact compare **beyond** spouse/role when both lack `planned`
+
+**Shipped 2026-08-15 — note-vs-note (spouse / cast role):** named notes, skip planned / planned later, mention when those notes are not in the main draft, mention when the main draft contradicts. Planned-for-draft Ask does not say “not in the draft.” No winner. Draft-vs-notes dual left as-is.
 
 ## Out of scope unless approved
 

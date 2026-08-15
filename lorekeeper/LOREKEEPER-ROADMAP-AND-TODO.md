@@ -226,7 +226,7 @@ Goal: **answer only what the question asks.**
 | **Your Tier A habits** | Scope, save timing, question shape | Vague or multi-part questions |
 | **Tier B–C code + tests** | Most owner daily questions | Every edge case, every typo in names |
 | **Optional RAG (Anthropic on server)** | Harder paraphrase / connect scattered draft prose | Still needs tight prompts (#44); not magic; owner rule: librarian only, no invented lore |
-| **Embeddings / vector search (not built)** | “I said it differently in chapter 12” retrieval | New infra, cost, tuning |
+| **Embeddings / vector search** | — | **Taken down 2026-08-14.** Owner: Ask finds phrasing variants well enough; fix misses with the usual Ask correction loop. Do not build. |
 | **General LLM “understand anything”** | Theoretical upper bound | Conflicts with no-invented-lore unless heavily constrained |
 
 Treat as **out of scope unless you explicitly approve**:
@@ -266,7 +266,6 @@ Run **one row at a time** in Cursor. Don’t skip Phase 0 — it costs nothing a
 | **4** | You | Re-ask a few hard questions on home/doc Ask | Part 2 A6 (log corrections) | Failures → Phase 1 again |
 | **5** | Cursor | *Implement storage items 26–27* | **26–27** | Off-server backups exist; failed sync is obvious |
 | **6** | Cursor | *Implement storage items 28–32* | **28–32** | Launch-grade storage (only needed before public **#25**) |
-| **7** | You + Cursor | Optional: approve semantic search / embeddings | Part 2 Tier D | Only if Phases 0–4 aren’t enough — bigger build, not required for owner-only |
 
 **Efficiency rules**
 
@@ -304,9 +303,9 @@ Run **one row at a time** in Cursor. Don’t skip Phase 0 — it costs nothing a
 - [x] **Voice-only / dramatic cast-card pass — dropped 2026-08-12 night.** Catch-up-voice and blurb-hook rewrites misread the Tenebris open (Etherei looked like the Baron) and did not make cards exciting without inventing. **Do not retry.** Keep the locked Tenebris gold wording below.
 - **2026-08-12 owner note:** Do not chase book-blurb / catch-up voice on who-is. Accuracy bar stays; wording of the Tenebris sample is locked again.
 
-### Ask opt-in “include writing tasks” (pinned 2026-08-11) — **later upgrade**
+### Ask writing tasks (pinned 2026-08-11; closed 2026-08-14)
 
-- [ ] **Opt-in checkbox: include writing tasks** — when on, Ask/cast cards may surface honest “not fully developed yet” work items that belong on that card (e.g. Dijon–Tenebris relationship still thin). Off by default; never invent tasks; librarian-only from notes/gaps. Do not build until character who-is voice/accuracy bar is stable.
+- [x] **Writing-next task list Ask** — shipped. “Give me the task list for …” / write-next from notes not yet in the draft. Owner golds: Etherei cast list + capture→arrival stretch. **Do not** add a separate who-is checkbox for writing tasks unless the owner asks again.
 
 ### Ask who-is accuracy milestone (pinned 2026-08-10, deepened 2026-08-10 evening) — **do not regress**
 
@@ -391,7 +390,7 @@ Run **one row at a time** in Cursor. Don’t skip Phase 0 — it costs nothing a
 
 - [x] **Update your notes?** — only when the main draft already has a foothold on the beat (e.g. flashback already on the page) and a related note still reads like the whole beat is only planned. Soft reminder; never invents the new plan; skip pure-future scenes not yet introduced.
 - [x] **Task-list upgrade** — prefer unused notes for threads the draft is already introducing; do not surface pure-future scene notes (e.g. facing the music at Tenebris) until the draft begins that scene.
-- [ ] Later deepen: note-vs-draft seat conflicts beyond flashback setup; optional Ask for “which seats look stale?”
+- [ ] **Later — in-LoreKeeper stale-note notices (not working on this now).** Not email, not phone push, not SMS. Only inside LoreKeeper: if the draft already has that part, a quiet notice like “you already wrote this stretch — still planning to include X from your notes?” Librarian only; never invents X. Owner sketched 2026-08-14. Do not build until they ask.
 
 ### Thin draft / catch-up gather Ask (pinned 2026-08-12) — **shipped v0**
 
@@ -460,7 +459,7 @@ Run **one row at a time** in Cursor. Don’t skip Phase 0 — it costs nothing a
 
 **Problem:** Long typing on phone (story, notes) — sore thumbs, small screen, accidental selection wipes, mic dictation annoying in public. **Not:** sentence guessing, cross-user learning, or replacing the OS keyboard with a tabbed alphabet.
 
-**Owner decisions (2026-06):** #3 sure · #4 keep · #5 fine · #11 yes · **#12 yes** · #10 maybe · #14 maybe · rest fine for bundle.
+**Owner decisions (2026-06):** #3 sure · #4 keep · #5 fine · #11 yes · **#12 yes** · #10 maybe · rest fine for bundle. **#14 phone break reminders — taken down 2026-08-14; do not build.**
 
 | # | Solution | Owner | Status | Notes |
 |---|----------|-------|--------|-------|
@@ -477,7 +476,7 @@ Run **one row at a time** in Cursor. Don’t skip Phase 0 — it costs nothing a
 | 11 | Bluetooth keyboard mode | **yes** | [x] shipped | Shortcuts, less touch chrome when external keyboard connected |
 | 12 | Plain capture on phone | **yes** | [x] shipped | Quick jot + **append to page** from doc sidebar (plain block at bottom) |
 | 13 | Read vs write on phone | fine | [x] shipped | Scroll/read default; tap Edit to type |
-| 14 | Gentle break reminders | **maybe** | [ ] plan | Off by default; long interval; dismiss forever |
+| 14 | Gentle break reminders | **taken down** | skip | Owner 2026-08-14: off the list. Do not build. |
 | 15 | Doc-local term list (opt-in) | fine | [x] shipped | Words from their work → feeds #4/#5; opt-in |
 | — | Mic dictation in public | skip | — | Social + editing burden |
 | — | Bigger full alphabet (one screen) | skip | — | Hides what they’re typing |
@@ -486,9 +485,9 @@ Run **one row at a time** in Cursor. Don’t skip Phase 0 — it costs nothing a
 
 **#12 — yes (scope):** Builds on existing **home New note** and **doc New note** — no second capture product. **In scope:** mobile writing mode + accessory row + undo/safety on note textareas; cleaner phone path to jot; **append to page** from doc sidebar (plain block at bottom of manuscript). Save note still sends to home list.
 
-**Suggested bundle (first pass):** #1 + #2 (both modes) + #3 + #4 + #5 + #7 + #8 (mobile toggle) + #11 + #12 + #13 + #15. Defer or light-touch: #10, #14.
+**Suggested bundle (first pass):** #1 + #2 (both modes) + #3 + #4 + #5 + #7 + #8 (mobile toggle) + #11 + #12 + #13 + #15. Defer or light-touch: #10.
 
-- [x] **Mobile comfort writing — bundle** — first pass shipped 2026-06-30 (#1–#8, #11–#13, #15, glossary #3–#5). [x] **#9 phone restore** shipped 2026-06-30. [x] **#10 handoff nudge** shipped 2026-06-30. [x] **#12 append-to-page** shipped 2026-06-30. Later: #14 breaks.
+- [x] **Mobile comfort writing — bundle** — first pass shipped 2026-06-30 (#1–#8, #11–#13, #15, glossary #3–#5). [x] **#9 phone restore** shipped 2026-06-30. [x] **#10 handoff nudge** shipped 2026-06-30. [x] **#12 append-to-page** shipped 2026-06-30. **#14 break reminders taken down 2026-08-14.**
 
 - [x] **Ask: POV / knowledge questions (misparsed “about” tail)** — `knowledge` route + `lorekeeper_knowledge_pov.py`; regression case `knowledge_pov_elara_marcus`.
 - [x] **Ask: “Who is …” quality regression (local fast path skips RAG)** — `local_pipeline_skips_rag()` in `lorekeeper_recall.py`; thin / false-empty who → RAG when enabled.
@@ -496,8 +495,9 @@ Run **one row at a time** in Cursor. Don’t skip Phase 0 — it costs nothing a
 - [x] **Plan loose ends vs planned-later (Ask)** — verdict in `lorekeeper/LOOSE-ENDS-DESIGN.md`
 - [x] **Loose-ends Ask routes (Layer 2)** — `planned:` / `fix:` / `TODO fix` tags; Ask *what's not written yet* and *what's flagged to fix*; canon audit skips `planned` entries (`lorekeeper_loose_ends.py`).
 - [x] **Ask quality playbook** — `LOREKEEPER-ASK-QUALITY-PLAYBOOK.md` + Owner’s Office Phases 0–2 (categorized spot-check, pass lines, manual scoring, corrections copy, note-structure guide).
-- [ ] **Ask playbook Phase 5 — Tier D (not built yet)** — embeddings / semantic retrieval; optional Owner’s Office interest UI later.
+- [x] **Ask playbook Phase 5 — embeddings / semantic retrieval — taken down 2026-08-14.** Do not build. Ask misses → usual correction loop (It got this wrong / Q·R·E), not a new search stack.
 - [ ] **Ask playbook Phase 6 — launch readiness (not built yet)** — playbook tied to public launch (#25) in Owner’s Office when you say go; nginx gate stays until then.
-- [ ] **Loose-ends Layer 3 — after public launch (#25)** — cross-note fact compare excluding `planned` tags; optional tag picker in note editor; public help copy for `planned` / `fix:` habits (no auto plot-hole detection). Layer 2 ships owner-only now so writers can adopt tags before gate comes off.
+- [x] **Loose-ends Layer 3 — note-vs-note compare (2026-08-15)** — when two of the writer’s notes disagree on spouse or cast role, Ask names both sides; skips `planned` / planned later; mentions if those notes are not in the main draft; mentions if the main draft contradicts. Planned-for-draft Ask does not repeat “not in the draft,” but still mentions a draft contradiction. No winner, no scolding, no inventing, no other accounts. Did **not** rebuild draft-vs-notes dual.
+- [ ] **Loose-ends Layer 3 leftovers — after public launch (#25)** — optional tag picker in note editor; public help copy for `planned` / `fix:` habits (no auto plot-hole detection).
 - [ ] **Spot-check set + Run (Owner’s Office UI)** — deferred 2026-06; use real Ask + **It got this wrong** + Cursor fixes. Stub: `lk-spot-check-runner.js`. Revisit for one-click regression pass when Ask is stable.
 

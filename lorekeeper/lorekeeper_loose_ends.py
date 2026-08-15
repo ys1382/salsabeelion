@@ -218,8 +218,16 @@ def answer_planned_gaps(
     *,
     work_hints: set[str],
 ) -> tuple[str, list[str]]:
+    from lorekeeper_note_compare import (
+        compose_planned_vs_draft_mentions,
+        splice_before_footer,
+    )
+
     items = collect_loose_end_items(entries, "planned")
     answer = compose_planned_gaps_answer(work_hints, items)
+    extra = compose_planned_vs_draft_mentions(entries)
+    if extra:
+        answer = splice_before_footer(answer, extra)
     source_ids = [row["entryId"] for row in items if row.get("entryId")][:8]
     return answer, source_ids
 

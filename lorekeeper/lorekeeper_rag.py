@@ -12,10 +12,8 @@ from lorekeeper_character_summary import character_targets, is_who_is_question
 from lorekeeper_question_routes import is_character_portrait_question, is_story_position_question, is_what_question
 from lorekeeper_knowledge_pov import is_awareness_question
 from lorekeeper_aliases import alias_reference_lines_for
-from lorekeeper_inference import (
-    audit_contradiction_lines_for,
-    inference_reference_lines_for,
-)
+from lorekeeper_inference import inference_reference_lines_for
+from lorekeeper_note_compare import compose_note_compare_lines
 from lorekeeper_situation import is_situation_question, situation_blocks_for_prompt
 from lorekeeper_story_position import draft_tail_prompt_block
 from lorekeeper_catchup_gather import catchup_prompt_block, is_catchup_gather_question
@@ -691,13 +689,13 @@ def _build_user_prompt(
         kind_hint = "Compose an audit answer: discrepancies and planning notes only.\n\n"
         targets = character_targets(question)
         if targets and scoped_entries:
-            contradiction_lines = audit_contradiction_lines_for(
-                targets[0], scoped_entries
+            contradiction_lines = compose_note_compare_lines(
+                targets[0], scoped_entries, mention_not_in_draft=True
             )
             if contradiction_lines:
                 audit_block = (
                     "Pre-parsed disagreements in your notes (surface honestly; "
-                    "do not pick a winner):\n"
+                    "do not pick a winner; do not use draft-vs-notes dual labels):\n"
                     + "\n".join(f"- {line}" for line in contradiction_lines)
                     + "\n\n"
                 )
