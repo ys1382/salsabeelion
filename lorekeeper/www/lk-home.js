@@ -463,16 +463,19 @@
       }
       notesWrap.appendChild(noteList);
 
-      if (!silo.isRandom) {
-        var addBtn = document.createElement("button");
-        addBtn.type = "button";
-        addBtn.className = "lk-btn secondary lk-silo-add-note";
-        addBtn.textContent = "Add note to this story";
-        addBtn.addEventListener("click", function () {
-          if (openNoteEditorRef) openNoteEditorRef(null, { workTag: silo.title, siloKey: silo.key });
-        });
-        notesWrap.appendChild(addBtn);
-      }
+      var addBtn = document.createElement("button");
+      addBtn.type = "button";
+      addBtn.className = "lk-btn secondary lk-silo-add-note";
+      addBtn.textContent = silo.isRandom ? "Add note" : "Add note to this story";
+      addBtn.addEventListener("click", function () {
+        if (!openNoteEditorRef) return;
+        if (silo.isRandom) {
+          openNoteEditorRef(null, { siloKey: silo.key, unassigned: true });
+          return;
+        }
+        openNoteEditorRef(null, { workTag: silo.title, siloKey: silo.key });
+      });
+      notesWrap.appendChild(addBtn);
 
       section.appendChild(notesWrap);
       list.appendChild(section);
@@ -786,7 +789,12 @@
       document.getElementById("noteBody").value = entry ? entry.body || "" : "";
       var tagsVal = entry && entry.tags ? entry.tags.join(", ") : "";
       if (!tagsVal && opts.workTag) tagsVal = opts.workTag;
-      if (!tagsVal && global.LoreKeeperMobileJot && global.LoreKeeperMobileJot.lastWorkTag) {
+      if (
+        !tagsVal &&
+        !opts.unassigned &&
+        global.LoreKeeperMobileJot &&
+        global.LoreKeeperMobileJot.lastWorkTag
+      ) {
         tagsVal = global.LoreKeeperMobileJot.lastWorkTag();
       }
       document.getElementById("noteTags").value = tagsVal;
