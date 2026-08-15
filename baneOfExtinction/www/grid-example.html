@@ -161,8 +161,10 @@
 
     <div id="puzzle" hidden>
       <p class="how">
-        Every pair of lists meets in its own square. A clue like “the mountain animal hunts blue sheep”
-        is marked where <em>mountains</em> meets <em>blue sheep</em> — you may not know the species yet.
+        Every pair of lists meets in its own square.
+        A “did not” is an X where those two labels meet.
+        If a clue says someone is either A or B, A and B are two different animals — X where those two meet, then wait; later clues pick which one.
+        If four descriptions are four different animals, X every place those labels meet.
         Tap a cell for a red X, tap again to lock the match, tap again to clear.
         The board does not copy marks onto other squares for you.
         Tap a clue when you are done with it: one pen line, and it drops to the bottom if it was not already last.
@@ -216,14 +218,13 @@
       ];
       var CLUES = [
         "The snow leopard is not threatened by oil spills.",
-        "The mountain animal hunts blue sheep.",
-        "Tube worms do not hunt. They live off bacteria.",
-        "Polar bears prey on seals.",
-        "Seafloor mining threatens the vent animal.",
-        "Oil spills hit the kelp-coast animal hardest of these four.",
-        "The kelp-coast animal eats sea urchins.",
-        "The vent animal lives off bacteria.",
-        "Poaching threatens the animal that hunts blue sheep."
+        "The tube worm is either the kelp-coast animal or the one that lives off bacteria.",
+        "Neither seafloor mining nor oil spills threaten the polar bear.",
+        "The four animals were the tube worm, the one threatened by oil spills, the mountain animal, and the one that preys on seals.",
+        "The snow leopard is either the kelp-coast animal or the one that hunts blue sheep.",
+        "The tube worm does not live on Arctic sea ice.",
+        "Neither the tube worm nor the polar bear is threatened by poaching.",
+        "The sea otter is either threatened by sea-ice loss or lives on the kelp coast."
       ];
 
       var state = {};
