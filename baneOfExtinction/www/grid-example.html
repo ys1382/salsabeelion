@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Logic grid example — Bane of Extinction</title>
+  <link rel="stylesheet" href="bane.css?v=public1" />
+  <script src="bane-auth-gate.js?v=public2"></script>
+  <style>
+    html.auth-checking body { visibility: hidden; }
+    .grid-wrap { max-width: 52rem; }
+    .how {
+      font-family: system-ui, sans-serif;
+      font-size: 0.86rem;
+      color: var(--muted);
+      margin: 0 0 1rem;
+    }
+    .board-scroll {
+      overflow-x: auto;
+      margin: 0 0 1.25rem;
+      padding-bottom: 0.25rem;
+    }
+    .block-title {
+      margin: 0 0 0.45rem;
+      font-family: system-ui, sans-serif;
+      font-size: 0.78rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+    table.logic {
+      border-collapse: collapse;
+      min-width: 32rem;
+      margin-bottom: 1.15rem;
+      font-family: system-ui, sans-serif;
+    }
+    table.logic th,
+    table.logic td {
+      border: 1px solid var(--line);
+      text-align: center;
+      padding: 0;
+    }
+    table.logic th {
+      font-weight: 600;
+      color: var(--muted);
+      font-size: 0.72rem;
+      line-height: 1.25;
+      padding: 0.4rem 0.35rem;
+      background: rgba(0, 0, 0, 0.22);
+    }
+    table.logic th.row-lab {
+      text-align: left;
+      min-width: 8.5rem;
+      color: var(--ink);
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+    .cell-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      min-width: 3.4rem;
+      min-height: 2.55rem;
+      border: 0;
+      background: transparent;
+      color: transparent;
+      font-size: 1.15rem;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: system-ui, sans-serif;
+    }
+    .cell-btn:hover { background: rgba(107, 196, 138, 0.08); }
+    .cell-btn.is-x { color: #e07070; }
+    .cell-btn.is-yes { color: var(--accent); }
+    .clue-list {
+      list-style: none;
+      margin: 0 0 1rem;
+      padding: 0;
+    }
+    .clue-list li { margin: 0 0 0.4rem; }
+    .clue-btn {
+      display: block;
+      width: 100%;
+      text-align: left;
+      border: 1px solid var(--line);
+      background: rgba(0, 0, 0, 0.18);
+      color: var(--ink);
+      border-radius: 10px;
+      padding: 0.65rem 0.8rem;
+      font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+      font-size: 0.98rem;
+      line-height: 1.4;
+      cursor: pointer;
+    }
+    .clue-btn:hover { border-color: rgba(232, 242, 234, 0.28); }
+    .clue-btn.is-used {
+      text-decoration: line-through;
+      text-decoration-thickness: 1.5px;
+      text-decoration-color: var(--ink);
+      color: var(--muted);
+    }
+    .grid-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.65rem;
+      margin: 0 0 0.75rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap grid-wrap">
+    <header class="hero hero--compact">
+      <p class="eyebrow">
+        <a href="index.html">← Bane of Extinction</a>
+        · <a href="office.html">Owner’s Office</a>
+      </p>
+      <h1 class="brand">Logic grid example</h1>
+      <p class="tagline">
+        Owner-only draft. Species most people never stand next to — still keystones, still threatened.
+        Matching teaches why they still touch a world you live in.
+      </p>
+    </header>
+
+    <div id="denied" class="note" hidden role="alert">
+      This page is only for the site owner.
+    </div>
+
+    <div id="puzzle" hidden>
+      <p class="how">
+        Tap a cell for a red X (can’t be). Tap again to lock the true match. Tap again to clear.
+        You mark every cell yourself — the board does not fill the other sides for you.
+        Tap a clue when you are done with it: one pen line through it, and it drops to the bottom if it was not already last.
+        Tap again if you still need it.
+      </p>
+
+      <div class="board-scroll" id="boards"></div>
+
+      <h2 class="block-title">Clues</h2>
+      <ul class="clue-list" id="clueList"></ul>
+
+      <div class="grid-actions">
+        <button type="button" class="btn primary" id="checkBtn">Check matches</button>
+        <button type="button" class="btn secondary" id="resetBtn">Reset board</button>
+      </div>
+      <p class="status" id="checkStatus" aria-live="polite"></p>
+    </div>
+  </div>
+  <script>
+    (function () {
+      var SPECIES = ["Snow leopard", "Sea otter", "Tube worm", "Polar bear"];
+      var BLOCKS = [
+        {
+          id: "where",
+          title: "Where they live",
+          rows: ["High mountains", "Kelp coast", "Deep-sea vents", "Arctic sea ice"],
+          answer: [0, 1, 2, 3]
+        },
+        {
+          id: "threat",
+          title: "What threatens them",
+          rows: ["Poaching", "Oil spills", "Seafloor mining", "Sea-ice loss"],
+          answer: [0, 1, 2, 3]
+        }
+      ];
+      var CLUES = [
+        "The snow leopard is not threatened by oil spills.",
+        "The mountain animal hunts blue sheep.",
+        "Giant tube worms live at deep-sea vents, not on sea ice.",
+        "Polar bears hunt from Arctic sea ice.",
+        "Seafloor mining threatens the vent animal, not the mountain cat.",
+        "Oil spills hit the kelp-coast animal hardest of these four."
+      ];
+
+      var state = {};
+      var clueUsed = [];
+      var usedOrder = [];
+
+      function cellKey(blockId, row, col) {
+        return blockId + ":" + row + ":" + col;
+      }
+
+      function cycleMark(cur) {
+        if (cur === "x") return "yes";
+        if (cur === "yes") return "";
+        return "x";
+      }
+
+      function markLabel(mark) {
+        if (mark === "x") return "×";
+        if (mark === "yes") return "●";
+        return "";
+      }
+
+      function renderBoards() {
+        var host = document.getElementById("boards");
+        host.innerHTML = "";
+        BLOCKS.forEach(function (block) {
+          var title = document.createElement("h2");
+          title.className = "block-title";
+          title.textContent = block.title;
+          host.appendChild(title);
+          var table = document.createElement("table");
+          table.className = "logic";
+          var thead = document.createElement("thead");
+          var hr = document.createElement("tr");
+          hr.appendChild(document.createElement("th"));
+          SPECIES.forEach(function (name) {
+            var th = document.createElement("th");
+            th.textContent = name;
+            hr.appendChild(th);
+          });
+          thead.appendChild(hr);
+          table.appendChild(thead);
+          var tbody = document.createElement("tbody");
+          block.rows.forEach(function (rowName, ri) {
+            var tr = document.createElement("tr");
+            var lab = document.createElement("th");
+            lab.className = "row-lab";
+            lab.scope = "row";
+            lab.textContent = rowName;
+            tr.appendChild(lab);
+            SPECIES.forEach(function (_name, ci) {
+              var td = document.createElement("td");
+              var btn = document.createElement("button");
+              var key = cellKey(block.id, ri, ci);
+              var mark = state[key] || "";
+              btn.type = "button";
+              btn.className = "cell-btn" + (mark ? " is-" + mark : "");
+              btn.textContent = markLabel(mark);
+              btn.setAttribute(
+                "aria-label",
+                SPECIES[ci] + ", " + rowName + (mark === "x" ? ", crossed out" : mark === "yes" ? ", locked match" : ", empty")
+              );
+              btn.addEventListener("click", function () {
+                state[key] = cycleMark(state[key] || "");
+                renderBoards();
+              });
+              td.appendChild(btn);
+              tr.appendChild(td);
+            });
+            tbody.appendChild(tr);
+          });
+          table.appendChild(tbody);
+          host.appendChild(table);
+        });
+      }
+
+      function renderClues() {
+        var list = document.getElementById("clueList");
+        list.innerHTML = "";
+        var order = [];
+        CLUES.forEach(function (_c, i) {
+          if (!clueUsed[i]) order.push(i);
+        });
+        usedOrder.forEach(function (i) {
+          order.push(i);
+        });
+        order.forEach(function (i) {
+          var li = document.createElement("li");
+          var btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "clue-btn" + (clueUsed[i] ? " is-used" : "");
+          btn.textContent = CLUES[i];
+          btn.addEventListener("click", function () {
+            if (!clueUsed[i]) {
+              clueUsed[i] = true;
+              usedOrder.push(i);
+            } else {
+              clueUsed[i] = false;
+              usedOrder = usedOrder.filter(function (x) { return x !== i; });
+            }
+            renderClues();
+          });
+          li.appendChild(btn);
+          list.appendChild(li);
+        });
+      }
+
+      function checkBoard() {
+        var status = document.getElementById("checkStatus");
+        var missing = false;
+        var wrong = false;
+        BLOCKS.forEach(function (block) {
+          SPECIES.forEach(function (_n, ci) {
+            var yesRow = -1;
+            var yesCount = 0;
+            block.rows.forEach(function (_r, ri) {
+              if ((state[cellKey(block.id, ri, ci)] || "") === "yes") {
+                yesCount += 1;
+                yesRow = ri;
+              }
+            });
+            if (yesCount !== 1) missing = true;
+            else if (yesRow !== block.answer[ci]) wrong = true;
+          });
+        });
+        if (wrong) {
+          status.textContent = "Some locked matches are not right. Leave the clues up if you still need them for the other side of the board.";
+          return;
+        }
+        if (missing) {
+          status.textContent = "Lock one match in each column of both grids (the green dot), then check again.";
+          return;
+        }
+        status.textContent =
+          "That’s the set. Snow leopard, sea otter, vent tube worm, polar bear — far from a garden path, still holding up food webs, coasts, and ice you live with.";
+      }
+
+      document.getElementById("checkBtn").addEventListener("click", checkBoard);
+      document.getElementById("resetBtn").addEventListener("click", function () {
+        state = {};
+        clueUsed = CLUES.map(function () { return false; });
+        usedOrder = [];
+        document.getElementById("checkStatus").textContent = "";
+        renderBoards();
+        renderClues();
+      });
+
+      fetch("/bane-of-extinction/api/auth/me", { credentials: "include" })
+        .then(function (res) { return res.json(); })
+        .then(function (data) {
+          if (!(data && data.signedIn && data.isOwner)) {
+            document.getElementById("denied").hidden = false;
+            return;
+          }
+          clueUsed = CLUES.map(function () { return false; });
+          renderBoards();
+          renderClues();
+          document.getElementById("puzzle").hidden = false;
+        })
+        .catch(function () {
+          document.getElementById("denied").hidden = false;
+        });
+    })();
+  </script>
+</body>
+</html>

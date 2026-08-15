@@ -224,6 +224,13 @@ After the still “freezes” on the codex card:
 
 Owner pins from chat go here.
 
+### 2026-08-15 — far-neighbor logic grid (owner example)
+
+Profile Perfect–style grid + clue list, used to teach real facts about species people rarely meet up close (keystones, endangered, deep sea, dangerous). Side-types are a pool (location, threat, prey/predator, offspring, wild count as locked bands) — not every type on every board. Clues stay readable until the player strikes them (one pen line; drop to bottom). Board does not auto-fill the other sides.
+
+- [x] Owner-only first example live (`grid-example.html`, same `isOwner` gate as Owner’s Office) — 4 species, location + threat
+- [ ] Later: more boards / side mixes; player-facing only when owner asks
+
 ### 2026-07-24 — walk / buddy / learned VR trail (call this up in a new agent)
 
 **Live status (2026-08-10):** **Removed from the live site completely** (nav, hub copy, and files `walk.html` / `bane-walk.js` / `bane-walk.css` deleted). EcoLens, codex, missions, accounts stay. Rebuild only when the owner asks — use this section + the former v1 snapshot below; do **not** treat Walk as shipped.

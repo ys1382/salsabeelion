@@ -241,6 +241,7 @@ Last updated: 2026-07-17
   - **Level 2** after ~15 finds — signature-sign quests; ant mound with/without + cutaway
   - **Level 3** after a handful of Level 2 missions (**5**) — same organism healthy/meh/warning by place + under-the-hood landscape stories (not tourist postcard facts)
 - **Owner’s Office** — `/bane-of-extinction/office.html` (owner email): player accounts (email + joined), private feedback, **new sign-ups** on/off. Never other players’ learns / scan photos / fact text.
+- **Owner-only logic-grid example** — `/bane-of-extinction/grid-example.html` (`isOwner` only; not in public nav). One small far-neighbor board: click X / lock match, strike clues to the bottom; location + threat sides. Draft toward a later player-facing puzzle.
 - Deploy: `bash top/scripts/deploy-bane-of-extinction.sh` (ports **8085** static + **8086** API; reloads nginx by default)
 
 **Cannot do without new work:**
