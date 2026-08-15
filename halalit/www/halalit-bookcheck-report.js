@@ -6,7 +6,7 @@
     "Halalit hasn’t read this cover to cover—you decide what fits your home.";
 
   var SCAN_TOPICS = [
-    { id: "audience", label: "Age band", subjectRe: /juvenile|children|young adult|teen|ya fiction|picture book/i, textRe: /young adult|teen fiction|teenage readers/i },
+    { id: "audience", label: "Age band", subjectRe: /young adult|teen fiction|ya fiction/i, textRe: /young adult|teen fiction|teenage readers/i },
     { id: "lgbtq", label: "LGBTQ themes", subjectRe: /lgbt|lesbian|gay|homosexual|queer|transgender|same[- ]sex|gender identity/i, textRe: /\blgbtq?\b|lesbian|gay\b|homosexual|queer\b|transgender|they\/them|two[- ]moms?|same[- ]sex/i },
     { id: "romance", label: "Romance or dating", subjectRe: /romance|dating|love stories/i, textRe: /romantic|love triangle|dating|betrothal|crush on/i },
     {
@@ -31,6 +31,76 @@
     { id: "format", label: "Comics or manga", subjectRe: /comic|graphic novel|manga/i, textRe: /\bcomic\b|\bgraphic novel\b|\bmanga\b/i },
     { id: "crime_tone", label: "Crime or cruelty tone", subjectRe: /true crime|crime fiction/i, textRe: /vigilante|romanticized crime|serial killer/i },
   ];
+
+  var COMMENT_AI_THEME_IDS = {
+    lgbtq: true,
+    adult_romance: true,
+    romantic_tension: true,
+    illegitimate_children: true,
+    crude_profanity: true,
+    group_demonization: true,
+    pro_colonial_narrative: true,
+    violence_intense: true,
+    family_portrayed_negatively: true,
+    cultural_stereotype: true,
+    substance: true,
+    romanticized_crime: true,
+  };
+
+  var AI_THEME_ROW_LABELS = {
+    lgbtq: "LGBTQ themes",
+    adult_romance: "Adult romance",
+    romantic_tension: "Romance or dating",
+    illegitimate_children: "Illegitimate-children plot",
+    crude_profanity: "Harsh swearing or slurs",
+    group_demonization: "Group demonization",
+    pro_colonial_narrative: "Pro-colonial narrative",
+    violence_intense: "Violence or horror",
+    family_portrayed_negatively: "Family portrayed harshly",
+    cultural_stereotype: "Cultural stereotyping",
+    substance: "Alcohol, smoking, or drugs",
+    romanticized_crime: "Crime or cruelty tone",
+  };
+
+  function shortThemeNote(text) {
+    var t = String(text || "").replace(/\s+/g, " ").trim();
+    if (!t) return "";
+    var first = t.match(/^[^.!?]+[.!?]?/);
+    if (first) t = first[0].trim();
+    if (t.length > 140) t = t.slice(0, 137) + "…";
+    return t;
+  }
+
+  function familyBriefIsMild(brief) {
+    return !/unfair|hostile|villain|abus|neglect|cruel (?:mother|father|parent)/i.test(String(brief || ""));
+  }
+
+  function aiThemeCommentStatus(id) {
+    if (
+      id === "lgbtq" ||
+      id === "adult_romance" ||
+      id === "illegitimate_children" ||
+      id === "crude_profanity" ||
+      id === "group_demonization" ||
+      id === "pro_colonial_narrative"
+    ) {
+      return "concern";
+    }
+    return "caution";
+  }
+
+  function shouldCommentOnAiTheme(theme, report) {
+    if (!theme || !theme.id || !COMMENT_AI_THEME_IDS[theme.id]) return false;
+    if (themeBriefDeniesIssue(theme.brief)) return false;
+    if (theme.id === "lgbtq" && lgbtqBriefDeniesContent(theme.brief)) return false;
+    if (theme.id === "family_portrayed_negatively" && familyBriefIsMild(theme.brief)) return false;
+    if (theme.id === "romantic_tension" && report && report.dimensions) {
+      for (var i = 0; i < report.dimensions.length; i++) {
+        if (report.dimensions[i] && report.dimensions[i].id === "romance") return false;
+      }
+    }
+    return true;
+  }
 
   function escapeHtml(s) {
     return String(s)
@@ -137,7 +207,7 @@
       );
     }
     if (tier === "teen_caution") {
-      return "“" + title + "” reads as teen/YA—not Halalit’s all-ages band. Read it yourself or wait.";
+      return "“" + title + "” is teen/YA—Halalit comments on themes below, not the age band alone.";
     }
     if (tier === "fanservice_caution") {
       return "“" + name + "” is a hand-checked comic with lighter fanservice caution—preview human characters and outfits; Halalit won’t auto-recommend.";
@@ -304,14 +374,11 @@
     }
     if (!tagHits.length && !descHit && !inBlob) return null;
 
+    if (topic.id === "audience") return null;
+
     var status = "caution";
     if (topic.id === "lgbtq" || topic.id === "illegitimacy") status = "concern";
-    if (topic.id === "romance") {
-      var teenBlob = /young adult|teen fiction|ya fiction|juvenile fiction/i.test(
-        subjects.join(" ") + " " + blobText
-      );
-      if (teenBlob || /young adult|teen fiction|ya fiction/i.test(description)) status = "concern";
-    }
+    if (topic.id === "romance") status = "caution";
     if (topic.id === "modesty" && /fanservice|fan service|ecchi|sexualized|immodest/i.test(blobText + " " + description)) {
       status = "concern";
     }
@@ -658,31 +725,6 @@
       else catalogOnly.push(SCAN_TOPICS[i].label);
     }
 
-    if (hint.signals && hint.signals.length) {
-      var aiScanNotes = [];
-      for (var si = 0; si < hint.signals.length; si++) {
-        var sig = String(hint.signals[si] || "").trim();
-        if (!/^AI scan:/i.test(sig)) continue;
-        var aiNote = sig.replace(/^AI scan:\s*/i, "");
-        if (aiNote && themeBriefEmbedsLgbtqDenial(aiNote)) continue;
-        if (aiNote && themeBriefDeniesIssue(aiNote)) continue;
-        if (aiNote && aiScanNotes.indexOf(aiNote) === -1) aiScanNotes.push(aiNote);
-      }
-      if (aiScanNotes.length) {
-        var hasHardConcern = rows.some(function (r) {
-          return r && r.status === "concern";
-        });
-        if (!hasHardConcern) {
-          rows.push({
-            id: "ai_scan",
-            label: "AI theme scan",
-            status: "caution",
-            note: aiScanNotes.join("; "),
-          });
-        }
-      }
-    }
-
     if (Policy && Policy.hardExclusionDetailForTitle) {
       var ex = Policy.hardExclusionDetailForTitle(title, author);
       if (ex) {
@@ -721,9 +763,8 @@
       gaps: graphic
         ? [
             "Panel-level fanservice and immodesty (flip through the book)",
-            "Tone shifts mid-series when tags stay “juvenile fiction”",
           ]
-        : ["Plot-centering when tags are thin (e.g. narcissism played for laughs, LGBTQ in later volumes)"],
+        : [],
       sourcesUsed:
         (doc && doc.key ? "Open Library edition" : "Title you typed") +
         (description ? ", publisher description" : "") +
@@ -851,6 +892,70 @@
     return r;
   }
 
+  function attachAiThemeCommentRows(report) {
+    if (!report || report.mode !== "catalog") return report;
+    var themes = report.aiThemes || [];
+    var rows = (report.dimensions || []).slice();
+    var seenIds = {};
+    for (var r = 0; r < rows.length; r++) {
+      if (rows[r] && rows[r].id) seenIds[rows[r].id] = true;
+    }
+    for (var a = 0; a < themes.length; a++) {
+      var theme = themes[a];
+      if (!shouldCommentOnAiTheme(theme, report)) continue;
+      var rowId = theme.id === "romantic_tension" ? "romance" : theme.id;
+      if (seenIds[rowId] || seenIds[theme.id]) continue;
+      var note = shortThemeNote(theme.brief);
+      if (!note) continue;
+      rows.push({
+        id: rowId,
+        label: AI_THEME_ROW_LABELS[theme.id] || theme.id,
+        status: aiThemeCommentStatus(theme.id),
+        note: note,
+      });
+      seenIds[rowId] = true;
+    }
+    report.dimensions = rows;
+    return report;
+  }
+
+  function reportLooksTeenYa(report, opts) {
+    var parts = [
+      (opts && opts.supplementText) || "",
+      (report && report.relevantSubjects ? report.relevantSubjects.join(" ") : ""),
+      (report && report.hintDetail) || "",
+      (opts && opts.hint && opts.hint.signals ? opts.hint.signals.join(" ") : ""),
+    ];
+    var themes = (report && report.aiThemes) || [];
+    for (var t = 0; t < themes.length; t++) {
+      if (themes[t] && themes[t].id === "teen_ya_age") parts.push(String(themes[t].brief || "teen"));
+    }
+    return /\byoung adult\b|\bteen fiction\b|\bya fiction\b|\bteenage\b|\bteen or young-adult/i.test(parts.join(" "));
+  }
+
+  function attachUnvettedTeenYaNote(report, opts) {
+    if (!report || report.mode !== "catalog") return report;
+    var tier = report.hintTier || report.tier || "";
+    if (tier === "verified_clean") return report;
+    if (!reportLooksTeenYa(report, opts)) return report;
+    var rows = report.dimensions || [];
+    for (var i = 0; i < rows.length; i++) {
+      if (rows[i] && (rows[i].id === "unvetted_teen" || rows[i].id === "scan_failed")) return report;
+    }
+    var note =
+      opts && opts.aiScanOk
+        ? "Teen/YA often includes romance. This isn’t hand-vetted—Bookcheck and Scroll Scanner can’t fully vet it on their own."
+        : "Teen/YA often includes romance. The scan didn’t finish—don’t rely on Bookcheck or Scroll Scanner alone.";
+    rows.unshift({
+      id: "unvetted_teen",
+      label: "Teen/YA",
+      status: "caution",
+      note: note,
+    });
+    report.dimensions = rows;
+    return report;
+  }
+
   function buildBookcheckReport(opts) {
     var title = opts.title || normalizeOlTitle(opts.doc) || "";
     var author = opts.author || authorsFromDoc(opts.doc) || "";
@@ -886,6 +991,8 @@
       var descBlob = (opts.descriptionOnly || "") + " " + (opts.supplementText || "");
       report.isGraphic = titleLooksGraphic(title, descBlob.toLowerCase());
     }
+    report = attachAiThemeCommentRows(report);
+    report = attachUnvettedTeenYaNote(report, opts);
     return applyOwnerAiThemeAbsent(
       applyLgbtqStanceFilters(attachExternalEvidence(report, opts), opts.hint),
       opts.hint
@@ -1943,8 +2050,9 @@
         var crow = report.dimensions[cr];
         if (!crow || (crow.status !== "concern" && crow.status !== "caution")) continue;
         if (crow.id === "catalog_silent" || crow.status === "unknown") continue;
+        if (crow.id === "audience") continue;
+        if (crow.id === "ai_scan") continue;
         if (themeBriefDeniesIssue(crow.note) || scanNoteHidesLgbtqDenial(crow.note, report, hint)) continue;
-        if (crow.id === "ai_scan" && opts.vetSource === "ai_themes") continue;
         concernRows.push(crow);
       }
     }
@@ -1954,10 +2062,7 @@
         report.parsedNote &&
         report.parsedNote.bullets.length) ||
       concernRows.length ||
-      report.aiSeriesNote ||
-      (report.external &&
-        ((report.external.wikipediaHits && report.external.wikipediaHits.length) ||
-          (report.external.wikipedia && report.external.wikipedia.plot)));
+      report.aiSeriesNote;
 
     if (!plotExtras) {
       if (report.descriptionExcerpt) {
@@ -1986,7 +2091,7 @@
     var shown = 0;
     for (var d = 0; d < concernRows.length; d++) {
       var row = concernRows[d];
-      var note = stripCjk(row.note);
+      var note = shortThemeNote(stripCjk(row.note));
       if (!note) continue;
       html +=
         "<li><strong>" +
@@ -1995,59 +2100,19 @@
         escapeHtml(note) +
         "</li>";
       shown += 1;
-      if (shown >= 6) break;
+      if (shown >= 4) break;
     }
 
     if (report.aiSeriesNote) {
       html += "<li><strong>Series:</strong> " + escapeHtml(stripCjk(report.aiSeriesNote)) + "</li>";
     }
 
-    if (report.external) {
-      var extBits = [];
-      if (report.external.wikipediaHits && report.external.wikipediaHits.length) {
-        for (var wh = 0; wh < report.external.wikipediaHits.length && wh < 2; wh++) {
-          extBits.push(
-            report.external.wikipediaHits[wh].label +
-              " (Wikipedia): " +
-              stripCjk(report.external.wikipediaHits[wh].snippet || "mentioned")
-          );
-        }
-      } else if (report.external.wikipedia && report.external.wikipedia.plot) {
-        extBits.push(
-          "Wikipedia plot scanned for themes—Halalit did not hand-read the book."
-        );
-      }
-      if (report.external.catalogHits && report.external.catalogHits.length) {
-        for (var ch = 0; ch < report.external.catalogHits.length && ch < 2; ch++) {
-          extBits.push(
-            report.external.catalogHits[ch].label +
-              " — catalog tag: " +
-              stripCjk((report.external.catalogHits[ch].tags || []).slice(0, 2).join(", "))
-          );
-        }
-      }
-      for (var eb = 0; eb < extBits.length; eb++) {
-        html += "<li>" + escapeHtml(extBits[eb]) + "</li>";
-      }
-    }
-
     html += "</ul></div>";
-
-    if (report.descriptionExcerpt) {
-      var desc = stripCjk(report.descriptionExcerpt);
-      if (desc.length >= 24) {
-        html +=
-          '<blockquote class="bookcheck-catalog-desc"><strong>Catalog blurb:</strong> ' +
-          escapeHtml(desc.length > 220 ? desc.slice(0, 217) + "…" : desc) +
-          "</blockquote>";
-      }
-    }
 
     return html;
   }
 
   function shouldSlimCatalogReport(report, hint, opts) {
-    if (!opts || !opts.experienced) return false;
     if (!report || report.mode !== "catalog") return false;
     return !reportIsHandSettled(report, hint);
   }
@@ -2055,7 +2120,7 @@
   function renderBookcheckReportHtml(report, opts) {
     if (!report) return "";
     opts = opts || {};
-    if (opts.compact) return renderBookcheckReportHtmlCompact(report, opts);
+    if (opts.compact || (report && report.mode === "catalog")) return renderBookcheckReportHtmlCompact(report, opts);
     report = filterReportForPrefs(report);
     var html = "";
     var hint = {

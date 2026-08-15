@@ -1079,7 +1079,7 @@
       return "OK for many families; skip if you avoid deity or mythology treated as real in stories.";
     }
     if (tier === "teen_caution") {
-      return "Teen or YA—not the same as all-ages. Read it yourself first or wait until your kids are older.";
+      return "Teen or YA—preview themes below; age band alone isn’t a reject.";
     }
     if (tier === "fanservice_caution") {
       return "Hand-checked comic with lighter fanservice caution than the heavy auto-reject list—Halalit won’t auto-recommend; preview human characters and outfits.";
@@ -1184,8 +1184,6 @@
       }
     }
 
-    var teen = blob ? isTeenBlob(blob) : false;
-
     if (blob && HARD_ADULT_ROMANCE_RE.test(blob) && !isHandVerifiedClean(ttl, auth)) {
       return done({
         tier: "flag_review",
@@ -1261,15 +1259,8 @@
       });
     }
 
-    /* Light/clean romance tags alone are not automatic reject — level/type (adult/mature) is.
-       Signals still note romance; teen/YA falls through to teen_caution below. */
-
-    if (teen) {
-      return done({
-        tier: "teen_caution",
-        detail: "Teen/YA tags—a different age band than Halalit’s all-ages family shelf (genre doesn’t change that).",
-      });
-    }
+    /* Light/clean romance and teen/YA tags alone are not automatic reject.
+       Age band is a comment, not a verdict. Hard rejects stay on adult romance, LGBTQ, etc. */
 
     var youth =
       /juvenile fiction|juvenile works|juvenile literature|child readers|young readers|children'?s/.test(blob);

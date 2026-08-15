@@ -847,7 +847,7 @@
     if (!inlineDetail) return hintDetail || "";
     if (hintDetail) return "";
     if (tier === "deity_comfort") return "Comfort note—not a ban.";
-    if (tier === "teen_caution") return "Teen/YA tags—not Halalit’s all-ages shelf.";
+    if (tier === "teen_caution") return "Teen/YA — check themes below.";
     if (tier === "verified_clean") return "Hand-checked for the family shelf.";
     if (tier === "flag_review") return "Outside Halalit’s hardest auto-reject rules.";
     if (tier === "user_discretion") {
@@ -1355,10 +1355,10 @@
     if (hintTier === "teen_caution") {
       return {
         kind: "maybe",
-        headline: fpPara ? "Teen/adult audience — caution + family note" : "Teen/adult audience — caution",
+        headline: fpPara ? "Teen/YA — family note" : "Teen/YA — see themes",
         body:
           shortVerdictBody("teen_caution", hintDetail, inlineDetail) ||
-          (hintDetail || "Teen/YA tags—not Halalit’s all-ages shelf.") + fpPara,
+          (hintDetail || "Teen/YA on its own isn’t a reject—check the themes below.") + fpPara,
         matchLine: matchLine,
         contextBlanket: "",
         familyAction: familyAction,

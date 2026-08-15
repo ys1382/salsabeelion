@@ -32,7 +32,7 @@
   var DEITY_COMFORT_LABEL = "Deity or mythology (comfort note)";
 
   var DEITY_COMFORT_DETAIL =
-    "Deity, spirits, or folklore treated as real—some readers skip these. Halalit won’t Book Quest this unless you allow deity/mythology in Advanced recommendations settings; not calling it inappropriate.";
+    "Deity, spirits, or folklore treated as real—some readers skip these. Not calling it inappropriate.";
 
   var DEITY_COMFORT_DETAIL_VERIFIED =
     "Hand-checked clean, but tags still mention deity or mythology—comfort note for readers who avoid that theme.";
