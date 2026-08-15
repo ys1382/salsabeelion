@@ -388,9 +388,45 @@ _RELATIONSHIP_TENSION = re.compile(
 )
 
 
+# Planned beats in a named window — same family as the capture→arrival gold,
+# even when the writer does not say "task list" / "write next".
+_WRITING_NEXT_SPAN_CUE = re.compile(
+    r"\b("
+    r"what\s+do\s+i\s+have\s+planned|"
+    r"what(?:'s|\s+is|\s+have\s+i)\s+planned|"
+    r"have\s+(?:i\s+)?planned|"
+    r"planned\s+between|"
+    r"what\s+happens\s+between|"
+    r"happens?\s+between|"
+    r"between\b.{0,120}(?:leave|left)\s+off|"
+    r"(?:leave|left)\s+off\b.{0,80}\band\b"
+    r")",
+    re.I | re.S,
+)
+
+
+def is_writing_next_span_question(question: str) -> bool:
+    """True for planned/happens-between A and B — not leave-off recap, not kinship."""
+    q = question or ""
+    if not extract_writing_next_span(q):
+        return False
+    if not _WRITING_NEXT_SPAN_CUE.search(q):
+        return False
+    try:
+        from lorekeeper_relations import is_relationship_between_question
+
+        if is_relationship_between_question(q):
+            return False
+    except Exception:
+        pass
+    return True
+
+
 def is_writing_next_task_list_question(question: str) -> bool:
     """Writer asked for a short write-next task list (not inventing chores)."""
-    return bool(_TASK_LIST_Q.search(question or ""))
+    if _TASK_LIST_Q.search(question or ""):
+        return True
+    return is_writing_next_span_question(question)
 
 
 def wants_later_book_scope(question: str) -> bool:
@@ -600,6 +636,16 @@ def _span_phase_named(
     if _SPAN_DONT_KNOW.search(line_s):
         return "unrelated"
     if _SPAN_STANDING.search(line_s) and not _SPAN_JOURNEY.search(line_s):
+        return "unrelated"
+
+    # "Where I leave off" is a meta start pole — match the named end beat, not
+    # the words "leave off" / "main draft".
+    if re.search(r"\b(?:leave|left)\s+off\b", start, re.I):
+        if end_toks and any(t in blob_n for t in end_toks):
+            return "in_span"
+        end_n = _normalize(end)
+        if end_n and end_n in blob_n:
+            return "in_span"
         return "unrelated"
 
     after_end = bool(

@@ -17,6 +17,7 @@ from lorekeeper_note_compare import compose_note_compare_lines
 from lorekeeper_situation import is_situation_question, situation_blocks_for_prompt
 from lorekeeper_story_position import draft_tail_prompt_block
 from lorekeeper_catchup_gather import catchup_prompt_block, is_catchup_gather_question
+from lorekeeper_writing_next import is_writing_next_task_list_question
 from lorekeeper_allusion import allusion_lines_for_prompt, is_allusion_question
 from lorekeeper_reliability import (
     MaterialState,
@@ -157,6 +158,17 @@ Structure:
 1. Lead with what sources clearly support about this person.
 2. If notes are thin or incomplete, add a final short paragraph headed "What isn't spelled out yet in your notes:" — honest gaps from sources only; do not invent missing details.
 3. Do not mix gap language into the factual lead."""
+
+
+_WRITING_NEXT = """
+This is a WRITE-NEXT / PLANNED-STRETCH question — not a leave-off recap and not a who-is card.
+
+- Short bullets of planned beats from NOTES that are not yet in the draft
+- If the question names a window (between A and B, including "where I leave off" as the start), only beats in that window
+- Never paste, paraphrase, or walk through the whole draft
+- Honest gap if notes don't fill the stretch
+- Librarian only; invent nothing
+"""
 
 
 def _uses_cast_card(
@@ -320,6 +332,12 @@ def _system_for_kind(
             parts.append(_RELATIONSHIP_ARC)
         else:
             parts.append(_RELATIONSHIP_CARD)
+    elif (
+        (plan and plan.intent == "writing_next")
+        or question_kind == "writing_next"
+        or is_writing_next_task_list_question(question)
+    ):
+        parts.append(_WRITING_NEXT)
     elif (
         (plan and plan.intent == "catchup_gather")
         or question_kind == "catchup_gather"

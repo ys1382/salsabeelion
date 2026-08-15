@@ -53,6 +53,14 @@ def is_what_question(question: str) -> bool:
 
 def is_story_position_question(question: str) -> bool:
     q = question or ""
+    try:
+        from lorekeeper_writing_next import is_writing_next_span_question
+
+        # "Between where I leave off and [beat]" is a stretch, not a leave-off recap.
+        if is_writing_next_span_question(q):
+            return False
+    except Exception:
+        pass
     if _STORY_POSITION_Q.search(q):
         return True
     return bool(_STORY_POSITION_LEFT_OFF_META.search(q))

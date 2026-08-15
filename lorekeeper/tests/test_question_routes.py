@@ -48,6 +48,14 @@ class QuestionRouteTests(unittest.TestCase):
         self.assertTrue(is_story_position_question(q))
         self.assertEqual(route_question(q), "resume")
 
+    def test_planned_between_leave_off_is_not_resume(self) -> None:
+        q = (
+            "What do I have planned between the place where I leave off in the "
+            "main draft and the warren underground POV?"
+        )
+        self.assertFalse(is_story_position_question(q))
+        self.assertEqual(route_question(q), "writing_next")
+
     def test_prologue_section_filter(self) -> None:
         hints = extract_section_hints("In Work, what happens in the prologue?")
         self.assertEqual(hints.get("section"), "prologue")

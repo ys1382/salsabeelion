@@ -43,6 +43,42 @@ class AskRouterTests(unittest.TestCase):
         self.assertEqual(plan.intent, "character_portrait")
         self.assertEqual(plan.router_engine, "local")
 
+    def test_local_plan_planned_between_leave_off_is_writing_next(self) -> None:
+        q = (
+            "What do I have planned between the place where I leave off in the "
+            "main draft and the warren underground POV?"
+        )
+        plan = local_ask_plan(q)
+        self.assertIsNotNone(plan)
+        assert plan is not None
+        self.assertEqual(plan.intent, "writing_next")
+        self.assertEqual(plan.question_kind, "writing_next")
+        self.assertFalse(plan.use_draft_tail)
+        self.assertNotEqual(plan.pipeline, "rag_resume")
+
+    def test_haiku_resume_corrected_to_writing_next_span(self) -> None:
+        payload = {
+            "intent": "story_resume",
+            "pipeline": "rag_resume",
+            "answer_model": "sonnet",
+            "role_terms": [],
+            "character_names": [],
+            "section": None,
+            "question_kind": "resume",
+        }
+        q = (
+            "What do I have planned between the place where I leave off in the "
+            "main draft and the warren underground POV?"
+        )
+        with mock.patch(
+            "lorekeeper_ask_router._call_haiku_router",
+            return_value=json.dumps(payload),
+        ):
+            plan = route_ask_question(q)
+        self.assertEqual(plan.intent, "writing_next")
+        self.assertEqual(plan.question_kind, "writing_next")
+        self.assertFalse(plan.use_draft_tail)
+
     def test_default_plan_summarizes_with_sonnet(self) -> None:
         plan = default_ask_plan("anything")
         self.assertEqual(plan.pipeline, "rag_summarize")

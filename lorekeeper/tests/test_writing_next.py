@@ -17,6 +17,7 @@ from lorekeeper_writing_next import (
     extract_writing_next_span,
     extract_writing_next_topic,
     frame_plan_recall,
+    is_writing_next_span_question,
     is_writing_next_task_list_question,
     line_is_later_book,
     plan_recall_core,
@@ -80,6 +81,19 @@ class WritingNextDetectionTests(unittest.TestCase):
                 "What's in my notes but not in the main document?"
             )
         )
+
+    def test_planned_between_leave_off_and_named_pov_is_writing_next(self):
+        q = (
+            "In Ashford Saga, what do I have planned between the place where I "
+            "leave off in the main draft and the warren underground POV?"
+        )
+        self.assertTrue(is_writing_next_span_question(q))
+        self.assertTrue(is_writing_next_task_list_question(q))
+        self.assertEqual(route_question(q), "writing_next")
+        span = extract_writing_next_span(q)
+        self.assertIsNotNone(span)
+        self.assertEqual(span["kind"], "named_span")
+        self.assertIn("warren", span["end"].lower())
 
     def test_topic_for_chase(self):
         q = "In Smoke and Mirrors, task list for the chase scene"
@@ -1682,6 +1696,46 @@ class WritingNextGeneralPathTests(unittest.TestCase):
         self.assertNotIn("treated as a guest", answer)
         self.assertNotIn("bridge rope", answer)
         self.assertNotIn("write what happens between", answer)
+
+    def test_planned_between_leave_off_and_pov_does_not_dump_draft(self):
+        dump = (
+            "PURPLE LANTERN PARADE walked the entire orchard twice. "
+            "Then Character E counted every fence post on the ridge. "
+            "The orchard path hummed until dawn over the same fence line."
+        )
+        entries = [
+            self._ashford(
+                "n_warren",
+                "Later POV",
+                "Still need to write the warren underground POV: a moss-stair "
+                "descent and the first glow-beetle in the tunnels.",
+            ),
+            self._ashford(
+                "n_court",
+                "Court",
+                "Character D resents Character T for skipping Predator Court duties.",
+            ),
+            self._ashford(
+                "d1",
+                "Main draft",
+                dump,
+                kind="document",
+            ),
+        ]
+        q = (
+            "In Ashford Saga, what do I have planned between the place where I "
+            "leave off in the main draft and the warren underground POV?"
+        )
+        res = recall_from_user_data(
+            q, {"lorekeeper_entries_v1": json.dumps(entries)}
+        )
+        answer = res.get("answer") or ""
+        self.assertEqual(res.get("questionKind"), "writing_next")
+        self.assertNotEqual(res.get("askIntent"), "story_resume")
+        self.assertNotIn("PURPLE LANTERN PARADE", answer)
+        self.assertNotIn("fence post", answer.lower())
+        self.assertNotIn("predator court", answer.lower())
+        self.assertIn("warren", answer.lower())
 
     def test_other_work_whole_list(self):
         entries = [

@@ -89,12 +89,12 @@ PIPELINE_KINDS = frozenset(
 
 
 def route_question(question: str) -> QuestionKind:
+    if is_writing_next_task_list_question(question):
+        return "writing_next"
     if is_planned_gap_question(question):
         return "planned_gaps"
     if is_flagged_fix_question(question):
         return "flagged_fix"
-    if is_writing_next_task_list_question(question):
-        return "writing_next"
     if is_notes_not_in_draft_question(question):
         return "notes_not_in_draft"
     if is_catchup_gather_question(question):
