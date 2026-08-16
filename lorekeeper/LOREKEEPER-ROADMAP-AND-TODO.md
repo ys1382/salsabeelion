@@ -364,19 +364,19 @@ Run **one row at a time** in Cursor. Don’t skip Phase 0 — it costs nothing a
 
   > Here's a short task list for Smoke and Mirrors about the stretch between capture and arrival — write-next items from your notes that aren't on the page yet:
   >
-  > • Your notes say he keeps him fed on the journey; when conversation is attempted, he keeps his mouth shut and will not speak.
+  > • Your notes say he keeps Character E fed on the journey; when conversation is attempted, Character E keeps his mouth shut and will not speak.
   >
-  > • Your notes say the journey takes several days. When he stops for the night, he binds the injuries firmly — not gently, and not roughly enough to worsen them — and binds the limbs so he cannot run off.
+  > • Your notes say the journey takes several days. When he stops for the night, he binds Character E's injuries firmly — not gently, and not roughly enough to worsen them — and binds the limbs so Character E cannot run off.
   >
   > • Your notes still leave the rest of this stretch unspecified.
   >
-  > — Short write-next tasks restated from your notes vs draft only. Nothing invented. Continuity sticky-notes, later-book setup, and standing lore stay out unless you ask for a later book. Name a topic for a tighter list, or ask again for more.
+  > — Short write-next tasks restated from your notes vs draft only. Nothing invented. Continuity sticky-notes, later-book setup, and standing lore stay out unless you ask for a later book. Ask again for more.
 
-- Must keep: stay after capture / before-or-during arrival; keep-fed + mouth shut; several days + overnight stop + bind injuries firmly (not gently, not roughly enough to worsen) + bind limbs so he cannot run off; honest “rest of this stretch unspecified”; plan-recall “Your notes say…”; no inventing the missing middle.
-- Must not: echo “write what happens between capture and arrival”; chase-before-capture; after they’re there (quarters, ticklish, rescue, Court); Serias-respect / increased-respect musing; Wonderland off-the-page asides.
+- Must keep: stay after capture / before-or-during arrival; keep-fed + mouth shut **with both people named when notes name them**; several days + overnight stop + bind injuries firmly (not gently, not roughly enough to worsen) + bind limbs so the captive cannot run off; honest “rest of this stretch unspecified”; plan-recall “Your notes say…”; no inventing the missing middle.
+- Must not: echo “write what happens between capture and arrival”; chase-before-capture; after they’re there (quarters, ticklish, rescue, Court); Serias-respect / increased-respect musing; Wonderland off-the-page asides; stacked he/him when notes already name both.
 - **Do not** edit `capture_to_arrival_writing_next_gold.txt` or soften `test_capture_to_arrival_writing_next_gold_shape_locked` without owner OK in that conversation.
 
-**Leave-off → named beat stretch (2026-08-15):** Same family as capture→arrival. “What do I have planned between where I leave off and [named POV/scene]?” lists **all** unused planned beats in that window (journey, overnight, in-between, and the named end). Never dump the draft. Never keep only the end-POV sentence if notes list more. Similar wording (“from where I leave off until…”, “what happens between where I left off and…”) uses the same window. Machine lock: `test_leave_off_to_named_pov_lists_full_window` + `test_planned_between_leave_off_and_pov_does_not_dump_draft`.
+**Leave-off → named beat stretch (2026-08-15; window+seat honesty 2026-08-16):** Same family as capture→arrival. “What do I have planned between where I leave off and [named POV/scene]?” lists **all** unused planned beats in that window (journey, overnight, in-between, and the named end). Never dump the draft. Never keep only the end-POV sentence if notes list more. Similar wording (“from where I leave off until…”, “what happens between where I left off and…”) uses the same window. **Do not** treat a generic faction word (Preyfolk, Predators) as the whole window. **Do not** stamp “shortly after captured” unless that claim’s own line says so. Standing lore, later-series, and “go back after the first draft” stay out. Named people instead of stacked he/him when notes name them. If the ask already named the stretch, do not say “Name a topic.” Machine lock: `test_leave_off_to_named_pov_lists_full_window` + `test_planned_between_leave_off_and_pov_does_not_dump_draft` + `test_leave_off_to_pov_keeps_window_honest`.
 
 **Follow-ups for a future agent (this gold already includes completeness + location + plan-recall voice):**
 - [x] Completeness: unused Etherei facts still missing from lists when present in notes

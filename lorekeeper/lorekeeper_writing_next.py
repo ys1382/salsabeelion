@@ -77,6 +77,12 @@ _FOOTER = (
     "lore stay out unless you ask for a later book. "
     "Name a topic for a tighter list, or ask again for more."
 )
+_FOOTER_SCOPED = (
+    "— Short write-next tasks restated from your notes vs draft only. "
+    "Nothing invented. Continuity sticky-notes, later-book setup, and standing "
+    "lore stay out unless you ask for a later book. "
+    "Ask again for more."
+)
 
 # Bubbly / cheerleading — never use in warm task voice.
 _BUBBLY_VOICE = re.compile(
@@ -111,6 +117,7 @@ _LATER_BOOK = re.compile(
     r"(?:meant|appear|appears|happens?)\s+.{0,24}(?:later\s+(?:on\s+)?(?:in\s+)?(?:the\s+)?series|later\s+book)|"
     r"later\s+on\s+in\s+the\s+series|"
     r"later\s+in\s+the\s+series|"
+    r"end of (?:the |this )?series|"
     r"eventual(?:ly)?(?:\s+\([^)]*\))?\s+reveal|"
     r"set\s+in\s+motion\s+the\s+eventual|"
     r"not\s+yet\s+but\s+within\s+a\s+few\s+months|"
@@ -319,9 +326,60 @@ _SPAN_STANDING = re.compile(
     r"\b("
     r"court politics|growing up|does not have a grudge|"
     r"same language|ethical captives|head to be easier|"
-    r"tone of the relationship"
+    r"tone of the relationship|"
+    r"is the protagonist|"
+    r"from Alice in Wonderland|"
+    r"similar to the film|"
+    r"Peter Rabbit|"
+    r"(?:Animals|animals) are built|"
+    r"built in this story'?s canon"
     r")\b",
     re.I,
+)
+
+# Identity / canon-research — never a near write-next task.
+_STANDING_IDENTITY = re.compile(
+    r"\b("
+    r"is the protagonist|"
+    r"from Alice in Wonderland|"
+    r"similar to the film|"
+    r"Peter Rabbit|"
+    r"(?:Animals|animals) are built|"
+    r"built in this story'?s canon"
+    r")\b",
+    re.I,
+)
+
+# Author "I'll go back later" — not a near write-next beat in this stretch.
+_REVISION_PASS = re.compile(
+    r"\b("
+    r"once I(?:'m| am) done writing the first|"
+    r"after the first (?:rough )?draft|"
+    r"go back over|"
+    r"go back to develop|"
+    r"make the book more fleshed out|"
+    r"when I(?:'m| am) done with the (?:first )?(?:rough )?draft"
+    r")\b",
+    re.I,
+)
+
+# Faction/world words that are too broad to mark a named-span end by themselves.
+_GENERIC_SPAN_END = frozenset(
+    {
+        "preyfolk",
+        "predator",
+        "predators",
+        "prey",
+        "animal",
+        "animals",
+        "folk",
+        "birds",
+        "bird",
+        "people",
+        "court",
+        "faeble",
+        "faebles",
+    }
 )
 
 _AUTHOR_MUSING_LEAD = re.compile(
@@ -629,11 +687,50 @@ def _span_pole_tokens(text: str) -> list[str]:
         "left",
         "where",
     }
-    return [
+    toks = [
         t
         for t in _content_tokens(text)
         if len(t) >= 4 and t not in weak
     ]
+    # POV is 3 letters but is the named-beat word in "underground POV".
+    if re.search(r"\bpov\b", text or "", re.I) and "pov" not in toks:
+        toks.append("pov")
+    return toks
+
+
+def _distinctive_span_end_tokens(end: str, end_toks: list[str]) -> list[str]:
+    """End-beat tokens that are not generic world/faction words."""
+    distinctive = [t for t in end_toks if t not in _GENERIC_SPAN_END]
+    if re.search(r"\bpov\b", end or "", re.I) and "pov" not in distinctive:
+        distinctive.append("pov")
+    return distinctive
+
+
+def _is_revision_pass(line: str) -> bool:
+    """True for 'go back after the first draft' notes — not this stretch."""
+    return bool(_REVISION_PASS.search(line or ""))
+
+
+def _line_hits_named_span_end(
+    line: str, title: str, span: dict[str, str] | None
+) -> bool:
+    """True when this claim is the named end beat (underground POV), not faction lore."""
+    if not span:
+        return False
+    end = str(span.get("end") or "")
+    end_toks = _span_pole_tokens(end)
+    strong = [t for t in _distinctive_span_end_tokens(end, end_toks) if t != "pov"]
+    if not strong:
+        return False
+    blob = f"{title} {line}"
+    blob_n = _normalize(blob)
+    if not any(t in blob_n for t in strong):
+        return False
+    if re.search(r"\b(?:pov|scene)\b", blob, re.I):
+        return True
+    if re.search(r"\b(?:need to write|still need|write the)\b", line, re.I):
+        return True
+    return False
 
 
 def _span_start_is_meta(start: str) -> bool:
@@ -712,7 +809,7 @@ def _span_phase_named(
     ):
         return "after_end"
 
-    if meta_start and _SPAN_STILL_CHASE.search(line_s):
+    if meta_start and _SPAN_STILL_CHASE.search(f"{title_s} {line_s}"):
         return "before_start"
 
     start_is_flash = bool(re.search(r"\bflashback\b", start, re.I))
@@ -735,11 +832,17 @@ def _span_phase_named(
 
     hits_start = sum(1 for t in start_toks if t in blob_n)
     hits_end = sum(1 for t in end_toks if t in blob_n)
+    distinctive_end = _distinctive_span_end_tokens(end, end_toks)
+    # Leave-off → named beat: "Preyfolk" alone is standing lore, not the window.
+    # Bare "POV" is too common (POV order notes). Prefer underground / warren.
+    strong_end = [t for t in distinctive_end if t != "pov"]
+    use_end = strong_end or distinctive_end
+    if use_end and meta_start:
+        hits_end = sum(1 for t in use_end if t in blob_n)
     end_n = _normalize(end)
     if end_n and end_n in blob_n:
         hits_end = max(hits_end, 1)
-    # Meta start (leave-off): naming the end beat is enough. Named start+end
-    # still needs the usual start/journey hits so later scenes stay out.
+    # Meta start (leave-off): naming the distinctive end beat is enough.
     if hits_end and meta_start:
         return "in_span"
     after_start = bool(re.search(r"\bafter\b", line_s, re.I) and hits_start)
@@ -799,11 +902,13 @@ def filter_unused_by_span(
             if not key or key in seen:
                 continue
             phase = phase_fn(title, line)
-            if phase in {"after_end", "before_start"}:
+            if phase != "in_span":
                 continue
             if _SPAN_STANDING.search(line) and not _SPAN_JOURNEY.search(line):
                 continue
             if _SPAN_DONT_KNOW.search(line) or line_is_later_book(line):
+                continue
+            if _is_revision_pass(line) or _is_continuity_or_musing(line):
                 continue
             if _SPAN_STILL_CHASE.search(line):
                 continue
@@ -1233,6 +1338,10 @@ def claim_is_write_next_task(
     if not s or _line_is_incomplete(s):
         return False
     if re.search(r"\b(?:posh\s+villain|vibe\s+here)\b", s, re.I):
+        return False
+    if _is_revision_pass(s):
+        return False
+    if _STANDING_IDENTITY.search(s):
         return False
     # Canon research / meta speculation — not a write-next beat.
     if re.search(
@@ -1679,6 +1788,7 @@ def extract_draft_timeline_seat(
     line: str = "",
     *,
     note_title: str = "",
+    same_note_body: str = "",
 ) -> str:
     """
     Short main-draft timeline seat from notes — librarian only, never invent.
@@ -1808,10 +1918,15 @@ def extract_draft_timeline_seat(
             add(70, "during the chase after Etherei spots Serias")
 
     # Generic librarian seats when notes name a when/where and no typed seat won.
+    # Same claim line only — related notes and note titles stamp the wrong beat
+    # (e.g. "after captured" on standing lore in a capture-titled note).
     if not candidates:
+        local = "\n".join(
+            p for p in ((line or "").strip(), (same_note_body or "").strip()) if p
+        )
         m = re.search(
             r"\b(after\s+[\w'-]+(?:\s+[\w'-]+){0,5}\s+is\s+captured)\b",
-            c,
+            local,
             re.I,
         )
         if m:
@@ -1819,7 +1934,7 @@ def extract_draft_timeline_seat(
         m = re.search(
             r"\b((?:during|after)\s+.{8,70}?"
             r"(?:capture[d]?|court\s+scene|chase\s+scene))\b",
-            c,
+            local,
             re.I,
         )
         if m:
@@ -1827,7 +1942,7 @@ def extract_draft_timeline_seat(
         m = re.search(
             r"\b(after\s+(?:the\s+)?[A-Za-z][\w'-]{2,}"
             r"(?:\s+[A-Za-z][\w'-]{2,}){0,2})\b",
-            c,
+            local,
             re.I,
         )
         if (
@@ -1838,13 +1953,19 @@ def extract_draft_timeline_seat(
                 m.group(1),
                 re.I,
             )
+            and re.search(
+                r"\b(?:capture[d]?|rescue|chase|scene|arrival|quarters|"
+                r"flashback|court|night|journey)\b",
+                m.group(1),
+                re.I,
+            )
         ):
             add(42, m.group(1))
         m = re.search(
             r"\b(during\s+(?:the\s+)?[A-Za-z][\w'-]{2,}"
             r"(?:\s+[A-Za-z][\w'-]{2,}){0,2}"
             r"(?:\s+scene|\s+chase|\s+flashback)?)\b",
-            c,
+            local,
             re.I,
         )
         if m and 10 <= len(m.group(1)) <= 48:
@@ -1853,7 +1974,7 @@ def extract_draft_timeline_seat(
             r"\b(at the\s+[A-Za-z][\w'-]{2,}"
             r"(?:\s+[A-Za-z][\w'-]{2,}){0,2}"
             r"(?:'s)?(?:\s+quarters|\s+manor|\s+place|\s+scene)?)\b",
-            c,
+            local,
             re.I,
         )
         if m and 8 <= len(m.group(1)) <= 48:
@@ -1861,7 +1982,7 @@ def extract_draft_timeline_seat(
         m = re.search(
             r"\b(shortly after\s+[A-Za-z][\w'-]{2,}"
             r"(?:\s+[A-Za-z][\w'-]{2,}){0,3})\b",
-            c,
+            local,
             re.I,
         )
         if m and len(m.group(1)) <= 48:
@@ -1886,12 +2007,13 @@ def format_seat_as_plan_sentence(seat: str) -> str:
         return out if out.endswith(".") else out + "."
 
     low = seat_s.lower()
-    # after … → shortly after … (owner example shape)
+    # Rescue gold uses "shortly after". Other after-seats stay honest — notes
+    # that only say "after" must not become "shortly after".
     if low.startswith("after "):
-        return (
-            "Your plan was for this reveal to take place shortly "
-            f"{seat_s[0].lower() + seat_s[1:]}."
-        )
+        rest = seat_s[0].lower() + seat_s[1:]
+        if re.search(r"\brescue\b", low):
+            return f"Your plan was for this reveal to take place shortly {rest}."
+        return f"Your plan was for this reveal to take place {rest}."
     if low.startswith("during "):
         return f"Your plan was for this to take place {seat_s[0].lower() + seat_s[1:]}."
     if low.startswith("at the ") or low.startswith("at "):
@@ -2283,6 +2405,12 @@ def frame_plan_recall(line: str, *, you_lead: bool, you_variant: int = 0) -> str
             return f"Your notes call for {body}"
         if finite or re.match(r"^(?:it|they|he|she)\s+\w+", body, re.I):
             return f"Your notes say {body}"
+        if re.match(
+            r"^(?:the|a|an)\s+\w+\s+(?:takes?|keeps?|finds?|binds?)\b",
+            body,
+            re.I,
+        ):
+            return f"Your notes say {body}"
         if re.match(r"^(?:the|a|an|his|her|their|this)\b", body, re.I):
             if you_variant % 2 == 0:
                 return f"You wanted {body}"
@@ -2301,6 +2429,12 @@ def frame_plan_recall(line: str, *, you_lead: bool, you_variant: int = 0) -> str
             return f"You were planning {body}"
         return f"Your notes call for {body}"
     if finite or re.match(r"^(?:it|they|he|she)\s+\w+", body, re.I):
+        return f"Your notes say {body}"
+    if re.match(
+        r"^(?:the|a|an)\s+\w+\s+(?:takes?|keeps?|finds?|binds?)\b",
+        body,
+        re.I,
+    ):
         return f"Your notes say {body}"
     out = f"Your notes call for {body}"
     out = re.sub(
@@ -2327,7 +2461,8 @@ def assign_plan_recall_frames(bullets: list[str]) -> list[str]:
         kind = task_beat_kind(plan_recall_core(bullet))
         force_non_you = kind in {"flashback", "chase"}
         if re.search(
-            r"journey takes several days|stop for the night|keeps him fed|keep him fed|"
+            r"journey takes several days|stop for the night|"
+            r"keeps? \w+ fed|keep \w+ fed|"
             r"still leave (?:the rest of )?this stretch|"
             r"rest of this stretch|stretch between capture",
             bullet,
@@ -2410,6 +2545,59 @@ def densify_task_phrasing(line: str) -> str:
     return s
 
 
+def _span_journey_actors(raw: str) -> tuple[str, str]:
+    """
+    (captor, captive) when the journey note names them — never invent.
+    Empty strings when the line only has stacked he/him.
+    """
+    s = raw or ""
+    captive = ""
+    captor = ""
+    m = re.search(r"keep(?:s)?\s+([A-Z][\w'-]+(?:\s+[A-Z])?)\s+fed", s)
+    if m:
+        captive = m.group(1)
+    m = re.search(r"\b([A-Z][\w'-]+(?:\s+[A-Z])?)(?:'s)?\s+injuries\b", s)
+    if m:
+        captive = captive or m.group(1)
+    m = re.search(
+        r"(?:that\s+|so\s+)?([A-Z][\w'-]+(?:\s+[A-Z])?)\s+cannot run",
+        s,
+    )
+    if m:
+        captive = captive or m.group(1)
+    m = re.search(
+        r"\b([A-Z][\w'-]+(?:\s+[A-Z])?)\s+keeps?\s+(?:his|her|their)\s+mouth",
+        s,
+    )
+    if m:
+        captive = captive or m.group(1)
+    m = re.search(
+        r"engage\s+([A-Z][\w'-]+(?:\s+[A-Z])?)\s+in\s+conversation",
+        s,
+    )
+    if m:
+        captive = captive or m.group(1)
+    if not captive:
+        m = re.search(r"\b(Etherei|Character E)\b", s)
+        if m and re.search(r"\b(?:fed|mouth|injur|run off)\b", s, re.I):
+            captive = m.group(1)
+    if re.search(r"\bthe wolf\b", s, re.I):
+        captor = "the wolf"
+    m = re.search(r"\b(Serias)\b", s)
+    if m:
+        captor = m.group(1)
+    return captor, captive
+
+
+def _cap_actor(name: str) -> str:
+    n = (name or "").strip()
+    if not n:
+        return n
+    if n[:1].islower():
+        return n[0].upper() + n[1:]
+    return n
+
+
 def _compress_span_journey_line(raw: str) -> str:
     """
     Librarian compress for capture→arrival journey notes — keep stop/bind/fed
@@ -2426,24 +2614,31 @@ def _compress_span_journey_line(raw: str) -> str:
         and re.search(r"cannot run|can'?t run|run off", s, re.I)
     )
     firmly = bool(re.search(r"\bfirmly\b", s, re.I) and re.search(r"not gently", s, re.I))
+    captor, captive = _span_journey_actors(s)
     fed = ""
     if re.search(r"keep .{0,48} fed", s, re.I):
+        feeder = _cap_actor(captor) if captor else "He"
+        fed_who = captive if captive else "him"
+        speaker = captive if captive else "he"
         if re.search(r"conversation|mouth .{0,40}shut|will speak", s, re.I):
             fed = (
-                "He keeps him fed on the journey; when conversation is attempted, "
-                "he keeps his mouth shut and will not speak"
+                f"{feeder} keeps {fed_who} fed on the journey; when conversation "
+                f"is attempted, {speaker} keeps his mouth shut and will not speak"
             )
         else:
-            fed = "He keeps him fed on the journey"
+            fed = f"{feeder} keeps {fed_who} fed on the journey"
     if days and stop:
         out = "The journey takes several days"
+        stopper = "he"
+        inj = f"{captive}'s injuries" if captive else "the injuries"
+        runner = captive if captive else "he"
         if bind_inj or firmly:
             out += (
-                ". When he stops for the night, he binds the injuries firmly — "
+                f". When {stopper} stops for the night, he binds {inj} firmly — "
                 "not gently, and not roughly enough to worsen them"
             )
             if bind_limbs:
-                out += " — and binds the limbs so he cannot run off"
+                out += f" — and binds the limbs so {runner} cannot run off"
         else:
             out += ", with a stop for the night before they arrive"
         if fed:
@@ -2522,7 +2717,9 @@ def restate_as_task_line(
     compressed = _compress_span_journey_line(s)
     if compressed:
         s = compressed
-        if timeline_seat and re.search(r"after .{0,48}captur", timeline_seat, re.I):
+        if re.search(r"rest of this stretch", s, re.I):
+            timeline_seat = ""
+        elif timeline_seat and re.search(r"after .{0,48}captur", timeline_seat, re.I):
             timeline_seat = ""
 
     # Compress brothers-discover-ticklish / albino-eyesight showable facts.
@@ -2679,8 +2876,17 @@ def restate_as_task_line(
                 chunk = _tidy_claim_line(m.group(0))
                 if chunk and len(chunk) <= _MAX_TASK_LINE:
                     s = chunk
+    named_endish = bool(
+        re.search(r"\b(?:underground|warren)\b", s, re.I)
+        and re.search(r"\b(?:pov|scene)\b", s, re.I)
+    )
     if _line_is_incomplete(s) or (
-        len(s) > (_MAX_TASK_LINE_WITH_SEAT if compressed else _MAX_TASK_LINE)
+        len(s)
+        > (
+            _MAX_TASK_LINE_WITH_SEAT
+            if (compressed or named_endish)
+            else _MAX_TASK_LINE
+        )
     ):
         # Never truncate with ellipsis — drop rather than trail off.
         return ""
@@ -2823,10 +3029,16 @@ def compose_writing_next_task_list(
         else:
             extra = max(0, int(total_before_cap) - bullet_count)
             if extra > 0:
-                lines.append(
-                    f"\n…and {extra} more write-next item(s). "
-                    "Name a topic (chase, Court politics, …) or ask again for more."
-                )
+                if topic_s:
+                    lines.append(
+                        f"\n…and {extra} more write-next item(s) in this stretch. "
+                        "Ask again for more."
+                    )
+                else:
+                    lines.append(
+                        f"\n…and {extra} more write-next item(s). "
+                        "Name a topic (chase, Court politics, …) or ask again for more."
+                    )
     elif unused_but_not_tasks:
         if topic_s:
             lines.append(
@@ -2857,7 +3069,8 @@ def compose_writing_next_task_list(
         block = format_update_notes_block(update_notes_nudges)
         if block:
             lines.append(block)
-    lines.append("\n" + _FOOTER)
+    footer = _FOOTER_SCOPED if topic_s else _FOOTER
+    lines.append("\n" + footer)
     return "\n".join(lines)
 
 
@@ -2972,6 +3185,19 @@ def answer_writing_next_task_list(
                 continue
             if not allow_later and line_is_later_book(line):
                 continue
+            if _is_continuity_or_musing(line) or _is_revision_pass(line):
+                continue
+            if _SPAN_STANDING.search(line) and not _SPAN_JOURNEY.search(line):
+                continue
+            if not (
+                _SPAN_JOURNEY.search(line)
+                or _DRAMATIZABLE.search(line)
+                or _RELATIONSHIP_TENSION.search(line)
+                or _line_hits_named_span_end(
+                    line, str(row.get("noteTitle") or ""), span
+                )
+            ):
+                continue
             if re.search(
                 r"^\s*(?:mind you|i mean|idk|i don'?t know)\b",
                 line,
@@ -3017,7 +3243,13 @@ def answer_writing_next_task_list(
         corpus = seat_search_corpus(row, note_index)
         line = str(row.get("line") or "")
         title = str(row.get("noteTitle") or "")
-        seat = extract_draft_timeline_seat(corpus, line, note_title=title)
+        same_body = ""
+        if eid := str(row.get("entryId") or ""):
+            if eid in note_index:
+                same_body = note_index[eid][1]
+        seat = extract_draft_timeline_seat(
+            corpus, line, note_title=title, same_note_body=same_body
+        )
         clarifier = extract_task_clarifier(corpus, line, note_title=title)
         enriched = {**row}
         if seat:

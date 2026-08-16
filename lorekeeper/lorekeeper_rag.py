@@ -165,6 +165,8 @@ This is a WRITE-NEXT / PLANNED-STRETCH question — not a leave-off recap and no
 
 - Short bullets of planned beats from NOTES that are not yet in the draft
 - If the question names a window (between A and B, including "where I leave off" as the start), list EVERY unused planned beat in that window — journey, overnight, in-between, and the named end beat. Do not keep only notes that name the end POV.
+- Do not treat a generic faction word (Preyfolk, Predators) as the whole window. Do not stamp "shortly after captured" unless that claim's own line says so. Standing lore, later-series, and "go back after the first draft" stay out.
+- Name both people when notes name them — never stacked he/him. If the ask already named the stretch, do not say "Name a topic."
 - Never paste, paraphrase, or walk through the whole draft
 - Honest gap if notes don't fill the stretch
 - Librarian only; invent nothing

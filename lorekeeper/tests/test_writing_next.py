@@ -465,14 +465,14 @@ class WritingNextAnswerTests(unittest.TestCase):
         gold = gold_path.read_text(encoding="utf-8")
         self.assertIn("about the stretch between capture and arrival", gold)
         self.assertIn(
-            "Your notes say he keeps him fed on the journey; when conversation "
-            "is attempted, he keeps his mouth shut and will not speak.",
+            "Your notes say he keeps Character E fed on the journey; when conversation "
+            "is attempted, Character E keeps his mouth shut and will not speak.",
             gold,
         )
         self.assertIn(
             "Your notes say the journey takes several days. When he stops for "
-            "the night, he binds the injuries firmly — not gently, and not "
-            "roughly enough to worsen them — and binds the limbs so he cannot "
+            "the night, he binds Character E's injuries firmly — not gently, and not "
+            "roughly enough to worsen them — and binds the limbs so Character E cannot "
             "run off.",
             gold,
         )
@@ -542,10 +542,12 @@ class WritingNextAnswerTests(unittest.TestCase):
         answer = res.get("answer") or ""
         low = answer.lower()
         for needle in (
-            "keeps him fed",
-            "mouth shut",
+            "keeps character e fed",
+            "character e keeps his mouth shut",
             "several days",
             "when he stops for the night",
+            "character e's injuries",
+            "character e cannot run off",
             "rest of this stretch unspecified",
         ):
             self.assertIn(needle, low)
@@ -566,6 +568,26 @@ class WritingNextAnswerTests(unittest.TestCase):
         self.assertIn("fed", bullets[0].lower())
         self.assertIn("several days", bullets[1].lower())
         self.assertIn("unspecified", bullets[2].lower())
+
+    def test_journey_restate_names_both_people(self):
+        out = restate_as_task_line(
+            "He also finds a way to keep Character E fed, but whenever he "
+            "attempts to engage Character E in conversation, Character E "
+            "keeps his mouth determinedly shut and will not speak at all."
+        )
+        low = (out or "").lower()
+        self.assertIn("character e fed", low)
+        self.assertIn("character e keeps his mouth", low)
+        self.assertNotIn("keeps him fed", low)
+        wolf = restate_as_task_line(
+            "The wolf keeps Etherei fed on the journey; when conversation is "
+            "attempted, Etherei keeps his mouth shut and will not speak."
+        )
+        wlow = (wolf or "").lower()
+        self.assertIn("the wolf keeps etherei fed", wlow)
+        self.assertIn("etherei keeps his mouth", wlow)
+        framed = assign_plan_recall_frames([wolf or ""])[0].lower()
+        self.assertTrue(framed.startswith("your notes say"), msg=framed)
 
     def test_caps_at_max_and_mentions_more(self):
         note_lines = [
@@ -1720,7 +1742,9 @@ class WritingNextGeneralPathTests(unittest.TestCase):
                 "n_warren",
                 "Later POV",
                 "Still need to write the warren underground POV: a moss-stair "
-                "descent and the first glow-beetle in the tunnels.",
+                "descent and the first glow-beetle in the tunnels, plus the "
+                "quiet first look at how the warren streets actually feel "
+                "when Character E is led down.",
             ),
             self._ashford(
                 "n_court",
@@ -1811,6 +1835,73 @@ class WritingNextGeneralPathTests(unittest.TestCase):
             self.assertNotIn("predator court", answer, msg=q)
             self.assertNotIn("treated as a guest", answer, msg=q)
             self.assertNotIn("swift", answer, msg=q)
+
+    def test_leave_off_to_pov_keeps_window_honest(self):
+        """Standing lore, later-series, and capture-stamped seats stay out."""
+        worldbuilding = "\n".join(
+            f"Preyfolk custom number {i} is a standing world fact, not this stretch."
+            for i in range(1, 18)
+        )
+        entries = [
+            self._ashford(
+                "n_stretch",
+                "After Character E is captured",
+                "The wolf keeps Character E fed on the journey; when conversation "
+                "is attempted, Character E keeps his mouth shut and will not speak.\n"
+                "Still need to write the warren underground POV: a moss-stair "
+                "descent and the first glow-beetle in the tunnels.\n"
+                "Character E is the protagonist of the story, the White Rabbit "
+                "from Alice in Wonderland.\n"
+                "Animals are built in this story's canon similar to the film "
+                "Peter Rabbit.\n"
+                "His expression should hint at his knowledge that the Cat does "
+                "not want him dead even while he's fleeing a Wolf.\n"
+                "Once I'm done writing the first rough draft, I will go back over "
+                "to develop their relationship further.\n"
+                "The Preyfolk sentience reveal is for the end of the series.\n"
+                "Obsidian has a fractured flashback after Etherei spots Serias.\n"
+                + worldbuilding,
+            ),
+            self._ashford(
+                "d1",
+                "Main draft",
+                "Character E was in the wolf's grasp, being carried down the path.",
+                kind="document",
+            ),
+        ]
+        q = (
+            "In Ashford Saga, what do I have planned between the place where I "
+            "leave off in the main draft and the warren underground POV?"
+        )
+        res = recall_from_user_data(
+            q, {"lorekeeper_entries_v1": json.dumps(entries)}
+        )
+        answer = res.get("answer") or ""
+        low = answer.lower()
+        self.assertEqual(res.get("questionKind"), "writing_next")
+        self.assertIn("warren", low)
+        self.assertIn("character e fed", low)
+        self.assertIn("character e keeps his mouth", low)
+        self.assertNotIn("protagonist", low)
+        self.assertNotIn("peter rabbit", low)
+        self.assertNotIn("alice in wonderland", low)
+        self.assertNotIn("expression should hint", low)
+        self.assertNotIn("first rough draft", low)
+        self.assertNotIn("end of the series", low)
+        self.assertNotIn("preyfolk custom number", low)
+        self.assertNotIn("shortly after character e is captured", low)
+        self.assertNotIn("name a topic", low)
+        self.assertNotIn("flashback", low)
+        leftover = re.search(r"and (\d+) more write-next", low)
+        if leftover:
+            self.assertLess(int(leftover.group(1)), 8)
+        bullets = [
+            ln.strip()
+            for ln in answer.splitlines()
+            if ln.strip().startswith("•")
+        ]
+        self.assertLessEqual(len(bullets), 8)
+        self.assertGreaterEqual(len(bullets), 1)
 
     def test_other_work_whole_list(self):
         entries = [
