@@ -281,7 +281,12 @@ _SPAN_JOURNEY = re.compile(
     r"before (?:they |he |she )?(?:arriv|reach)|"
     r"until (?:they |he |she )?arriv|"
     r"open gap|"
-    r"not yet drafted"
+    r"not yet drafted|"
+    r"annoy|annoys|annoying|"
+    r"teas(?:e|es|ing)|"
+    r"provok(?:e|es|ing)|"
+    r"needl(?:e|es|ing)|"
+    r"attempts? to annoy|trying to annoy|tries to annoy"
     r")\b",
     re.I,
 )
@@ -419,7 +424,10 @@ _DRAMATIZABLE = re.compile(
     r"still\s+(?:need|have|has)\s+to\s+(?:write|draft|show|open)|"
     r"not yet (?:on the page|written|drafted)|"
     r"haven'?t (?:written|drafted|shown)|"
-    r"needs? a scene|should show"
+    r"needs? a scene|should show|"
+    r"annoy|annoys|annoying|"
+    r"teas(?:e|es|ing)|"
+    r"provok(?:e|es|ing)"
     r")\b",
     re.I,
 )
@@ -706,6 +714,43 @@ def _distinctive_span_end_tokens(end: str, end_toks: list[str]) -> list[str]:
     return distinctive
 
 
+def _note_looks_like_stretch_planning(title: str) -> bool:
+    """True for capture/journey/between notes — in-between beats live here."""
+    return bool(
+        re.search(
+            r"\b("
+            r"between|"
+            r"capture|"
+            r"captured|"
+            r"journey|"
+            r"in-progress|"
+            r"after .{0,48}captur|"
+            r"on the (?:way|road|path)"
+            r")\b",
+            title or "",
+            re.I,
+        )
+    )
+
+
+def _looks_like_stretch_scene_beat(line: str) -> bool:
+    """Planned on-page beat in the stretch — not standing worldbuilding."""
+    s = line or ""
+    if _SPAN_JOURNEY.search(s) or _DRAMATIZABLE.search(s):
+        return True
+    if _RELATIONSHIP_TENSION.search(s):
+        return True
+    if re.search(
+        r"\b[A-Z][\w'-]+\b.{0,48}\b("
+        r"attempts?|tries|trying|keeps|binds|stops|annoy|tease|provoke|"
+        r"needle|bait"
+        r")\b",
+        s,
+    ):
+        return True
+    return False
+
+
 def _is_revision_pass(line: str) -> bool:
     """True for 'go back after the first draft' notes — not this stretch."""
     return bool(_REVISION_PASS.search(line or ""))
@@ -842,9 +887,15 @@ def _span_phase_named(
     end_n = _normalize(end)
     if end_n and end_n in blob_n:
         hits_end = max(hits_end, 1)
-    # Meta start (leave-off): naming the distinctive end beat is enough.
+    # Meta start (leave-off): distinctive end + POV/scene/write, not every
+    # underground worldbuilding note.
     if hits_end and meta_start:
-        return "in_span"
+        if re.search(
+            r"\b(?:pov|scene|need to write|still need|write the)\b",
+            f"{title_s} {line_s}",
+            re.I,
+        ):
+            return "in_span"
     after_start = bool(re.search(r"\bafter\b", line_s, re.I) and hits_start)
     if after_start:
         return "in_span"
@@ -902,8 +953,13 @@ def filter_unused_by_span(
             if not key or key in seen:
                 continue
             phase = phase_fn(title, line)
-            if phase != "in_span":
+            if phase in {"after_end", "before_start"}:
                 continue
+            if phase != "in_span":
+                if not _note_looks_like_stretch_planning(title):
+                    continue
+                if not _looks_like_stretch_scene_beat(line):
+                    continue
             if _SPAN_STANDING.search(line) and not _SPAN_JOURNEY.search(line):
                 continue
             if _SPAN_DONT_KNOW.search(line) or line_is_later_book(line):
@@ -3193,6 +3249,7 @@ def answer_writing_next_task_list(
                 _SPAN_JOURNEY.search(line)
                 or _DRAMATIZABLE.search(line)
                 or _RELATIONSHIP_TENSION.search(line)
+                or _looks_like_stretch_scene_beat(line)
                 or _line_hits_named_span_end(
                     line, str(row.get("noteTitle") or ""), span
                 )

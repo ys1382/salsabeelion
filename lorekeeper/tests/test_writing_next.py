@@ -1782,6 +1782,7 @@ class WritingNextGeneralPathTests(unittest.TestCase):
             "When he stops for the night, it will be clear the wolf had this "
             "stop planned.\n"
             "He keeps his mouth shut and will not speak on the journey.\n"
+            "Character E attempts to annoy Character S.\n"
             "Still need to write the warren underground POV: a moss-stair "
             "descent and the first glow-beetle in the tunnels."
         )
@@ -1828,6 +1829,7 @@ class WritingNextGeneralPathTests(unittest.TestCase):
             self.assertEqual(res.get("questionKind"), "writing_next", msg=q)
             self.assertIn("stop planned", answer, msg=q)
             self.assertIn("mouth shut", answer, msg=q)
+            self.assertIn("annoy", answer, msg=q)
             self.assertIn("warren", answer, msg=q)
             self.assertIn("injur", answer, msg=q)
             self.assertNotIn("purple lantern parade", answer, msg=q)
@@ -1848,6 +1850,7 @@ class WritingNextGeneralPathTests(unittest.TestCase):
                 "After Character E is captured",
                 "The wolf keeps Character E fed on the journey; when conversation "
                 "is attempted, Character E keeps his mouth shut and will not speak.\n"
+                "Character E attempts to annoy Character S.\n"
                 "Still need to write the warren underground POV: a moss-stair "
                 "descent and the first glow-beetle in the tunnels.\n"
                 "Character E is the protagonist of the story, the White Rabbit "
@@ -1882,6 +1885,7 @@ class WritingNextGeneralPathTests(unittest.TestCase):
         self.assertIn("warren", low)
         self.assertIn("character e fed", low)
         self.assertIn("character e keeps his mouth", low)
+        self.assertIn("annoy", low)
         self.assertNotIn("protagonist", low)
         self.assertNotIn("peter rabbit", low)
         self.assertNotIn("alice in wonderland", low)
