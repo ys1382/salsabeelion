@@ -213,6 +213,10 @@ _AFTER_BEFORE_SPAN_Q = re.compile(
     r"(?:before|until|prior to|up to)\s+(.+?)(?:\s*[?.!]?\s*$)",
     re.I,
 )
+_FROM_UNTIL_SPAN_Q = re.compile(
+    r"\bfrom\s+(.+?)\s+(?:until|up to)\s+(.+?)(?:\s*[?.!]?\s*$)",
+    re.I,
+)
 _SPAN_STILL_CHASE = re.compile(
     r"\b("
     r"during the (?:\w+\s+)?capture chase|"
@@ -262,6 +266,7 @@ _SPAN_JOURNEY = re.compile(
     r"on the way|en route|the (?:walk|trip|journey) (?:to|toward)|"
     r"several days|"
     r"stops?\s+for\s+the\s+(?:night|day)|"
+    r"(?:this\s+)?stop planned|"
     r"keep .{0,48} fed|"
     r"mouth .{0,40}shut|"
     r"between .{0,48}arriv|"
@@ -396,10 +401,13 @@ _WRITING_NEXT_SPAN_CUE = re.compile(
     r"what(?:'s|\s+is|\s+have\s+i)\s+planned|"
     r"have\s+(?:i\s+)?planned|"
     r"planned\s+between|"
+    r"planned\s+from\b|"
     r"what\s+happens\s+between|"
     r"happens?\s+between|"
     r"between\b.{0,120}(?:leave|left)\s+off|"
-    r"(?:leave|left)\s+off\b.{0,80}\band\b"
+    r"(?:leave|left)\s+off\b.{0,80}\band\b|"
+    r"from\s+where\s+i\s+(?:leave|left)\s+off|"
+    r"(?:leave|left)\s+off\b.{0,80}(?:until|up\s+to)\b"
     r")",
     re.I | re.S,
 )
@@ -528,7 +536,11 @@ def extract_writing_next_span(question: str) -> dict[str, str] | None:
     q = (question or "").strip()
     if not q:
         return None
-    m = _BETWEEN_SPAN_Q.search(q) or _AFTER_BEFORE_SPAN_Q.search(q)
+    m = (
+        _BETWEEN_SPAN_Q.search(q)
+        or _AFTER_BEFORE_SPAN_Q.search(q)
+        or _FROM_UNTIL_SPAN_Q.search(q)
+    )
     if not m:
         return None
     start = re.sub(r"\s+", " ", m.group(1).strip()).strip(" \t\"'“”‘’")
@@ -611,6 +623,11 @@ def _span_pole_tokens(text: str) -> list[str]:
         "before",
         "after",
         "between",
+        "place",
+        "main",
+        "leave",
+        "left",
+        "where",
     }
     return [
         t
@@ -619,33 +636,55 @@ def _span_pole_tokens(text: str) -> list[str]:
     ]
 
 
+def _span_start_is_meta(start: str) -> bool:
+    """True when the start pole is 'where I leave off' / now — not a named beat."""
+    s = start or ""
+    if re.search(r"\b(?:leave|left)\s+off\b", s, re.I):
+        return True
+    if re.search(r"\bwhere\s+i\s+am\b|\bcurrent\s+spot\b", s, re.I):
+        return True
+    if re.match(r"^\s*(?:now|here)\s*$", s, re.I):
+        return True
+    return False
+
+
+def _line_is_after_named_end(line: str, end_toks: list[str]) -> bool:
+    """True when the line is clearly after the named end beat."""
+    if not end_toks:
+        return False
+    n = _normalize(line or "")
+    if not any(t in n for t in end_toks):
+        return False
+    alt = "|".join(re.escape(t) for t in end_toks)
+    return bool(
+        re.search(
+            rf"\bafter\s+(?:the\s+)?(?:\w+\s+){{0,4}}(?:{alt})\b",
+            n,
+            re.I,
+        )
+    )
+
+
 def _span_phase_named(
     title: str, line: str, span: dict[str, str]
 ) -> str:
     """
     before_start | in_span | after_end | unrelated
     Librarian window for a generic after-X / until-Y ask.
+    Meta start ('where I leave off') keeps unused journey / end-beat notes
+    in the window — not only notes that name the end POV.
     """
     title_s = title or ""
     line_s = line or ""
     blob_n = _normalize(f"{title_s} {line_s}")
     start = str(span.get("start") or "")
     end = str(span.get("end") or "")
-    start_toks = _span_pole_tokens(start)
+    meta_start = _span_start_is_meta(start)
+    start_toks = [] if meta_start else _span_pole_tokens(start)
     end_toks = _span_pole_tokens(end)
     if _SPAN_DONT_KNOW.search(line_s):
         return "unrelated"
     if _SPAN_STANDING.search(line_s) and not _SPAN_JOURNEY.search(line_s):
-        return "unrelated"
-
-    # "Where I leave off" is a meta start pole — match the named end beat, not
-    # the words "leave off" / "main draft".
-    if re.search(r"\b(?:leave|left)\s+off\b", start, re.I):
-        if end_toks and any(t in blob_n for t in end_toks):
-            return "in_span"
-        end_n = _normalize(end)
-        if end_n and end_n in blob_n:
-            return "in_span"
         return "unrelated"
 
     after_end = bool(
@@ -661,16 +700,20 @@ def _span_phase_named(
         and not _SPAN_JOURNEY.search(line_s)
         and not _SPAN_DURING_ARRIVAL.search(line_s)
     )
-    if after_end:
+    if after_end or _line_is_after_named_end(line_s, end_toks):
         return "after_end"
     if (
         _SPAN_AFTER_THERE.search(line_s)
         and not _SPAN_JOURNEY.search(line_s)
         and not _SPAN_DURING_ARRIVAL.search(line_s)
+        and not meta_start
         and end_toks
         and any(t in blob_n for t in end_toks)
     ):
         return "after_end"
+
+    if meta_start and _SPAN_STILL_CHASE.search(line_s):
+        return "before_start"
 
     start_is_flash = bool(re.search(r"\bflashback\b", start, re.I))
     if start_is_flash and re.search(r"\bflashback\b", line_s, re.I):
@@ -692,14 +735,22 @@ def _span_phase_named(
 
     hits_start = sum(1 for t in start_toks if t in blob_n)
     hits_end = sum(1 for t in end_toks if t in blob_n)
+    end_n = _normalize(end)
+    if end_n and end_n in blob_n:
+        hits_end = max(hits_end, 1)
+    # Meta start (leave-off): naming the end beat is enough. Named start+end
+    # still needs the usual start/journey hits so later scenes stay out.
+    if hits_end and meta_start:
+        return "in_span"
     after_start = bool(re.search(r"\bafter\b", line_s, re.I) and hits_start)
     if after_start:
         return "in_span"
     if hits_start and hits_end:
         return "in_span"
-    need_start = 1 if len(start_toks) <= 2 else max(1, (len(start_toks) + 1) // 2)
-    if hits_start >= need_start:
-        return "in_span"
+    if not meta_start:
+        need_start = 1 if len(start_toks) <= 2 else max(1, (len(start_toks) + 1) // 2)
+        if hits_start >= need_start:
+            return "in_span"
     return "unrelated"
 
 
@@ -731,6 +782,33 @@ def filter_unused_by_span(
             continue
         seen.add(key)
         out.append(row)
+    # Same-note siblings: the rest of a stretch note, not only the end-POV sentence.
+    in_span_ids = {
+        str(row.get("entryId") or "")
+        for row in out
+        if str(row.get("entryId") or "").strip()
+    }
+    if in_span_ids:
+        for row in items:
+            eid = str(row.get("entryId") or "")
+            if not eid or eid not in in_span_ids:
+                continue
+            line = str(row.get("line") or "")
+            title = str(row.get("noteTitle") or "")
+            key = _normalize(line)[:160]
+            if not key or key in seen:
+                continue
+            phase = phase_fn(title, line)
+            if phase in {"after_end", "before_start"}:
+                continue
+            if _SPAN_STANDING.search(line) and not _SPAN_JOURNEY.search(line):
+                continue
+            if _SPAN_DONT_KNOW.search(line) or line_is_later_book(line):
+                continue
+            if _SPAN_STILL_CHASE.search(line):
+                continue
+            seen.add(key)
+            out.append(row)
     return out
 
 
@@ -2878,21 +2956,33 @@ def answer_writing_next_task_list(
         allow_later_book=allow_later,
         keep_span_journey=bool(span),
     )
-    if span and not tasks:
-        # Gap notes are often musing, not "find a way to write" craft lines.
-        tasks = [
-            row
-            for row in cleaned
-            if str(row.get("line") or "").strip()
-            and not _line_is_incomplete(str(row.get("line") or ""))
-            and (allow_later or not line_is_later_book(str(row.get("line") or "")))
-            and not re.search(
+    if span:
+        # In-window musing / journey lines — keep them even if a craft task
+        # already survived, so one overnight beat does not hide the rest.
+        seen_task = {
+            _normalize(str(row.get("line") or ""))[:160] for row in tasks
+        }
+        extras: list[dict[str, str]] = []
+        for row in cleaned:
+            line = str(row.get("line") or "")
+            key = _normalize(line)[:160]
+            if not key or key in seen_task:
+                continue
+            if _line_is_incomplete(line):
+                continue
+            if not allow_later and line_is_later_book(line):
+                continue
+            if re.search(
                 r"^\s*(?:mind you|i mean|idk|i don'?t know)\b",
-                str(row.get("line") or ""),
+                line,
                 re.I,
-            )
-            and not _SPAN_DONT_KNOW.search(str(row.get("line") or ""))
-        ]
+            ):
+                continue
+            if _SPAN_DONT_KNOW.search(line):
+                continue
+            seen_task.add(key)
+            extras.append(row)
+        tasks = list(tasks) + extras
     if topic and topic_looks_like_cast(topic):
         tasks = [
             row
@@ -2912,20 +3002,7 @@ def answer_writing_next_task_list(
         filter_tasks_by_draft_foothold(
             tasks,
             entries,
-            allow_span_arrival=bool(
-                span
-                and (
-                    span.get("kind") == "capture_to_arrival"
-                    or (
-                        span.get("kind") == "named_span"
-                        and re.search(
-                            r"\barriv|reach|manor|quarters|mansion",
-                            str(span.get("end") or ""),
-                            re.I,
-                        )
-                    )
-                )
-            ),
+            allow_span_arrival=bool(span),
         )
         if tasks
         else []

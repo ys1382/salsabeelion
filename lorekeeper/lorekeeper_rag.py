@@ -164,7 +164,7 @@ _WRITING_NEXT = """
 This is a WRITE-NEXT / PLANNED-STRETCH question — not a leave-off recap and not a who-is card.
 
 - Short bullets of planned beats from NOTES that are not yet in the draft
-- If the question names a window (between A and B, including "where I leave off" as the start), only beats in that window
+- If the question names a window (between A and B, including "where I leave off" as the start), list EVERY unused planned beat in that window — journey, overnight, in-between, and the named end beat. Do not keep only notes that name the end POV.
 - Never paste, paraphrase, or walk through the whole draft
 - Honest gap if notes don't fill the stretch
 - Librarian only; invent nothing

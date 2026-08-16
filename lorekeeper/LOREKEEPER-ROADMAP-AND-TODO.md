@@ -376,6 +376,8 @@ Run **one row at a time** in Cursor. Don’t skip Phase 0 — it costs nothing a
 - Must not: echo “write what happens between capture and arrival”; chase-before-capture; after they’re there (quarters, ticklish, rescue, Court); Serias-respect / increased-respect musing; Wonderland off-the-page asides.
 - **Do not** edit `capture_to_arrival_writing_next_gold.txt` or soften `test_capture_to_arrival_writing_next_gold_shape_locked` without owner OK in that conversation.
 
+**Leave-off → named beat stretch (2026-08-15):** Same family as capture→arrival. “What do I have planned between where I leave off and [named POV/scene]?” lists **all** unused planned beats in that window (journey, overnight, in-between, and the named end). Never dump the draft. Never keep only the end-POV sentence if notes list more. Similar wording (“from where I leave off until…”, “what happens between where I left off and…”) uses the same window. Machine lock: `test_leave_off_to_named_pov_lists_full_window` + `test_planned_between_leave_off_and_pov_does_not_dump_draft`.
+
 **Follow-ups for a future agent (this gold already includes completeness + location + plan-recall voice):**
 - [x] Completeness: unused Etherei facts still missing from lists when present in notes
 - [x] Location: edit seat + draft-timeline seats

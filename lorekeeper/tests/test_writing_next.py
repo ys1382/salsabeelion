@@ -95,6 +95,18 @@ class WritingNextDetectionTests(unittest.TestCase):
         self.assertEqual(span["kind"], "named_span")
         self.assertIn("warren", span["end"].lower())
 
+    def test_planned_from_leave_off_until_named_pov_is_writing_next(self):
+        q = (
+            "In Ashford Saga, what do I have planned from where I leave off "
+            "until the warren underground POV?"
+        )
+        self.assertTrue(is_writing_next_span_question(q))
+        self.assertEqual(route_question(q), "writing_next")
+        span = extract_writing_next_span(q)
+        self.assertIsNotNone(span)
+        self.assertEqual(span["kind"], "named_span")
+        self.assertIn("warren", span["end"].lower())
+
     def test_topic_for_chase(self):
         q = "In Smoke and Mirrors, task list for the chase scene"
         self.assertEqual(extract_writing_next_topic(q).lower(), "the chase scene")
@@ -1736,6 +1748,69 @@ class WritingNextGeneralPathTests(unittest.TestCase):
         self.assertNotIn("fence post", answer.lower())
         self.assertNotIn("predator court", answer.lower())
         self.assertIn("warren", answer.lower())
+
+    def test_leave_off_to_named_pov_lists_full_window(self):
+        dump = (
+            "PURPLE LANTERN PARADE walked the entire orchard twice. "
+            "Character E was in the wolf's grasp, being carried down the path."
+        )
+        stretch_note = (
+            "When he stops for the night, it will be clear the wolf had this "
+            "stop planned.\n"
+            "He keeps his mouth shut and will not speak on the journey.\n"
+            "Still need to write the warren underground POV: a moss-stair "
+            "descent and the first glow-beetle in the tunnels."
+        )
+        entries = [
+            self._ashford("n_stretch", "Next stretch", stretch_note),
+            self._ashford(
+                "n_bind",
+                "Overnight",
+                "When he stops for the night he firmly binds Character E's "
+                "injuries — along with his limbs so Character E cannot run off.",
+            ),
+            self._ashford(
+                "n_court",
+                "Court",
+                "Character D resents Character T for skipping Predator Court duties.",
+            ),
+            self._ashford(
+                "n_guest",
+                "Arrival",
+                "Upon arrival at the manor, Character E is treated as a guest "
+                "rather than a prisoner.",
+            ),
+            self._ashford(
+                "n_chase",
+                "Chase",
+                "Find a way to write the chase swiftly but not hastily "
+                "when the wolf shows up.",
+            ),
+            self._ashford("d1", "Main draft", dump, kind="document"),
+        ]
+        questions = (
+            "In Ashford Saga, what do I have planned between the place where I "
+            "leave off in the main draft and the warren underground POV?",
+            "In Ashford Saga, what happens between where I left off in the "
+            "main draft and the warren underground scene?",
+            "In Ashford Saga, what do I have planned from where I leave off "
+            "until the warren underground POV?",
+        )
+        for q in questions:
+            res = recall_from_user_data(
+                q, {"lorekeeper_entries_v1": json.dumps(entries)}
+            )
+            answer = (res.get("answer") or "").lower()
+            self.assertEqual(res.get("questionKind"), "writing_next", msg=q)
+            self.assertIn("stop planned", answer, msg=q)
+            self.assertIn("mouth shut", answer, msg=q)
+            self.assertIn("warren", answer, msg=q)
+            self.assertIn("injur", answer, msg=q)
+            self.assertNotIn("purple lantern parade", answer, msg=q)
+            self.assertNotIn("fence post", answer, msg=q)
+            self.assertNotIn("predator court", answer, msg=q)
+            self.assertNotIn("treated as a guest", answer, msg=q)
+            self.assertNotIn("swift", answer, msg=q)
 
     def test_other_work_whole_list(self):
         entries = [

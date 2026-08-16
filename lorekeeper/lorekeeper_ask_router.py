@@ -31,7 +31,7 @@ GOLD FAMILIES (question → answer shape; never copy a gold's story facts):
 - who_is — "Who is [name]?" → short identity card. Not a plot dump.
 - story_resume — "Where did I leave off in the main draft?" → short recap of NOW in the draft. Only when the whole question is about current draft position.
 - catchup_gather — "Get me caught up with this story" → orientation of what exists so far. Not a novel rewrite.
-- writing_next — "Give me the task list for [character]" OR "task list for what happens between [beat A] and [beat B]" OR "What do I have planned between where I leave off and [named beat]?" → short planned beats from notes, in that window only. Never the whole draft.
+- writing_next — "Give me the task list for [character]" OR "task list for what happens between [beat A] and [beat B]" OR "What do I have planned between where I leave off and [named beat]?" → ALL unused planned beats from notes in that window (not only the named end beat). Never the whole draft.
 - notes_not_in_draft — "What's in my notes but not in the main document?" → unused note lines.
 
 CRITICAL — story_resume vs writing_next stretch:
@@ -43,7 +43,7 @@ Routing guide:
 - summarize_story: plot, scenes, motivation, "what happens" (not between two beats), "what would make"
 - character_portrait: "what kind of person", personality, traits, portrait of a named character or role
 - story_resume: leave-off / current draft position only (see gold family above)
-- writing_next: planned beats / task list / between-two-points stretch (see gold family above)
+- writing_next: planned beats / task list / between-two-points stretch (see gold family above). For leave-off → named beat, list every unused planned beat in the window, not only the named end.
 - catchup_gather: catch me up / what have I got so far
 - who_is: ONLY when the question literally asks "who is [name]" — identity lookup, not personality
 - NEVER who_is for: "what is [name]", "what kind of person", "what is X like", "what would motivate"
