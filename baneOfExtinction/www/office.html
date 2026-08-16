@@ -110,6 +110,10 @@
             <input type="checkbox" id="flagSignups" checked />
             <span><strong>New sign-ups</strong> — allow creating accounts (sign-in still works)</span>
           </label>
+          <label class="switch">
+            <input type="checkbox" id="flagLogicGrid" />
+            <span><strong>Logic grid for players</strong> — same game you play now. Off = owner only.</span>
+          </label>
           <button type="button" class="btn primary" id="saveSettingsBtn" style="margin-top:0.75rem">Save switches</button>
           <p class="status" id="settingsStatus" aria-live="polite"></p>
         </div>
@@ -196,6 +200,9 @@
             document.getElementById("flagSignups").checked = !!(
               res.settings && res.settings.signupsEnabled
             );
+            document.getElementById("flagLogicGrid").checked = !!(
+              res.settings && res.settings.logicGridPublic
+            );
           });
       }
 
@@ -207,7 +214,10 @@
           credentials: "include",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            flags: { signupsEnabled: document.getElementById("flagSignups").checked },
+            flags: {
+              signupsEnabled: document.getElementById("flagSignups").checked,
+              logicGridPublic: document.getElementById("flagLogicGrid").checked,
+            },
           }),
         })
           .then(function (res) {
@@ -237,6 +247,6 @@
         });
     })();
   </script>
-  <script src="bane-owner-tabs.js?v=grid1"></script>
+  <script src="bane-owner-tabs.js?v=grid2"></script>
 </body>
 </html>

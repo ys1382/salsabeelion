@@ -224,13 +224,21 @@ After the still “freezes” on the codex card:
 
 Owner pins from chat go here.
 
+### 2026-08-16 — logic grid from the wildlife codex
+
+Early boards use **learned neighbors** (generated stills + facts, never camera photos). Clues teach facts the player has **not** already received; solving adds them to the fact book. Fewer than four distinct learned species (or a dry fact well) nudges **safe** EcoLens scans — plants, bugs, rocks, empty shells, calm shared-space wildlife; not crowding animals that bite. Far-neighbor boards (snow leopard and friends) unlock after one codex puzzle. Owner always has the tab; **Logic grid for players** in Owner’s Office turns on the same game for everyone.
+
+- [x] Codex boards compiled from unused facts + stills (`grid-example.html` + `/api/logic-grid-puzzle`)
+- [x] Scan-more gate (4 distinct learned species); far neighbors after 1 codex solve
+- [x] Owner-only until Office switch `logicGridPublic` — flipping it ships this version, not a stub
+
 ### 2026-08-15 — far-neighbor logic grid (owner example)
 
 Profile Perfect–style grid + clue list, used to teach real facts about species people rarely meet up close (keystones, endangered, deep sea, dangerous). Side-types are a pool (location, threat, prey/predator, offspring, wild count as locked bands) — not every type on every board. Clues stay readable until the player strikes them (one pen line; drop to bottom). Board does not auto-fill the other sides (species stays blank until the player marks it).
 
 - [x] Owner-only first example live (`grid-example.html`) — own **Logic grid** tab; classic L-grid so clues can mark between location and prey (not only on a species row)
 - [x] Double-tap lock auto-Xs the rest of that row and column in the **same** little square only
-- [ ] Later: more boards / side mixes; player-facing only when owner asks
+- [x] Later boards: far-neighbor set kept as the post-codex unlock (2026-08-16)
 
 ### 2026-07-24 — walk / buddy / learned VR trail (call this up in a new agent)
 

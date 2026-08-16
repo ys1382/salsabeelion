@@ -49,6 +49,7 @@ rsync_cmd "$ROOT/top/_shared/serve_static_https.py" "$ROOT/top/_shared/kids-watc
 rsync_cmd "$ROOT/top/_shared/oddtrove_sso.py" "$HOST:~/$REMOTE_BASE/_shared/oddtrove_sso.py"
 rsync_cmd "$ROOT/baneOfExtinction/www/" "$HOST:~/$REMOTE_BASE/bane-of-extinction/"
 rsync_cmd "$ROOT/baneOfExtinction/bane_api.py" "$HOST:~/$REMOTE_BASE/bane-server/bane_api.py"
+rsync_cmd "$ROOT/baneOfExtinction/bane_logic_grid.py" "$HOST:~/$REMOTE_BASE/bane-server/bane_logic_grid.py"
 mkdir -p "$ROOT/baneOfExtinction/data"
 ssh_cmd "$HOST" "mkdir -p ~/$REMOTE_BASE/bane-server/data"
 rsync_cmd "$ROOT/baneOfExtinction/data/" "$HOST:~/$REMOTE_BASE/bane-server/data/"

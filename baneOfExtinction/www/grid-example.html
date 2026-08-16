@@ -111,6 +111,7 @@
       box-sizing: border-box;
       display: flex;
       align-items: center;
+      gap: 0.35rem;
       min-width: 7.8rem;
       min-height: 2.35rem;
       height: auto;
@@ -119,6 +120,17 @@
       font-size: 0.78rem;
       font-weight: 500;
       border-top: 1px solid var(--line);
+    }
+    .row-head .names span em {
+      font-style: normal;
+      font-weight: 500;
+    }
+    .grid-still {
+      width: 1.7rem;
+      height: 1.7rem;
+      object-fit: cover;
+      border-radius: 4px;
+      flex: 0 0 auto;
     }
     .row-head .names span:first-child { border-top: 0; }
     table.sub {
@@ -189,6 +201,27 @@
       gap: 0.65rem;
       margin: 0 0 0.75rem;
     }
+    .board-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.65rem;
+      align-items: center;
+      margin: 0 0 1rem;
+    }
+    .board-bar .hint {
+      flex: 1 1 12rem;
+      margin: 0;
+      font-family: system-ui, sans-serif;
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+    .loading-note, .need-more {
+      font-family: system-ui, sans-serif;
+      font-size: 0.95rem;
+      line-height: 1.45;
+      color: var(--ink);
+      margin: 0 0 1rem;
+    }
   </style>
 </head>
 <body>
@@ -204,20 +237,37 @@
     <header class="hero hero--compact">
       <h1 class="brand">Logic grid</h1>
       <p class="tagline">
-        Owner-only draft. Species most people never stand next to — still keystones, still threatened.
-        Matching teaches why they still touch a world you live in.
+        Puzzles from neighbors you’ve already learned — generated stills and facts, never the camera photo.
+        New facts you have not seen yet. Scan more safe wildlife to unlock the next board.
+        Far neighbors (snow leopard and friends) come later.
       </p>
     </header>
 
     <div id="denied" class="note" hidden role="alert">
-      This page is only for the site owner.
+      This page is only for the site owner until Logic grid is switched on for players.
+    </div>
+
+    <div id="boardBar" class="board-bar" hidden>
+      <button type="button" class="btn primary" id="codexBtn">Your neighbors</button>
+      <button type="button" class="btn secondary" id="farBtn">Far neighbors</button>
+      <p class="hint" id="farNote"></p>
+    </div>
+
+    <div id="loading" class="loading-note" hidden>Building a puzzle from your wildlife codex…</div>
+
+    <div id="needMore" hidden>
+      <p class="need-more" id="needMoreText"></p>
+      <p>
+        <a class="btn primary" href="wildlife-scan.html">Open EcoLens</a>
+        <a class="btn secondary" href="codex.html">Wildlife codex</a>
+      </p>
     </div>
 
     <div id="puzzle" hidden>
       <p class="how">
         The board is an L: every pair of different lists meets in one square. Blank space is not a square — a list does not meet itself.
         A “did not” is an X where those two labels meet.
-        A clue that ties two traits (kelp coast and oil spills) is marked where those two meet — you may not know the species yet.
+        A clue that ties two traits is marked where those two meet — you may not know the species yet.
         Tap a cell for a red X, tap again to clear.
         Double-tap to lock a match (green circle). The rest of that row and column in the same little square get red Xs.
         Other little squares stay as you left them — a lock on prey × place does not fill the species list.
@@ -232,339 +282,14 @@
       <div class="grid-actions">
         <button type="button" class="btn primary" id="checkBtn">Check matches</button>
         <button type="button" class="btn secondary" id="resetBtn">Reset board</button>
+        <button type="button" class="btn secondary" id="newBoardBtn">New board</button>
       </div>
       <p class="status" id="checkStatus" aria-live="polite"></p>
     </div>
   </div>
-  <script>
-    (function () {
-      var CATS = {
-        species: {
-          title: "Species",
-          items: ["Snow leopard", "Sea otter", "Tube worm", "Polar bear"]
-        },
-        where: {
-          title: "Where they live",
-          items: ["High mountains", "Kelp coast", "Deep-sea vents", "Arctic sea ice"],
-          short: ["Mountains", "Kelp coast", "Vents", "Sea ice"]
-        },
-        threat: {
-          title: "What threatens them",
-          items: ["Poaching", "Oil spills", "Seafloor mining", "Sea-ice loss"],
-          short: ["Poaching", "Oil spills", "Mining", "Ice loss"]
-        },
-        prey: {
-          title: "What they eat",
-          items: ["Blue sheep", "Sea urchins", "Vent bacteria", "Seals"],
-          short: ["Blue sheep", "Urchins", "Vent bacteria", "Seals"]
-        }
-      };
-      var N = 4;
-      var CAT_ORDER = ["species", "where", "threat", "prey"];
-      var COL_GROUPS = ["prey", "threat", "where"];
-      var ROW_GROUPS = ["species", "where", "threat"];
-      var PAIR_IDS = [
-        "species|where",
-        "species|threat",
-        "species|prey",
-        "where|threat",
-        "where|prey",
-        "threat|prey"
-      ];
-      var CLUES = [
-        "The snow leopard is not threatened by oil spills.",
-        "The mountain animal hunts blue sheep.",
-        "Neither the snow leopard nor the sea otter lives at deep-sea vents.",
-        "Oil spills hit the kelp-coast animal hardest of these four.",
-        "The tube worm does not live on Arctic sea ice.",
-        "Seafloor mining threatens the vent animal.",
-        "The kelp-coast animal eats sea urchins.",
-        "Neither seafloor mining nor oil spills threaten the polar bear.",
-        "The vent animal lives off bacteria.",
-        "Neither the tube worm nor the polar bear is threatened by poaching.",
-        "The snow leopard does not live on Arctic sea ice."
-      ];
-
-      var state = {};
-      var clueUsed = [];
-      var usedOrder = [];
-      var clickTimers = {};
-
-      function hasSubgrid(rowCat, colCat) {
-        return CAT_ORDER.indexOf(rowCat) < CAT_ORDER.indexOf(colCat);
-      }
-
-      function cellKey(catA, iA, catB, iB) {
-        if (catA < catB) return catA + ":" + iA + "|" + catB + ":" + iB;
-        return catB + ":" + iB + "|" + catA + ":" + iA;
-      }
-
-      function uniquenessX(rowCat, colCat, ri, ci) {
-        var j, i;
-        for (j = 0; j < N; j++) {
-          if (j !== ci && (state[cellKey(rowCat, ri, colCat, j)] || "") === "yes") return true;
-        }
-        for (i = 0; i < N; i++) {
-          if (i !== ri && (state[cellKey(rowCat, i, colCat, ci)] || "") === "yes") return true;
-        }
-        return false;
-      }
-
-      function displayMark(rowCat, colCat, ri, ci) {
-        var user = state[cellKey(rowCat, ri, colCat, ci)] || "";
-        if (user === "yes") return "yes";
-        if (user === "x") return "x";
-        if (uniquenessX(rowCat, colCat, ri, ci)) return "x";
-        return "";
-      }
-
-      function toggleX(rowCat, colCat, ri, ci) {
-        var key = cellKey(rowCat, ri, colCat, ci);
-        var cur = state[key] || "";
-        if (cur === "yes") {
-          state[key] = "";
-          return;
-        }
-        if (cur === "x") {
-          state[key] = "";
-          return;
-        }
-        if (uniquenessX(rowCat, colCat, ri, ci)) return;
-        state[key] = "x";
-      }
-
-      function lockMatch(rowCat, colCat, ri, ci) {
-        var key = cellKey(rowCat, ri, colCat, ci);
-        var j, i, other;
-        if ((state[key] || "") === "yes") {
-          state[key] = "";
-          return;
-        }
-        for (j = 0; j < N; j++) {
-          if (j === ci) continue;
-          other = cellKey(rowCat, ri, colCat, j);
-          if ((state[other] || "") === "yes") state[other] = "";
-        }
-        for (i = 0; i < N; i++) {
-          if (i === ri) continue;
-          other = cellKey(rowCat, i, colCat, ci);
-          if ((state[other] || "") === "yes") state[other] = "";
-        }
-        state[key] = "yes";
-      }
-
-      function markLabel(mark) {
-        if (mark === "x") return "×";
-        if (mark === "yes") return "●";
-        return "";
-      }
-
-      function colHead(id) {
-        var box = document.createElement("div");
-        box.className = "col-head";
-        var lab = document.createElement("div");
-        lab.className = "cat-lab";
-        lab.textContent = CATS[id].title;
-        box.appendChild(lab);
-        var labs = document.createElement("div");
-        labs.className = "col-labs";
-        var shorts = CATS[id].short || CATS[id].items;
-        shorts.forEach(function (name, i) {
-          var span = document.createElement("span");
-          span.textContent = name;
-          span.title = CATS[id].items[i];
-          labs.appendChild(span);
-        });
-        box.appendChild(labs);
-        return box;
-      }
-
-      function rowHead(id) {
-        var box = document.createElement("div");
-        box.className = "row-head";
-        var lab = document.createElement("div");
-        lab.className = "cat-lab";
-        lab.textContent = CATS[id].title;
-        box.appendChild(lab);
-        var names = document.createElement("div");
-        names.className = "names";
-        CATS[id].items.forEach(function (name) {
-          var span = document.createElement("span");
-          span.textContent = name;
-          names.appendChild(span);
-        });
-        box.appendChild(names);
-        return box;
-      }
-
-      function subgridTable(rowCat, colCat) {
-        var table = document.createElement("table");
-        table.className = "sub";
-        CATS[rowCat].items.forEach(function (rowName, ri) {
-          var tr = document.createElement("tr");
-          CATS[colCat].items.forEach(function (colName, ci) {
-            var td = document.createElement("td");
-            var mark = displayMark(rowCat, colCat, ri, ci);
-            var btn = document.createElement("button");
-            btn.type = "button";
-            btn.className = "cell-btn" + (mark ? " is-" + mark : "");
-            btn.textContent = markLabel(mark);
-            btn.setAttribute(
-              "aria-label",
-              rowName + " × " + colName +
-                (mark === "x" ? ", crossed out" : mark === "yes" ? ", locked match" : ", empty")
-            );
-            btn.addEventListener("click", function () {
-              var key = cellKey(rowCat, ri, colCat, ci);
-              if (clickTimers[key]) {
-                clearTimeout(clickTimers[key]);
-                delete clickTimers[key];
-                return;
-              }
-              clickTimers[key] = setTimeout(function () {
-                delete clickTimers[key];
-                toggleX(rowCat, colCat, ri, ci);
-                renderBoards();
-              }, 280);
-            });
-            btn.addEventListener("dblclick", function (e) {
-              e.preventDefault();
-              var key = cellKey(rowCat, ri, colCat, ci);
-              if (clickTimers[key]) {
-                clearTimeout(clickTimers[key]);
-                delete clickTimers[key];
-              }
-              lockMatch(rowCat, colCat, ri, ci);
-              renderBoards();
-            });
-            td.appendChild(btn);
-            tr.appendChild(td);
-          });
-          table.appendChild(tr);
-        });
-        return table;
-      }
-
-      function renderBoards() {
-        var host = document.getElementById("boards");
-        host.innerHTML = "";
-        var wrap = document.createElement("div");
-        wrap.className = "logic-l";
-        wrap.appendChild(document.createElement("div"));
-        COL_GROUPS.forEach(function (id) {
-          wrap.appendChild(colHead(id));
-        });
-        ROW_GROUPS.forEach(function (rowCat) {
-          wrap.appendChild(rowHead(rowCat));
-          COL_GROUPS.forEach(function (colCat) {
-            if (!hasSubgrid(rowCat, colCat)) {
-              var skip = document.createElement("div");
-              skip.className = "logic-l__skip";
-              skip.setAttribute("aria-hidden", "true");
-              wrap.appendChild(skip);
-              return;
-            }
-            wrap.appendChild(subgridTable(rowCat, colCat));
-          });
-        });
-        host.appendChild(wrap);
-      }
-
-      function renderClues() {
-        var list = document.getElementById("clueList");
-        list.innerHTML = "";
-        var order = [];
-        CLUES.forEach(function (_c, i) {
-          if (!clueUsed[i]) order.push(i);
-        });
-        usedOrder.forEach(function (i) {
-          order.push(i);
-        });
-        order.forEach(function (i) {
-          var li = document.createElement("li");
-          var btn = document.createElement("button");
-          btn.type = "button";
-          btn.className = "clue-btn" + (clueUsed[i] ? " is-used" : "");
-          btn.textContent = CLUES[i];
-          btn.addEventListener("click", function () {
-            if (!clueUsed[i]) {
-              clueUsed[i] = true;
-              usedOrder.push(i);
-            } else {
-              clueUsed[i] = false;
-              usedOrder = usedOrder.filter(function (x) { return x !== i; });
-            }
-            renderClues();
-          });
-          li.appendChild(btn);
-          list.appendChild(li);
-        });
-      }
-
-      function checkBoard() {
-        var status = document.getElementById("checkStatus");
-        var missing = false;
-        var wrong = false;
-        PAIR_IDS.forEach(function (pid) {
-          var parts = pid.split("|");
-          var a = parts[0];
-          var b = parts[1];
-          for (var i = 0; i < N; i++) {
-            var yesAt = -1;
-            var yesCount = 0;
-            for (var j = 0; j < N; j++) {
-              if ((state[cellKey(a, i, b, j)] || "") === "yes") {
-                yesCount += 1;
-                yesAt = j;
-              }
-            }
-            if (yesCount !== 1) missing = true;
-            else if (yesAt !== i) wrong = true;
-          }
-        });
-        if (wrong) {
-          status.textContent = "Some locked matches are not right. A two-sided clue is marked where those two labels meet — then you still have to carry it to the other little squares yourself.";
-          return;
-        }
-        if (missing) {
-          status.textContent = "Lock one match in each little square of the L (the green dot), then check again.";
-          return;
-        }
-        status.textContent =
-          "That’s the set. Snow leopard, sea otter, vent tube worm, polar bear — far from a garden path, still holding up food webs, coasts, and ice you live with.";
-      }
-
-      document.getElementById("checkBtn").addEventListener("click", checkBoard);
-      document.getElementById("resetBtn").addEventListener("click", function () {
-        Object.keys(clickTimers).forEach(function (k) {
-          clearTimeout(clickTimers[k]);
-        });
-        clickTimers = {};
-        state = {};
-        clueUsed = CLUES.map(function () { return false; });
-        usedOrder = [];
-        document.getElementById("checkStatus").textContent = "";
-        renderBoards();
-        renderClues();
-      });
-
-      fetch("/bane-of-extinction/api/auth/me", { credentials: "include" })
-        .then(function (res) { return res.json(); })
-        .then(function (data) {
-          if (!(data && data.signedIn && data.isOwner)) {
-            document.getElementById("denied").hidden = false;
-            return;
-          }
-          clueUsed = CLUES.map(function () { return false; });
-          renderBoards();
-          renderClues();
-          document.getElementById("puzzle").hidden = false;
-        })
-        .catch(function () {
-          document.getElementById("denied").hidden = false;
-        });
-    })();
-  </script>
-  <script src="bane-owner-tabs.js?v=grid1"></script>
+  <script src="bane-codex-facts.js?v=live1"></script>
+  <script src="bane-codex-collection.js?v=sync1"></script>
+  <script src="bane-logic-grid.js?v=grid2"></script>
+  <script src="bane-owner-tabs.js?v=grid2"></script>
 </body>
 </html>

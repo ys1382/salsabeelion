@@ -1,5 +1,5 @@
 /**
- * Owner-only extra tab: Logic grid. Hidden for everyone else.
+ * Logic grid tab. Hidden until the player is allowed (owner, or Office switch on).
  */
 (function (global) {
   var nav = global.document.querySelector("nav.site-tabs");
@@ -26,7 +26,7 @@
       return res.json();
     })
     .then(function (data) {
-      if (data && data.signedIn && data.isOwner) tab.hidden = false;
+      if (data && data.signedIn && data.logicGridEnabled) tab.hidden = false;
     })
     .catch(function () {});
 })(typeof window !== "undefined" ? window : this);

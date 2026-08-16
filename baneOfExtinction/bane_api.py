@@ -6,6 +6,8 @@ Bane of Extinction — public quiet beta API (Google sign-in required for play).
                                   (one shared still per species+life-stage; rescans reuse)
 - POST /api/callouts           — Claude helper facts + native range / conservation status
                                   (optional looking-at place lens; focus modes; no GPS)
+- POST /api/logic-grid-puzzle  — codex-based logic grid (new unused facts) or far-neighbor board
+                                  (owner-only until Owner’s Office logicGridPublic)
 - GET  /api/auth/me            — Odd Trove Google SSO + BoE account row (isOwner)
 - GET/PUT /api/learned         — wildlife learns + fact book synced to signed-in Google account
 - POST /api/feedback/submit    — private tip to owner (signed-in)
@@ -38,6 +40,12 @@ import urllib.request
 from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeoutError
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any
+
+from bane_logic_grid import (
+    compile_far_neighbor_puzzle,
+    compile_logic_grid_from_rows,
+    known_fact_hit,
+)
 
 # Shared Odd Trove SSO (oddtrove_sso.py) — kids-sites/_shared or repo top/_shared.
 _HERE = os.path.dirname(os.path.abspath(__file__))
@@ -102,7 +110,8 @@ OWNER_EMAIL = (
     or os.environ.get("HALALIT_OWNER_EMAIL")
     or "nightofhonour@gmail.com"
 ).strip().lower()
-_DEFAULT_SETTINGS = {"signupsEnabled": True}
+_DEFAULT_SETTINGS = {"signupsEnabled": True, "logicGridPublic": False}
+MIN_LOGIC_GRID_SPECIES = 4
 _accounts_lock = threading.Lock()
 MAX_FEEDBACK_CHARS = 2000
 MAX_FEEDBACK_KEEP = 200
@@ -1205,6 +1214,27 @@ def _save_accounts_store(store: dict[str, Any]) -> None:
     os.replace(tmp, path)
 
 
+def _logic_grid_flags(settings: dict[str, Any] | None, is_owner: bool) -> dict[str, bool]:
+    public = bool((settings or {}).get("logicGridPublic"))
+    return {
+        "logicGridPublic": public,
+        "logicGridEnabled": bool(is_owner or public),
+    }
+
+
+def _require_logic_grid(handler: BaseHTTPRequestHandler) -> tuple[int, dict[str, Any]]:
+    code, payload = _session_player(handler)
+    if code != 200 or not payload.get("signedIn"):
+        return code, payload
+    if not payload.get("logicGridEnabled"):
+        return 403, {
+            "ok": False,
+            "error": "logic_grid_closed",
+            "message": "Logic grid is still an owner draft.",
+        }
+    return 200, payload
+
+
 def _ensure_account_from_sso(
     email: str, google_sub: str = ""
 ) -> tuple[int, dict[str, Any]]:
@@ -1228,12 +1258,15 @@ def _ensure_account_from_sso(
             if _is_owner_email(email_n):
                 existing["is_owner"] = True
             _save_accounts_store(store)
+            is_owner = _is_owner_email(email_n)
+            flags = _logic_grid_flags(settings, is_owner)
             return 200, {
                 "ok": True,
                 "signedIn": True,
                 "email": email_n,
-                "isOwner": _is_owner_email(email_n),
+                "isOwner": is_owner,
                 "googleSub": existing.get("google_sub") or sub,
+                **flags,
             }
         for u in users.values():
             if isinstance(u, dict) and sub and (u.get("google_sub") or "") == sub:
@@ -1259,12 +1292,15 @@ def _ensure_account_from_sso(
             "is_owner": _is_owner_email(email_n),
         }
         _save_accounts_store(store)
+        is_owner = _is_owner_email(email_n)
+        flags = _logic_grid_flags(settings, is_owner)
         return 200, {
             "ok": True,
             "signedIn": True,
             "email": email_n,
-            "isOwner": _is_owner_email(email_n),
+            "isOwner": is_owner,
             "googleSub": sub,
+            **flags,
         }
 
 
@@ -4314,6 +4350,204 @@ def _fallback_place_status(
     return local[:160], compare[:200]
 
 
+LOGIC_GRID_SYSTEM = (
+    "You write comparable attributes for a family-friendly logic-grid puzzle in "
+    "Bane of Extinction. The player already learned these organisms into their wildlife "
+    "codex. Do NOT use or mention camera photos. Use real facts only. "
+    "Never invent IUCN ranks. Never encourage crowding unsafe wildlife. "
+    "Return ONLY JSON."
+)
+
+
+def build_codex_logic_grid(
+    species: list[dict[str, Any]],
+    known_facts: list[str],
+) -> dict[str, Any]:
+    """Claude attributes + unique-solution compiler. No photos in, no photos out."""
+    cleaned: list[dict[str, str]] = []
+    for raw in species[:8]:
+        if not isinstance(raw, dict):
+            continue
+        name = str(raw.get("commonName") or raw.get("displayName") or "").strip()[:120]
+        if not name:
+            continue
+        cleaned.append(
+            {
+                "speciesKey": str(raw.get("speciesKey") or "")[:100],
+                "commonName": name,
+                "latinName": str(raw.get("latinName") or "").strip()[:160],
+                "organismType": str(raw.get("organismType") or "other").strip()[:40],
+                "lifeStage": str(raw.get("lifeStage") or "").strip()[:40],
+            }
+        )
+    if len(cleaned) < MIN_LOGIC_GRID_SPECIES:
+        return {
+            "ok": True,
+            "needMore": True,
+            "minSpecies": MIN_LOGIC_GRID_SPECIES,
+            "haveSpecies": len(cleaned),
+            "message": (
+                "Learn %s more safe neighbors with EcoLens to unlock a logic grid — "
+                "plants, bugs, rocks, empty shells, and calm wildlife you already share "
+                "space with. Do not crowd animals that can bite or surprise you."
+                % max(0, MIN_LOGIC_GRID_SPECIES - len(cleaned))
+            ),
+        }
+    cleaned = cleaned[:MIN_LOGIC_GRID_SPECIES]
+    known = [
+        _clip_plain(str(x), MAX_FACT_CHARS) for x in (known_facts or []) if str(x).strip()
+    ][:80]
+    roster = []
+    for row in cleaned:
+        roster.append(
+            {
+                "speciesKey": row["speciesKey"],
+                "commonName": row["commonName"],
+                "latinName": row["latinName"],
+                "organismType": row["organismType"],
+                "lifeStage": row["lifeStage"],
+            }
+        )
+    user = (
+        "Build one 4-species logic grid from THIS roster (use these names, in this order):\n"
+        + json.dumps(roster, ensure_ascii=False)
+        + "\n\nFacts the player already received (do NOT repeat, even paraphrased):\n"
+        + json.dumps(known[:40], ensure_ascii=False)
+        + "\n\nPick 3 categories that CONTRAST across these four. Prefer backyard/"
+        "neighborhood axes when they are local finds: where you'd notice them; who visits "
+        "them or what they eat; where they first come from; or a nearby trouble "
+        "(drought, pruning, cats, pavement heat) — not oil spills or seafloor mining "
+        "unless it truly fits this set. "
+        "If the mix includes rock/object/plant/animal, pick axes that still distinguish them.\n"
+        "Each value must be unique within its category, 2–5 words, grid-label short.\n"
+        "For EACH organism write exactly one NEW fact (1–2 complete sentences) that teaches "
+        "the grid attribute and is not in the avoid list.\n"
+        "Phrases: eq is 'The {species} … {item}.' neq is the negative. Keep {species} and {item} as those tokens.\n"
+        "JSON shape:\n"
+        + json.dumps(
+            {
+                "categories": [
+                    {
+                        "id": "where",
+                        "title": "Where you'd notice them",
+                        "eq": "The {species} is found at {item}.",
+                        "neq": "The {species} is not found at {item}.",
+                    },
+                    {
+                        "id": "trait",
+                        "title": "Who visits or what they eat",
+                        "eq": "The {species} is tied to {item}.",
+                        "neq": "The {species} is not tied to {item}.",
+                    },
+                    {
+                        "id": "origin",
+                        "title": "Where they come from",
+                        "eq": "The {species} comes from {item}.",
+                        "neq": "The {species} does not come from {item}.",
+                    },
+                ],
+                "rows": [
+                    {
+                        "speciesKey": "must match roster",
+                        "commonName": "must match roster",
+                        "latinName": "",
+                        "values": {
+                            "where": "short unique label",
+                            "trait": "short unique label",
+                            "origin": "short unique label",
+                        },
+                        "newFact": {
+                            "fact": "1-2 complete sentences of a NEW fact",
+                            "kind": "notice|help|wonder",
+                            "label": "short label",
+                        },
+                    }
+                ],
+            }
+        )
+    )
+    try:
+        raw_text = _call_claude_text(LOGIC_GRID_SYSTEM, user, max_tokens=1800)
+        parsed = _extract_json_object(raw_text)
+    except Exception as exc:  # noqa: BLE001
+        return {
+            "ok": False,
+            "error": "puzzle_unavailable",
+            "message": "Could not build a neighbor puzzle right now. Try again in a moment.",
+            "detail": type(exc).__name__,
+        }
+    cats_raw = parsed.get("categories") or []
+    rows_raw = parsed.get("rows") or []
+    if not isinstance(cats_raw, list) or not isinstance(rows_raw, list):
+        return {
+            "ok": False,
+            "error": "puzzle_shape",
+            "message": "The puzzle writer returned a broken board. Try again.",
+        }
+    aligned: list[dict[str, Any]] = []
+    for want in cleaned:
+        match = None
+        for row in rows_raw:
+            if not isinstance(row, dict):
+                continue
+            key = str(row.get("speciesKey") or "").strip()
+            name = str(row.get("commonName") or "").strip().lower()
+            if key and key == want["speciesKey"]:
+                match = row
+                break
+            if name and name == want["commonName"].lower():
+                match = row
+                break
+        if not match:
+            return {
+                "ok": False,
+                "error": "puzzle_roster",
+                "message": "The puzzle did not stick to your learned neighbors. Try again.",
+            }
+        fact = match.get("newFact") if isinstance(match.get("newFact"), dict) else {}
+        fact_text = str(fact.get("fact") or "").strip()
+        if not fact_text or known_fact_hit(fact_text, known):
+            return {
+                "ok": False,
+                "error": "puzzle_old_facts",
+                "message": "That board reused facts you already have. Scan a new neighbor or try again.",
+            }
+        aligned.append(
+            {
+                "speciesKey": want["speciesKey"],
+                "commonName": want["commonName"],
+                "latinName": want["latinName"] or str(match.get("latinName") or ""),
+                "values": match.get("values") if isinstance(match.get("values"), dict) else {},
+                "newFact": {
+                    "fact": fact_text,
+                    "kind": fact.get("kind") or "notice",
+                    "label": fact.get("label") or "",
+                },
+            }
+        )
+    try:
+        puzzle = compile_logic_grid_from_rows(aligned, cats_raw[:3])
+    except Exception as exc:  # noqa: BLE001
+        return {
+            "ok": False,
+            "error": "puzzle_compile",
+            "message": "Could not turn those facts into a solvable grid. Try again.",
+            "detail": type(exc).__name__,
+        }
+    keys = [r["speciesKey"] or r["commonName"] for r in cleaned]
+    puzzle["ok"] = True
+    puzzle["kind"] = "codex"
+    puzzle["needMore"] = False
+    puzzle["boardId"] = "codex:" + "|".join(sorted(k.lower() for k in keys if k))
+    puzzle["winNote"] = (
+        "That’s a set from your own wildlife codex. The new facts now belong in your fact book. "
+        "Scan more safe neighbors to unlock another board — later boards can reach far neighbors "
+        "like snow leopards."
+    )
+    puzzle["minSpecies"] = MIN_LOGIC_GRID_SPECIES
+    puzzle["haveSpecies"] = len(cleaned)
+    return puzzle
+
 
 class Handler(BaseHTTPRequestHandler):
     def log_message(self, fmt: str, *args: Any) -> None:
@@ -4401,7 +4635,8 @@ class Handler(BaseHTTPRequestHandler):
                     "accounts": accounts,
                     "readerMessages": messages,
                     "settings": {
-                        "signupsEnabled": bool(settings.get("signupsEnabled", True))
+                        "signupsEnabled": bool(settings.get("signupsEnabled", True)),
+                        "logicGridPublic": bool(settings.get("logicGridPublic", False)),
                     },
                 },
             )
@@ -4483,9 +4718,12 @@ class Handler(BaseHTTPRequestHandler):
                 settings = store.setdefault("settings", dict(_DEFAULT_SETTINGS))
                 if "signupsEnabled" in flags:
                     settings["signupsEnabled"] = bool(flags.get("signupsEnabled"))
+                if "logicGridPublic" in flags:
+                    settings["logicGridPublic"] = bool(flags.get("logicGridPublic"))
                 _save_accounts_store(store)
                 out_settings = {
-                    "signupsEnabled": bool(settings.get("signupsEnabled", True))
+                    "signupsEnabled": bool(settings.get("signupsEnabled", True)),
+                    "logicGridPublic": bool(settings.get("logicGridPublic", False)),
                 }
             _json(self, 200, {"ok": True, "settings": out_settings})
             return
@@ -4737,6 +4975,52 @@ class Handler(BaseHTTPRequestHandler):
                 pool_refill=pool_refill,
             )
             _json(self, 200, result)
+            return
+
+        if path in ("/api/logic-grid-puzzle", "/logic-grid-puzzle"):
+            auth_code, auth_payload = _require_logic_grid(self)
+            if auth_code != 200:
+                _json(
+                    self,
+                    401 if auth_code == 401 else auth_code,
+                    {
+                        "ok": False,
+                        "error": auth_payload.get("error") or "sign_in_required",
+                        "message": auth_payload.get("message")
+                        or "Sign in with Google to play the logic grid.",
+                    },
+                )
+                return
+            board = str(body.get("board") or body.get("kind") or "codex").strip().lower()
+            if board in ("far", "far-neighbor", "later"):
+                try:
+                    puzzle = compile_far_neighbor_puzzle()
+                except Exception as exc:  # noqa: BLE001
+                    _json(
+                        self,
+                        502,
+                        {
+                            "ok": False,
+                            "error": "puzzle_compile",
+                            "message": "Could not load the far-neighbor board.",
+                            "detail": type(exc).__name__,
+                        },
+                    )
+                    return
+                puzzle["ok"] = True
+                puzzle["needMore"] = False
+                _json(self, 200, puzzle)
+                return
+            species_raw = body.get("species") or body.get("entries") or []
+            if not isinstance(species_raw, list):
+                species_raw = []
+            known_raw = body.get("knownFacts") or body.get("avoidFacts") or []
+            if not isinstance(known_raw, list):
+                known_raw = []
+            known_facts = [str(x) for x in known_raw if str(x).strip()]
+            result = build_codex_logic_grid(species_raw, known_facts)
+            code = 200 if result.get("ok") else 502
+            _json(self, code, result)
             return
 
         if path in ("/api/learned", "/api/learned/sync"):
