@@ -4419,7 +4419,11 @@ def build_codex_logic_grid(
         "(drought, pruning, cats, pavement heat) — not oil spills or seafloor mining "
         "unless it truly fits this set. "
         "If the mix includes rock/object/plant/animal, pick axes that still distinguish them.\n"
-        "Each value must be unique within its category, 2–5 words, grid-label short.\n"
+        "Board cells are tiny: also give each organism a cellName that is a SHORTENING of "
+        "its commonName (Star jasmine → Jasmine; Western fence lizard → Lizard). "
+        "Keep cellNames unique. Clues will use the full commonName.\n"
+        "Attribute VALUES may be 2–5 words for clues; also put a 1–2 word short list on each "
+        "category for the cells. No filler labels (No visitors, various, other, tied to).\n"
         "For EACH organism write exactly one NEW fact (1–2 complete sentences) that teaches "
         "the grid attribute and is not in the avoid list.\n"
         "Phrases: eq is 'The {species} … {item}.' neq is the negative. Keep {species} and {item} as those tokens.\n"
@@ -4450,11 +4454,12 @@ def build_codex_logic_grid(
                     {
                         "speciesKey": "must match roster",
                         "commonName": "must match roster",
+                        "cellName": "Jasmine",
                         "latinName": "",
                         "values": {
-                            "where": "short unique label",
-                            "trait": "short unique label",
-                            "origin": "short unique label",
+                            "where": "clue-length unique label",
+                            "trait": "clue-length unique label",
+                            "origin": "clue-length unique label",
                         },
                         "newFact": {
                             "fact": "1-2 complete sentences of a NEW fact",
@@ -4516,6 +4521,7 @@ def build_codex_logic_grid(
             {
                 "speciesKey": want["speciesKey"],
                 "commonName": want["commonName"],
+                "cellName": str(match.get("cellName") or match.get("shortName") or "").strip(),
                 "latinName": want["latinName"] or str(match.get("latinName") or ""),
                 "values": match.get("values") if isinstance(match.get("values"), dict) else {},
                 "newFact": {

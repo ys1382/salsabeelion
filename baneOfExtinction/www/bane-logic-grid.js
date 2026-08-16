@@ -244,8 +244,10 @@
     box.appendChild(lab);
     var names = global.document.createElement("div");
     names.className = "names";
-    cats()[id].items.forEach(function (name) {
+    cats()[id].items.forEach(function (name, i) {
+      var label = (cats()[id].short && cats()[id].short[i]) || name;
       var span = global.document.createElement("span");
+      span.title = name;
       if (id === "species") {
         var src = stillsByName[name] || stillsByName[name.toLowerCase()];
         if (src) {
@@ -257,7 +259,7 @@
         }
       }
       var t = global.document.createElement("em");
-      t.textContent = name;
+      t.textContent = label;
       span.appendChild(t);
       names.appendChild(span);
     });

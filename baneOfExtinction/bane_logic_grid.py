@@ -121,6 +121,59 @@ def _norm(text: str) -> str:
     return re.sub(r"\s+", " ", str(text or "").strip().lower())
 
 
+CELL_LIMIT = 14
+_DROP_LEADING = frozenset(
+    {
+        "star",
+        "common",
+        "western",
+        "eastern",
+        "northern",
+        "southern",
+        "giant",
+        "empty",
+        "california",
+        "pacific",
+        "atlantic",
+        "american",
+        "european",
+        "asian",
+        "african",
+        "native",
+        "wild",
+        "domestic",
+        "sweet",
+        "the",
+        "sea",
+        "snow",
+        "polar",
+        "desert",
+        "mountain",
+        "house",
+    }
+)
+_GENERIC_CELL = frozenset(
+    {
+        "plant",
+        "animal",
+        "species",
+        "organism",
+        "unknown",
+        "other",
+        "neighbor",
+        "thing",
+        "object",
+        "visitor",
+        "visitors",
+        "none",
+        "various",
+        "n/a",
+        "no visitors",
+        "tied to",
+    }
+)
+
+
 def _shorten(text: str, limit: int = 18) -> str:
     s = re.sub(r"\s+", " ", str(text or "").strip())
     if len(s) <= limit:
@@ -130,6 +183,76 @@ def _shorten(text: str, limit: int = 18) -> str:
     if sp >= 8:
         cut = cut[:sp]
     return cut.rstrip(" ,;:—-") + "…"
+
+
+def _pretty_cell(text: str) -> str:
+    s = re.sub(r"\s+", " ", str(text or "").strip())
+    if not s:
+        return s
+    return s[0].upper() + s[1:]
+
+
+def _nick_candidates(full: str) -> list[str]:
+    words = re.findall(r"[A-Za-z0-9]+(?:'[A-Za-z]+)?", str(full or ""))
+    if not words:
+        s = re.sub(r"\s+", " ", str(full or "").strip())
+        return [s] if s else []
+    out: list[str] = []
+    stripped = list(words)
+    while len(stripped) > 1 and stripped[0].lower() in _DROP_LEADING:
+        stripped = stripped[1:]
+        out.append(" ".join(stripped))
+    if len(words) >= 3:
+        bridge = words[-2].lower()
+        if bridge in ("at", "of", "the", "and", "or", "in", "on", "for", "to"):
+            out.append(words[0])
+        else:
+            out.append(" ".join(words[-2:]))
+    out.append(" ".join(words))
+    seen: set[str] = set()
+    uniq: list[str] = []
+    for cand in out:
+        key = cand.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        uniq.append(cand)
+    return uniq
+
+
+def unique_cell_names(
+    fulls: list[str],
+    hints: list[str] | None = None,
+    *,
+    limit: int = CELL_LIMIT,
+) -> list[str]:
+    """Cell nicknames: 'Star jasmine' → 'Jasmine' when that stays unique."""
+    hints = list(hints or [])
+    while len(hints) < len(fulls):
+        hints.append("")
+    chosen: list[str] = []
+    used: set[str] = set()
+    for i, full in enumerate(fulls):
+        cands: list[str] = []
+        hint = re.sub(r"\s+", " ", str(hints[i] or "").strip())
+        if hint:
+            cands.append(hint)
+        cands.extend(_nick_candidates(full))
+        pick = re.sub(r"\s+", " ", str(full or "").strip()) or "—"
+        for cand in cands:
+            key = cand.lower()
+            if key in _GENERIC_CELL or key in used:
+                continue
+            if len(cand) <= limit or cand.lower() == pick.lower():
+                pick = cand
+                break
+        if len(pick) > limit:
+            trimmed = _shorten(pick, limit).rstrip("…").strip()
+            if trimmed and trimmed.lower() not in used:
+                pick = trimmed
+        used.add(pick.lower())
+        chosen.append(_pretty_cell(pick))
+    return chosen
 
 
 def _fill(template: str, **kwargs: str) -> str:
@@ -384,6 +507,7 @@ def compile_logic_grid_from_rows(
             }
 
     names = []
+    cell_hints: list[str] = []
     entity_values: list[dict[str, str]] = []
     new_facts: list[dict[str, Any]] = []
     species_meta: list[dict[str, str]] = []
@@ -403,6 +527,7 @@ def compile_logic_grid_from_rows(
                 raise ValueError("missing value for " + cid)
             mapped[cid] = val[:42]
         names.append(name)
+        cell_hints.append(str(row.get("cellName") or row.get("shortName") or "").strip())
         entity_values.append(mapped)
         species_meta.append(
             {
@@ -434,21 +559,20 @@ def compile_logic_grid_from_rows(
             raise ValueError("category %s values are not unique" % cid)
 
     display: dict[str, list[str]] = {"species": names[:]}
-    shorts: dict[str, list[str]] = {}
+    shorts: dict[str, list[str]] = {
+        "species": unique_cell_names(names, cell_hints),
+    }
     for cid in ordered_ids:
         labels = [row[cid] for row in entity_values]
         rng.shuffle(labels)
         display[cid] = labels
         given_short = by_id[cid].get("short")
+        hints: list[str] = [""] * n
         if isinstance(given_short, list) and len(given_short) == n:
-            # shorts follow original entity order — remap to shuffled display.
             orig = [row[cid] for row in entity_values]
-            remap = []
-            for lab in labels:
-                remap.append(str(given_short[orig.index(lab)]))
-            shorts[cid] = remap
-        else:
-            shorts[cid] = [_shorten(x) for x in labels]
+            for j, lab in enumerate(labels):
+                hints[j] = str(given_short[orig.index(lab)])
+        shorts[cid] = unique_cell_names(labels, hints)
 
     phrases = {
         cid: {"eq": by_id[cid]["eq"], "neq": by_id[cid]["neq"]} for cid in ordered_ids
@@ -492,7 +616,7 @@ def compile_logic_grid_from_rows(
         raise RuntimeError("puzzle lost uniqueness while trimming")
 
     cats = {
-        "species": {"title": "Species", "items": names[:], "short": names[:]},
+        "species": {"title": "Species", "items": names[:], "short": shorts["species"]},
         "where": {
             "title": by_id["where"]["title"],
             "items": display["where"],
