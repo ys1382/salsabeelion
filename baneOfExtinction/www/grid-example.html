@@ -33,8 +33,15 @@
       display: grid;
       grid-template-columns: max-content repeat(3, max-content);
       justify-content: start;
-      align-items: start;
+      align-items: stretch;
+      column-gap: 0;
+      row-gap: 0;
       font-family: system-ui, sans-serif;
+    }
+    .row-head {
+      display: flex;
+      flex-direction: row;
+      align-items: stretch;
     }
     .logic-l__skip {
       background: transparent;
@@ -57,11 +64,19 @@
       padding: 0.35rem 0.3rem;
     }
     .row-head .cat-lab {
-      text-align: left;
-      padding: 0.5rem 0.45rem 0.3rem;
+      box-sizing: border-box;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      text-align: center;
+      padding: 0.4rem 0.15rem;
+      letter-spacing: 0.03em;
       background: rgba(107, 196, 138, 0.08);
       border: 1px solid var(--line);
-      border-bottom: 0;
+      border-right: 0;
+      flex: 0 0 auto;
     }
     .col-head .col-labs {
       display: grid;
@@ -85,7 +100,6 @@
       display: grid;
       grid-template-rows: repeat(4, 2.35rem);
       border: 1px solid var(--line);
-      border-top: 0;
     }
     .row-head .names span {
       box-sizing: border-box;
@@ -102,6 +116,9 @@
     .row-head .names span:first-child { border-top: 0; }
     table.sub {
       border-collapse: collapse;
+      border-spacing: 0;
+      margin: 0;
+      height: 100%;
     }
     table.sub td {
       box-sizing: border-box;
@@ -116,6 +133,7 @@
       align-items: center;
       justify-content: center;
       width: 100%;
+      height: 100%;
       min-width: 2.55rem;
       min-height: 2.35rem;
       border: 0;
