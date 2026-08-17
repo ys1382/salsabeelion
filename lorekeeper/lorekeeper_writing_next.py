@@ -2025,7 +2025,13 @@ def extract_draft_timeline_seat(
             re.I,
         )
         if m and 10 <= len(m.group(1)) <= 48:
-            add(40, m.group(1))
+            seat_d = m.group(1)
+            # "between switch to X's POV and arrival" is not "during X's POV".
+            if not (
+                re.search(r"\bpov\b", seat_d, re.I)
+                and re.search(r"\bbetween\b", local, re.I)
+            ):
+                add(40, seat_d)
         m = re.search(
             r"\b(at the\s+[A-Za-z][\w'-]{2,}"
             r"(?:\s+[A-Za-z][\w'-]{2,}){0,2}"
@@ -2467,6 +2473,10 @@ def frame_plan_recall(line: str, *, you_lead: bool, you_variant: int = 0) -> str
             re.I,
         ):
             return f"Your notes say {body}"
+        if re.match(r"^add\s+", body, re.I):
+            if you_variant % 2 == 0:
+                return f"You wanted to {body}"
+            return f"You were planning to {body}"
         if re.match(r"^(?:the|a|an|his|her|their|this)\b", body, re.I):
             if you_variant % 2 == 0:
                 return f"You wanted {body}"
@@ -2492,6 +2502,8 @@ def frame_plan_recall(line: str, *, you_lead: bool, you_variant: int = 0) -> str
         re.I,
     ):
         return f"Your notes say {body}"
+    if re.match(r"^add\s+", body, re.I):
+        return f"Your plan was to {body}"
     out = f"Your notes call for {body}"
     out = re.sub(
         r"^Your notes call for ((?:it|he|she|they)\s+"
@@ -2705,6 +2717,32 @@ def _compress_span_journey_line(raw: str) -> str:
     return ""
 
 
+def _rewrite_thinking_of_adding(s: str) -> str:
+    """
+    Restate '… I'm thinking of adding X' as a plan core — never quote first person
+    after 'Your notes call for'.
+    """
+    raw = (s or "").strip()
+    if not raw:
+        return raw
+    m = re.search(
+        r"^(.*?)(?:,\s*)?i(?:'?m| am)\s+thinking of adding\s+(.+)$",
+        raw,
+        re.I | re.S,
+    )
+    if not m:
+        return raw
+    where = m.group(1).strip(" ,")
+    what = m.group(2).strip().rstrip(".")
+    if not what:
+        return raw
+    core = f"Add {what}"
+    if where:
+        where_l = where[0].lower() + where[1:] if where[0].isupper() else where
+        return f"{core}, {where_l}"
+    return core
+
+
 def restate_as_task_line(
     raw: str,
     *,
@@ -2746,6 +2784,7 @@ def restate_as_task_line(
     s = re.sub(r"^also,\s+", "", s, flags=re.I).strip()
     s = re.sub(r"^(?:ok\s+)?(?:so\s+)?(?:right\s+)?now,?\s+", "", s, flags=re.I).strip()
     s = re.sub(r"^ok\s+(?:so\s+)?", "", s, flags=re.I).strip()
+    s = _rewrite_thinking_of_adding(s)
     if re.search(r"don'?t want to make that the meat", s, re.I):
         return ""
 
@@ -2957,6 +2996,8 @@ def restate_as_task_line(
     else:
         if s[-1] not in ".!?\"'”’":
             s = s + "."
+    if timeline_seat and re.search(r"\bbetween\b.{0,160}\band\b", s, re.I):
+        timeline_seat = ""
     if timeline_seat:
         s = attach_timeline_seat(s.rstrip("."), timeline_seat)
     elif s[-1] not in ".!?\"'”’":

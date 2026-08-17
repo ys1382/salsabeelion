@@ -589,6 +589,50 @@ class WritingNextAnswerTests(unittest.TestCase):
         framed = assign_plan_recall_frames([wolf or ""])[0].lower()
         self.assertTrue(framed.startswith("your notes say"), msg=framed)
 
+    def test_thinking_of_adding_is_plan_recall_not_i_quote(self):
+        raw = (
+            "Somewhere between this coming switch to Character S's POV and their "
+            "arrival at the manor, I'm thinking of adding a POV for the Beaver Mayor "
+            "interacting with an underground Preyfolk movement."
+        )
+        out = restate_as_task_line(raw)
+        framed = assign_plan_recall_frames([out or ""])[0]
+        low = framed.lower()
+        self.assertNotIn("i'm thinking", low)
+        self.assertNotIn("i am thinking", low)
+        self.assertNotIn("your notes call for somewhere", low)
+        self.assertIn("beaver mayor", low)
+        self.assertIn("underground", low)
+        self.assertTrue(
+            "you were planning to add" in low
+            or "your plan was to add" in low
+            or "you wanted to add" in low,
+            msg=framed,
+        )
+        self.assertNotIn("during character s's pov", low)
+        entries = [
+            _entry(
+                "n1",
+                "Between capture and arrival",
+                raw,
+            ),
+            _entry(
+                "d1",
+                "Draft",
+                "Character E was in the wolf's grasp, being carried down the path.",
+                kind="document",
+            ),
+        ]
+        res = recall_from_user_data(
+            "In Smoke and Mirrors, what do I have planned between the place where I "
+            "leave off in the main draft and the warren underground POV?",
+            {"lorekeeper_entries_v1": json.dumps(entries)},
+        )
+        answer = (res.get("answer") or "").lower()
+        self.assertIn("beaver mayor", answer)
+        self.assertNotIn("i'm thinking", answer)
+        self.assertNotIn("your notes call for somewhere", answer)
+
     def test_caps_at_max_and_mentions_more(self):
         note_lines = [
             f"Unused plot beat number {i} about the silver lantern ritual."
