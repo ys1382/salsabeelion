@@ -77,9 +77,13 @@ _store_cache: dict[str, Any] | None = None
 _store_mtime: float = 0.0
 
 DOCUMENTS_KEY = "lorekeeper_documents_v1"
+ENTRIES_KEY = "lorekeeper_entries_v1"
 NOTIFY_PREFS_KEY = "lorekeeper_notify_prefs_v1"
 DOCUMENT_BACKUPS_KEY = "lorekeeper_document_backups_v1"
 NOTE_BACKUPS_KEY = "lorekeeper_note_backups_v1"
+# Stale phone/tab copies send the whole notes list. Allow a normal one-note
+# delete; if more IDs would vanish, keep the extras (union by id).
+MAX_NOTE_DROPS_PER_SAVE = 1
 DOC_META_FIELDS = (
     "id",
     "title",
@@ -89,6 +93,65 @@ DOC_META_FIELDS = (
     "bodyFormat",
     "pageDefaults",
 )
+
+
+def _parse_entries_list(raw: Any) -> list[dict[str, Any]] | None:
+    if raw is None or raw == "":
+        return []
+    parsed: Any = raw
+    if not isinstance(raw, list):
+        try:
+            parsed = json.loads(str(raw))
+        except (TypeError, json.JSONDecodeError):
+            return None
+    if not isinstance(parsed, list):
+        return None
+    return [row for row in parsed if isinstance(row, dict)]
+
+
+def _entry_updated_at(entry: dict[str, Any]) -> float:
+    try:
+        return float(entry.get("updatedAt") or 0)
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def merge_entries_payload(stored_raw: Any, incoming_raw: Any) -> str:
+    """Merge note lists so a shorter stale snapshot cannot wipe notes."""
+    incoming = _parse_entries_list(incoming_raw)
+    stored = _parse_entries_list(stored_raw)
+    if incoming is None:
+        return str(stored_raw) if stored_raw not in (None, "") else "[]"
+    if stored is None:
+        stored = []
+
+    incoming_ids = {str(row.get("id") or "") for row in incoming if row.get("id")}
+    stored_by_id = {
+        str(row.get("id") or ""): row for row in stored if row.get("id")
+    }
+    missing = [eid for eid in stored_by_id if eid and eid not in incoming_ids]
+    keep_extras = len(missing) > MAX_NOTE_DROPS_PER_SAVE
+
+    out: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for row in incoming:
+        eid = str(row.get("id") or "")
+        if not eid:
+            out.append(row)
+            continue
+        chosen = row
+        older = stored_by_id.get(eid)
+        if older is not None and _entry_updated_at(older) > _entry_updated_at(row):
+            chosen = older
+        out.append(chosen)
+        seen.add(eid)
+    if keep_extras:
+        for row in stored:
+            eid = str(row.get("id") or "")
+            if eid and eid not in seen:
+                out.append(row)
+                seen.add(eid)
+    return json.dumps(out)
 
 
 def _default_notify_prefs() -> dict[str, bool]:
@@ -871,6 +934,8 @@ class Handler(BaseHTTPRequestHandler):
                         continue
                     if value == "" or value is None:
                         data.pop(key, None)
+                    elif key == ENTRIES_KEY:
+                        data[key] = merge_entries_payload(data.get(key), str(value))
                     else:
                         data[key] = str(value)
                 _save_store(store)

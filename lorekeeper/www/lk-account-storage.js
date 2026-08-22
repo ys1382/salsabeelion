@@ -260,18 +260,88 @@
     return changed ? JSON.stringify(localList) : localRaw;
   }
 
+  function parseEntryList(raw) {
+    try {
+      var list = JSON.parse(raw);
+      return Array.isArray(list) ? list : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function entryUpdatedAt(entry) {
+    var n = Number((entry && entry.updatedAt) || 0);
+    return n === n ? n : 0;
+  }
+
+  /** Union notes by id so a shorter phone/tab copy cannot wipe newer notes. */
+  function mergeEntriesById(localRaw, serverRaw) {
+    var localList = parseEntryList(localRaw) || [];
+    var serverList = parseEntryList(serverRaw) || [];
+    var byId = {};
+    var order = [];
+    function consider(entry) {
+      if (!entry || !entry.id) return;
+      var id = String(entry.id);
+      if (!byId[id]) {
+        order.push(id);
+        byId[id] = entry;
+        return;
+      }
+      if (entryUpdatedAt(entry) >= entryUpdatedAt(byId[id])) byId[id] = entry;
+    }
+    serverList.forEach(consider);
+    localList.forEach(consider);
+    return JSON.stringify(
+      order.map(function (id) {
+        return byId[id];
+      })
+    );
+  }
+
+  function localHasNotesServerLacks(localRaw, serverRaw) {
+    var localList = parseEntryList(localRaw) || [];
+    var serverList = parseEntryList(serverRaw) || [];
+    var serverIds = {};
+    serverList.forEach(function (entry) {
+      if (entry && entry.id) serverIds[String(entry.id)] = true;
+    });
+    return localList.some(function (entry) {
+      return entry && entry.id && !serverIds[String(entry.id)];
+    });
+  }
+
   function mergeIntoCache(data) {
     if (!data || typeof data !== "object") return;
     var queued = false;
+    if (Object.prototype.hasOwnProperty.call(data, ENTRIES_KEY) && data[ENTRIES_KEY]) {
+      var localNotes = pending[ENTRIES_KEY];
+      if (localNotes === "__delete__") localNotes = "[]";
+      if (localNotes == null || localNotes === "") {
+        localNotes = cache[ENTRIES_KEY] || localGetItem(ENTRIES_KEY) || "[]";
+      }
+      var mergedNotes = mergeEntriesById(localNotes, data[ENTRIES_KEY]);
+      cache[ENTRIES_KEY] = mergedNotes;
+      localSetItem(ENTRIES_KEY, mergedNotes);
+      if (
+        Object.prototype.hasOwnProperty.call(pending, ENTRIES_KEY) ||
+        localHasNotesServerLacks(localNotes, data[ENTRIES_KEY])
+      ) {
+        pending[ENTRIES_KEY] = mergedNotes;
+        markPendingKey(ENTRIES_KEY);
+        queued = true;
+      }
+    }
     Object.keys(data).forEach(function (k) {
+      if (k === ENTRIES_KEY) return;
       if (Object.prototype.hasOwnProperty.call(pending, k)) return;
       var local = localGetItem(k);
       if (local != null && local !== "" && local !== data[k]) {
         if (k === "lorekeeper_documents_v1") {
-          var merged = mergeDocumentsPreferLonger(local, data[k]);
-          if (merged !== local && plainWordCountSum(merged) >= plainWordCountSum(local)) {
-            cache[k] = merged;
-            localSetItem(k, merged);
+          var mergedDocs = mergeDocumentsPreferLonger(local, data[k]);
+          if (mergedDocs !== local && plainWordCountSum(mergedDocs) >= plainWordCountSum(local)) {
+            cache[k] = mergedDocs;
+            localSetItem(k, mergedDocs);
             return;
           }
         }

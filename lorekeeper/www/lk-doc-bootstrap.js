@@ -8,7 +8,7 @@
     "./lk-spell.js?v=10",
     "./vendor/quill/1.3.7/dist/quill.min.js",
     "./lk-api-config.js?v=50",
-    "./lk-account-storage.js?v=15",
+    "./lk-account-storage.js?v=16",
     "./lk-auth-gate.js?v=3",
     "./lk-last-focus.js?v=1",
     "./lk-documents.js?v=55",
