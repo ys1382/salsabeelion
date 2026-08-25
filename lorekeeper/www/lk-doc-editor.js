@@ -22,6 +22,10 @@
   var resumeCaptureTimer = null;
   /** After Delete document — block park/flush from re-saving that one doc. */
   var discardOnLeave = false;
+  /** Writer confirmed an in-app leave — skip a second browser dialog. */
+  var allowLeave = false;
+  var LEAVE_UNSAVED_MSG =
+    "This draft hasn't finished saving. If you leave now, your last words may not be on your account yet.";
 
   function docTextLength() {
     if (!quill) return 0;
@@ -486,6 +490,82 @@
         setTimeout(onEditorChange, 0);
       });
     }
+  }
+
+  function isSaveInFlight() {
+    if (discardOnLeave || allowLeave) return false;
+    if (dirty) return true;
+    if (saveTimer || saveMaxTimer) return true;
+    var Store = global.LoreKeeperAccountStorage;
+    if (Store && typeof Store.hasPending === "function" && Store.hasPending()) return true;
+    var el = document.getElementById("saveStatus");
+    if (!el) return false;
+    return el.classList.contains("is-saving") || el.classList.contains("is-error");
+  }
+
+  function isLeavingThisDocument(href) {
+    if (!href || href.charAt(0) === "#") return false;
+    var url;
+    try {
+      url = new URL(href, global.location.href);
+    } catch (e) {
+      return true;
+    }
+    if (url.protocol !== "http:" && url.protocol !== "https:") return false;
+    var here = global.location;
+    if (url.pathname === here.pathname && url.search === here.search) return false;
+    if (/(^|\/)doc\.html$/i.test(url.pathname)) {
+      var nextId = url.searchParams.get("d") || "";
+      var curId = "";
+      try {
+        curId = new URLSearchParams(here.search).get("d") || "";
+      } catch (e2) {}
+      if (nextId && curId && nextId === curId) return false;
+    }
+    return true;
+  }
+
+  function confirmLeaveUnsaved() {
+    return global.confirm(LEAVE_UNSAVED_MSG);
+  }
+
+  function bindLeaveGuard() {
+    if (!global.document || !global.document.addEventListener) return;
+    global.document.addEventListener(
+      "click",
+      function (ev) {
+        if (ev.defaultPrevented) return;
+        if (ev.button !== 0) return;
+        if (ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.altKey) return;
+        var target = ev.target;
+        if (target && target.nodeType === 3) target = target.parentElement;
+        if (!target || !target.closest) return;
+        var signOutBtn = target.closest("#lkSignOutBtn");
+        if (signOutBtn) {
+          if (!isSaveInFlight()) return;
+          if (!confirmLeaveUnsaved()) {
+            ev.preventDefault();
+            ev.stopPropagation();
+            return;
+          }
+          allowLeave = true;
+          parkSave();
+          return;
+        }
+        var link = target.closest("a[href]");
+        if (!link) return;
+        var dest = link.target;
+        if (dest && dest !== "" && dest !== "_self") return;
+        if (!isLeavingThisDocument(link.href || link.getAttribute("href"))) return;
+        if (!isSaveInFlight()) return;
+        ev.preventDefault();
+        if (!confirmLeaveUnsaved()) return;
+        allowLeave = true;
+        parkSave();
+        global.location.href = link.href;
+      },
+      true
+    );
   }
 
   function parkSave() {
@@ -1266,11 +1346,16 @@
     global.addEventListener("visibilitychange", function () {
       if (global.document.visibilityState === "hidden") parkSave();
     });
-    global.addEventListener("beforeunload", function () {
+    global.addEventListener("beforeunload", function (ev) {
       if (!doc || !quill) return;
       loading = false;
       parkSave();
+      if (discardOnLeave || allowLeave) return;
+      if (!isSaveInFlight()) return;
+      ev.preventDefault();
+      ev.returnValue = "";
     });
+    bindLeaveGuard();
     global.addEventListener("lorekeeper-keyboard-save", function () {
       flushSave(true);
     });
