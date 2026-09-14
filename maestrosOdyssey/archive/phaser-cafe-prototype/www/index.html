@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+  <title>Maestro’s Odyssey</title>
+  <link rel="preload" href="vendor/phaser/3.60.0/dist/phaser.min.js" as="script" />
+  <style>
+    html { overscroll-behavior-x: none; }
+
+    :root {
+      --bg: #121018;
+      --gold: #d4af6a;
+      --text: #eae6f0;
+      --dim: #7a7388;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+    body {
+      background: #5a4038;
+      color: var(--text);
+      font-family: "Georgia", "Palatino", serif;
+    }
+    .game-shell {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      background: #5a4038;
+    }
+    #game {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+    #game canvas {
+      display: block;
+    }
+    .controls-hints.is-hidden .controls-panel {
+      display: none;
+    }
+    .controls-panel {
+      position: fixed;
+      top: 3.1rem;
+      bottom: 0.45rem;
+      z-index: 25;
+      width: min(14rem, 30vw);
+      display: flex;
+      flex-direction: column;
+      pointer-events: none;
+    }
+    .controls-panel--left {
+      left: 0.45rem;
+    }
+    .controls-panel--right {
+      right: 0.45rem;
+    }
+    .controls-card {
+      position: relative;
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      width: 100%;
+      padding: 1rem 1.1rem 0.95rem;
+      pointer-events: auto;
+      background: rgba(18, 16, 24, 0.92);
+      border: 1px solid rgba(212, 175, 106, 0.45);
+      border-radius: 6px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+      font-family: system-ui, sans-serif;
+      text-align: left;
+    }
+    .controls-card h2 {
+      margin: 0 2rem 0.65rem 0;
+      font-size: 1.05rem;
+      color: var(--gold);
+      font-family: "Georgia", "Palatino", serif;
+      font-weight: 400;
+    }
+    .controls-card ul {
+      margin: 0;
+      padding: 0 0 0 1rem;
+      color: var(--text);
+      font-size: clamp(0.88rem, 1.85vw, 0.98rem);
+      line-height: 1.5;
+    }
+    .controls-card li {
+      margin-bottom: 0.35rem;
+    }
+    .controls-card li:last-child {
+      margin-bottom: 0;
+    }
+    .controls-close {
+      position: absolute;
+      top: 0.45rem;
+      right: 0.5rem;
+      width: 1.75rem;
+      height: 1.75rem;
+      padding: 0;
+      border: none;
+      border-radius: 4px;
+      background: transparent;
+      color: var(--dim);
+      font-size: 1.25rem;
+      line-height: 1;
+      cursor: pointer;
+    }
+    .controls-close:hover,
+    .controls-close:focus {
+      color: var(--gold);
+      background: rgba(212, 175, 106, 0.12);
+      outline: none;
+    }
+    .mara-order-wrap {
+      position: fixed;
+      z-index: 55;
+      display: none;
+      box-sizing: border-box;
+    }
+    .mara-order-wrap.is-open {
+      display: block;
+    }
+    .mara-order-input {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0 14px;
+      box-sizing: border-box;
+      font-family: ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, monospace;
+      font-size: 17px;
+      line-height: 1.45;
+      color: #fffbe8;
+      background: rgba(0, 0, 0, 0.82);
+      border: 2px solid #ffe066;
+      border-radius: 0;
+      outline: none;
+      caret-color: #ffe066;
+    }
+    .mara-order-input::placeholder {
+      color: rgba(255, 251, 232, 0.35);
+    }
+    .mara-visit-wrap {
+      position: fixed;
+      z-index: 56;
+      display: none;
+      box-sizing: border-box;
+      padding: 16px 18px 12px;
+      overflow: hidden;
+      font-family: ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, monospace;
+      font-size: 17px;
+      line-height: 1.45;
+      color: #fffbe8;
+      background: rgba(0, 0, 0, 0.88);
+      border: 2px solid #ffe066;
+      border-radius: 0;
+    }
+    .mara-visit-wrap.is-open {
+      display: block;
+    }
+    .mara-visit-text {
+      margin: 0 0 10px;
+      white-space: pre-wrap;
+      overflow: hidden;
+    }
+    .mara-visit-hint {
+      margin: 0;
+      font-size: 14px;
+      color: rgba(255, 251, 232, 0.55);
+    }
+    .mo-day-hud {
+      position: fixed;
+      top: 0.65rem;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 20;
+      padding: 0.35rem 0.65rem;
+      font-family: system-ui, sans-serif;
+      font-size: clamp(0.88rem, 1.85vw, 1rem);
+      line-height: 1.35;
+      color: #fffbe8;
+      background: rgba(18, 16, 24, 0.82);
+      border: 1px solid rgba(212, 175, 106, 0.45);
+      border-radius: 4px;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+    .mo-learning-card-hud {
+      position: fixed;
+      top: 0.65rem;
+      right: 0.65rem;
+      z-index: 20;
+      padding: 0.35rem 0.65rem;
+      font-family: system-ui, sans-serif;
+      font-size: clamp(0.88rem, 1.85vw, 1rem);
+      line-height: 1.35;
+      color: #fffbe8;
+      background: rgba(18, 16, 24, 0.82);
+      border: 1px solid rgba(212, 175, 106, 0.45);
+      border-radius: 4px;
+      pointer-events: none;
+    }
+    .mo-restart-btn {
+      position: fixed;
+      top: 0.65rem;
+      left: 0.65rem;
+      z-index: 20;
+      padding: 0.35rem 0.65rem;
+      font-family: system-ui, sans-serif;
+      font-size: clamp(0.88rem, 1.85vw, 1rem);
+      line-height: 1.35;
+      color: #fffbe8;
+      background: rgba(18, 16, 24, 0.82);
+      border: 1px solid rgba(212, 175, 106, 0.45);
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .mo-restart-btn:hover {
+      background: rgba(36, 32, 48, 0.92);
+    }
+    .mo-language-picker {
+      position: fixed;
+      inset: 0;
+      z-index: 60;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      background: rgba(18, 16, 24, 0.72);
+      pointer-events: auto;
+    }
+    .mo-language-picker.is-open {
+      display: flex;
+    }
+    .mo-language-card {
+      position: relative;
+      width: min(26rem, 94vw);
+      max-height: min(92vh, 40rem);
+      overflow-y: auto;
+      padding: 1.35rem 1.25rem 1.2rem;
+      background: rgba(18, 16, 24, 0.96);
+      border: 1px solid rgba(212, 175, 106, 0.55);
+      border-radius: 8px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+      font-family: system-ui, sans-serif;
+      text-align: center;
+    }
+    .mo-language-card h2 {
+      margin: 0 0 0.45rem;
+      font-family: "Georgia", "Palatino", serif;
+      font-size: 1.2rem;
+      font-weight: 400;
+      color: var(--gold);
+    }
+    .mo-language-card p {
+      margin: 0 0 1rem;
+      color: var(--dim);
+      font-size: 0.95rem;
+      line-height: 1.45;
+    }
+    .mo-language-actions {
+      display: flex;
+      gap: 0.65rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .mo-language-btn {
+      min-width: 7.5rem;
+      padding: 0.55rem 1rem;
+      border: 1px solid rgba(212, 175, 106, 0.45);
+      border-radius: 6px;
+      background: rgba(36, 32, 48, 0.92);
+      color: var(--text);
+      font-family: "Georgia", "Palatino", serif;
+      font-size: 1.05rem;
+      cursor: pointer;
+    }
+    .mo-language-btn:hover,
+    .mo-language-btn:focus,
+    .mo-look-btn:hover,
+    .mo-look-btn:focus {
+      border-color: var(--gold);
+      color: var(--gold);
+      outline: none;
+      background: rgba(48, 42, 62, 0.95);
+    }
+    .mo-language-btn.is-selected,
+    .mo-look-btn.is-selected {
+      border-color: var(--gold);
+      color: var(--gold);
+      background: rgba(48, 42, 62, 0.95);
+      box-shadow: 0 0 0 1px rgba(212, 175, 106, 0.35);
+    }
+    .mo-setup-section {
+      margin: 0 0 1rem;
+      text-align: left;
+    }
+    .mo-setup-section h3 {
+      margin: 0 0 0.35rem;
+      font-family: "Georgia", "Palatino", serif;
+      font-size: 1rem;
+      font-weight: 400;
+      color: var(--text);
+    }
+    .mo-setup-hint {
+      margin: 0 0 0.55rem;
+      font-size: 0.88rem;
+      line-height: 1.4;
+      color: var(--dim);
+      text-align: left;
+    }
+    .mo-setup-native {
+      display: block;
+      margin-top: 0.15rem;
+      font-size: 0.92rem;
+      color: var(--dim);
+    }
+    .mo-look-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+    }
+    .mo-look-btn {
+      padding: 0.5rem 0.55rem;
+      border: 1px solid rgba(212, 175, 106, 0.45);
+      border-radius: 6px;
+      background: rgba(36, 32, 48, 0.92);
+      color: var(--text);
+      font-family: system-ui, sans-serif;
+      font-size: 0.82rem;
+      line-height: 1.35;
+      cursor: pointer;
+      text-align: center;
+    }
+    .mo-visit-setup-continue {
+      display: block;
+      width: 100%;
+      margin-top: 0.35rem;
+      padding: 0.6rem 1rem;
+      border: 1px solid rgba(212, 175, 106, 0.55);
+      border-radius: 6px;
+      background: rgba(212, 175, 106, 0.18);
+      color: var(--gold);
+      font-family: "Georgia", "Palatino", serif;
+      font-size: 1.05rem;
+      cursor: pointer;
+    }
+    .mo-visit-setup-continue:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      color: var(--dim);
+      border-color: rgba(212, 175, 106, 0.25);
+      background: rgba(36, 32, 48, 0.6);
+    }
+    .mo-visit-setup-continue:not(:disabled):hover,
+    .mo-visit-setup-continue:not(:disabled):focus {
+      background: rgba(212, 175, 106, 0.28);
+      outline: none;
+    }
+    .mara-order-input[dir="rtl"] {
+      text-align: right;
+    }
+    .mo-learning-card-hud.is-prologue-hidden,
+    .mo-day-hud.is-prologue-hidden {
+      opacity: 0.35;
+    }
+    .mo-prologue-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 58;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1.25rem;
+      background: rgba(12, 10, 18, 0.88);
+      pointer-events: auto;
+      cursor: pointer;
+    }
+    .mo-prologue-overlay.is-open {
+      display: flex;
+    }
+    .mo-prologue-card {
+      width: min(28rem, 94vw);
+      max-height: min(88vh, 36rem);
+      padding: 1.5rem 1.35rem 1.2rem;
+      background: rgba(18, 16, 24, 0.96);
+      border: 1px solid rgba(212, 175, 106, 0.55);
+      border-radius: 8px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+      text-align: center;
+      pointer-events: auto;
+    }
+    .mo-prologue-portrait-wrap {
+      display: none;
+      justify-content: center;
+      margin: 0 0 1rem;
+    }
+    .mo-prologue-overlay.is-elder .mo-prologue-portrait-wrap {
+      display: flex;
+    }
+    #mo-prologue-portrait {
+      display: block;
+      width: 64px;
+      height: 96px;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+      border: 2px solid rgba(212, 175, 106, 0.45);
+      border-radius: 4px;
+      background: rgba(90, 64, 56, 0.4);
+    }
+    .mo-prologue-speaker {
+      display: none;
+      margin: 0 0 0.5rem;
+      font-family: "Georgia", "Palatino", serif;
+      font-size: 0.95rem;
+      color: var(--gold);
+    }
+    .mo-prologue-overlay.is-elder .mo-prologue-speaker {
+      display: block;
+    }
+    .mo-prologue-text {
+      margin: 0 0 0.85rem;
+      font-family: "Georgia", "Palatino", serif;
+      font-size: clamp(1rem, 2.2vw, 1.12rem);
+      line-height: 1.55;
+      color: var(--text);
+      white-space: pre-wrap;
+      text-align: left;
+    }
+    .mo-prologue-text em {
+      font-style: italic;
+    }
+    .mo-prologue-hint {
+      margin: 0;
+      font-family: system-ui, sans-serif;
+      font-size: 0.88rem;
+      color: var(--dim);
+    }
+    .mo-prologue-overlay.is-report .mo-prologue-card {
+      text-align: left;
+    }
+    .mo-elder-report-input-wrap {
+      margin-top: 1rem;
+    }
+    .mo-elder-report-input-wrap[hidden] {
+      display: none !important;
+    }
+    .mo-elder-report-input {
+      box-sizing: border-box;
+      width: 100%;
+      min-height: 6.5rem;
+      padding: 0.65rem 0.75rem;
+      font-family: system-ui, sans-serif;
+      font-size: 0.95rem;
+      line-height: 1.45;
+      color: #fffbe8;
+      background: rgba(8, 8, 14, 0.92);
+      border: 1px solid rgba(212, 175, 106, 0.45);
+      border-radius: 6px;
+      resize: vertical;
+    }
+    .mo-elder-report-input:focus {
+      outline: 2px solid rgba(212, 175, 106, 0.55);
+      border-color: rgba(212, 175, 106, 0.65);
+    }
+    .mo-elder-report-submit {
+      margin-top: 0.65rem;
+      padding: 0.45rem 0.9rem;
+      font-family: system-ui, sans-serif;
+      font-size: 0.92rem;
+      color: #1a1410;
+      background: #d4af6a;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .mo-elder-report-submit:hover {
+      background: #e0bc78;
+    }
+  </style>
+</head>
+<body>
+  <div class="game-shell">
+    <button type="button" id="mo-restart-btn" class="mo-restart-btn" title="Reset prologue, language, look, Mara intro, café week, and learning card">Restart</button>
+    <div id="mo-day-hud" class="mo-day-hud" aria-live="polite">Monday · café day 1</div>
+    <div id="mo-learning-card-hud" class="mo-learning-card-hud" aria-live="polite">Learning card: 200 pesos</div>
+    <div id="game"></div>
+    <div id="mo-prologue-overlay" class="mo-prologue-overlay" aria-hidden="true" role="dialog" aria-labelledby="mo-prologue-text" aria-modal="true">
+      <div class="mo-prologue-card">
+        <div class="mo-prologue-portrait-wrap" aria-hidden="true">
+          <canvas id="mo-prologue-portrait" width="64" height="96" aria-hidden="true"></canvas>
+        </div>
+        <p id="mo-prologue-speaker" class="mo-prologue-speaker">Community elder</p>
+        <p id="mo-prologue-text" class="mo-prologue-text"></p>
+        <div id="mo-elder-report-input-wrap" class="mo-elder-report-input-wrap" hidden aria-hidden="true">
+          <textarea
+            id="mo-elder-report-input"
+            class="mo-elder-report-input"
+            rows="4"
+            maxlength="1200"
+            placeholder="What did you notice — food, Mara, the room, the people…"
+            aria-label="Tell the elder about Dragon's Brew"
+          ></textarea>
+          <button type="button" id="mo-elder-report-submit" class="mo-elder-report-submit">Tell the elder</button>
+        </div>
+        <p id="mo-prologue-hint" class="mo-prologue-hint">Space, E, or R — continue</p>
+      </div>
+    </div>
+    <div id="mo-language-picker" class="mo-language-picker" aria-hidden="true" role="dialog" aria-labelledby="mo-language-title" aria-modal="true">
+      <div class="mo-language-card">
+        <h2 id="mo-language-title">Before you head out</h2>
+        <p>Pick café language and how you appear. Culture words from peoples stay in their own tongue elsewhere.</p>
+        <section class="mo-setup-section" aria-labelledby="mo-setup-lang-title">
+          <h3 id="mo-setup-lang-title">Café language</h3>
+          <p class="mo-setup-hint">Menu words will be in the language you choose.</p>
+          <div class="mo-language-actions">
+            <button type="button" class="mo-language-btn" data-cafe-lane="es" aria-pressed="false">Spanish<span class="mo-setup-native">Español</span></button>
+            <button type="button" class="mo-language-btn" data-cafe-lane="ar" aria-pressed="false">Arabic<span class="mo-setup-native">العربية</span></button>
+          </div>
+        </section>
+        <section class="mo-setup-section" aria-labelledby="mo-setup-look-title">
+          <h3 id="mo-setup-look-title">Your look</h3>
+          <p class="mo-setup-hint">How you appear walking the street and in the café.</p>
+          <div class="mo-look-actions">
+            <button type="button" class="mo-look-btn" data-protagonist-look="man_short" aria-pressed="false">Man · short hair</button>
+            <button type="button" class="mo-look-btn" data-protagonist-look="woman_long" aria-pressed="false">Woman · long hair</button>
+            <button type="button" class="mo-look-btn" data-protagonist-look="man_kufi" aria-pressed="false">Man · kufi &amp; thobe</button>
+            <button type="button" class="mo-look-btn" data-protagonist-look="woman_jilbab" aria-pressed="false">Woman · hijab &amp; jilbab</button>
+          </div>
+        </section>
+        <button type="button" id="mo-visit-setup-continue" class="mo-visit-setup-continue" disabled aria-disabled="true">Continue</button>
+      </div>
+    </div>
+    <div id="controls-hints" class="controls-hints">
+      <aside id="controls-hints-left" class="controls-panel controls-panel--left" role="complementary" aria-labelledby="controls-title-left">
+        <div class="controls-card">
+          <button type="button" class="controls-close" aria-label="Hide hints">×</button>
+          <h2 id="controls-title-left">How to play</h2>
+          <ul>
+            <li><strong>Move</strong> — arrow keys or WASD</li>
+            <li><strong>Enter café</strong> — walk to the door and step through</li>
+            <li><strong>R</strong> — read the drink menu, strike board, and house rules (wall behind the counter)</li>
+            <li><strong>E</strong> — talk to Mara (inside the café; read the menu first to practice ordering)</li>
+            <li><strong>T</strong> — walk up to a chair or stool and press T to sit; press T again to stand</li>
+            <li><strong>D / F</strong> — while seated, sip your drink (D) or eat (F) after you pick up your order</li>
+          </ul>
+        </div>
+      </aside>
+      <aside id="controls-hints-right" class="controls-panel controls-panel--right" role="complementary" aria-labelledby="controls-title-right">
+        <div class="controls-card">
+          <button type="button" class="controls-close" aria-label="Hide hints">×</button>
+          <h2 id="controls-title-right">During your visit</h2>
+          <ul>
+            <li><strong>Weekday</strong> — top center shows the fiction day (Monday first); one completed visit per day</li>
+            <li><strong>Menu</strong> — one or two new words in your chosen language each café day</li>
+            <li><strong>Finish your order</strong> — sit and finish your drink and/or food before the visit is done</li>
+            <li><strong>Restart</strong> (top left) — pick language and look again; fresh Mara intro, café week, and learning-card balance</li>
+            <li><strong>Space, E, or R</strong> — close what you’re reading</li>
+          </ul>
+        </div>
+      </aside>
+    </div>
+    <div id="mara-order-wrap" class="mara-order-wrap" aria-hidden="true">
+      <input
+        type="text"
+        id="mara-order-input"
+        class="mara-order-input"
+        autocomplete="off"
+        autocorrect="off"
+        autocapitalize="off"
+        spellcheck="false"
+        placeholder="Type your order in Spanish, then Enter"
+        aria-label="Your order in Spanish"
+      />
+    </div>
+    <div id="mara-visit-wrap" class="mara-visit-wrap" aria-hidden="true">
+      <p id="mara-visit-text" class="mara-visit-text"></p>
+      <p class="mara-visit-hint">Space, E, or R — continue</p>
+    </div>
+  </div>
+  <script src="vendor/phaser/3.60.0/dist/phaser.min.js"></script>
+  <script src="mo-protagonist-look.js?v=20260627p"></script>
+  <script src="mo-cafe-language.js?v=20260627p"></script>
+  <script src="mo-elder-portrait.js?v=20260627t"></script>
+  <script src="mo-visit-setup.js?v=20260627p"></script>
+  <script src="mo-prologue.js?v=20260628a"></script>
+  <script src="mo-elder-report.js?v=20260628a"></script>
+  <script src="mo-learning-card.js?v=20260627p"></script>
+  <script src="mo-game-days.js?v=20260628a"></script>
+  <script src="mo-game-restart.js?v=20260628a"></script>
+  <script src="mo-dragons-brew-menu.js?v=20260628a"></script>
+  <script src="mo-menu-quiz.js?v=20260628a"></script>
+  <script src="mo-doors.js?v=20260628e"></script>
+  <script src="mo-farm-rpg.js?v=20260628f"></script>
+  <script>
+    (function () {
+      var wrap = document.getElementById('controls-hints');
+      if (!wrap) return;
+      var dismissed = false;
+      function dismiss() {
+        dismissed = true;
+        wrap.classList.add('is-hidden');
+      }
+      wrap.querySelectorAll('.controls-close').forEach(function (btn) {
+        btn.addEventListener('click', dismiss);
+      });
+      window.MoControlsPanel = {
+        sync: function () {
+          if (!dismissed) wrap.classList.remove('is-hidden');
+        },
+        resetDismiss: function () {
+          dismissed = false;
+          wrap.classList.remove('is-hidden');
+        }
+      };
+    })();
+  </script>
+</body>
+</html>
