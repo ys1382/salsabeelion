@@ -235,10 +235,12 @@ Community elder → **prepaid learning card** (debit, in-game only, **no overdra
 
 ## Your additions (decisions)
 
-### zij2d Godot pull (owner — 2026-09-13)
+### zij2d Godot pull (owner — 2026-09-13 / 2026-09-15)
 
 - [x] **Old Phaser café snapshotted** — `archive/phaser-cafe-prototype/` (full `www/` copy).
-- [ ] **Do not swap live `/maestros/` to zij2d** — different engine (Godot 4.6 vs Phaser web), different product (LLM-invented village vs authored Dragon’s Brew), art packs not in git and not for redistribution. Clone lives at sibling repo `../zij` (`https://github.com/ys1382/zij`). Needs Godot 4.6 + local `2d/assets/` to play. Lorebook stays canon.
+- [x] **New Godot build started** — `maestrosOdyssey/2d/` (zij2d engine + authored Dragon's Brew world). Live `/maestros/` still Phaser `www/`. Needs Godot 4.6. First slice: elder, card, café interior, Mara locked line, menu, house rules, Monday neighbors. No web export yet.
+
+### Week-one tone + café language (owner — pinned 2026-06)
 
 ### Week-one tone + café language (owner — pinned 2026-06)
 

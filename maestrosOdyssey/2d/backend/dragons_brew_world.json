@@ -1,0 +1,335 @@
+{
+  "title": "Dragon's Brew",
+  "premise": "You live on this block. Before you head out, a community elder wants to see you — then Dragon's Brew is the kindest place to start the week.",
+  "hidden_truth": "The neighborhood already decided you belong here. The learning card is how they show it, not a test.",
+  "seed": "maestro-odyssey-dragons-brew-week-one",
+  "goal": {
+    "summary": "settle in at Dragon's Brew",
+    "detail": "Talk with the elder, go inside the café, meet Mara, and read the menu and house rules. Listening in a public room counts."
+  },
+  "items": [
+    {
+      "id": "learning_card",
+      "name": "a prepaid learning card",
+      "text": "About a week's meals at the counter — 400 pesos. When the balance reads zero, that's the end of it. No borrowing past zero."
+    }
+  ],
+  "map": {
+    "width": 40,
+    "height": 30,
+    "base_terrain": "grass",
+    "regions": [
+      {
+        "terrain": "dirt",
+        "x": 6,
+        "y": 12,
+        "w": 26,
+        "h": 12
+      },
+      {
+        "terrain": "water",
+        "x": 32,
+        "y": 3,
+        "w": 6,
+        "h": 5
+      }
+    ],
+    "paths": [
+      {
+        "points": [
+          { "x": 4, "y": 20 },
+          { "x": 20, "y": 20 },
+          { "x": 20, "y": 13 }
+        ],
+        "width": 2
+      }
+    ]
+  },
+  "player_start": { "x": 19, "y": 14 },
+  "objects": [
+    {
+      "id": "dragons_brew",
+      "asset": "building.house_hay_2",
+      "x": 14,
+      "y": 5
+    },
+    {
+      "id": "elder_house",
+      "asset": "building.house_hay_1",
+      "x": 2,
+      "y": 16
+    },
+    {
+      "id": "tree_n",
+      "asset": "tree.tree_emerald_1",
+      "x": 0,
+      "y": 2
+    },
+    {
+      "id": "tree_s",
+      "asset": "tree.tree_emerald_2",
+      "x": 1,
+      "y": 24
+    },
+    {
+      "id": "tree_e",
+      "asset": "tree.tree_emerald_4",
+      "x": 34,
+      "y": 22
+    },
+    {
+      "id": "bush_a",
+      "asset": "tree.bush_emerald_1",
+      "x": 12,
+      "y": 24
+    },
+    {
+      "id": "bush_b",
+      "asset": "tree.bush_emerald_3",
+      "x": 24,
+      "y": 24
+    },
+    {
+      "id": "lamp_w",
+      "asset": "prop.lamppost_3",
+      "x": 9,
+      "y": 12
+    },
+    {
+      "id": "lamp_e",
+      "asset": "prop.lamppost_3",
+      "x": 25,
+      "y": 12
+    },
+    {
+      "id": "well",
+      "asset": "building.well_hay_1",
+      "x": 28,
+      "y": 16
+    }
+  ],
+  "interactables": [
+    {
+      "id": "cafe_door",
+      "asset": "building.house_hay_2",
+      "x": 14,
+      "y": 5,
+      "text": "Warm light, a counter, and the smell of coffee. Every species is welcome here.",
+      "beat": "",
+      "on": "dragons_brew",
+      "gives_item": "",
+      "needs_item": "",
+      "locked_text": ""
+    },
+    {
+      "id": "cafe_sign",
+      "asset": "prop.sign_1",
+      "x": 12,
+      "y": 12,
+      "text": "Dragon's Brew — neighborhood café. Come in. Sit. Order at the counter.",
+      "beat": "",
+      "on": "",
+      "gives_item": "",
+      "needs_item": "",
+      "locked_text": ""
+    },
+    {
+      "id": "card_basket",
+      "asset": "prop.basket_empty",
+      "x": 8,
+      "y": 16,
+      "text": "A prepaid learning card, waiting where the elder said it would be.",
+      "beat": "card_granted",
+      "on": "",
+      "gives_item": "learning_card",
+      "needs_item": "",
+      "locked_text": ""
+    },
+    {
+      "id": "street_bench",
+      "asset": "prop.bench_1",
+      "x": 22,
+      "y": 14,
+      "text": "A bench on the dirt path, facing Dragon's Brew. Good for catching your breath.",
+      "beat": "",
+      "on": "",
+      "gives_item": "",
+      "needs_item": "",
+      "locked_text": ""
+    }
+  ],
+  "npcs": [
+    {
+      "id": "elder",
+      "x": 9,
+      "y": 18,
+      "name": "Elder",
+      "role": "block elder",
+      "persona": "Warm, practical, looks after the block without making a fuss.",
+      "secret": "Glad the neighborhood still looks after people who want to learn it properly.",
+      "could_know": "Lives on this street and keeps the learning cards; sends newcomers to Dragon's Brew first",
+      "opener": "Good morning, dear. I'm one of the elders who helps look after this block. You've been part of the neighborhood for a while now.",
+      "movement": "idle",
+      "tint": "#d4af6a",
+      "wants_item": "",
+      "gives_item": "learning_card",
+      "reveal_beat": "card_granted",
+      "scripted_lines": [
+        "Good morning, dear. I'm one of the elders who helps look after this block. You've been part of the neighborhood for a while now.",
+        "When someone wants to learn the block properly — not just pass through like a tourist — the community keeps a learning card for them. I'd like you to have one.",
+        "I'm loading yours with about a week's worth of meals at the counter — 400 pesos. Use it when you order. When the balance reads zero, that's the end of it. We don't borrow past zero, so you never owe more than what's on the card.",
+        "Dragon's Brew down the path is the kindest place to start. It's a warm room with a good counter, and every species is welcome there. Take your mornings there when you're ready.",
+        "While you're there, notice the menu, the house rules on the wall, and the people who share the room — not gossip, nothing like that. Just what a good neighbor would notice, with kind eyes.",
+        "On the same weekday next week, I'll check in with you. I'd love to hear about the food, the feel of the room, and the community you meet there.",
+        "Here — this is yours now. Take your time. The street is waiting whenever you're ready to go."
+      ]
+    },
+    {
+      "id": "mara",
+      "x": 19,
+      "y": 13,
+      "inside": "dragons_brew",
+      "inside_x": 7,
+      "inside_y": 4,
+      "name": "Mara",
+      "role": "barista",
+      "persona": "Smart, gentle, keeps her mouth shut when she wants. Makes the room feel safe.",
+      "secret": "Notices more than she says, and will not pass table talk.",
+      "could_know": "Works the counter at Dragon's Brew every morning and sees who comes through the door",
+      "opener": "You're fine — take your time. The board is there when you're ready.",
+      "movement": "idle",
+      "tint": "#c45a6a",
+      "wants_item": "",
+      "reveal_beat": "mara_campire",
+      "scripted_lines": [
+        "Laughs gently, and waves a hand as if waving away your nervousness. \"You're fine, there's not a lot of my kind in this area. I'm a Çampire—vampire and werecat somewhere down the line. The wings plus the tail are a fun conversation starter.\"",
+        "When you're ready, the drink menu is on the wall. Have a look — then I can take your order.",
+        "What's your order? (café, té, or a muffin this morning — 35, 30, or 28 pesos.)"
+      ]
+    },
+    {
+      "id": "iguana_neighbor",
+      "x": 24,
+      "y": 16,
+      "name": "Iguana neighbor",
+      "role": "marine iguana lizardfolk",
+      "persona": "Plain-spoken, tired of policy talk, not looking for a fight.",
+      "secret": "Worried the sea routes are getting harder for ordinary people, not because merfolk started it.",
+      "could_know": "Sits at Dragon's Brew on Mondays with her riverfolk friend; hears ferry and sea-region news",
+      "opener": "Morning. We're just talking ferries — nothing dramatic.",
+      "movement": "idle",
+      "tint": "#3f8f5a",
+      "wants_item": "",
+      "reveal_beat": "sea_talk",
+      "scripted_lines": [
+        "They're not ferrying people in the sea region the way they used to. Policy, not a brawl.",
+        "Merfolk aren't picking fights. Humans tightened the lines. She's curt because she's tired, not because she hates the room."
+      ]
+    },
+    {
+      "id": "riverfolk_neighbor",
+      "x": 26,
+      "y": 17,
+      "name": "Riverfolk neighbor",
+      "role": "crocodilian riverfolk",
+      "persona": "Steady, low voice, careful with other people's business.",
+      "secret": "Would rather keep the café a warm room than a news desk.",
+      "could_know": "Monday mornings at the café with the iguana neighbor; knows the river and the coast both",
+      "opener": "Coffee first. News second, if you want it.",
+      "movement": "idle",
+      "tint": "#4a6b4e",
+      "wants_item": "",
+      "scripted_lines": [
+        "I work the water. People still need to get home. Closing ferries doesn't make anyone safer — it just makes them late.",
+        "Give the sea table room if you see it later this week. Respect, not fear. They're not the ones starting trouble."
+      ]
+    }
+  ],
+  "enemies": [],
+  "beats": [
+    {
+      "id": "card_granted",
+      "desc": "The community elder granted a prepaid learning card for about a week of neighborhood meals.",
+      "hint": "Someone on this block wanted to see you before you headed out."
+    },
+    {
+      "id": "mara_campire",
+      "desc": "Mara, the barista, is a Çampire — vampire and werecat somewhere down the line.",
+      "hint": "The woman at the counter has wings and a cat tail, and she laughs gently."
+    },
+    {
+      "id": "menu_read",
+      "desc": "Dragon's Brew serves a small generic menu: café, té, and a muffin to start, priced in pesos.",
+      "hint": "There's a drink board on the wall inside."
+    },
+    {
+      "id": "house_rules",
+      "desc": "The house will not serve customer blood, bovine blood, or lizard or cow meat, and it refuses racism, fighting, smoking, and alcohol.",
+      "hint": "An erasable board and a fixed sign hang in the café."
+    },
+    {
+      "id": "sea_talk",
+      "desc": "Sea-region ferries are tightening because of human policy, not because merfolk started fights.",
+      "hint": "Two neighbors at a table are talking about the water, not gossiping."
+    }
+  ],
+  "ending": {
+    "condition_beats": [
+      "card_granted",
+      "mara_campire",
+      "menu_read",
+      "house_rules"
+    ],
+    "finale": "You've found your mornings. Dragon's Brew will still be here tomorrow — same counter, same pesos, same warm room. The elder will want to hear what you noticed, with kind eyes."
+  },
+  "rival": {},
+  "interiors": {
+    "dragons_brew": {
+      "room": { "x": 14, "y": 10 },
+      "objects": [
+        { "id": "cafe_table", "asset": "prop.table_medium_1", "x": 2, "y": 4 },
+        { "id": "cafe_hearth", "asset": "prop.fireplace_1", "x": 11, "y": 1 },
+        { "id": "cafe_plant", "asset": "prop.plant_2", "x": 1, "y": 7 }
+      ],
+      "interactables": [
+        {
+          "id": "drink_menu",
+          "asset": "prop.sign_2",
+          "x": 9,
+          "y": 1,
+          "text": "Hoy / today\n\ncafé — 35 pesos (coffee)\nté — 30 pesos (tea)\nmuffin — 28 pesos\n\nMore of the board opens as the week goes on. One language at a time on the wall.",
+          "beat": "menu_read",
+          "on": "",
+          "gives_item": "",
+          "needs_item": "",
+          "locked_text": ""
+        },
+        {
+          "id": "house_board",
+          "asset": "prop.bulletinboard_1",
+          "x": 1,
+          "y": 1,
+          "text": "House rules\n\nNo customer (sentient / people) blood served here.\nNo bovine blood served here.\nNo lizard or cow meat.\nFish is fine.\n\nWe reserve the right to refuse service due to\n- Racism\n- Predator-Attitude\n- Fighting\n- Loud Arguments\n- Smoking\n- Drinking Alcohol\n- And picking on customers for any not-aforementioned reasons.\n\nStrike of the week: the board is blank today — nothing pulled from the menu.",
+          "beat": "house_rules",
+          "on": "",
+          "gives_item": "",
+          "needs_item": "",
+          "locked_text": ""
+        },
+        {
+          "id": "cafe_seat",
+          "asset": "prop.bench_3",
+          "x": 5,
+          "y": 6,
+          "text": "A small table seat. Sit if you like — the room is for lingering.",
+          "beat": "",
+          "on": "",
+          "gives_item": "",
+          "needs_item": "",
+          "locked_text": ""
+        }
+      ]
+    }
+  },
+  "version": 2
+}
