@@ -1062,6 +1062,9 @@
     if (global.LoreKeeperMobileComfort && global.LoreKeeperMobileComfort.initDocPage) {
       global.LoreKeeperMobileComfort.initDocPage(quill);
     }
+    if (global.LoreKeeperVoiceType && global.LoreKeeperVoiceType.initDoc) {
+      global.LoreKeeperVoiceType.initDoc(quill);
+    }
     global.LoreKeeperSpell.ready.then(function () {
       if (!quill) return;
       spellCtl = global.LoreKeeperSpell.bindQuill(quill, document.getElementById("docSpellFlags"));

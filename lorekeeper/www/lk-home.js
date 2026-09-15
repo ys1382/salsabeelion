@@ -1243,6 +1243,9 @@
     if (global.LoreKeeperMobileComfort && global.LoreKeeperMobileComfort.initHomeNotes) {
       global.LoreKeeperMobileComfort.initHomeNotes();
     }
+    if (global.LoreKeeperVoiceType && global.LoreKeeperVoiceType.initHome) {
+      global.LoreKeeperVoiceType.initHome();
+    }
     if (global.LoreKeeperHomeTabs && typeof global.LoreKeeperHomeTabs.init === "function") {
       global.LoreKeeperHomeTabs.init();
     }

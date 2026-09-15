@@ -278,6 +278,10 @@ Run **one row at a time** in Cursor. Don’t skip Phase 0 — it costs nothing a
 
 ## Your additions
 
+### Computer voice typing (shipped 2026-09-15)
+
+- [x] **Computer voice typing** — LoreKeeper popup, then browser microphone permission, then dictation into home notes, document notes, and the document editor. Chrome or Edge. Start with **Fn twice** (like Notes); leaving the tab turns it off. Phone still waits.
+
 ### Ask quality bar (owner pin — change anytime) — pinned 2026-08-12
 
 **Easy to revisit:** edit or delete this block if the bar changes.
@@ -480,7 +484,7 @@ Run **one row at a time** in Cursor. Don’t skip Phase 0 — it costs nothing a
 | 13 | Read vs write on phone | fine | [x] shipped | Scroll/read default; tap Edit to type |
 | 14 | Gentle break reminders | **taken down** | skip | Owner 2026-08-14: off the list. Do not build. |
 | 15 | Doc-local term list (opt-in) | fine | [x] shipped | Words from their work → feeds #4/#5; opt-in |
-| — | Mic dictation in public | skip | — | Social + editing burden |
+| — | Mic dictation in public | skip on phone | computer shipped 2026-09-15 | Phone still waits. Computer: opt-in LoreKeeper popup, then browser permission, into notes and the document. |
 | — | Bigger full alphabet (one screen) | skip | — | Hides what they’re typing |
 | — | Tabbed / full custom in-app keyboard | skip | — | Slow; fights OS keyboard |
 | — | Sentence / intent prediction | skip | — | Privacy + co-author feel |
