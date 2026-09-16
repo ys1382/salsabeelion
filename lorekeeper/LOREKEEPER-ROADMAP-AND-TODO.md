@@ -156,6 +156,7 @@ Run on your owner account. Check when true for **two weeks**:
 - [x] **31. Account delete + export** — export-before-delete on `account.html`; `POST /auth/delete-account`; owner account protected.
 - [x] **32. Storage meta in Owner’s Office (optional)** — Last sync / backup age / export reminder — meta only.
 - [x] **Note restore backups (2026-08-10)** — Per-note snapshots like documents (`lorekeeper_note_backups_v1`); Restore last backup on home note editor.
+- [x] **Stale phone/tab cannot wipe notes (2026-08-21)** — Bulk save unions missing note IDs if more than two would vanish; browser hydrate unions by id instead of letting a shorter local copy overwrite.
 
 #### Tier C — Google Docs parity (out of scope for v1)
 
@@ -282,6 +283,10 @@ Run **one row at a time** in Cursor. Don’t skip Phase 0 — it costs nothing a
 
 - [x] **Computer voice typing** — LoreKeeper popup, then browser microphone permission, then dictation into home notes, document notes, and the document editor. Chrome or Edge. Start with **Fn twice** (like Notes); leaving the tab turns it off. Phone still waits.
 
+### Resolve notes update (pinned 2026-08-24)
+
+- [ ] **Resolve notes update** — counterpart to the existing **Update document?** nudge: when the main draft has moved on, help the writer update / resolve their notes (human-written only; no AI rewrite of canon). Cadence and UI TBD.
+
 ### Ask quality bar (owner pin — change anytime) — pinned 2026-08-12
 
 **Easy to revisit:** edit or delete this block if the bar changes.
@@ -380,7 +385,13 @@ Run **one row at a time** in Cursor. Don’t skip Phase 0 — it costs nothing a
 - Must not: echo “write what happens between capture and arrival”; chase-before-capture; after they’re there (quarters, ticklish, rescue, Court); Serias-respect / increased-respect musing; Wonderland off-the-page asides; stacked he/him when notes already name both.
 - **Do not** edit `capture_to_arrival_writing_next_gold.txt` or soften `test_capture_to_arrival_writing_next_gold_shape_locked` without owner OK in that conversation.
 
-**Leave-off → named beat stretch (2026-08-15; window+seat honesty 2026-08-16):** Same family as capture→arrival. “What do I have planned between where I leave off and [named POV/scene]?” lists **all** unused planned beats in that window (journey, overnight, in-between, and the named end). Never dump the draft. Never keep only the end-POV sentence if notes list more. Similar wording (“from where I leave off until…”, “what happens between where I left off and…”) uses the same window. **Do not** treat a generic faction word (Preyfolk, Predators) as the whole window. **Do not** stamp “shortly after captured” unless that claim’s own line says so. Standing lore, later-series, and “go back after the first draft” stay out. Named people instead of stacked he/him when notes name them. If the ask already named the stretch, do not say “Name a topic.” Machine lock: `test_leave_off_to_named_pov_lists_full_window` + `test_planned_between_leave_off_and_pov_does_not_dump_draft` + `test_leave_off_to_pov_keeps_window_honest`.
+**Leave-off → named beat stretch (2026-08-15; window+seat honesty 2026-08-16; gold wording locked 2026-08-16):** Same family as capture→arrival. “What do I have planned between where I leave off and [named POV/scene]?” lists **all** unused planned beats in that window (journey, overnight, in-between, and the named end). Never dump the draft. Never keep only the end-POV sentence if notes list more. Similar wording (“from where I leave off until…”, “what happens between where I left off and…”) uses the same window. **Do not** treat a generic faction word (Preyfolk, Predators) as the whole window. **Do not** stamp “shortly after captured” unless that claim’s own line says so. Standing lore, later-series, and “go back after the first draft” stay out. Named people instead of stacked he/him when notes name them. If the ask already named the stretch, do not say “Name a topic.”
+
+- Q: *What’s planned between where I leave off and the Preyfolk underground POV?* (story silo / search-in = Smoke and Mirrors)
+- **Gold sample (owner-locked 2026-08-16 — exact live wording and order; floor only, not made more accurate yet):** `lorekeeper/tests/fixtures/leave_off_to_preyfolk_writing_next_gold.txt` + `test_leave_off_to_preyfolk_writing_next_gold_shape_locked`.
+- Must keep (this wording, this order): planned night stop clear to Etherei/readers that Serias had it planned · Beaver Mayor + underground Preyfolk POV between coming Serias switch and arrival at Tenebris’s mansion · wolf keeps Chroniker fed / Chroniker will not speak · several days + overnight bind injuries firmly (not gently, not roughly enough to worsen) + bind limbs so Etherei cannot run off · honest “rest of this stretch unspecified” · plan-recall footer; no “Name a topic.”
+- Window behavior still also locked by: `test_leave_off_to_named_pov_lists_full_window` + `test_planned_between_leave_off_and_pov_does_not_dump_draft` + `test_leave_off_to_pov_keeps_window_honest`.
+- **Do not** edit `leave_off_to_preyfolk_writing_next_gold.txt` or soften `test_leave_off_to_preyfolk_writing_next_gold_shape_locked` without owner OK in that conversation. Do not change Ask to chase this gold unless the owner asks.
 
 **Follow-ups for a future agent (this gold already includes completeness + location + plan-recall voice):**
 - [x] Completeness: unused Etherei facts still missing from lists when present in notes

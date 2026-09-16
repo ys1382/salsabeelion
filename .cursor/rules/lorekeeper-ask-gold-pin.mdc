@@ -21,6 +21,14 @@ When the owner pins a gold Ask answer (baseline, never-worse, “lock this sampl
 - Soften machine locks so a thinner answer still passes
 - Mix who-is / leave-off / writing-next golds into an unrelated pass
 
+## Writing-next specifically
+
+**Locked gold (2026-08-16 — owner pin, exact live wording):** leave-off → Preyfolk underground POV task list for *What’s planned between where I leave off and the Preyfolk underground POV?* (Smoke and Mirrors) — `lorekeeper/tests/fixtures/leave_off_to_preyfolk_writing_next_gold.txt`. Floor only; do not make it more accurate unless the owner asks. Do not edit that file without owner OK.
+
+Must-keep in this order when locking or raising later: planned night stop (clear to Etherei/readers that Serias had it planned) · Beaver Mayor + underground Preyfolk POV between coming Serias switch and Tenebris arrival · wolf keeps Chroniker fed / Chroniker will not speak · several days + overnight bind injuries firmly + bind limbs so Etherei cannot run · honest unspecified rest · invent-nothing footer (no “Name a topic”).
+
+Sibling stretch gold (do not mix or overwrite): capture→arrival — `lorekeeper/tests/fixtures/capture_to_arrival_writing_next_gold.txt`.
+
 ## Catch-up specifically
 
 **Locked gold (2026-08-12 evening — owner “fine, keep it”):** premise / thin-draft catch-up for *Get me caught up with this story* (stories like *The Waking Dream*) — `lorekeeper/tests/fixtures/catchup_waking_dream_gold.txt`. Orientation for what exists / why they’re here / why they can’t leave / how the antagonist would see her — not a full plotted novel recap.

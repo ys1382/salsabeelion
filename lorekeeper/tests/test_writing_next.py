@@ -569,6 +569,66 @@ class WritingNextAnswerTests(unittest.TestCase):
         self.assertIn("several days", bullets[1].lower())
         self.assertIn("unspecified", bullets[2].lower())
 
+    def test_leave_off_to_preyfolk_writing_next_gold_shape_locked(self):
+        """
+        Owner-locked leave-off → Preyfolk underground POV writing-next gold
+        (2026-08-16). Exact wording and order. Do not edit the fixture or
+        soften this test without owner OK. Do not change Ask to chase this.
+        """
+        from pathlib import Path
+
+        gold_path = (
+            Path(__file__).resolve().parent
+            / "fixtures"
+            / "leave_off_to_preyfolk_writing_next_gold.txt"
+        )
+        gold = gold_path.read_text(encoding="utf-8")
+        expected = (
+            "Here's a short task list for Smoke and Mirrors about this stretch "
+            "— write-next items from your notes that aren't on the page yet:\n"
+            "\n"
+            "• Your notes say once they arrive at their stop for the night, "
+            "it will be clear to Etherei (and the readers) that Serias had "
+            "this stop planned.\n"
+            "\n"
+            "• You wanted to add a POV for the Beaver Mayor interacting with "
+            "an underground Preyfolk movement, somewhere between this coming "
+            "switch to Serias's POV and their arrival at Tenebris's mansion.\n"
+            "\n"
+            "• Your notes say the wolf keeps Chroniker fed on the journey; "
+            "when conversation is attempted, Chroniker keeps his mouth shut "
+            "and will not speak.\n"
+            "\n"
+            "• Your notes say the journey takes several days. When he stops "
+            "for the night, he binds Etherei's injuries firmly — not gently, "
+            "and not roughly enough to worsen them — and binds the limbs so "
+            "Etherei cannot run off.\n"
+            "\n"
+            "• Your notes still leave the rest of this stretch unspecified.\n"
+            "\n"
+            "— Short write-next tasks restated from your notes vs draft only. "
+            "Nothing invented. Continuity sticky-notes, later-book setup, and "
+            "standing lore stay out unless you ask for a later book. Ask again "
+            "for more.\n"
+        )
+        self.assertEqual(gold, expected)
+        bullets = [
+            ln.strip()
+            for ln in gold.splitlines()
+            if ln.strip().startswith("•")
+        ]
+        self.assertEqual(len(bullets), 5)
+        self.assertIn("Serias had this stop planned", bullets[0])
+        self.assertIn("Beaver Mayor", bullets[1])
+        self.assertIn("underground Preyfolk movement", bullets[1])
+        self.assertIn("Chroniker fed", bullets[2])
+        self.assertIn("Chroniker keeps his mouth shut", bullets[2])
+        self.assertIn("binds Etherei's injuries firmly", bullets[3])
+        self.assertIn("Etherei cannot run off", bullets[3])
+        self.assertIn("rest of this stretch unspecified", bullets[4])
+        self.assertNotIn("Name a topic", gold)
+        self.assertNotIn("write what happens between", gold.lower())
+
     def test_journey_restate_names_both_people(self):
         out = restate_as_task_line(
             "He also finds a way to keep Character E fed, but whenever he "
