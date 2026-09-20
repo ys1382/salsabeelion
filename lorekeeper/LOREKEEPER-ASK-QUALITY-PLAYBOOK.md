@@ -30,11 +30,19 @@ When you say a live answer is the **gold / baseline / never-worse** bar:
 4. Never invent unwritten transport (or other) mechanics; still restate saved reason-for-being-there and can’t-leave-yet.
 5. Prefer mining **stakes classes** from notes (entry, softer side, antagonist’s read of her, can’t-leave) over waiting for the owner to report each miss.
 
-Same spirit for leave-off / who-is / writing-next golds: raising voice must not erase locked must-keeps.
+Same spirit for leave-off / who-is / writing-next / catch-up / when-will golds: raising voice must not erase locked must-keeps. Do not mix families in one pass. Do not edit locked fixtures without owner OK.
 
-**Writing-next golds:** Etherei cast list — `tests/fixtures/etherei_writing_next_gold.txt`. Capture→arrival stretch — `tests/fixtures/capture_to_arrival_writing_next_gold.txt` (locked 2026-08-13; in-window journey beats + unspecified rest; name both people when notes name them; no Ask echo). Leave-off → Preyfolk underground POV — `tests/fixtures/leave_off_to_preyfolk_writing_next_gold.txt` (locked 2026-08-16; exact live wording and order; planned night stop · Beaver Mayor underground POV · Chroniker fed/silence · overnight bind · unspecified rest). Same stretch family: every unused planned beat in the window, never the whole draft, never only the named end if notes list more in between. Faction-word mentions (Preyfolk) are not the window. Seats come from the claim line. Do not edit locked fixtures without owner OK.
+**Locked golds (questions only — answers live in fixtures):**
 
-**Catch-up gold (premise / thin draft — locked 2026-08-12 evening):** Owner checked **fine — keep it** for *Get me caught up with this story* on premise-heavy early drafts (e.g. *The Waking Dream*). Fixture: `tests/fixtures/catchup_waking_dream_gold.txt`. Bar is orientation for what exists / why here / why can’t leave / how antagonist would see her — not a full plotted novel recap.
+- Who-is — *Who is Tenebris?* — `tests/fixtures/tenebris_who_is_gold.txt`
+- Leave-off plot — *Where did I leave off in the main draft in terms of plot?* — `tests/fixtures/leave_off_plot_gold.txt`
+- Catch-up — *Get me caught up with this story.* (thin-draft / *The Waking Dream*) — `tests/fixtures/catchup_waking_dream_gold.txt`
+- Writing-next Etherei — *Give me the task list for Etherei.* — `tests/fixtures/etherei_writing_next_gold.txt`
+- Writing-next stretch — *Give me the task list for what happens between Serias capturing Etherei and Serias’s arrival at Tenebris’s place.* — `tests/fixtures/capture_to_arrival_writing_next_gold.txt`
+- Writing-next stretch — *What’s planned between where I leave off and the Preyfolk underground POV?* — `tests/fixtures/leave_off_to_preyfolk_writing_next_gold.txt` (locked 2026-08-16; exact live wording and order; planned night stop · Beaver Mayor underground POV · Chroniker fed/silence · overnight bind · unspecified rest). Same stretch family: every unused planned beat in the window, never the whole draft, never only the named end if notes list more in between. Faction-word mentions (Preyfolk) are not the window. Seats come from the claim line.
+- When-will — *When will the Predators find out that the Preyfolk from their realm are sentient?* — `tests/fixtures/when_will_preyfolk_sentience_gold.txt`
+
+**Not gold yet:** portrait / “what kind of person,” relationship, “what does X know,” notes-not-in-draft, prologue/section summary.
 
 ---
 

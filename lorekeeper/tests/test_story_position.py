@@ -310,6 +310,33 @@ class StoryPositionAnswerTests(unittest.TestCase):
         self.assertIn("planning brief", block.lower())
         self.assertIn("formal librarian", block.lower())
 
+    def test_leave_off_plot_gold_shape_locked(self) -> None:
+        """
+        Owner-locked leave-off plot gold (2026-08-11; fixture 2026-09-19).
+        Exact planning-brief sample. Do not edit the fixture without owner OK.
+        """
+        from pathlib import Path
+
+        gold_path = (
+            Path(__file__).resolve().parent
+            / "fixtures"
+            / "leave_off_plot_gold.txt"
+        )
+        gold = gold_path.read_text(encoding="utf-8").strip()
+        low = gold.lower()
+        self.assertIn("etherei in serias the wolf's grasp", low)
+        self.assertIn("mountain path", low)
+        self.assertIn("obsidian", low)
+        self.assertIn("stygian", low)
+        self.assertIn("injured leg", low)
+        self.assertIn("tenebris", low)
+        self.assertIn("incorrect", low)
+        self.assertIn("fascinated study", low)
+        self.assertIn("guest rather than a prisoner", low)
+        self.assertIn("open gap", low)
+        self.assertNotIn("source n", low)
+        self.assertNotRegex(gold, r"(?mi)^Here's a short task list")
+
 
 if __name__ == "__main__":
     unittest.main()

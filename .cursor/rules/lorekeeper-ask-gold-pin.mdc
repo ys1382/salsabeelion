@@ -19,18 +19,49 @@ When the owner pins a gold Ask answer (baseline, never-worse, “lock this sampl
 
 - Treat gold as voice-only and let Sonnet “upgrade” by dropping entry-reason or other already-good slots
 - Soften machine locks so a thinner answer still passes
-- Mix who-is / leave-off / writing-next golds into an unrelated pass
+- Mix who-is / leave-off / writing-next / catch-up / when-will golds into an unrelated pass
+- Edit a locked fixture without owner OK in that conversation
+
+## Locked gold inventory (do not mix families)
+
+1. **Who is Tenebris?** (Smoke and Mirrors) — `lorekeeper/tests/fixtures/tenebris_who_is_gold.txt`
+2. **Where did I leave off in the main draft in terms of plot?** (Smoke and Mirrors) — `lorekeeper/tests/fixtures/leave_off_plot_gold.txt`
+3. **Get me caught up with this story.** (thin-draft / *The Waking Dream*) — `lorekeeper/tests/fixtures/catchup_waking_dream_gold.txt`
+4. **Give me the task list for Etherei.** (Smoke and Mirrors) — `lorekeeper/tests/fixtures/etherei_writing_next_gold.txt`
+5. **Give me the task list for what happens between Serias capturing Etherei and Serias’s arrival at Tenebris’s place.** (Smoke and Mirrors) — `lorekeeper/tests/fixtures/capture_to_arrival_writing_next_gold.txt`
+6. **What’s planned between where I leave off and the Preyfolk underground POV?** (Smoke and Mirrors) — `lorekeeper/tests/fixtures/leave_off_to_preyfolk_writing_next_gold.txt`
+7. **When will the Predators find out that the Preyfolk from their realm are sentient?** (Smoke and Mirrors) — `lorekeeper/tests/fixtures/when_will_preyfolk_sentience_gold.txt`
+
+**Not gold yet:** portrait / “what kind of person,” relationship, “what does X know” / “does X know Y,” notes-not-in-draft, prologue/section summary. Pin those in their own pass.
+
+## Who-is specifically
+
+**Locked gold (2026-08-11 night; restored 2026-08-12 night):** *Who is Tenebris?* — `lorekeeper/tests/fixtures/tenebris_who_is_gold.txt` + `test_who_is_tenebris_gold_locked`. Exact wording and sentence order. Dramatic / book-blurb who-is voice is dropped — do not retry.
+
+Must keep: role/open first · Etherei fascination when noted · Dijon third cousin + cold-on-surface / few-cats-without-grudge / both-care + Court-load (unbeknownst) · mother here + father Domestic Cat from another realm + Faeble still open — never “parent stock” · cold shoulder for outsider father · Court disgust + unrealized influence · mixed parentage + not entirely of this world · faeble social rank.
+
+## Leave-off plot specifically
+
+**Locked gold (2026-08-11 — owner “excellent”):** *Where did I leave off in the main draft in terms of plot?* (Smoke and Mirrors) — `lorekeeper/tests/fixtures/leave_off_plot_gold.txt` + `test_leave_off_plot_gold_shape_locked`. Planning-brief voice, not novel prose. Not a writing-next stretch list.
+
+Must keep: NOW + just-before sacrifice/brothers · stakes/belief · belief framed **incorrect** when notes say so · destination · honest open gap if notes say so · no `SOURCE N` · no fake work titles · no infodump.
 
 ## Writing-next specifically
 
-**Locked gold (2026-08-16 — owner pin, exact live wording):** leave-off → Preyfolk underground POV task list for *What’s planned between where I leave off and the Preyfolk underground POV?* (Smoke and Mirrors) — `lorekeeper/tests/fixtures/leave_off_to_preyfolk_writing_next_gold.txt`. Floor only; do not make it more accurate unless the owner asks. Do not edit that file without owner OK.
+**Locked gold (2026-08-16 — owner pin, exact live wording):** leave-off → Preyfolk underground POV task list for *What’s planned between where I leave off and the Preyfolk underground POV?* (Smoke and Mirrors) — `lorekeeper/tests/fixtures/leave_off_to_preyfolk_writing_next_gold.txt`. Floor only; do not make it more accurate unless the owner asks.
 
 Must-keep in this order when locking or raising later: planned night stop (clear to Etherei/readers that Serias had it planned) · Beaver Mayor + underground Preyfolk POV between coming Serias switch and Tenebris arrival · wolf keeps Chroniker fed / Chroniker will not speak · several days + overnight bind injuries firmly + bind limbs so Etherei cannot run · honest unspecified rest · invent-nothing footer (no “Name a topic”).
 
 Sibling stretch gold (do not mix or overwrite): capture→arrival — `lorekeeper/tests/fixtures/capture_to_arrival_writing_next_gold.txt`.
+
+Cast-list gold (do not mix or overwrite): Etherei task list — `lorekeeper/tests/fixtures/etherei_writing_next_gold.txt`. Plan-recall voice; seats as follow-on sentences, not parentheses.
 
 ## Catch-up specifically
 
 **Locked gold (2026-08-12 evening — owner “fine, keep it”):** premise / thin-draft catch-up for *Get me caught up with this story* (stories like *The Waking Dream*) — `lorekeeper/tests/fixtures/catchup_waking_dream_gold.txt`. Orientation for what exists / why they’re here / why they can’t leave / how the antagonist would see her — not a full plotted novel recap.
 
 Must-keep when notes/draft support: NOW pressure · named boss (even sparse) · **antagonist softer side / not without a soul** · **antagonist stakes about her (dangerous asset or threat)** · origin · **who/why they are in the antagonist domain (e.g. Sparrow)** · **cannot simply leave / registration / unmask risk** — without inventing how they were physically transported if unwritten.
+
+## When-will specifically
+
+**Locked gold (2026-08-14):** *When will the Predators find out that the Preyfolk from their realm are sentient?* (Smoke and Mirrors) — `lorekeeper/tests/fixtures/when_will_preyfolk_sentience_gold.txt` + `test_preyfolk_when_will_gold_shape_locked`. Short; this-book vs later-book first; no invented whether.
