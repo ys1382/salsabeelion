@@ -1224,11 +1224,25 @@
       "notes": "Most volumes hand-vetted; skip <em>Beach Babe</em> (parent discretion, beach/bikini); **Book Quest** when otherwise clean"
     },
     {
+      "title": "Batcat",
+      "author": "Meggie Ramm",
+      "source": "cursor_roster",
+      "tier": "flag_review",
+      "notes": "Owner **hand-reject** — main character uses they/them pronouns; graphic novel series; `flag_review`; no Book Quest"
+    },
+    {
       "title": "Black Beauty",
       "author": "Anna Sewell",
       "source": "cursor_roster",
       "tier": "parked",
       "notes": "Owner: plot clean; `user_discretion`—sad horse-abuse beats (Older kids); uses \"gypsies\"; ridicules Muslim name Abdullah; off Book Quest; not auto-reject"
+    },
+    {
+      "title": "Blood City Rollers",
+      "author": "V.P. Anderson, Tatiana Hill",
+      "source": "cursor_roster",
+      "tier": "flag_review",
+      "notes": "Owner **hand-reject** — vampire roller-derby series; girls falling in love with each other; graphic novels; `flag_review`; no Book Quest"
     },
     {
       "title": "Cupcake Diaries",
@@ -1259,6 +1273,20 @@
       "notes": "Age band **parked**."
     },
     {
+      "title": "Grace Needs Space!",
+      "author": "Benjamin A. Wilgus, Rii Abrego",
+      "source": "cursor_roster",
+      "tier": "flag_review",
+      "notes": "Owner **hand-reject** — blurb (before reading) presents the main character with two moms; graphic novel; `flag_review`; no Book Quest"
+    },
+    {
+      "title": "Halfway to Somewhere",
+      "author": "Jose Pimienta",
+      "source": "cursor_roster",
+      "tier": "flag_review",
+      "notes": "Owner **hand-reject** — main character uses they/them pronouns; graphic novel; `flag_review`; no Book Quest"
+    },
+    {
       "title": "Harry Potter",
       "author": "J.K. Rowling",
       "source": "cursor_roster",
@@ -1280,11 +1308,25 @@
       "notes": "Book 1 hand-vetted; rest of series open; book 1 “secret baby?” line flagged as minor note; **Book Quest** includes book 1 when otherwise clean"
     },
     {
+      "title": "Look on the Bright Side",
+      "author": "Lily Williams, Karen Schneemann",
+      "source": "cursor_roster",
+      "tier": "flag_review",
+      "notes": "Owner **hand-reject** — one best-friend girl crushes on another girl; graphic novel; `flag_review`; no Book Quest"
+    },
+    {
       "title": "Nancy Drew",
       "author": "line",
       "source": "cursor_roster",
       "tier": "parked",
       "notes": "**AI on Bookcheck** for most titles—only *Secret of the Old Clock* hand-vetted; full series hand-vet only if readers push for it"
+    },
+    {
+      "title": "Nell of Gumbling",
+      "author": "Emma Steinkellner",
+      "source": "cursor_roster",
+      "tier": "flag_review",
+      "notes": "Owner **hand-reject** — blurb (before reading) presents the main character with two dads; graphic novel series; `flag_review`; no Book Quest"
     },
     {
       "title": "Nevermoor",
@@ -1306,6 +1348,13 @@
       "source": "cursor_roster",
       "tier": "parked",
       "notes": "Off list until owner checks graphic editions for **fanservice** (idk yet)."
+    },
+    {
+      "title": "Sol Goes for Goal!",
+      "author": "Julio Anta, Gabi Mendez",
+      "source": "cursor_roster",
+      "tier": "flag_review",
+      "notes": "Owner **hand-reject** — blurb (before reading) has the main character in love with another girl; graphic novel; `flag_review`; no Book Quest"
     },
     {
       "title": "Squished",
@@ -1373,6 +1422,6 @@
   ],
   "counts": {
     "vetted": 145,
-    "rejected": 25
+    "rejected": 33
   }
 }

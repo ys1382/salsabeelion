@@ -2438,6 +2438,76 @@
       ]),
     },
     {
+      titleRe: /\bgrace needs space\b/i,
+      authorRe: /wilgus|benjamin\s*a\.?\s*wilgus|alison\s*wilgus|abrego|rii\s*abrego/i,
+      tier: "flag_review",
+      detail: bookNote("Grace Needs Space! (Benjamin A. Wilgus, Rii Abrego)", [
+        "Owner hand-rejected.",
+        "Jacket/blurb presents the main character with two moms—visible before opening the book.",
+        "Graphic novel—Halalit won’t recommend this title.",
+      ]),
+    },
+    {
+      titleRe: /\bnell of gumbling\b|\bextremely normal fairy-?tale life\b/i,
+      authorRe: /steinkellner|emma\s*steinkellner/i,
+      tier: "flag_review",
+      detail: bookNote("Nell of Gumbling (Emma Steinkellner)", [
+        "Owner hand-rejected.",
+        "Jacket/blurb presents the main character with two dads—visible before opening the book.",
+        "Graphic novel series—Halalit won’t recommend this line.",
+      ]),
+    },
+    {
+      titleRe: /\bsol goes for (the )?goal\b/i,
+      authorRe: /anta|julio\s*anta|mendez|gabi\s*mendez/i,
+      tier: "flag_review",
+      detail: bookNote("Sol Goes for Goal! (Julio Anta, Gabi Mendez)", [
+        "Owner hand-rejected.",
+        "Jacket/blurb presents the main character in love with another girl—visible before opening the book.",
+        "Graphic novel—Halalit won’t recommend this title.",
+      ]),
+    },
+    {
+      titleRe: /\bblood city rollers\b|\bmove it or bruise it\b/i,
+      authorRe: /v\.?\s*p\.?\s*anderson|veronica\s*park|park\s*anderson|tatiana\s*hill/i,
+      tier: "flag_review",
+      detail: bookNote("Blood City Rollers (V.P. Anderson, Tatiana Hill)", [
+        "Owner hand-rejected.",
+        "Series includes girls falling in love with each other.",
+        "Vampire roller-derby graphic novels—Halalit won’t recommend this line.",
+      ]),
+    },
+    {
+      titleRe: /\bbatcat\b/i,
+      authorRe: /ramm|meggie\s*(the\s*)?ramm|marguerite\s*ramm/i,
+      tier: "flag_review",
+      detail: bookNote("Batcat (Meggie Ramm)", [
+        "Owner hand-rejected.",
+        "Main character uses they/them pronouns.",
+        "Graphic novel series—Halalit won’t recommend this line.",
+      ]),
+    },
+    {
+      titleRe: /\bhalfway to somewhere\b/i,
+      authorRe: /pimienta|jose\s*pimienta|jo\s*pi|joe\s*pi/i,
+      tier: "flag_review",
+      detail: bookNote("Halfway to Somewhere (Jose Pimienta)", [
+        "Owner hand-rejected.",
+        "Main character uses they/them pronouns.",
+        "Graphic novel—Halalit won’t recommend this title.",
+      ]),
+    },
+    {
+      titleRe: /\blook on the bright side\b/i,
+      authorRe: /lily\s*williams|schneemann|schneeman|karen\s*schneemann/i,
+      tier: "flag_review",
+      detail: bookNote("Look on the Bright Side (Lily Williams, Karen Schneemann)", [
+        "Owner hand-rejected.",
+        "One best-friend girl crushes on another girl.",
+        "Graphic novel—Halalit won’t recommend this title.",
+      ]),
+    },
+    {
       titleRe:
         /\bvenom of the serpent'?s crown\b|\bsoul of the deep\b|\bway of the owls\b/i,
       authorRe: /pau\s*preto|nicki\s*pau/i,
