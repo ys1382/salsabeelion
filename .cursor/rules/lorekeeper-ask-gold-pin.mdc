@@ -19,7 +19,7 @@ When the owner pins a gold Ask answer (baseline, never-worse, “lock this sampl
 
 - Treat gold as voice-only and let Sonnet “upgrade” by dropping entry-reason or other already-good slots
 - Soften machine locks so a thinner answer still passes
-- Mix who-is / leave-off / writing-next / catch-up / when-will golds into an unrelated pass
+- Mix who-is / leave-off / writing-next / catch-up / when-will / knowledge golds into an unrelated pass
 - Edit a locked fixture without owner OK in that conversation
 
 ## Locked gold inventory (do not mix families)
@@ -31,8 +31,9 @@ When the owner pins a gold Ask answer (baseline, never-worse, “lock this sampl
 5. **Give me the task list for what happens between Serias capturing Etherei and Serias’s arrival at Tenebris’s place.** (Smoke and Mirrors) — `lorekeeper/tests/fixtures/capture_to_arrival_writing_next_gold.txt`
 6. **What’s planned between where I leave off and the Preyfolk underground POV?** (Smoke and Mirrors) — `lorekeeper/tests/fixtures/leave_off_to_preyfolk_writing_next_gold.txt`
 7. **When will the Predators find out that the Preyfolk from their realm are sentient?** (Smoke and Mirrors) — `lorekeeper/tests/fixtures/when_will_preyfolk_sentience_gold.txt`
+8. **Does the beaver mayor know Etherei’s name?** (Smoke and Mirrors) — `lorekeeper/tests/fixtures/beaver_mayor_knows_etherei_name_gold.txt`
 
-**Not gold yet:** portrait / “what kind of person,” relationship, “what does X know” / “does X know Y,” notes-not-in-draft, prologue/section summary. Pin those in their own pass.
+**Not gold yet:** portrait / “what kind of person,” relationship, notes-not-in-draft, prologue/section summary. Strange Rabbit / name-never-spoken extras on does-know are optional until the owner raises the floor. Spoken-address scan (knower only) is already locked.
 
 ## Who-is specifically
 
@@ -61,6 +62,16 @@ Cast-list gold (do not mix or overwrite): Etherei task list — `lorekeeper/test
 **Locked gold (2026-08-12 evening — owner “fine, keep it”):** premise / thin-draft catch-up for *Get me caught up with this story* (stories like *The Waking Dream*) — `lorekeeper/tests/fixtures/catchup_waking_dream_gold.txt`. Orientation for what exists / why they’re here / why they can’t leave / how the antagonist would see her — not a full plotted novel recap.
 
 Must-keep when notes/draft support: NOW pressure · named boss (even sparse) · **antagonist softer side / not without a soul** · **antagonist stakes about her (dangerous asset or threat)** · origin · **who/why they are in the antagonist domain (e.g. Sparrow)** · **cannot simply leave / registration / unmask risk** — without inventing how they were physically transported if unwritten.
+
+## Knowledge / does-know specifically
+
+**Locked gold (2026-09-19 — owner pin, floor):** *Does the beaver mayor know Etherei’s name?* (Smoke and Mirrors) — `lorekeeper/tests/fixtures/beaver_mayor_knows_etherei_name_gold.txt` + `test_gold_shape_locked`. Short name-status, not a story dump.
+
+Must-keep: addresses Etherei as **Stranger** · therefore unlikely Mayor Sepior knows the name yet · invent-nothing footer. **Spoken-address scan:** rest on how the **named knower** addresses the White Rabbit in speech — not world-epithets, glued names (TheWhiteRabbit), dialogue leftovers (Let), description quotes (“a very far way away”), or another character’s name for him (Chroniker). Never a catch-up/story blurb.
+
+Machine locks for that scan (do not soften): `test_does_not_treat_description_quote_as_name` · `test_does_not_treat_let_as_name` · `test_does_not_treat_white_rabbit_epithet_as_name` · `test_does_not_use_another_characters_name_for_him`.
+
+Optional later raise (do not drop the floor): strange Rabbit · name never spoken in his presence · deeper Sepior-only address lines.
 
 ## When-will specifically
 

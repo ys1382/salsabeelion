@@ -198,6 +198,7 @@ def is_catchup_gather_question(question: str) -> bool:
     if not q or not _CATCHUP_Q.search(q):
         return False
     from lorekeeper_character_summary import is_who_is_question
+    from lorekeeper_knowledge_pov import is_knowledge_pov_question
     from lorekeeper_loose_ends import is_flagged_fix_question, is_planned_gap_question
     from lorekeeper_notes_vs_draft import is_notes_not_in_draft_question
     from lorekeeper_question_routes import is_story_position_question
@@ -217,6 +218,8 @@ def is_catchup_gather_question(question: str) -> bool:
     if is_planned_gap_question(q) or is_flagged_fix_question(q):
         return False
     if is_who_is_question(q):
+        return False
+    if is_knowledge_pov_question(q):
         return False
     return True
 

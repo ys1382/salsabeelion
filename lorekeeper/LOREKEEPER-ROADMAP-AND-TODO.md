@@ -299,6 +299,15 @@ Run **one row at a time** in Cursor. Don’t skip Phase 0 — it costs nothing a
 
 **Honest ceiling:** perfect completeness forever is not the bar; “accurate when it speaks, thin when it doesn’t” is.
 
+### Ask knowledge / does-know (locked 2026-09-19) — **do not regress floor**
+
+- Q: *Does the beaver mayor know Etherei’s name?* (story silo / search-in = Smoke and Mirrors)
+- **Gold sample (owner-locked 2026-09-19 — floor only):** `lorekeeper/tests/fixtures/beaver_mayor_knows_etherei_name_gold.txt` + `test_gold_shape_locked`
+- Must keep: addresses Etherei as **Stranger** · therefore unlikely Mayor Sepior knows the name yet · invent-nothing footer · **spoken-address scan** (the named knower’s spoken address only — not epithets, glued names, dialogue leftovers, or another character’s name for him)
+- Must not: description quotes as vocatives (“a very far way away”) · Let · TheWhiteRabbit · Chroniker as Sepior’s address · story blurb / catch-up dump
+- Optional later raise: strange Rabbit · name never spoken in his presence · deeper Sepior-only address lines — do not drop the floor or the address scan to add them
+- Do **not** mix into who-is, leave-off, writing-next, or catch-up golds. Do **not** edit the fixture or soften the lock without owner OK. Address-scan tests must stay green: `test_does_not_treat_description_quote_as_name` · `test_does_not_treat_let_as_name` · `test_does_not_treat_white_rabbit_epithet_as_name` · `test_does_not_use_another_characters_name_for_him`.
+
 ### Ask multi-turn + voice (owner pin — far off) — pinned 2026-08-12
 
 **Easy to revisit:** edit or delete this block if the wish changes.
@@ -443,7 +452,8 @@ Run **one row at a time** in Cursor. Don’t skip Phase 0 — it costs nothing a
 
 ### Document page split (needs more than Cursor — 2026-08-09)
 
-- [ ] **Real Google Docs–style page split** — stacked letter pages, whole lines to the next page, no gap bleed, no top/bottom chop. Tall growing page works for now (full draft + word count). Multi-page split was tried and rolled back (clipping, scroll/caret issues). **Needs more work; probably more than Cursor alone** (pair programming / deeper editor work). Do not treat as a small Cursor-only follow-up until a new approach is agreed.
+- [x] **Page-count guess (2026-09-19)** — sidebar shows “about N pages” next to word count. Letter-size height vs current font/margins. **Does not split** the editor. Not a real-book typeset.
+- [ ] **Real Google Docs–style page split** — stacked letter pages, whole lines to the next page, no gap bleed, no top/bottom chop. Tall growing page works for now (full draft + word count + page guess). Multi-page split was tried and rolled back (clipping, scroll/caret issues). **Needs more work; probably more than Cursor alone** (pair programming / deeper editor work). Do not treat as a small Cursor-only follow-up until a new approach is agreed.
 
 ### Ask confirm-sources (retired as default UI 2026-07-20)
 

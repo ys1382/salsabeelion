@@ -29,10 +29,13 @@ Pick the closest GOLD FAMILY by whether the writer's question *sounds like* that
 
 GOLD FAMILIES (question → answer shape; never copy a gold's story facts):
 - who_is — "Who is [name]?" → short identity card. Not a plot dump.
+- knowledge — "What does [name] know about …?" OR "Does [name] know [Y's name]?" → short knowledge status from notes/draft (how they address them, whether the name is spoken in their presence). Not a story blurb or catch-up.
 - story_resume — "Where did I leave off in the main draft?" → short recap of NOW in the draft. Only when the whole question is about current draft position.
 - catchup_gather — "Get me caught up with this story" → orientation of what exists so far. Not a novel rewrite.
 - writing_next — "Give me the task list for [character]" OR "task list for what happens between [beat A] and [beat B]" OR "What do I have planned between where I leave off and [named beat]?" → ALL unused planned beats from notes in that window (not only the named end beat). Never the whole draft.
 - notes_not_in_draft — "What's in my notes but not in the main document?" → unused note lines.
+
+CRITICAL — never catchup_gather or summarize_story for "Does X know …?" / "What does X know about …?". Those are knowledge.
 
 CRITICAL — story_resume vs writing_next stretch:
 - If the question asks what is planned / happens BETWEEN the leave-off point AND another beat (POV, scene, chapter, arrival), it is writing_next. "Leave off" is only the start of the window.
@@ -160,8 +163,27 @@ def _parse_router_json(raw: str) -> dict[str, Any]:
 
 def _apply_gold_family_guard(plan: AskPlan, question: str) -> AskPlan:
     """Closest gold family wins — stretch/planned-between is not a leave-off recap."""
+    from lorekeeper_knowledge_pov import (
+        awareness_parts,
+        is_knowledge_pov_question,
+        knowledge_pov_parts,
+    )
     from lorekeeper_writing_next import is_writing_next_task_list_question
 
+    if is_knowledge_pov_question(question):
+        parts = awareness_parts(question) or knowledge_pov_parts(question)
+        names = [parts[0]] if parts else list(plan.character_names)
+        return AskPlan(
+            intent="narrow_fact",
+            pipeline="rag_summarize",
+            answer_model="haiku",
+            question_kind="knowledge",
+            role_terms=[],
+            character_names=names[:6],
+            section=plan.section,
+            use_draft_tail=False,
+            router_engine=plan.router_engine,
+        )
     if not is_writing_next_task_list_question(question):
         return plan
     return AskPlan(
@@ -179,11 +201,11 @@ def _apply_gold_family_guard(plan: AskPlan, question: str) -> AskPlan:
 
 def _apply_portrait_guard(plan: AskPlan, question: str) -> AskPlan:
     """Correct Haiku when it misroutes what-is character questions as who_is."""
-    from lorekeeper_knowledge_pov import awareness_parts, is_awareness_question
+    from lorekeeper_knowledge_pov import awareness_parts, is_knowledge_pov_question, knowledge_pov_parts
     from lorekeeper_question_routes import extract_what_subject, is_character_portrait_question
 
-    if is_awareness_question(question):
-        parts = awareness_parts(question)
+    if is_knowledge_pov_question(question):
+        parts = awareness_parts(question) or knowledge_pov_parts(question)
         names: list[str] = []
         if parts:
             names.append(parts[0])
@@ -342,7 +364,7 @@ def local_ask_plan(question: str) -> AskPlan | None:
     """Fast local routing — skip Haiku when the question shape is obvious."""
     from lorekeeper_character_compose import is_audit_question, is_coverage_question
     from lorekeeper_character_summary import is_who_is_question
-    from lorekeeper_knowledge_pov import awareness_parts, is_awareness_question, is_knowledge_pov_question
+    from lorekeeper_knowledge_pov import awareness_parts, is_knowledge_pov_question, knowledge_pov_parts
     from lorekeeper_loose_ends import is_flagged_fix_question, is_planned_gap_question
     from lorekeeper_notes_vs_draft import is_notes_not_in_draft_question
     from lorekeeper_writing_next import is_writing_next_task_list_question
@@ -362,8 +384,8 @@ def local_ask_plan(question: str) -> AskPlan | None:
     section_hints = extract_section_hints(q)
     section_raw = section_hints.get("section") if section_hints else None
 
-    if is_awareness_question(q):
-        parts = awareness_parts(q)
+    if is_knowledge_pov_question(q):
+        parts = awareness_parts(q) or knowledge_pov_parts(q)
         names = [parts[0]] if parts else []
         return AskPlan(
             intent="narrow_fact",
@@ -371,16 +393,6 @@ def local_ask_plan(question: str) -> AskPlan | None:
             answer_model="haiku",
             question_kind="knowledge",
             character_names=names[:6],
-            section=section_raw,
-            router_engine="local",
-        )
-
-    if is_knowledge_pov_question(q):
-        return AskPlan(
-            intent="narrow_fact",
-            pipeline="rag_summarize",
-            answer_model="haiku",
-            question_kind="knowledge",
             section=section_raw,
             router_engine="local",
         )

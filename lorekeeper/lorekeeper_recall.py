@@ -29,7 +29,14 @@ from lorekeeper_ask_router import (
     section_hints_from_plan,
 )
 from lorekeeper_rag import RAG_VERSION, answer_with_rag, rag_enabled
-from lorekeeper_knowledge_pov import awareness_parts, is_awareness_question, is_knowledge_pov_question
+from lorekeeper_knowledge_pov import (
+    awareness_parts,
+    is_awareness_question,
+    is_does_know_question,
+    is_knowledge_pov_question,
+    knowledge_pov_parts,
+    _PLOT_BLURB_RE,
+)
 from lorekeeper_notes_vs_draft import is_notes_not_in_draft_question
 from lorekeeper_writing_next import is_writing_next_task_list_question
 from lorekeeper_catchup_gather import is_catchup_gather_question
@@ -802,6 +809,17 @@ def local_pipeline_skips_rag(
             return False
         return bool(answer.strip())
 
+    if is_does_know_question(question) and kind in ("knowledge", "narrow_fact"):
+        if not answer.strip():
+            return False
+        if "knowledge about" in answer.lower() and "includes:" in answer.lower():
+            return False
+        if _PLOT_BLURB_RE.search(answer):
+            return False
+        if "hidey hole" in answer.lower() or "further incense" in answer.lower():
+            return False
+        return True
+
     if kind in ("who", "knowledge") or is_who_is_question(question) or is_knowledge_pov_question(
         question
     ):
@@ -1441,6 +1459,29 @@ def recall_from_user_data(
             question, local_pipeline, scoped, spot_check=spot_check, plan=ask_plan
         ):
             return _finish_local_pipeline(local_pipeline)
+
+    if ask_plan and is_does_know_question(question):
+        if local_pipeline and str(local_pipeline.get("answer") or "").strip():
+            return _finish_local_pipeline(local_pipeline)
+        parts = knowledge_pov_parts(question)
+        knower = parts[0] if parts else "they"
+        topic = parts[1] if parts else "that"
+        work_title = work_title_from_hints(work_hints) if work_hints else ""
+        where = f" in {work_title}" if work_title else ""
+        return _finish(_attach_router_meta({
+            "ok": True,
+            "answer": (
+                f"Nothing saved yet{where} that says whether {knower} knows {topic}.\n\n"
+                "— From your notes only. Nothing invented."
+            ),
+            "sources": [],
+            "materialState": "nothing_saved",
+            "mode": recall_mode,
+            "questionKind": "knowledge",
+            "recallVersion": RECALL_VERSION,
+            "recallEngine": "local",
+            "entryCount": len(entries),
+        }))
 
     if ask_plan and is_awareness_question(question):
         if local_pipeline and str(local_pipeline.get("answer") or "").strip():

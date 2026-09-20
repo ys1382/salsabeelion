@@ -35,6 +35,36 @@ class AskRouterTests(unittest.TestCase):
         self.assertEqual(plan.question_kind, "knowledge")
         self.assertEqual(plan.intent, "narrow_fact")
 
+    def test_local_plan_does_know_name_is_knowledge(self) -> None:
+        q = "Does the beaver mayor know Etherei's name?"
+        plan = local_ask_plan(q)
+        self.assertIsNotNone(plan)
+        assert plan is not None
+        self.assertEqual(plan.router_engine, "local")
+        self.assertEqual(plan.question_kind, "knowledge")
+        self.assertEqual(plan.intent, "narrow_fact")
+        self.assertFalse(plan.use_draft_tail)
+
+    def test_haiku_catchup_corrected_to_does_know(self) -> None:
+        payload = {
+            "intent": "catchup_gather",
+            "pipeline": "rag_summarize",
+            "answer_model": "sonnet",
+            "role_terms": [],
+            "character_names": [],
+            "section": None,
+            "question_kind": "catchup_gather",
+        }
+        q = "Does the beaver mayor know Etherei's name?"
+        with mock.patch(
+            "lorekeeper_ask_router._call_haiku_router",
+            return_value=json.dumps(payload),
+        ):
+            plan = route_ask_question(q)
+        self.assertEqual(plan.intent, "narrow_fact")
+        self.assertEqual(plan.question_kind, "knowledge")
+        self.assertFalse(plan.use_draft_tail)
+
     def test_local_plan_portrait(self) -> None:
         q = "In Smoke and Mirrors, what is Duke Dijon?"
         plan = local_ask_plan(q)

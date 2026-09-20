@@ -8,7 +8,9 @@ from lorekeeper_knowledge_pov import (
     build_awareness_answer,
     build_knowledge_pov_answer,
     awareness_parts,
+    answer_meets_does_know_name_gold_bar,
     is_awareness_question,
+    is_does_know_question,
     is_knowledge_pov_question,
     knowledge_pov_parts,
     names_in_knowledge_topic,
@@ -211,6 +213,261 @@ class KnowledgePovTests(unittest.TestCase):
             }
         ]
         self.assertTrue(local_pipeline_skips_rag(q, pipeline, scoped, plan=plan))
+
+
+class DoesKnowNameTests(unittest.TestCase):
+    Q = "Does the beaver mayor know Etherei's name?"
+
+    def _entries(self) -> list[dict]:
+        return [
+            {
+                "id": "m1",
+                "title": "Mayor Sepior",
+                "body": (
+                    "The Beaver Mayor, Mayor Sepior, knows that Etherei is a strange "
+                    "Rabbit. When addressing Etherei, he calls Etherei \"Stranger.\" "
+                    "Etherei's name is never spoken in his presence."
+                ),
+                "tags": ["Smoke and Mirrors"],
+                "kind": "note",
+            },
+            {
+                "id": "blurb",
+                "title": "Overview",
+                "body": (
+                    "Smoke and Mirrors follows Etherei as he becomes entangled in a "
+                    "dangerous political hunt orchestrated by predators. The central "
+                    "crisis arrives when Etherei is captured by Serias."
+                ),
+                "tags": ["Smoke and Mirrors"],
+                "kind": "note",
+            },
+        ]
+
+    def test_detects_does_know_name(self) -> None:
+        self.assertTrue(is_does_know_question(self.Q))
+        self.assertTrue(is_knowledge_pov_question(self.Q))
+        parts = knowledge_pov_parts(self.Q)
+        self.assertIsNotNone(parts)
+        assert parts is not None
+        self.assertIn("Beaver Mayor", parts[0])
+        self.assertIn("name", parts[1].lower())
+
+    def test_does_not_steal_what_does_know_about(self) -> None:
+        q = "In Smoke and Mirrors, what does Elara know about Marcus's interest in Elara?"
+        self.assertFalse(is_does_know_question(q))
+        self.assertTrue(is_knowledge_pov_question(q))
+
+    def test_local_plan_is_knowledge(self) -> None:
+        plan = local_ask_plan(self.Q)
+        self.assertIsNotNone(plan)
+        assert plan is not None
+        self.assertEqual(plan.question_kind, "knowledge")
+        self.assertEqual(plan.intent, "narrow_fact")
+        self.assertEqual(plan.router_engine, "local")
+
+    def test_compose_matches_candidate_gold_bar(self) -> None:
+        answer, ids = build_knowledge_pov_answer(self.Q, self._entries())
+        self.assertIsNotNone(answer)
+        assert answer is not None
+        self.assertTrue(answer_meets_does_know_name_gold_bar(answer), answer)
+        self.assertIn("strange", answer.lower())
+        self.assertIn("rabbit", answer.lower())
+        self.assertNotIn("political hunt", answer.lower())
+        self.assertNotIn("captured by serias", answer.lower())
+        self.assertTrue(ids)
+
+    def test_recall_does_not_dump_story_blurb(self) -> None:
+        os.environ["LOREKEEPER_RAG"] = "0"
+        res = recall_from_user_data(
+            self.Q,
+            {"lorekeeper_entries_v1": __import__("json").dumps(self._entries())},
+        )
+        self.assertTrue(res.get("ok"))
+        self.assertEqual(res.get("questionKind"), "knowledge")
+        answer = str(res.get("answer") or "")
+        self.assertTrue(answer_meets_does_know_name_gold_bar(answer), answer)
+        self.assertNotIn("becomes entangled", answer.lower())
+
+    def test_gold_shape_locked(self) -> None:
+        """
+        Owner-locked does-know name gold (2026-09-19). Floor only.
+        Spoken-address scan is also locked — do not soften vocative tests.
+        Do not edit the fixture or soften this test without owner OK.
+        """
+        from pathlib import Path
+
+        gold_path = (
+            Path(__file__).resolve().parent
+            / "fixtures"
+            / "beaver_mayor_knows_etherei_name_gold.txt"
+        )
+        gold = gold_path.read_text(encoding="utf-8")
+        expected = (
+            "The only times we see him addressing Etherei, he calls Etherei "
+            '"Stranger." Therefore, it is unlikely that Mayor Sepior knows '
+            "Etherei's name yet.\n"
+            "\n"
+            "— From your notes only. Nothing invented.\n"
+        )
+        self.assertEqual(gold, expected)
+        self.assertTrue(answer_meets_does_know_name_gold_bar(gold), gold)
+        self.assertIn("Stranger", gold)
+        self.assertIn("Mayor Sepior", gold)
+        self.assertNotIn("very far", gold.lower())
+        self.assertNotIn("strange Rabbit", gold)
+
+    def test_floor_only_answer_meets_bar(self) -> None:
+        floor = (
+            "The only times we see him addressing Etherei, he calls Etherei "
+            '"Stranger." Therefore, it is unlikely that Mayor Sepior knows '
+            "Etherei's name yet.\n\n"
+            "— From your notes only. Nothing invented."
+        )
+        self.assertTrue(answer_meets_does_know_name_gold_bar(floor), floor)
+
+    def test_curly_apostrophe_still_name_status(self) -> None:
+        q = "Does the beaver mayor know Etherei\u2019s name?"
+        self.assertTrue(is_does_know_question(q))
+        answer, _ids = build_knowledge_pov_answer(q, self._entries())
+        self.assertIsNotNone(answer)
+        assert answer is not None
+        self.assertTrue(answer_meets_does_know_name_gold_bar(answer), answer)
+        self.assertNotIn("knowledge about", answer.lower())
+
+    def test_does_not_dump_draft_scenes(self) -> None:
+        entries = self._entries() + [
+            {
+                "id": "scene",
+                "title": "Draft",
+                "body": (
+                    "Etherei shakes his face, ridding himself of his blank expression "
+                    "that is likely to only further incense the beaver mayor. "
+                    '"But, if you follow me, I know someone who can give you a better '
+                    'answer than me!" '
+                    + ("*" * 80)
+                    + " Somewhere in a different underground burrow, "
+                    '"I cannot tell you how much I appreciate you agreeing to meet '
+                    'with us here," the Beaver mayor tells the Moonshadow Twins. '
+                    '"Perhaps you could explain further than that, now that you are '
+                    'in our hidey hole so to speak?"'
+                ),
+                "tags": ["Smoke and Mirrors"],
+                "kind": "doc",
+            }
+        ]
+        os.environ["LOREKEEPER_RAG"] = "0"
+        res = recall_from_user_data(
+            "Does the beaver mayor know Etherei\u2019s name?",
+            {"lorekeeper_entries_v1": __import__("json").dumps(entries)},
+        )
+        answer = str(res.get("answer") or "")
+        self.assertTrue(answer_meets_does_know_name_gold_bar(answer), answer)
+        self.assertNotIn("knowledge about", answer.lower())
+        self.assertNotIn("includes:", answer.lower())
+        self.assertNotIn("further incense", answer.lower())
+        self.assertNotIn("hidey hole", answer.lower())
+        self.assertNotIn("Moonshadow", answer)
+        self.assertNotIn("*" * 20, answer)
+
+    def test_does_not_treat_description_quote_as_name(self) -> None:
+        entries = [
+            {
+                "id": "m1",
+                "title": "Mayor Sepior",
+                "body": (
+                    "The Beaver Mayor, Mayor Sepior, knows that Etherei is a strange "
+                    "Rabbit. The beaver mayor said Etherei was \"a very far way away.\" "
+                    "When addressing Etherei, he calls Etherei \"Stranger.\" "
+                    "Etherei's name is never spoken in his presence."
+                ),
+                "tags": ["Smoke and Mirrors"],
+                "kind": "note",
+            }
+        ]
+        answer, _ids = build_knowledge_pov_answer(self.Q, entries)
+        self.assertIsNotNone(answer)
+        assert answer is not None
+        self.assertTrue(answer_meets_does_know_name_gold_bar(answer), answer)
+        self.assertIn("Stranger", answer)
+        self.assertNotIn("very far", answer.lower())
+        self.assertNotIn("way away", answer.lower())
+
+    def test_does_not_treat_let_as_name(self) -> None:
+        entries = [
+            {
+                "id": "m1",
+                "title": "Mayor Sepior",
+                "body": (
+                    '"Let me show you the way," the beaver mayor tells Etherei. '
+                    '"Let," he adds, before the twins arrive. '
+                    "When addressing Etherei, he calls Etherei \"Stranger.\" "
+                    "Etherei's name is never spoken in his presence."
+                ),
+                "tags": ["Smoke and Mirrors"],
+                "kind": "note",
+            }
+        ]
+        answer, _ids = build_knowledge_pov_answer(self.Q, entries)
+        self.assertIsNotNone(answer)
+        assert answer is not None
+        self.assertTrue(answer_meets_does_know_name_gold_bar(answer), answer)
+        self.assertIn("Stranger", answer)
+        self.assertNotRegex(answer, r'["\']Let["\']')
+
+    def test_does_not_treat_white_rabbit_epithet_as_name(self) -> None:
+        entries = [
+            {
+                "id": "m1",
+                "title": "Mayor Sepior",
+                "body": (
+                    "Etherei is also known as TheWhiteRabbit. "
+                    "The beaver mayor has heard of the White Rabbit. "
+                    "When addressing Etherei, he calls Etherei \"Stranger.\" "
+                    "Etherei's name is never spoken in his presence."
+                ),
+                "tags": ["Smoke and Mirrors"],
+                "kind": "note",
+            }
+        ]
+        answer, _ids = build_knowledge_pov_answer(self.Q, entries)
+        self.assertIsNotNone(answer)
+        assert answer is not None
+        self.assertTrue(answer_meets_does_know_name_gold_bar(answer), answer)
+        self.assertIn("Stranger", answer)
+        self.assertNotIn("TheWhiteRabbit", answer)
+        self.assertNotIn("White Rabbit", answer)
+
+    def test_does_not_use_another_characters_name_for_him(self) -> None:
+        entries = [
+            {
+                "id": "t1",
+                "title": "Tenebris",
+                "body": (
+                    "Tenebris knows Etherei as Chroniker. "
+                    "Tenebris calls Etherei \"Chroniker.\""
+                ),
+                "tags": ["Smoke and Mirrors"],
+                "kind": "note",
+            },
+            {
+                "id": "m1",
+                "title": "Mayor Sepior",
+                "body": (
+                    "The Beaver Mayor, Mayor Sepior, meets Etherei. "
+                    "When addressing Etherei, he calls Etherei \"Stranger.\" "
+                    "Etherei's name is never spoken in his presence."
+                ),
+                "tags": ["Smoke and Mirrors"],
+                "kind": "note",
+            },
+        ]
+        answer, _ids = build_knowledge_pov_answer(self.Q, entries)
+        self.assertIsNotNone(answer)
+        assert answer is not None
+        self.assertTrue(answer_meets_does_know_name_gold_bar(answer), answer)
+        self.assertIn("Stranger", answer)
+        self.assertNotIn("Chroniker", answer)
 
 
 class WhoRagEscalationTests(unittest.TestCase):

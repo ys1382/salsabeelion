@@ -62,6 +62,11 @@ class CatchupDetectionTests(unittest.TestCase):
         self.assertFalse(is_catchup_gather_question("Who is Character A?"))
         self.assertFalse(
             is_catchup_gather_question(
+                "Does the beaver mayor know Etherei's name?"
+            )
+        )
+        self.assertFalse(
+            is_catchup_gather_question(
                 "What should I write next in The Waking Dream?"
             )
         )

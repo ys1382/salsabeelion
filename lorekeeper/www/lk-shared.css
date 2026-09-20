@@ -149,6 +149,11 @@ a { color: var(--accent); }
 }
 .lk-ask-answer {
   white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  max-width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
   margin: 0.75rem 0 0;
   padding: 0.85rem 0.95rem;
   border-radius: 10px;

@@ -41,8 +41,9 @@ Same spirit for leave-off / who-is / writing-next / catch-up / when-will golds: 
 - Writing-next stretch — *Give me the task list for what happens between Serias capturing Etherei and Serias’s arrival at Tenebris’s place.* — `tests/fixtures/capture_to_arrival_writing_next_gold.txt`
 - Writing-next stretch — *What’s planned between where I leave off and the Preyfolk underground POV?* — `tests/fixtures/leave_off_to_preyfolk_writing_next_gold.txt` (locked 2026-08-16; exact live wording and order; planned night stop · Beaver Mayor underground POV · Chroniker fed/silence · overnight bind · unspecified rest). Same stretch family: every unused planned beat in the window, never the whole draft, never only the named end if notes list more in between. Faction-word mentions (Preyfolk) are not the window. Seats come from the claim line.
 - When-will — *When will the Predators find out that the Preyfolk from their realm are sentient?* — `tests/fixtures/when_will_preyfolk_sentience_gold.txt`
+- Knowledge / does-know — *Does the beaver mayor know Etherei’s name?* — `tests/fixtures/beaver_mayor_knows_etherei_name_gold.txt` (locked 2026-09-19; floor: Stranger vocative · unlikely Mayor Sepior knows the name yet · invent-nothing footer). **Spoken-address scan locked:** knower’s spoken address only — not epithets, glued names, dialogue leftovers, or another character’s name for him.
 
-**Not gold yet:** portrait / “what kind of person,” relationship, “what does X know,” notes-not-in-draft, prologue/section summary.
+**Not gold yet:** portrait / “what kind of person,” relationship, notes-not-in-draft, prologue/section summary. Does-know extras (strange Rabbit, name never spoken) may be added later without dropping the floor or the address scan.
 
 ---
 
@@ -63,6 +64,7 @@ Optional: work tags on notes, one facet per question, coverage wording only when
 | What is Ella’s role? | One role line | narrow facet |
 | How are A and B related? | Relationship only | relationship |
 | What does Elara know about …? | POV knowledge | knowledge |
+| Does the beaver mayor know Etherei’s name? | Short knowledge status (how they address them, name in presence) — not a story blurb | knowledge |
 | Where did I leave off? | Latest draft state | story_resume |
 | What have I got so far? / Catch me up | Orientation brief: cast, beats, open Qs, planned scraps | catchup_gather |
 | What happens in the prologue? | Prologue-scoped summary | summarize_story |

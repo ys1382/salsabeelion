@@ -10,7 +10,7 @@ from typing import Any, Callable
 from lorekeeper_character_compose import is_audit_question, is_coverage_question
 from lorekeeper_character_summary import character_targets, is_who_is_question
 from lorekeeper_question_routes import is_character_portrait_question, is_story_position_question, is_what_question
-from lorekeeper_knowledge_pov import is_awareness_question
+from lorekeeper_knowledge_pov import is_awareness_question, is_knowledge_pov_question
 from lorekeeper_aliases import alias_reference_lines_for
 from lorekeeper_inference import inference_reference_lines_for
 from lorekeeper_note_compare import compose_note_compare_lines
@@ -249,14 +249,15 @@ Stay focused on what was asked. One short paragraph unless the question explicit
 Never invent identities, species, or hybrid roles that sources do not state. If one note names a sentinel and another discusses birds, do not invent a sentinel bird."""
 
 _AWARENESS = """
-This asks how aware or informed someone is about a specific topic — NOT a full character profile.
+This asks what a named person knows or how aware they are — including yes/no "Does X know Y's name?" — NOT a story summary, catch-up blurb, or full character profile.
 
 Rules:
-- First sentence must state their awareness level or what they know about the topic asked
+- First sentence must state their knowledge/awareness of the topic asked
+- For "does X know Y's name?": restate how X addresses Y, whether Y's name is spoken in X's presence, and anything X is stated to know about Y. Then a short likely/unlikely only if those facts support it. Never invent.
+- No plot overview, hunt/capture recap, or book-blurb opening
 - No cast-card headers, bullet sections, or "Key Ties" blocks
 - No backstory before the current story unless one short phrase is needed
-- No prior-story hooks or off-page events unless the question asks for them
-- One short paragraph (2–4 sentences max) unless sources require a bit more
+- One short paragraph (2–5 sentences max) unless sources require a bit more
 """
 
 _RELATIONSHIP_CARD = """
@@ -325,7 +326,9 @@ def _system_for_kind(
     parts = [_SYSTEM_BASE]
     if plan and plan.intent == "character_portrait":
         parts.append(_CHARACTER_PORTRAIT)
-    elif plan and plan.intent == "narrow_fact" and is_awareness_question(question):
+    elif plan and plan.intent == "narrow_fact" and (
+        is_awareness_question(question) or is_knowledge_pov_question(question)
+    ):
         parts.append(_AWARENESS)
     elif (plan and plan.intent == "relationship") or question_kind == "relationship":
         from lorekeeper_relations import is_story_arc_relationship_question
@@ -559,7 +562,9 @@ def _build_user_prompt(
     catchup_block = ""
     if plan and plan.intent == "character_portrait":
         kind_hint = _CHARACTER_PORTRAIT + "\n"
-    elif plan and plan.intent == "narrow_fact" and is_awareness_question(question):
+    elif plan and plan.intent == "narrow_fact" and (
+        is_awareness_question(question) or is_knowledge_pov_question(question)
+    ):
         kind_hint = _AWARENESS + "\n"
     elif (plan and plan.intent == "relationship") or question_kind == "relationship":
         from lorekeeper_relations import (
