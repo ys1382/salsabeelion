@@ -812,6 +812,12 @@
     document.querySelectorAll(".lk-page-static, .lk-page-measure").forEach(function (node) {
       LoreKeeperFontCatalog.applyToElement(node, fontId);
     });
+    schedulePageGuess();
+    if (global.document && global.document.fonts && global.document.fonts.ready) {
+      global.document.fonts.ready.then(function () {
+        schedulePageGuess();
+      }).catch(function () {});
+    }
   }
 
   function applyPageLayout() {
@@ -835,6 +841,7 @@
       scheduleBlockPageGaps();
       schedulePageChrome();
     }
+    schedulePageGuess();
   }
 
   function loadPageSetupFields() {
@@ -864,11 +871,51 @@
     return text.split(/\s+/).filter(Boolean).length;
   }
 
+  function usableLetterPageHeightPx() {
+    return Math.max(120, PAGE_H - marginPx() * 2);
+  }
+
+  function countLetterPageGuess() {
+    var words = countWords();
+    if (!words) return 0;
+    var el = editorEl();
+    var usable = usableLetterPageHeightPx();
+    var ink = el ? el.scrollHeight || el.offsetHeight || 0 : 0;
+    if (ink > 0 && usable > 0) {
+      return Math.max(1, Math.ceil(ink / usable));
+    }
+    return Math.max(1, Math.ceil(words / 250));
+  }
+
+  var pageGuessTimer = null;
+  function schedulePageGuess() {
+    if (pageGuessTimer) {
+      if (global.cancelAnimationFrame) global.cancelAnimationFrame(pageGuessTimer);
+      else global.clearTimeout(pageGuessTimer);
+    }
+    var run = function () {
+      pageGuessTimer = null;
+      updateWordCount();
+    };
+    if (global.requestAnimationFrame) pageGuessTimer = global.requestAnimationFrame(run);
+    else pageGuessTimer = global.setTimeout(run, 16);
+  }
+
   function updateWordCount() {
     var el = document.getElementById("wordCount");
     if (!el) return;
     var n = countWords();
-    el.textContent = n + " word" + (n === 1 ? "" : "s");
+    var wordLabel = n + " word" + (n === 1 ? "" : "s");
+    if (!n) {
+      el.textContent = wordLabel;
+      el.removeAttribute("title");
+      return;
+    }
+    var pages = countLetterPageGuess();
+    var pageLabel = "about " + pages + " page" + (pages === 1 ? "" : "s");
+    el.textContent = wordLabel + " · " + pageLabel;
+    el.title =
+      "Guess for letter-size pages with your current font and margins. The draft stays one sheet.";
   }
 
   function editorContentWords() {
