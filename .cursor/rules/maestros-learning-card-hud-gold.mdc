@@ -1,0 +1,31 @@
+---
+description: Maestro's learning-card HUD gold — pickup first, three short lines, no hearts
+globs: maestrosOdyssey/**
+alwaysApply: false
+---
+
+# Maestro's — pinning learning-card HUD (gold)
+
+Owner pinned 2026-09-21: the red hearts are gone. Day / week / pesos show **after** you take the card, as three short lines.
+
+## Locked flow
+
+1. Hearts HUD stays off. This is not a fighting game.
+2. Elder explains the card. She does **not** silently put it in the bag.
+3. **E — Take** on the basket by her door. Toast + journal "Carrying" is the pickup.
+4. Then the top-left shows **Monday** / **Week 1** / **400 pesos** — not one run-on line.
+5. Copy says **pesos**, never a bare `$` that reads like US dollars.
+
+## Do not
+
+- Auto-grant the card on the first elder hello
+- Show the corner before pickup
+- Bring the hearts back "just in case"
+- Mix this with the elder full-screen opener or language/look picker
+
+## Lock files
+
+- `maestrosOdyssey/2d/ui/hud.gd`
+- `maestrosOdyssey/2d/ui/game_state.gd` (`CARD_START_PESOS`, weekday, week)
+- `maestrosOdyssey/2d/backend/test_learning_card_hud.py`
+- `card_basket` in `dragons_brew_world.json`

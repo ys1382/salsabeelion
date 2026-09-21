@@ -26,7 +26,7 @@ Play starts on the block. Talk to the elder, pick up the learning card, go into 
 - Street + enterable Dragon's Brew
 - Elder prologue and prepaid learning card
 - Sit on benches with **E** (street bench and the café seat)
-- Mara's locked Çampire line, then typed order after you read the menu
+- Mara's locked Çampire line, then typed order after you read the menu (small cup/muffin in hand; sit and **D** sip / **F** eat)
 - Mara's wings overlay (Çampire read on the shared villager sheet; tail later)
 - Monday iguana + riverfolk neighbors (sea-ferry talk, merfolk not picking fights)
 - Authored menu and house-rules boards

@@ -1,0 +1,33 @@
+---
+description: Maestro's Mara typed-order gold — don't drop or stall the café order
+globs: maestrosOdyssey/**
+alwaysApply: false
+---
+
+# Maestro's — pinning Mara typed order (gold)
+
+Owner pinned 2026-09-21: typing an order at Mara **works**, and the **sip / eat hold** works. Do not remove the type box, skip the drink in the same reply, or leave the player waiting on a drink that never arrives.
+
+## Locked flow
+
+1. **E** Mara — Çampire intro first.
+2. Read the drink menu (beat `menu_read`) before she takes an order.
+3. **E** Mara — "What's your order?"
+4. **E** again — type box. WASD must not steal keys. **Enter** submits.
+5. Match **café / té / muffin** (English coffee/tea too). Echo the **Spanish lemma**.
+6. **Same reply, drink is ready** — and a **cup / muffin sprite** shows on the player (packs have no mug; custom pixels). Hide it when they leave the café. No kitchen timer. No "I'll get that started" hang.
+
+## Do not
+
+- Drop the type box when adding pay, sip, or sit-to-dine later
+- Wait minutes (or any off-screen cook time) before the order finishes
+- Say "here you go" with no visible drink or muffin
+- Send unmatched text to a silent fallback coffee without telling the player
+- Mix this gold with the elder full-screen opener or language/look picker (those are later)
+
+## Lock files
+
+- `maestrosOdyssey/2d/ui/cafe_order.gd`
+- `maestrosOdyssey/2d/ui/dialogue_ui.gd` (`show_order_box`)
+- `maestrosOdyssey/2d/actors/player.gd` (`Held` sprite)
+- `maestrosOdyssey/2d/backend/test_mara_order_gold.py`

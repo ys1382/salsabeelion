@@ -172,8 +172,8 @@
       "movement": "idle",
       "tint": "#d4af6a",
       "wants_item": "",
-      "gives_item": "learning_card",
-      "reveal_beat": "card_granted",
+      "gives_item": "",
+      "reveal_beat": "",
       "scripted_lines": [
         "Good morning, dear. I'm one of the elders who helps look after this block. You've been part of the neighborhood for a while now.",
         "When someone wants to learn the block properly — not just pass through like a tourist — the community keeps a learning card for them. I'd like you to have one.",
@@ -181,7 +181,7 @@
         "Dragon's Brew down the path is the kindest place to start. It's a warm room with a good counter, and every species is welcome there. Take your mornings there when you're ready.",
         "While you're there, notice the menu, the house rules on the wall, and the people who share the room — not gossip, nothing like that. Just what a good neighbor would notice, with kind eyes.",
         "On the same weekday next week, I'll check in with you. I'd love to hear about the food, the feel of the room, and the community you meet there.",
-        "Here — this is yours now. Take your time. The street is waiting whenever you're ready to go."
+        "The card is in the basket by my door — take it when you're ready. The street is waiting."
       ]
     },
     {

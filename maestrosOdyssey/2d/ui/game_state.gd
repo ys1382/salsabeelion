@@ -35,6 +35,13 @@ var inventory: Array[String] = []
 var cast: Array = []
 var title: String = ""
 
+## Stub clock + wallet until the day-advance and Mara pay tasks land.
+## HUD stays blank until the player actually takes the learning card.
+const CARD_START_PESOS := 400
+var weekday: String = "Monday"
+var week_number: int = 1
+var card_balance: int = 0
+
 ## "explore" -> "showdown_pending" (card up, boss not spawned yet) ->
 ## "showdown" (boss alive) -> "won". Worlds with no rival skip straight from
 ## "explore" to "won" via the legacy finale_reached path.
@@ -68,6 +75,9 @@ func set_world(w: Dictionary) -> void:
 	title = str(w.get("title", ""))
 	revealed_beats.clear()
 	inventory.clear()
+	weekday = "Monday"
+	week_number = 1
+	card_balance = 0
 	_finale_shown = false
 	_acts_fired = 0
 	phase = "explore"
@@ -108,6 +118,8 @@ func take_item(item_id: String) -> bool:
 	if item_id == "" or inventory.has(item_id):
 		return false
 	inventory.append(item_id)
+	if item_id == "learning_card":
+		card_balance = CARD_START_PESOS
 	item_taken.emit(item(item_id))
 	return true
 

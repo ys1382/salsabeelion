@@ -51,6 +51,7 @@ var focus: Node = null
 var seated := false
 var _stand_pos := Vector2.ZERO
 var _walk_mask := 1
+var _held: Sprite2D
 
 
 func _ready() -> void:
@@ -61,6 +62,14 @@ func _ready() -> void:
 	_sprite.position = SPRITE_STAND
 	_walk_mask = collision_mask
 	_sprite.animation_finished.connect(_on_anim_finished)
+	_held = Sprite2D.new()
+	_held.name = "Held"
+	_held.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_held.z_index = 2
+	_held.hide()
+	add_child(_held)
+	CafeOrder.order_ready.connect(_on_order_ready)
+	CafeOrder.order_cleared.connect(_hide_held)
 	_play("idle")
 
 
@@ -85,11 +94,17 @@ func _physics_process(delta: float) -> void:
 		_play("idle")
 		return
 	if seated:
+		# D is also walk-right. While there's still a cup, D sips instead of
+		# standing up — same as the old café.
+		if CafeOrder.cup_left > 0 and Input.is_physical_key_pressed(KEY_D) \
+				and not Input.is_physical_key_pressed(KEY_RIGHT):
+			input.x = minf(input.x, 0.0)
 		if input != Vector2.ZERO:
 			stand_up()
 		else:
 			velocity = Vector2.ZERO
 			move_and_slide()
+			_place_held()
 			_update_focus()
 			return
 	if _attacking:
@@ -135,7 +150,13 @@ func _update_focus() -> void:
 	if DialogueUI.is_open():
 		return
 	if seated:
-		DialogueUI.show_prompt("E — Stand")
+		var bits: PackedStringArray = []
+		if CafeOrder.cup_left > 0:
+			bits.append("D — Sip")
+		if CafeOrder.muffin_left > 0:
+			bits.append("F — Eat")
+		bits.append("E — Stand")
+		DialogueUI.show_prompt("   ".join(bits))
 		return
 	if focus is Interactable:
 		DialogueUI.show_prompt("E — %s" % (focus as Interactable).prompt())
@@ -151,6 +172,15 @@ func _unhandled_input(event: InputEvent) -> void:
 			DialogueUI.close()
 			get_viewport().set_input_as_handled()
 		return
+	if seated and event is InputEventKey and event.pressed and not event.echo:
+		if event.keycode == KEY_D or event.physical_keycode == KEY_D:
+			if try_sip():
+				get_viewport().set_input_as_handled()
+				return
+		if event.keycode == KEY_F or event.physical_keycode == KEY_F:
+			if try_bite():
+				get_viewport().set_input_as_handled()
+				return
 	if event.is_action_pressed("interact"):
 		interact_pressed.emit()
 		use_focus()
@@ -231,6 +261,7 @@ func sit_on(host: Node2D) -> void:
 	_play("idle")
 	_sprite.frame = 0
 	_sprite.pause()
+	_place_held()
 
 
 func stand_up(restore := true) -> void:
@@ -243,6 +274,7 @@ func stand_up(restore := true) -> void:
 		global_position = _stand_pos
 	velocity = Vector2.ZERO
 	_play("idle")
+	_place_held()
 
 
 ## Returns what happened, so a caller knows whether a model reply is still
@@ -309,6 +341,63 @@ func _on_anim_finished() -> void:
 		_attacking = false
 
 
+func _on_order_ready(_lemmas: PackedStringArray) -> void:
+	_refresh_held()
+
+
+func try_sip() -> bool:
+	if not seated or DialogueUI.is_open() or DialogueUI.is_ordering():
+		return false
+	if not CafeOrder.sip():
+		return false
+	_refresh_held()
+	return true
+
+
+func try_bite() -> bool:
+	if not seated or DialogueUI.is_open() or DialogueUI.is_ordering():
+		return false
+	if not CafeOrder.bite():
+		return false
+	_refresh_held()
+	return true
+
+
+func _refresh_held() -> void:
+	if _held == null:
+		return
+	if not CafeOrder.still_holding():
+		_hide_held()
+		return
+	_held.texture = CafeOrder.texture_for()
+	_held.show()
+	_place_held()
+
+
+func _hide_held() -> void:
+	if _held != null:
+		_held.hide()
+		_held.texture = null
+
+
+func _place_held() -> void:
+	if _held == null or not _held.visible:
+		return
+	var left := facing.x < -0.3
+	var up := facing.y < -0.3
+	_held.flip_h = left
+	if seated:
+		_held.position = Vector2(-4 if left else 4, 2)
+		_held.z_index = 2
+		return
+	if up:
+		_held.position = Vector2(6, -14)
+		_held.z_index = -1
+	else:
+		_held.position = Vector2(-7 if left else 7, -8)
+		_held.z_index = 2
+
+
 func _play(state: String) -> void:
 	if _dead:
 		return
@@ -317,3 +406,4 @@ func _play(state: String) -> void:
 	var anim := "%s_%s" % [state, parts[0]]
 	if _sprite.animation != anim or not _sprite.is_playing():
 		_sprite.play(anim)
+	_place_held()

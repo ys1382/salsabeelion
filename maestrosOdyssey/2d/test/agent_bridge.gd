@@ -68,13 +68,21 @@ func _ready() -> void:
 	# report — so it stays alive regardless of pause state.
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_server = TCPServer.new()
-	var err := _server.listen(PORT, "127.0.0.1")
+	var bound := PORT
+	for a in OS.get_cmdline_user_args():
+		if a.begins_with("--agent-port="):
+			bound = int(a.split("=")[1])
+			break
+	var err := _server.listen(bound, "127.0.0.1")
+	if err != OK and bound == PORT:
+		bound = PORT + 2
+		err = _server.listen(bound, "127.0.0.1")
 	if err != OK:
-		push_warning("AgentBridge: cannot listen on %d (%d)" % [PORT, err])
+		push_warning("AgentBridge: cannot listen on %d (%d)" % [bound, err])
 		set_process(false)
 		return
 	LLMClient.dialogue_received.connect(_on_dialogue)
-	print("AgentBridge: listening on 127.0.0.1:%d" % PORT)
+	print("AgentBridge: listening on 127.0.0.1:%d" % bound)
 
 
 func _on_dialogue(npc_id: String, line: String, _meta: Dictionary) -> void:
@@ -216,6 +224,28 @@ func _run(cmd: Dictionary) -> void:
 				return
 			pa.swing()
 			_reply({"ok": true, "hp": pa.hp, "enemies": _enemies()})
+		"sip":
+			var ps := _player()
+			if ps == null:
+				_reply({"ok": false, "error": "no_player"})
+				return
+			var sipped := ps.try_sip()
+			var sip_out := _state()
+			sip_out["ok"] = sipped
+			if not sipped:
+				sip_out["error"] = "no_sip"
+			_reply(sip_out)
+		"eat":
+			var pe := _player()
+			if pe == null:
+				_reply({"ok": false, "error": "no_player"})
+				return
+			var ate := pe.try_bite()
+			var eat_out := _state()
+			eat_out["ok"] = ate
+			if not ate:
+				eat_out["error"] = "no_eat"
+			_reply(eat_out)
 		"face":
 			# Swings are a cone in front of the player, so a test has to be able
 			# to aim without walking.
@@ -401,10 +431,20 @@ func _state() -> Dictionary:
 		"solved": GameState.solved(),
 		"inside": Interiors.inside(),
 		"seated": false if p == null else p.seated,
+		"held": false if p == null else (
+			p.get_node_or_null("Held") != null
+			and (p.get_node("Held") as CanvasItem).visible
+		),
+		"cup_left": CafeOrder.cup_left,
+		"muffin_left": CafeOrder.muffin_left,
 		"journal_open": Journal.is_open(),
 		"hp": -1 if p == null else p.hp,
 		"enemies": _enemies(),
 		"inventory": GameState.inventory,
+		"hud_visible": GameState.has_item("learning_card"),
+		"weekday": GameState.weekday,
+		"week_number": GameState.week_number,
+		"card_balance": GameState.card_balance,
 		"npcs": npcs,
 		"interactables": interactables,
 	}
@@ -706,6 +746,14 @@ func _talk(npc_id: String) -> void:
 
 
 func _say(text: String) -> void:
+	if DialogueUI.is_ordering():
+		DialogueUI.call("_on_order_submitted", text)
+		await get_tree().process_frame
+		var ordered := _state()
+		ordered["line"] = DialogueUI.body()
+		ordered["speaker"] = "Mara"
+		_reply(ordered)
+		return
 	var p := _player()
 	var npc := _talking_to
 	if npc == null and p != null and p.focus is Npc:
