@@ -1,8 +1,8 @@
 extends Node
 # Dragon's Brew day-one order at Mara. Menu must be read first; then a typed
-# line is matched against the board (café, té, muffin). Pay / week-turn stay
-# out of this slice. Sit to sip (D) and eat (F). The cup and muffin are custom
-# pixels — the packs have no mug — same idea as the Phaser café.
+# line is matched against the board (café, té, muffin). A match takes pesos
+# from the learning card in the same reply — no extra pay tap, no kitchen wait.
+# Sit to sip (D) and eat (F). Leaving after a paid order turns the weekday.
 
 signal order_ready(lemmas: PackedStringArray)
 signal order_cleared
@@ -18,15 +18,27 @@ var _tea := false
 
 ## Longest names first so "café" wins over a stray "é".
 const ITEMS := [
-	{"needles": ["café", "cafe", "coffee"], "lemma": "café"},
-	{"needles": ["muffin"], "lemma": "muffin"},
-	{"needles": ["té", "te", "tea"], "lemma": "té"},
+	{"needles": ["café", "cafe", "coffee"], "lemma": "café", "pesos": 35},
+	{"needles": ["muffin"], "lemma": "muffin", "pesos": 28},
+	{"needles": ["té", "te", "tea"], "lemma": "té", "pesos": 30},
 ]
 
 
 func reset_visit() -> void:
 	open_box_on_close = false
 	intro_done = false
+	_clear_order()
+
+
+## Paid order this stay? Leaving the café then turns the weekday.
+func leave_cafe() -> void:
+	if taken:
+		GameState.advance_day()
+	_clear_order()
+
+
+func _clear_order() -> void:
+	open_box_on_close = false
 	taken = false
 	served = PackedStringArray()
 	cup_left = 0
@@ -59,6 +71,14 @@ func reply_for(text: String) -> String:
 	var lemmas := match_lemmas(order)
 	if lemmas.is_empty():
 		return "Mara tilts her head. \"I didn't catch that — café, té, or a muffin this morning?\""
+	if not GameState.has_item("learning_card"):
+		return "Mara glances at the reader. \"You'll want the learning card from the elder's basket first — no borrowing past zero.\""
+	var total := order_total(lemmas)
+	if not GameState.try_pay(total):
+		return (
+			"Mara checks the register. \"%d pesos for this order.\"\n\n"
+			+ "\"Your learning card only has %d pesos — I can't start it until you have enough on the card.\""
+		) % [total, GameState.card_balance]
 	taken = true
 	open_box_on_close = false
 	served = lemmas
@@ -68,7 +88,10 @@ func reply_for(text: String) -> String:
 	order_ready.emit(lemmas)
 	var echo := ", ".join(lemmas)
 	# Gold: ready in this same line, with a visible cup/muffin on the player.
-	return "Mara repeats it back, calm and clear: \"%s.\"\n\n\"Here you go — that's ready.\"" % echo
+	return (
+		"Mara repeats it back, calm and clear: \"%s.\"\n\n"
+		+ "That's %d pesos from your card. \"Here you go — that's ready.\""
+	) % [echo, total]
 
 
 func still_holding() -> bool:
@@ -104,6 +127,14 @@ func texture_for(lemmas: PackedStringArray = PackedStringArray()) -> Texture2D:
 	if has_muffin:
 		_draw_muffin(img, 8 if has_drink else 1)
 	return ImageTexture.create_from_image(img)
+
+
+func order_total(lemmas: PackedStringArray) -> int:
+	var total := 0
+	for item in ITEMS:
+		if lemmas.has(str(item["lemma"])):
+			total += int(item["pesos"])
+	return total
 
 
 func _has_drink(lemmas: PackedStringArray) -> bool:

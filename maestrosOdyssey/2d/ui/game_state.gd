@@ -38,6 +38,10 @@ var title: String = ""
 ## Stub clock + wallet until the day-advance and Mara pay tasks land.
 ## HUD stays blank until the player actually takes the learning card.
 const CARD_START_PESOS := 400
+const WEEKDAYS := [
+	"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday",
+]
+var day_index: int = 1
 var weekday: String = "Monday"
 var week_number: int = 1
 var card_balance: int = 0
@@ -75,9 +79,9 @@ func set_world(w: Dictionary) -> void:
 	title = str(w.get("title", ""))
 	revealed_beats.clear()
 	inventory.clear()
-	weekday = "Monday"
-	week_number = 1
+	day_index = 1
 	card_balance = 0
+	_sync_clock()
 	_finale_shown = false
 	_acts_fired = 0
 	phase = "explore"
@@ -122,6 +126,25 @@ func take_item(item_id: String) -> bool:
 		card_balance = CARD_START_PESOS
 	item_taken.emit(item(item_id))
 	return true
+
+
+func try_pay(amount: int) -> bool:
+	if amount <= 0 or not has_item("learning_card"):
+		return false
+	if card_balance < amount:
+		return false
+	card_balance -= amount
+	return true
+
+
+func advance_day() -> void:
+	day_index += 1
+	_sync_clock()
+
+
+func _sync_clock() -> void:
+	weekday = WEEKDAYS[(day_index - 1) % WEEKDAYS.size()]
+	week_number = int((day_index - 1) / 7) + 1
 
 
 ## The item's display name, falling back to the raw id so a world with a

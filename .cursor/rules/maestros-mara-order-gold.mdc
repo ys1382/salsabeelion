@@ -21,6 +21,7 @@ Owner pinned 2026-09-21: typing an order at Mara **works**, and the **sip / eat 
 
 - Drop the type box when adding pay, sip, or sit-to-dine later
 - Wait minutes (or any off-screen cook time) before the order finishes
+- Add a second "tap your card" beat before the drink is in hand
 - Say "here you go" with no visible drink or muffin
 - Send unmatched text to a silent fallback coffee without telling the player
 - Mix this gold with the elder full-screen opener or language/look picker (those are later)

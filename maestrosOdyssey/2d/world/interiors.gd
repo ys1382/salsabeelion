@@ -93,7 +93,7 @@ func leave() -> void:
 		p.global_position = _outside_pos
 		p.velocity = Vector2.ZERO
 		p.agent_input = Vector2.ZERO
-		CafeOrder.reset_visit()
+		CafeOrder.leave_cafe()
 		_clamp_camera(p, root.pixel_size())
 		if current != null:
 			for n in root.world.get("npcs", []):

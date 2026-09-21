@@ -442,6 +442,7 @@ func _state() -> Dictionary:
 		"enemies": _enemies(),
 		"inventory": GameState.inventory,
 		"hud_visible": GameState.has_item("learning_card"),
+		"day_index": GameState.day_index,
 		"weekday": GameState.weekday,
 		"week_number": GameState.week_number,
 		"card_balance": GameState.card_balance,

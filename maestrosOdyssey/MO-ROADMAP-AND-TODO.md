@@ -240,7 +240,7 @@ Community elder → **prepaid learning card** (debit, in-game only, **no overdra
 - [x] **Old Phaser café snapshotted** — `archive/phaser-cafe-prototype/` (full `www/` copy).
 - [x] **New Godot build started** — `maestrosOdyssey/2d/` (zij2d engine + authored Dragon's Brew world). Live `/maestros/` is the Godot web export. Phaser snapshot: `archive/phaser-cafe-prototype/`.
 - [x] **Mara typed order (gold, 2026-09-21)** — menu first, type box, Spanish echo, **ready in the same reply** with a **visible cup/muffin** (no kitchen wait). Sit and **D** sip / **F** eat. Do not drop; see `.cursor/rules/maestros-mara-order-gold.mdc`.
-- [x] **Learning-card HUD (gold, 2026-09-21)** — hearts off; take the card from the elder's basket; then **Monday** / **Week 1** / **400 pesos** as three short lines. See `.cursor/rules/maestros-learning-card-hud-gold.mdc`.
+- [x] **Learning-card HUD (gold, 2026-09-21)** — hearts off; take the card from the elder's basket; then weekday / week / pesos as three short lines. Matched orders deduct pesos in the same reply; leaving after a paid order turns the weekday. See `.cursor/rules/maestros-learning-card-hud-gold.mdc`.
 
 ### Week-one tone + café language (owner — pinned 2026-06)
 
