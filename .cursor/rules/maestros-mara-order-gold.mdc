@@ -14,7 +14,7 @@ Owner pinned 2026-09-21: typing an order at Mara **works**, and the **sip / eat 
 2. Read the drink menu (beat `menu_read`) before she takes an order.
 3. **E** Mara — "What's your order?"
 4. **E** again — type box. WASD must not steal keys. **Enter** submits.
-5. Match **café / té / muffin** (English coffee/tea too). Echo the **Spanish lemma**.
+5. Match **today's board**. Day 1 is **café / té / muffin** (English coffee/tea too). Later café days follow the #26 unlock schedule in `cafe_order.gd`. Echo the **Spanish lemma**.
 6. **Same reply, drink is ready** — and a **cup / muffin sprite** shows on the player (packs have no mug; custom pixels). Hide it when they leave the café. No kitchen timer. No "I'll get that started" hang.
 
 ## Do not
@@ -25,6 +25,8 @@ Owner pinned 2026-09-21: typing an order at Mara **works**, and the **sip / eat 
 - Say "here you go" with no visible drink or muffin
 - Send unmatched text to a silent fallback coffee without telling the player
 - Mix this gold with the elder full-screen opener or language/look picker (those are later)
+
+Practice when the card is short (positive balance, below today's cheapest item) uses the **same type box**. Do not add a second input. Remember ordered lemmas **this play only**.
 
 ## Lock files
 

@@ -82,6 +82,8 @@ func set_world(w: Dictionary) -> void:
 	day_index = 1
 	card_balance = 0
 	_sync_clock()
+	if has_node("/root/CafeOrder"):
+		CafeOrder.reset_session()
 	_finale_shown = false
 	_acts_fired = 0
 	phase = "explore"
@@ -135,6 +137,12 @@ func try_pay(amount: int) -> bool:
 		return false
 	card_balance -= amount
 	return true
+
+
+func add_balance(amount: int) -> void:
+	if amount <= 0 or not has_item("learning_card"):
+		return
+	card_balance += amount
 
 
 func advance_day() -> void:

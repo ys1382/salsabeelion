@@ -1,8 +1,9 @@
 extends Node
-# Dragon's Brew day-one order at Mara. Menu must be read first; then a typed
-# line is matched against the board (café, té, muffin). A match takes pesos
-# from the learning card in the same reply — no extra pay tap, no kitchen wait.
-# Sit to sip (D) and eat (F). Leaving after a paid order turns the weekday.
+# Dragon's Brew order at Mara. Menu must be read first; then a typed line is
+# matched against today's board. A match takes pesos from the learning card in
+# the same reply — no extra pay tap, no kitchen wait. Sit to sip (D) and eat
+# (F). Leaving after a paid order turns the weekday, which opens more of the
+# board through café day 7.
 
 signal order_ready(lemmas: PackedStringArray)
 signal order_cleared
@@ -14,14 +15,42 @@ var taken := false
 var served: PackedStringArray = PackedStringArray()
 var cup_left := 0
 var muffin_left := 0
-var _tea := false
+var _drink := ""
+var _food := ""
+## Board words ordered this play — used so practice skips what you already bought.
+var ordered: PackedStringArray = PackedStringArray()
+var _practicing := false
+var _practice_lemma := ""
+var _practice_en := ""
+var _practice_earned := 0
+var _practice_earned_day := 0
 
-## Longest names first so "café" wins over a stray "é".
+const PRACTICE_PESOS := 12
+const PRACTICE_MAX_DAY := 36
+
+## Canon #26 unlocks. Day 1 is café / té / muffin. Later days add on; the full
+## board stays after day 7. new_today marks a new café-lane lemma (cognates skip).
 const ITEMS := [
-	{"needles": ["café", "cafe", "coffee"], "lemma": "café", "pesos": 35},
-	{"needles": ["muffin"], "lemma": "muffin", "pesos": 28},
-	{"needles": ["té", "te", "tea"], "lemma": "té", "pesos": 30},
+	{"needles": ["chocolate caliente", "hot chocolate", "chocolate"], "lemma": "chocolate caliente", "en": "hot chocolate", "pesos": 48, "kind": "drink", "unlock_day": 2, "new_today": true},
+	{"needles": ["espresso"], "lemma": "espresso", "en": "espresso", "pesos": 40, "kind": "drink", "unlock_day": 7, "new_today": false},
+	{"needles": ["croissant"], "lemma": "croissant", "en": "croissant", "pesos": 32, "kind": "food", "unlock_day": 6, "new_today": false},
+	{"needles": ["tostada", "toast"], "lemma": "tostada", "en": "toast", "pesos": 22, "kind": "food", "unlock_day": 3, "new_today": true},
+	{"needles": ["galleta", "cookie"], "lemma": "galleta", "en": "cookie", "pesos": 24, "kind": "food", "unlock_day": 4, "new_today": true},
+	{"needles": ["bolillo"], "lemma": "bolillo", "en": "bolillo roll", "pesos": 20, "kind": "food", "unlock_day": 5, "new_today": true},
+	{"needles": ["azúcar", "azucar", "sugar"], "lemma": "azúcar", "en": "sugar", "pesos": 0, "kind": "addon", "unlock_day": 6, "new_today": true},
+	{"needles": ["creamer"], "lemma": "creamer", "en": "creamer", "pesos": 0, "kind": "addon", "unlock_day": 7, "new_today": true},
+	{"needles": ["café", "cafe", "coffee"], "lemma": "café", "en": "coffee", "pesos": 35, "kind": "drink", "unlock_day": 1, "new_today": true},
+	{"needles": ["muffin"], "lemma": "muffin", "en": "muffin", "pesos": 28, "kind": "food", "unlock_day": 1, "new_today": false},
+	{"needles": ["té", "tea"], "lemma": "té", "en": "tea", "pesos": 30, "kind": "drink", "unlock_day": 1, "new_today": true},
 ]
+
+
+func reset_session() -> void:
+	ordered = PackedStringArray()
+	_practice_earned = 0
+	_practice_earned_day = 0
+	intro_done = false
+	_clear_order()
 
 
 func reset_visit() -> void:
@@ -43,7 +72,11 @@ func _clear_order() -> void:
 	served = PackedStringArray()
 	cup_left = 0
 	muffin_left = 0
-	_tea = false
+	_drink = ""
+	_food = ""
+	_practicing = false
+	_practice_lemma = ""
+	_practice_en = ""
 	order_cleared.emit()
 
 
@@ -60,21 +93,53 @@ func talk(npc: Npc) -> String:
 		return str(lines[1])
 	if taken:
 		return "That's already yours. Sit if you like — the room is for lingering."
+	if too_broke_to_order():
+		if not _begin_practice():
+			return "Mara checks your card. \"Not quite enough for the board today — and you've already practiced what's up. Sit if you like.\""
+		open_box_on_close = true
+		return _practice_prompt()
 	open_box_on_close = true
-	return str(lines[2])
+	return order_prompt()
+
+
+func order_prompt() -> String:
+	var names := _visible_lemmas(false)
+	return "What's your order? (%s this morning.)" % ", ".join(names)
+
+
+func too_broke_to_order() -> bool:
+	if not GameState.has_item("learning_card"):
+		return false
+	var bal := GameState.card_balance
+	if bal <= 0:
+		return false
+	return bal < cheapest_price()
+
+
+func cheapest_price() -> int:
+	var low := 9999
+	for item in visible_items():
+		var p := int(item["pesos"])
+		if p > 0:
+			low = mini(low, p)
+	return 28 if low == 9999 else low
 
 
 func reply_for(text: String) -> String:
 	var order := text.strip_edges()
+	if _practicing:
+		return _practice_reply(order)
 	if order == "":
 		return "Mara waits patiently. \"Take your time — look at the board again if you need to.\""
 	var lemmas := match_lemmas(order)
-	if lemmas.is_empty():
-		return "Mara tilts her head. \"I didn't catch that — café, té, or a muffin this morning?\""
+	if lemmas.is_empty() or not _is_real_order(lemmas):
+		return (
+			"Mara tilts her head. \"I didn't catch that — %s this morning?\""
+		) % ", ".join(_visible_lemmas(false))
 	if not GameState.has_item("learning_card"):
 		return "Mara glances at the reader. \"You'll want the learning card from the elder's basket first — no borrowing past zero.\""
 	var total := order_total(lemmas)
-	if not GameState.try_pay(total):
+	if total <= 0 or not GameState.try_pay(total):
 		return (
 			"Mara checks the register. \"%d pesos for this order.\"\n\n"
 			+ "\"Your learning card only has %d pesos — I can't start it until you have enough on the card.\""
@@ -82,16 +147,17 @@ func reply_for(text: String) -> String:
 	taken = true
 	open_box_on_close = false
 	served = lemmas
-	_tea = lemmas.has("té") and not lemmas.has("café")
-	cup_left = 4 if _has_drink(lemmas) else 0
-	muffin_left = 3 if lemmas.has("muffin") else 0
+	_drink = _lemma_of_kind(lemmas, "drink")
+	_food = _lemma_of_kind(lemmas, "food")
+	cup_left = 4 if _drink != "" else 0
+	muffin_left = 3 if _food != "" else 0
+	_remember(lemmas)
 	order_ready.emit(lemmas)
-	var echo := ", ".join(lemmas)
-	# Gold: ready in this same line, with a visible cup/muffin on the player.
+	# Gold: ready in this same line, with a visible cup/food on the player.
 	return (
 		"Mara repeats it back, calm and clear: \"%s.\"\n\n"
 		+ "That's %d pesos from your card. \"Here you go — that's ready.\""
-	) % [echo, total]
+	) % [_echo(lemmas), total]
 
 
 func still_holding() -> bool:
@@ -115,17 +181,19 @@ func bite() -> bool:
 func texture_for(lemmas: PackedStringArray = PackedStringArray()) -> Texture2D:
 	if lemmas.is_empty():
 		lemmas = served
-	var has_muffin := muffin_left > 0 and lemmas.has("muffin")
-	var has_drink := cup_left > 0 and _has_drink(lemmas)
-	if not has_muffin and not has_drink:
+	var drink := _lemma_of_kind(lemmas, "drink")
+	var food := _lemma_of_kind(lemmas, "food")
+	var has_food := muffin_left > 0 and food != ""
+	var has_drink := cup_left > 0 and drink != ""
+	if not has_food and not has_drink:
 		return null
-	var w := 16 if has_drink and has_muffin else 10
+	var w := 16 if has_drink and has_food else 10
 	var img := Image.create(w, 12, false, Image.FORMAT_RGBA8)
 	img.fill(Color(0, 0, 0, 0))
 	if has_drink:
-		_draw_cup(img, 0, _tea if lemmas == served else (lemmas.has("té") and not lemmas.has("café")))
-	if has_muffin:
-		_draw_muffin(img, 8 if has_drink else 1)
+		_draw_cup(img, 0, drink)
+	if has_food:
+		_draw_muffin(img, 8 if has_drink else 1, food)
 	return ImageTexture.create_from_image(img)
 
 
@@ -137,16 +205,212 @@ func order_total(lemmas: PackedStringArray) -> int:
 	return total
 
 
-func _has_drink(lemmas: PackedStringArray) -> bool:
-	return lemmas.has("té") or lemmas.has("café")
+func board_text() -> String:
+	var drinks: Array = []
+	var foods: Array = []
+	var addons: Array = []
+	for item in visible_items():
+		var kind := str(item["kind"])
+		if kind == "drink":
+			drinks.append(item)
+		elif kind == "food":
+			foods.append(item)
+		else:
+			addons.append(item)
+	var lines: PackedStringArray = ["Hoy / today", "", "Hot drinks"]
+	for item in drinks:
+		lines.append(_menu_line(item))
+	if not foods.is_empty():
+		lines.append("")
+		lines.append("Food")
+		for item in foods:
+			lines.append(_menu_line(item))
+	if not addons.is_empty():
+		lines.append("")
+		lines.append("Add-ons")
+		for item in addons:
+			lines.append(_menu_line(item))
+	for item in _new_today_items():
+		lines.append("")
+		lines.append("(New today: %s — %s)" % [str(item["lemma"]), str(item["en"])])
+	lines.append("")
+	if GameState.day_index < 7:
+		lines.append("More of the board opens as the week goes on. One language at a time on the wall.")
+	else:
+		lines.append("One language at a time on the wall.")
+	return "\n".join(lines)
 
 
-func _draw_cup(img: Image, ox: int, tea: bool) -> void:
+func visible_items() -> Array:
+	var day := mini(GameState.day_index, 7)
+	var out: Array = []
+	for d in range(1, day + 1):
+		for item in ITEMS:
+			if int(item["unlock_day"]) == d:
+				out.append(item)
+	return out
+
+
+func match_lemmas(order: String) -> PackedStringArray:
+	var hay := _fold(order)
+	var items := visible_items()
+	items.sort_custom(func(a, b): return _longest_needle(a) > _longest_needle(b))
+	var found: PackedStringArray = []
+	for item in items:
+		for needle: String in item["needles"]:
+			if _has_word(hay, needle):
+				found.append(str(item["lemma"]))
+				break
+	return found
+
+
+func _visible_lemmas(include_addons: bool) -> PackedStringArray:
+	var names: PackedStringArray = []
+	for item in visible_items():
+		if not include_addons and str(item["kind"]) == "addon":
+			continue
+		names.append(str(item["lemma"]))
+	return names
+
+
+func _new_today_items() -> Array:
+	var day := GameState.day_index
+	if day < 1 or day > 7:
+		return []
+	var out: Array = []
+	for item in ITEMS:
+		if int(item["unlock_day"]) == day and bool(item.get("new_today", false)):
+			out.append(item)
+	return out
+
+
+func _menu_line(item: Dictionary) -> String:
+	var pesos := int(item["pesos"])
+	var price := "included" if pesos == 0 else "%d pesos" % pesos
+	return "%s — %s (%s)" % [str(item["lemma"]), price, str(item["en"])]
+
+
+func _echo(lemmas: PackedStringArray) -> String:
+	if lemmas.is_empty():
+		return ""
+	if GameState.week_number >= 2 and lemmas.size() >= 2:
+		var head := PackedStringArray()
+		for i in range(lemmas.size() - 1):
+			head.append(lemmas[i])
+		return ", ".join(head) + " y " + lemmas[lemmas.size() - 1]
+	return ", ".join(lemmas)
+
+
+func _is_real_order(lemmas: PackedStringArray) -> bool:
+	return _lemma_of_kind(lemmas, "drink") != "" or _lemma_of_kind(lemmas, "food") != ""
+
+
+func _remember(lemmas: PackedStringArray) -> void:
+	for lemma in lemmas:
+		if lemma == "azúcar" or lemma == "creamer":
+			continue
+		if not ordered.has(lemma):
+			ordered.append(lemma)
+
+
+func _begin_practice() -> bool:
+	var pick := _practice_pick()
+	if pick.is_empty():
+		_practicing = false
+		return false
+	_practicing = true
+	_practice_lemma = str(pick["lemma"])
+	_practice_en = str(pick["en"])
+	return true
+
+
+func _practice_pick() -> Dictionary:
+	var fresh: Array = []
+	var any_item: Array = []
+	for item in visible_items():
+		if str(item["kind"]) == "addon":
+			continue
+		any_item.append(item)
+		if not ordered.has(str(item["lemma"])):
+			fresh.append(item)
+	var pool: Array = fresh if not fresh.is_empty() else any_item
+	if pool.is_empty():
+		return {}
+	return pool[0]
+
+
+func _practice_prompt() -> String:
+	return (
+		"Mara leans on the counter. \"Your card's a little short — but we can practice what's on the board.\"\n\n"
+		+ "What do we call %s in Spanish? (Check the wall if you need to.)"
+	) % _practice_en
+
+
+func _practice_reply(attempt: String) -> String:
+	_practicing = false
+	open_box_on_close = false
+	if attempt == "":
+		return "Mara waits patiently. \"Take your time — look at the board again if you need to.\""
+	if _practice_lemma == "" or not match_lemmas(attempt).has(_practice_lemma):
+		return (
+			"Mara points gently at the board. \"Not quite — look for %s up there. The word is %s. Come back when you're ready to try again.\""
+		) % [_practice_en, _practice_lemma]
+	var grant := _practice_grant()
+	var line := "Mara smiles. \"That sounds lovely, dear.\""
+	if grant > 0:
+		line += " \"The learning program added %d pesos to your card for practice.\"" % grant
+	else:
+		line += " \"You've practiced plenty for today — the word will stick.\""
+	line += " \"Say %s once more on your way out and it'll feel natural.\"" % _practice_lemma
+	return line
+
+
+func _practice_grant() -> int:
+	if _practice_earned_day != GameState.day_index:
+		_practice_earned_day = GameState.day_index
+		_practice_earned = 0
+	var room := PRACTICE_MAX_DAY - _practice_earned
+	var grant := mini(PRACTICE_PESOS, room)
+	if grant <= 0:
+		return 0
+	GameState.add_balance(grant)
+	_practice_earned += grant
+	return grant
+
+
+func _lemma_of_kind(lemmas: PackedStringArray, kind: String) -> String:
+	for item in ITEMS:
+		if str(item["kind"]) == kind and lemmas.has(str(item["lemma"])):
+			return str(item["lemma"])
+	return ""
+
+
+func _longest_needle(item: Dictionary) -> int:
+	var n := 0
+	for needle: String in item["needles"]:
+		n = maxi(n, needle.length())
+	return n
+
+
+func _has_word(hay: String, needle: String) -> bool:
+	var n := _fold(needle)
+	if n == "":
+		return false
+	return (" " + hay + " ").find(" " + n + " ") >= 0
+
+
+func _draw_cup(img: Image, ox: int, drink: String) -> void:
 	var cream := Color(0.94, 0.93, 0.89)
 	var inner := Color(0.91, 0.86, 0.78)
 	var handle := Color(0.83, 0.69, 0.42)
 	var foam := Color(0.91, 0.88, 0.82)
-	var liquid := Color(0.77, 0.63, 0.35) if tea else Color(0.48, 0.31, 0.16)
+	var liquid := Color(0.48, 0.31, 0.16)
+	if drink == "té":
+		liquid = Color(0.77, 0.63, 0.35)
+	elif drink == "chocolate caliente":
+		liquid = Color(0.42, 0.22, 0.14)
+	elif drink == "espresso":
+		liquid = Color(0.28, 0.16, 0.10)
 	_fill(img, ox + 1, 4, 6, 7, cream)
 	_fill(img, ox + 2, 5, 4, 5, inner)
 	_fill(img, ox + 0, 6, 2, 3, handle)
@@ -156,10 +420,22 @@ func _draw_cup(img: Image, ox: int, tea: bool) -> void:
 		_fill(img, ox + 2, 9 - h, 4, h, liquid)
 
 
-func _draw_muffin(img: Image, ox: int) -> void:
+func _draw_muffin(img: Image, ox: int, food: String = "muffin") -> void:
 	var plate := Color(0.91, 0.88, 0.82)
 	var cake := Color(0.77, 0.60, 0.35)
 	var top := Color(0.83, 0.67, 0.42)
+	if food == "tostada":
+		cake = Color(0.86, 0.74, 0.52)
+		top = Color(0.78, 0.58, 0.32)
+	elif food == "croissant":
+		cake = Color(0.86, 0.68, 0.38)
+		top = Color(0.91, 0.76, 0.48)
+	elif food == "galleta":
+		cake = Color(0.72, 0.50, 0.28)
+		top = Color(0.55, 0.34, 0.18)
+	elif food == "bolillo":
+		cake = Color(0.90, 0.80, 0.58)
+		top = Color(0.82, 0.68, 0.42)
 	_fill(img, ox, 9, 8, 2, plate)
 	var h := mini(muffin_left, 3) + 1
 	_fill(img, ox + 1, 9 - h, 6, h, cake)
@@ -175,16 +451,15 @@ func _fill(img: Image, x: int, y: int, w: int, h: int, c: Color) -> void:
 			img.set_pixel(ix, iy, c)
 
 
-func match_lemmas(order: String) -> PackedStringArray:
-	var hay := _fold(order)
-	var found: PackedStringArray = []
-	for item in ITEMS:
-		for needle: String in item["needles"]:
-			if hay.find(_fold(needle)) >= 0:
-				found.append(str(item["lemma"]))
-				break
-	return found
-
-
 func _fold(s: String) -> String:
-	return s.strip_edges().to_lower().replace("é", "e").replace("á", "a")
+	var t := s.strip_edges().to_lower()
+	t = t.replace("é", "e").replace("á", "a").replace("í", "i")
+	t = t.replace("ó", "o").replace("ú", "u").replace("ü", "u").replace("ñ", "n")
+	var out := ""
+	for i in t.length():
+		var ch := t.substr(i, 1)
+		if ch >= "a" and ch <= "z":
+			out += ch
+		else:
+			out += " "
+	return out.strip_edges()

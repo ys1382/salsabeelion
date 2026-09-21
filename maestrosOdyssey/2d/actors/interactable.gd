@@ -118,6 +118,8 @@ func use() -> String:
 		Interiors.enter(enters, text)
 		return ""
 	var line := text
+	if str(data.get("id", "")) == "drink_menu":
+		line = CafeOrder.board_text()
 	if gives != "" and GameState.take_item(gives):
 		var got: Dictionary = GameState.item(gives)
 		var blurb := str(got.get("text", ""))

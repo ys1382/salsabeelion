@@ -22,6 +22,7 @@ def main() -> int:
     assert "leave_cafe" in cafe and "advance_day" in cafe
     assert "leave_cafe()" in interiors
     assert "try_pay" in state and "advance_day" in state
+    assert "add_balance" in state
     assert "WEEKDAYS" in state and "day_index" in state
     assert "card_balance" in hud and "weekday" in hud
     print("cafe clock: ok")

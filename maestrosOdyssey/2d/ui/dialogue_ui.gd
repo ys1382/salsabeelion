@@ -143,7 +143,13 @@ func _fit(text: String, has_speaker: bool) -> void:
 	var capped := minf(h, screen.y * MAX_SCREEN_FRACTION)
 	# fit_content would force the label to its full height and overflow the cap;
 	# turn it off in the rare case the line is long enough to need scrolling.
-	_body.fit_content = h <= capped
+	var needs_scroll := h > capped
+	_body.fit_content = not needs_scroll
+	if needs_scroll:
+		var speaker_h := float(SPEAKER_SIZE) + SPACING if has_speaker else 0.0
+		_body.custom_minimum_size.y = maxf(24.0, capped - PAD * 2 - speaker_h)
+	else:
+		_body.custom_minimum_size.y = 0
 	_panel.offset_top = -(capped + PAD)
 
 
