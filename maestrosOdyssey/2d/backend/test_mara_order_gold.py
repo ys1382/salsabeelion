@@ -17,6 +17,21 @@ def main() -> int:
     assert "café" in cafe and "té" in cafe and "muffin" in cafe
     assert "show_order_box" in dialogue
     assert "Type your order, then Enter" in dialogue
+    assert "E — Close" in dialogue
+    assert "_hint.hide()" in dialogue
+    assert (
+        '\tif DialogueUI.is_ordering():\n'
+        '\t\treturn ""\n'
+        '\tif DialogueUI.is_open():\n'
+        '\t\tDialogueUI.close()'
+    ) in player, "E must still close speech so Mara's type box can open"
+    physics = player.split("func _physics_process", 1)[1].split("func _update_focus", 1)[0]
+    seated = physics.split("if seated:", 1)[1]
+    assert "stand_up" not in seated, "D / WASD must not stand you up; E — Stand does"
+    project = (ROOT / "project.godot").read_text(encoding="utf-8")
+    interact = project.split("interact={", 1)[1].split("attack={", 1)[0]
+    assert 'keycode":69' in interact
+    assert 'keycode":32' not in interact, "Space must not sit, stand, talk, or close"
     assert "Here you go" in cafe and "that's ready" in cafe, (
         "successful order must hand the drink over in the same line")
     assert "I'll get that started" not in cafe, (

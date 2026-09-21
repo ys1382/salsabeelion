@@ -26,6 +26,12 @@ def main() -> int:
     assert "80%" not in report and "percentage" not in report.lower()
     assert "refill_card" in report and "refill_card" in state
     assert "npc_id == \"elder\"" in player
+    assert (
+        '\tif DialogueUI.is_ordering():\n'
+        '\t\treturn ""\n'
+        '\tif DialogueUI.is_open():\n'
+        '\t\tDialogueUI.close()'
+    ) in player, "elder type box must not trap speech-close on E"
     assert "show_order_box" in dialogue
     assert "Type your order, then Enter" in dialogue
     print("elder report: ok")

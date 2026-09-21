@@ -94,19 +94,13 @@ func _physics_process(delta: float) -> void:
 		_play("idle")
 		return
 	if seated:
-		# D is also walk-right. While there's still a cup, D sips instead of
-		# standing up — same as the old café.
-		if CafeOrder.cup_left > 0 and Input.is_physical_key_pressed(KEY_D) \
-				and not Input.is_physical_key_pressed(KEY_RIGHT):
-			input.x = minf(input.x, 0.0)
-		if input != Vector2.ZERO:
-			stand_up()
-		else:
-			velocity = Vector2.ZERO
-			move_and_slide()
-			_place_held()
-			_update_focus()
-			return
+		# Stay seated unless E. D is sip (and walk-right when standing);
+		# walking must not stand or sit you.
+		velocity = Vector2.ZERO
+		move_and_slide()
+		_place_held()
+		_update_focus()
+		return
 	if _attacking:
 		input = Vector2.ZERO
 	if input != Vector2.ZERO:
@@ -284,17 +278,19 @@ func stand_up(restore := true) -> void:
 ## took a gift.
 func use_focus() -> String:
 	# A second press closes an open panel rather than immediately re-triggering.
+	# Order-box and speech-close must stay siblings: nesting the close under
+	# is_ordering() made E a no-op on Mara's line, so the type box never opened.
 	if DialogueUI.is_ordering():
 		return ""
-		if DialogueUI.is_open():
-			DialogueUI.close()
-			if CafeOrder.open_box_on_close:
-				CafeOrder.open_box_on_close = false
-				DialogueUI.show_order_box()
-			elif ElderReport.open_box_on_close:
-				ElderReport.open_box_on_close = false
-				DialogueUI.show_order_box(ElderReport.speaker_name())
-			return ""
+	if DialogueUI.is_open():
+		DialogueUI.close()
+		if CafeOrder.open_box_on_close:
+			CafeOrder.open_box_on_close = false
+			DialogueUI.show_order_box()
+		elif ElderReport.open_box_on_close:
+			ElderReport.open_box_on_close = false
+			DialogueUI.show_order_box(ElderReport.speaker_name())
+		return ""
 	if seated:
 		stand_up()
 		return ""

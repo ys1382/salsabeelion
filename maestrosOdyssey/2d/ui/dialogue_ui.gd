@@ -10,6 +10,7 @@ extends CanvasLayer
 const PAD := 10
 const BODY_SIZE := 11
 const SPEAKER_SIZE := 12
+const HINT_SIZE := 11
 const SPACING := 4
 ## Never eat more than this share of the screen; past it the body scrolls.
 const MAX_SCREEN_FRACTION := 0.55
@@ -19,6 +20,7 @@ var _panel: PanelContainer
 var _box: VBoxContainer
 var _speaker: Label
 var _body: RichTextLabel
+var _hint: Label
 var _order: LineEdit
 
 
@@ -66,6 +68,13 @@ func _ready() -> void:
 	_body.add_theme_font_size_override("normal_font_size", BODY_SIZE)
 	_box.add_child(_body)
 
+	_hint = Label.new()
+	_hint.add_theme_font_size_override("font_size", HINT_SIZE)
+	_hint.add_theme_color_override("font_color", Color(0.78, 0.74, 0.62))
+	_hint.text = "E — Close"
+	_hint.hide()
+	_box.add_child(_hint)
+
 	_order = LineEdit.new()
 	_order.placeholder_text = "Type your order, then Enter"
 	_order.add_theme_font_size_override("font_size", BODY_SIZE)
@@ -100,6 +109,7 @@ func show_line(speaker: String, text: String) -> void:
 	_speaker.visible = speaker != ""
 	_body.text = text
 	_body.show()
+	_hint.show()
 	_fit(text, speaker != "")
 	_panel.show()
 
@@ -109,6 +119,7 @@ func show_order_box(speaker: String = "Mara") -> void:
 	_speaker.text = speaker
 	_speaker.visible = true
 	_body.hide()
+	_hint.hide()
 	_order.text = ""
 	_order.show()
 	_panel.show()
@@ -143,14 +154,17 @@ func _fit(text: String, has_speaker: bool) -> void:
 	var h := body_h + PAD * 2
 	if has_speaker:
 		h += float(SPEAKER_SIZE) + SPACING
+	h += float(HINT_SIZE) + SPACING
 	var capped := minf(h, screen.y * MAX_SCREEN_FRACTION)
 	# fit_content would force the label to its full height and overflow the cap;
 	# turn it off in the rare case the line is long enough to need scrolling.
 	var needs_scroll := h > capped
 	_body.fit_content = not needs_scroll
 	if needs_scroll:
-		var speaker_h := float(SPEAKER_SIZE) + SPACING if has_speaker else 0.0
-		_body.custom_minimum_size.y = maxf(24.0, capped - PAD * 2 - speaker_h)
+		var extra := float(HINT_SIZE) + SPACING
+		if has_speaker:
+			extra += float(SPEAKER_SIZE) + SPACING
+		_body.custom_minimum_size.y = maxf(24.0, capped - PAD * 2 - extra)
 	else:
 		_body.custom_minimum_size.y = 0
 	_panel.offset_top = -(capped + PAD)
@@ -170,5 +184,6 @@ func body() -> String:
 func close() -> void:
 	_order.hide()
 	_order.release_focus()
+	_hint.hide()
 	_body.show()
 	_panel.hide()

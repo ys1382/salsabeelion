@@ -242,6 +242,15 @@ Community elder → **prepaid learning card** (debit, in-game only, **no overdra
 - [x] **Mara typed order (gold, 2026-09-21)** — menu first, type box, Spanish echo, **ready in the same reply** with a **visible cup/muffin** (no kitchen wait). Sit and **D** sip / **F** eat. Do not drop; see `.cursor/rules/maestros-mara-order-gold.mdc`.
 - [x] **Learning-card HUD (gold, 2026-09-21)** — hearts off; take the card from the elder's basket; then weekday / week / pesos as three short lines. Matched orders deduct pesos in the same reply; leaving after a paid order turns the weekday. See `.cursor/rules/maestros-learning-card-hud-gold.mdc`.
 
+#### Later / want to change (owner — Godot, 2026-09-21)
+
+- [ ] **Café house-rules sign layout** — “we don’t serve human blood / smoking isn’t allowed” (etc.) is a run-on in the **thin top rectangle**; the **bigger bottom rectangle** is empty. Put the copy in the space that can hold it.
+- [ ] **Something between sip/eat and day’s end** — food/drink alone feels too thin; **not** high-fantasy storyline events. Exact beat TBD. Direction: **overheard table talk** that continues/changes — **lizardfolk + merfolk** (and the Monday croc/ferry table) plus **more people talking in the room**. Pull from earlier notes in `docs/DRAGONS-BREW-PRE-TRAIN.md` and week-one mellow room **#13–19**; keep it slice-of-life, not mystery.
+- [ ] **Player house + enterable houses that do something** — avatar should have **their own house**. Houses you can enter currently do nothing except **go in / leave**. Add quiet indoor things (look, sit, a few objects) — not plot events. The authored block today is café + elder house only; café is the only room with real interactables.
+- [ ] **Have to read the board to order** — you already must tap the menu once, but Mara then lists today’s items in chat (`What's your order? (café, té, muffin…)`), so you can skip the wall after that. Stop spoon-feeding the day’s words in her prompt; the player should **check the menu** for practice. Keep the type box and same-reply drink.
+- [x] **Only the key on the prompt does that action** — **E** sit / stand / talk / close reading. **D** sip only (no stand). **Space** is not a second E. Order type box still uses **Enter**; E types the letter.
+- [ ] **Elder test has a clear language aim** — day 8 still isn’t a quiz screen (no score, two lines). Right now she says “tell me about the food, the room, the community” and you guess what counts. Give a **bar you can aim at**: being able to **carry a bit of conversation in that café tongue**, so the week of orders actually invests you. Exact how she names the bar TBD; keep it kind, not a grade.
+
 ### Week-one tone + café language (owner — pinned 2026-06)
 
 ### Week-one tone + café language (owner — pinned 2026-06)
