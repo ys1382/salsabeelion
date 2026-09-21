@@ -10,11 +10,15 @@ Defaults: PORT=8072, HTTP (no TLS args needed for local dev).
 """
 import http.server
 import json
+import mimetypes
 import os
 import ssl
 import sys
 import urllib.request
 import urllib.error
+
+mimetypes.add_type("application/wasm", ".wasm")
+mimetypes.add_type("application/javascript", ".js")
 
 PORT     = int(sys.argv[1]) if len(sys.argv) > 1 else 8072
 KEY_PEM  = sys.argv[2] if len(sys.argv) > 2 else None
@@ -241,7 +245,11 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         if self.command == "GET":
             path = self.path.split("?", 1)[0]
             if not path.startswith("/api"):
-                if path in ("/", "/index.html") or path.endswith(".html"):
+                if path in ("/", "/index.html") or path.endswith(
+                    (".html", ".js", ".wasm", ".pck")
+                ):
+                    # Godot re-exports reuse the same filenames; a week-long
+                    # cache left the café stuck on an old boot splash.
                     self.send_header("Cache-Control", "no-cache")
                 else:
                     self.send_header("Cache-Control", "public, max-age=604800")

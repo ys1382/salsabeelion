@@ -13,11 +13,12 @@ config_version=5
 config/name="Maestro's Odyssey"
 config/description="Language-adventure neighborhood: Dragon's Brew first, authored plot on the zij2d Godot engine."
 run/main_scene="res://scenes/main.tscn"
-config/features=PackedStringArray("4.6", "Forward Plus")
+config/features=PackedStringArray("4.7", "GL Compatibility")
 
 [autoload]
 
 GameState="*res://ui/game_state.gd"
+CafeOrder="*res://ui/cafe_order.gd"
 WorldManager="*res://world/world_manager.gd"
 LLMClient="*res://ui/llm_client.gd"
 DialogueUI="*res://ui/dialogue_ui.gd"
@@ -91,4 +92,7 @@ journal={
 
 [rendering]
 
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+renderer/rendering_method.web="gl_compatibility"
 textures/canvas_textures/default_texture_filter=0

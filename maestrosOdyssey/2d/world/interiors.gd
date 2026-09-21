@@ -42,6 +42,8 @@ func enter(building_id: String, flavour: String = "") -> void:
 	var footprint := Catalog.footprint(asset) if asset != "" else Vector2i(6, 6)
 
 	_player = p
+	if p.seated:
+		p.stand_up(false)
 	_outside_pos = p.global_position
 
 	current = Interior.new()
@@ -80,6 +82,8 @@ func leave() -> void:
 	current.exit_requested.disconnect(leave)
 
 	if root != null and p != null and is_instance_valid(p):
+		if p.seated:
+			p.stand_up(false)
 		root.visible = true
 		root.process_mode = Node.PROCESS_MODE_INHERIT
 		p.reparent(root.get_node("Objects"), false)
@@ -89,6 +93,7 @@ func leave() -> void:
 		p.global_position = _outside_pos
 		p.velocity = Vector2.ZERO
 		p.agent_input = Vector2.ZERO
+		CafeOrder.reset_visit()
 		_clamp_camera(p, root.pixel_size())
 		if current != null:
 			for n in root.world.get("npcs", []):

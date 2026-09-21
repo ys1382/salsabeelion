@@ -44,6 +44,10 @@ var _finale_shown: bool = false
 var _acts_fired: int = 0
 
 
+func is_browser() -> bool:
+	return OS.get_name() == "Web" or OS.has_feature("web")
+
+
 func _ready() -> void:
 	var args := OS.get_cmdline_user_args()
 	# Maestro's Odyssey ships authored canon. Generation is opt-in (--online).
@@ -52,6 +56,9 @@ func _ready() -> void:
 		offline_mode = true
 	if args.has("--online"):
 		offline_mode = false
+	# Browser builds have no local FastAPI. Never wait on 127.0.0.1:8000.
+	if is_browser():
+		offline_mode = true
 
 
 ## Adopting a world resets the story with it. The VLM repair pass rebuilds the

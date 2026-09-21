@@ -19,6 +19,7 @@ var _panel: PanelContainer
 var _box: VBoxContainer
 var _speaker: Label
 var _body: RichTextLabel
+var _order: LineEdit
 
 
 func _ready() -> void:
@@ -65,6 +66,13 @@ func _ready() -> void:
 	_body.add_theme_font_size_override("normal_font_size", BODY_SIZE)
 	_box.add_child(_body)
 
+	_order = LineEdit.new()
+	_order.placeholder_text = "Type your order, then Enter"
+	_order.add_theme_font_size_override("font_size", BODY_SIZE)
+	_order.text_submitted.connect(_on_order_submitted)
+	_order.hide()
+	_box.add_child(_order)
+
 
 func show_prompt(text: String) -> void:
 	if is_open():
@@ -86,11 +94,36 @@ func show_thinking(speaker: String) -> void:
 
 func show_line(speaker: String, text: String) -> void:
 	_prompt.hide()
+	_order.hide()
+	_order.release_focus()
 	_speaker.text = speaker
 	_speaker.visible = speaker != ""
 	_body.text = text
+	_body.show()
 	_fit(text, speaker != "")
 	_panel.show()
+
+
+func show_order_box() -> void:
+	_prompt.hide()
+	_speaker.text = "Mara"
+	_speaker.visible = true
+	_body.hide()
+	_order.text = ""
+	_order.show()
+	_panel.show()
+	_panel.offset_top = -(SPEAKER_SIZE + SPACING + 28 + PAD * 2 + PAD)
+	_order.call_deferred("grab_focus")
+
+
+func is_ordering() -> bool:
+	return _panel.visible and _order.visible
+
+
+func _on_order_submitted(text: String) -> void:
+	_order.hide()
+	_order.release_focus()
+	show_line("Mara", CafeOrder.reply_for(text))
 
 
 ## Sizes the panel to the wrapped text. Font.get_multiline_string_size gives the
@@ -126,4 +159,7 @@ func body() -> String:
 
 
 func close() -> void:
+	_order.hide()
+	_order.release_focus()
+	_body.show()
 	_panel.hide()

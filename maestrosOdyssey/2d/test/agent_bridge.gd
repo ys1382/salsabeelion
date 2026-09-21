@@ -60,7 +60,7 @@ var _last_npc := ""
 
 
 func _ready() -> void:
-	if "--agent-bridge" not in OS.get_cmdline_user_args():
+	if GameState.is_browser() or "--agent-bridge" not in OS.get_cmdline_user_args():
 		set_process(false)
 		return
 	# Journal pauses the tree. A paused bridge would stop polling its socket and
@@ -369,11 +369,17 @@ func _state() -> Dictionary:
 	if b != null:
 		for n in get_tree().get_nodes_in_group("npc"):
 			var npc := n as Npc
+			var overlays: Array = []
+			if npc.get_node_or_null("Wings") != null:
+				overlays.append("Wings")
+			if npc.get_node_or_null("Tail") != null:
+				overlays.append("Tail")
 			npcs.append({
 				"id": npc.npc_id, "name": npc.display_name,
 				"tile": [_tile_of(npc.position).x, _tile_of(npc.position).y],
 				"dist": 0.0 if p == null else snappedf(
 					p.position.distance_to(npc.position), 0.1),
+				"overlays": overlays,
 			})
 	var interactables := []
 	for it in GameState.world.get("interactables", []):
@@ -394,6 +400,7 @@ func _state() -> Dictionary:
 		# validate_world() cannot see, so a playtest has to be able to ask.
 		"solved": GameState.solved(),
 		"inside": Interiors.inside(),
+		"seated": false if p == null else p.seated,
 		"journal_open": Journal.is_open(),
 		"hp": -1 if p == null else p.hp,
 		"enemies": _enemies(),

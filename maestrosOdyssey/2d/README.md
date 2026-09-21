@@ -1,17 +1,23 @@
 # Maestro's Odyssey — Godot build
 
-New local build of the neighborhood game, using the zij2d Godot engine with **authored** Dragon's Brew plot (lorebook wins). This does **not** replace the live Phaser café on `/maestros/`.
+Neighborhood game on the zij2d Godot engine with **authored** Dragon's Brew plot (lorebook wins). Live `/maestros/` serves the web export in `../www/`. Phaser snapshot: `../archive/phaser-cafe-prototype/`.
 
-Old Phaser café snapshot: `../archive/phaser-cafe-prototype/`.
+## Web (Odd Trove)
 
-## Play
+`python3 tools/make_placeholder_assets.py` once, then from this folder:
 
-Needs **Godot 4.6**. From this folder:
+Godot 4.7.2 `--headless --export-release Web`
+
+Copy `build/web/` over `../www/`, then copy `brew.html` to `index.html` so `/maestros/` still loads. The packer only picks up JSON under `generated/`, so the authored world is `generated/dragons_brew_world.json` (same file as `backend/`).
+
+## Play locally (desktop)
+
+Needs **Godot 4.7**. From this folder:
 
 1. `python3 tools/make_placeholder_assets.py` — once, unless you already have the local art packs under `assets/`
 2. Open `project.godot` and press Play
 
-WASD to move, **E** to talk / read / go inside, Tab for the journal.
+WASD to move, **E** to talk / read / sit / go inside, Tab for the journal. Stand with **E** or walk away.
 
 Play starts on the block. Talk to the elder, pick up the learning card, go into Dragon's Brew, meet Mara, read the menu and house rules.
 
@@ -19,11 +25,13 @@ Play starts on the block. Talk to the elder, pick up the learning card, go into 
 
 - Street + enterable Dragon's Brew
 - Elder prologue and prepaid learning card
-- Mara's locked Çampire line, then menu / order talk
+- Sit on benches with **E** (street bench and the café seat)
+- Mara's locked Çampire line, then typed order after you read the menu
+- Mara's wings overlay (Çampire read on the shared villager sheet; tail later)
 - Monday iguana + riverfolk neighbors (sea-ferry talk, merfolk not picking fights)
 - Authored menu and house-rules boards
 
-Not in this slice yet: typed orders, pesos HUD, day clock, café-lane picker, week-one rotating cast beyond Monday, train, or a web export for Odd Trove.
+Not in this slice yet: pesos HUD, day clock, café-lane picker, week-one rotating cast beyond Monday, or train.
 
 ## Art
 
@@ -32,4 +40,4 @@ Not in this slice yet: typed orders, pesos HUD, day clock, café-lane picker, we
 ## Do not
 
 - Invent canon with the LLM generator (Play does not call it)
-- Deploy this folder to `/maestros/` — live site still rsyncs `../www/`
+- Web-export licensed art packs from `assets/` — placeholders only on Odd Trove

@@ -93,6 +93,8 @@ func _on_backend_down() -> void:
 
 
 func _autostart() -> void:
+	if GameState.is_browser():
+		return
 	var script_path := ProjectSettings.globalize_path("res://backend/run.sh")
 	if not FileAccess.file_exists(script_path):
 		print("LLMClient: backend/run.sh not found; the village runs on canned lines")

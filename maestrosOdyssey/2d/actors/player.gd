@@ -23,6 +23,10 @@ const ATTACK_CONE := 0.35
 const ATTACK_DAMAGE := 1
 ## Long enough to read the death animation before the world snaps back.
 const RESPAWN_S := 1.6
+## Idle sprite sits this far above the feet. Dropped a little while seated so
+## the character reads as on the bench rather than standing in front of it.
+const SPRITE_STAND := Vector2(0, -16)
+const SPRITE_SIT := Vector2(0, -10)
 
 signal interact_pressed
 signal health_changed(current: int, maximum: int)
@@ -44,6 +48,9 @@ var _dead := false
 ## means "use the real input". Public so test/agent_bridge.gd can steer.
 var agent_input := Vector2.ZERO
 var focus: Node = null
+var seated := false
+var _stand_pos := Vector2.ZERO
+var _walk_mask := 1
 
 
 func _ready() -> void:
@@ -51,7 +58,8 @@ func _ready() -> void:
 	_sprite.sprite_frames = Sheet.player_frames()
 	# The sheet's feet sit near the bottom of the 48x48 cell; lift the sprite so
 	# the node origin is the feet (matches prop anchors and makes Y-sort work).
-	_sprite.position = Vector2(0, -16)
+	_sprite.position = SPRITE_STAND
+	_walk_mask = collision_mask
 	_sprite.animation_finished.connect(_on_anim_finished)
 	_play("idle")
 
@@ -71,6 +79,19 @@ func _physics_process(delta: float) -> void:
 
 	var input := agent_input if agent_input != Vector2.ZERO \
 		else Input.get_vector("move_left", "move_right", "move_up", "move_down")
+	if DialogueUI.is_ordering():
+		velocity = Vector2.ZERO
+		move_and_slide()
+		_play("idle")
+		return
+	if seated:
+		if input != Vector2.ZERO:
+			stand_up()
+		else:
+			velocity = Vector2.ZERO
+			move_and_slide()
+			_update_focus()
+			return
 	if _attacking:
 		input = Vector2.ZERO
 	if input != Vector2.ZERO:
@@ -113,6 +134,9 @@ func _update_focus() -> void:
 
 	if DialogueUI.is_open():
 		return
+	if seated:
+		DialogueUI.show_prompt("E — Stand")
+		return
 	if focus is Interactable:
 		DialogueUI.show_prompt("E — %s" % (focus as Interactable).prompt())
 	elif focus is Npc:
@@ -122,6 +146,11 @@ func _update_focus() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if DialogueUI.is_ordering():
+		if event.is_action_pressed("ui_cancel"):
+			DialogueUI.close()
+			get_viewport().set_input_as_handled()
+		return
 	if event.is_action_pressed("interact"):
 		interact_pressed.emit()
 		use_focus()
@@ -177,6 +206,7 @@ func _die() -> void:
 	# Respawn rather than end the run. This is a mystery for children: losing
 	# the story you have pieced together because a slime cornered you would be
 	# a punishment out of all proportion, so beats are untouched.
+	stand_up(false)
 	global_position = spawn_point
 	hp = MAX_HP
 	_dead = false
@@ -186,17 +216,60 @@ func _die() -> void:
 	_play("idle")
 
 
+func sit_on(host: Node2D) -> void:
+	if seated or host == null or not is_instance_valid(host):
+		return
+	seated = true
+	_stand_pos = global_position
+	if host is PhysicsBody2D:
+		add_collision_exception_with(host)
+	collision_mask = 0
+	global_position = host.global_position + Vector2(0, -4)
+	velocity = Vector2.ZERO
+	facing = Vector2.UP
+	_sprite.position = SPRITE_SIT
+	_play("idle")
+	_sprite.frame = 0
+	_sprite.pause()
+
+
+func stand_up(restore := true) -> void:
+	if not seated:
+		return
+	seated = false
+	collision_mask = _walk_mask
+	_sprite.position = SPRITE_STAND
+	if restore:
+		global_position = _stand_pos
+	velocity = Vector2.ZERO
+	_play("idle")
+
+
 ## Returns what happened, so a caller knows whether a model reply is still
-## coming: "" (nothing/closed), "interactable", "give", or "talk". Only "talk"
-## has a request in flight — the agent bridge used to await one unconditionally
-## and sat through its whole timeout whenever an NPC simply took a gift.
+## coming: "" (nothing/closed), "interactable", "sit", "give", or "talk". Only
+## "talk" has a request in flight — the agent bridge used to await one
+## unconditionally and sat through its whole timeout whenever an NPC simply
+## took a gift.
 func use_focus() -> String:
 	# A second press closes an open panel rather than immediately re-triggering.
+	if DialogueUI.is_ordering():
+		return ""
 	if DialogueUI.is_open():
 		DialogueUI.close()
+		if CafeOrder.open_box_on_close:
+			CafeOrder.open_box_on_close = false
+			DialogueUI.show_order_box()
+		return ""
+	if seated:
+		stand_up()
 		return ""
 	if focus is Interactable:
 		var it := focus as Interactable
+		if it.verb == "sit" and it.enters == "" and it.gives == "":
+			var host := it.get_parent() as Node2D
+			if host != null:
+				sit_on(host)
+			return "sit"
 		var line := it.use()
 		# Entering a building and leaving one both return "" — the change of
 		# scene IS the response, and an empty panel over it would just be in
@@ -207,11 +280,11 @@ func use_focus() -> String:
 	if focus is Npc:
 		var npc := focus as Npc
 		npc.attend(global_position)
-		# A gift is not its own scripted moment any more — it is context for the
-		# conversation it starts. The character is told what they were just
-		# handed and decides what that earns, same as any other exchange.
 		var gift := npc.accept_item()
 		npc.met = true
+		if npc.npc_id == "mara":
+			DialogueUI.show_line(npc.display_name, CafeOrder.talk(npc))
+			return "talk"
 		if npc.has_scripted() or GameState.offline_mode or not LLMClient.backend_available:
 			if gift != "":
 				DialogueUI.show_line(npc.display_name,

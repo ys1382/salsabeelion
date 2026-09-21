@@ -23,10 +23,13 @@ def main() -> int:
     assert names == {"elder", "mara", "iguana_neighbor", "riverfolk_neighbor"}
     mara = next(n for n in world["npcs"] if n["id"] == "mara")
     assert mara["inside"] == "dragons_brew"
+    assert mara.get("look") == "campire"
     assert "Çampire" in mara["scripted_lines"][0]
     interior = world["interiors"]["dragons_brew"]
     beats = {it["beat"] for it in interior["interactables"] if it.get("beat")}
     assert "menu_read" in beats and "house_rules" in beats
+    seats = {it["id"] for it in interior["interactables"]}
+    assert "cafe_seat" in seats
     print("dragons_brew_world.json: ok")
     return 0
 

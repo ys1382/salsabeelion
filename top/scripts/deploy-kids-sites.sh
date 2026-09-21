@@ -94,7 +94,9 @@ fi
 if site_enabled maestros; then
   echo "Running Maestro's pre-deploy verify..."
   bash "$ROOT/maestrosOdyssey/scripts/verify-maestros.sh"
-  if [[ ! -f "$ROOT/maestrosOdyssey/www/vendor/phaser/3.60.0/dist/phaser.min.js" ]]; then
+  if ls "$ROOT/maestrosOdyssey/www/"*.wasm >/dev/null 2>&1 || ls "$ROOT/maestrosOdyssey/www/"*.pck >/dev/null 2>&1; then
+    echo "Maestro's www/ is a Godot web export — skipping Phaser vendor."
+  elif [[ ! -f "$ROOT/maestrosOdyssey/www/vendor/phaser/3.60.0/dist/phaser.min.js" ]]; then
     echo "Vendoring Maestro's Phaser (self-hosted)..."
     bash "$ROOT/maestrosOdyssey/scripts/fetch-phaser.sh"
   fi

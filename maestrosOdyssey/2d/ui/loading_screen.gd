@@ -59,7 +59,6 @@ func status(title: String, detail: String = "") -> void:
 	_sub.text = detail
 	_step_started_ms = Time.get_ticks_msec()
 	_clock.text = ""
-	# The build and capture steps block the main loop, so without an explicit
-	# frame yield the text never actually appears before the work starts.
-	await get_tree().process_frame
-	await get_tree().process_frame
+	# Yield one idle tick so the labels paint before heavy work. process_frame
+	# can stall on HTML5; a zero timer is enough on desktop too.
+	await get_tree().create_timer(0.0).timeout

@@ -7,6 +7,7 @@ extends CharacterBody2D
 const SPEED := 18.0
 const WANDER_EVERY := 3.0
 const WANDER_RADIUS := 40.0
+const LooksLib := preload("res://actors/looks.gd")
 
 @onready var _sprite: AnimatedSprite2D = $Sprite
 
@@ -46,6 +47,10 @@ func _ready() -> void:
 	var tint: String = data.get("tint", "")
 	if tint.is_valid_html_color():
 		_sprite.modulate = Color(tint).lerp(Color.WHITE, 0.6)
+	var look := str(data.get("look", ""))
+	if look == "" and npc_id == "mara":
+		look = "campire"
+	LooksLib.attach(self, look)
 	_home = position
 	_timer = randf() * WANDER_EVERY
 	_play("idle")
@@ -127,4 +132,5 @@ func attend(to: Vector2, seconds: float = 8.0) -> void:
 func _play(state: String) -> void:
 	var parts := Sheet.facing_suffix(facing)
 	_sprite.flip_h = parts[1]
+	LooksLib.face(self, parts[1])
 	_sprite.play("%s_%s" % [state, parts[0]])

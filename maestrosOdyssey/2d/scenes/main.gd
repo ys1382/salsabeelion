@@ -12,7 +12,7 @@ extends Node2D
 # it needs a real window: --headless uses a dummy renderer and SubViewport
 # textures come back empty.
 
-const FALLBACK := "res://backend/dragons_brew_world.json"
+const FALLBACK := "res://generated/dragons_brew_world.json"
 ## The repair loop is bounded so a model that keeps finding things to fix can
 ## never keep the player on the loading screen.
 ##
@@ -42,14 +42,39 @@ func _ready() -> void:
 	builder.name = "World"
 	add_child(builder)
 	WorldManager.world_root = builder
-
-	# A model reply lands while an ellipsis is on screen; swap it in.
 	LLMClient.dialogue_received.connect(_on_dialogue)
+	print("boot os=", OS.get_name(), " web=", GameState.is_browser())
 
-	# --shot renders and exits with nobody watching, so it skips the screen.
+	# _ready itself must stay synchronous. Any `await` here makes this a
+	# coroutine, and HTML5 can freeze before the village is built.
+	if not GameState.is_browser() and (
+			_has_flag("--generate") or _arg_value("--shot") != ""
+			or _arg_value("--shot-after-repair") != ""):
+		call_deferred("_boot_async")
+		return
+
+	var named := _arg_value("--world")
+	var world := _load_world(named if named != "" else FALLBACK)
+	if world.is_empty():
+		push_error("no world to build")
+		if not GameState.is_browser():
+			get_tree().quit(1)
+		return
+
+	GameState.set_world(world)
+	builder.build(world)
+	print("built '%s' [%s] — %d objects, %d interactables, %d npcs, %d enemies"
+		% [world["title"], _source, world["objects"].size(),
+		   world["interactables"].size(), world["npcs"].size(),
+		   world["enemies"].size()])
+	if not _has_flag("--agent-bridge"):
+		Journal.show_opening()
+
+
+func _boot_async() -> void:
 	var shot := _arg_value("--shot")
 	var screen: LoadingScreen = null
-	if shot == "":
+	if shot == "" and _has_flag("--generate"):
 		screen = LoadingScreen.new()
 		add_child(screen)
 		await screen.status("Maestro's Odyssey", "waking the neighborhood")
@@ -69,30 +94,23 @@ func _ready() -> void:
 		   world["interactables"].size(), world["npcs"].size(),
 		   world["enemies"].size()])
 
-	# Dialogue is answered against the backend's copy of the world, so it has to
-	# be told which one we are playing — unless it generated this one itself, in
-	# which case pushing it back would only reset the session it just set up.
-	if _source != "backend":
+	if _source != "backend" and not GameState.offline_mode:
 		await _sync_world_to_backend()
 
 	if shot != "":
 		await _capture_and_quit(shot)
 		return
-	if not _has_flag("--no-critique"):
+	if screen != null and not _has_flag("--no-critique"):
 		await _repair_loop(screen)
-	screen.queue_free()
+	if screen != null:
+		screen.queue_free()
 
-	# For scripted runs: render the repaired world and exit, so the whole
-	# generate -> build -> review -> rebuild path is testable without a human.
 	var after := _arg_value("--shot-after-repair")
 	if after != "":
 		await capture(after)
 		get_tree().quit()
 		return
 
-	# The premise, once, before anything else. A player dropped straight into the
-	# village has no idea what the problem is. Scripted runs skip it: the bridge
-	# drives the player directly and the card would eat its first interact.
 	if not _has_flag("--agent-bridge"):
 		Journal.show_opening()
 
@@ -105,7 +123,7 @@ func _obtain_world(screen: LoadingScreen) -> Dictionary:
 	var path := _arg_value("--world")
 	if path != "":
 		return _load_world(path)
-	if not _has_flag("--generate"):
+	if GameState.is_browser() or not _has_flag("--generate"):
 		return _load_world(FALLBACK)
 
 	if not GameState.offline_mode:
