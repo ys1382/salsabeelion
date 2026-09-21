@@ -19,6 +19,7 @@ config/features=PackedStringArray("4.7", "GL Compatibility")
 
 GameState="*res://ui/game_state.gd"
 CafeOrder="*res://ui/cafe_order.gd"
+ElderReport="*res://ui/elder_report.gd"
 WorldManager="*res://world/world_manager.gd"
 LLMClient="*res://ui/llm_client.gd"
 DialogueUI="*res://ui/dialogue_ui.gd"

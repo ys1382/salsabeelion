@@ -49,5 +49,23 @@ func _initialize() -> void:
 	assert(cafe.ordered.has("café"))
 	assert(cafe._begin_practice())
 	assert(str(cafe._practice_lemma) == "muffin")
+
+	gs.day_index = 8
+	gs._sync_clock()
+	var elder: Node = root.get_node("ElderReport")
+	elder.reset()
+	cafe.ordered = PackedStringArray()
+	assert(not elder.can_offer())
+	cafe.ordered = PackedStringArray(["café", "té", "muffin"])
+	assert(elder.can_offer())
+	gs.take_item("learning_card")
+	gs.card_balance = 40
+	elder.awaiting = true
+	var kind := String(elder.reply_for(
+		"Mara at the counter has wings. The café is warm. Neighbors at the table. House rules, no racism."
+	))
+	assert(kind.contains("lovely"), kind)
+	assert(bool(elder.passed))
+	assert(int(gs.card_balance) == 400)
 	print("menu_schedule_runtime: ok")
 	quit()

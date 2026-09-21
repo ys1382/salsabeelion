@@ -286,12 +286,15 @@ func use_focus() -> String:
 	# A second press closes an open panel rather than immediately re-triggering.
 	if DialogueUI.is_ordering():
 		return ""
-	if DialogueUI.is_open():
-		DialogueUI.close()
-		if CafeOrder.open_box_on_close:
-			CafeOrder.open_box_on_close = false
-			DialogueUI.show_order_box()
-		return ""
+		if DialogueUI.is_open():
+			DialogueUI.close()
+			if CafeOrder.open_box_on_close:
+				CafeOrder.open_box_on_close = false
+				DialogueUI.show_order_box()
+			elif ElderReport.open_box_on_close:
+				ElderReport.open_box_on_close = false
+				DialogueUI.show_order_box(ElderReport.speaker_name())
+			return ""
 	if seated:
 		stand_up()
 		return ""
@@ -317,6 +320,11 @@ func use_focus() -> String:
 		if npc.npc_id == "mara":
 			DialogueUI.show_line(npc.display_name, CafeOrder.talk(npc))
 			return "talk"
+		if npc.npc_id == "elder":
+			var report := ElderReport.talk(npc)
+			if report != "":
+				DialogueUI.show_line(npc.display_name, report)
+				return "talk"
 		if npc.has_scripted() or GameState.offline_mode or not LLMClient.backend_available:
 			if gift != "":
 				DialogueUI.show_line(npc.display_name,

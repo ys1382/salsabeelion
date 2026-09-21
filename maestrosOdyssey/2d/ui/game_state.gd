@@ -84,6 +84,8 @@ func set_world(w: Dictionary) -> void:
 	_sync_clock()
 	if has_node("/root/CafeOrder"):
 		CafeOrder.reset_session()
+	if has_node("/root/ElderReport"):
+		ElderReport.reset()
 	_finale_shown = false
 	_acts_fired = 0
 	phase = "explore"
@@ -143,6 +145,12 @@ func add_balance(amount: int) -> void:
 	if amount <= 0 or not has_item("learning_card"):
 		return
 	card_balance += amount
+
+
+func refill_card(amount: int = CARD_START_PESOS) -> void:
+	if not has_item("learning_card"):
+		return
+	card_balance = amount
 
 
 func advance_day() -> void:

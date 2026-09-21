@@ -38,6 +38,7 @@ def main() -> int:
     assert "CARD_START_PESOS" in state
     assert "weekday" in state and "week_number" in state
     assert "card_balance" in state
+    assert "refill_card" in state
     print("learning card hud: ok")
     return 0
 

@@ -104,9 +104,9 @@ func show_line(speaker: String, text: String) -> void:
 	_panel.show()
 
 
-func show_order_box() -> void:
+func show_order_box(speaker: String = "Mara") -> void:
 	_prompt.hide()
-	_speaker.text = "Mara"
+	_speaker.text = speaker
 	_speaker.visible = true
 	_body.hide()
 	_order.text = ""
@@ -123,7 +123,10 @@ func is_ordering() -> bool:
 func _on_order_submitted(text: String) -> void:
 	_order.hide()
 	_order.release_focus()
-	show_line("Mara", CafeOrder.reply_for(text))
+	if ElderReport.awaiting:
+		show_line(ElderReport.speaker_name(), ElderReport.reply_for(text))
+	else:
+		show_line("Mara", CafeOrder.reply_for(text))
 
 
 ## Sizes the panel to the wrapped text. Font.get_multiline_string_size gives the
