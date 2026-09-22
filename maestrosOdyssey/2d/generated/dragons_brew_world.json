@@ -316,7 +316,8 @@
       "objects": [
         { "id": "cafe_table", "asset": "prop.table_medium_1", "x": 2, "y": 4 },
         { "id": "cafe_neighbors_table", "asset": "prop.table_medium_1", "x": 10, "y": 4 },
-        { "id": "cafe_plant", "asset": "prop.plant_2", "x": 1, "y": 7 }
+        { "id": "cafe_plant", "asset": "prop.plant_2", "x": 1, "y": 7 },
+        { "id": "dish_cart", "asset": "prop.crate_large_empty", "x": 4, "y": 2 }
       ],
       "interactables": [
         {
@@ -339,6 +340,18 @@
           "text": "House rules\n\nNo customer (sentient / people) blood served here.\nNo bovine blood served here.\nNo lizard or cow meat.\nFish is fine.\n\nWe reserve the right to refuse service due to\n- Racism\n- Predator-Attitude\n- Fighting\n- Loud Arguments\n- Smoking\n- Drinking Alcohol\n- And picking on customers for any not-aforementioned reasons.\n\nStrike of the week: the board is blank today — nothing pulled from the menu.",
           "beat": "house_rules",
           "on": "",
+          "gives_item": "",
+          "needs_item": "",
+          "locked_text": ""
+        },
+        {
+          "id": "dish_cart",
+          "asset": "prop.crate_large_empty",
+          "x": 4,
+          "y": 2,
+          "text": "The dish cart. Cups and plates go here to be washed.",
+          "beat": "",
+          "on": "dish_cart",
           "gives_item": "",
           "needs_item": "",
           "locked_text": ""

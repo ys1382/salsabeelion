@@ -143,6 +143,8 @@ func show_order_box(speaker: String = "Mara") -> void:
 	_order.text = ""
 	if speaker == "Elder":
 		_order.placeholder_text = "Favorite drink and food, then Enter"
+	elif CafeOrder.awaiting_bye:
+		_order.placeholder_text = CafeOrder.goodbye_box_hint()
 	else:
 		_order.placeholder_text = "Type your order, then Enter"
 	_order.show()

@@ -238,5 +238,70 @@ func _initialize() -> void:
 	assert(CafePhrasesScript.line_for("iguana_neighbor", 6, false).contains("croissant"))
 	assert(CafePhrasesScript.line_for("riverfolk_neighbor", 7, false).contains("espresso"))
 	assert(CafePhrasesScript.line_for("iguana_neighbor", 8, true).contains("con leche"))
+	gs.day_index = 1
+	gs._sync_clock()
+	cafe.reset_session()
+	assert(cafe.may_leave())
+	cafe.taken = true
+	cafe._drink = "café"
+	cafe._food = "muffin"
+	cafe.served = PackedStringArray(["café", "muffin"])
+	cafe.cup_left = 0
+	cafe.muffin_left = 0
+	cafe._mark_meal_if_done()
+	assert(cafe.carrying_dishes)
+	assert(not cafe.may_leave())
+	assert(cafe.leave_blocked_line().contains("dish cart"))
+	var put: String = cafe.use_dish_cart()
+	assert(put.contains("Adiós, and buenas noches"), put)
+	assert(put.contains("good night"), put)
+	assert(cafe.awaiting_bye)
+	assert(not cafe.carrying_dishes)
+	var wrong: String = cafe.reply_for("goodbye")
+	assert(cafe.awaiting_bye, wrong)
+	assert(not wrong.contains("Adiós"))
+	var early_y: String = cafe.reply_for("adios y buenas noches")
+	assert(cafe.awaiting_bye, early_y)
+	var said: String = cafe.reply_for("Adiós, and buenas noches")
+	assert(cafe.goodbye_done, said)
+	assert(cafe.may_leave())
+	assert(said == "Mara smiles and nods.")
+
+	gs.day_index = 3
+	gs._sync_clock()
+	assert(gs.weekday == "Wednesday")
+	cafe.reset_session()
+	cafe.taken = true
+	cafe._drink = "té"
+	cafe._food = "muffin"
+	cafe.served = PackedStringArray(["té", "muffin"])
+	cafe.cup_left = 0
+	cafe.muffin_left = 0
+	cafe._mark_meal_if_done()
+	var night_line: String = cafe.use_dish_cart()
+	assert(night_line.contains("Adiós, y buenas noches"), night_line)
+	assert(night_line.contains("good night"), night_line)
+	var night_bad: String = cafe.reply_for("adios and buenas noches")
+	assert(cafe.awaiting_bye, night_bad)
+	assert(not night_bad.contains("buenas noches"))
+	var night_ok: String = cafe.reply_for("adiós, y buenas noches")
+	assert(cafe.goodbye_done, night_ok)
+	assert(night_ok == "Mara smiles and nods.")
+	assert(cafe.may_leave())
+
+	gs.day_index = 8
+	gs._sync_clock()
+	cafe.reset_session()
+	cafe.taken = true
+	cafe._drink = "café"
+	cafe._food = "muffin"
+	cafe.served = PackedStringArray(["café", "muffin"])
+	cafe.cup_left = 0
+	cafe.muffin_left = 0
+	cafe._mark_meal_if_done()
+	var later: String = cafe.use_dish_cart()
+	assert(later.contains("Adiós, y buenas noches"), later)
+	var later_ok: String = cafe.reply_for("adios y buenas noches")
+	assert(later_ok == "Mara smiles and nods.")
 	print("menu_schedule_runtime: ok")
 	quit()

@@ -303,6 +303,7 @@ func use_focus() -> String:
 				sit_on(host)
 			return "sit"
 		var line := it.use()
+		_refresh_held()
 		# Entering a building and leaving one both return "" — the change of
 		# scene IS the response, and an empty panel over it would just be in
 		# the way.

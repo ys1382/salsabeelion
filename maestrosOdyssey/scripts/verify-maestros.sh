@@ -17,12 +17,14 @@ if grep -q 'new Engine' "$WWW/index.html" 2>/dev/null && ls "$WWW"/*.wasm >/dev/
   python3 "$ROOT/maestrosOdyssey/2d/backend/test_learning_card_hud.py"
   python3 "$ROOT/maestrosOdyssey/2d/backend/test_cafe_clock.py"
   python3 "$ROOT/maestrosOdyssey/2d/backend/test_night_pass.py"
+  python3 "$ROOT/maestrosOdyssey/2d/backend/test_cafe_closeout.py"
   python3 "$ROOT/maestrosOdyssey/2d/backend/test_menu_unlock.py"
   python3 "$ROOT/maestrosOdyssey/2d/backend/test_cafe_practice.py"
   python3 "$ROOT/maestrosOdyssey/2d/backend/test_elder_report.py"
   python3 "$ROOT/maestrosOdyssey/2d/backend/test_player_house.py"
   python3 "$ROOT/maestrosOdyssey/2d/backend/test_house_rules_sign.py"
   python3 "$ROOT/maestrosOdyssey/2d/backend/test_waypoint.py"
+  python3 "$ROOT/maestrosOdyssey/2d/backend/test_species_tints.py"
   echo "Maestro's verify: OK (Godot web)"
   exit 0
 fi

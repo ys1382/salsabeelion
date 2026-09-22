@@ -259,15 +259,17 @@ This chat’s later list **plus** original MO items **not in the Godot build yet
 - [x] **Player house (first cottage, 2026-09-21)** — plank floor; table, bench, **closed crate back-right**, barrel. No campfire/fireplace (pack’s “fireplace” is a campfire — removed from home + café + random house fill). Night pass is stepping inside after a finished café meal — no bed.
 - [x] **Night pass when you step into your house** (owner locked 2026-09-21) — **not** a bed / hay stand-in. After café: you must have **ordered and consumed** (sip/eat done). Then **enter your house** → short **night passes** beat → **weekday turns** → morning. Do **not** turn the day on café leave anymore for this path (or gate café-leave day-tick so home is what ends the day after a completed meal). No lie-down animation required.
 - [ ] **Have to read the board to order** — you already must tap the menu once, but Mara then lists today’s items in chat (`What's your order? (café, té, muffin…)`), so you can skip the wall after that. Stop spoon-feeding the day’s words in her prompt; the player should **check the menu** for practice. Keep the type box and same-reply drink.
+- [ ] **Accent letters in the type box** (owner — 2026-09-22) — press-and-hold **any** letter that has accents (E is only an example) shows the usual picker (é / á / ñ / ü…), but you **cannot click or select** it. The box keeps repeating the base letter (`eeeee`, `aaaaa`, …) instead. Make the pick land in the box (café, té, azúcar). Same box for Mara and the elder.
 - [x] **Only the key on the prompt does that action** — **E** sit / stand / talk / close reading. **D** sip only (no stand). **Space** is not a second E. Order type box still uses **Enter**; E types the letter.
 - [x] **Elder test has a clear language aim** (2026-09-22) — still not a quiz screen. She asks for a favorite drink and a favorite food, with an add-on (*con leche*, *con azúcar*, *y leche*). Tue–Sun café neighbors say that shape with a different board item each day.
 - [ ] **Journal for Spanish phrases** (owner — 2026-09-22) — not a word list. Each overheard sentence stays in the journal with that day’s food or drink, so progress is something you can open and try saying. Basic, and a bit more interesting than a list. Not built yet.
+- [ ] **Week two: un / una** (owner — 2026-09-22) — week one can still be “a café” / “a té.” In **week 2** they start using **un** and **una** (one / a, with gender). Gives a reason to learn more than two café words. Not a flashcard. After the **train station**, more numbers than un/una (dos, tres, …).
 - [ ] **Home crate as real storage** — Minecraft-chest style: open UI, put items in / take out, save with the account/run. Today the crate only shows flavor text on E (verb says Open). Not built yet — pin only.
 - [x] **Furniture stop floating** — tables stay full size (bigger than the chairs). The two café neighbors stand on opposite sides of their table again. People draw in front of their own face, so a table no longer sits on their head.
 - [x] **Tutorial directions / compass** (2026-09-22) — start in front of your cottage; a small arrow points to the next stop (elder → basket → café → home after the meal). Not a minimap.
-- [ ] **Leave-café close-out (paired — always together)** — if owner asks for **say goodbye to Mara**, **put dishes away**, reusable cup return, or **both**, do **both** in the same build. Do not ship one without the other.
-  - **Put dishes away** — café is reusables-only. After you finish, put the cup/mug (and food dish) in a **bin** (or similar) so staff can take it to wash. No disposable walk-away. Exact props/flow TBD.
-  - **Say goodbye to Mara** — more social; you can’t just walk out after the meal. Exact how TBD (E Mara for a short bye, door blocked until then, etc.). Keep it warm, not a quiz.
+- [x] **Leave-café close-out (paired — shipped 2026-09-22)** — after the cup and plate are finished, put them in the dish cart by the counter. Mara says **adiós** (Wednesday: **buenas noches**) and you type it back before the doorway lets you out. The door tiles stay put. Morning still comes when you step into your house.
+  - **Dishes vs the street (locked):** you **cannot** leave the café, walk the block, or end the day still holding dishes. Empty cup/plate stay in hand **inside** until the cart. Mara stops you at the door. You will not wander outside with them until you come back.
+- [ ] **Talk to every café customer before you leave** (owner — 2026-09-22) — an **arrow** points at the other people in the room (same idea as the cottage waypoint). You **cannot leave** until you have talked to **everyone** at the tables, not only Mara. Door waits; not a quiz.
 
 **From original MO — not in Godot yet**
 
@@ -285,6 +287,10 @@ This chat’s later list **plus** original MO items **not in the Godot build yet
 - [ ] **#21 goblin detective watch** — post-train / later arc, not week one. Detective / mafia / sea-policy plot stays later.
 - [ ] **Player-frame language + Mara tail** — UI/chat in the language you already speak; Irish / Japanese / Turkish locked until the train. Mara tail overlay still later.
 - [ ] **Revise `DRAGONS-BREW-PRE-TRAIN.md`** when owner asks — old week-one detective/sea table → later-arc section; align with #13–19. Saturday pegasus + griffin **stay café plot**; body animation is post-demo (below).
+
+### After demo — elder as ambassador (owner — pinned 2026-09-22)
+
+- [ ] **Elder is a human ambassador** to supernatural peoples, after the train-station demo ending. The player is **her apprentice** — that is why she granted the learning card and the café week. She is training you to take her place because she cannot travel as much; her work now is the next generation, and keeping good terms with this county / city / suburbia. Not week one. Not a lecture on day one.
 
 ### After demo — non-humanoid animation (owner — pinned 2026-09-22, corrected same day)
 

@@ -88,6 +88,10 @@ static func attach(host: Node2D, entry: Dictionary) -> Interactable:
 
 
 func prompt() -> String:
+	if str(data.get("id", "")) == "dish_cart":
+		if CafeOrder.carrying_dishes:
+			return "Put dishes"
+		return "Look"
 	if locked():
 		return "Try"
 	if enters != "":
@@ -105,6 +109,9 @@ func locked() -> bool:
 ## side effect — the beat and the pickup. A locked interactable does neither, so
 ## it can be tried as often as the player likes.
 func use() -> String:
+	if str(data.get("id", "")) == "dish_cart":
+		used.emit(self)
+		return CafeOrder.use_dish_cart()
 	if locked():
 		return locked_text if locked_text != "" \
 			else "You can't, not without %s." % GameState.item_name(needs)

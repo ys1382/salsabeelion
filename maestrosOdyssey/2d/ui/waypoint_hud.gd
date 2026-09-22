@@ -51,10 +51,12 @@ func _poly(pts: PackedVector2Array, color: Color, scale_mul: float) -> Polygon2D
 	return p
 
 
-## elder → card basket → Dragon's Brew → home (after the meal).
+## elder → card basket → Dragon's Brew → dish cart → home (after the meal).
 func current_id() -> String:
 	if GameState.world.is_empty():
 		return ""
+	if CafeOrder.carrying_dishes:
+		return "dish_cart"
 	if GameState.day_index >= 8 and not ElderReport.done:
 		return "elder"
 	if GameState.cafe_meal_done:
@@ -71,6 +73,8 @@ func at_destination() -> bool:
 	var id := current_id()
 	if id == "":
 		return false
+	if id == "dish_cart":
+		return _focus_id() == "dish_cart"
 	if Interiors.inside() and Interiors.current != null:
 		return Interiors.current.building_id == id
 	return _focus_id() == id
@@ -146,6 +150,11 @@ func _focus_id() -> String:
 func _target_pos(id: String) -> Vector2:
 	if id == "":
 		return Vector2.ZERO
+	if id == "dish_cart" and Interiors.inside() and Interiors.current != null \
+			and Interiors.current.building_id == "dragons_brew":
+		var cart := Interiors.current.get_node_or_null("Objects/dish_cart") as Node2D
+		if cart != null:
+			return cart.global_position
 	if Interiors.inside() and Interiors.current != null \
 			and Interiors.current.building_id != id:
 		var door := Interiors.current.get_node_or_null("Objects/Doorway") as Node2D

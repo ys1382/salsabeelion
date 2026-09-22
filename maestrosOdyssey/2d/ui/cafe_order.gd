@@ -3,7 +3,12 @@ extends Node
 # matched against today's board. A paid order is one drink and one food. A
 # match takes pesos from the learning card in the same reply — no extra pay
 # tap, no kitchen wait. Sit to sip (D) and eat (F). After both are finished,
-# stepping into your house turns the weekday. If the card can't cover any
+# the empty cup and plate go in the dish cart, and you say her goodbye back
+# before the door will let you out. Monday and Tuesday that is adiós, and
+# buenas noches. From Wednesday on — the day she teaches y — it is adiós, y
+# buenas noches. A right spelling gets a smile and a nod. Stepping into your
+# house turns the weekday. If the card
+# can't cover any
 # pair, Mara quizzes board words instead (cycling, not the same lemma on a
 # loop). From Wednesday, a paid pair must use y (not and), and extras use con
 # (not with). Add-ons are Spanish. A good quiz also lets home turn the weekday.
@@ -30,6 +35,11 @@ var _practice_earned_day := 0
 ## Paid order fully sipped/eaten this café day. Survives leaving the café so
 ## home entry can turn the weekday. Not a bed — stepping inside is enough.
 var meal_done := false
+## Empty cup and plate still in hand after the meal, until the dish cart.
+var carrying_dishes := false
+## Dish cart used; waiting on the Spanish goodbye typed back.
+var awaiting_bye := false
+var goodbye_done := false
 
 const NIGHT_PASS_LINE := "Night passes. It's morning."
 
@@ -92,12 +102,93 @@ func _clear_order() -> void:
 	served = PackedStringArray()
 	cup_left = 0
 	muffin_left = 0
+	carrying_dishes = false
+	awaiting_bye = false
+	goodbye_done = false
 	_drink = ""
 	_food = ""
 	_practicing = false
 	_practice_lemma = ""
 	_practice_en = ""
 	order_cleared.emit()
+
+
+## The café door stays where it is. This only refuses the leave until the
+## dishes are in the cart and the goodbye has been said back.
+func may_leave() -> bool:
+	return not carrying_dishes and not awaiting_bye
+
+
+func leave_blocked_line() -> String:
+	if carrying_dishes:
+		return (
+			"Mara calls over before you reach the door. "
+			+ "\"The dish cart is by the counter. Cups and plates go there to be washed.\""
+		)
+	open_box_on_close = true
+	return "Mara is still waiting. Say it back before you go."
+
+
+func use_dish_cart() -> String:
+	if awaiting_bye:
+		open_box_on_close = true
+		return "Mara waits by the cart. Say it back."
+	if goodbye_done:
+		return "The dish cart is waiting for the next wash."
+	if not carrying_dishes:
+		if still_holding():
+			return "Mara glances over. \"Finish first — then the cup and plate go in the cart.\""
+		return "An empty dish cart. Staff take what's left here back to wash."
+	carrying_dishes = false
+	awaiting_bye = true
+	open_box_on_close = true
+	return (
+		"You set the cup and plate in the dish cart.\n\n"
+		+ "Mara looks over. \"%s.\" That means goodbye, and good night. Say it back."
+	) % _goodbye_spoken()
+
+
+## Shown in the type box so a missed line can still be typed. Not spoken again.
+func goodbye_box_hint() -> String:
+	return _goodbye_spoken()
+
+
+## Monday and Tuesday still use English "and". From Wednesday, y stays.
+func _goodbye_spoken() -> String:
+	if GameState.day_index >= 3:
+		return "Adiós, y buenas noches"
+	return "Adiós, and buenas noches"
+
+
+func _goodbye_expected() -> String:
+	if GameState.day_index >= 3:
+		return "adios y buenas noches"
+	return "adios and buenas noches"
+
+
+func _bye_reply(text: String) -> String:
+	if _flat_spanish(text) == _goodbye_expected():
+		awaiting_bye = false
+		goodbye_done = true
+		open_box_on_close = false
+		return "Mara smiles and nods."
+	open_box_on_close = true
+	return "Mara waits, gentle. Say it back the way she did."
+
+
+func _flat_spanish(raw: String) -> String:
+	var s := raw.strip_edges().to_lower()
+	s = s.replace("á", "a").replace("é", "e").replace("í", "i")
+	s = s.replace("ó", "o").replace("ú", "u").replace("ü", "u").replace("ñ", "n")
+	var out := ""
+	for i in s.length():
+		var c := s.substr(i, 1)
+		if "¡!¿?.,;:\"'".contains(c):
+			continue
+		out += c
+	while out.contains("  "):
+		out = out.replace("  ", " ")
+	return out.strip_edges()
 
 
 func talk(npc: Npc) -> String:
@@ -112,6 +203,13 @@ func talk(npc: Npc) -> String:
 	if not GameState.known("menu_read"):
 		return str(lines[1])
 	if taken:
+		if carrying_dishes:
+			return "Mara nods toward the cart. \"Dishes in the cart first. Then we say goodbye.\""
+		if awaiting_bye:
+			open_box_on_close = true
+			return "Mara waits. Say it back."
+		if goodbye_done:
+			return "Mara smiles. \"The door's there when you're ready.\""
 		return "That's already yours. Sit if you like — the room is for lingering."
 	if too_broke_to_order():
 		if not _begin_practice():
@@ -176,6 +274,8 @@ func cheapest_price() -> int:
 
 func reply_for(text: String) -> String:
 	var order := text.strip_edges()
+	if awaiting_bye:
+		return _bye_reply(order)
 	if _practicing:
 		return _practice_reply(order)
 	if order == "":
@@ -220,7 +320,7 @@ func reply_for(text: String) -> String:
 
 
 func still_holding() -> bool:
-	return cup_left > 0 or muffin_left > 0
+	return cup_left > 0 or muffin_left > 0 or carrying_dishes
 
 
 func sip() -> bool:
@@ -242,6 +342,9 @@ func bite() -> bool:
 func _mark_meal_if_done() -> void:
 	if taken and cup_left <= 0 and muffin_left <= 0:
 		meal_done = true
+		carrying_dishes = true
+		awaiting_bye = false
+		goodbye_done = false
 		GameState.note_cafe_meal_done()
 
 
@@ -252,6 +355,12 @@ func texture_for(lemmas: PackedStringArray = PackedStringArray()) -> Texture2D:
 	var food := _lemma_of_kind(lemmas, "food")
 	var has_food := muffin_left > 0 and food != ""
 	var has_drink := cup_left > 0 and drink != ""
+	if carrying_dishes and not has_food and not has_drink:
+		var empty := Image.create(16, 12, false, Image.FORMAT_RGBA8)
+		empty.fill(Color(0, 0, 0, 0))
+		_draw_cup(empty, 0, drink if drink != "" else "café")
+		_fill(empty, 8, 9, 8, 2, Color(0.91, 0.88, 0.82))
+		return ImageTexture.create_from_image(empty)
 	if not has_food and not has_drink:
 		return null
 	var w := 16 if has_drink and has_food else 10

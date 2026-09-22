@@ -87,6 +87,11 @@ func _show_night_pass() -> void:
 func leave() -> void:
 	if not inside():
 		return
+	# Do not move the doorway. If the meal's dishes are still in hand, or Mara
+	# is waiting on the Spanish goodbye, stay in the room and let her say so.
+	if current.building_id == "dragons_brew" and not CafeOrder.may_leave():
+		DialogueUI.show_line("Mara", CafeOrder.leave_blocked_line())
+		return
 	var root := WorldManager.world_root
 	var p := _player
 	current.exit_requested.disconnect(leave)
