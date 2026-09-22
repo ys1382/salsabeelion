@@ -407,6 +407,7 @@ func _state() -> Dictionary:
 			npcs.append({
 				"id": npc.npc_id, "name": npc.display_name,
 				"tile": [_tile_of(npc.position).x, _tile_of(npc.position).y],
+				"facing": [snappedf(npc.facing.x, 0.1), snappedf(npc.facing.y, 0.1)],
 				"dist": 0.0 if p == null else snappedf(
 					p.position.distance_to(npc.position), 0.1),
 				"overlays": overlays,

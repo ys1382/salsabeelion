@@ -24,6 +24,17 @@ def main() -> int:
     mara = next(n for n in world["npcs"] if n["id"] == "mara")
     assert mara["inside"] == "dragons_brew"
     assert mara.get("look") == "campire"
+    iguana = next(n for n in world["npcs"] if n["id"] == "iguana_neighbor")
+    riverfolk = next(n for n in world["npcs"] if n["id"] == "riverfolk_neighbor")
+    assert iguana["inside"] == "dragons_brew"
+    assert riverfolk["inside"] == "dragons_brew"
+    assert int(iguana["inside_x"]) == 11 and int(iguana["inside_y"]) == 7
+    assert int(riverfolk["inside_x"]) == 11 and int(riverfolk["inside_y"]) == 3
+    assert iguana.get("facing") == "up"
+    assert riverfolk.get("facing") == "down"
+    cafe_ids = {o["id"] for o in world["interiors"]["dragons_brew"]["objects"]}
+    assert "cafe_table" in cafe_ids
+    assert "cafe_neighbors_table" in cafe_ids
     assert "Çampire" in mara["scripted_lines"][0]
     interior = world["interiors"]["dragons_brew"]
     beats = {it["beat"] for it in interior["interactables"] if it.get("beat")}

@@ -19,6 +19,11 @@ def main() -> int:
     assert "say y instead of and" in cafe
     assert "here we say y" in cafe
     assert "needs_y" in cafe
+    assert "Extras use con" in cafe
+    assert "con azúcar" in cafe
+    assert "needs_con" in cafe
+    assert "leche" in cafe
+    assert "calentado" in cafe
     assert "something to eat with it" in cafe
     assert "show_order_box" in dialogue
     assert "Type your order, then Enter" in dialogue

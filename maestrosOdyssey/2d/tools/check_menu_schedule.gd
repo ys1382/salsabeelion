@@ -10,10 +10,17 @@ func _initialize() -> void:
 	gs._sync_clock()
 	var d1: String = cafe.board_text()
 	assert(d1.contains("café") and d1.contains("té") and d1.contains("muffin"))
+	assert(d1.contains("leche") and d1.contains("azúcar") and d1.contains("calentado"))
 	assert(not d1.contains("chocolate caliente"))
 	assert(not d1.contains("tostada"))
+	assert(not d1.contains("crema"))
+	assert(not d1.contains("frío"))
 	assert(cafe.match_lemmas("chocolate caliente").is_empty())
 	assert(cafe.match_lemmas("té").has("té"))
+	assert(cafe.match_lemmas("leche").has("leche"))
+	assert(cafe.match_lemmas("azúcar").has("azúcar"))
+	assert(not cafe.match_lemmas("sugar").has("azúcar"))
+	assert(not cafe.match_lemmas("milk").has("leche"))
 	var combo: PackedStringArray = cafe.match_lemmas("coffee muffin")
 	assert(combo.has("café") and combo.has("muffin"))
 	assert(cafe.match_lemmas("tostada").is_empty())
@@ -29,7 +36,7 @@ func _initialize() -> void:
 	gs.day_index = 7
 	gs._sync_clock()
 	var d7: String = cafe.board_text()
-	assert(d7.contains("espresso") and d7.contains("creamer") and d7.contains("croissant"))
+	assert(d7.contains("espresso") and d7.contains("crema") and d7.contains("croissant") and d7.contains("frío"))
 	var late: PackedStringArray = cafe.match_lemmas("espresso y galleta")
 	assert(late.has("espresso") and late.has("galleta"))
 
@@ -73,6 +80,55 @@ func _initialize() -> void:
 	assert(pair.contains("Here you go"), pair)
 	assert(int(gs.card_balance) == 337)
 
+	cafe.reset_session()
+	gs.take_item("learning_card")
+	gs.card_balance = 400
+	var sugar_en: String = cafe.reply_for("café muffin sugar")
+	assert(sugar_en.contains("azúcar"), sugar_en)
+	assert(not sugar_en.contains("Here you go"))
+	assert(int(gs.card_balance) == 400)
+	var with_azucar: String = cafe.reply_for("café muffin azúcar")
+	assert(with_azucar.contains("Here you go"), with_azucar)
+	assert(with_azucar.contains("azúcar"), with_azucar)
+	assert(int(gs.card_balance) == 337)
+
+	cafe.reset_session()
+	gs.take_item("learning_card")
+	gs.card_balance = 400
+	var iced_early: String = cafe.reply_for("iced coffee muffin")
+	assert(iced_early.contains("Here you go"), iced_early)
+	assert(not iced_early.contains("frío"), iced_early)
+
+	cafe.reset_session()
+	gs.take_item("learning_card")
+	gs.card_balance = 400
+	var frio_early: String = cafe.reply_for("café muffin frío")
+	assert(frio_early.contains("Here you go"), frio_early)
+	assert(not frio_early.contains("frío"), frio_early)
+	assert(not frio_early.contains("wall yet"), frio_early)
+
+	cafe.reset_session()
+	gs.take_item("learning_card")
+	gs.card_balance = 400
+	var cream_early: String = cafe.reply_for("café muffin cream")
+	assert(cream_early.contains("Here you go"), cream_early)
+	assert(not cream_early.contains("crema"), cream_early)
+
+	cafe.reset_session()
+	gs.take_item("learning_card")
+	gs.card_balance = 400
+	var crema_early: String = cafe.reply_for("café muffin crema")
+	assert(crema_early.contains("Here you go"), crema_early)
+	assert(not crema_early.contains("crema"), crema_early)
+
+	cafe.reset_session()
+	gs.take_item("learning_card")
+	gs.card_balance = 400
+	var warmed: String = cafe.reply_for("café muffin calentado")
+	assert(warmed.contains("Here you go"), warmed)
+	assert(warmed.contains("calentado"), warmed)
+	assert(int(gs.card_balance) == 337)
+
 	gs.day_index = 2
 	gs._sync_clock()
 	cafe.reset_session()
@@ -91,6 +147,7 @@ func _initialize() -> void:
 	var wed: String = cafe.order_prompt()
 	assert(wed.contains("say y instead of and"), wed)
 	assert(wed.contains("drink y a food"), wed)
+	assert(wed.contains("con azúcar"), wed)
 	var no_y: String = cafe.reply_for("té muffin")
 	assert(no_y.contains("we say y"), no_y)
 	assert(not no_y.contains("Here you go"))
@@ -103,11 +160,53 @@ func _initialize() -> void:
 	assert(with_y.contains("té y muffin") or with_y.contains(" y "), with_y)
 	assert(int(gs.card_balance) == 342)
 
+	cafe.reset_session()
+	gs.take_item("learning_card")
+	gs.card_balance = 400
+	var no_con: String = cafe.reply_for("té y muffin azúcar")
+	assert(no_con.contains("extras use con"), no_con)
+	assert(not no_con.contains("Here you go"))
+	assert(int(gs.card_balance) == 400)
+	var with_con: String = cafe.reply_for("té y muffin con azúcar")
+	assert(with_con.contains("Here you go"), with_con)
+	assert(with_con.contains("con azúcar"), with_con)
+	assert(int(gs.card_balance) == 342)
+
 	gs.day_index = 4
 	gs._sync_clock()
 	var thu: String = cafe.order_prompt()
 	assert(thu.contains("drink y a food"), thu)
 	assert(not thu.contains("instead of and"), thu)
+
+	gs.day_index = 6
+	gs._sync_clock()
+	var d6: String = cafe.board_text()
+	assert(d6.contains("crema"), d6)
+	assert(not d6.contains("frío"), d6)
+	cafe.reset_session()
+	gs.take_item("learning_card")
+	gs.card_balance = 400
+	var cream_en: String = cafe.reply_for("café y muffin cream")
+	assert(cream_en.contains("crema"), cream_en)
+	assert(not cream_en.contains("Here you go"))
+	var cream_ok: String = cafe.reply_for("café y muffin con crema")
+	assert(cream_ok.contains("Here you go"), cream_ok)
+	assert(cream_ok.contains("crema"), cream_ok)
+	assert(int(gs.card_balance) == 337)
+
+	gs.day_index = 7
+	gs._sync_clock()
+	cafe.reset_session()
+	gs.take_item("learning_card")
+	gs.card_balance = 400
+	var iced_en: String = cafe.reply_for("iced espresso y muffin")
+	assert(iced_en.contains("frío"), iced_en)
+	assert(not iced_en.contains("Here you go"))
+	assert(int(gs.card_balance) == 400)
+	var iced_ok: String = cafe.reply_for("espresso frío y muffin")
+	assert(iced_ok.contains("Here you go"), iced_ok)
+	assert(iced_ok.contains("frío"), iced_ok)
+	assert(int(gs.card_balance) == 332)
 
 	gs.day_index = 8
 	gs._sync_clock()

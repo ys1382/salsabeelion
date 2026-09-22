@@ -34,6 +34,7 @@ func setup(d: Dictionary) -> void:
 	data = d
 	npc_id = d["id"]
 	display_name = d["name"]
+	facing = _facing_from_data()
 
 
 func _ready() -> void:
@@ -120,6 +121,20 @@ func accept_item() -> String:
 		return ""
 	_gave = true
 	return want
+
+
+## Idle pose from the world JSON (`up` / `down` / `left` / `right`). Missing
+## or unknown values keep the default toward the camera.
+func _facing_from_data() -> Vector2:
+	match str(data.get("facing", "down")).to_lower():
+		"up":
+			return Vector2.UP
+		"left":
+			return Vector2.LEFT
+		"right":
+			return Vector2.RIGHT
+		_:
+			return Vector2.DOWN
 
 
 ## Called when the player starts talking: stop wandering and turn to face them.

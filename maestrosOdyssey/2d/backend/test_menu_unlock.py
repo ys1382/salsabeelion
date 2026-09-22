@@ -22,8 +22,17 @@ def main() -> int:
     assert "bolillo" in cafe and '"unlock_day": 5' in cafe
     assert "croissant" in cafe and '"unlock_day": 6' in cafe
     assert "azúcar" in cafe
+    assert "leche" in cafe
+    assert "crema" in cafe
+    assert "calentado" in cafe
+    assert "frío" in cafe
+    assert '"needles": ["frío", "frio"]' in cafe
+    assert '"needles": ["frío", "frio", "iced", "chilled"]' not in cafe
     assert "espresso" in cafe and '"unlock_day": 7' in cafe
-    assert "creamer" in cafe
+    assert "needs_con" in cafe
+    assert "Extras use con" in cafe
+    assert '"needles": ["azúcar", "azucar"]' in cafe
+    assert '"needles": ["azúcar", "azucar", "sugar"]' not in cafe
     assert '"pesos": 48' in cafe and '"pesos": 40' in cafe
     assert '"pesos": 22' in cafe and '"pesos": 32' in cafe
     assert "drink_menu" in interact and "board_text" in interact

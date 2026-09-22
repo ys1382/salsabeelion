@@ -5,8 +5,8 @@ extends Node
 # tap, no kitchen wait. Sit to sip (D) and eat (F). After both are finished,
 # stepping into your house turns the weekday. If the card can't cover any
 # pair, Mara quizzes board words instead (cycling, not the same lemma on a
-# loop). From Wednesday, a paid pair must use y (not and). A good quiz also
-# lets home turn the weekday.
+# loop). From Wednesday, a paid pair must use y (not and), and extras use con
+# (not with). Add-ons are Spanish. A good quiz also lets home turn the weekday.
 
 signal order_ready(lemmas: PackedStringArray)
 signal order_cleared
@@ -36,8 +36,10 @@ const NIGHT_PASS_LINE := "Night passes. It's morning."
 const PRACTICE_PESOS := 12
 const PRACTICE_MAX_DAY := 36
 
-## Canon #26 unlocks. Day 1 is café / té / muffin. Later days add on; the full
-## board stays after day 7. new_today marks a new café-lane lemma (cognates skip).
+## Canon #26 unlocks. Day 1 is café / té / muffin, plus leche / azúcar.
+## Later days add on; the full board stays after day 7. Add-ons are Spanish
+## only. From Wednesday, extras use con. new_today marks a new café-lane lemma
+## (cognates skip). prep is how you like it (calentado, frío) — not a new drink.
 const ITEMS := [
 	{"needles": ["chocolate caliente", "hot chocolate", "chocolate"], "lemma": "chocolate caliente", "en": "hot chocolate", "pesos": 48, "kind": "drink", "unlock_day": 2, "new_today": true},
 	{"needles": ["espresso"], "lemma": "espresso", "en": "espresso", "pesos": 40, "kind": "drink", "unlock_day": 7, "new_today": false},
@@ -45,8 +47,11 @@ const ITEMS := [
 	{"needles": ["tostada", "toast"], "lemma": "tostada", "en": "toast", "pesos": 22, "kind": "food", "unlock_day": 3, "new_today": true},
 	{"needles": ["galleta", "cookie"], "lemma": "galleta", "en": "cookie", "pesos": 24, "kind": "food", "unlock_day": 4, "new_today": true},
 	{"needles": ["bolillo"], "lemma": "bolillo", "en": "bolillo roll", "pesos": 20, "kind": "food", "unlock_day": 5, "new_today": true},
-	{"needles": ["azúcar", "azucar", "sugar"], "lemma": "azúcar", "en": "sugar", "pesos": 0, "kind": "addon", "unlock_day": 6, "new_today": true},
-	{"needles": ["creamer"], "lemma": "creamer", "en": "creamer", "pesos": 0, "kind": "addon", "unlock_day": 7, "new_today": true},
+	{"needles": ["leche"], "lemma": "leche", "en": "milk", "pesos": 0, "kind": "addon", "unlock_day": 1, "new_today": true},
+	{"needles": ["azúcar", "azucar"], "lemma": "azúcar", "en": "sugar", "pesos": 0, "kind": "addon", "unlock_day": 1, "new_today": true},
+	{"needles": ["crema"], "lemma": "crema", "en": "creamer", "pesos": 0, "kind": "addon", "unlock_day": 6, "new_today": true},
+	{"needles": ["calentado", "calentada"], "lemma": "calentado", "en": "warmed", "pesos": 0, "kind": "prep", "unlock_day": 1, "new_today": false},
+	{"needles": ["frío", "frio"], "lemma": "frío", "en": "iced", "pesos": 0, "kind": "prep", "unlock_day": 7, "new_today": true},
 	{"needles": ["café", "cafe", "coffee"], "lemma": "café", "en": "coffee", "pesos": 35, "kind": "drink", "unlock_day": 1, "new_today": true},
 	{"needles": ["muffin"], "lemma": "muffin", "en": "muffin", "pesos": 28, "kind": "food", "unlock_day": 1, "new_today": false},
 	{"needles": ["té", "tea"], "lemma": "té", "en": "tea", "pesos": 30, "kind": "drink", "unlock_day": 1, "new_today": true},
@@ -123,15 +128,20 @@ func order_prompt() -> String:
 	if GameState.day_index == 3:
 		return (
 			"What's your order? (%s this morning.)\n\n"
-			+ "Today I'd like you to say y instead of and — a drink y a food."
+			+ "Today I'd like you to say y instead of and — a drink y a food. "
+			+ "Extras use con, like con azúcar."
 		) % board
 	if needs_y():
-		return "What's your order? A drink y a food. (%s this morning.)" % board
+		return "What's your order? A drink y a food, con if you want extras. (%s this morning.)" % board
 	return "What's your order? A drink and a food. (%s this morning.)" % board
 
 
 ## Wednesday onward (café day 3). Early week still accepts and / just both words.
 func needs_y() -> bool:
+	return GameState.day_index >= 3
+
+
+func needs_con() -> bool:
 	return GameState.day_index >= 3
 
 
@@ -180,6 +190,11 @@ func reply_for(text: String) -> String:
 		return missing
 	if needs_y() and not _has_y(order):
 		return _y_nudge(lemmas)
+	var english := _english_extra_nudge(order, lemmas)
+	if english != "":
+		return english
+	if needs_con() and _has_addon(lemmas) and not _has_con(order):
+		return _con_nudge(lemmas)
 	if not GameState.has_item("learning_card"):
 		return "Mara glances at the reader. \"You'll want the learning card from the elder's basket first — no borrowing past zero.\""
 	var total := order_total(lemmas)
@@ -261,14 +276,17 @@ func board_text() -> String:
 	var drinks: Array = []
 	var foods: Array = []
 	var addons: Array = []
+	var preps: Array = []
 	for item in visible_items():
 		var kind := str(item["kind"])
 		if kind == "drink":
 			drinks.append(item)
 		elif kind == "food":
 			foods.append(item)
-		else:
+		elif kind == "addon":
 			addons.append(item)
+		else:
+			preps.append(item)
 	var lines: PackedStringArray = ["Hoy / today", "", "Hot drinks"]
 	for item in drinks:
 		lines.append(_menu_line(item))
@@ -281,6 +299,11 @@ func board_text() -> String:
 		lines.append("")
 		lines.append("Add-ons")
 		for item in addons:
+			lines.append(_menu_line(item))
+	if not preps.is_empty():
+		lines.append("")
+		lines.append("Ask Mara")
+		for item in preps:
 			lines.append(_menu_line(item))
 	for item in _new_today_items():
 		lines.append("")
@@ -319,7 +342,7 @@ func match_lemmas(order: String) -> PackedStringArray:
 func _visible_lemmas(include_addons: bool) -> PackedStringArray:
 	var names: PackedStringArray = []
 	for item in visible_items():
-		if not include_addons and str(item["kind"]) == "addon":
+		if not include_addons and _is_extra(item):
 			continue
 		names.append(str(item["lemma"]))
 	return names
@@ -337,20 +360,36 @@ func _new_today_items() -> Array:
 
 
 func _menu_line(item: Dictionary) -> String:
+	if str(item["kind"]) == "prep":
+		return "%s — %s" % [str(item["lemma"]), str(item["en"])]
 	var pesos := int(item["pesos"])
 	var price := "included" if pesos == 0 else "%d pesos" % pesos
 	return "%s — %s (%s)" % [str(item["lemma"]), price, str(item["en"])]
 
 
 func _echo(lemmas: PackedStringArray) -> String:
-	if lemmas.is_empty():
-		return ""
-	if lemmas.size() >= 2 and (needs_y() or GameState.week_number >= 2):
-		var head := PackedStringArray()
-		for i in range(lemmas.size() - 1):
-			head.append(lemmas[i])
-		return ", ".join(head) + " y " + lemmas[lemmas.size() - 1]
-	return ", ".join(lemmas)
+	var drink := _lemma_of_kind(lemmas, "drink")
+	var food := _lemma_of_kind(lemmas, "food")
+	var addons := _lemmas_of_kind(lemmas, "addon")
+	if lemmas.has("frío") and drink != "":
+		drink = drink + " frío"
+	if lemmas.has("calentado") and food != "":
+		food = food + " calentado"
+	var core := ""
+	if drink != "" and food != "":
+		if needs_y() or GameState.week_number >= 2:
+			core = drink + " y " + food
+		else:
+			core = drink + ", " + food
+	elif drink != "":
+		core = drink
+	else:
+		core = food
+	if addons.is_empty():
+		return core
+	if needs_con() or GameState.week_number >= 2:
+		return core + " con " + _join_y(addons)
+	return core + ", " + ", ".join(addons)
 
 
 func _is_real_order(lemmas: PackedStringArray) -> bool:
@@ -361,12 +400,29 @@ func _has_y(order: String) -> bool:
 	return _has_word(_fold(order), "y")
 
 
+func _has_con(order: String) -> bool:
+	return _has_word(_fold(order), "con")
+
+
 func _y_nudge(lemmas: PackedStringArray) -> String:
 	var drink := _lemma_of_kind(lemmas, "drink")
 	var food := _lemma_of_kind(lemmas, "food")
+	if _has_addon(lemmas):
+		return (
+			"Mara tilts her head, kind. \"Almost — here we say y, and extras use con. %s y %s con %s?\""
+		) % [drink, food, _join_y(_lemmas_of_kind(lemmas, "addon"))]
 	return (
 		"Mara tilts her head, kind. \"Almost — here we say y. %s y %s?\""
 	) % [drink, food]
+
+
+func _con_nudge(lemmas: PackedStringArray) -> String:
+	var drink := _lemma_of_kind(lemmas, "drink")
+	var food := _lemma_of_kind(lemmas, "food")
+	var extra := _join_y(_lemmas_of_kind(lemmas, "addon"))
+	return (
+		"Mara tilts her head, kind. \"Almost — extras use con. %s y %s con %s?\""
+	) % [drink, food, extra]
 
 
 func _missing_half_line(lemmas: PackedStringArray) -> String:
@@ -385,7 +441,7 @@ func _missing_half_line(lemmas: PackedStringArray) -> String:
 
 func _remember(lemmas: PackedStringArray) -> void:
 	for lemma in lemmas:
-		if lemma == "azúcar" or lemma == "creamer":
+		if _kind_of(lemma) == "addon" or _kind_of(lemma) == "prep":
 			continue
 		if not ordered.has(lemma):
 			ordered.append(lemma)
@@ -405,14 +461,14 @@ func _begin_practice() -> bool:
 func _practice_pick() -> Dictionary:
 	if _practice_lemma != "" and not ordered.has(_practice_lemma):
 		for item in visible_items():
-			if str(item["kind"]) == "addon":
+			if _is_extra(item):
 				continue
 			if str(item["lemma"]) == _practice_lemma:
 				return item
 	var fresh: Array = []
 	var any_item: Array = []
 	for item in visible_items():
-		if str(item["kind"]) == "addon":
+		if _is_extra(item):
 			continue
 		any_item.append(item)
 		if not ordered.has(str(item["lemma"])):
@@ -477,6 +533,73 @@ func _lemma_of_kind(lemmas: PackedStringArray, kind: String) -> String:
 		if str(item["kind"]) == kind and lemmas.has(str(item["lemma"])):
 			return str(item["lemma"])
 	return ""
+
+
+func _lemmas_of_kind(lemmas: PackedStringArray, kind: String) -> PackedStringArray:
+	var out: PackedStringArray = []
+	for item in ITEMS:
+		var lemma := str(item["lemma"])
+		if str(item["kind"]) == kind and lemmas.has(lemma):
+			out.append(lemma)
+	return out
+
+
+func _has_addon(lemmas: PackedStringArray) -> bool:
+	return not _lemmas_of_kind(lemmas, "addon").is_empty()
+
+
+func _kind_of(lemma: String) -> String:
+	for item in ITEMS:
+		if str(item["lemma"]) == lemma:
+			return str(item["kind"])
+	return ""
+
+
+func _is_extra(item: Dictionary) -> bool:
+	var kind := str(item["kind"])
+	return kind == "addon" or kind == "prep"
+
+
+func _is_unlocked(lemma: String) -> bool:
+	for item in visible_items():
+		if str(item["lemma"]) == lemma:
+			return true
+	return false
+
+
+func _join_y(parts: PackedStringArray) -> String:
+	if parts.is_empty():
+		return ""
+	if parts.size() == 1:
+		return parts[0]
+	var head := PackedStringArray()
+	for i in range(parts.size() - 1):
+		head.append(parts[i])
+	return ", ".join(head) + " y " + parts[parts.size() - 1]
+
+
+func _english_extra_nudge(order: String, lemmas: PackedStringArray) -> String:
+	var hay := _fold(order)
+	var hints: PackedStringArray = []
+	if _has_word(hay, "sugar") and _is_unlocked("azúcar") and not lemmas.has("azúcar"):
+		hints.append("azúcar")
+	if _has_word(hay, "milk") and _is_unlocked("leche") and not lemmas.has("leche"):
+		hints.append("leche")
+	if (_has_word(hay, "creamer") or _has_word(hay, "cream")) and _is_unlocked("crema") and not lemmas.has("crema"):
+		hints.append("crema")
+	if (_has_word(hay, "warmed") or _has_word(hay, "heated")) and _is_unlocked("calentado") and not lemmas.has("calentado"):
+		hints.append("calentado")
+	if (
+		_has_word(hay, "iced")
+		or _has_word(hay, "chilled")
+		or _has_word(hay, "ice")
+	) and _is_unlocked("frío") and not lemmas.has("frío"):
+		hints.append("frío")
+	if hints.is_empty():
+		return ""
+	return (
+		"Mara nods at the board. \"That extra is %s — Spanish on this wall.\""
+	) % _join_y(hints)
 
 
 func _longest_needle(item: Dictionary) -> int:
