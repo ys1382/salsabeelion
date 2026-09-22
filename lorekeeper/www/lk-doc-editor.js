@@ -26,6 +26,8 @@
   var allowLeave = false;
   var LEAVE_UNSAVED_MSG =
     "This draft hasn't finished saving. If you leave now, your last words may not be on your account yet.";
+  var LEAVE_STALE_MSG =
+    "This tab is older than the copy on your account. Leaving will not save these words over the newer copy.";
 
   function docTextLength() {
     if (!quill) return 0;
@@ -123,7 +125,7 @@
         if (!doc || !quill || loading) return;
         var canvas = document.getElementById("docCanvas");
         if (canvas) doc.lastScrollTop = canvas.scrollTop;
-        LoreKeeperDocuments.save(doc);
+        if (!isThisTabStale()) LoreKeeperDocuments.save(doc);
       }, 1200);
     });
   }
@@ -431,7 +433,6 @@
     if (dismissBtn) {
       dismissBtn.addEventListener("click", function () {
         hideStaleBanner();
-        if (global.LoreKeeperDocCollab && doc) LoreKeeperDocCollab.bumpLoaded(doc);
       });
     }
     if (!global.LoreKeeperDocCollab) return;
@@ -492,8 +493,21 @@
     }
   }
 
+  function isThisTabStale() {
+    if (!doc) return false;
+    var stored = global.LoreKeeperDocuments && LoreKeeperDocuments.find(doc.id);
+    if (stored && (stored.updatedAt || 0) > (doc.updatedAt || 0) + 400) {
+      if (htmlWordCount(doc.bodyHtml) <= htmlWordCount(stored.bodyHtml)) return true;
+    }
+    if (global.LoreKeeperDocCollab && LoreKeeperDocCollab.isStaleVsStore) {
+      return LoreKeeperDocCollab.isStaleVsStore(doc.id);
+    }
+    return false;
+  }
+
   function isSaveInFlight() {
     if (discardOnLeave || allowLeave) return false;
+    if (isThisTabStale()) return !!dirty;
     if (dirty) return true;
     if (saveTimer || saveMaxTimer) return true;
     var Store = global.LoreKeeperAccountStorage;
@@ -526,7 +540,7 @@
   }
 
   function confirmLeaveUnsaved() {
-    return global.confirm(LEAVE_UNSAVED_MSG);
+    return global.confirm(isThisTabStale() ? LEAVE_STALE_MSG : LEAVE_UNSAVED_MSG);
   }
 
   function bindLeaveGuard() {
@@ -549,7 +563,7 @@
             return;
           }
           allowLeave = true;
-          parkSave();
+          if (!isThisTabStale()) parkSave();
           return;
         }
         var link = target.closest("a[href]");
@@ -561,7 +575,7 @@
         ev.preventDefault();
         if (!confirmLeaveUnsaved()) return;
         allowLeave = true;
-        parkSave();
+        if (!isThisTabStale()) parkSave();
         global.location.href = link.href;
       },
       true
@@ -570,6 +584,10 @@
 
   function parkSave() {
     if (discardOnLeave || !doc || !quill || loading) return Promise.resolve();
+    if (isThisTabStale()) {
+      showStaleBanner();
+      return Promise.resolve();
+    }
     captureResumePosition();
     syncDocBodyFromEditor();
     syncPageSetup();
@@ -589,6 +607,12 @@
   function flushSave(force) {
     if (discardOnLeave || !doc) return;
     if (!force && !dirty) return;
+    if (isThisTabStale()) {
+      dirty = true;
+      showStaleBanner();
+      setSaveStatus("Not saved over the newer copy — reload that version, or copy these words first.", "error");
+      return;
+    }
     if (saveTimer) {
       clearTimeout(saveTimer);
       saveTimer = null;
@@ -1399,6 +1423,13 @@
     global.addEventListener("beforeunload", function (ev) {
       if (!doc || !quill) return;
       loading = false;
+      if (isThisTabStale()) {
+        if (discardOnLeave || allowLeave) return;
+        if (!dirty) return;
+        ev.preventDefault();
+        ev.returnValue = "";
+        return;
+      }
       parkSave();
       if (discardOnLeave || allowLeave) return;
       if (!isSaveInFlight()) return;

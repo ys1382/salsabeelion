@@ -5,7 +5,7 @@
   var DOCUMENTS_KEY = "lorekeeper_documents_v1";
   var DOCUMENT_BACKUPS_KEY = "lorekeeper_document_backups_v1";
   var LAST_DOC_KEY = "lorekeeper_last_doc_v1";
-  var MAX_SNAPSHOTS = 2;
+  var MAX_SNAPSHOTS = 8;
 
   function uid(prefix) {
     return (prefix || "d") + "_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 9);
@@ -309,7 +309,6 @@
   function saveDocument(doc) {
     if (!doc || !doc.id) return false;
     compactBackupsForDoc(doc.id);
-    touchDoc(doc);
     var docs = loadRaw();
     var found = false;
     var prior = null;
@@ -323,13 +322,33 @@
         doc.bodyHtmlBackupAt = prior.bodyHtmlBackupAt;
       }
     }
-    // Refuse saves that shrink a long draft (page-clip / bad join).
-    if (prior && !isEmptyHtml(prior.bodyHtml) && !isEmptyHtml(doc.bodyHtml)) {
-      var priorWords = bodyPlainText(prior.bodyHtml).split(/\s+/).filter(Boolean).length;
-      var nextWords = bodyPlainText(doc.bodyHtml).split(/\s+/).filter(Boolean).length;
-      if (priorWords > 40 && nextWords < Math.floor(priorWords * 0.95)) {
-        doc.bodyHtml = prior.bodyHtml;
+    var priorPlain = prior ? bodyPlainText(prior.bodyHtml) : "";
+    var nextPlain = bodyPlainText(doc.bodyHtml);
+    var priorWords = priorPlain ? priorPlain.split(/\s+/).filter(Boolean).length : 0;
+    var nextWords = nextPlain ? nextPlain.split(/\s+/).filter(Boolean).length : 0;
+    // An older tab must not replace a newer stored copy with the same or shorter text.
+    if (
+      prior &&
+      (prior.updatedAt || 0) > (doc.updatedAt || 0) + 400 &&
+      nextWords <= priorWords
+    ) {
+      return true;
+    }
+    var keepPriorBody = false;
+    if (prior && priorWords > 40 && nextWords < priorWords) {
+      if (nextWords < Math.floor(priorWords * 0.95)) {
+        keepPriorBody = true;
+      } else if (!nextPlain || priorPlain.indexOf(nextPlain) === 0) {
+        keepPriorBody = true;
       }
+    }
+    if (keepPriorBody) {
+      doc.bodyHtml = prior.bodyHtml;
+      if (prior.updatedAt) doc.updatedAt = prior.updatedAt;
+    } else if (prior && priorPlain === nextPlain) {
+      if (prior.updatedAt) doc.updatedAt = prior.updatedAt;
+    } else {
+      touchDoc(doc);
     }
     if (isEmptyHtml(doc.bodyHtml)) {
       var snap = latestSnapshot(doc.id);

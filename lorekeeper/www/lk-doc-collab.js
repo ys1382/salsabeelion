@@ -1,6 +1,6 @@
 /**
  * LoreKeeper — multi-tab / multi-device policy for documents (#28).
- * Last save wins; other tabs get a reload prompt — no automatic merge.
+ * An older tab must not save over a newer copy. Other tabs get a reload prompt — no automatic merge.
  */
 (function (global) {
   var TAB_ID =
@@ -18,7 +18,7 @@
 
   var loadedUpdatedAt = 0;
   var POLICY_HINT =
-    "Last save wins. If you edit the same document in two tabs or devices, LoreKeeper asks you to reload — it does not merge two versions.";
+    "A tab with older text will not save over a newer copy. If two tabs disagree, LoreKeeper asks you to reload — it does not merge two versions.";
 
   function markLoaded(doc) {
     loadedUpdatedAt = (doc && doc.updatedAt) || 0;
@@ -26,6 +26,13 @@
 
   function bumpLoaded(doc) {
     if (doc && doc.updatedAt) loadedUpdatedAt = doc.updatedAt;
+  }
+
+  function isStaleVsStore(docId) {
+    if (!docId || !global.LoreKeeperDocuments) return false;
+    var fresh = global.LoreKeeperDocuments.find(docId);
+    if (!fresh || !fresh.updatedAt) return false;
+    return fresh.updatedAt > loadedUpdatedAt + 400;
   }
 
   function checkRemoteNewer(getDocId, onStale) {
@@ -50,6 +57,7 @@
     policyHint: POLICY_HINT,
     markLoaded: markLoaded,
     bumpLoaded: bumpLoaded,
+    isStaleVsStore: isStaleVsStore,
     checkRemoteNewer: checkRemoteNewer,
   };
 })(typeof window !== "undefined" ? window : this);

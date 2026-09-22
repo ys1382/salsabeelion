@@ -220,7 +220,7 @@
     return text.split(/\s+/).filter(Boolean).length;
   }
 
-  /** Prefer longer bodyHtml per document so a clipped local mirror cannot wipe the server draft. */
+  /** Server list is the set of documents; per id, keep the longer body. */
   function mergeDocumentsPreferLonger(localRaw, serverRaw) {
     var localList;
     var serverList;
@@ -231,33 +231,22 @@
       return localRaw;
     }
     if (!Array.isArray(localList) || !Array.isArray(serverList)) return localRaw;
-    var byId = {};
-    serverList.forEach(function (d) {
-      if (d && d.id) byId[d.id] = d;
+    if (!serverList.length) return localRaw;
+    var byLocal = {};
+    localList.forEach(function (d) {
+      if (d && d.id) byLocal[d.id] = d;
     });
-    var changed = false;
-    localList.forEach(function (d, i) {
-      if (!d || !d.id || !byId[d.id]) return;
-      var s = byId[d.id];
-      var lw = plainWordCount(d.bodyHtml);
-      var sw = plainWordCount(s.bodyHtml);
-      if (sw > 40 && sw > lw && lw < Math.floor(sw * 0.95)) {
-        localList[i] = s;
-        changed = true;
-      }
-    });
-    // Keep server-only docs too.
+    var out = [];
     serverList.forEach(function (s) {
       if (!s || !s.id) return;
-      var found = localList.some(function (d) {
-        return d && d.id === s.id;
-      });
-      if (!found) {
-        localList.push(s);
-        changed = true;
+      var localDoc = byLocal[s.id];
+      if (localDoc && plainWordCount(localDoc.bodyHtml) > plainWordCount(s.bodyHtml)) {
+        out.push(localDoc);
+      } else {
+        out.push(s);
       }
     });
-    return changed ? JSON.stringify(localList) : localRaw;
+    return JSON.stringify(out);
   }
 
   function parseEntryList(raw) {
@@ -339,7 +328,7 @@
       if (local != null && local !== "" && local !== data[k]) {
         if (k === "lorekeeper_documents_v1") {
           var mergedDocs = mergeDocumentsPreferLonger(local, data[k]);
-          if (mergedDocs !== local && plainWordCountSum(mergedDocs) >= plainWordCountSum(local)) {
+          if (mergedDocs !== local) {
             cache[k] = mergedDocs;
             localSetItem(k, mergedDocs);
             return;

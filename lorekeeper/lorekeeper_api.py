@@ -84,6 +84,8 @@ NOTE_BACKUPS_KEY = "lorekeeper_note_backups_v1"
 # Stale phone/tab copies send the whole notes list. Allow a normal one-note
 # delete; if more IDs would vanish, keep the extras (union by id).
 MAX_NOTE_DROPS_PER_SAVE = 1
+# Owner asked this duplicate gone; a stale browser copy kept putting it back.
+DROP_DOC_IDS = frozenset({"d_mqhnkq78_5qoy4h2"})
 DOC_META_FIELDS = (
     "id",
     "title",
@@ -151,6 +153,50 @@ def merge_entries_payload(stored_raw: Any, incoming_raw: Any) -> str:
             if eid and eid not in seen:
                 out.append(row)
                 seen.add(eid)
+    return json.dumps(out)
+
+
+def _html_word_count(html: Any) -> int:
+    text = re.sub(r"<[^>]+>", " ", str(html or ""))
+    text = text.replace("&nbsp;", " ").replace("\xa0", " ")
+    text = re.sub(r"\s+", " ", text).strip()
+    return len([part for part in text.split(" ") if part]) if text else 0
+
+
+def merge_documents_payload(stored_raw: Any, incoming_raw: Any) -> str:
+    """Keep a longer draft when a stale tab saves a small shrink."""
+    incoming = _parse_entries_list(incoming_raw)
+    stored = _parse_entries_list(stored_raw)
+    if incoming is None:
+        return str(stored_raw) if stored_raw not in (None, "") else "[]"
+    if stored is None:
+        stored = []
+
+    stored_by_id = {
+        str(row.get("id") or ""): row for row in stored if row.get("id")
+    }
+    out: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for row in incoming:
+        did = str(row.get("id") or "")
+        if not did or did in DROP_DOC_IDS:
+            if not did:
+                out.append(row)
+            continue
+        chosen = row
+        older = stored_by_id.get(did)
+        if older is not None:
+            stored_words = _html_word_count(older.get("bodyHtml"))
+            incoming_words = _html_word_count(row.get("bodyHtml"))
+            small_shrink = (
+                stored_words > incoming_words
+                and incoming_words >= int(stored_words * 0.95)
+            )
+            empty_wipe = stored_words > 0 and incoming_words == 0
+            if small_shrink or empty_wipe:
+                chosen = older
+        out.append(chosen)
+        seen.add(did)
     return json.dumps(out)
 
 
@@ -936,6 +982,8 @@ class Handler(BaseHTTPRequestHandler):
                         data.pop(key, None)
                     elif key == ENTRIES_KEY:
                         data[key] = merge_entries_payload(data.get(key), str(value))
+                    elif key == DOCUMENTS_KEY:
+                        data[key] = merge_documents_payload(data.get(key), str(value))
                     else:
                         data[key] = str(value)
                 _save_store(store)

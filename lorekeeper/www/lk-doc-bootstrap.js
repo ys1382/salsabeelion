@@ -8,11 +8,11 @@
     "./lk-spell.js?v=10",
     "./vendor/quill/1.3.7/dist/quill.min.js",
     "./lk-api-config.js?v=50",
-    "./lk-account-storage.js?v=16",
+    "./lk-account-storage.js?v=18",
     "./lk-auth-gate.js?v=3",
     "./lk-last-focus.js?v=1",
-    "./lk-documents.js?v=55",
-    "./lk-doc-collab.js?v=1",
+    "./lk-documents.js?v=56",
+    "./lk-doc-collab.js?v=2",
     "./lk-entries.js?v=5",
     "./lk-work-membership.js?v=2",
     "./lk-font-loader.js?v=1",
@@ -39,7 +39,7 @@
     "./lk-mobile-restore.js?v=1",
     "./lk-mobile-handoff.js?v=1",
     "./lk-doc-page-boxes.js?v=14",
-    "./lk-doc-editor.js?v=97",
+    "./lk-doc-editor.js?v=98",
   ];
 
   function loadNext(index) {
