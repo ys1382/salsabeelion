@@ -19,7 +19,7 @@ Needs **Godot 4.7**. From this folder:
 
 WASD to move, **E** to talk / read / sit / go inside, Tab for the journal. Stand with **E** or walk away.
 
-Play starts on the block. Talk to the elder, pick up the learning card, go into Dragon's Brew, meet Mara, read the menu and house rules.
+Play starts at your cottage. A small arrow points to the next stop. Talk to the elder, pick up the learning card, go into Dragon's Brew, meet Mara, read the menu and house rules.
 
 ## What this first Godot slice includes
 

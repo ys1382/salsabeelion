@@ -45,7 +45,7 @@
       }
     ]
   },
-  "player_start": { "x": 19, "y": 14 },
+  "player_start": { "x": 10, "y": 11 },
   "objects": [
     {
       "id": "dragons_brew",
