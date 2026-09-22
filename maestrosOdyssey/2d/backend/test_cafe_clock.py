@@ -1,4 +1,4 @@
-"""Pesos deduct on order; weekday and week turn when you leave after paying."""
+"""Pesos deduct on order; weekday turns at home after a finished meal."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -19,7 +19,9 @@ def main() -> int:
     assert "order_total" in cafe and "try_pay" in cafe
     assert "Here you go" in cafe and "that's ready" in cafe
     assert "I'll get that started" not in cafe
-    assert "leave_cafe" in cafe and "advance_day" in cafe
+    assert "leave_cafe" in cafe
+    assert "try_night_pass" in cafe
+    assert "try_night_pass" in interiors
     assert "leave_cafe()" in interiors
     assert "try_pay" in state and "advance_day" in state
     assert "add_balance" in state

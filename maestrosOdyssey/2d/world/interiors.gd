@@ -70,8 +70,15 @@ func enter(building_id: String, flavour: String = "") -> void:
 	_clamp_camera(p, current.pixel_size())
 
 	entered.emit(building_id)
-	if flavour != "":
+	# Wait a frame so the E that opened the door cannot also close the card.
+	if building_id == "player_house" and CafeOrder.try_night_pass():
+		call_deferred("_show_night_pass")
+	elif flavour != "":
 		DialogueUI.show_line("", flavour)
+
+
+func _show_night_pass() -> void:
+	Journal.show_night_pass()
 
 
 func leave() -> void:
@@ -93,7 +100,8 @@ func leave() -> void:
 		p.global_position = _outside_pos
 		p.velocity = Vector2.ZERO
 		p.agent_input = Vector2.ZERO
-		CafeOrder.leave_cafe()
+		if current != null and current.building_id == "dragons_brew":
+			CafeOrder.leave_cafe()
 		_clamp_camera(p, root.pixel_size())
 		if current != null:
 			for n in root.world.get("npcs", []):

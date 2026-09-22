@@ -240,7 +240,7 @@ Community elder → **prepaid learning card** (debit, in-game only, **no overdra
 - [x] **Old Phaser café snapshotted** — `archive/phaser-cafe-prototype/` (full `www/` copy).
 - [x] **New Godot build started** — `maestrosOdyssey/2d/` (zij2d engine + authored Dragon's Brew world). Live `/maestros/` is the Godot web export. Phaser snapshot: `archive/phaser-cafe-prototype/`.
 - [x] **Mara typed order (gold, 2026-09-21)** — menu first, type box, Spanish echo, **ready in the same reply** with a **visible cup/muffin** (no kitchen wait). Sit and **D** sip / **F** eat. Do not drop; see `.cursor/rules/maestros-mara-order-gold.mdc`.
-- [x] **Learning-card HUD (gold, 2026-09-21)** — hearts off; take the card from the elder's basket; then weekday / week / pesos as three short lines. Matched orders deduct pesos in the same reply; leaving after a paid order turns the weekday. See `.cursor/rules/maestros-learning-card-hud-gold.mdc`.
+- [x] **Learning-card HUD (gold, 2026-09-21)** — hearts off; take the card from the elder's basket; then weekday / week / pesos as three short lines. Matched orders deduct pesos in the same reply; **finished meal + step into your house** turns the weekday. See `.cursor/rules/maestros-learning-card-hud-gold.mdc`.
 
 #### Future Godot adaptations (combined — 2026-09-21)
 
@@ -250,11 +250,16 @@ This chat’s later list **plus** original MO items **not in the Godot build yet
 
 - [x] **Café house-rules sign layout (2026-09-21)** — “we don’t serve human blood / smoking isn’t allowed” (etc.) is a run-on in the **thin top rectangle**; the **bigger bottom rectangle** is empty. Put the copy in the space that can hold it.
 - [ ] **Something between sip/eat and day’s end** — food/drink alone feels too thin; **not** high-fantasy storyline events. Exact beat TBD. Direction: **overheard table talk** that continues/changes — **lizardfolk + merfolk** (and the Monday croc/ferry table) plus **more people talking in the room**. Pull from earlier notes in `docs/DRAGONS-BREW-PRE-TRAIN.md` and week-one mellow room **#13–19**; keep it slice-of-life, not mystery.
-- [x] **Player house (first cottage, 2026-09-21)** — plank floor; table, bench, **closed crate back-right**, barrel. No campfire/fireplace (pack’s “fireplace” is a campfire — removed from home + café + random house fill). Sleep / night-pass still later.
+- [x] **Player house (first cottage, 2026-09-21)** — plank floor; table, bench, **closed crate back-right**, barrel. No campfire/fireplace (pack’s “fireplace” is a campfire — removed from home + café + random house fill). Night pass is stepping inside after a finished café meal — no bed.
+- [x] **Night pass when you step into your house** (owner locked 2026-09-21) — **not** a bed / hay stand-in. After café: you must have **ordered and consumed** (sip/eat done). Then **enter your house** → short **night passes** beat → **weekday turns** → morning. Do **not** turn the day on café leave anymore for this path (or gate café-leave day-tick so home is what ends the day after a completed meal). No lie-down animation required.
 - [ ] **Have to read the board to order** — you already must tap the menu once, but Mara then lists today’s items in chat (`What's your order? (café, té, muffin…)`), so you can skip the wall after that. Stop spoon-feeding the day’s words in her prompt; the player should **check the menu** for practice. Keep the type box and same-reply drink.
 - [x] **Only the key on the prompt does that action** — **E** sit / stand / talk / close reading. **D** sip only (no stand). **Space** is not a second E. Order type box still uses **Enter**; E types the letter.
 - [ ] **Elder test has a clear language aim** — day 8 still isn’t a quiz screen (no score, two lines). Right now she says “tell me about the food, the room, the community” and you guess what counts. Give a **bar you can aim at**: being able to **carry a bit of conversation in that café tongue**, so the week of orders actually invests you. Exact how she names the bar TBD; keep it kind, not a grade.
 - [ ] **Home crate as real storage** — Minecraft-chest style: open UI, put items in / take out, save with the account/run. Today the crate only shows flavor text on E (verb says Open). Not built yet — pin only.
+- [ ] **Furniture stop floating** — indoor props (table, crate, bench, etc.) sit on the floor properly; no hovering.
+- [ ] **Tutorial directions / compass** — exploration stays, but early on give a clear cue so you find your cottage without wandering forever (owner didn’t discover home until late). Exact UI TBD (arrow, elder line, short compass — not a full minimap unless asked).
+- [ ] **Reusable cup return** — café is reusables-only. After you finish, put the cup/mug in a **bin** (or similar) so staff can take it to wash. No disposable walk-away. Exact props/flow TBD.
+- [ ] **Say goodbye to Mara before leaving** — more social; you can’t just walk out after the meal. Exact how TBD (E Mara for a short bye, door blocked until then, etc.). Keep it warm, not a quiz.
 
 **From original MO — not in Godot yet**
 

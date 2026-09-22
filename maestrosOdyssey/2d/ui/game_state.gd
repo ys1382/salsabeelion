@@ -45,6 +45,9 @@ var day_index: int = 1
 var weekday: String = "Monday"
 var week_number: int = 1
 var card_balance: int = 0
+## Paid café meal fully drained. Survives leaving Dragon's Brew so home can
+## turn the weekday. Cleared when the night-pass card fires.
+var cafe_meal_done: bool = false
 
 ## "explore" -> "showdown_pending" (card up, boss not spawned yet) ->
 ## "showdown" (boss alive) -> "won". Worlds with no rival skip straight from
@@ -81,6 +84,7 @@ func set_world(w: Dictionary) -> void:
 	inventory.clear()
 	day_index = 1
 	card_balance = 0
+	cafe_meal_done = false
 	_sync_clock()
 	if has_node("/root/CafeOrder"):
 		CafeOrder.reset_session()
@@ -151,6 +155,20 @@ func refill_card(amount: int = CARD_START_PESOS) -> void:
 	if not has_item("learning_card"):
 		return
 	card_balance = amount
+
+
+func note_cafe_meal_done() -> void:
+	cafe_meal_done = true
+
+
+func try_night_pass() -> bool:
+	if not cafe_meal_done:
+		return false
+	cafe_meal_done = false
+	if has_node("/root/CafeOrder"):
+		CafeOrder.meal_done = false
+	advance_day()
+	return true
 
 
 func advance_day() -> void:

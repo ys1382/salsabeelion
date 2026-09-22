@@ -2,8 +2,8 @@ extends Node
 # Dragon's Brew order at Mara. Menu must be read first; then a typed line is
 # matched against today's board. A match takes pesos from the learning card in
 # the same reply — no extra pay tap, no kitchen wait. Sit to sip (D) and eat
-# (F). Leaving after a paid order turns the weekday, which opens more of the
-# board through café day 7.
+# (F). After the cup or food is finished, stepping into your house turns the
+# weekday, which opens more of the board through café day 7.
 
 signal order_ready(lemmas: PackedStringArray)
 signal order_cleared
@@ -24,6 +24,11 @@ var _practice_lemma := ""
 var _practice_en := ""
 var _practice_earned := 0
 var _practice_earned_day := 0
+## Paid order fully sipped/eaten this café day. Survives leaving the café so
+## home entry can turn the weekday. Not a bed — stepping inside is enough.
+var meal_done := false
+
+const NIGHT_PASS_LINE := "Night passes. It's morning."
 
 const PRACTICE_PESOS := 12
 const PRACTICE_MAX_DAY := 36
@@ -50,6 +55,8 @@ func reset_session() -> void:
 	_practice_earned = 0
 	_practice_earned_day = 0
 	intro_done = false
+	meal_done = false
+	GameState.cafe_meal_done = false
 	_clear_order()
 
 
@@ -59,11 +66,16 @@ func reset_visit() -> void:
 	_clear_order()
 
 
-## Paid order this stay? Leaving the café then turns the weekday.
+## Hide the cup/food for this visit. Does not turn the weekday — home does,
+## and only after the meal was finished.
 func leave_cafe() -> void:
-	if taken:
-		GameState.advance_day()
+	if taken and cup_left <= 0 and muffin_left <= 0:
+		_mark_meal_if_done()
 	_clear_order()
+
+
+func try_night_pass() -> bool:
+	return GameState.try_night_pass()
 
 
 func _clear_order() -> void:
@@ -168,6 +180,7 @@ func sip() -> bool:
 	if cup_left <= 0:
 		return false
 	cup_left -= 1
+	_mark_meal_if_done()
 	return true
 
 
@@ -175,7 +188,14 @@ func bite() -> bool:
 	if muffin_left <= 0:
 		return false
 	muffin_left -= 1
+	_mark_meal_if_done()
 	return true
+
+
+func _mark_meal_if_done() -> void:
+	if taken and cup_left <= 0 and muffin_left <= 0:
+		meal_done = true
+		GameState.note_cafe_meal_done()
 
 
 func texture_for(lemmas: PackedStringArray = PackedStringArray()) -> Texture2D:
