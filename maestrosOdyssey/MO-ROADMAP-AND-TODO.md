@@ -82,7 +82,7 @@ Design and tasks **committed here**; implementation waits until you approve task
 |------|---------|
 | **#10 prologue** | Community elder grants learning card — **about one week** of neighborhood meals (MXN). |
 | **Days 1–7 (#12 + visits)** | Menu unlocks; plot (#13–19); card balance **predesigned** to reach **0** after **7 completed café days**. |
-| **Day 8 (same weekday next week)** | Card empty → elder **calls** (or visit). Not a quiz — *“I haven’t been to Dragon’s Brew in quite some time. Tell me about it — the food, the room, the community.”* Player **reports** what they saw (drinks, food, Mara, vibes, house rules — **not gossip**). |
+| **Day 8 (same weekday next week)** | **Elder first, then buy** (owner 2026-09-21) — leftover pesos OK; no café purchase until the report. Not a quiz — *“I haven’t been to Dragon’s Brew in quite some time. Tell me about it…”* Player **reports** what they saw (drinks, food, Mara, vibes, house rules — **not gossip**). |
 | **Enough detail** | Elder: *“That sounds lovely, dear.”* → card **upgraded** → eligible for train when **week 3** arrives (#24). |
 | **Wants more** | Elder: *“I love that place. Can you go back and find out more for me?”* → card **still upgraded**; **train waits** until a later elder check passes → café revisit (#29) to bring back what she asked for. **No** “barely visited” branch; **no** grading tone out loud. |
 | **Under the hood** | Elder report scored (**≥80%** pass); **elder test only** — not café quiz or menu familiarity. Player **never** hears a percentage or fail label. |
@@ -242,14 +242,35 @@ Community elder → **prepaid learning card** (debit, in-game only, **no overdra
 - [x] **Mara typed order (gold, 2026-09-21)** — menu first, type box, Spanish echo, **ready in the same reply** with a **visible cup/muffin** (no kitchen wait). Sit and **D** sip / **F** eat. Do not drop; see `.cursor/rules/maestros-mara-order-gold.mdc`.
 - [x] **Learning-card HUD (gold, 2026-09-21)** — hearts off; take the card from the elder's basket; then weekday / week / pesos as three short lines. Matched orders deduct pesos in the same reply; leaving after a paid order turns the weekday. See `.cursor/rules/maestros-learning-card-hud-gold.mdc`.
 
-#### Later / want to change (owner — Godot, 2026-09-21)
+#### Future Godot adaptations (combined — 2026-09-21)
 
-- [ ] **Café house-rules sign layout** — “we don’t serve human blood / smoking isn’t allowed” (etc.) is a run-on in the **thin top rectangle**; the **bigger bottom rectangle** is empty. Put the copy in the space that can hold it.
+This chat’s later list **plus** original MO items **not in the Godot build yet**. Master task numbers still live above. Phaser-only gold (lane picker, Arabic wall) counts as **not in Godot** until it is.
+
+**From this conversation**
+
+- [x] **Café house-rules sign layout (2026-09-21)** — “we don’t serve human blood / smoking isn’t allowed” (etc.) is a run-on in the **thin top rectangle**; the **bigger bottom rectangle** is empty. Put the copy in the space that can hold it.
 - [ ] **Something between sip/eat and day’s end** — food/drink alone feels too thin; **not** high-fantasy storyline events. Exact beat TBD. Direction: **overheard table talk** that continues/changes — **lizardfolk + merfolk** (and the Monday croc/ferry table) plus **more people talking in the room**. Pull from earlier notes in `docs/DRAGONS-BREW-PRE-TRAIN.md` and week-one mellow room **#13–19**; keep it slice-of-life, not mystery.
-- [ ] **Player house + enterable houses that do something** — avatar should have **their own house**. Houses you can enter currently do nothing except **go in / leave**. Add quiet indoor things (look, sit, a few objects) — not plot events. The authored block today is café + elder house only; café is the only room with real interactables.
+- [x] **Player house (first cottage, 2026-09-21)** — plank floor; table, bench, **closed crate back-right**, barrel. No campfire/fireplace (pack’s “fireplace” is a campfire — removed from home + café + random house fill). Sleep / night-pass still later.
 - [ ] **Have to read the board to order** — you already must tap the menu once, but Mara then lists today’s items in chat (`What's your order? (café, té, muffin…)`), so you can skip the wall after that. Stop spoon-feeding the day’s words in her prompt; the player should **check the menu** for practice. Keep the type box and same-reply drink.
 - [x] **Only the key on the prompt does that action** — **E** sit / stand / talk / close reading. **D** sip only (no stand). **Space** is not a second E. Order type box still uses **Enter**; E types the letter.
 - [ ] **Elder test has a clear language aim** — day 8 still isn’t a quiz screen (no score, two lines). Right now she says “tell me about the food, the room, the community” and you guess what counts. Give a **bar you can aim at**: being able to **carry a bit of conversation in that café tongue**, so the week of orders actually invests you. Exact how she names the bar TBD; keep it kind, not a grade.
+- [ ] **Home crate as real storage** — Minecraft-chest style: open UI, put items in / take out, save with the account/run. Today the crate only shows flavor text on E (verb says Open). Not built yet — pin only.
+
+**From original MO — not in Godot yet**
+
+- [ ] **#13–19 week-one mellow room** — rotating regulars, species + language in small beats, not mystery. Godot has a Monday iguana + croc stub; Tue–Sun (minotaur, family night, werewolf table, pegasus + griffin, quiet Sunday) still missing. How to fill the post-order gap: table talk, above.
+- [ ] **#22 evening werewolf + vampire table** — Thursday+; innocent evening regulars; calm public life.
+- [ ] **#27 day-2+ order depth** — *con / sin azúcar*, one food upsell, Mara read-back in the café lane before pay.
+- [ ] **#11 café lane + tourist money** — Spanish **or** Arabic menu lemmas; Arabic wall translit + script + English; dirham when Arabic. **Lane picker** at first load / restart (Phaser had it; Godot does not).
+- [ ] **#25 vocab tracker** — private familiarity bands, menu-hint fade, tourism gate, elder prompts. No grade UI. Optional later in-game lane switch.
+- [ ] **#20 optional hard mode** — stricter typed order check; opt-in only.
+- [ ] **Day-8 pesos + elder gate** — each café day you **must order a drink and a food**. Leftover pesos on day 8 are **OK** (not forced to 0). You **cannot buy anything** on day 8 until you talk to the elder first; then she can refill. Mara turns you toward the elder if you try to order first.
+- [ ] **#29 café revisit** — when the elder asks you to go back and find out more; bring one asked detail.
+- [ ] **#24 train gate** — week 3 if elder pass; otherwise more neighborhood time. No fail screen.
+- [ ] **#23 plaza** — same learning-card rules; echo café words on signs.
+- [ ] **#21 goblin detective watch** — post-train / later arc, not week one. Detective / mafia / sea-policy plot stays later.
+- [ ] **Player-frame language + Mara tail** — UI/chat in the language you already speak; Irish / Japanese / Turkish locked until the train. Mara tail overlay still later.
+- [ ] **Revise `DRAGONS-BREW-PRE-TRAIN.md`** when owner asks — old week-one detective/sea table → later-arc section; align with #13–19.
 
 ### Week-one tone + café language (owner — pinned 2026-06)
 
@@ -262,7 +283,7 @@ Community elder → **prepaid learning card** (debit, in-game only, **no overdra
 - [ ] **Optional lane switch (#25)** — in-game switch to other café language later; dual-label fade / tourism gate deferred.
 - [ ] **Revise `DRAGONS-BREW-PRE-TRAIN.md`** when owner asks — move old week-one detective/sea table to a **later-arc** section; align week table with #13–19 above.
 
-- [ ] **Starting balance / day-8 depletion** — tune so **7 completed café days** → **0 pesos** on day 8 (same weekday). Stub **200 MXN** until scripted week budget is wired in **#10** / **#28**.
+- [ ] **Starting balance / day-8 depletion** — **superseded 2026-09-21:** leftover OK; day 8 **elder-before-buy** (see Future Godot adaptations). Old “land at 0” goal dropped.
 
 - [x] **Day-1 prices (MXN pesos)** — indie café; **≈17–18 MXN = $1 USD** for your math only — **not** “40 US dollars” for a muffin.
 

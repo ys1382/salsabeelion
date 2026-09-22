@@ -7,11 +7,11 @@ extends Node2D
 # something, not to read more prose. The layout is seeded off the building id so
 # a given house always looks the same when you come back to it.
 #
-# There is no interior tileset in the art packs. The floor is the Road terrain,
-# painted a ring wider than the room so its grassy edge transitions fall UNDER
-# the walls instead of fringing the room. The walls themselves are drawn, not
-# tiled: Tileset_RockSlope was tried first and renders nothing for a solid fill
-# — it only has cliff edges — and a flat band is both reliable and readable.
+# There is no interior tileset in the art packs. Café rooms still use the Road
+# terrain, painted a ring wider than the room so grassy edge transitions fall
+# UNDER the walls. A house can ask for `floor: "planks"` and get drawn boards
+# instead. The walls themselves are drawn, not tiled: Tileset_RockSlope was
+# tried first and renders nothing for a solid fill — it only has cliff edges.
 
 const TILE := Catalog.TILE
 ## Wall band thickness in tiles. Wide enough to cover the floor terrain's own
@@ -27,16 +27,17 @@ const MIN_ROOM := Vector2i(9, 7)
 const MAX_ROOM := Vector2i(16, 11)
 
 ## Furniture worth putting in a room, with how many of each at most.
+## No sacks, potted plants, or fireplaces — those read wrong in a quiet home.
 const FURNITURE := [
-	"prop.table_medium_1", "prop.fireplace_1", "prop.bench_1", "prop.bench_3",
+	"prop.table_medium_1", "prop.bench_1", "prop.bench_3",
 	"prop.crate_large_empty", "prop.crate_medium_closed", "prop.barrel_small_empty",
-	"prop.sack_3", "prop.basket_empty", "prop.plant_2",
 ]
 
 signal exit_requested
 
 var building_id: String = ""
 var room: Vector2i = MIN_ROOM
+var floor_kind: String = "road"
 
 var _floor: TileMapLayer
 var _objects: Node2D
@@ -48,6 +49,7 @@ var _rng := RandomNumberGenerator.new()
 func build(id: String, footprint: Vector2i, seed_text: String, spec: Dictionary = {}) -> void:
 	building_id = id
 	_rng.seed = hash("%s|%s" % [seed_text, id])
+	floor_kind = str(spec.get("floor", "road"))
 	if spec.has("room"):
 		var r: Dictionary = spec["room"]
 		room = Vector2i(int(r.get("x", MIN_ROOM.x)), int(r.get("y", MIN_ROOM.y)))
@@ -88,11 +90,12 @@ func _make_layers() -> void:
 	void_rect.size = Vector2(span)
 	add_child(void_rect)
 
-	_floor = TileMapLayer.new()
-	_floor.name = "Floor"
-	_floor.tile_set = Catalog.tileset("Road")
-	_floor.z_index = -50
-	add_child(_floor)
+	if floor_kind != "planks":
+		_floor = TileMapLayer.new()
+		_floor.name = "Floor"
+		_floor.tile_set = Catalog.tileset("Road")
+		_floor.z_index = -50
+		add_child(_floor)
 
 	_objects = Node2D.new()
 	_objects.name = "Objects"
@@ -101,12 +104,15 @@ func _make_layers() -> void:
 
 
 func _paint() -> void:
-	var cells: Array[Vector2i] = []
-	for y in range(-FLOOR_BLEED, room.y + FLOOR_BLEED):
-		for x in range(-FLOOR_BLEED, room.x + FLOOR_BLEED):
-			cells.append(Vector2i(x, y))
-	_floor.set_cells_terrain_connect(
-		cells, 0, Catalog.terrain_index("Road", "Road"))
+	if floor_kind == "planks":
+		_paint_planks()
+	else:
+		var cells: Array[Vector2i] = []
+		for y in range(-FLOOR_BLEED, room.y + FLOOR_BLEED):
+			for x in range(-FLOOR_BLEED, room.x + FLOOR_BLEED):
+				cells.append(Vector2i(x, y))
+		_floor.set_cells_terrain_connect(
+			cells, 0, Catalog.terrain_index("Road", "Road"))
 
 	var w := room.x * TILE
 	var h := room.y * TILE
@@ -140,6 +146,45 @@ func _paint() -> void:
 		shape.shape = rect
 		shape.position = pos + size * 0.5
 		body.add_child(shape)
+
+
+func _paint_planks() -> void:
+	# The pack has no indoor floor tiles. Horizontal boards, stable per house.
+	var w := room.x * TILE
+	var h := room.y * TILE
+	var img := Image.create(w, h, false, Image.FORMAT_RGBA8)
+	var plank_h := 8
+	var boards := [
+		Color(0.52, 0.33, 0.18),
+		Color(0.46, 0.28, 0.15),
+		Color(0.58, 0.37, 0.20),
+		Color(0.43, 0.26, 0.13),
+	]
+	var gap := Color(0.22, 0.13, 0.07)
+	var seam := Color(0.32, 0.18, 0.10)
+	var row_count := int(h / plank_h) + 1
+	var offsets: Array[int] = []
+	for _i in row_count:
+		offsets.append(_rng.randi_range(0, 3) * TILE)
+	for y in h:
+		var row := int(y / plank_h)
+		var board: Color = boards[row % boards.size()]
+		var offset: int = offsets[row]
+		for x in w:
+			var c := board
+			if y % plank_h == 0:
+				c = gap
+			elif (x + offset) % (TILE * 4) == 0:
+				c = seam
+			img.set_pixel(x, y, c)
+	var tex := ImageTexture.create_from_image(img)
+	var sprite := Sprite2D.new()
+	sprite.name = "PlankFloor"
+	sprite.texture = tex
+	sprite.centered = false
+	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	sprite.z_index = -50
+	add_child(sprite)
 
 
 func _furnish() -> void:
@@ -187,22 +232,35 @@ func _furnish() -> void:
 
 
 func _place_spec(spec: Dictionary) -> void:
+	var by_id := {}
 	for entry in spec.get("objects", []):
-		_instance_interior_asset(entry, false)
+		var node := _instance_interior_asset(entry)
+		if node != null:
+			by_id[str(entry.get("id", ""))] = node
 	for entry in spec.get("interactables", []):
-		var node := _instance_interior_asset(entry, true)
+		var host_id := str(entry.get("on", ""))
+		var node: Node2D = null
+		if host_id != "" and by_id.has(host_id):
+			node = by_id[host_id]
+		else:
+			node = _instance_interior_asset(entry)
+			if node != null and str(entry.get("id", "")) != "":
+				by_id[str(entry.get("id", ""))] = node
 		if node != null:
 			Interactable.attach(node, entry)
 
 
-func _instance_interior_asset(entry: Dictionary, _interactive: bool) -> Node2D:
+func _instance_interior_asset(entry: Dictionary) -> Node2D:
 	var asset := str(entry.get("asset", ""))
 	if not Catalog.has_object(asset):
 		push_warning("interior %s names unknown asset '%s'" % [entry.get("id", "?"), asset])
 		return null
 	var node: Node2D = load(Catalog.object(asset)["scene"]).instantiate()
 	node.name = str(entry.get("id", asset.get_slice(".", 1)))
-	node.y_sort_enabled = true
+	# Don't y-sort inside the prop — the Objects layer already sorts by feet.
+	# Nested y-sort plus a Sprite offset made some props fail to read on planks.
+	node.y_sort_enabled = false
+	node.z_index = 1
 	var fp := Catalog.footprint(asset)
 	var cell := Vector2i(int(entry.get("x", 1)), int(entry.get("y", 1)))
 	node.position = Catalog.cell_to_anchor(

@@ -22,6 +22,10 @@ var _speaker: Label
 var _body: RichTextLabel
 var _hint: Label
 var _order: LineEdit
+## Wall-sign close-up: one paper that holds the whole copy.
+var _sign: PanelContainer
+var _sign_body: RichTextLabel
+var _sign_text := ""
 
 
 func _ready() -> void:
@@ -82,6 +86,8 @@ func _ready() -> void:
 	_order.hide()
 	_box.add_child(_order)
 
+	_build_sign()
+
 
 func show_prompt(text: String) -> void:
 	if is_open():
@@ -102,6 +108,7 @@ func show_thinking(speaker: String) -> void:
 
 
 func show_line(speaker: String, text: String) -> void:
+	_hide_sign()
 	_prompt.hide()
 	_order.hide()
 	_order.release_focus()
@@ -114,7 +121,20 @@ func show_line(speaker: String, text: String) -> void:
 	_panel.show()
 
 
+## Close-up of a wall sign. One paper: title and rules together, not a thin
+## header bar over an empty panel.
+func show_sign(text: String) -> void:
+	_prompt.hide()
+	_order.hide()
+	_order.release_focus()
+	_panel.hide()
+	_sign_text = text
+	_sign_body.text = text.strip_edges()
+	_sign.show()
+
+
 func show_order_box(speaker: String = "Mara") -> void:
+	_hide_sign()
 	_prompt.hide()
 	_speaker.text = speaker
 	_speaker.visible = true
@@ -171,13 +191,15 @@ func _fit(text: String, has_speaker: bool) -> void:
 
 
 func is_open() -> bool:
-	return _panel.visible
+	return _panel.visible or _sign.visible
 
 
 ## What the panel is currently saying. The agent bridge reads this to assert on
 ## lines the game produces locally — item pickups, locked_text, gift lines —
 ## which never go through the model and so never reach dialogue_received.
 func body() -> String:
+	if _sign.visible:
+		return _sign_text
 	return _body.text
 
 
@@ -187,3 +209,53 @@ func close() -> void:
 	_hint.hide()
 	_body.show()
 	_panel.hide()
+	_hide_sign()
+
+
+func _hide_sign() -> void:
+	_sign.hide()
+	_sign_text = ""
+
+
+func _wood_panel(bg: Color, border: Color, margin: int = 8) -> PanelContainer:
+	var p := PanelContainer.new()
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = bg
+	sb.border_color = border
+	sb.set_border_width_all(2)
+	sb.set_corner_radius_all(2)
+	sb.set_content_margin_all(margin)
+	p.add_theme_stylebox_override("panel", sb)
+	return p
+
+
+func _build_sign() -> void:
+	# One paper. Sit a little below the top so the first line stays on screen.
+	_sign = _wood_panel(Color(0.87, 0.82, 0.72), Color(0.42, 0.28, 0.16))
+	_sign.set_anchors_preset(Control.PRESET_CENTER)
+	_sign.offset_left = -220
+	_sign.offset_right = 220
+	_sign.offset_top = -144
+	_sign.offset_bottom = 170
+	_sign.hide()
+	add_child(_sign)
+
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", SPACING)
+	_sign.add_child(col)
+
+	_sign_body = RichTextLabel.new()
+	_sign_body.bbcode_enabled = false
+	_sign_body.scroll_active = true
+	_sign_body.fit_content = false
+	_sign_body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_sign_body.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_sign_body.add_theme_font_size_override("normal_font_size", BODY_SIZE)
+	_sign_body.add_theme_color_override("default_color", Color(0.22, 0.16, 0.10))
+	col.add_child(_sign_body)
+
+	var sign_hint := Label.new()
+	sign_hint.add_theme_font_size_override("font_size", HINT_SIZE)
+	sign_hint.add_theme_color_override("font_color", Color(0.42, 0.32, 0.22))
+	sign_hint.text = "E — Close"
+	col.add_child(sign_hint)

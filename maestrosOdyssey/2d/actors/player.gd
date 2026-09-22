@@ -306,7 +306,10 @@ func use_focus() -> String:
 		# scene IS the response, and an empty panel over it would just be in
 		# the way.
 		if line != "":
-			DialogueUI.show_line("", line)
+			if str(it.data.get("id", "")) == "house_board":
+				DialogueUI.show_sign(line)
+			else:
+				DialogueUI.show_line("", line)
 		return "interactable"
 	if focus is Npc:
 		var npc := focus as Npc

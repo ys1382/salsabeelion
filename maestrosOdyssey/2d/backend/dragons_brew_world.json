@@ -60,6 +60,12 @@
       "y": 16
     },
     {
+      "id": "player_house",
+      "asset": "building.house_hay_1",
+      "x": 8,
+      "y": 4
+    },
+    {
       "id": "tree_n",
       "asset": "tree.tree_emerald_1",
       "x": 0,
@@ -153,6 +159,18 @@
       "text": "A bench on the dirt path, facing Dragon's Brew. Good for catching your breath.",
       "beat": "",
       "on": "",
+      "gives_item": "",
+      "needs_item": "",
+      "locked_text": ""
+    },
+    {
+      "id": "home_door",
+      "asset": "building.house_hay_1",
+      "x": 8,
+      "y": 4,
+      "text": "Your place on the block. Small, and yours.",
+      "beat": "",
+      "on": "player_house",
       "gives_item": "",
       "needs_item": "",
       "locked_text": ""
@@ -289,7 +307,6 @@
       "room": { "x": 14, "y": 10 },
       "objects": [
         { "id": "cafe_table", "asset": "prop.table_medium_1", "x": 2, "y": 4 },
-        { "id": "cafe_hearth", "asset": "prop.fireplace_1", "x": 11, "y": 1 },
         { "id": "cafe_plant", "asset": "prop.plant_2", "x": 1, "y": 7 }
       ],
       "interactables": [
@@ -325,6 +342,65 @@
           "text": "A small table seat. Sit if you like — the room is for lingering.",
           "beat": "",
           "on": "",
+          "gives_item": "",
+          "needs_item": "",
+          "locked_text": ""
+        }
+      ]
+    },
+    "player_house": {
+      "floor": "planks",
+      "room": { "x": 12, "y": 8 },
+      "objects": [
+        { "id": "home_table", "asset": "prop.table_medium_1", "x": 1, "y": 2 },
+        { "id": "home_crate", "asset": "prop.crate_medium_closed", "x": 10, "y": 1 },
+        { "id": "home_barrel", "asset": "prop.barrel_small_empty", "x": 1, "y": 5 }
+      ],
+      "interactables": [
+        {
+          "id": "home_seat",
+          "asset": "prop.bench_3",
+          "x": 5,
+          "y": 5,
+          "text": "Your bench. Sit if you like — the room will wait.",
+          "beat": "",
+          "on": "",
+          "gives_item": "",
+          "needs_item": "",
+          "locked_text": ""
+        },
+        {
+          "id": "home_crate_look",
+          "asset": "prop.crate_medium_closed",
+          "x": 10,
+          "y": 1,
+          "text": "A closed crate in the back corner. Yours when you need it.",
+          "beat": "",
+          "on": "home_crate",
+          "gives_item": "",
+          "needs_item": "",
+          "locked_text": ""
+        },
+        {
+          "id": "home_table_look",
+          "asset": "prop.table_medium_1",
+          "x": 1,
+          "y": 2,
+          "text": "A plain table. Room for a cup, later.",
+          "beat": "",
+          "on": "home_table",
+          "gives_item": "",
+          "needs_item": "",
+          "locked_text": ""
+        },
+        {
+          "id": "home_barrel_look",
+          "asset": "prop.barrel_small_empty",
+          "x": 1,
+          "y": 5,
+          "text": "An empty barrel in the corner.",
+          "beat": "",
+          "on": "home_barrel",
           "gives_item": "",
           "needs_item": "",
           "locked_text": ""

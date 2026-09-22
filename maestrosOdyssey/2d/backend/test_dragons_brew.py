@@ -30,6 +30,18 @@ def main() -> int:
     assert "menu_read" in beats and "house_rules" in beats
     seats = {it["id"] for it in interior["interactables"]}
     assert "cafe_seat" in seats
+    houses = {o["id"] for o in world["objects"]}
+    assert "player_house" in houses
+    home = world["interiors"]["player_house"]
+    assert home.get("floor") == "planks"
+    home_objects = {o["asset"] for o in home.get("objects", [])}
+    assert "prop.crate_medium_closed" in home_objects
+    assert "prop.table_medium_1" in home_objects
+    assert "prop.fireplace_1" not in home_objects
+    cafe_objects = {o["asset"] for o in world["interiors"]["dragons_brew"]["objects"]}
+    assert "prop.fireplace_1" not in cafe_objects
+    assert "prop.sack_3" not in home_objects
+    assert "prop.plant_2" not in home_objects
     print("dragons_brew_world.json: ok")
     return 0
 

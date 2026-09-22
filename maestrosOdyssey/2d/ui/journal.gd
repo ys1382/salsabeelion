@@ -180,6 +180,10 @@ func _on_world_event(evt: Dictionary) -> void:
 # --- toast -------------------------------------------------------------------
 
 func _on_beat(beat: Dictionary) -> void:
+	# The house-rules board already shows the copy on its paper. The toast is
+	# the thin run-on bar sitting on top of that.
+	if str(beat.get("id", "")) == "house_rules":
+		return
 	if not beat.is_empty():
 		_show_toast("✦  %s" % beat.get("desc", ""))
 
