@@ -7,6 +7,7 @@ extends CharacterBody2D
 # cell — top-down games read correctly when only the feet collide, and it lets
 # the player tuck under the overhanging parts of trees and roofs.
 
+const CafePhrasesScript := preload("res://ui/cafe_phrases.gd")
 const SPEED := 70.0
 const ACCEL := 900.0
 const FRICTION := 1100.0
@@ -324,6 +325,11 @@ func use_focus() -> String:
 			if report != "":
 				DialogueUI.show_line(npc.display_name, report)
 				return "talk"
+		var phrase := CafePhrasesScript.line_for(npc.npc_id, GameState.day_index, ElderReport.needs_revisit)
+		if phrase != "":
+			npc.grant_if_any()
+			DialogueUI.show_line(npc.display_name, phrase)
+			return "talk"
 		if npc.has_scripted() or GameState.offline_mode or not LLMClient.backend_available:
 			if gift != "":
 				DialogueUI.show_line(npc.display_name,

@@ -141,6 +141,10 @@ func show_order_box(speaker: String = "Mara") -> void:
 	_body.hide()
 	_hint.hide()
 	_order.text = ""
+	if speaker == "Elder":
+		_order.placeholder_text = "Favorite drink and food, then Enter"
+	else:
+		_order.placeholder_text = "Type your order, then Enter"
 	_order.show()
 	_panel.show()
 	_panel.offset_top = -(SPEAKER_SIZE + SPACING + 28 + PAD * 2 + PAD)

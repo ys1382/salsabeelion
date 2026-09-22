@@ -8,8 +8,8 @@ var done := false
 var passed := false
 var needs_revisit := false
 
-const PASS_BUCKETS := 4
 const SPEAKER := "Elder"
+const ASK := "I haven't been to Dragon's Brew in quite some time, dear. Tell me your favorite drink and your favorite food — the way they say it there, with something extra like con leche."
 
 
 func reset() -> void:
@@ -36,7 +36,10 @@ func talk(npc: Npc) -> String:
 	npc.met = true
 	if done:
 		if needs_revisit:
-			return "I love that place. Notice one more kind thing next time you're there — then come tell me."
+			done = false
+			open_box_on_close = true
+			awaiting = true
+			return ASK
 		return "That still sounds lovely, dear. Dragon's Brew will be there in the morning."
 	if GameState.day_index < 8:
 		return ""
@@ -44,7 +47,7 @@ func talk(npc: Npc) -> String:
 		return "I love that you went. A few more words from the wall in your pocket — then I'll want to hear about the week."
 	open_box_on_close = true
 	awaiting = true
-	return "I haven't been to Dragon's Brew in quite some time, dear. Tell me about it — the food, the room, the community. Use whatever words you have."
+	return ASK
 
 
 func reply_for(text: String) -> String:
@@ -54,9 +57,8 @@ func reply_for(text: String) -> String:
 	if report == "":
 		awaiting = true
 		open_box_on_close = true
-		return "Take your time — what did you notice at Dragon's Brew?"
-	var hits := _bucket_hits(report)
-	passed = hits >= PASS_BUCKETS
+		return "Take your time — your favorite drink and your favorite food, with something like con leche."
+	passed = _favorites_ok(report)
 	done = true
 	needs_revisit = not passed
 	GameState.refill_card()
@@ -65,38 +67,40 @@ func reply_for(text: String) -> String:
 	return "I love that place. Can you go back and find out more for me?"
 
 
-func _bucket_hits(report: String) -> int:
-	var t := _fold(report)
-	var hits := 0
-	if _has_any(t, _food_terms()):
-		hits += 1
-	if _has_any(t, ["mara", "barista", "campire", "counter", "wings", "tail"]):
-		hits += 1
-	if GameState.known("house_rules") or _has_any(t, ["rule", "house", "blood", "racism", "strike", "sugar", "refuse", "welcome"]):
-		hits += 1
-	if _has_any(t, ["warm", "cozy", "community", "room", "feel", "friendly", "kind", "calm", "nice"]):
-		hits += 1
-	if _has_any(t, ["species", "customer", "people", "neighbor", "fellow", "regular", "table"]):
-		hits += 1
-	return hits
+## A drink, a food, the favorite word, and an add-on joined with con or y.
+## Café con leche y muffin son mis favoritos. Gender on favorito can be loose.
+func _favorites_ok(report: String) -> bool:
+	var tokens := _tokens(report)
+	if not _has_token_prefix(tokens, "favorit"):
+		return false
+	if not _has_token(tokens, ["cafe", "te", "chocolate", "espresso"]):
+		return false
+	if not _has_token(tokens, ["muffin", "tostada", "galleta", "bolillo", "croissant"]):
+		return false
+	if not _has_token(tokens, ["con", "y"]):
+		return false
+	return _has_token(tokens, ["leche", "azucar", "crema"])
 
 
-func _food_terms() -> PackedStringArray:
-	var terms: PackedStringArray = [
-		"cafe", "coffee", "tea", "muffin", "chocolate", "espresso", "toast",
-		"tostada", "croissant", "galleta", "cookie", "bolillo", "food", "drink", "menu",
-	]
-	for lemma in CafeOrder.ordered:
-		var folded := _fold(lemma)
-		if folded != "" and not terms.has(folded):
-			terms.append(folded)
-	return terms
+func _tokens(report: String) -> PackedStringArray:
+	var parts := _fold(report).split(" ", false)
+	var tokens := PackedStringArray()
+	for part in parts:
+		if part != "":
+			tokens.append(part)
+	return tokens
 
 
-func _has_any(hay: String, needles: PackedStringArray) -> bool:
-	for n in needles:
-		var needle := _fold(n)
-		if needle != "" and hay.find(needle) >= 0:
+func _has_token(tokens: PackedStringArray, words: Array) -> bool:
+	for token in tokens:
+		if words.has(token):
+			return true
+	return false
+
+
+func _has_token_prefix(tokens: PackedStringArray, prefix: String) -> bool:
+	for token in tokens:
+		if token.begins_with(prefix):
 			return true
 	return false
 

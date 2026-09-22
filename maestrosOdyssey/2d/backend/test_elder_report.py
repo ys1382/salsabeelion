@@ -22,7 +22,9 @@ def main() -> int:
     assert "That sounds lovely, dear." in report
     assert "Can you go back and find out more for me?" in report
     assert "I haven't been to Dragon's Brew" in report
-    assert "PASS_BUCKETS" in report
+    assert "favorite drink and your favorite food" in report
+    assert "con leche" in report
+    assert "_favorites_ok" in report
     assert "80%" not in report and "percentage" not in report.lower()
     assert "refill_card" in report and "refill_card" in state
     assert "npc_id == \"elder\"" in player

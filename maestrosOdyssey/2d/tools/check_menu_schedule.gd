@@ -1,4 +1,6 @@
 extends SceneTree
+
+const CafePhrasesScript := preload("res://ui/cafe_phrases.gd")
 # Headless check that the café board follows fiction day, not the starter trio.
 
 
@@ -219,11 +221,22 @@ func _initialize() -> void:
 	gs.take_item("learning_card")
 	gs.card_balance = 40
 	elder.awaiting = true
-	var kind := String(elder.reply_for(
-		"Mara at the counter has wings. The café is warm. Neighbors at the table. House rules, no racism."
-	))
+	var kind := String(elder.reply_for("El café con leche y el muffin son mis favoritos."))
 	assert(kind.contains("lovely"), kind)
 	assert(bool(elder.passed))
 	assert(int(gs.card_balance) == 400)
+	elder.reset()
+	gs.card_balance = 40
+	elder.awaiting = true
+	var thin := String(elder.reply_for("The café is warm. Neighbors at the table."))
+	assert(thin.contains("find out more"), thin)
+	assert(not bool(elder.passed))
+	assert(CafePhrasesScript.line_for("iguana_neighbor", 1, false) == "")
+	assert(CafePhrasesScript.line_for("iguana_neighbor", 2, false).contains("té"))
+	assert(CafePhrasesScript.line_for("riverfolk_neighbor", 3, false).contains("tostada"))
+	assert(CafePhrasesScript.line_for("riverfolk_neighbor", 5, false).contains("bolillo"))
+	assert(CafePhrasesScript.line_for("iguana_neighbor", 6, false).contains("croissant"))
+	assert(CafePhrasesScript.line_for("riverfolk_neighbor", 7, false).contains("espresso"))
+	assert(CafePhrasesScript.line_for("iguana_neighbor", 8, true).contains("con leche"))
 	print("menu_schedule_runtime: ok")
 	quit()
