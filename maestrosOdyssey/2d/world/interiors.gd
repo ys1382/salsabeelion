@@ -65,6 +65,9 @@ func enter(building_id: String, flavour: String = "") -> void:
 
 	p.reparent(current.get_node("Objects"), false)
 	p.position = current.entry_point()
+	# The room already sorts by feet. Leaving this on sorts the picture by the
+	# head, so a table draws across the face.
+	p.y_sort_enabled = false
 	p.velocity = Vector2.ZERO
 	p.agent_input = Vector2.ZERO
 	_clamp_camera(p, current.pixel_size())
@@ -93,6 +96,7 @@ func leave() -> void:
 			p.stand_up(false)
 		root.visible = true
 		root.process_mode = Node.PROCESS_MODE_INHERIT
+		p.y_sort_enabled = true
 		p.reparent(root.get_node("Objects"), false)
 		# Back on the doorstep, not inside the wall. The saved position is where
 		# they were standing when they pressed E, which is by definition a legal
@@ -129,6 +133,7 @@ func _spawn_inside_npcs(building_id: String, interior: Interior) -> void:
 		var ix := int(n.get("inside_x", interior.room.x / 2))
 		var iy := int(n.get("inside_y", maxi(interior.room.y / 2, 2)))
 		npc.position = Catalog.cell_to_anchor(Vector2i(ix, iy))
+		npc.y_sort_enabled = false
 		objects.add_child(npc)
 		root.entities[n["id"]] = npc
 

@@ -258,9 +258,8 @@ func _instance_interior_asset(entry: Dictionary) -> Node2D:
 	var node: Node2D = load(Catalog.object(asset)["scene"]).instantiate()
 	node.name = str(entry.get("id", asset.get_slice(".", 1)))
 	# Don't y-sort inside the prop — the Objects layer already sorts by feet.
-	# Nested y-sort plus a Sprite offset made some props fail to read on planks.
+	# A raised z put the table on top of people's faces.
 	node.y_sort_enabled = false
-	node.z_index = 1
 	var fp := Catalog.footprint(asset)
 	var cell := Vector2i(int(entry.get("x", 1)), int(entry.get("y", 1)))
 	node.position = Catalog.cell_to_anchor(

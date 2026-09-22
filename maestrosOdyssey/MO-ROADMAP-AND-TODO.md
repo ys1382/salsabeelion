@@ -34,7 +34,7 @@ Design and tasks **committed here**; implementation waits until you approve task
 - [ ] **#23** — Plaza floor (echo café words)
 - [ ] **#20–22** — Optional order check; **evening werewolf/vampire table (week one)**; goblin watch → **post–train / later arc** (not week one)
 - [x] **Menu trim + language picker (owner 2026-06)** — generic core; ES/AR popup at start + restart; 1–2 new lemmas/day; extras → `MOUNTAIN_MENU_POOL`
-- [ ] **Day-8 balance tuning** — script 7 café days → 0 pesos on same weekday next week
+- [ ] **Day-8 balance tuning** — **superseded 2026-09-21:** leftover pesos OK; not forced to 0. See elder-before-buy below.
 
 **Next approved build when mechanics stable:** #10 → Arabic lemma review (#11) → #27 → #13 Monday (mellow species beat).
 
@@ -67,7 +67,7 @@ Design and tasks **committed here**; implementation waits until you approve task
 |-------|------|
 | **Drinks (4)** | Visit 1: café, té · day 2: chocolate caliente · day 7: espresso (cognate — no new lemma). |
 | **Food (5)** | Muffin day 1 (cognate) · new lemmas: tostada D3, galleta D4, bolillo D5 · croissant D6 (cognate). |
-| **Add-ons** | Azúcar / سكر day 6 · creamer day 7. |
+| **Add-ons** | Leche + azúcar day 1 (Spanish only). **con** taught Wednesday with **y**. Crema Saturday. Drink **frío** (iced) Sunday. Food **calentado** (warmed) from day 1. |
 | **Here** | café, té, chocolate caliente, espresso · muffin, tostada (bread), croissant, galleta, bolillo |
 | **Not here (mountain / later)** | americano, descafeinado, té de hierbas, café de olla · bagel, concha, empanada, churro, tortilla tostada · lattes, syrup pumps, smoothies |
 | **Teaching** | Wall = **one chosen lane** (ES or AR) + English gloss + **lane money** (pesos / dirham — درهم) · **1–2 new lemmas/day** · Arabic wall: **translit — script — English** · culture keywords elsewhere stay in native tongue |
@@ -117,6 +117,7 @@ Say a **task number** (or a **safe pair**). Always start with **verdict first** 
 | **L** | **#26** | Menu unlock schedule — alone |
 | **M** | **#27** | Day-2+ order depth (con/sin, upsell) — alone |
 | **N** | **#28** then **#29** | Elder week-end call (#28) → optional revisit quest (#29) if needed |
+| **O** | **Say goodbye to Mara + put dishes away** | Same café close-out. If owner asks for **either or both**, ship **both** in that chat. |
 
 ### Do not batch (gets janky fast)
 
@@ -198,14 +199,14 @@ Needs **#3**.
 
 ### Week-one room — mellow, not mystery (#13–19)
 
-Needs **#3** and **#12**. **Tone:** nature-wonder café week — friendly regulars, species glimpses, language in context. **Not** mystery-novel infodumps. See **Your additions** (owner pinned 2026-06). Old detective / sea-policy beats in `DRAGONS-BREW-PRE-TRAIN.md` → **later arc**, not week one.
+Needs **#3** and **#12**. **Tone:** nature-wonder café week — friendly regulars, species glimpses, language in context. **Not** mystery-novel infodumps. See **Your additions** (owner pinned 2026-06). **Pegasus / griffin can still be café plot** (Saturday); **body animation** waits until after the train-station demo ending (Your additions, 2026-09-22). Old detective / sea-policy beats in `DRAGONS-BREW-PRE-TRAIN.md` → **later arc**, not week one.
 
 - [ ] **#13 — Monday** — warm room; Mara + wall + strike board; **friendly customers**; optional muted **TV headline** (soft world color, not crime blotter)
 - [ ] **#14 — Tuesday** — strike board tick; **minotaur** as pleasant morning regular (not lore courier)
 - [ ] **#15 — Wednesday** — **family night** human table; blue-night **vampire** usual; light species beat
 - [ ] **#16 — Thursday** — **werewolf fiancé + chaperone twin** (evening); calm public life — no centaur/detective overlap
 - [ ] **#17 — Friday** — mellow Friday regulars; **no** dragonfolk mafia beat in week one
-- [ ] **#18 — Saturday** — **pegasus + griffin** as nice Saturday regulars (wonder, not worry-plot)
+- [ ] **#18 — Saturday** — **pegasus + griffin** as nice Saturday café regulars (wonder, not worry-plot). Plot stays in the café; **animation/body art** is a post-demo upgrade (below).
 - [ ] **#19 — Sunday** — quiet Sunday room; one soft species or language echo
 
 ---
@@ -216,10 +217,10 @@ Needs **#3** and **#12**. **Tone:** nature-wonder café week — friendly regula
 - [ ] **#21 — Goblin detective visual watch** — **post–train / later arc** (not week one)
 - [ ] **#22 — Evening werewolf + vampire table** (week-one evenings Thu+; innocent vampire regular)
 - [ ] **#23 — Plaza floor** (same learning card rules; echo café words on signs)
-- [ ] **#24 — Train gate / wider world** (after #28 elder upgrade)
+- [ ] **#24 — Train gate / arrive at station** (after #28 elder upgrade) — **end of the demo** when this plot deploys. Wider world after. Non-humanoid **animation upgrades** wait until after this ships. Mechanics still rank above that animation work.
 - [ ] **#25 — Wire vocab into progress tracker** (familiarity bands, **bilingual menu fade**, **tourism competence gate**, elder prompt source, subtitle fade — no grade UI)
 - [x] **#26 — Menu unlock schedule** — visit 1: 3 drinks + 2 foods; day 2: espresso + croissant; foods through day 4 per **generic menu canon**; chalkboard “new today” ticks
-- [ ] **#27 — Day-2+ order depth** — *For your té — con azúcar or sin azúcar?* (or AR lane equivalent); same-or-different; one food upsell; Mara read-back in player’s **active café lane** before pay; no new specialty drinks
+- [ ] **#27 — Day-2+ order depth** — player extras shipped. Still later: *For your té — con azúcar or sin azúcar?*; same-or-different; one food upsell; Mara read-back before pay; no new specialty drinks
 - [x] **#28 — Day-8 elder report** — fiction week 2 + language week goal; natural report conversation (not quiz UI); two elder lines only; card upgrade; revisit flag when under hood pass
 - [ ] **#29 — Café revisit quest** — when #28 “go back and find out more” branch; player brings back one asked detail; train opens after elder pass (≥80% under hood)
 
@@ -241,12 +242,17 @@ Community elder → **prepaid learning card** (debit, in-game only, **no overdra
 - [x] **New Godot build started** — `maestrosOdyssey/2d/` (zij2d engine + authored Dragon's Brew world). Live `/maestros/` is the Godot web export. Phaser snapshot: `archive/phaser-cafe-prototype/`.
 - [x] **Mara typed order (gold, 2026-09-21)** — menu first, type box, Spanish echo, **ready in the same reply** with a **visible cup/muffin** (no kitchen wait). Sit and **D** sip / **F** eat. Do not drop; see `.cursor/rules/maestros-mara-order-gold.mdc`.
 - [x] **Learning-card HUD (gold, 2026-09-21)** — hearts off; take the card from the elder's basket; then weekday / week / pesos as three short lines. Matched orders deduct pesos in the same reply; **finished meal + step into your house** turns the weekday. See `.cursor/rules/maestros-learning-card-hud-gold.mdc`.
+- [x] **Drink extras + warmed food (2026-09-22)** — *leche* / *azúcar* from Monday (Spanish only); Wednesday teaches **con** with **y**; *crema* Saturday; drink *frío* Sunday; food *calentado* optional. Still one drink + one food, ready in the same reply. #27 Mara *con o sin* prompt and food upsell still later.
 
 #### Future Godot adaptations (combined — 2026-09-21)
 
 This chat’s later list **plus** original MO items **not in the Godot build yet**. Master task numbers still live above. Phaser-only gold (lane picker, Arabic wall) counts as **not in Godot** until it is.
 
+**When listing open todos (owner — 2026-09-22):** **plot**, then **mechanics**, then **animation** (include every open item). Mechanics still rank above animation for what to build next. Non-humanoid body animation sits under animation, after the train-station demo ending. Do not drop mechanics off the list.
+
 **From this conversation**
+
+- [ ] **Don’t walk through people or things** (owner — 2026-09-22) — player should bump into NPCs, furniture, counters, crates, walls. Not a ghost. Mechanics, not an art pass.
 
 - [x] **Café house-rules sign layout (2026-09-21)** — “we don’t serve human blood / smoking isn’t allowed” (etc.) is a run-on in the **thin top rectangle**; the **bigger bottom rectangle** is empty. Put the copy in the space that can hold it.
 - [ ] **Something between sip/eat and day’s end** — food/drink alone feels too thin; **not** high-fantasy storyline events. Exact beat TBD. Direction: **overheard table talk** that continues/changes — **lizardfolk + merfolk** (and the Monday croc/ferry table) plus **more people talking in the room**. Pull from earlier notes in `docs/DRAGONS-BREW-PRE-TRAIN.md` and week-one mellow room **#13–19**; keep it slice-of-life, not mystery.
@@ -256,26 +262,40 @@ This chat’s later list **plus** original MO items **not in the Godot build yet
 - [x] **Only the key on the prompt does that action** — **E** sit / stand / talk / close reading. **D** sip only (no stand). **Space** is not a second E. Order type box still uses **Enter**; E types the letter.
 - [ ] **Elder test has a clear language aim** — day 8 still isn’t a quiz screen (no score, two lines). Right now she says “tell me about the food, the room, the community” and you guess what counts. Give a **bar you can aim at**: being able to **carry a bit of conversation in that café tongue**, so the week of orders actually invests you. Exact how she names the bar TBD; keep it kind, not a grade.
 - [ ] **Home crate as real storage** — Minecraft-chest style: open UI, put items in / take out, save with the account/run. Today the crate only shows flavor text on E (verb says Open). Not built yet — pin only.
-- [ ] **Furniture stop floating** — indoor props (table, crate, bench, etc.) sit on the floor properly; no hovering.
-- [ ] **Tutorial directions / compass** — exploration stays, but early on give a clear cue so you find your cottage without wandering forever (owner didn’t discover home until late). Exact UI TBD (arrow, elder line, short compass — not a full minimap unless asked).
-- [ ] **Reusable cup return** — café is reusables-only. After you finish, put the cup/mug in a **bin** (or similar) so staff can take it to wash. No disposable walk-away. Exact props/flow TBD.
-- [ ] **Say goodbye to Mara before leaving** — more social; you can’t just walk out after the meal. Exact how TBD (E Mara for a short bye, door blocked until then, etc.). Keep it warm, not a quiz.
+- [x] **Furniture stop floating** — tables stay full size (bigger than the chairs). The two café neighbors stand on opposite sides of their table again. People draw in front of their own face, so a table no longer sits on their head.
+- [x] **Tutorial directions / compass** (2026-09-22) — start in front of your cottage; a small arrow points to the next stop (elder → basket → café → home after the meal). Not a minimap.
+- [ ] **Leave-café close-out (paired — always together)** — if owner asks for **say goodbye to Mara**, **put dishes away**, reusable cup return, or **both**, do **both** in the same build. Do not ship one without the other.
+  - **Put dishes away** — café is reusables-only. After you finish, put the cup/mug (and food dish) in a **bin** (or similar) so staff can take it to wash. No disposable walk-away. Exact props/flow TBD.
+  - **Say goodbye to Mara** — more social; you can’t just walk out after the meal. Exact how TBD (E Mara for a short bye, door blocked until then, etc.). Keep it warm, not a quiz.
 
 **From original MO — not in Godot yet**
 
-- [ ] **#13–19 week-one mellow room** — rotating regulars, species + language in small beats, not mystery. Godot has a Monday iguana + croc stub; Tue–Sun (minotaur, family night, werewolf table, pegasus + griffin, quiet Sunday) still missing. How to fill the post-order gap: table talk, above.
+- [ ] **#13–19 week-one mellow room** — rotating regulars, species + language in small beats, not mystery. Godot has a Monday iguana + croc stub; Tue–Sun (minotaur, family night, werewolf table, pegasus + griffin, quiet Sunday) still missing. How to fill the post-order gap: table talk, above. Café **plot** may include pegasus + griffin; **non-humanoid animation** waits until after the train-station demo ending.
 - [ ] **#22 evening werewolf + vampire table** — Thursday+; innocent evening regulars; calm public life.
-- [ ] **#27 day-2+ order depth** — *con / sin azúcar*, one food upsell, Mara read-back in the café lane before pay.
+- [ ] **#27 day-2+ order depth** — player extras shipped (con / calentado / frío). Still later: Mara *con o sin* prompt, one food upsell, read-back before pay.
 - [ ] **#11 café lane + tourist money** — Spanish **or** Arabic menu lemmas; Arabic wall translit + script + English; dirham when Arabic. **Lane picker** at first load / restart (Phaser had it; Godot does not).
 - [ ] **#25 vocab tracker** — private familiarity bands, menu-hint fade, tourism gate, elder prompts. No grade UI. Optional later in-game lane switch.
 - [ ] **#20 optional hard mode** — stricter typed order check; opt-in only.
-- [ ] **Day-8 pesos + elder gate** — each café day you **must order a drink and a food**. Leftover pesos on day 8 are **OK** (not forced to 0). You **cannot buy anything** on day 8 until you talk to the elder first; then she can refill. Mara turns you toward the elder if you try to order first.
+- [x] **Must order a drink and a food** (2026-09-22) — each café day; quiz only when no pair fits the card.
+- [ ] **Day-8 elder-before-buy** — leftover pesos on day 8 are **OK**. You **cannot buy anything** on day 8 until you talk to the elder first; then she can refill. Mara turns you toward the elder if you try to order first.
 - [ ] **#29 café revisit** — when the elder asks you to go back and find out more; bring one asked detail.
-- [ ] **#24 train gate** — week 3 if elder pass; otherwise more neighborhood time. No fail screen.
+- [ ] **#24 train gate / arrive at station** — week 3 if elder pass; otherwise more neighborhood time. No fail screen. **This arrival is the demo ending** when it deploys.
 - [ ] **#23 plaza** — same learning-card rules; echo café words on signs.
 - [ ] **#21 goblin detective watch** — post-train / later arc, not week one. Detective / mafia / sea-policy plot stays later.
 - [ ] **Player-frame language + Mara tail** — UI/chat in the language you already speak; Irish / Japanese / Turkish locked until the train. Mara tail overlay still later.
-- [ ] **Revise `DRAGONS-BREW-PRE-TRAIN.md`** when owner asks — old week-one detective/sea table → later-arc section; align with #13–19.
+- [ ] **Revise `DRAGONS-BREW-PRE-TRAIN.md`** when owner asks — old week-one detective/sea table → later-arc section; align with #13–19. Saturday pegasus + griffin **stay café plot**; body animation is post-demo (below).
+
+### After demo — non-humanoid animation (owner — pinned 2026-09-22, corrected same day)
+
+**Demo ending:** arriving at the **train station** (#24). Do not spend the demo on non-humanoid **body animation** — owner does not have that art yet.
+
+**Not a plot ban:** pegasus / griffin **can still happen in the café** (Saturday #18, and later café visits). Do **not** treat “no animation yet” as “they never sit at Dragon’s Brew.”
+
+- [ ] **Animation upgrades after train-station plot deploys** — pegasus, griffin, centaur, and other non-humanoid bodies (walk, idle, sit, café presence that currently has no sheets).
+- [ ] **Café pegasus + griffin look/move right** — Saturday regulars and later café beats get real bodies; plot does not wait on this.
+- [ ] **Pegasus platform agent animation** — station beat can ship with the demo plot; upgrade movement/art after.
+- [ ] **Griffin interpreter + pegasus sky-sign / SL animation** — full teaching/animation TBD (`WORLD-AND-CAST.md`); after demo.
+- [ ] **Other non-humanoid bodies** (giants’ scale, legendary dragons/wyverns, animal-level life) — animation later; legendary stay later in plot too.
 
 ### Week-one tone + café language (owner — pinned 2026-06)
 
@@ -303,7 +323,7 @@ This chat’s later list **plus** original MO items **not in the Godot build yet
   | galleta (cookie) | 24 | ~$1.40 |
   | bolillo | 20 | ~$1.15 |
   | toast (tostada) | 22 | ~$1.30 |
-  | sugar / creamer | 0 | included |
+  | sugar / milk / creamer | 0 | included |
 
   **Sample orders:** café + muffin **63 pesos** · té + tostada **52 pesos** · espresso + galleta **64 pesos**.
 
@@ -322,10 +342,10 @@ This chat’s later list **plus** original MO items **not in the Godot build yet
 
 | Works | Not built |
 |-------|-----------|
-| Visit + cup + T sit + required dine + Mara intro + learning card HUD + pay (#8–9) | Mellow week-one room (#13+), bilingual fade + gate (#25), order depth (#27) |
+| Visit + cup + sit + dine + Mara intro + learning card + pay (#8–9) + drink extras | Mellow week-one room (#13+), bilingual fade + gate (#25), leftover #27 (con o sin / upsell / read-back) |
 | Prologue elder + card grant (#10) + day-8 elder report (#28) | Café revisit (#29), train (#24), detective arc (later) |
-| Doors + collision + complete visit (#1–3) + café space (#4–5) + fiction days (#12) + menu unlocks (#26) | Bilingual ES+AR wall (#11), plaza (#23), train (#24), detective arc (later) |
-| MXN menu prices (#7) | |
+| Doors + collision foundation + café space + fiction days (#12) + menu unlocks (#26) + cottage waypoint arrow | Bilingual ES+AR wall (#11), plaza (#23), train (#24), don’t-walk-through people/things |
+| MXN menu prices (#7) + required drink+food pair | Elder-before-buy on day 8 |
 
 ---
 
