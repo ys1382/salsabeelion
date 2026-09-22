@@ -43,6 +43,9 @@ def main() -> int:
     assert "_mark_meal_if_done" in sip and "_mark_meal_if_done" in bite
     assert "cup_left = 4 if _drink" in cafe
     assert "muffin_left = 3 if _food" in cafe
+    practice = _fn(cafe, "_practice_reply")
+    assert "note_cafe_meal_done" in practice
+    assert "_remember" in practice
     assert "if not seated" in _fn(player, "try_sip")
     assert "if not seated" in _fn(player, "try_bite")
 

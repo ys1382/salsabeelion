@@ -14,7 +14,7 @@ Owner pinned 2026-09-21: typing an order at Mara **works**, and the **sip / eat 
 2. Read the drink menu (beat `menu_read`) before she takes an order.
 3. **E** Mara — "What's your order?"
 4. **E** again — type box. WASD must not steal keys. **Enter** submits.
-5. Match **today's board**. Day 1 is **café / té / muffin** (English coffee/tea too). Later café days follow the #26 unlock schedule in `cafe_order.gd`. Echo the **Spanish lemma**.
+5. Match **today's board**. A paid order is **one drink and one food**. Day 1 is **café / té / muffin** (English coffee/tea too). Later café days follow the #26 unlock schedule in `cafe_order.gd`. Echo the **Spanish lemma**. From **Wednesday**, the typed pair must use **y** (not *and*). **Wednesday's order prompt** is where Mara introduces that: *say y instead of and*. Later mid-week days keep the short *A drink y a food.* If the card can't cover any pair, quiz board words instead (cycle; do not loop coffee).
 6. **Same reply, drink is ready** — and a **cup / muffin sprite** shows on the player (packs have no mug; custom pixels). Hide it when they leave the café. No kitchen timer. No "I'll get that started" hang.
 
 ## Do not
@@ -26,7 +26,7 @@ Owner pinned 2026-09-21: typing an order at Mara **works**, and the **sip / eat 
 - Send unmatched text to a silent fallback coffee without telling the player
 - Mix this gold with the elder full-screen opener or language/look picker (those are later)
 
-Practice when the card is short (positive balance, below today's cheapest item) uses the **same type box**. Do not add a second input. Remember ordered lemmas **this play only**.
+Practice when the card can't cover **any** drink-and-food pair (including 0 pesos) uses the **same type box**. Do not add a second input. Remember ordered **and practiced** lemmas **this play only**, and cycle the board — do not loop coffee.
 
 ## Lock files
 

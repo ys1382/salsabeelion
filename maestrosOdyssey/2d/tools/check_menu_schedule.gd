@@ -37,6 +37,11 @@ func _initialize() -> void:
 	gs._sync_clock()
 	cafe.reset_session()
 	gs.take_item("learning_card")
+	gs.card_balance = 70
+	assert(not cafe.too_broke_to_order())
+	assert(int(cafe.cheapest_pair_price()) == 58)
+	gs.card_balance = 0
+	assert(cafe.too_broke_to_order())
 	gs.card_balance = 10
 	assert(cafe.too_broke_to_order())
 	assert(cafe._begin_practice())
@@ -45,10 +50,64 @@ func _initialize() -> void:
 	var practiced: String = cafe._practice_reply("coffee")
 	assert(practiced.contains("12 pesos"), practiced)
 	assert(int(gs.card_balance) == before + 12)
-	cafe._remember(PackedStringArray(["café"]))
 	assert(cafe.ordered.has("café"))
+	assert(bool(cafe.meal_done))
 	assert(cafe._begin_practice())
 	assert(str(cafe._practice_lemma) == "muffin")
+	var muffin_q: String = cafe._practice_reply("muffin")
+	assert(muffin_q.contains("lovely"), muffin_q)
+	assert(cafe.ordered.has("muffin"))
+	assert(cafe._begin_practice())
+	assert(str(cafe._practice_lemma) == "té")
+
+	cafe.reset_session()
+	gs.take_item("learning_card")
+	gs.card_balance = 400
+	var drink_only: String = cafe.reply_for("café")
+	assert(drink_only.contains("food"), drink_only)
+	assert(not drink_only.contains("Here you go"))
+	var food_only: String = cafe.reply_for("muffin")
+	assert(food_only.contains("drink"), food_only)
+	assert(not food_only.contains("Here you go"))
+	var pair: String = cafe.reply_for("café muffin")
+	assert(pair.contains("Here you go"), pair)
+	assert(int(gs.card_balance) == 337)
+
+	gs.day_index = 2
+	gs._sync_clock()
+	cafe.reset_session()
+	gs.take_item("learning_card")
+	gs.card_balance = 400
+	var tue: String = cafe.reply_for("café muffin")
+	assert(tue.contains("Here you go"), tue)
+	assert(not cafe.needs_y())
+
+	gs.day_index = 3
+	gs._sync_clock()
+	cafe.reset_session()
+	gs.take_item("learning_card")
+	gs.card_balance = 400
+	assert(cafe.needs_y())
+	var wed: String = cafe.order_prompt()
+	assert(wed.contains("say y instead of and"), wed)
+	assert(wed.contains("drink y a food"), wed)
+	var no_y: String = cafe.reply_for("té muffin")
+	assert(no_y.contains("we say y"), no_y)
+	assert(not no_y.contains("Here you go"))
+	assert(int(gs.card_balance) == 400)
+	var with_and: String = cafe.reply_for("té and muffin")
+	assert(with_and.contains("we say y"), with_and)
+	assert(not with_and.contains("Here you go"))
+	var with_y: String = cafe.reply_for("té y muffin")
+	assert(with_y.contains("Here you go"), with_y)
+	assert(with_y.contains("té y muffin") or with_y.contains(" y "), with_y)
+	assert(int(gs.card_balance) == 342)
+
+	gs.day_index = 4
+	gs._sync_clock()
+	var thu: String = cafe.order_prompt()
+	assert(thu.contains("drink y a food"), thu)
+	assert(not thu.contains("instead of and"), thu)
 
 	gs.day_index = 8
 	gs._sync_clock()

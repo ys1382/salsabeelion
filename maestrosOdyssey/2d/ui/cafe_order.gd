@@ -1,9 +1,12 @@
 extends Node
 # Dragon's Brew order at Mara. Menu must be read first; then a typed line is
-# matched against today's board. A match takes pesos from the learning card in
-# the same reply — no extra pay tap, no kitchen wait. Sit to sip (D) and eat
-# (F). After the cup or food is finished, stepping into your house turns the
-# weekday, which opens more of the board through café day 7.
+# matched against today's board. A paid order is one drink and one food. A
+# match takes pesos from the learning card in the same reply — no extra pay
+# tap, no kitchen wait. Sit to sip (D) and eat (F). After both are finished,
+# stepping into your house turns the weekday. If the card can't cover any
+# pair, Mara quizzes board words instead (cycling, not the same lemma on a
+# loop). From Wednesday, a paid pair must use y (not and). A good quiz also
+# lets home turn the weekday.
 
 signal order_ready(lemmas: PackedStringArray)
 signal order_cleared
@@ -116,25 +119,49 @@ func talk(npc: Npc) -> String:
 
 func order_prompt() -> String:
 	var names := _visible_lemmas(false)
-	return "What's your order? (%s this morning.)" % ", ".join(names)
+	var board := ", ".join(names)
+	if GameState.day_index == 3:
+		return (
+			"What's your order? (%s this morning.)\n\n"
+			+ "Today I'd like you to say y instead of and — a drink y a food."
+		) % board
+	if needs_y():
+		return "What's your order? A drink y a food. (%s this morning.)" % board
+	return "What's your order? A drink and a food. (%s this morning.)" % board
+
+
+## Wednesday onward (café day 3). Early week still accepts and / just both words.
+func needs_y() -> bool:
+	return GameState.day_index >= 3
 
 
 func too_broke_to_order() -> bool:
 	if not GameState.has_item("learning_card"):
 		return false
-	var bal := GameState.card_balance
-	if bal <= 0:
-		return false
-	return bal < cheapest_price()
+	return GameState.card_balance < cheapest_pair_price()
+
+
+## Cheapest drink plus cheapest food on today's board. Quiz only when the
+## card can't cover any pair — not a forced cheap order.
+func cheapest_pair_price() -> int:
+	var drink_low := 9999
+	var food_low := 9999
+	for item in visible_items():
+		var p := int(item["pesos"])
+		if p <= 0:
+			continue
+		var kind := str(item["kind"])
+		if kind == "drink":
+			drink_low = mini(drink_low, p)
+		elif kind == "food":
+			food_low = mini(food_low, p)
+	if drink_low == 9999 or food_low == 9999:
+		return 9999
+	return drink_low + food_low
 
 
 func cheapest_price() -> int:
-	var low := 9999
-	for item in visible_items():
-		var p := int(item["pesos"])
-		if p > 0:
-			low = mini(low, p)
-	return 28 if low == 9999 else low
+	return cheapest_pair_price()
 
 
 func reply_for(text: String) -> String:
@@ -144,10 +171,15 @@ func reply_for(text: String) -> String:
 	if order == "":
 		return "Mara waits patiently. \"Take your time — look at the board again if you need to.\""
 	var lemmas := match_lemmas(order)
-	if lemmas.is_empty() or not _is_real_order(lemmas):
+	if lemmas.is_empty() or (_lemma_of_kind(lemmas, "drink") == "" and _lemma_of_kind(lemmas, "food") == ""):
 		return (
 			"Mara tilts her head. \"I didn't catch that — %s this morning?\""
 		) % ", ".join(_visible_lemmas(false))
+	var missing := _missing_half_line(lemmas)
+	if missing != "":
+		return missing
+	if needs_y() and not _has_y(order):
+		return _y_nudge(lemmas)
 	if not GameState.has_item("learning_card"):
 		return "Mara glances at the reader. \"You'll want the learning card from the elder's basket first — no borrowing past zero.\""
 	var total := order_total(lemmas)
@@ -313,7 +345,7 @@ func _menu_line(item: Dictionary) -> String:
 func _echo(lemmas: PackedStringArray) -> String:
 	if lemmas.is_empty():
 		return ""
-	if GameState.week_number >= 2 and lemmas.size() >= 2:
+	if lemmas.size() >= 2 and (needs_y() or GameState.week_number >= 2):
 		var head := PackedStringArray()
 		for i in range(lemmas.size() - 1):
 			head.append(lemmas[i])
@@ -322,7 +354,33 @@ func _echo(lemmas: PackedStringArray) -> String:
 
 
 func _is_real_order(lemmas: PackedStringArray) -> bool:
-	return _lemma_of_kind(lemmas, "drink") != "" or _lemma_of_kind(lemmas, "food") != ""
+	return _lemma_of_kind(lemmas, "drink") != "" and _lemma_of_kind(lemmas, "food") != ""
+
+
+func _has_y(order: String) -> bool:
+	return _has_word(_fold(order), "y")
+
+
+func _y_nudge(lemmas: PackedStringArray) -> String:
+	var drink := _lemma_of_kind(lemmas, "drink")
+	var food := _lemma_of_kind(lemmas, "food")
+	return (
+		"Mara tilts her head, kind. \"Almost — here we say y. %s y %s?\""
+	) % [drink, food]
+
+
+func _missing_half_line(lemmas: PackedStringArray) -> String:
+	var drink := _lemma_of_kind(lemmas, "drink")
+	var food := _lemma_of_kind(lemmas, "food")
+	if drink != "" and food == "":
+		return (
+			"Mara nods. \"%s — and something to eat with it? A food from the board too.\""
+		) % drink
+	if food != "" and drink == "":
+		return (
+			"Mara nods. \"%s — and a drink to go with it?\""
+		) % food
+	return ""
 
 
 func _remember(lemmas: PackedStringArray) -> void:
@@ -345,6 +403,12 @@ func _begin_practice() -> bool:
 
 
 func _practice_pick() -> Dictionary:
+	if _practice_lemma != "" and not ordered.has(_practice_lemma):
+		for item in visible_items():
+			if str(item["kind"]) == "addon":
+				continue
+			if str(item["lemma"]) == _practice_lemma:
+				return item
 	var fresh: Array = []
 	var any_item: Array = []
 	for item in visible_items():
@@ -356,6 +420,13 @@ func _practice_pick() -> Dictionary:
 	var pool: Array = fresh if not fresh.is_empty() else any_item
 	if pool.is_empty():
 		return {}
+	if pool.size() > 1 and _practice_lemma != "":
+		var rotated: Array = []
+		for item in pool:
+			if str(item["lemma"]) != _practice_lemma:
+				rotated.append(item)
+		if not rotated.is_empty():
+			pool = rotated
 	return pool[0]
 
 
@@ -376,6 +447,9 @@ func _practice_reply(attempt: String) -> String:
 			"Mara points gently at the board. \"Not quite — look for %s up there. The word is %s. Come back when you're ready to try again.\""
 		) % [_practice_en, _practice_lemma]
 	var grant := _practice_grant()
+	_remember(PackedStringArray([_practice_lemma]))
+	meal_done = true
+	GameState.note_cafe_meal_done()
 	var line := "Mara smiles. \"That sounds lovely, dear.\""
 	if grant > 0:
 		line += " \"The learning program added %d pesos to your card for practice.\"" % grant

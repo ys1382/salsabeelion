@@ -14,7 +14,12 @@ def main() -> int:
     dialogue = DIALOGUE.read_text(encoding="utf-8")
     player = PLAYER.read_text(encoding="utf-8")
     assert "menu_read" in cafe, "order still requires reading the board first"
-    assert "café" in cafe and "té" in cafe and "muffin" in cafe
+    assert "A drink and a food" in cafe
+    assert "A drink y a food" in cafe
+    assert "say y instead of and" in cafe
+    assert "here we say y" in cafe
+    assert "needs_y" in cafe
+    assert "something to eat with it" in cafe
     assert "show_order_box" in dialogue
     assert "Type your order, then Enter" in dialogue
     assert "E — Close" in dialogue

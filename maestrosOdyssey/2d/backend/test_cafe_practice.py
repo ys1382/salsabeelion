@@ -14,8 +14,20 @@ def main() -> int:
     state = STATE.read_text(encoding="utf-8")
     dialogue = DIALOGUE.read_text(encoding="utf-8")
     assert "too_broke_to_order" in cafe
+    assert "cheapest_pair_price" in cafe
+    assert "A drink and a food" in cafe
+    assert "something to eat with it" in cafe
+    assert "a drink to go with it" in cafe
     assert "PRACTICE_PESOS" in cafe and "PRACTICE_MAX_DAY" in cafe
     assert "_remember" in cafe and "ordered" in cafe
+    practice = cafe.split("func _practice_reply", 1)[1].split("\nfunc ", 1)[0]
+    assert "_remember" in practice
+    assert "note_cafe_meal_done" in practice
+    pick = cafe.split("func _practice_pick", 1)[1].split("\nfunc ", 1)[0]
+    assert "rotated" in pick
+    broke = cafe.split("func too_broke_to_order", 1)[1].split("\nfunc ", 1)[0]
+    assert "cheapest_pair_price" in broke
+    assert "bal <= 0" not in broke
     assert "practice what's on the board" in cafe
     assert "learning program added" in cafe
     assert "show_order_box" in dialogue
