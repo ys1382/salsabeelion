@@ -4,7 +4,7 @@ extends Node
 # match takes pesos from the learning card in the same reply — no extra pay
 # tap. If anyone is seated, the cup stays at the counter until you have heard
 # their last line for the day. Three quiet seconds later Mara calls that it
-# is ready. You walk back and press E; it does not appear in your hands
+# is ready. You walk back and press T; it does not appear in your hands
 # before that. An empty room still hands it over in that same reply. Sit to
 # sip (D) and eat (F). After both are finished,
 # the empty cup and plate go in the dish cart, and you say her goodbye back
@@ -269,7 +269,7 @@ func _counter_while_waiting() -> String:
 	if not _tables_heard():
 		return "Mara shakes her head, gentle. \"Not yet. Hear the tables first — I'll call you.\""
 	if not called_out:
-		# She calls across the room. Pressing E early must not take that line.
+		# She calls across the room. Pressing T early must not take that line.
 		return ""
 	_put_in_hands()
 	return "Mara sets it in your hands. \"Here you go — that's ready.\""

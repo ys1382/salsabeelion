@@ -30,7 +30,7 @@ def main() -> int:
     assert "_sign_title" not in dialogue
     assert "text.strip_edges()" in dialogue
     player = PLAYER.read_text(encoding="utf-8")
-    assert 'it.data.get("id", "")) == "house_board"' in player
+    assert 'id == "house_board"' in player
     assert "DialogueUI.show_sign(line)" in player
     assert 'DialogueUI.show_line("", line)' in player, "drink menu still uses the chat panel"
     journal = JOURNAL.read_text(encoding="utf-8")

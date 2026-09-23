@@ -84,7 +84,7 @@ def main() -> int:
     assert "_place_street_signs" in builder
     player = (ROOT / "actors" / "player.gd").read_text(encoding="utf-8")
     assert "caption_for" in player
-    assert 'it.data.get("id", "")) == "house_board"' in player
+    assert 'id == "house_board"' in player
     hud = HUD.read_text(encoding="utf-8")
     assert "♥" not in hud and "MAX_HP" not in hud
     verify = VERIFY.read_text(encoding="utf-8")

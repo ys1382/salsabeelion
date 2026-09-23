@@ -17,7 +17,7 @@ Needs **Godot 4.7**. From this folder:
 1. `python3 tools/make_placeholder_assets.py` — once, unless you already have the local art packs under `assets/`
 2. Open `project.godot` and press Play
 
-WASD to move, **E** to talk / read / sit / go inside, Tab for the journal. Stand with **E** or walk away.
+WASD to move. **T** talks (a second **T** closes the line). **E** goes in and out of a door, and still takes the card and uses the dish cart. **R** reads the menu and the house rules. **S** sits and stands when you are at a chair; otherwise **S** walks down. **D** sips, **F** eats, Enter sends an order. Tab for the journal.
 
 Play starts at your cottage. A small arrow points to the next stop. Talk to the elder, pick up the learning card, go into Dragon's Brew, meet Mara, read the menu and house rules.
 
@@ -25,7 +25,7 @@ Play starts at your cottage. A small arrow points to the next stop. Talk to the 
 
 - Street + enterable Dragon's Brew
 - Elder prologue and prepaid learning card
-- Sit on benches with **E** (street bench and the café seat)
+- Sit on benches with **S** (street bench and the café seat)
 - Mara's locked Çampire line, then typed order after you read the menu (small cup/muffin in hand; sit and **D** sip / **F** eat)
 - Mara's wings overlay (Çampire read on the shared villager sheet; tail later)
 - Monday iguana + riverfolk neighbors (sea-ferry talk, merfolk not picking fights)

@@ -1,6 +1,6 @@
 extends CanvasLayer
 # Autoload. Two pieces of on-screen text: a small verb prompt that follows what
-# the player is standing next to ("E — Read"), and a panel for the line itself.
+# the player is standing next to ("T — Talk", "R — Read"), and a panel for the line itself.
 # Built in code so there is no .tscn to keep in sync with the script.
 #
 # The panel grows to fit its line rather than living in a fixed rect. At a 360px
@@ -26,6 +26,9 @@ var _order: LineEdit
 var _sign: PanelContainer
 var _sign_body: RichTextLabel
 var _sign_text := ""
+## Which key dismisses the open panel. Talk lines use T, the menu and house
+## rules use R, and a door, basket, cart, or look uses E.
+var close_key := "T"
 
 
 func _ready() -> void:
@@ -75,7 +78,7 @@ func _ready() -> void:
 	_hint = Label.new()
 	_hint.add_theme_font_size_override("font_size", HINT_SIZE)
 	_hint.add_theme_color_override("font_color", Color(0.78, 0.74, 0.62))
-	_hint.text = "E — Close"
+	_hint.text = "T — Close"
 	_hint.hide()
 	_box.add_child(_hint)
 
@@ -116,6 +119,8 @@ func show_line(speaker: String, text: String) -> void:
 	_speaker.visible = speaker != ""
 	_body.text = text
 	_body.show()
+	close_key = "T"
+	_hint.text = "T — Close"
 	_hint.show()
 	_fit(text, speaker != "")
 	_panel.show()
@@ -130,7 +135,14 @@ func show_sign(text: String) -> void:
 	_panel.hide()
 	_sign_text = text
 	_sign_body.text = text.strip_edges()
+	close_key = "R"
 	_sign.show()
+
+
+## After show_line, when this panel is not talk. The hint follows the key.
+func set_close_key(key: String) -> void:
+	close_key = key
+	_hint.text = "%s — Close" % key
 
 
 func show_order_box(speaker: String = "Mara") -> void:
@@ -263,5 +275,5 @@ func _build_sign() -> void:
 	var sign_hint := Label.new()
 	sign_hint.add_theme_font_size_override("font_size", HINT_SIZE)
 	sign_hint.add_theme_color_override("font_color", Color(0.42, 0.32, 0.22))
-	sign_hint.text = "E — Close"
+	sign_hint.text = "R — Close"
 	col.add_child(sign_hint)

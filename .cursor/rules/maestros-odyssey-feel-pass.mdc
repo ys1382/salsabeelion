@@ -43,11 +43,11 @@ If port 8765 is busy, pick another (e.g. `8766`). Open `http://127.0.0.1:<port>/
 
 Run on a **fresh page load** (hard refresh). Intro is per visit (`sessionStorage`), not permanent save.
 
-7. **Mara first talk** — **E** near Mara: *Laughs gently*, left-hand wave, Çampire line. Must **not** skip to menu nudge or order on first visit.
+7. **Mara first talk** — **T** near Mara: *Laughs gently*, left-hand wave, Çampire line. Must **not** skip to menu nudge or order on first visit.
 8. **Menu nudge** — talk again **before** reading menu: she points you to the board.
-9. **Read menu** — **R** facing drink menu: board text opens.
-10. **Order prompt** — **E** again: “What’s your order?” + Spanish hint in parentheses.
-11. **Order box** — **E** to dismiss prompt: empty box, blinking cursor, can type **more than one letter** (try **Té** or **croissant**).
+9. **Read menu** — **R** facing drink menu: board text opens. **R** again closes it.
+10. **Order prompt** — **T** again: “What’s your order?” + Spanish hint in parentheses.
+11. **Order box** — **T** to dismiss prompt: empty box, blinking cursor, can type **more than one letter** (try **Té** or **croissant**).
 12. **Typing not stuck** — game movement keys must **not** steal keys while the order box is open.
 
 ## Fix patterns

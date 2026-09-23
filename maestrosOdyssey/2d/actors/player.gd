@@ -96,7 +96,7 @@ func _physics_process(delta: float) -> void:
 		_play("idle")
 		return
 	if seated:
-		# Stay seated unless E. D is sip (and walk-right when standing);
+		# Stay seated unless S. D is sip (and walk-right when standing);
 		# walking must not stand or sit you.
 		velocity = Vector2.ZERO
 		move_and_slide()
@@ -154,13 +154,14 @@ func _update_focus() -> void:
 			bits.append("D — Sip")
 		if CafeOrder.muffin_left > 0:
 			bits.append("F — Eat")
-		bits.append("E — Stand")
+		bits.append("S — Stand")
 		DialogueUI.show_prompt("   ".join(bits))
 		return
 	if focus is Interactable:
-		DialogueUI.show_prompt("E — %s" % (focus as Interactable).prompt())
+		var it := focus as Interactable
+		DialogueUI.show_prompt("%s — %s" % [_prompt_key(it), it.prompt()])
 	elif focus is Npc:
-		DialogueUI.show_prompt("E — Talk to %s" % (focus as Npc).display_name)
+		DialogueUI.show_prompt("T — Talk to %s" % (focus as Npc).display_name)
 	else:
 		DialogueUI.hide_prompt()
 
@@ -180,11 +181,82 @@ func _unhandled_input(event: InputEvent) -> void:
 			if try_bite():
 				get_viewport().set_input_as_handled()
 				return
+		if _key_down(event, KEY_S) and not DialogueUI.is_open():
+			stand_up()
+			get_viewport().set_input_as_handled()
+			return
+	if _key_down(event, KEY_T):
+		if _try_close("T"):
+			get_viewport().set_input_as_handled()
+			return
+		if not DialogueUI.is_open() and focus is Npc:
+			_talk_npc(focus as Npc)
+			get_viewport().set_input_as_handled()
+		return
+	if _key_down(event, KEY_R):
+		if _try_close("R"):
+			get_viewport().set_input_as_handled()
+			return
+		if not DialogueUI.is_open() and focus is Interactable \
+				and _prompt_key(focus as Interactable) == "R":
+			_use_prop(focus as Interactable)
+			get_viewport().set_input_as_handled()
+		return
+	if _key_down(event, KEY_S) and not seated and not DialogueUI.is_open() \
+			and focus is Interactable and _prompt_key(focus as Interactable) == "S":
+		var host := (focus as Interactable).get_parent() as Node2D
+		if host != null:
+			sit_on(host)
+		get_viewport().set_input_as_handled()
+		return
 	if event.is_action_pressed("interact"):
 		interact_pressed.emit()
-		use_focus()
+		if _try_close("E"):
+			get_viewport().set_input_as_handled()
+			return
+		if DialogueUI.is_open() or seated:
+			return
+		if focus is Interactable and _prompt_key(focus as Interactable) == "E":
+			_use_prop(focus as Interactable)
+			get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("attack"):
 		swing()
+
+
+func _key_down(event: InputEvent, key: Key) -> bool:
+	return event is InputEventKey and event.pressed and not event.echo \
+		and (event.keycode == key or event.physical_keycode == key)
+
+
+## T talks. R is only the drink menu and the house-rules board. S sits.
+## E is doors, plus the basket, the dish cart, and the looks left on E.
+func _prompt_key(it: Interactable) -> String:
+	var id := str(it.data.get("id", ""))
+	if id == "drink_menu" or id == "house_board":
+		return "R"
+	if it.verb == "sit" and it.enters == "" and it.gives == "":
+		return "S"
+	return "E"
+
+
+func _try_close(key: String) -> bool:
+	if DialogueUI.is_ordering() or not DialogueUI.is_open():
+		return false
+	if DialogueUI.close_key != key:
+		return false
+	DialogueUI.close()
+	_after_panel_close()
+	return true
+
+
+func _after_panel_close() -> void:
+	CafeOrder.on_speech_closed()
+	if CafeOrder.open_box_on_close:
+		CafeOrder.open_box_on_close = false
+		DialogueUI.show_order_box()
+	elif ElderReport.open_box_on_close:
+		ElderReport.open_box_on_close = false
+		DialogueUI.show_order_box(ElderReport.speaker_name())
 
 
 # --- combat -------------------------------------------------------------------
@@ -289,13 +361,7 @@ func use_focus() -> String:
 		return ""
 	if DialogueUI.is_open():
 		DialogueUI.close()
-		CafeOrder.on_speech_closed()
-		if CafeOrder.open_box_on_close:
-			CafeOrder.open_box_on_close = false
-			DialogueUI.show_order_box()
-		elif ElderReport.open_box_on_close:
-			ElderReport.open_box_on_close = false
-			DialogueUI.show_order_box(ElderReport.speaker_name())
+		_after_panel_close()
 		return ""
 	if seated:
 		stand_up()
@@ -307,57 +373,69 @@ func use_focus() -> String:
 			if host != null:
 				sit_on(host)
 			return "sit"
-		var line := it.use()
-		_refresh_held()
-		# Entering a building and leaving one both return "" — the change of
-		# scene IS the response, and an empty panel over it would just be in
-		# the way.
-		if line != "":
-			if str(it.data.get("id", "")) == "house_board":
-				DialogueUI.show_sign(line)
-			else:
-				DialogueUI.show_line("", line)
-		return "interactable"
+		return _use_prop(it)
 	if focus is Npc:
-		var npc := focus as Npc
-		npc.attend(global_position)
-		var gift := npc.accept_item()
-		npc.met = true
-		if npc.npc_id == "mara":
-			var mara_line := CafeOrder.talk(npc)
-			if mara_line != "":
-				DialogueUI.show_line(npc.display_name, mara_line)
-			return "talk"
-		if npc.npc_id == "elder":
-			var report := ElderReport.talk(npc)
-			if report != "":
-				DialogueUI.show_line(npc.display_name, report)
-				return "talk"
-		var phrase := CafePhrasesScript.line_for(npc.npc_id, GameState.day_index, ElderReport.needs_revisit)
-		if phrase != "":
-			npc.grant_if_any()
-			CafeOrder.note_guest_spoke(npc.npc_id, phrase, true)
-			DialogueUI.show_line(npc.display_name, phrase)
-			return "talk"
-		if npc.has_scripted() or GameState.offline_mode or not LLMClient.backend_available:
-			if gift != "":
-				DialogueUI.show_line(npc.display_name,
-					"You hand over %s. They turn it over and over in their hands."
-						% GameState.item_name(gift))
-				return "give"
-			npc.grant_if_any()
-			var spoken := npc.next_scripted_line()
-			CafeOrder.note_guest_spoke(npc.npc_id, spoken, false)
-			DialogueUI.show_line(npc.display_name, spoken)
-			return "talk"
-		if gift != "":
-			DialogueUI.show_thinking(npc.display_name)
-			LLMClient.request_dialogue(npc.npc_id, "", gift)
-			return "talk"
-		DialogueUI.show_thinking(npc.display_name)
-		LLMClient.request_dialogue(npc.npc_id, "")
-		return "talk"
+		return _talk_npc(focus as Npc)
 	return ""
+
+
+func _use_prop(it: Interactable) -> String:
+	var line := it.use()
+	_refresh_held()
+	# Entering a building and leaving one both return "" — the change of
+	# scene IS the response, and an empty panel over it would just be in
+	# the way.
+	if line != "":
+		var id := str(it.data.get("id", ""))
+		if id == "house_board":
+			DialogueUI.show_sign(line)
+		elif id == "drink_menu":
+			DialogueUI.show_line("", line)
+			DialogueUI.set_close_key("R")
+		else:
+			DialogueUI.show_line("", line)
+			DialogueUI.set_close_key("E")
+	return "interactable"
+
+
+func _talk_npc(npc: Npc) -> String:
+	npc.attend(global_position)
+	var gift := npc.accept_item()
+	npc.met = true
+	if npc.npc_id == "mara":
+		var mara_line := CafeOrder.talk(npc)
+		if mara_line != "":
+			DialogueUI.show_line(npc.display_name, mara_line)
+		return "talk"
+	if npc.npc_id == "elder":
+		var report := ElderReport.talk(npc)
+		if report != "":
+			DialogueUI.show_line(npc.display_name, report)
+			return "talk"
+	var phrase := CafePhrasesScript.line_for(npc.npc_id, GameState.day_index, ElderReport.needs_revisit)
+	if phrase != "":
+		npc.grant_if_any()
+		CafeOrder.note_guest_spoke(npc.npc_id, phrase, true)
+		DialogueUI.show_line(npc.display_name, phrase)
+		return "talk"
+	if npc.has_scripted() or GameState.offline_mode or not LLMClient.backend_available:
+		if gift != "":
+			DialogueUI.show_line(npc.display_name,
+				"You hand over %s. They turn it over and over in their hands."
+					% GameState.item_name(gift))
+			return "give"
+		npc.grant_if_any()
+		var spoken := npc.next_scripted_line()
+		CafeOrder.note_guest_spoke(npc.npc_id, spoken, false)
+		DialogueUI.show_line(npc.display_name, spoken)
+		return "talk"
+	if gift != "":
+		DialogueUI.show_thinking(npc.display_name)
+		LLMClient.request_dialogue(npc.npc_id, "", gift)
+		return "talk"
+	DialogueUI.show_thinking(npc.display_name)
+	LLMClient.request_dialogue(npc.npc_id, "")
+	return "talk"
 
 
 func _on_anim_finished() -> void:

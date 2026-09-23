@@ -27,17 +27,22 @@ def main() -> int:
     assert "something to eat with it" in cafe
     assert "show_order_box" in dialogue
     assert "Type your order, then Enter" in dialogue
-    assert "E — Close" in dialogue
+    assert "T — Close" in dialogue
+    assert "R — Close" in dialogue
     assert "_hint.hide()" in dialogue
     assert (
         '\tif DialogueUI.is_ordering():\n'
         '\t\treturn ""\n'
         '\tif DialogueUI.is_open():\n'
         '\t\tDialogueUI.close()'
-    ) in player, "E must still close speech so Mara's type box can open"
+    ) in player, "closing a panel must still run so Mara's type box can open"
+    assert "T — Talk" in player
+    assert "S — Stand" in player
+    assert '_prompt_key' in player
+    assert 'id == "drink_menu" or id == "house_board"' in player
     physics = player.split("func _physics_process", 1)[1].split("func _update_focus", 1)[0]
     seated = physics.split("if seated:", 1)[1]
-    assert "stand_up" not in seated, "D / WASD must not stand you up; E — Stand does"
+    assert "stand_up" not in seated, "D / WASD must not stand you up; S — Stand does"
     project = (ROOT / "project.godot").read_text(encoding="utf-8")
     interact = project.split("interact={", 1)[1].split("attack={", 1)[0]
     assert 'keycode":69' in interact

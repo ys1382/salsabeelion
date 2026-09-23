@@ -79,6 +79,7 @@ func enter(building_id: String, flavour: String = "") -> void:
 		call_deferred("_show_night_pass")
 	elif flavour != "":
 		DialogueUI.show_line("", flavour)
+		DialogueUI.set_close_key("E")
 
 
 func _show_night_pass() -> void:
