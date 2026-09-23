@@ -77,6 +77,11 @@ func entry_point() -> Vector2:
 	return Catalog.cell_to_anchor(Vector2i(room.x / 2, room.y - 1))
 
 
+## The forest clearing overrides this. Rooms leave through the doorway, not a tile.
+func covers_exit(_pos: Vector2) -> bool:
+	return false
+
+
 func _make_layers() -> void:
 	# A backdrop far larger than the room, because the camera cannot always be
 	# clamped to a space smaller than the viewport — without it the area past

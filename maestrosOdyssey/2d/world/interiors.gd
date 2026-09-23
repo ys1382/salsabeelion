@@ -1,4 +1,6 @@
 extends Node
+const Shade := preload("res://world/shade_path.gd")
+const ClearingScript := preload("res://world/clearing.gd")
 # Autoload. Owns going inside a building and coming back out.
 #
 # The outdoor world is hidden and frozen rather than torn down, so the village is
@@ -14,10 +16,101 @@ var current: Interior = null
 
 var _outside_pos := Vector2.ZERO
 var _player: Player = null
+## After a path crossing, ignore the mouth and the way back for a moment
+## so the two screens cannot bounce.
+var _travel_ready_at := 0
 
 
 func inside() -> bool:
 	return current != null
+
+
+func _physics_process(_delta: float) -> void:
+	if Time.get_ticks_msec() < _travel_ready_at:
+		return
+	if inside():
+		if current.building_id == "forest_clearing":
+			var p := _player
+			if p != null and is_instance_valid(p) and current.covers_exit(p.global_position):
+				leave()
+		return
+	var root := WorldManager.world_root
+	if root == null or root.player == null:
+		return
+	if _on_forest_mouth((root.player as Node2D).global_position):
+		enter_clearing("forest_clearing")
+
+
+## The tree-gap mouth on the left edge of the village.
+func _on_forest_mouth(pos: Vector2) -> bool:
+	var root := WorldManager.world_root
+	if root == null:
+		return false
+	var here := Shade.cell_of(pos)
+	var size: Vector2i = (root as WorldBuilder).map_size()
+	for path in root.world.get("map", {}).get("shade_paths", []):
+		if str(path.get("enters", "")) != "forest_clearing":
+			continue
+		if Shade.mouth_cells(path, size).has(here):
+			return true
+	return false
+
+
+func _return_from_forest() -> Vector2:
+	var root := WorldManager.world_root
+	if root == null:
+		return _outside_pos
+	for path in root.world.get("map", {}).get("shade_paths", []):
+		if str(path.get("enters", "")) != "forest_clearing":
+			continue
+		var back: Dictionary = path.get("return", {})
+		return Shade.center_of(Vector2i(int(back.get("x", 3)), int(back.get("y", 8))))
+	return _outside_pos
+
+
+func _block_travel() -> void:
+	_travel_ready_at = Time.get_ticks_msec() + 450
+
+
+## Same hide-and-return as a house, for the forest clearing. Walking through
+## the tree gap is the door. Does not turn the day.
+func enter_clearing(place_id: String) -> void:
+	if inside() or Time.get_ticks_msec() < _travel_ready_at:
+		return
+	var root := WorldManager.world_root
+	if root == null:
+		return
+	var p := root.player as Player
+	if p == null:
+		return
+	var spec: Dictionary = root.world.get("clearings", {}).get(place_id, {})
+	if spec.is_empty():
+		push_warning("cannot enter '%s': no clearing" % place_id)
+		return
+
+	_player = p
+	if p.seated:
+		p.stand_up(false)
+	_outside_pos = _return_from_forest()
+
+	var clearing = ClearingScript.new()
+	clearing.name = "Clearing_%s" % place_id
+	add_child(clearing)
+	clearing.build_clearing(place_id, spec)
+	current = clearing
+
+	root.visible = false
+	root.process_mode = Node.PROCESS_MODE_DISABLED
+
+	p.reparent(clearing.get_node("Objects"), false)
+	p.position = clearing.entry_point()
+	p.facing = Vector2.UP
+	p.y_sort_enabled = false
+	p.velocity = Vector2.ZERO
+	p.agent_input = Vector2.ZERO
+	_clamp_camera(p, clearing.pixel_size())
+	_block_travel()
+	entered.emit(place_id)
 
 
 ## `flavour` is the door interactable's text, shown once the player is actually
@@ -96,7 +189,9 @@ func leave() -> void:
 		return
 	var root := WorldManager.world_root
 	var p := _player
-	current.exit_requested.disconnect(leave)
+	var leaving_clearing := current.building_id == "forest_clearing"
+	if current.exit_requested.is_connected(leave):
+		current.exit_requested.disconnect(leave)
 
 	if root != null and p != null and is_instance_valid(p):
 		if p.seated:
@@ -107,10 +202,14 @@ func leave() -> void:
 		p.reparent(root.get_node("Objects"), false)
 		# Back on the doorstep, not inside the wall. The saved position is where
 		# they were standing when they pressed E, which is by definition a legal
-		# tile they walked to.
+		# tile they walked to. The forest path saves a spot on that path
+		# instead, just short of the mouth.
 		p.global_position = _outside_pos
 		p.velocity = Vector2.ZERO
 		p.agent_input = Vector2.ZERO
+		if leaving_clearing:
+			p.facing = Vector2.RIGHT
+			_block_travel()
 		if current != null and current.building_id == "dragons_brew":
 			CafeOrder.leave_cafe()
 		_clamp_camera(p, root.pixel_size())

@@ -26,6 +26,7 @@ if grep -q 'new Engine' "$WWW/index.html" 2>/dev/null && ls "$WWW"/*.wasm >/dev/
   python3 "$ROOT/maestrosOdyssey/2d/backend/test_house_rules_sign.py"
   python3 "$ROOT/maestrosOdyssey/2d/backend/test_waypoint.py"
   python3 "$ROOT/maestrosOdyssey/2d/backend/test_species_tints.py"
+  python3 "$ROOT/maestrosOdyssey/2d/backend/test_forest_clearing.py"
   echo "Maestro's verify: OK (Godot web)"
   exit 0
 fi

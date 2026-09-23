@@ -43,6 +43,14 @@
         ],
         "width": 2
       }
+    ],
+    "shade_paths": [
+      {
+        "id": "forest_path",
+        "enters": "forest_clearing",
+        "mouth": { "x": 0, "y": 6, "w": 2, "h": 4 },
+        "return": { "x": 3, "y": 8 }
+      }
     ]
   },
   "player_start": { "x": 10, "y": 11 },
@@ -67,15 +75,57 @@
     },
     {
       "id": "tree_n",
-      "asset": "tree.tree_emerald_1",
+      "asset": "tree.tree_emerald_4",
       "x": 0,
-      "y": 2
+      "y": 0
+    },
+    {
+      "id": "border_tree_nw",
+      "asset": "tree.tree_emerald_2",
+      "x": 3,
+      "y": 0
+    },
+    {
+      "id": "border_tree_s",
+      "asset": "tree.tree_emerald_4",
+      "x": 0,
+      "y": 10
+    },
+    {
+      "id": "border_tree_s_front",
+      "asset": "tree.tree_emerald_2",
+      "x": 3,
+      "y": 10
+    },
+    {
+      "id": "border_bush_elder_a",
+      "asset": "tree.bush_emerald_3",
+      "x": 0,
+      "y": 16
+    },
+    {
+      "id": "border_bush_elder_b",
+      "asset": "tree.bush_emerald_3",
+      "x": 0,
+      "y": 18
+    },
+    {
+      "id": "border_bush_elder_c",
+      "asset": "tree.bush_emerald_4",
+      "x": 0,
+      "y": 20
+    },
+    {
+      "id": "border_tree_s2",
+      "asset": "tree.tree_emerald_2",
+      "x": 0,
+      "y": 22
     },
     {
       "id": "tree_s",
       "asset": "tree.tree_emerald_2",
-      "x": 1,
-      "y": 24
+      "x": 0,
+      "y": 26
     },
     {
       "id": "tree_e",
@@ -500,6 +550,32 @@
           "needs_item": "",
           "locked_text": ""
         }
+      ]
+    }
+  },
+  "clearings": {
+    "forest_clearing": {
+      "room": { "x": 16, "y": 10 },
+      "entry": { "x": 7, "y": 5 },
+      "exit": { "x": 7, "y": 8, "w": 2, "h": 2 },
+      "objects": [
+        { "id": "clearing_tree_nw", "asset": "tree.tree_emerald_1", "x": 0, "y": 0 },
+        { "id": "clearing_tree_n", "asset": "tree.tree_emerald_2", "x": 4, "y": 0 },
+        { "id": "clearing_bush_n1", "asset": "tree.bush_emerald_6", "x": 7, "y": 0 },
+        { "id": "clearing_bush_n2", "asset": "tree.bush_emerald_7", "x": 8, "y": 1 },
+        { "id": "clearing_bush_n3", "asset": "tree.bush_emerald_5", "x": 10, "y": 0 },
+        { "id": "clearing_tree_ne", "asset": "tree.tree_emerald_1", "x": 12, "y": 0 },
+        { "id": "clearing_bush_w", "asset": "tree.bush_emerald_1", "x": 0, "y": 4 },
+        { "id": "clearing_tree_sw", "asset": "tree.tree_emerald_2", "x": 0, "y": 6 },
+        { "id": "clearing_bush_e", "asset": "tree.bush_emerald_1", "x": 13, "y": 4 },
+        { "id": "clearing_tree_se", "asset": "tree.tree_emerald_2", "x": 13, "y": 6 },
+        { "id": "clearing_bush_s1", "asset": "tree.bush_emerald_2", "x": 3, "y": 8 },
+        { "id": "clearing_bush_s2", "asset": "tree.bush_emerald_4", "x": 6, "y": 8 },
+        { "id": "clearing_bush_s3", "asset": "tree.bush_emerald_3", "x": 9, "y": 8 },
+        { "id": "clearing_stump", "asset": "prop.chopped_tree_1", "x": 4, "y": 5 },
+        { "id": "clearing_rock_a", "asset": "rock.rock_brown_4", "x": 10, "y": 5 },
+        { "id": "clearing_rock_b", "asset": "rock.rock_brown_1", "x": 4, "y": 7 },
+        { "id": "clearing_rock_c", "asset": "rock.rock_brown_6", "x": 11, "y": 6 }
       ]
     }
   },

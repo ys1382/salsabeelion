@@ -44,6 +44,7 @@ func build(w: Dictionary) -> void:
 	world = w
 	_make_layers()
 	_paint_terrain()
+	_paint_shade_paths()
 	_place_objects()
 	_spawn_actors()
 	built.emit(w)
@@ -201,6 +202,12 @@ func _path_cells(path: Dictionary, size: Vector2i) -> Array[Vector2i]:
 						seen[c] = true
 						out.append(c)
 	return out
+
+
+## Forest mouth/return live in map.shade_paths. The village no longer paints
+## a dark strip — the clearing itself is the dark grass.
+func _paint_shade_paths() -> void:
+	pass
 
 
 # --- objects and actors ------------------------------------------------------
