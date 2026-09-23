@@ -52,6 +52,15 @@ def main() -> int:
     fiance = next(n for n in tuesday if n["id"] == "werewolf_fiance")
     sister = next(n for n in tuesday if n["id"] == "werewolf_sister")
     vampire = next(n for n in tuesday if n["id"] == "vampire_neighbor")
+    # Door is bottom-center (x 7). Tuesday people stay off that middle walk.
+    assert int(fiance["inside_x"]) == 1 and int(fiance["inside_y"]) == 8
+    assert fiance.get("facing") == "right"
+    assert int(sister["inside_x"]) == 5 and int(sister["inside_y"]) == 8
+    assert sister.get("facing") == "left"
+    assert int(vampire["inside_x"]) == 0 and int(vampire["inside_y"]) == 7
+    assert vampire.get("facing") == "right"
+    for n in tuesday:
+        assert int(n["inside_x"]) not in (6, 7, 8)
     assert fiance.get("species") == "werewolf"
     assert sister.get("species") == "werewolf"
     assert vampire.get("species") == "vampire"
@@ -69,6 +78,13 @@ def main() -> int:
     assert "menu_read" in beats and "house_rules" in beats
     seats = {it["id"] for it in interior["interactables"]}
     assert "cafe_seat" in seats
+    seat = next(it for it in interior["interactables"] if it["id"] == "cafe_seat")
+    assert int(seat["x"]) == 5 and int(seat["y"]) == 5
+    plant = next(o for o in interior["objects"] if o["id"] == "cafe_plant")
+    assert int(plant["x"]) == 1 and int(plant["y"]) == 5
+    gd = (Path(__file__).resolve().parents[1] / "world" / "interiors.gd").read_text()
+    assert '"id": "cafe_tuesday_table"' in gd
+    assert '"x": 2,\n\t\t"y": 7,' in gd
     houses = {o["id"] for o in world["objects"]}
     assert "player_house" in houses
     home = world["interiors"]["player_house"]

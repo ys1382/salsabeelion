@@ -270,7 +270,7 @@ This chat’s later list **plus** original MO items **not in the Godot build yet
 - [x] **Leave-café close-out (paired — shipped 2026-09-22)** — after the cup and plate are finished, put them in the dish cart by the counter. Mara says **adiós** (Wednesday: **buenas noches**) and you type it back before the doorway lets you out. The door tiles stay put. Morning still comes when you step into your house.
   - **Dishes vs the street (locked):** you **cannot** leave the café, walk the block, or end the day still holding dishes. Empty cup/plate stay in hand **inside** until the cart. Mara stops you at the door. You will not wander outside with them until you come back.
 - [ ] **Talk to every café customer before you leave** (owner — 2026-09-22) — an **arrow** points at the other people in the room (same idea as the cottage waypoint). You **cannot leave** until you have talked to **everyone** at the tables, not only Mara. Door waits; not a quiz.
-- [ ] **Tables don’t block the café entrance** (owner — 2026-09-22) — pin only. Tables stay out of the doorway so you can walk in and out.
+- [x] **Tables don’t block the café entrance** (owner — 2026-09-22) — Tuesday’s extra table sits on the left. The middle walk from the door to the counter stays open every day.
 - [ ] **NPCs face you when you talk** (owner — 2026-09-22) — pin only. They turn toward you for the conversation.
 - [ ] **Mara reads Bombay-black, evenly** (owner — 2026-09-22) — pin only. On screen she is dark brown, and not the same brown all over. She is not black at all.
 - [ ] **Merfolk read blue** (owner — 2026-09-22) — pin only. The Monday riverfolk is a crocodilian, their own people, not a merfolk subtype, so they do not take the merfolk blue. Actual merfolk still need to be blue.

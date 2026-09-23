@@ -125,15 +125,16 @@ func leave() -> void:
 	left.emit()
 
 
-## Solid center table only on Tuesday, so Monday's path to Mara stays open.
+## Tuesday's extra table stays on the left. The middle walk from the door
+## to the counter stays open every day.
 func _spawn_tuesday_table(building_id: String, interior: Interior) -> void:
 	if building_id != "dragons_brew" or GameState.weekday != "Tuesday":
 		return
 	interior._instance_interior_asset({
 		"id": "cafe_tuesday_table",
 		"asset": "prop.table_medium_1",
-		"x": 6,
-		"y": 6,
+		"x": 2,
+		"y": 7,
 	})
 
 
