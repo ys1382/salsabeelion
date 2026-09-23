@@ -182,17 +182,8 @@ func _place_lamp_pools(builder: WorldBuilder) -> void:
 		var host := builder.entities.get(entry["id"]) as Node2D
 		if host == null:
 			continue
-		# Soft warm pool on the ground under the post — not on the wood.
-		var pool := Sprite2D.new()
-		pool.texture = _soft
-		pool.centered = true
-		pool.position = host.position + Vector2(0, 4)
-		pool.scale = Vector2(0.9, 0.42)
-		pool.modulate = Color(1.0, 0.7, 0.35, 0.55)
-		pool.z_index = -1
-		_add_add_blend(pool)
-		_fx.add_child(pool)
-		# Brighten each hanging lantern on the fixture itself.
+		# Ground pools under the post read as a second lantern on the dirt.
+		# Keep light on the hanging fixtures only.
 		for offset in FIXTURES:
 			var lantern := Sprite2D.new()
 			lantern.texture = _soft
