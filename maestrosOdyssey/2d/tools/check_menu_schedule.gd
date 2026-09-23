@@ -303,5 +303,64 @@ func _initialize() -> void:
 	assert(later.contains("Adiós, y buenas noches"), later)
 	var later_ok: String = cafe.reply_for("adios y buenas noches")
 	assert(later_ok == "Mara smiles and nods.")
+
+	# Seated guests hold the cup at the counter until their last line, then
+	# Mara calls three seconds after that box closes. Pickup is a later talk.
+	gs.day_index = 1
+	gs._sync_clock()
+	cafe.reset_session()
+	gs.world = {
+		"npcs": [
+			{"id": "mara", "inside": "dragons_brew"},
+			{
+				"id": "iguana_neighbor",
+				"inside": "dragons_brew",
+				"scripted_lines": ["Ferry talk.", "Merfolk aren't picking fights."],
+			},
+			{
+				"id": "riverfolk_neighbor",
+				"inside": "dragons_brew",
+				"scripted_lines": ["Coffee first.", "People still need to get home."],
+			},
+			{
+				"id": "werewolf_fiance",
+				"inside": "dragons_brew",
+				"weekdays": ["Tuesday"],
+				"scripted_lines": ["Morning.", "We're here for the tea."],
+			},
+		],
+	}
+	gs.take_item("learning_card")
+	gs.card_balance = 400
+	var held: String = cafe.reply_for("café and muffin")
+	assert(held.contains("I'll call you when it's ready"), held)
+	assert(not held.contains("Here you go"), held)
+	assert(bool(cafe.awaiting_serve))
+	assert(not cafe.may_leave())
+	assert(int(cafe.cup_left) == 0)
+	assert(int(gs.card_balance) == 400 - 63)
+	cafe.note_guest_spoke("iguana_neighbor", "Ferry talk.", false)
+	cafe.note_guest_spoke("werewolf_fiance", "We're here for the tea.", false)
+	assert(not cafe._tables_heard())
+	cafe.on_speech_closed()
+	assert(float(cafe._callout_left) < 0.0)
+	cafe.note_guest_spoke("iguana_neighbor", "Merfolk aren't picking fights.", false)
+	cafe.note_guest_spoke("riverfolk_neighbor", "People still need to get home.", false)
+	assert(cafe._tables_heard())
+	var early: String = cafe._counter_while_waiting()
+	assert(early.contains("Give the room a moment"), early)
+	assert(bool(cafe.awaiting_serve))
+	cafe.on_speech_closed()
+	assert(float(cafe._callout_left) == 3.0)
+	cafe._process(3.0)
+	assert(bool(cafe.called_out))
+	assert(float(cafe._callout_left) < 0.0)
+	var picked: String = cafe._counter_while_waiting()
+	assert(picked.contains("Here you go"), picked)
+	assert(not bool(cafe.awaiting_serve))
+	assert(int(cafe.cup_left) == 4)
+	assert(cafe.may_leave())
+	gs.world = {}
+	cafe.reset_session()
 	print("menu_schedule_runtime: ok")
 	quit()

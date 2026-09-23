@@ -291,7 +291,7 @@ func _run(cmd: Dictionary) -> void:
 			out["outcome"] = outcome
 			# For anything but a model reply the visible line is whatever the
 			# panel is showing — pickup text, locked_text, the gift line.
-			out["line"] = _last_line if outcome == "talk" else DialogueUI.body()
+			out["line"] = _last_line if _last_line != "" else DialogueUI.body()
 			_reply(out)
 		"talk":
 			await _talk(str(cmd.get("id", "")))

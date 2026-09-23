@@ -6,7 +6,9 @@ alwaysApply: false
 
 # Maestro's — pinning Mara typed order (gold)
 
-Owner pinned 2026-09-21: typing an order at Mara **works**, and the **sip / eat hold** works. Do not remove the type box, skip the drink in the same reply, or leave the player waiting on a drink that never arrives.
+Owner pinned 2026-09-21: typing an order at Mara **works**, and the **sip / eat hold** works. Do not remove the type box, or leave the player waiting on a drink that never arrives.
+
+Owner updated 2026-09-22: if anyone is seated, the food stays at the counter until those people have said their last line for the day. Three seconds after that box closes, Mara says it is ready. The player walks back and presses **E** to take it. It does not appear in their hands on its own. An empty room still hands the order over in the accept reply.
 
 ## Locked flow
 
@@ -15,13 +17,14 @@ Owner pinned 2026-09-21: typing an order at Mara **works**, and the **sip / eat 
 3. **E** Mara — "What's your order?"
 4. **E** again — type box. WASD must not steal keys. **Enter** submits.
 5. Match **today's board**. A paid order is **one drink and one food**. Day 1 is **café / té / muffin** (English coffee/tea too) plus Spanish extras **leche / azúcar**, and food may be **calentado**. Later café days follow the #26 unlock schedule in `cafe_order.gd` (**crema** Saturday, **frío** Sunday — Spanish once each appears on the board; do not hint they exist before then). Echo the **Spanish lemma**. From **Wednesday**, the typed pair must use **y** (not *and*), and extras must use **con** (not *with*). **Wednesday's order prompt** is where Mara introduces both: *say y instead of and* and *extras use con, like con azúcar*. Later mid-week days keep the short *A drink y a food, con if you want extras.* If the card can't cover any pair, quiz board words instead (cycle; do not loop coffee).
-6. **Same reply, drink is ready** — and a **cup / muffin sprite** shows on the player (packs have no mug; custom pixels). Hide it when they leave the café. No kitchen timer. No "I'll get that started" hang.
+6. **Pesos come off when she accepts the order.** If the room is empty, or everyone seated has already been heard, that same reply hands the drink over and the **cup / muffin sprite** shows. If people are still unheard, she says she will call. The sprite waits until the player walks back and presses **E** after her call. Hide it when they leave the café. No on-screen countdown. No "I'll get that started" hang. The wait is the table talks, then three quiet seconds, then the walk back.
 
 ## Do not
 
 - Drop the type box when adding pay, sip, or sit-to-dine later
-- Wait minutes (or any off-screen cook time) before the order finishes
+- Wait minutes, or add a countdown, before the order finishes
 - Add a second "tap your card" beat before the drink is in hand
+- Put the cup in the player's hands when Mara only calls that it is ready
 - Say "here you go" with no visible drink or muffin
 - Send unmatched text to a silent fallback coffee without telling the player
 - Mix this gold with the elder full-screen opener or language/look picker (those are later)

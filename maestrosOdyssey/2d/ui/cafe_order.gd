@@ -2,7 +2,11 @@ extends Node
 # Dragon's Brew order at Mara. Menu must be read first; then a typed line is
 # matched against today's board. A paid order is one drink and one food. A
 # match takes pesos from the learning card in the same reply — no extra pay
-# tap, no kitchen wait. Sit to sip (D) and eat (F). After both are finished,
+# tap. If anyone is seated, the cup stays at the counter until you have heard
+# their last line for the day. Three quiet seconds later Mara calls that it
+# is ready. You walk back and press E; it does not appear in your hands
+# before that. An empty room still hands it over in that same reply. Sit to
+# sip (D) and eat (F). After both are finished,
 # the empty cup and plate go in the dish cart, and you say her goodbye back
 # before the door will let you out. Monday and Tuesday that is adiós, and
 # buenas noches. From Wednesday on — the day she teaches y — it is adiós, y
@@ -35,6 +39,16 @@ var _practice_earned_day := 0
 ## Paid order fully sipped/eaten this café day. Survives leaving the café so
 ## home entry can turn the weekday. Not a bed — stepping inside is enough.
 var meal_done := false
+## Paid, but the cup and plate are still at the counter.
+var awaiting_serve := false
+## Mara has already called across the room that the order is ready.
+var called_out := false
+## Seconds left before that call. Negative means no call is waiting.
+var _callout_left := -1.0
+## Guest id -> true once their last line for this day has been shown.
+var _heard := {}
+
+const CALLOUT_SEC := 3.0
 ## Empty cup and plate still in hand after the meal, until the dish cart.
 var carrying_dishes := false
 ## Dish cart used; waiting on the Spanish goodbye typed back.
@@ -75,6 +89,7 @@ func reset_session() -> void:
 	intro_done = false
 	meal_done = false
 	GameState.cafe_meal_done = false
+	clear_table_rounds()
 	_clear_order()
 
 
@@ -87,7 +102,7 @@ func reset_visit() -> void:
 ## Hide the cup/food for this visit. Does not turn the weekday — home does,
 ## and only after the meal was finished.
 func leave_cafe() -> void:
-	if taken and cup_left <= 0 and muffin_left <= 0:
+	if taken and not awaiting_serve and cup_left <= 0 and muffin_left <= 0:
 		_mark_meal_if_done()
 	_clear_order()
 
@@ -105,6 +120,9 @@ func _clear_order() -> void:
 	carrying_dishes = false
 	awaiting_bye = false
 	goodbye_done = false
+	awaiting_serve = false
+	called_out = false
+	_callout_left = -1.0
 	_drink = ""
 	_food = ""
 	_practicing = false
@@ -113,13 +131,28 @@ func _clear_order() -> void:
 	order_cleared.emit()
 
 
-## The café door stays where it is. This only refuses the leave until the
-## dishes are in the cart and the goodbye has been said back.
+## The café door stays where it is. After a paid order it also waits until
+## the food is in your hands. Then it waits on the dish cart and the goodbye.
 func may_leave() -> bool:
-	return not carrying_dishes and not awaiting_bye
+	return not awaiting_serve and not carrying_dishes and not awaiting_bye
 
 
 func leave_blocked_line() -> String:
+	if awaiting_serve:
+		if not _tables_heard():
+			return (
+				"Mara calls over before you reach the door. "
+				+ "\"Hear the tables first. I'll call when your order is ready.\""
+			)
+		if not called_out:
+			return (
+				"Mara calls over before you reach the door. "
+				+ "\"Give it a moment. I'll call you.\""
+			)
+		return (
+			"Mara calls over before you reach the door. "
+			+ "\"Your order's at the counter.\""
+		)
 	if carrying_dishes:
 		return (
 			"Mara calls over before you reach the door. "
@@ -127,6 +160,150 @@ func leave_blocked_line() -> String:
 		)
 	open_box_on_close = true
 	return "Mara is still waiting. Say it back before you go."
+
+
+## Next person to hear, or Mara once the food is waiting at the counter.
+## Empty outside the café, and whenever nothing is on order.
+func nav_target() -> String:
+	if not awaiting_serve:
+		return ""
+	if not Interiors.inside() or Interiors.current == null:
+		return ""
+	if Interiors.current.building_id != "dragons_brew":
+		return ""
+	var next := _next_unheard_id()
+	if next != "":
+		return next
+	return "mara"
+
+
+func clear_table_rounds() -> void:
+	_heard.clear()
+
+
+## A seated guest just said `line`. A phrase day is one line. Scripted days
+## count only when that line is their last one for the visit.
+func note_guest_spoke(npc_id: String, line: String, from_phrase: bool) -> void:
+	var guest := _guest_by_id(npc_id)
+	if guest.is_empty():
+		return
+	if from_phrase:
+		_heard[npc_id] = true
+		return
+	var lines = guest.get("scripted_lines", [])
+	if typeof(lines) != TYPE_ARRAY or lines.is_empty():
+		_heard[npc_id] = true
+		return
+	if line == str(lines[lines.size() - 1]):
+		_heard[npc_id] = true
+
+
+## The player just closed a speech box. The three quiet seconds start here,
+## so Mara does not talk over the last person.
+func on_speech_closed() -> void:
+	if not awaiting_serve or called_out:
+		return
+	if not _tables_heard():
+		_callout_left = -1.0
+		return
+	_callout_left = CALLOUT_SEC
+
+
+func _process(delta: float) -> void:
+	if _callout_left < 0.0:
+		return
+	if _speech_open():
+		return
+	_callout_left -= delta
+	if _callout_left > 0.0:
+		return
+	_callout_left = -1.0
+	_announce_ready()
+
+
+func _speech_open() -> bool:
+	if DialogueUI._panel == null:
+		return false
+	return DialogueUI.is_open() or DialogueUI.is_ordering()
+
+
+func _announce_ready() -> void:
+	if not awaiting_serve or called_out or not _tables_heard():
+		return
+	if _speech_open():
+		_callout_left = CALLOUT_SEC
+		return
+	called_out = true
+	var line := "Mara calls from the counter, once the table has gone quiet. \"Your order's ready.\""
+	if DialogueUI._panel == null:
+		return
+	DialogueUI.show_line("Mara", line)
+
+
+func _counter_while_waiting() -> String:
+	if not _tables_heard():
+		return "Mara shakes her head, gentle. \"Not yet. Hear the tables first — I'll call you.\""
+	if not called_out:
+		return "Mara glances at the counter. \"Almost. Give the room a moment.\""
+	_put_in_hands()
+	return "Mara sets it in your hands. \"Here you go — that's ready.\""
+
+
+func _hand_over_now(total: int) -> String:
+	_put_in_hands()
+	return (
+		"Mara repeats it back, calm and clear: \"%s.\"\n\n"
+		+ "That's %d pesos from your card. \"Here you go — that's ready.\""
+	) % [_echo(served), total]
+
+
+func _put_in_hands() -> void:
+	awaiting_serve = false
+	called_out = false
+	_callout_left = -1.0
+	cup_left = 4 if _drink != "" else 0
+	muffin_left = 3 if _food != "" else 0
+	order_ready.emit(served)
+
+
+func _guest_dicts() -> Array:
+	var out: Array = []
+	var npcs = GameState.world.get("npcs", [])
+	if typeof(npcs) != TYPE_ARRAY:
+		return out
+	for n in npcs:
+		if typeof(n) != TYPE_DICTIONARY:
+			continue
+		if str(n.get("inside", "")) != "dragons_brew":
+			continue
+		if str(n.get("id", "")) == "mara":
+			continue
+		if not Interiors._here_today(n):
+			continue
+		out.append(n)
+	return out
+
+
+func _guest_by_id(npc_id: String) -> Dictionary:
+	for n in _guest_dicts():
+		if str(n.get("id", "")) == npc_id:
+			return n
+	return {}
+
+
+func _tables_heard() -> bool:
+	for n in _guest_dicts():
+		if not bool(_heard.get(str(n.get("id", "")), false)):
+			return false
+	return true
+
+
+func _next_unheard_id() -> String:
+	for n in _guest_dicts():
+		var id := str(n.get("id", ""))
+		if id != "" and not bool(_heard.get(id, false)):
+			return id
+	return ""
 
 
 func use_dish_cart() -> String:
@@ -203,6 +380,8 @@ func talk(npc: Npc) -> String:
 	if not GameState.known("menu_read"):
 		return str(lines[1])
 	if taken:
+		if awaiting_serve:
+			return _counter_while_waiting()
 		if carrying_dishes:
 			return "Mara nods toward the cart. \"Dishes in the cart first. Then we say goodbye.\""
 		if awaiting_bye:
@@ -308,14 +487,17 @@ func reply_for(text: String) -> String:
 	served = lemmas
 	_drink = _lemma_of_kind(lemmas, "drink")
 	_food = _lemma_of_kind(lemmas, "food")
-	cup_left = 4 if _drink != "" else 0
-	muffin_left = 3 if _food != "" else 0
 	_remember(lemmas)
-	order_ready.emit(lemmas)
-	# Gold: ready in this same line, with a visible cup/food on the player.
+	if _guest_dicts().is_empty() or _tables_heard():
+		return _hand_over_now(total)
+	awaiting_serve = true
+	called_out = false
+	_callout_left = -1.0
+	cup_left = 0
+	muffin_left = 0
 	return (
 		"Mara repeats it back, calm and clear: \"%s.\"\n\n"
-		+ "That's %d pesos from your card. \"Here you go — that's ready.\""
+		+ "That's %d pesos from your card. \"I'll call you when it's ready.\""
 	) % [_echo(lemmas), total]
 
 
@@ -340,6 +522,8 @@ func bite() -> bool:
 
 
 func _mark_meal_if_done() -> void:
+	if awaiting_serve:
+		return
 	if taken and cup_left <= 0 and muffin_left <= 0:
 		meal_done = true
 		carrying_dishes = true

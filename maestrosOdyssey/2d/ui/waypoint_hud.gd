@@ -57,6 +57,9 @@ func current_id() -> String:
 		return ""
 	if CafeOrder.carrying_dishes:
 		return "dish_cart"
+	var table := CafeOrder.nav_target()
+	if table != "":
+		return table
 	if GameState.day_index >= 8 and not ElderReport.done:
 		return "elder"
 	if GameState.cafe_meal_done:
@@ -75,6 +78,8 @@ func at_destination() -> bool:
 		return false
 	if id == "dish_cart":
 		return _focus_id() == "dish_cart"
+	if id != "elder" and id != "card_basket" and id != "dragons_brew" and id != "player_house":
+		return _focus_id() == id
 	if Interiors.inside() and Interiors.current != null:
 		return Interiors.current.building_id == id
 	return _focus_id() == id
@@ -147,9 +152,24 @@ func _focus_id() -> String:
 	return ""
 
 
+func _entity(id: String) -> Node2D:
+	var root := WorldManager.world_root
+	if root == null:
+		return null
+	var node := root.entities.get(id) as Node2D
+	if node != null and is_instance_valid(node):
+		return node
+	return null
+
+
 func _target_pos(id: String) -> Vector2:
 	if id == "":
 		return Vector2.ZERO
+	if id != "dish_cart" and id != "dragons_brew" and id != "player_house" \
+			and id != "elder" and id != "card_basket":
+		var person := _entity(id)
+		if person != null:
+			return person.global_position
 	if id == "dish_cart" and Interiors.inside() and Interiors.current != null \
 			and Interiors.current.building_id == "dragons_brew":
 		var cart := Interiors.current.get_node_or_null("Objects/dish_cart") as Node2D

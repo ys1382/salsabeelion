@@ -43,7 +43,11 @@ def main() -> int:
     assert 'keycode":69' in interact
     assert 'keycode":32' not in interact, "Space must not sit, stand, talk, or close"
     assert "Here you go" in cafe and "that's ready" in cafe, (
-        "successful order must hand the drink over in the same line")
+        "picking the order up must still hand over a visible drink")
+    assert "I'll call you when it's ready" in cafe
+    assert "Your order's ready" in cafe
+    assert "CALLOUT_SEC := 3.0" in cafe
+    assert "awaiting_serve" in cafe
     assert "I'll get that started" not in cafe, (
         "do not hang the player on a kitchen wait that never finishes")
     assert "order_ready" in cafe and "texture_for" in cafe

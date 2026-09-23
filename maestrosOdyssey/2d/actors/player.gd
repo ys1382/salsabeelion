@@ -285,6 +285,7 @@ func use_focus() -> String:
 		return ""
 	if DialogueUI.is_open():
 		DialogueUI.close()
+		CafeOrder.on_speech_closed()
 		if CafeOrder.open_box_on_close:
 			CafeOrder.open_box_on_close = false
 			DialogueUI.show_order_box()
@@ -329,6 +330,7 @@ func use_focus() -> String:
 		var phrase := CafePhrasesScript.line_for(npc.npc_id, GameState.day_index, ElderReport.needs_revisit)
 		if phrase != "":
 			npc.grant_if_any()
+			CafeOrder.note_guest_spoke(npc.npc_id, phrase, true)
 			DialogueUI.show_line(npc.display_name, phrase)
 			return "talk"
 		if npc.has_scripted() or GameState.offline_mode or not LLMClient.backend_available:
@@ -338,7 +340,9 @@ func use_focus() -> String:
 						% GameState.item_name(gift))
 				return "give"
 			npc.grant_if_any()
-			DialogueUI.show_line(npc.display_name, npc.next_scripted_line())
+			var spoken := npc.next_scripted_line()
+			CafeOrder.note_guest_spoke(npc.npc_id, spoken, false)
+			DialogueUI.show_line(npc.display_name, spoken)
 			return "talk"
 		if gift != "":
 			DialogueUI.show_thinking(npc.display_name)

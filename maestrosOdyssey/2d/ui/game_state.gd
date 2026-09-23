@@ -167,6 +167,7 @@ func try_night_pass() -> bool:
 	cafe_meal_done = false
 	if has_node("/root/CafeOrder"):
 		CafeOrder.meal_done = false
+		CafeOrder.clear_table_rounds()
 	advance_day()
 	return true
 
