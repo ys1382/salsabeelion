@@ -3,26 +3,28 @@ extends RefCounted
 # Week-one table talk. Same two sentence shapes each day, different board items.
 # Monday keeps the ferry lines in the world file. From Tuesday the neighbors
 # say these instead, so day 8 has a favorite drink, a favorite food, and an add-on.
+# Ramp English → Spanish. First favorite lines must still be understandable;
+# do not open on a full-Spanish sentence.
 
 const _IGUANA := "iguana_neighbor"
 const _RIVER := "riverfolk_neighbor"
 
 const LINES := {
 	2: {
-		_IGUANA: "El té es mi favorito.",
+		_IGUANA: "Té is my favorite.",
 		_RIVER: "Have you tried their chocolate caliente? It is muy good.",
 	},
 	3: {
-		_IGUANA: "El café es mi favorito.",
+		_IGUANA: "El café is my favorite.",
 		_RIVER: "Have you tried su tostada? It is muy buena.",
 	},
 	4: {
-		_IGUANA: "La leche es mi favorita.",
+		_IGUANA: "La leche is mi favorita.",
 		_RIVER: "Have you tried su galleta? Es muy buena.",
 	},
 	5: {
 		_IGUANA: "El muffin es mi favorito.",
-		_RIVER: "¿Ya probaste su bolillo? Es muy bueno.",
+		_RIVER: "Have you tried su bolillo? Es muy bueno.",
 	},
 	6: {
 		_IGUANA: "El croissant es mi favorito.",

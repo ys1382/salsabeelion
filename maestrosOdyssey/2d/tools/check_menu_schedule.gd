@@ -232,7 +232,7 @@ func _initialize() -> void:
 	assert(thin.contains("find out more"), thin)
 	assert(not bool(elder.passed))
 	assert(CafePhrasesScript.line_for("iguana_neighbor", 1, false) == "")
-	assert(CafePhrasesScript.line_for("iguana_neighbor", 2, false).contains("té"))
+	assert(CafePhrasesScript.line_for("iguana_neighbor", 2, false).to_lower().contains("té"))
 	assert(CafePhrasesScript.line_for("riverfolk_neighbor", 3, false).contains("tostada"))
 	assert(CafePhrasesScript.line_for("riverfolk_neighbor", 5, false).contains("bolillo"))
 	assert(CafePhrasesScript.line_for("iguana_neighbor", 6, false).contains("croissant"))

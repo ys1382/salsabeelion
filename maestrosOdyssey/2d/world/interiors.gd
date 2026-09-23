@@ -58,6 +58,7 @@ func enter(building_id: String, flavour: String = "") -> void:
 	current.build(building_id, footprint,
 		str(root.world.get("seed", root.world.get("title", ""))), spec)
 	current.exit_requested.connect(leave)
+	_spawn_tuesday_table(building_id, current)
 	_spawn_inside_npcs(building_id, current)
 
 	root.visible = false
@@ -124,6 +125,18 @@ func leave() -> void:
 	left.emit()
 
 
+## Solid center table only on Tuesday, so Monday's path to Mara stays open.
+func _spawn_tuesday_table(building_id: String, interior: Interior) -> void:
+	if building_id != "dragons_brew" or GameState.weekday != "Tuesday":
+		return
+	interior._instance_interior_asset({
+		"id": "cafe_tuesday_table",
+		"asset": "prop.table_medium_1",
+		"x": 6,
+		"y": 6,
+	})
+
+
 func _spawn_inside_npcs(building_id: String, interior: Interior) -> void:
 	var objects := interior.get_node_or_null("Objects") as Node2D
 	var root := WorldManager.world_root
@@ -131,6 +144,8 @@ func _spawn_inside_npcs(building_id: String, interior: Interior) -> void:
 		return
 	for n in root.world.get("npcs", []):
 		if str(n.get("inside", "")) != building_id:
+			continue
+		if not _here_today(n):
 			continue
 		var npc: Npc = preload("res://actors/npc.tscn").instantiate()
 		npc.setup(n)
@@ -141,6 +156,18 @@ func _spawn_inside_npcs(building_id: String, interior: Interior) -> void:
 		npc.y_sort_enabled = false
 		objects.add_child(npc)
 		root.entities[n["id"]] = npc
+
+
+## Empty weekdays means every day. Otherwise they only stand in the room
+## on a listed weekday (Tuesday's table, and again the next Tuesday).
+func _here_today(n: Dictionary) -> bool:
+	var days = n.get("weekdays", [])
+	if typeof(days) != TYPE_ARRAY or days.is_empty():
+		return true
+	for day in days:
+		if str(day) == GameState.weekday:
+			return true
+	return false
 
 
 func _clamp_camera(p: Player, px: Vector2i) -> void:

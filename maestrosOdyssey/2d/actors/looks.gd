@@ -2,6 +2,51 @@ extends RefCounted
 # Cheap species extras drawn on top of the shared villager sheet. The packs on
 # disk are one human, so Mara's Çampire read is wings for now — tail waits for
 # a real sheet. Same idea as the Phaser café, as overlay sprites.
+#
+# Body color is a tint on that same sheet (no new walk cycle). Whole sprite
+# shifts, clothes included. Campire wash stays low so Mara can read Bombay-black.
+
+const SPECIES_TINT := {
+	"campire": {"hex": "#241c1e", "wash": 0.06},
+	"vampire": {"hex": "#e8e6ee", "wash": 0.12},
+	"werewolf": {"hex": "#6e6e72", "wash": 0.18},
+	"lizardfolk": {"hex": "#3f8f5a", "wash": 0.28},
+	"merfolk": {"hex": "#3a6db0", "wash": 0.28},
+	"dragonfolk": {"hex": "#b33a32", "wash": 0.28},
+}
+
+
+static func species_of(data: Dictionary) -> String:
+	var look := str(data.get("look", "")).to_lower()
+	if look == "campire":
+		return "campire"
+	var species := str(data.get("species", "")).to_lower()
+	if SPECIES_TINT.has(species):
+		return species
+	var blob := (str(data.get("role", "")) + " " + str(data.get("name", ""))).to_lower()
+	if "lizardfolk" in blob or "iguana" in blob:
+		return "lizardfolk"
+	if "merfolk" in blob:
+		return "merfolk"
+	if "dragonfolk" in blob:
+		return "dragonfolk"
+	if "werewolf" in blob:
+		return "werewolf"
+	if "vampire" in blob:
+		return "vampire"
+	return ""
+
+
+static func apply_body_tint(sprite: CanvasItem, data: Dictionary) -> void:
+	var key := species_of(data)
+	if key != "" and SPECIES_TINT.has(key):
+		var spec: Dictionary = SPECIES_TINT[key]
+		var col := Color(String(spec["hex"]))
+		sprite.modulate = col.lerp(Color.WHITE, float(spec["wash"]))
+		return
+	var tint := str(data.get("tint", ""))
+	if tint.is_valid_html_color():
+		sprite.modulate = Color(tint).lerp(Color.WHITE, 0.6)
 
 
 static func attach(host: Node2D, look: String) -> void:
@@ -29,8 +74,9 @@ static func _draw_wings() -> Image:
 	# 64x32, pivot at centre. Two bat triangles with a body-wide gap.
 	var img := Image.create(64, 32, false, Image.FORMAT_RGBA8)
 	img.fill(Color(0, 0, 0, 0))
-	var wing := Color(0.07, 0.06, 0.10, 1)
-	var edge := Color(0.18, 0.16, 0.22, 1)
+	# Copper-brown rim so wings still read on a Bombay-black body.
+	var wing := Color(0.12, 0.09, 0.10, 1)
+	var edge := Color(0.42, 0.28, 0.18, 1)
 	_fill_tri(img, Vector2i(28, 6), Vector2i(2, 26), Vector2i(26, 20), wing)
 	_fill_tri(img, Vector2i(35, 6), Vector2i(61, 26), Vector2i(37, 20), wing)
 	_fill_tri(img, Vector2i(28, 8), Vector2i(10, 22), Vector2i(26, 16), edge)

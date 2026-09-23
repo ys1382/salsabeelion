@@ -216,7 +216,7 @@
       "could_know": "Works the counter at Dragon's Brew every morning and sees who comes through the door",
       "opener": "You're fine — take your time. The board is there when you're ready.",
       "movement": "idle",
-      "tint": "#c45a6a",
+      "tint": "#241c1e",
       "look": "campire",
       "wants_item": "",
       "reveal_beat": "mara_campire",
@@ -236,6 +236,7 @@
       "facing": "up",
       "name": "Iguana neighbor",
       "role": "marine iguana lizardfolk",
+      "species": "lizardfolk",
       "persona": "Plain-spoken, tired of policy talk, not looking for a fight.",
       "secret": "Worried the sea routes are getting harder for ordinary people, not because merfolk started it.",
       "could_know": "Sits at Dragon's Brew on Mondays with her riverfolk friend; hears ferry and sea-region news",
@@ -269,6 +270,78 @@
       "scripted_lines": [
         "I work the water. People still need to get home. Closing ferries doesn't make anyone safer — it just makes them late.",
         "Give the sea table room if you see it later this week. Respect, not fear. They're not the ones starting trouble."
+      ]
+    },
+    {
+      "id": "werewolf_fiance",
+      "x": 22,
+      "y": 16,
+      "inside": "dragons_brew",
+      "inside_x": 9,
+      "inside_y": 7,
+      "facing": "left",
+      "weekdays": ["Tuesday"],
+      "name": "Werewolf fiancé",
+      "role": "werewolf fiancé, here as a person",
+      "species": "werewolf",
+      "persona": "Calm, plain, keeps the table easy.",
+      "secret": "His other shape stays home. The café gets the person.",
+      "could_know": "Sits at Dragon's Brew on Tuesdays with his sister and a vampire friend",
+      "opener": "Morning. This is me — no wolf shape.",
+      "movement": "idle",
+      "tint": "#6e6e72",
+      "wants_item": "",
+      "scripted_lines": [
+        "My sister came with me. We're here for the tea.",
+        "My sister came with us. That's how we sit in public."
+      ]
+    },
+    {
+      "id": "werewolf_sister",
+      "x": 23,
+      "y": 15,
+      "inside": "dragons_brew",
+      "inside_x": 5,
+      "inside_y": 8,
+      "facing": "right",
+      "weekdays": ["Tuesday"],
+      "name": "Werewolf sister",
+      "role": "werewolf sister and chaperone, here as a person",
+      "species": "werewolf",
+      "persona": "Steady, looks after the table without making a fuss.",
+      "secret": "She can hold a person-shape when she wants. Today she simply does.",
+      "could_know": "Comes to Dragon's Brew on Tuesdays with her brother and their vampire friend",
+      "opener": "I'm his sister. I came with them.",
+      "movement": "idle",
+      "tint": "#6e6e72",
+      "wants_item": "",
+      "scripted_lines": [
+        "I came with my brother. He likes this table.",
+        "The tea is good. We'll stay on this side."
+      ]
+    },
+    {
+      "id": "vampire_neighbor",
+      "x": 25,
+      "y": 16,
+      "inside": "dragons_brew",
+      "inside_x": 8,
+      "inside_y": 5,
+      "facing": "down",
+      "weekdays": ["Tuesday"],
+      "name": "Vampire neighbor",
+      "role": "vampire woman",
+      "species": "vampire",
+      "persona": "Quiet, polite, pale, not trying to be dramatic.",
+      "secret": "She likes the room because nobody treats pale as a costume.",
+      "could_know": "Shares the Tuesday table with the werewolf pair; orders like everyone else",
+      "opener": "I'm a vampire. The pale is just how I look.",
+      "movement": "idle",
+      "tint": "#e8e6ee",
+      "wants_item": "",
+      "scripted_lines": [
+        "Té is a good idea, when you're ready to order.",
+        "We're not here to make a fuss. Just the table."
       ]
     }
   ],

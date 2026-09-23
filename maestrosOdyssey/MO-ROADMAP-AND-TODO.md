@@ -202,9 +202,9 @@ Needs **#3**.
 Needs **#3** and **#12**. **Tone:** nature-wonder café week — friendly regulars, species glimpses, language in context. **Not** mystery-novel infodumps. See **Your additions** (owner pinned 2026-06). **Pegasus / griffin can still be café plot** (Saturday) without real bodies. **Minotaurs and the like cannot** — horns and extra pieces do not sit neatly on the villager sheet, so those peoples wait until **after animation upgrades** (owner 2026-09-22). Old detective / sea-policy beats in `DRAGONS-BREW-PRE-TRAIN.md` → **later arc**, not week one.
 
 - [ ] **#13 — Monday** — warm room; Mara + wall + strike board; **friendly customers**; optional muted **TV headline** (soft world color, not crime blotter)
-- [ ] **#14 — Tuesday** — strike board tick; pleasant **humanoid-enough** morning regulars (tinted villager sheet). **Not** a minotaur — horns / extra head pieces wait until after animation upgrades.
-- [ ] **#15 — Wednesday** — **family night** human table; blue-night **vampire** usual; light species beat
-- [ ] **#16 — Thursday** — **werewolf fiancé + chaperone twin** (evening); calm public life — no centaur/detective overlap
+- [x] **#14 — Tuesday** — **daytime** table: werewolf fiancé + chaperone twin + vampire woman, all looking like people (werewolves **not transformed** — no wolf-form animation yet). Pale vampire tint. Strike board can still tick. **Not** a minotaur. Shipped 2026-09-22 (Tuesday only; gray / pale on the villager sheet).
+- [ ] **#15 — Wednesday** — **family night** human table; light species beat. Vampire usual now sits Tuesday with the couple (not a separate blue-night mystery).
+- [ ] **#16 — Thursday** — mellow Thursday room. Evening **werewolf form** waits until animation upgrades. No centaur/detective overlap.
 - [ ] **#17 — Friday** — mellow Friday regulars; **no** dragonfolk mafia beat in week one
 - [ ] **#18 — Saturday** — **pegasus + griffin** as nice Saturday café regulars (wonder, not worry-plot). Plot stays in the café; **animation/body art** is a post-demo upgrade (below).
 - [ ] **#19 — Sunday** — quiet Sunday room; one soft species or language echo
@@ -215,7 +215,7 @@ Needs **#3** and **#12**. **Tone:** nature-wonder café week — friendly regula
 
 - [ ] **#20 — Real order check** (optional hard mode — ES or AR lane; not default path; see Design pillars)
 - [ ] **#21 — Goblin detective visual watch** — **post–train / later arc** (not week one)
-- [ ] **#22 — Evening werewolf + vampire table** (week-one evenings Thu+; innocent vampire regular)
+- [ ] **#22 — Evening werewolf + vampire table** — daytime people shipped 2026-09-22 (Tuesday only, no wolf form). Transformed Thu+ evenings still wait on animation.
 - [ ] **#23 — Plaza floor** (same learning card rules; echo café words on signs)
 - [ ] **#24 — Train gate / arrive at station** (after #28 elder upgrade) — **end of the demo** when this plot deploys. Wider world after. Non-humanoid **animation upgrades** wait until after this ships. Mechanics still rank above that animation work.
 - [ ] **#25 — Wire vocab into progress tracker** (familiarity bands, **bilingual menu fade**, **tourism competence gate**, elder prompt source, subtitle fade — no grade UI)
@@ -270,11 +270,15 @@ This chat’s later list **plus** original MO items **not in the Godot build yet
 - [x] **Leave-café close-out (paired — shipped 2026-09-22)** — after the cup and plate are finished, put them in the dish cart by the counter. Mara says **adiós** (Wednesday: **buenas noches**) and you type it back before the doorway lets you out. The door tiles stay put. Morning still comes when you step into your house.
   - **Dishes vs the street (locked):** you **cannot** leave the café, walk the block, or end the day still holding dishes. Empty cup/plate stay in hand **inside** until the cart. Mara stops you at the door. You will not wander outside with them until you come back.
 - [ ] **Talk to every café customer before you leave** (owner — 2026-09-22) — an **arrow** points at the other people in the room (same idea as the cottage waypoint). You **cannot leave** until you have talked to **everyone** at the tables, not only Mara. Door waits; not a quiz.
+- [ ] **Tables don’t block the café entrance** (owner — 2026-09-22) — pin only. Tables stay out of the doorway so you can walk in and out.
+- [ ] **NPCs face you when you talk** (owner — 2026-09-22) — pin only. They turn toward you for the conversation.
+- [ ] **Mara reads Bombay-black, evenly** (owner — 2026-09-22) — pin only. On screen she is dark brown, and not the same brown all over. She is not black at all.
+- [ ] **Merfolk read blue** (owner — 2026-09-22) — pin only. The Monday riverfolk is a crocodilian, their own people, not a merfolk subtype, so they do not take the merfolk blue. Actual merfolk still need to be blue.
 
 **From original MO — not in Godot yet**
 
-- [ ] **#13–19 week-one mellow room** — rotating regulars, species + language in small beats, not mystery. Monday iguana + riverfolk are **seated at a café table** with ferry talk (2026-09-22). Tue–Sun (family night, werewolf table, pegasus + griffin, quiet Sunday) still missing. **No minotaur (or similar horns/extra-piece peoples) until after animation upgrades.** How to fill the post-order gap: table talk, above. Café **plot** may include pegasus + griffin before their real bodies exist.
-- [ ] **#22 evening werewolf + vampire table** — Thursday+; innocent evening regulars; calm public life.
+- [ ] **#13–19 week-one mellow room** — rotating regulars, species + language in small beats, not mystery. Monday iguana + riverfolk are **seated at a café table** with ferry talk (2026-09-22). Tuesday werewolf fiancé + sister + pale vampire sit as people (2026-09-22); no wolf form. Wed–Sun (family night, pegasus + griffin, quiet Sunday) still missing. **No minotaur (or similar horns/extra-piece peoples) until after animation upgrades.** How to fill the post-order gap: table talk, above. Café **plot** may include pegasus + griffin before their real bodies exist.
+- [ ] **#22 evening werewolf + vampire table** — **daytime people shipped 2026-09-22** (Tuesday only, no wolf form). Transformed evening table still waits on animation.
 - [ ] **#27 day-2+ order depth** — player extras shipped (con / calentado / frío). Still later: Mara *con o sin* prompt, one food upsell, read-back before pay.
 - [ ] **#11 café lane + tourist money** — Spanish **or** Arabic menu lemmas; Arabic wall translit + script + English; dirham when Arabic. **Lane picker** at first load / restart (Phaser had it; Godot does not).
 - [ ] **#25 vocab tracker** — private familiarity bands, menu-hint fade, tourism gate, elder prompts. No grade UI. Optional later in-game lane switch.

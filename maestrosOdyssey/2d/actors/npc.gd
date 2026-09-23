@@ -41,13 +41,7 @@ func _ready() -> void:
 	add_to_group("npc")
 	_sprite.sprite_frames = Sheet.villager_frames()
 	_sprite.position = Vector2(0, -16)
-	# `tint` keeps a cast of identical villager sprites visually distinguishable.
-	# modulate MULTIPLIES, so a saturated tint turns the sprite into a dark
-	# silhouette — blend most of the way to white to keep the hue but not lose
-	# the art.
-	var tint: String = data.get("tint", "")
-	if tint.is_valid_html_color():
-		_sprite.modulate = Color(tint).lerp(Color.WHITE, 0.6)
+	LooksLib.apply_body_tint(_sprite, data)
 	var look := str(data.get("look", ""))
 	if look == "" and npc_id == "mara":
 		look = "campire"
