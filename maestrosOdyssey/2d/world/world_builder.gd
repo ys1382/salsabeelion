@@ -12,6 +12,7 @@ extends Node2D
 # lets the VLM repair pass rebuild a patched world in place.
 
 const TILE := Catalog.TILE
+const StreetSignScript := preload("res://world/street_sign.gd")
 ## Terrain is painted this far past the map edge so the autotiler doesn't draw
 ## an "Empty" border where the grass meets nothing.
 const BLEED := 3
@@ -229,6 +230,7 @@ func _place_objects() -> void:
 		entities[entry["id"]] = node
 
 	_make_houses_enterable()
+	_place_street_signs()
 
 
 ## Every house gets a door, whether the model thought to give it one or not.
@@ -263,6 +265,18 @@ func _make_houses_enterable() -> void:
 			"x": entry["x"], "y": entry["y"], "text": "", "beat": "",
 			"on": entry["id"], "enters": entry["id"],
 		})
+
+
+## Place names you can read from the street. Indoor menu and house rules stay press-E.
+func _place_street_signs() -> void:
+	for id in StreetSignScript.CAPTIONS:
+		var node := entities.get(id) as Node2D
+		if node == null:
+			continue
+		var sign = StreetSignScript.new()
+		sign.name = "StreetSign"
+		node.add_child(sign)
+		sign.setup(StreetSignScript.caption_for(str(id)), str(id).ends_with("_house"))
 
 
 func _asset_of(object_id: String) -> String:

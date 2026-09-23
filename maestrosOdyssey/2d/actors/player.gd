@@ -8,6 +8,7 @@ extends CharacterBody2D
 # the player tuck under the overhanging parts of trees and roofs.
 
 const CafePhrasesScript := preload("res://ui/cafe_phrases.gd")
+const StreetSignScript := preload("res://world/street_sign.gd")
 const SPEED := 70.0
 const ACCEL := 900.0
 const FRICTION := 1100.0
@@ -130,6 +131,9 @@ func _update_focus() -> void:
 	var best_d := INF
 	for area in _reach.get_overlapping_areas():
 		if area is Interactable:
+			# Outdoor place names are already painted on the sign.
+			if StreetSignScript.caption_for(str((area as Interactable).data.get("id", ""))) != "":
+				continue
 			var d := global_position.distance_squared_to((area as Node2D).global_position)
 			if d < best_d:
 				best_d = d
@@ -320,7 +324,9 @@ func use_focus() -> String:
 		var gift := npc.accept_item()
 		npc.met = true
 		if npc.npc_id == "mara":
-			DialogueUI.show_line(npc.display_name, CafeOrder.talk(npc))
+			var mara_line := CafeOrder.talk(npc)
+			if mara_line != "":
+				DialogueUI.show_line(npc.display_name, mara_line)
 			return "talk"
 		if npc.npc_id == "elder":
 			var report := ElderReport.talk(npc)

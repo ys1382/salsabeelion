@@ -174,7 +174,24 @@ func nav_target() -> String:
 	var next := _next_unheard_id()
 	if next != "":
 		return next
-	return "mara"
+	if called_out:
+		return "mara"
+	return ""
+
+
+func has_table_guests() -> bool:
+	return not _guest_dicts().is_empty()
+
+
+## "" | "hear" | "wait" | "pickup" while a plated order is still at the counter.
+func serve_step() -> String:
+	if not awaiting_serve:
+		return ""
+	if not _tables_heard():
+		return "hear"
+	if not called_out:
+		return "wait"
+	return "pickup"
 
 
 func clear_table_rounds() -> void:
@@ -198,13 +215,21 @@ func note_guest_spoke(npc_id: String, line: String, from_phrase: bool) -> void:
 		_heard[npc_id] = true
 
 
-## The player just closed a speech box. The three quiet seconds start here,
-## so Mara does not talk over the last person.
+func _ready() -> void:
+	# A paused journal must not freeze the three quiet seconds.
+	process_mode = Node.PROCESS_MODE_ALWAYS
+
+
+## The player just closed a speech box. The three quiet seconds start once,
+## after everyone seated has been heard. A later close does not start them over,
+## or walking to Mara and pressing E would keep her from calling.
 func on_speech_closed() -> void:
 	if not awaiting_serve or called_out:
 		return
 	if not _tables_heard():
 		_callout_left = -1.0
+		return
+	if _callout_left >= 0.0:
 		return
 	_callout_left = CALLOUT_SEC
 
@@ -244,7 +269,8 @@ func _counter_while_waiting() -> String:
 	if not _tables_heard():
 		return "Mara shakes her head, gentle. \"Not yet. Hear the tables first — I'll call you.\""
 	if not called_out:
-		return "Mara glances at the counter. \"Almost. Give the room a moment.\""
+		# She calls across the room. Pressing E early must not take that line.
+		return ""
 	_put_in_hands()
 	return "Mara sets it in your hands. \"Here you go — that's ready.\""
 
