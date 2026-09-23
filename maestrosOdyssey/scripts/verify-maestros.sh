@@ -17,6 +17,7 @@ if grep -q 'new Engine' "$WWW/index.html" 2>/dev/null && ls "$WWW"/*.wasm >/dev/
   python3 "$ROOT/maestrosOdyssey/2d/backend/test_learning_card_hud.py"
   python3 "$ROOT/maestrosOdyssey/2d/backend/test_cafe_clock.py"
   python3 "$ROOT/maestrosOdyssey/2d/backend/test_night_pass.py"
+  python3 "$ROOT/maestrosOdyssey/2d/backend/test_day_night.py"
   python3 "$ROOT/maestrosOdyssey/2d/backend/test_cafe_closeout.py"
   python3 "$ROOT/maestrosOdyssey/2d/backend/test_menu_unlock.py"
   python3 "$ROOT/maestrosOdyssey/2d/backend/test_cafe_practice.py"

@@ -199,14 +199,14 @@ Needs **#3**.
 
 ### Week-one room — mellow, not mystery (#13–19)
 
-Needs **#3** and **#12**. **Tone:** nature-wonder café week — friendly regulars, species glimpses, language in context. **Not** mystery-novel infodumps. See **Your additions** (owner pinned 2026-06). **Pegasus / griffin can still be café plot** (Saturday) without real bodies. **Minotaurs and the like cannot** — horns and extra pieces do not sit neatly on the villager sheet, so those peoples wait until **after animation upgrades** (owner 2026-09-22). Old detective / sea-policy beats in `DRAGONS-BREW-PRE-TRAIN.md` → **later arc**, not week one.
+Needs **#3** and **#12**. **Tone:** nature-wonder café week — friendly regulars, species glimpses, language in context. **Not** mystery-novel infodumps. See **Your additions** (owner pinned 2026-06). **Pre-upgrade café plot uses people the current villager sheet can carry** (human, lizardfolk, crocodilian riverfolk, werewolf-as-person, vampire, Mara). **Pegasus, griffin, and other very detailed creatures wait** until after animation upgrades — do not placeholder them (owner 2026-09-22). **Minotaurs and the like** wait for the same reason. A **muted café TV** is a potential **post-upgrade** beat; before that it would look flat. Old detective / sea-policy beats in `DRAGONS-BREW-PRE-TRAIN.md` → **later arc**, not week one.
 
-- [ ] **#13 — Monday** — warm room; Mara + wall + strike board; **friendly customers**; optional muted **TV headline** (soft world color, not crime blotter)
-- [x] **#14 — Tuesday** — **daytime** table: werewolf fiancé + chaperone twin + vampire woman, all looking like people (werewolves **not transformed** — no wolf-form animation yet). Pale vampire tint. Strike board can still tick. **Not** a minotaur. Shipped 2026-09-22 (Tuesday only; gray / pale on the villager sheet).
-- [ ] **#15 — Wednesday** — **family night** human table; light species beat. Vampire usual now sits Tuesday with the couple (not a separate blue-night mystery).
-- [ ] **#16 — Thursday** — mellow Thursday room. Evening **werewolf form** waits until animation upgrades. No centaur/detective overlap.
+- [ ] **#13 — Monday** — warm room; Mara + wall + strike board; **friendly customers**. No café TV yet (that waits until after animation upgrades).
+- [x] **#14 — Tuesday** — **daytime** table: werewolf fiancé + chaperone twin + vampire woman, all looking like people (werewolves **not transformed** — no wolf-form animation yet). Pale vampire tint. Strike board can still tick. **Not** a minotaur. Shipped 2026-09-22 (Tuesday only; gray / pale on the villager sheet). Mara teaches **y** this day (instead of *and*).
+- [ ] **#15 — Wednesday** — **family night** human table; light species beat. Vampire usual now sits Tuesday with the couple (not a separate blue-night mystery). Mara teaches **con** this day (extras).
+- [ ] **#16 — Thursday** — mellow Thursday room; **un / una** enter café talk. Evening **werewolf form** waits until animation upgrades. No centaur/detective overlap.
 - [ ] **#17 — Friday** — mellow Friday regulars; **no** dragonfolk mafia beat in week one
-- [ ] **#18 — Saturday** — **pegasus + griffin** as nice Saturday café regulars (wonder, not worry-plot). Plot stays in the café; **animation/body art** is a post-demo upgrade (below).
+- [ ] **#18 — Saturday** — mellow Saturday regulars the current sheet can carry. **Pegasus + griffin** wait until after animation upgrades (very detailed creatures; do not placeholder them).
 - [ ] **#19 — Sunday** — quiet Sunday room; one soft species or language echo
 
 ---
@@ -240,15 +240,20 @@ Community elder → **prepaid learning card** (debit, in-game only, **no overdra
 
 - [x] **Old Phaser café snapshotted** — `archive/phaser-cafe-prototype/` (full `www/` copy).
 - [x] **New Godot build started** — `maestrosOdyssey/2d/` (zij2d engine + authored Dragon's Brew world). Live `/maestros/` is the Godot web export. Phaser snapshot: `archive/phaser-cafe-prototype/`.
-- [x] **Mara typed order (gold, 2026-09-21)** — menu first, type box, Spanish echo, **ready in the same reply** with a **visible cup/muffin** (no kitchen wait). Sit and **D** sip / **F** eat. Do not drop; see `.cursor/rules/maestros-mara-order-gold.mdc`.
+- [x] **Mara typed order (gold, 2026-09-21)** — menu first, type box, Spanish echo, visible cup/muffin. Sit and **D** sip / **F** eat. Do not drop; see `.cursor/rules/maestros-mara-order-gold.mdc`. **2026-09-22:** if anyone is seated, the cup waits at the counter until those talks finish.
 - [x] **Learning-card HUD (gold, 2026-09-21)** — hearts off; take the card from the elder's basket; then weekday / week / pesos as three short lines. Matched orders deduct pesos in the same reply; **finished meal + step into your house** turns the weekday. See `.cursor/rules/maestros-learning-card-hud-gold.mdc`.
-- [x] **Drink extras + warmed food (2026-09-22)** — *leche* / *azúcar* from Monday (Spanish only); Wednesday teaches **con** with **y**; *crema* Saturday; drink *frío* Sunday; food *calentado* optional. Still one drink + one food, ready in the same reply. #27 Mara *con o sin* prompt and food upsell still later.
+- [x] **Drink extras + warmed food (2026-09-22)** — *leche* / *azúcar* from Monday (Spanish only); *crema* Saturday; drink *frío* Sunday; food *calentado* optional. Still one drink + one food, ready in the same reply. #27 Mara *con o sin* prompt and food upsell still later.
+  - **Week-one connector schedule (owner — 2026-09-23):** **Tuesday = y** (instead of *and*). **Wednesday = con** (extras). **Thursday = un / una**. Live build still taught **y** and **con** together on Wednesday — retarget when that ships.
 
 #### Future Godot adaptations (combined — 2026-09-21)
 
 This chat’s later list **plus** original MO items **not in the Godot build yet**. Master task numbers still live above. Phaser-only gold (lane picker, Arabic wall) counts as **not in Godot** until it is.
 
-**When listing open todos (owner — 2026-09-22):** **plot before the demo ending**, then **plot after the new animation upgrades**, then **mechanics**, then **animation**. Include every open item. Demo ending = arrive at the train station (#24). Non-humanoid body animation happens after that ships. **Minotaurs and the like** (horns, extra pieces that will not sit neatly on the villager sheet) are **not** pre-upgrade café plot — unlike pegasus/griffin, do not placeholder them. Mechanics still rank above animation for what to build next.
+**When listing open todos (owner — 2026-09-22, priority later that night):** Show **only items not done**. For **pre-animation-upgrades**, list **plot**, then **mechanics**, then **look you can do on the current sprites**. Do not drop the rest when naming a priority.
+
+**Next to deploy (owner — 2026-09-22; connectors 2026-09-23):** Plot first: **human table**, then week-one language by day — **Tue y**, **Wed con**, **Thu un / una**. Mechanics first: **bump into people and furniture**, then **read the board**, then the **strike board**. Everything else stays on the list under that.
+
+Demo ending = arrive at the train station (#24). **Pegasus, griffin, and other very detailed creatures** are **post-upgrade**, same as minotaurs — do not placeholder them. A **soft café TV** is a potential **post-upgrade** item; anything earlier would look flat. Mechanics still rank above the big animation work.
 
 **From this conversation**
 
@@ -260,24 +265,25 @@ This chat’s later list **plus** original MO items **not in the Godot build yet
 - [x] **Night pass when you step into your house** (owner locked 2026-09-21) — **not** a bed / hay stand-in. After café: you must have **ordered and consumed** (sip/eat done). Then **enter your house** → short **night passes** beat → **weekday turns** → morning. Do **not** turn the day on café leave anymore for this path (or gate café-leave day-tick so home is what ends the day after a completed meal). No lie-down animation required.
 - [ ] **Have to read the board to order** — you already must tap the menu once, but Mara then lists today’s items in chat (`What's your order? (café, té, muffin…)`), so you can skip the wall after that. Stop spoon-feeding the day’s words in her prompt; the player should **check the menu** for practice. Keep the type box and same-reply drink.
 - [ ] **Accent letters in the type box** (owner — 2026-09-22) — press-and-hold **any** letter that has accents (E is only an example) shows the usual picker (é / á / ñ / ü…), but you **cannot click or select** it. The box keeps repeating the base letter (`eeeee`, `aaaaa`, …) instead. Make the pick land in the box (café, té, azúcar). Same box for Mara and the elder.
-- [x] **Only the key on the prompt does that action** — **E** sit / stand / talk / close reading. **D** sip only (no stand). **Space** is not a second E. Order type box still uses **Enter**; E types the letter.
+- [x] **Only the key on the prompt does that action** — **T** talk / close a line. **E** doors (basket and dish cart stay on **E**). **R** menu and house rules. **S** sit / stand, and **S** still walks down when you are not at a chair. **D** sip only (no stand). **F** eat. **Space** is not a second interact. Order type box still uses **Enter**.
 - [x] **Elder test has a clear language aim** (2026-09-22) — still not a quiz screen. She asks for a favorite drink and a favorite food, with an add-on (*con leche*, *con azúcar*, *y leche*). Tue–Sun café neighbors say that shape with a different board item each day.
 - [ ] **Journal for Spanish phrases** (owner — 2026-09-22) — not a word list. Each overheard sentence stays in the journal with that day’s food or drink, so progress is something you can open and try saying. Basic, and a bit more interesting than a list. Not built yet.
-- [ ] **Week two: un / una** (owner — 2026-09-22) — week one can still be “a café” / “a té.” In **week 2** they start using **un** and **una** (one / a, with gender). Gives a reason to learn more than two café words. Not a flashcard. After the **train station**, more numbers than un/una (dos, tres, …).
+- [ ] **Week one connectors by day** (owner — 2026-09-23) — **Tuesday: y** (instead of *and*). **Wednesday: con** (extras like *con leche*). **Thursday: un / una** (one / a, with gender). Monday can still be “a café” / “a té.” Not a flashcard. After the **train station**, more numbers than un/una (dos, tres, …). Live build still joins **y** and **con** on Wednesday — retarget when this ships.
 - [ ] **Home crate as real storage** — Minecraft-chest style: open UI, put items in / take out, save with the account/run. Today the crate only shows flavor text on E (verb says Open). Not built yet — pin only.
 - [x] **Furniture stop floating** — tables stay full size (bigger than the chairs). The two café neighbors stand on opposite sides of their table again. People draw in front of their own face, so a table no longer sits on their head.
 - [x] **Tutorial directions / compass** (2026-09-22) — start in front of your cottage; a small arrow points to the next stop (elder → basket → café → home after the meal). Not a minimap.
+- [ ] **Arrow waits on the elder** (owner — 2026-09-23) — **mechanics.** The compass does **not** point at the card basket until you have finished hearing the elder out (her last line that morning). Meeting her once is not enough.
 - [x] **Leave-café close-out (paired — shipped 2026-09-22)** — after the cup and plate are finished, put them in the dish cart by the counter. Mara says **adiós** (Wednesday: **buenas noches**) and you type it back before the doorway lets you out. The door tiles stay put. Morning still comes when you step into your house.
   - **Dishes vs the street (locked):** you **cannot** leave the café, walk the block, or end the day still holding dishes. Empty cup/plate stay in hand **inside** until the cart. Mara stops you at the door. You will not wander outside with them until you come back.
-- [ ] **Talk to every café customer before you leave** (owner — 2026-09-22) — an **arrow** points at the other people in the room (same idea as the cottage waypoint). You **cannot leave** until you have talked to **everyone** at the tables, not only Mara. Door waits; not a quiz.
+- [x] **Talk to every café customer before you leave** (owner — 2026-09-22) — after you order, an **arrow** points at the next person seated. The food stays at the counter until you have heard everyone's last line that day. Three seconds after you close that line, Mara says it is ready. Walk back and press **T**. The door waits until the food is in your hands. Not a quiz.
 - [x] **Tables don’t block the café entrance** (owner — 2026-09-22) — Tuesday’s extra table sits on the left. The middle walk from the door to the counter stays open every day.
-- [ ] **NPCs face you when you talk** (owner — 2026-09-22) — pin only. They turn toward you for the conversation.
+- [ ] **Face each other when talking** (owner — 2026-09-22; player added 2026-09-23) — **mechanics.** The NPC turns toward you, and you turn toward them, for the conversation.
 - [ ] **Mara reads Bombay-black, evenly** (owner — 2026-09-22) — pin only. On screen she is dark brown, and not the same brown all over. She is not black at all.
 - [ ] **Merfolk read blue** (owner — 2026-09-22) — pin only. The Monday riverfolk is a crocodilian, their own people, not a merfolk subtype, so they do not take the merfolk blue. Actual merfolk still need to be blue.
 
 **From original MO — not in Godot yet**
 
-- [ ] **#13–19 week-one mellow room** — rotating regulars, species + language in small beats, not mystery. Monday iguana + riverfolk are **seated at a café table** with ferry talk (2026-09-22). Tuesday werewolf fiancé + sister + pale vampire sit as people (2026-09-22); no wolf form. Wed–Sun (family night, pegasus + griffin, quiet Sunday) still missing. **No minotaur (or similar horns/extra-piece peoples) until after animation upgrades.** How to fill the post-order gap: table talk, above. Café **plot** may include pegasus + griffin before their real bodies exist.
+- [ ] **#13–19 week-one mellow room** — rotating regulars the current sheet can carry, species + language in small beats, not mystery. Monday iguana + crocodilian riverfolk are **seated at a café table** with ferry talk (2026-09-22). Tuesday werewolf fiancé (male) + sister + female vampire sit as people (2026-09-22); no wolf form. You already have to hear everyone before the food comes (2026-09-22). The door-to-counter walk stays open (2026-09-22). Still open: human table, then Thu–Sun mellow rooms. **No pegasus, griffin, minotaur, or other very detailed creatures until after animation upgrades.** No café TV until then. Keep the favorite-drink / favorite-food / add-on lines.
 - [ ] **#22 evening werewolf + vampire table** — **daytime people shipped 2026-09-22** (Tuesday only, no wolf form). Transformed evening table still waits on animation.
 - [ ] **#27 day-2+ order depth** — player extras shipped (con / calentado / frío). Still later: Mara *con o sin* prompt, one food upsell, read-back before pay.
 - [ ] **#11 café lane + tourist money** — Spanish **or** Arabic menu lemmas; Arabic wall translit + script + English; dirham when Arabic. **Lane picker** at first load / restart (Phaser had it; Godot does not).
@@ -290,7 +296,7 @@ This chat’s later list **plus** original MO items **not in the Godot build yet
 - [ ] **#23 plaza** — same learning-card rules; echo café words on signs.
 - [ ] **#21 goblin detective watch** — post-train / later arc, not week one. Detective / mafia / sea-policy plot stays later.
 - [ ] **Player-frame language + Mara tail** — UI/chat in the language you already speak; Irish / Japanese / Turkish locked until the train. Mara tail overlay still later.
-- [ ] **Revise `DRAGONS-BREW-PRE-TRAIN.md`** when owner asks — old week-one detective/sea table → later-arc section; align with #13–19. Saturday pegasus + griffin **stay café plot**; body animation is post-demo (below).
+- [ ] **Revise `DRAGONS-BREW-PRE-TRAIN.md`** when owner asks — old week-one detective/sea table → later-arc section; align with #13–19. Pegasus, griffin, and other very detailed creatures are **post-upgrade**, not week-one placeholders.
 
 ### After demo — elder as ambassador (owner — pinned 2026-09-22)
 
@@ -300,14 +306,15 @@ This chat’s later list **plus** original MO items **not in the Godot build yet
 
 **Demo ending:** arriving at the **train station** (#24). Do not spend the demo on non-humanoid **body animation** — owner does not have that art yet.
 
-**Not a plot ban for pegasus / griffin:** they **can still happen in the café** (Saturday #18) without real bodies.
+**Plot waits for very detailed creatures:** pegasus, griffin, minotaurs, and anyone else the villager sheet cannot carry. Do not placeholder them. Their café beats ship after the animation upgrades.
 
-**Is a plot delay for minotaurs and the like:** horns and extra pieces will not sit neatly on the current villager sheet. Do **not** glue horns onto a human and call it a minotaur. Those café/station beats wait until after the animation upgrades.
-
+- [ ] **Soft café TV** (owner — 2026-09-22) — potential **post-upgrade** only. A muted headline for soft world color, not a crime blotter. Before the animation upgrades it would look flat.
+- [x] **Outdoor day / night look (2026-09-23)** — night falls while you are in Dragon's Brew; street cools and dims; lamp pools + warm window/door glow in the dark rectangles. Morning fades back after night pass. **Richer glass** (sun on daytime windows; moon/stars at night) stays **post-upgrade** — see below.
+- [ ] **More realistic house windows** (owner — 2026-09-23) — **post-upgrade** only. Daytime glass can catch sun; nighttime glass can catch moon and stars, or richer indoor light. Until then, night uses a simple indoor glow in the dark window rectangles.
 - [ ] **Animation upgrades after train-station plot deploys** — pegasus, griffin, centaur, **minotaur horns / similar add-on pieces**, and other bodies that the villager sheet cannot carry (walk, idle, sit).
 - [ ] **Minotaur as a real regular** — pleasant morning café / dairy-world beat (was Tuesday #14). Ships after horns look right; not a week-one placeholder.
-- [ ] **Café pegasus + griffin look/move right** — Saturday regulars and later café beats get real bodies; plot does not wait on this.
-- [ ] **Pegasus platform agent animation** — station beat can ship with the demo plot; upgrade movement/art after.
+- [ ] **Café pegasus + griffin** — Saturday regulars and later café beats, after their bodies exist. Plot waits on this.
+- [ ] **Pegasus platform agent** — waits until the pegasus body exists. Do not put a placeholder on the platform for the demo.
 - [ ] **Griffin interpreter + pegasus sky-sign / SL animation** — full teaching/animation TBD (`WORLD-AND-CAST.md`); after demo.
 - [ ] **Other non-humanoid bodies** (giants’ scale, legendary dragons/wyverns, animal-level life) — animation later; legendary stay later in plot too.
 
@@ -315,7 +322,7 @@ This chat’s later list **plus** original MO items **not in the Godot build yet
 
 ### Week-one tone + café language (owner — pinned 2026-06)
 
-- [ ] **Week one = mellow, not mystery** — nature-wonder vibe at Dragon’s Brew: warm room, friendly fellow customers, species lore in small beats. **Detective / goblin / centaur / mafia / sea-policy infodumps → later in game**, not the first in-game week. Optional **muted café TV** for soft headlines instead of table lectures.
+- [ ] **Week one = mellow, not mystery** — nature-wonder vibe at Dragon’s Brew: warm room, friendly fellow customers, species lore in small beats. **Detective / goblin / centaur / mafia / sea-policy infodumps → later in game**, not the first in-game week. The muted café TV is post-upgrade, not a week-one stand-in.
 - [ ] **Week one teaches species + language basics** — fictional peoples get **key words/concepts in their native tongues** (stable; does not fade). **Café menu = one lane** (Spanish **or** Arabic — player picks at start / restart). **Culture keywords stay native** even when the café lane is Spanish.
 - [ ] **Player frame language** — UI + Mara’s chat frame use whatever language the player already speaks in practice (not forever locked; reduces overwhelm). Irish / Japanese / Turkish / other region lanes stay **locked until train / wider world** — not a day-one pile.
 - [x] **Café lane picker** — popup at first load and after Restart; wall = one target language + English gloss (not ES+AR+EN side by side).

@@ -449,6 +449,8 @@ func _state() -> Dictionary:
 		"weekday": GameState.weekday,
 		"week_number": GameState.week_number,
 		"card_balance": GameState.card_balance,
+		"outdoor_night": DayNight.amount,
+		"want_night": DayNight._want_night,
 		"npcs": npcs,
 		"interactables": interactables,
 	}

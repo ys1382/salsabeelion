@@ -212,6 +212,10 @@ func is_open() -> bool:
 	return _panel.visible or _sign.visible
 
 
+func is_sign_open() -> bool:
+	return _sign.visible
+
+
 ## What the panel is currently saying. The agent bridge reads this to assert on
 ## lines the game produces locally — item pickups, locked_text, gift lines —
 ## which never go through the model and so never reach dialogue_received.

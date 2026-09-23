@@ -128,21 +128,24 @@ func _physics_process(delta: float) -> void:
 ## comparable again, so nearest genuinely wins.
 func _update_focus() -> void:
 	var best: Node = null
-	var best_d := INF
+	var best_score := INF
 	for area in _reach.get_overlapping_areas():
 		if area is Interactable:
 			# Outdoor place names are already painted on the sign.
 			if StreetSignScript.caption_for(str((area as Interactable).data.get("id", ""))) != "":
 				continue
 			var d := global_position.distance_squared_to((area as Node2D).global_position)
-			if d < best_d:
-				best_d = d
+			# Prefer the drink menu / house rules over the exit when both are
+			# in reach — otherwise Leave steals the prompt and R does nothing.
+			d += _focus_bias(area as Interactable)
+			if d < best_score:
+				best_score = d
 				best = area
 	for body in _reach.get_overlapping_bodies():
 		if body is Npc:
 			var d := global_position.distance_squared_to((body as Node2D).global_position)
-			if d <= best_d:   # <= so a person wins an exact tie
-				best_d = d
+			if d <= best_score:   # <= so a person wins an exact tie
+				best_score = d
 				best = body
 	focus = best
 
@@ -164,6 +167,15 @@ func _update_focus() -> void:
 		DialogueUI.show_prompt("T — Talk to %s" % (focus as Npc).display_name)
 	else:
 		DialogueUI.hide_prompt()
+
+
+## Leave is a big reach box by the door. Nudge it so wall boards win nearby.
+func _focus_bias(it: Interactable) -> float:
+	if it.verb == "leave":
+		return 900.0
+	if _prompt_key(it) == "R":
+		return -120.0
+	return 0.0
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -194,12 +206,23 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 		return
 	if _key_down(event, KEY_R):
-		if _try_close("R"):
+		# Menu / house-rules: R always reads when you are at the board, even if
+		# a door line or other panel is still open (order box stays alone).
+		if focus is Interactable and _prompt_key(focus as Interactable) == "R":
+			if DialogueUI.is_ordering():
+				return
+			if DialogueUI.is_open():
+				if DialogueUI.close_key == "R" and DialogueUI.is_sign_open():
+					DialogueUI.close()
+					_after_panel_close()
+					get_viewport().set_input_as_handled()
+					return
+				DialogueUI.close()
+				_after_panel_close()
+			_use_prop(focus as Interactable)
 			get_viewport().set_input_as_handled()
 			return
-		if not DialogueUI.is_open() and focus is Interactable \
-				and _prompt_key(focus as Interactable) == "R":
-			_use_prop(focus as Interactable)
+		if _try_close("R"):
 			get_viewport().set_input_as_handled()
 		return
 	if _key_down(event, KEY_S) and not seated and not DialogueUI.is_open() \
@@ -387,11 +410,10 @@ func _use_prop(it: Interactable) -> String:
 	# the way.
 	if line != "":
 		var id := str(it.data.get("id", ""))
-		if id == "house_board":
+		# Wall boards use the full paper close-up — the bottom chat strip
+		# clipped the drink menu so it looked blank.
+		if id == "house_board" or id == "drink_menu":
 			DialogueUI.show_sign(line)
-		elif id == "drink_menu":
-			DialogueUI.show_line("", line)
-			DialogueUI.set_close_key("R")
 		else:
 			DialogueUI.show_line("", line)
 			DialogueUI.set_close_key("E")

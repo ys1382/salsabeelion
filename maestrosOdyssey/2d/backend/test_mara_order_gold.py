@@ -40,6 +40,9 @@ def main() -> int:
     assert "S — Stand" in player
     assert '_prompt_key' in player
     assert 'id == "drink_menu" or id == "house_board"' in player
+    assert "show_sign(line)" in player
+    assert 'id == "house_board" or id == "drink_menu"' in player
+    assert "is_sign_open" in dialogue
     physics = player.split("func _physics_process", 1)[1].split("func _update_focus", 1)[0]
     seated = physics.split("if seated:", 1)[1]
     assert "stand_up" not in seated, "D / WASD must not stand you up; S — Stand does"

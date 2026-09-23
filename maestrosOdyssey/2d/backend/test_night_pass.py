@@ -60,6 +60,7 @@ def main() -> int:
     assert "show_night_pass" in interiors
     assert "call_deferred" in interiors
     assert "show_night_pass" in journal
+    assert "DayNight.ensure_night()" in interiors
     assert 'building_id == "dragons_brew"' in interiors
     assert "leave_cafe()" in interiors
     print("night pass: ok")

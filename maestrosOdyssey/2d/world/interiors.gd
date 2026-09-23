@@ -196,6 +196,10 @@ func leave() -> void:
 	if root != null and p != null and is_instance_valid(p):
 		if p.seated:
 			p.stand_up(false)
+		# Night fell while you were in the café — finish it before the street shows.
+		if current != null and current.building_id == "dragons_brew" \
+				and has_node("/root/DayNight"):
+			DayNight.ensure_night()
 		root.visible = true
 		root.process_mode = Node.PROCESS_MODE_INHERIT
 		p.y_sort_enabled = true

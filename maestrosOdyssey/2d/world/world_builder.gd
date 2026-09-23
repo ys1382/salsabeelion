@@ -47,6 +47,8 @@ func build(w: Dictionary) -> void:
 	_paint_shade_paths()
 	_place_objects()
 	_spawn_actors()
+	if has_node("/root/DayNight"):
+		DayNight.attach(self)
 	built.emit(w)
 
 

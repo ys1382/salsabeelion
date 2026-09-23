@@ -67,6 +67,8 @@ func _ready() -> void:
 		% [world["title"], _source, world["objects"].size(),
 		   world["interactables"].size(), world["npcs"].size(),
 		   world["enemies"].size()])
+	if _has_flag("--force-night"):
+		DayNight.begin_night(0.0)
 	if not _has_flag("--agent-bridge"):
 		Journal.show_opening()
 
@@ -93,6 +95,8 @@ func _boot_async() -> void:
 		% [world["title"], _source, world["objects"].size(),
 		   world["interactables"].size(), world["npcs"].size(),
 		   world["enemies"].size()])
+	if _has_flag("--force-night"):
+		DayNight.begin_night(0.0)
 
 	if _source != "backend" and not GameState.offline_mode:
 		await _sync_world_to_backend()

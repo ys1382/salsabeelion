@@ -175,6 +175,9 @@ func try_night_pass() -> bool:
 func advance_day() -> void:
 	day_index += 1
 	_sync_clock()
+	# Outdoor street returns to morning while you are still inside the house.
+	if has_node("/root/DayNight"):
+		DayNight.begin_day()
 
 
 func _sync_clock() -> void:

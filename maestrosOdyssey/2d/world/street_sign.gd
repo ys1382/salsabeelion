@@ -1,7 +1,7 @@
 extends Node2D
 # Dragon's Brew, painted on a wooden board hung from the post.
 # Houses are not labeled. The arrow does that job.
-# Indoor boards (menu, house rules) stay press-E.
+# Indoor boards (menu, house rules) stay press-R.
 
 const CAPTIONS := {
 	"cafe_sign": "Dragon's Brew",
