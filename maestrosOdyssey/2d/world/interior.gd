@@ -14,6 +14,7 @@ extends Node2D
 # tried first and renders nothing for a solid fill — it only has cliff edges.
 
 const TILE := Catalog.TILE
+const MenuBoardScript := preload("res://world/menu_board.gd")
 ## Wall band thickness in tiles. Wide enough to cover the floor terrain's own
 ## edge tiles, which are drawn as grass meeting a path.
 const WALL := 2
@@ -253,6 +254,11 @@ func _place_spec(spec: Dictionary) -> void:
 				by_id[str(entry.get("id", ""))] = node
 		if node != null:
 			Interactable.attach(node, entry)
+			if str(entry.get("id", "")) == "drink_menu":
+				var board := MenuBoardScript.new()
+				board.name = "MenuBoard"
+				node.add_child(board)
+				board.setup()
 
 
 func _instance_interior_asset(entry: Dictionary) -> Node2D:

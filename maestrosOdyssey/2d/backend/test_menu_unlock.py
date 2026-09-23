@@ -7,6 +7,9 @@ ROOT = Path(__file__).resolve().parents[1]
 CAFE = ROOT / "ui" / "cafe_order.gd"
 INTERACT = ROOT / "actors" / "interactable.gd"
 DIALOGUE = ROOT / "ui" / "dialogue_ui.gd"
+BOARD = ROOT / "world" / "menu_board.gd"
+INTERIOR = ROOT / "world" / "interior.gd"
+STREET = ROOT / "world" / "street_sign.gd"
 
 
 def main() -> int:
@@ -36,6 +39,14 @@ def main() -> int:
     assert '"pesos": 48' in cafe and '"pesos": 40' in cafe
     assert '"pesos": 22' in cafe and '"pesos": 32' in cafe
     assert "drink_menu" in interact and "board_text" in interact
+    board = BOARD.read_text(encoding="utf-8")
+    assert 'label := "MENU"' in board
+    interior = INTERIOR.read_text(encoding="utf-8")
+    assert 'entry.get("id", "")) == "drink_menu"' in interior
+    assert "MenuBoard" in interior
+    street = STREET.read_text(encoding="utf-8")
+    assert "drink_menu" not in street
+    assert "MENU" not in street
     assert "custom_minimum_size" in dialogue
     assert "I'll get that started" not in cafe
     print("menu unlock: ok")
