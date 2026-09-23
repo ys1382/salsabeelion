@@ -9,6 +9,7 @@ extends CharacterBody2D
 
 const CafePhrasesScript := preload("res://ui/cafe_phrases.gd")
 const StreetSignScript := preload("res://world/street_sign.gd")
+const SACK_TEX := preload("res://assets/The Fan-tasy Tileset (Free)/Art/Props/Sack_3.png")
 const SPEED := 70.0
 const ACCEL := 900.0
 const FRICTION := 1100.0
@@ -505,20 +506,20 @@ func _chop_prompt() -> bool:
 func _refresh_held() -> void:
 	if _held == null:
 		return
-	# The cup and plate stay as they are. Wood never replaces them.
+	# The cup and plate stay as they are. The sack never replaces them.
 	if CafeOrder.still_holding():
 		_held.texture = CafeOrder.texture_for()
 		_held.show()
 		_place_held()
 		return
-	# Temporary: logs in the hand. A sack from the home crate is not wired yet.
-	if GameState.wood_cut_today() and not _in_cafe():
-		_held.texture = _logs_texture()
+	# Axe while the dead tree is still up. After it falls, the sack shows.
+	if _axe_out():
+		_held.texture = _axe_texture()
 		_held.show()
 		_place_held()
 		return
-	if _axe_out():
-		_held.texture = _axe_texture()
+	if GameState.carrying_sack() and not _in_cafe():
+		_held.texture = SACK_TEX
 		_held.show()
 		_place_held()
 		return
@@ -557,28 +558,6 @@ func _axe_texture() -> Texture2D:
 	img.set_pixel(3, 4, blade)
 	img.set_pixel(13, 4, edge)
 	return ImageTexture.create_from_image(img)
-
-
-func _logs_texture() -> Texture2D:
-	var img := Image.create(16, 12, false, Image.FORMAT_RGBA8)
-	img.fill(Color(0, 0, 0, 0))
-	_draw_log(img, 1, 1, 14, Color(0.55, 0.34, 0.16))
-	_draw_log(img, 2, 6, 12, Color(0.46, 0.28, 0.13))
-	return ImageTexture.create_from_image(img)
-
-
-func _draw_log(img: Image, x: int, y: int, w: int, wood: Color) -> void:
-	var end := Color(0.72, 0.55, 0.32)
-	var ring := Color(0.40, 0.24, 0.12)
-	for ix in range(x, x + w):
-		img.set_pixel(ix, y, ring)
-		img.set_pixel(ix, y + 1, wood)
-		img.set_pixel(ix, y + 2, wood)
-		img.set_pixel(ix, y + 3, ring)
-	img.set_pixel(x, y + 1, end)
-	img.set_pixel(x, y + 2, end)
-	img.set_pixel(x + w - 1, y + 1, end)
-	img.set_pixel(x + w - 1, y + 2, end)
 
 
 func _hide_held() -> void:

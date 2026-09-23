@@ -13,6 +13,9 @@ extends Node2D
 
 const TILE := Catalog.TILE
 const StreetSignScript := preload("res://world/street_sign.gd")
+## Behind the cottage, on open grass, clear of the café to the east.
+## Top-left tile. The ring is 2×2, so it occupies (8,1) through (9,2).
+const CAMPFIRE_CELL := Vector2i(8, 1)
 ## Terrain is painted this far past the map edge so the autotiler doesn't draw
 ## an "Empty" border where the grass meets nothing.
 const BLEED := 3
@@ -240,6 +243,7 @@ func _place_objects() -> void:
 
 	_make_houses_enterable()
 	_place_street_signs()
+	_place_campfire()
 
 
 ## Every house gets a door, whether the model thought to give it one or not.
@@ -286,6 +290,33 @@ func _place_street_signs() -> void:
 		sign.name = "StreetSign"
 		node.add_child(sign)
 		sign.setup(StreetSignScript.caption_for(str(id)), str(id).ends_with("_house"))
+
+
+func _place_campfire() -> void:
+	var host := Node2D.new()
+	host.set_script(preload("res://world/campfire_spot.gd"))
+	host.name = "campfire"
+	host.y_sort_enabled = true
+	var fp := Vector2i(2, 2)
+	host.position = Catalog.cell_to_anchor(
+		Vector2i(CAMPFIRE_CELL.x, CAMPFIRE_CELL.y + fp.y - 1)) \
+		+ Vector2((fp.x - 1) * TILE * 0.5, 0)
+	_objects.add_child(host)
+	if Interactable.attach(host, {
+		"id": "campfire",
+		"asset": "prop.fireplace_1",
+		"x": CAMPFIRE_CELL.x,
+		"y": CAMPFIRE_CELL.y,
+		"text": "",
+		"beat": "",
+		"on": "",
+		"gives_item": "",
+		"needs_item": "",
+		"locked_text": "",
+	}) == null:
+		host.queue_free()
+		return
+	entities["campfire"] = host
 
 
 func _asset_of(object_id: String) -> String:

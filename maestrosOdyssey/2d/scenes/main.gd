@@ -71,6 +71,8 @@ func _ready() -> void:
 		DayNight.begin_night(0.0)
 	if _has_flag("--check-forest"):
 		call_deferred("_run_forest_check")
+	elif _has_flag("--check-campfire"):
+		call_deferred("_run_campfire_check")
 	elif not _has_flag("--agent-bridge"):
 		Journal.show_opening()
 
@@ -331,4 +333,9 @@ func _has_flag(flag: String) -> bool:
 
 func _run_forest_check() -> void:
 	var check: Script = load("res://tools/check_forest_chop.gd")
+	check.run(self)
+
+
+func _run_campfire_check() -> void:
+	var check: Script = load("res://tools/check_campfire.gd")
 	check.run(self)

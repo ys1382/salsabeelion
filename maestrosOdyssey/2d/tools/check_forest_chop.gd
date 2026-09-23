@@ -1,7 +1,7 @@
 extends RefCounted
 # Run from the real game: godot --path . -- --check-forest
-# Monday still points at the café. Tuesday points at the woods, the dead
-# tree is brown, four swings leave a stump and logs in hand.
+# Monday and Tuesday point at the café. Saturday points at the woods, the
+# dead tree is brown, four swings leave a stump and logs in the sack.
 
 
 static func run(host: Node) -> void:
@@ -15,6 +15,14 @@ static func run(host: Node) -> void:
 	gs.day_index = 2
 	gs._sync_clock()
 	assert(gs.weekday == "Tuesday")
+	assert(not gs.forest_morning())
+	assert(not gs.wood_chore_open())
+	assert(arrow.current_id() == "dragons_brew")
+	_assert_goodbye(host, false)
+
+	gs.day_index = 6
+	gs._sync_clock()
+	assert(gs.weekday == "Saturday")
 	assert(gs.forest_morning())
 	assert(gs.wood_chore_open())
 	assert(arrow.current_id() == "forest_clearing")
@@ -50,8 +58,35 @@ static func run(host: Node) -> void:
 	assert(arrow.current_id() == "dragons_brew")
 	player._refresh_held()
 	assert(held.visible)
+	_assert_goodbye(host, true)
 	print("forest chop: ok")
 	host.get_tree().quit()
+
+
+## Goodbye still lets you out. The chilly line is Saturday only, after the nod.
+static func _assert_goodbye(host: Node, wood_day: bool) -> void:
+	var cafe: Node = host.get_node("/root/CafeOrder")
+	cafe.reset_session()
+	cafe.taken = true
+	cafe._drink = "café"
+	cafe._food = "muffin"
+	cafe.served = PackedStringArray(["café", "muffin"])
+	cafe.cup_left = 0
+	cafe.muffin_left = 0
+	cafe._mark_meal_if_done()
+	var phrase := "Adiós, y buenas noches" if GameState.day_index >= 3 else "Adiós, and buenas noches"
+	cafe.use_dish_cart()
+	var said: String = cafe.reply_for(phrase)
+	assert(cafe.goodbye_done, said)
+	assert(cafe.may_leave())
+	assert(said.begins_with("Mara smiles and nods."))
+	if wood_day:
+		assert(said.contains("chilly tonight"))
+		assert(said.contains("light the fire"))
+	else:
+		assert(said == "Mara smiles and nods.")
+	# The check is about the line, not ending the day.
+	GameState.cafe_meal_done = false
 
 
 static func _needle_counts(node: Node2D) -> Array:

@@ -105,6 +105,9 @@ func current_id() -> String:
 		return table
 	if GameState.day_index >= 8 and not ElderReport.done:
 		return "elder"
+	# Wood still in the sack: the fire behind home, then the door.
+	if GameState.cafe_meal_done and GameState.wood_for_fire():
+		return "campfire"
 	if GameState.cafe_meal_done:
 		return "player_house"
 	if GameState.wood_chore_open():
@@ -126,6 +129,8 @@ func marker_name(id: String) -> String:
 			return "Café"
 		"player_house":
 			return "Home"
+		"campfire":
+			return "Fire"
 		"forest_clearing":
 			return "Woods"
 		"dish_cart":
@@ -263,7 +268,8 @@ func _over_person(id: String) -> bool:
 	if not Interiors.inside() or Interiors.current == null:
 		return false
 	if id == "" or id == "dish_cart" or id == "dragons_brew" \
-			or id == "player_house" or id == "elder" or id == "card_basket":
+			or id == "player_house" or id == "elder" or id == "card_basket" \
+			or id == "campfire":
 		return false
 	var person := _entity(id)
 	return person is Npc
@@ -417,7 +423,7 @@ func _target_pos(id: String) -> Vector2:
 				return tree.global_position
 		return Interiors.forest_mouth_position()
 	if id != "dish_cart" and id != "dragons_brew" and id != "player_house" \
-			and id != "elder" and id != "card_basket":
+			and id != "elder" and id != "card_basket" and id != "campfire":
 		var person := _entity(id)
 		if person != null:
 			return person.global_position

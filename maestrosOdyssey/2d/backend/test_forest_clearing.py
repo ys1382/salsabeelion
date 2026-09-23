@@ -136,11 +136,11 @@ def main() -> int:
     player = (ROOT / "actors" / "player.gd").read_text(encoding="utf-8")
     assert "try_chop" in player
     assert "_axe_texture" in player
-    assert "_logs_texture" in player
+    assert "Sack_3.png" in player
+    assert "_logs_texture" not in player
     state = (ROOT / "ui" / "game_state.gd").read_text(encoding="utf-8")
     assert "func forest_morning" in state
-    assert "day_index >= 2" in state
-    assert "day_index <= 7" in state
+    assert "day_index == 6" in state
     tasks = (ROOT / "ui" / "task_list.gd").read_text(encoding="utf-8")
     assert "Cut wood in the forest" in tasks
     assert "forest_morning()" in tasks

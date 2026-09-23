@@ -374,6 +374,8 @@ func _bye_reply(text: String) -> String:
 		awaiting_bye = false
 		goodbye_done = true
 		open_box_on_close = false
+		if GameState.forest_morning():
+			return "Mara smiles and nods. \"It's chilly tonight. That's why you light the fire at home.\""
 		return "Mara smiles and nods."
 	open_box_on_close = true
 	return "Mara waits, gentle. Say it back the way she did."

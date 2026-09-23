@@ -16,8 +16,10 @@ signal beat_revealed(beat: Dictionary)
 signal finale_reached(text: String)
 ## Fired the first time each item is picked up.
 signal item_taken(item: Dictionary)
-## Axe, logs, or back to empty hands. The café cup still wins while it is out.
+## Axe, sack, or back to empty hands. The café cup still wins while it is out.
 signal carry_changed
+## The outdoor campfire behind the house changed stage (pit, or lit).
+signal campfire_changed
 ## The rival escalating: a rumor becoming common talk, or minions/the boss
 ## needing to exist in the live scene. Mechanics only — WorldManager is the
 ## one thing that should act on these; Journal only toasts the rumors.
@@ -52,6 +54,10 @@ var card_balance: int = 0
 var cafe_meal_done: bool = false
 ## Weekday index on which the dead tree last fell. 0 means not yet today.
 var wood_cut_day: int = 0
+## 0 nothing, 1 unlit stone pit, 2 the pack's lit campfire. Stays for the run.
+var campfire_stage: int = 0
+## Weekday index on which today's wood went onto the fire. 0 means not yet.
+var wood_stowed_day: int = 0
 
 ## "explore" -> "showdown_pending" (card up, boss not spawned yet) ->
 ## "showdown" (boss alive) -> "won". Worlds with no rival skip straight from
@@ -90,6 +96,8 @@ func set_world(w: Dictionary) -> void:
 	card_balance = 0
 	cafe_meal_done = false
 	wood_cut_day = 0
+	campfire_stage = 0
+	wood_stowed_day = 0
 	_sync_clock()
 	if has_node("/root/CafeOrder"):
 		CafeOrder.reset_session()
@@ -180,7 +188,7 @@ func try_night_pass() -> bool:
 func advance_day() -> void:
 	day_index += 1
 	_sync_clock()
-	# Yesterday's bundle is done. The next morning cuts a new tree.
+	# Yesterday's bundle is done. Only Saturday asks for wood again, next week.
 	inventory.erase("logs")
 	# Outdoor street returns to morning while you are still inside the house.
 	if has_node("/root/DayNight"):
@@ -188,9 +196,9 @@ func advance_day() -> void:
 	carry_changed.emit()
 
 
-## Tuesday through Sunday of week one. Monday stays the café morning.
+## Saturday of week one only. Every other morning is the café, same as Monday.
 func forest_morning() -> bool:
-	return week_number == 1 and day_index >= 2 and day_index <= 7
+	return week_number == 1 and day_index == 6
 
 
 func wood_cut_today() -> bool:
@@ -206,6 +214,57 @@ func wood_chore_open() -> bool:
 func note_wood_cut() -> void:
 	wood_cut_day = day_index
 	take_item("logs")
+	carry_changed.emit()
+
+
+## Forest mornings start with the sack from home, until today's wood is on the fire.
+func carrying_sack() -> bool:
+	return forest_morning() and not wood_stowed_today()
+
+
+func wood_stowed_today() -> bool:
+	return wood_stowed_day == day_index and day_index > 0
+
+
+## Cut wood still in the sack, ready for the campfire.
+func wood_for_fire() -> bool:
+	return wood_cut_today() and not wood_stowed_today()
+
+
+func campfire_prompt() -> String:
+	if wood_for_fire():
+		if campfire_stage <= 0:
+			return "Build"
+		if campfire_stage == 1:
+			return "Light"
+		return "Add wood"
+	return "Look"
+
+
+## Outdoor only. The spot behind the house calls this. Returns the line to show.
+func tend_campfire() -> String:
+	if wood_for_fire():
+		if campfire_stage <= 0:
+			campfire_stage = 1
+			campfire_changed.emit()
+			return "You set the stones in a ring, a little way behind the house."
+		if campfire_stage == 1:
+			campfire_stage = 2
+			_stow_wood()
+			return "You set the wood in and light it. The campfire catches."
+		_stow_wood()
+		return "You add the wood. The fire takes it."
+	if campfire_stage >= 2:
+		return "The campfire is going."
+	if campfire_stage == 1:
+		return "The stones are set. They still need wood."
+	return "Open ground behind the house. It would hold a fire."
+
+
+func _stow_wood() -> void:
+	wood_stowed_day = day_index
+	inventory.erase("logs")
+	campfire_changed.emit()
 	carry_changed.emit()
 
 
