@@ -16,6 +16,8 @@ signal beat_revealed(beat: Dictionary)
 signal finale_reached(text: String)
 ## Fired the first time each item is picked up.
 signal item_taken(item: Dictionary)
+## Axe, logs, or back to empty hands. The café cup still wins while it is out.
+signal carry_changed
 ## The rival escalating: a rumor becoming common talk, or minions/the boss
 ## needing to exist in the live scene. Mechanics only — WorldManager is the
 ## one thing that should act on these; Journal only toasts the rumors.
@@ -48,6 +50,8 @@ var card_balance: int = 0
 ## Paid café meal fully drained. Survives leaving Dragon's Brew so home can
 ## turn the weekday. Cleared when the night-pass card fires.
 var cafe_meal_done: bool = false
+## Weekday index on which the dead tree last fell. 0 means not yet today.
+var wood_cut_day: int = 0
 
 ## "explore" -> "showdown_pending" (card up, boss not spawned yet) ->
 ## "showdown" (boss alive) -> "won". Worlds with no rival skip straight from
@@ -85,6 +89,7 @@ func set_world(w: Dictionary) -> void:
 	day_index = 1
 	card_balance = 0
 	cafe_meal_done = false
+	wood_cut_day = 0
 	_sync_clock()
 	if has_node("/root/CafeOrder"):
 		CafeOrder.reset_session()
@@ -175,9 +180,33 @@ func try_night_pass() -> bool:
 func advance_day() -> void:
 	day_index += 1
 	_sync_clock()
+	# Yesterday's bundle is done. The next morning cuts a new tree.
+	inventory.erase("logs")
 	# Outdoor street returns to morning while you are still inside the house.
 	if has_node("/root/DayNight"):
 		DayNight.begin_day()
+	carry_changed.emit()
+
+
+## Tuesday through Sunday of week one. Monday stays the café morning.
+func forest_morning() -> bool:
+	return week_number == 1 and day_index >= 2 and day_index <= 7
+
+
+func wood_cut_today() -> bool:
+	return wood_cut_day == day_index and day_index > 0
+
+
+## The arrow's first job, until the tree is down. A finished meal still
+## sends you home — the café loop is allowed later the same day.
+func wood_chore_open() -> bool:
+	return forest_morning() and not wood_cut_today() and not cafe_meal_done
+
+
+func note_wood_cut() -> void:
+	wood_cut_day = day_index
+	take_item("logs")
+	carry_changed.emit()
 
 
 func _sync_clock() -> void:

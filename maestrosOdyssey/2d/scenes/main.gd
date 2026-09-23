@@ -69,7 +69,9 @@ func _ready() -> void:
 		   world["enemies"].size()])
 	if _has_flag("--force-night"):
 		DayNight.begin_night(0.0)
-	if not _has_flag("--agent-bridge"):
+	if _has_flag("--check-forest"):
+		call_deferred("_run_forest_check")
+	elif not _has_flag("--agent-bridge"):
 		Journal.show_opening()
 
 
@@ -325,3 +327,8 @@ func _arg_value(flag: String) -> String:
 
 func _has_flag(flag: String) -> bool:
 	return OS.get_cmdline_user_args().has(flag)
+
+
+func _run_forest_check() -> void:
+	var check: Script = load("res://tools/check_forest_chop.gd")
+	check.run(self)

@@ -71,7 +71,10 @@ func _ready() -> void:
 	_held.hide()
 	add_child(_held)
 	CafeOrder.order_ready.connect(_on_order_ready)
-	CafeOrder.order_cleared.connect(_hide_held)
+	CafeOrder.order_cleared.connect(_refresh_held)
+	GameState.carry_changed.connect(_refresh_held)
+	Interiors.entered.connect(func(_id): _refresh_held())
+	Interiors.left.connect(_refresh_held)
 	_play("idle")
 
 
@@ -165,6 +168,8 @@ func _update_focus() -> void:
 		DialogueUI.show_prompt("%s — %s" % [_prompt_key(it), it.prompt()])
 	elif focus is Npc:
 		DialogueUI.show_prompt("T — Talk to %s" % (focus as Npc).display_name)
+	elif _chop_prompt():
+		DialogueUI.show_prompt("J — Chop")
 	else:
 		DialogueUI.hide_prompt()
 
@@ -307,6 +312,9 @@ func _strike() -> void:
 			continue
 		if e.has_method("take_damage"):
 			e.take_damage(ATTACK_DAMAGE, dir)
+	var place := Interiors.current
+	if place != null and place.has_method("try_chop"):
+		place.try_chop(global_position, facing)
 
 
 func take_damage(amount: int) -> void:
@@ -487,15 +495,90 @@ func try_bite() -> bool:
 	return true
 
 
+func _chop_prompt() -> bool:
+	var place := Interiors.current
+	if place == null or not place.has_method("chop_ready"):
+		return false
+	return place.chop_ready(global_position, facing)
+
+
 func _refresh_held() -> void:
 	if _held == null:
 		return
-	if not CafeOrder.still_holding():
-		_hide_held()
+	# The cup and plate stay as they are. Wood never replaces them.
+	if CafeOrder.still_holding():
+		_held.texture = CafeOrder.texture_for()
+		_held.show()
+		_place_held()
 		return
-	_held.texture = CafeOrder.texture_for()
-	_held.show()
-	_place_held()
+	# Temporary: logs in the hand. A sack from the home crate is not wired yet.
+	if GameState.wood_cut_today() and not _in_cafe():
+		_held.texture = _logs_texture()
+		_held.show()
+		_place_held()
+		return
+	if _axe_out():
+		_held.texture = _axe_texture()
+		_held.show()
+		_place_held()
+		return
+	_hide_held()
+
+
+func _in_cafe() -> bool:
+	return (
+		Interiors.inside()
+		and Interiors.current != null
+		and Interiors.current.building_id == "dragons_brew"
+	)
+
+
+func _axe_out() -> bool:
+	var place := Interiors.current
+	if place == null or not place.has_method("tree_standing"):
+		return false
+	return place.tree_standing()
+
+
+func _axe_texture() -> Texture2D:
+	var img := Image.create(16, 16, false, Image.FORMAT_RGBA8)
+	img.fill(Color(0, 0, 0, 0))
+	var handle := Color(0.55, 0.34, 0.16)
+	var grip := Color(0.40, 0.24, 0.12)
+	var blade := Color(0.78, 0.80, 0.84)
+	var edge := Color(0.55, 0.58, 0.62)
+	for y in range(5, 15):
+		img.set_pixel(7, y, handle)
+		img.set_pixel(8, y, grip)
+	for x in range(4, 13):
+		img.set_pixel(x, 3, blade)
+		img.set_pixel(x, 4, blade)
+		img.set_pixel(x, 5, edge)
+	img.set_pixel(3, 4, blade)
+	img.set_pixel(13, 4, edge)
+	return ImageTexture.create_from_image(img)
+
+
+func _logs_texture() -> Texture2D:
+	var img := Image.create(16, 12, false, Image.FORMAT_RGBA8)
+	img.fill(Color(0, 0, 0, 0))
+	_draw_log(img, 1, 1, 14, Color(0.55, 0.34, 0.16))
+	_draw_log(img, 2, 6, 12, Color(0.46, 0.28, 0.13))
+	return ImageTexture.create_from_image(img)
+
+
+func _draw_log(img: Image, x: int, y: int, w: int, wood: Color) -> void:
+	var end := Color(0.72, 0.55, 0.32)
+	var ring := Color(0.40, 0.24, 0.12)
+	for ix in range(x, x + w):
+		img.set_pixel(ix, y, ring)
+		img.set_pixel(ix, y + 1, wood)
+		img.set_pixel(ix, y + 2, wood)
+		img.set_pixel(ix, y + 3, ring)
+	img.set_pixel(x, y + 1, end)
+	img.set_pixel(x, y + 2, end)
+	img.set_pixel(x + w - 1, y + 1, end)
+	img.set_pixel(x + w - 1, y + 2, end)
 
 
 func _hide_held() -> void:

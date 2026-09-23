@@ -82,7 +82,8 @@ def _check(path: Path) -> None:
     clearing = world["clearings"]["forest_clearing"]
     room_w = int(clearing["room"]["x"])
     room_h = int(clearing["room"]["y"])
-    assert room_w <= 24 and room_h <= 16
+    # Bigger than the 640×360 view (40×22 tiles) so you walk to see the far woods.
+    assert room_w > 40 and room_h > 23
     # Whole clearing is dark grass in code — no path-strip shade in JSON.
     assert "shade" not in clearing
     exit_cells = _rect(clearing["exit"])
@@ -100,7 +101,17 @@ def _check(path: Path) -> None:
     assert any(a.startswith("tree.tree_") for a in assets)
     assert any(a.startswith("tree.bush_") for a in assets)
     assert any(a.startswith("rock.") for a in assets)
-    assert "prop.chopped_tree_1" in assets
+    # The stump is what the dead tree becomes after the chops, not a prop you start on.
+    assert "prop.chopped_tree_1" not in assets
+    dead = [obj for obj in clearing["objects"] if obj["id"] == "dead_tree"]
+    assert len(dead) == 1
+    assert str(dead[0]["asset"]).startswith("tree.tree_")
+    assert any(
+        obj["asset"] == dead[0]["asset"] and obj["id"] != "dead_tree"
+        for obj in clearing["objects"]
+    )
+    dead_cells = _cells(dead[0])
+    assert all(0 < x < room_w - 1 and 0 < y < room_h - 1 for x, y in dead_cells)
     names = {n["id"] for n in world["npcs"]}
     assert "forest" not in names
     for n in world["npcs"]:
@@ -119,6 +130,24 @@ def main() -> int:
     assert 'building_id == "player_house"' in house
     clearing_gd = (ROOT / "world" / "clearing.gd").read_text(encoding="utf-8")
     assert "Shade.paint(_floor, cells)" in clearing_gd
+    assert "prop.chopped_tree_1" in clearing_gd
+    assert "_brown_needles" in clearing_gd
+    assert "CHOPS_TO_FELL" in clearing_gd
+    player = (ROOT / "actors" / "player.gd").read_text(encoding="utf-8")
+    assert "try_chop" in player
+    assert "_axe_texture" in player
+    assert "_logs_texture" in player
+    state = (ROOT / "ui" / "game_state.gd").read_text(encoding="utf-8")
+    assert "func forest_morning" in state
+    assert "day_index >= 2" in state
+    assert "day_index <= 7" in state
+    tasks = (ROOT / "ui" / "task_list.gd").read_text(encoding="utf-8")
+    assert "Cut wood in the forest" in tasks
+    assert "forest_morning()" in tasks
+    assert "Go to Dragon's Brew" in tasks
+    waypoint = (ROOT / "ui" / "waypoint_hud.gd").read_text(encoding="utf-8")
+    assert "forest_clearing" in waypoint
+    assert "wood_chore_open" in waypoint
     builder = (ROOT / "world" / "world_builder.gd").read_text(encoding="utf-8")
     assert "Shade.paint(_ground" not in builder
     print("forest clearing: ok")

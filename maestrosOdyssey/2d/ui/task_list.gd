@@ -173,10 +173,21 @@ func _steps() -> Array[Dictionary]:
 	var bits: Array[Dictionary] = [
 		{"text": "Talk to the elder", "done": met or card},
 		{"text": "Take the card", "done": card},
+	]
+	# Monday stays the café. Later week-one mornings cut wood first.
+	# Once the meal is finished, home ends the day even if the tree was skipped.
+	if GameState.forest_morning() and not GameState.cafe_meal_done:
+		bits.append({
+			"text": "Cut wood in the forest",
+			"done": GameState.wood_cut_today(),
+		})
+	elif GameState.forest_morning() and GameState.wood_cut_today():
+		bits.append({"text": "Cut wood in the forest", "done": true})
+	bits.append_array([
 		{"text": "Go to Dragon's Brew", "done": in_cafe or menu or ordered},
 		{"text": "Read the menu", "done": menu or ordered},
 		{"text": "Order a drink and a food", "done": ordered},
-	]
+	])
 	if CafeOrder.has_table_guests():
 		bits.append({
 			"text": "Hear the tables",

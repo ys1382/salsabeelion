@@ -108,9 +108,27 @@ func enter_clearing(place_id: String) -> void:
 	p.y_sort_enabled = false
 	p.velocity = Vector2.ZERO
 	p.agent_input = Vector2.ZERO
-	_clamp_camera(p, clearing.pixel_size())
+	_clamp_camera(p, clearing.pixel_size(), clearing.camera_pad())
 	_block_travel()
 	entered.emit(place_id)
+
+
+func forest_mouth_position() -> Vector2:
+	var root := WorldManager.world_root
+	if root == null:
+		return Vector2.ZERO
+	var size: Vector2i = (root as WorldBuilder).map_size()
+	for path in root.world.get("map", {}).get("shade_paths", []):
+		if str(path.get("enters", "")) != "forest_clearing":
+			continue
+		var cells := Shade.mouth_cells(path, size)
+		if cells.is_empty():
+			return Vector2.ZERO
+		var acc := Vector2.ZERO
+		for c in cells:
+			acc += Shade.center_of(c)
+		return acc / float(cells.size())
+	return Vector2.ZERO
 
 
 ## `flavour` is the door interactable's text, shown once the player is actually
@@ -275,14 +293,14 @@ func _here_today(n: Dictionary) -> bool:
 	return false
 
 
-func _clamp_camera(p: Player, px: Vector2i) -> void:
+func _clamp_camera(p: Player, px: Vector2i, pad: int = 0) -> void:
 	var cam := p.get_node_or_null("Camera") as Camera2D
 	if cam == null:
 		return
-	cam.limit_left = 0
-	cam.limit_top = 0
-	cam.limit_right = px.x
-	cam.limit_bottom = px.y
+	cam.limit_left = -pad
+	cam.limit_top = -pad
+	cam.limit_right = px.x + pad
+	cam.limit_bottom = px.y + pad
 	# The camera smooths towards its target; without this the first frame inside
 	# is a pan across the whole room from wherever it was standing outdoors.
 	cam.reset_smoothing()

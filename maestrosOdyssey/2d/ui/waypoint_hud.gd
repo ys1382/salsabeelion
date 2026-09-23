@@ -107,6 +107,8 @@ func current_id() -> String:
 		return "elder"
 	if GameState.cafe_meal_done:
 		return "player_house"
+	if GameState.wood_chore_open():
+		return "forest_clearing"
 	if GameState.has_item("learning_card"):
 		return "dragons_brew"
 	if elder_met():
@@ -124,6 +126,8 @@ func marker_name(id: String) -> String:
 			return "Café"
 		"player_house":
 			return "Home"
+		"forest_clearing":
+			return "Woods"
 		"dish_cart":
 			return "Dishes"
 		"mara":
@@ -143,6 +147,19 @@ func at_destination() -> bool:
 	var id := current_id()
 	if id == "":
 		return false
+	if id == "forest_clearing":
+		if not Interiors.inside() or Interiors.current == null:
+			return false
+		if Interiors.current.building_id != "forest_clearing":
+			return false
+		if Interiors.current.has_method("tree_standing") \
+				and Interiors.current.tree_standing():
+			var body := _player() as Player
+			if body != null and Interiors.current.has_method("chop_ready") \
+					and Interiors.current.chop_ready(body.global_position, body.facing):
+				return true
+			return false
+		return true
 	if id == "dish_cart":
 		return _focus_id() == "dish_cart"
 	if id != "elder" and id != "card_basket" and id != "dragons_brew" and id != "player_house":
@@ -390,6 +407,15 @@ func _entity(id: String) -> Node2D:
 func _target_pos(id: String) -> Vector2:
 	if id == "":
 		return Vector2.ZERO
+	if id == "forest_clearing":
+		if Interiors.inside() and Interiors.current != null \
+				and Interiors.current.building_id == "forest_clearing" \
+				and Interiors.current.has_method("tree_standing") \
+				and Interiors.current.tree_standing():
+			var tree := Interiors.current.get_node_or_null("Objects/dead_tree") as Node2D
+			if tree != null:
+				return tree.global_position
+		return Interiors.forest_mouth_position()
 	if id != "dish_cart" and id != "dragons_brew" and id != "player_house" \
 			and id != "elder" and id != "card_basket":
 		var person := _entity(id)
