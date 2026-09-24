@@ -164,21 +164,28 @@ func leave_blocked_line() -> String:
 	return "Mara is still waiting. Say it back before you go."
 
 
-## Next person to hear, or Mara once the food is waiting at the counter.
-## Empty outside the café, and whenever nothing is on order.
+## Inside the café, one stop at a time: the menu, then Mara, then each
+## person still unheard, then Mara again, then the chair once the food
+## is in hand. Empty outside, and once the meal is finished.
 func nav_target() -> String:
-	if not awaiting_serve:
-		return ""
 	if not Interiors.inside() or Interiors.current == null:
 		return ""
 	if Interiors.current.building_id != "dragons_brew":
 		return ""
-	var next := _next_unheard_id()
-	if next != "":
-		return next
-	if called_out:
+	if GameState.cafe_meal_done:
+		return ""
+	if awaiting_serve:
+		var next := _next_unheard_id()
+		if next != "":
+			return next
 		return "mara"
-	return ""
+	if cup_left > 0 or muffin_left > 0:
+		return "cafe_seat"
+	if taken:
+		return ""
+	if not GameState.known("menu_read"):
+		return "drink_menu"
+	return "mara"
 
 
 func has_table_guests() -> bool:

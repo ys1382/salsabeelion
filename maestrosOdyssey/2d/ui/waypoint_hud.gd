@@ -119,6 +119,10 @@ func marker_name(id: String) -> String:
 			return "Dishes"
 		"mara":
 			return "Mara"
+		"drink_menu":
+			return "Menu"
+		"cafe_seat":
+			return "Chair"
 		_:
 			var node := _entity(id)
 			if node is Npc:
@@ -149,6 +153,10 @@ func at_destination() -> bool:
 		return true
 	if id == "dish_cart":
 		return _focus_id() == "dish_cart"
+	if id == "cafe_seat":
+		var seated := _player() as Player
+		if seated != null and seated.seated:
+			return true
 	if id != "elder" and id != "card_basket" and id != "dragons_brew" and id != "player_house":
 		return _focus_id() == id
 	if Interiors.inside() and Interiors.current != null:
