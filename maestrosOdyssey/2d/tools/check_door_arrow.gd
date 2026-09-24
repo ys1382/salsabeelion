@@ -67,8 +67,8 @@ static func _walk_room(host: Node, player: Player, arrow: Node, door: Node2D) ->
 	var spots := [
 		door.global_position,
 		door.global_position + Vector2(0, -40),
-		door.global_position + Vector2(-36, -48),
-		door.global_position + Vector2(36, -56),
+		door.global_position + Vector2(-80, -36),
+		door.global_position + Vector2(80, -36),
 		door.global_position + Vector2(0, -24),
 	]
 	for spot in spots:
@@ -100,9 +100,9 @@ static func _walk_room(host: Node, player: Player, arrow: Node, door: Node2D) ->
 			"arrow jumped on the floor, slip %s at %s" % [slipped, spot])
 		var delta := door.global_position - player.global_position
 		if delta.length_squared() > 28.0 * 28.0:
-			var want := delta.angle() + PI * 0.5
-			await _expect(host, absf(angle_difference(arrow._draw_rot, want)) < 0.45,
-				"arrow not aimed at the door, rot %s want %s" % [arrow._draw_rot, want])
+			var want := Vector2.DOWN.angle() + PI * 0.5
+			await _expect(host, absf(angle_difference(arrow._draw_rot, want)) < 0.2,
+				"arrow swung off the door, rot %s want %s at %s" % [arrow._draw_rot, want, spot])
 	player.set_physics_process(true)
 
 

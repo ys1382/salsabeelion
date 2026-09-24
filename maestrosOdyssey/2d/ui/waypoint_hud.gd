@@ -183,11 +183,15 @@ func _cafe_guest(id: String) -> bool:
 
 
 func _process(delta: float) -> void:
-	if Journal.is_open() or DialogueUI.blocks_arrow():
+	if Journal.is_open():
 		_set_wanted(false)
 		return
 	var id := current_id()
-	if id == "" or at_destination():
+	# A talk hides the next person. The way home stays on this room's door.
+	if id == "" or (DialogueUI.blocks_arrow() and not _aiming_at_door(id)):
+		_set_wanted(false)
+		return
+	if at_destination():
 		_set_wanted(false)
 		return
 	var target := _target_pos(id)
@@ -214,20 +218,12 @@ func _process(delta: float) -> void:
 	var point := Vector2.DOWN
 	var on_screen := false
 	if exit_door:
-		# Direction comes from the doorway in this room, never from a place
-		# outside. A tiny vector means you are standing on the door: rest
-		# there and keep the last steady aim.
-		var world_delta := target - player.global_position
-		var on_door := world_delta.length_squared() < DOOR_DOCK * DOOR_DOCK
-		if on_door:
-			point = _last_point if _last_point.length_squared() > 0.01 else Vector2.DOWN
-		else:
-			var screen_delta := xform.basis_xform(world_delta)
-			if screen_delta.length_squared() < 1.0:
-				point = _last_point if _last_point.length_squared() > 0.01 else Vector2.DOWN
-			else:
-				point = screen_delta.normalized()
-				_last_point = point
+		# The door is the bottom of the room. Aim down at it. Aiming from
+		# the player makes the arrow swing left and right as you walk across.
+		var world_delta := Vector2.DOWN
+		var on_door := target.distance_to(player.global_position) < DOOR_DOCK
+		point = world_delta
+		_last_point = point
 		var off := _outside_px(screen_target, view)
 		if on_door:
 			_door_docked = true
