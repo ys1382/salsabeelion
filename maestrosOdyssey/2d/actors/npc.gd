@@ -28,6 +28,9 @@ var _home := Vector2.ZERO
 var _heading := Vector2.ZERO
 var _timer := 0.0
 var _paused := 0.0
+## Talk hold. Negative pause means "until the panel closes," not a timer.
+var _talk_locked := false
+var _facing_before := Vector2.DOWN
 
 
 func setup(d: Dictionary) -> void:
@@ -56,8 +59,9 @@ func _physics_process(delta: float) -> void:
 		return
 	# A villager who strides off mid-conversation is maddening; zij3d had to add
 	# the same courtesy pause after playtesting.
-	if _paused > 0.0:
-		_paused -= delta
+	if _paused < 0.0 or _paused > 0.0:
+		if _paused > 0.0:
+			_paused -= delta
 		velocity = Vector2.ZERO
 		_play("idle")
 		return
@@ -132,14 +136,55 @@ func _facing_from_data() -> Vector2:
 
 
 ## Called when the player starts talking: stop wandering and turn to face them.
+## A bare attend still times out. A real conversation uses hold_talk instead.
 func attend(to: Vector2, seconds: float = 8.0) -> void:
+	if _talk_locked:
+		hold_talk(to)
+		return
 	_paused = seconds
-	facing = position.direction_to(to)
+	_face_toward(to)
 	_play("idle")
+
+
+## Face the player and stay that way until release_talk. No timer.
+func hold_talk(to: Vector2) -> void:
+	if not _talk_locked:
+		_facing_before = facing
+		_talk_locked = true
+	_paused = -1.0
+	_heading = Vector2.ZERO
+	_face_toward(to)
+	_play("idle")
+
+
+## Conversation over. Face the way they were, then wander may resume.
+func release_talk() -> void:
+	if not _talk_locked:
+		return
+	_talk_locked = false
+	_paused = 0.0
+	facing = _facing_before
+	_play("idle")
+
+
+func _face_toward(to: Vector2) -> void:
+	var dir := global_position.direction_to(to)
+	if dir.length_squared() < 0.0001:
+		return
+	# The up row is the back of the head, so it reads as looking away.
+	# A talk uses the side face toward them instead.
+	if dir.y < 0.0 and absf(dir.y) >= absf(dir.x):
+		dir = Vector2(-1.0 if dir.x < 0.0 else 1.0, 0.0)
+	facing = dir
 
 
 func _play(state: String) -> void:
 	var parts := Sheet.facing_suffix(facing)
-	_sprite.flip_h = parts[1]
-	LooksLib.face(self, parts[1])
+	# Side row on this sheet already faces left. The shared helper flips
+	# for a sheet that faces right, so undo that or they look the same way.
+	var flip := bool(parts[1])
+	if parts[0] == "side":
+		flip = not flip
+	_sprite.flip_h = flip
+	LooksLib.face(self, flip)
 	_sprite.play("%s_%s" % [state, parts[0]])

@@ -66,6 +66,10 @@ var _push_held := 0.0
 ## Which way we are sliding off the person we bumped. Zero until the hold
 ## is long enough. Collision stays on the whole time.
 var _step_side := Vector2.ZERO
+## Person we are mid-conversation with. Null for signs, doors, and the menu.
+var _talk_with: Npc = null
+## Sit pose could not show this facing. Applied if we stand while the panel is open.
+var _face_on_stand := Vector2.ZERO
 
 
 func _ready() -> void:
@@ -110,6 +114,15 @@ func _physics_process(delta: float) -> void:
 		velocity = Vector2.ZERO
 		move_and_slide()
 		_play("idle")
+		return
+	if _talking():
+		velocity = Vector2.ZERO
+		move_and_slide()
+		if not seated:
+			_play("idle")
+		else:
+			_place_held()
+		_update_focus()
 		return
 	if seated:
 		# Stay seated unless S. D is sip (and walk-right when standing);
@@ -351,6 +364,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if DialogueUI.is_ordering():
 		if event.is_action_pressed("ui_cancel"):
 			DialogueUI.close()
+			_end_talk_face()
 			get_viewport().set_input_as_handled()
 		return
 	if seated and event is InputEventKey and event.pressed and not event.echo:
@@ -449,6 +463,8 @@ func _after_panel_close() -> void:
 	elif ElderReport.open_box_on_close:
 		ElderReport.open_box_on_close = false
 		DialogueUI.show_order_box(ElderReport.speaker_name())
+	if not DialogueUI.is_open():
+		_end_talk_face()
 
 
 # --- combat -------------------------------------------------------------------
@@ -546,6 +562,9 @@ func stand_up(restore := true) -> void:
 		_stand_clear_of_seat()
 	_seat = null
 	velocity = Vector2.ZERO
+	if _face_on_stand != Vector2.ZERO and _talking():
+		facing = _face_on_stand
+	_face_on_stand = Vector2.ZERO
 	_play("idle")
 	_place_held()
 
@@ -615,27 +634,30 @@ func _use_prop(it: Interactable) -> String:
 
 
 func _talk_npc(npc: Npc) -> String:
-	npc.attend(global_position)
 	var gift := npc.accept_item()
 	npc.met = true
 	if npc.npc_id == "mara":
 		var mara_line := CafeOrder.talk(npc)
 		if mara_line != "":
+			_begin_talk_face(npc)
 			DialogueUI.show_line(npc.display_name, mara_line)
 		return "talk"
 	if npc.npc_id == "elder":
 		var report := ElderReport.talk(npc)
 		if report != "":
+			_begin_talk_face(npc)
 			DialogueUI.show_line(npc.display_name, report)
 			return "talk"
 	var phrase := CafePhrasesScript.line_for(npc.npc_id, GameState.day_index, ElderReport.needs_revisit)
 	if phrase != "":
 		npc.grant_if_any()
 		CafeOrder.note_guest_spoke(npc.npc_id, phrase, true)
+		_begin_talk_face(npc)
 		DialogueUI.show_line(npc.display_name, phrase)
 		return "talk"
 	if npc.has_scripted() or GameState.offline_mode or not LLMClient.backend_available:
 		if gift != "":
+			_begin_talk_face(npc)
 			DialogueUI.show_line(npc.display_name,
 				"You hand over %s. They turn it over and over in their hands."
 					% GameState.item_name(gift))
@@ -643,15 +665,59 @@ func _talk_npc(npc: Npc) -> String:
 		npc.grant_if_any()
 		var spoken := npc.next_scripted_line()
 		CafeOrder.note_guest_spoke(npc.npc_id, spoken, false)
+		_begin_talk_face(npc)
 		DialogueUI.show_line(npc.display_name, spoken)
 		return "talk"
 	if gift != "":
+		_begin_talk_face(npc)
 		DialogueUI.show_thinking(npc.display_name)
 		LLMClient.request_dialogue(npc.npc_id, "", gift)
 		return "talk"
+	_begin_talk_face(npc)
 	DialogueUI.show_thinking(npc.display_name)
 	LLMClient.request_dialogue(npc.npc_id, "")
 	return "talk"
+
+
+func _talking() -> bool:
+	return _talk_with != null and is_instance_valid(_talk_with) \
+		and DialogueUI.is_open() and not DialogueUI.is_sign_open()
+
+
+## Turn toward them. Feet stay put. A sit pose only turns when that idle row exists.
+func _begin_talk_face(npc: Npc) -> void:
+	_talk_with = npc
+	var feet := global_position
+	var spr := _sprite.position
+	npc.hold_talk(feet)
+	var to := feet.direction_to(npc.global_position)
+	if to.length_squared() < 0.0001:
+		return
+	if seated and not _sit_shows(to):
+		_face_on_stand = to
+		return
+	_face_on_stand = Vector2.ZERO
+	facing = to
+	_play("idle")
+	global_position = feet
+	_sprite.position = spr
+	if seated:
+		_sprite.frame = 0
+		_sprite.pause()
+
+
+func _sit_shows(to: Vector2) -> bool:
+	var parts: Array = Sheet.facing_suffix(to)
+	if _sprite.sprite_frames == null:
+		return false
+	return _sprite.sprite_frames.has_animation("idle_%s" % parts[0])
+
+
+func _end_talk_face() -> void:
+	_face_on_stand = Vector2.ZERO
+	if _talk_with != null and is_instance_valid(_talk_with):
+		_talk_with.release_talk()
+	_talk_with = null
 
 
 func _on_anim_finished() -> void:
