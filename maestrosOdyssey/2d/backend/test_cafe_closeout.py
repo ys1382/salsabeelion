@@ -40,7 +40,15 @@ def main() -> int:
     assert "Adiós, and buenas noches" in cafe
     assert "Adiós, y buenas noches" in cafe
     assert "goodbye, and good night" in cafe
-    assert "day_index >= 3" in cafe
+    spoken = _fn(cafe, "_goodbye_spoken")
+    expected = _fn(cafe, "_goodbye_expected")
+    assert "day_index >= 2" in spoken
+    assert "day_index >= 2" in expected
+    assert "day_index >= 3" not in spoken
+    assert "day_index >= 3" not in expected
+    assert "day_index >= 2" in _fn(cafe, "needs_y")
+    assert "day_index >= 3" in _fn(cafe, "needs_con")
+    assert "day_index >= 4" in _fn(cafe, "needs_article")
     assert "carrying_dishes" in cafe
     assert "awaiting_bye" in cafe
     bye = _fn(cafe, "_bye_reply")

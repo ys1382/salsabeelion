@@ -74,7 +74,7 @@ static func _assert_goodbye(host: Node, wood_day: bool) -> void:
 	cafe.cup_left = 0
 	cafe.muffin_left = 0
 	cafe._mark_meal_if_done()
-	var phrase := "Adiós, y buenas noches" if GameState.day_index >= 3 else "Adiós, and buenas noches"
+	var phrase := "Adiós, y buenas noches" if GameState.day_index >= 2 else "Adiós, and buenas noches"
 	cafe.use_dish_cart()
 	var said: String = cafe.reply_for(phrase)
 	assert(cafe.goodbye_done, said)

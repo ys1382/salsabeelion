@@ -8,14 +8,15 @@ extends Node
 # before that. An empty room still hands it over in that same reply. Sit to
 # sip (D) and eat (F). After both are finished,
 # the empty cup and plate go in the dish cart, and you say her goodbye back
-# before the door will let you out. Monday and Tuesday that is adiós, and
-# buenas noches. From Wednesday on — the day she teaches y — it is adiós, y
-# buenas noches. A right spelling gets a smile and a nod. Stepping into your
+# before the door will let you out. Monday that is adiós, and buenas noches.
+# From Tuesday on — the day she teaches y — it is adiós, y buenas noches.
+# A right spelling gets a smile and a nod. Stepping into your
 # house turns the weekday. If the card
 # can't cover any
 # pair, Mara quizzes board words instead (cycling, not the same lemma on a
-# loop). From Wednesday, a paid pair must use y (not and), and extras use con
-# (not with). Add-ons are Spanish. A good quiz also lets home turn the weekday.
+# loop). One new café word a day, and it stays: y from Tuesday, con for extras
+# from Wednesday, un / una (with gender) from Thursday. Later Mondays do not
+# go back to English "and". Add-ons are Spanish. A good quiz also lets home turn the weekday.
 
 signal order_ready(lemmas: PackedStringArray)
 signal order_cleared
@@ -62,7 +63,8 @@ const PRACTICE_MAX_DAY := 36
 
 ## Canon #26 unlocks. Day 1 is café / té / muffin, plus leche / azúcar.
 ## Later days add on; the full board stays after day 7. Add-ons are Spanish
-## only. From Wednesday, extras use con. new_today marks a new café-lane lemma
+## only. From Wednesday, extras use con. From Thursday, un / una matches gender.
+## new_today marks a new café-lane lemma
 ## (cognates skip). prep is how you like it (calentado, frío) — not a new drink.
 const ITEMS := [
 	{"needles": ["chocolate caliente", "hot chocolate", "chocolate"], "lemma": "chocolate caliente", "en": "hot chocolate", "pesos": 48, "kind": "drink", "unlock_day": 2, "new_today": true},
@@ -356,15 +358,15 @@ func goodbye_box_hint() -> String:
 	return _goodbye_spoken()
 
 
-## Monday and Tuesday still use English "and". From Wednesday, y stays.
+## Monday still uses English "and". From Tuesday, y stays — including later Mondays.
 func _goodbye_spoken() -> String:
-	if GameState.day_index >= 3:
+	if GameState.day_index >= 2:
 		return "Adiós, y buenas noches"
 	return "Adiós, and buenas noches"
 
 
 func _goodbye_expected() -> String:
-	if GameState.day_index >= 3:
+	if GameState.day_index >= 2:
 		return "adios y buenas noches"
 	return "adios and buenas noches"
 
@@ -430,24 +432,42 @@ func talk(npc: Npc) -> String:
 func order_prompt() -> String:
 	var names := _visible_lemmas(false)
 	var board := ", ".join(names)
-	if GameState.day_index == 3:
+	if GameState.day_index == 2:
 		return (
 			"What's your order? (%s this morning.)\n\n"
-			+ "Today I'd like you to say y instead of and — a drink y a food. "
+			+ "Today I'd like you to say y instead of and — a drink y a food."
+		) % board
+	if GameState.day_index == 3:
+		return (
+			"What's your order? A drink y a food. (%s this morning.)\n\n"
 			+ "Extras use con, like con azúcar."
 		) % board
+	if GameState.day_index == 4:
+		return (
+			"What's your order? (%s this morning.)\n\n"
+			+ "Today, un and una mean a, or one — un café, a coffee. "
+			+ "un café y una galleta. Y still joins them, and extras still use con."
+		) % board
+	if needs_article():
+		return "What's your order? Un or una, then a drink y a food, con if you want extras. (%s this morning.)" % board
 	if needs_y():
-		return "What's your order? A drink y a food, con if you want extras. (%s this morning.)" % board
+		return "What's your order? A drink y a food. (%s this morning.)" % board
 	return "What's your order? A drink and a food. (%s this morning.)" % board
 
 
-## Wednesday onward (café day 3). Early week still accepts and / just both words.
+## Tuesday onward. Stays on later Mondays — day_index does not wrap.
 func needs_y() -> bool:
-	return GameState.day_index >= 3
+	return GameState.day_index >= 2
 
 
+## Wednesday onward, and only when the order has an extra.
 func needs_con() -> bool:
 	return GameState.day_index >= 3
+
+
+## Thursday onward. un / una in front of the drink and the food, by gender.
+func needs_article() -> bool:
+	return GameState.day_index >= 4
 
 
 func too_broke_to_order() -> bool:
@@ -502,6 +522,8 @@ func reply_for(text: String) -> String:
 		return english
 	if needs_con() and _has_addon(lemmas) and not _has_con(order):
 		return _con_nudge(lemmas)
+	if needs_article() and not _articles_ok(order, lemmas):
+		return _article_nudge(lemmas)
 	if not GameState.has_item("learning_card"):
 		return "Mara glances at the reader. \"You'll want the learning card from the elder's basket first — no borrowing past zero.\""
 	var total := order_total(lemmas)
@@ -696,6 +718,11 @@ func _echo(lemmas: PackedStringArray) -> String:
 		drink = drink + " frío"
 	if lemmas.has("calentado") and food != "":
 		food = food + " calentado"
+	if needs_article():
+		if drink != "":
+			drink = _article_for(_lemma_of_kind(lemmas, "drink")) + " " + drink
+		if food != "":
+			food = _article_for(_lemma_of_kind(lemmas, "food")) + " " + food
 	var core := ""
 	if drink != "" and food != "":
 		if needs_y() or GameState.week_number >= 2:
@@ -726,24 +753,82 @@ func _has_con(order: String) -> bool:
 
 
 func _y_nudge(lemmas: PackedStringArray) -> String:
-	var drink := _lemma_of_kind(lemmas, "drink")
-	var food := _lemma_of_kind(lemmas, "food")
-	if _has_addon(lemmas):
+	if _has_addon(lemmas) and needs_con():
 		return (
-			"Mara tilts her head, kind. \"Almost — here we say y, and extras use con. %s y %s con %s?\""
-		) % [drink, food, _join_y(_lemmas_of_kind(lemmas, "addon"))]
+			"Mara tilts her head, kind. \"Almost — here we say y, and extras use con. %s?\""
+		) % _model_order(lemmas)
 	return (
-		"Mara tilts her head, kind. \"Almost — here we say y. %s y %s?\""
-	) % [drink, food]
+		"Mara tilts her head, kind. \"Almost — here we say y. %s?\""
+	) % _model_order(lemmas)
 
 
 func _con_nudge(lemmas: PackedStringArray) -> String:
+	return (
+		"Mara tilts her head, kind. \"Almost — extras use con. %s?\""
+	) % _model_order(lemmas)
+
+
+func _article_nudge(lemmas: PackedStringArray) -> String:
+	return (
+		"Mara tilts her head, kind. \"Almost — un or una means a, or one. %s?\""
+	) % _model_order(lemmas)
+
+
+## Masculine on this board: café, té, chocolate caliente, espresso, muffin,
+## croissant, bolillo. Feminine: tostada, galleta. Add-ons stay with con.
+func _article_for(lemma: String) -> String:
+	if lemma == "tostada" or lemma == "galleta":
+		return "una"
+	return "un"
+
+
+func _articles_ok(order: String, lemmas: PackedStringArray) -> bool:
 	var drink := _lemma_of_kind(lemmas, "drink")
 	var food := _lemma_of_kind(lemmas, "food")
-	var extra := _join_y(_lemmas_of_kind(lemmas, "addon"))
-	return (
-		"Mara tilts her head, kind. \"Almost — extras use con. %s y %s con %s?\""
-	) % [drink, food, extra]
+	if drink == "" or food == "":
+		return false
+	return _article_before(order, drink) == _article_for(drink) \
+		and _article_before(order, food) == _article_for(food)
+
+
+func _article_before(order: String, lemma: String) -> String:
+	var words := _fold(order).split(" ", false)
+	var needle := _fold(lemma).split(" ", false)
+	if needle.is_empty():
+		return ""
+	for i in range(words.size() - needle.size() + 1):
+		var matched := true
+		for j in needle.size():
+			if words[i + j] != needle[j]:
+				matched = false
+				break
+		if not matched:
+			continue
+		if i == 0:
+			return ""
+		return words[i - 1]
+	return ""
+
+
+## The kind line Mara offers. Articles from Thursday. con only once it is taught.
+func _model_order(lemmas: PackedStringArray) -> String:
+	var drink := _lemma_of_kind(lemmas, "drink")
+	var food := _lemma_of_kind(lemmas, "food")
+	var drink_bit := drink
+	var food_bit := food
+	if lemmas.has("frío") and drink != "":
+		drink_bit = drink + " frío"
+	if lemmas.has("calentado") and food != "":
+		food_bit = food + " calentado"
+	if needs_article():
+		if drink != "":
+			drink_bit = _article_for(drink) + " " + drink_bit
+		if food != "":
+			food_bit = _article_for(food) + " " + food_bit
+	var core := drink_bit + " y " + food_bit
+	if _has_addon(lemmas) and needs_con():
+		return core + " con " + _join_y(_lemmas_of_kind(lemmas, "addon"))
+	return core
 
 
 func _missing_half_line(lemmas: PackedStringArray) -> String:

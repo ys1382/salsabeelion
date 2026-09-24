@@ -251,7 +251,7 @@ This chat’s later list **plus** original MO items **not in the Godot build yet
 
 **When listing open todos (owner — 2026-09-22, priority later that night):** Show **only items not done**. For **pre-animation-upgrades**, list **plot**, then **mechanics**, then **look you can do on the current sprites**. Do not drop the rest when naming a priority.
 
-**Next to deploy (owner — 2026-09-22; connectors 2026-09-23):** Plot first: **human table**, then week-one language by day — **Tue y**, **Wed con**, **Thu un / una**. Mechanics first: **bump into people and furniture**, then **read the board**, then the **strike board**. Everything else stays on the list under that.
+**Next to deploy (owner — 2026-09-22; connectors 2026-09-23; bump shipped 2026-09-23):** Plot first: **human table**, then week-one language by day — **Tue y**, **Wed con**, **Thu un / una**. Mechanics first: **read the board**, then the **strike board**. Everything else stays on the list under that.
 
 Demo ending = arrive at the train station (#24). **Pegasus, griffin, and other very detailed creatures** are **post-upgrade**, same as minotaurs — do not placeholder them. A **soft café TV** is a potential **post-upgrade** item; anything earlier would look flat. Mechanics still rank above the big animation work.
 
