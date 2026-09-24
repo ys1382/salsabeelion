@@ -399,16 +399,37 @@ func _flat_spanish(raw: String) -> String:
 
 
 func talk(npc: Npc) -> String:
+	var pages := talk_pages(npc)
+	if pages.is_empty():
+		return ""
+	return pages[0]
+
+
+## One visit. If the menu is still unread, the last box is "go read it" and
+## that box can close. If it is already read, the hello continues into the
+## order, and closing that last box still opens the type box.
+func talk_pages(npc: Npc) -> PackedStringArray:
 	npc.met = true
 	var lines = npc.data.get("scripted_lines", [])
+	var out := PackedStringArray()
 	if typeof(lines) != TYPE_ARRAY or lines.size() < 3:
-		return str(npc.data.get("opener", "..."))
+		out.append(str(npc.data.get("opener", "...")))
+		return out
 	if not intro_done:
 		intro_done = true
 		npc.grant_if_any()
-		return str(lines[0])
+		out.append(str(lines[0]))
 	if not GameState.known("menu_read"):
-		return str(lines[1])
+		open_box_on_close = false
+		out.append(str(lines[1]))
+		return out
+	var next := _counter_or_order_line()
+	if next != "":
+		out.append(next)
+	return out
+
+
+func _counter_or_order_line() -> String:
 	if taken:
 		if awaiting_serve:
 			return _counter_while_waiting()

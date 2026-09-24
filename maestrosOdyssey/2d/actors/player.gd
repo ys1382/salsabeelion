@@ -68,6 +68,10 @@ var _push_held := 0.0
 var _step_side := Vector2.ZERO
 ## Person we are mid-conversation with. Null for signs, doors, and the menu.
 var _talk_with: Npc = null
+## Boxes left in this talk. Empty for a single beat (Mara, a one-line day,
+## the day-8 report). T advances until the last box, which is the only close.
+var _pages: PackedStringArray = PackedStringArray()
+var _page := 0
 ## Sit pose could not show this facing. Applied if we stand while the panel is open.
 var _face_on_stand := Vector2.ZERO
 
@@ -389,6 +393,10 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 		return
 	if _key_down(event, KEY_R):
+		# A person with lines left is not a sign. R must not dismiss them.
+		if _more_lines():
+			get_viewport().set_input_as_handled()
+			return
 		# Menu / house-rules: R always reads when you are at the board, even if
 		# a door line or other panel is still open (order box stays alone).
 		if focus is Interactable and _prompt_key(focus as Interactable) == "R":
@@ -417,6 +425,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if event.is_action_pressed("interact"):
 		interact_pressed.emit()
+		if _more_lines():
+			get_viewport().set_input_as_handled()
+			return
 		if _try_close("E"):
 			get_viewport().set_input_as_handled()
 			return
@@ -448,14 +459,23 @@ func _prompt_key(it: Interactable) -> String:
 func _try_close(key: String) -> bool:
 	if DialogueUI.is_ordering() or not DialogueUI.is_open():
 		return false
+	# Middle boxes advance. That is not a close: no heard mark beyond the
+	# line now showing, no callout timer, and they keep facing each other.
+	if _more_lines():
+		if key != "T":
+			return false
+		_advance_page()
+		return true
 	if DialogueUI.close_key != key:
 		return false
+	_clear_pages()
 	DialogueUI.close()
 	_after_panel_close()
 	return true
 
 
 func _after_panel_close() -> void:
+	_clear_pages()
 	CafeOrder.on_speech_closed()
 	if CafeOrder.open_box_on_close:
 		CafeOrder.open_box_on_close = false
@@ -593,6 +613,8 @@ func use_focus() -> String:
 	# A second press closes an open panel rather than immediately re-triggering.
 	# Order-box and speech-close must stay siblings: nesting the close under
 	# is_ordering() made E a no-op on Mara's line, so the type box never opened.
+	if _more_lines():
+		return ""
 	if DialogueUI.is_ordering():
 		return ""
 	if DialogueUI.is_open():
@@ -636,11 +658,14 @@ func _use_prop(it: Interactable) -> String:
 func _talk_npc(npc: Npc) -> String:
 	var gift := npc.accept_item()
 	npc.met = true
+	_clear_pages()
 	if npc.npc_id == "mara":
-		var mara_line := CafeOrder.talk(npc)
-		if mara_line != "":
+		var mara_pages := CafeOrder.talk_pages(npc)
+		if mara_pages.size() > 1:
+			_open_pages(npc, mara_pages)
+		elif mara_pages.size() == 1:
 			_begin_talk_face(npc)
-			DialogueUI.show_line(npc.display_name, mara_line)
+			DialogueUI.show_line(npc.display_name, mara_pages[0])
 		return "talk"
 	if npc.npc_id == "elder":
 		var report := ElderReport.talk(npc)
@@ -663,10 +688,7 @@ func _talk_npc(npc: Npc) -> String:
 					% GameState.item_name(gift))
 			return "give"
 		npc.grant_if_any()
-		var spoken := npc.next_scripted_line()
-		CafeOrder.note_guest_spoke(npc.npc_id, spoken, false)
-		_begin_talk_face(npc)
-		DialogueUI.show_line(npc.display_name, spoken)
+		_open_pages(npc, npc.scripted_pages())
 		return "talk"
 	if gift != "":
 		_begin_talk_face(npc)
@@ -677,6 +699,39 @@ func _talk_npc(npc: Npc) -> String:
 	DialogueUI.show_thinking(npc.display_name)
 	LLMClient.request_dialogue(npc.npc_id, "")
 	return "talk"
+
+
+func _more_lines() -> bool:
+	return _pages.size() > 1 and _page < _pages.size() - 1
+
+
+func _clear_pages() -> void:
+	_pages = PackedStringArray()
+	_page = 0
+
+
+## Show the current box. A middle line is not a close, so the guest is not
+## marked heard unless this text is already their last line for the visit.
+func _open_pages(npc: Npc, lines: PackedStringArray) -> void:
+	_pages = lines
+	_page = 0
+	_show_page(npc)
+
+
+func _show_page(npc: Npc) -> void:
+	if _pages.is_empty():
+		return
+	var line := _pages[_page]
+	CafeOrder.note_guest_spoke(npc.npc_id, line, false)
+	_begin_talk_face(npc)
+	DialogueUI.show_line(npc.display_name, line, _more_lines())
+
+
+func _advance_page() -> void:
+	if not _more_lines() or _talk_with == null or not is_instance_valid(_talk_with):
+		return
+	_page += 1
+	_show_page(_talk_with)
 
 
 func _talking() -> bool:

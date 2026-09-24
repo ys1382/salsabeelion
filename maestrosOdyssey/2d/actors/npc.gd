@@ -98,6 +98,21 @@ func next_scripted_line() -> String:
 	return line
 
 
+## Every line still left in this talk, from the one they are due through the
+## last. Later visits stick on that last line, so a one-line day can still close.
+func scripted_pages() -> PackedStringArray:
+	var lines = data.get("scripted_lines", [])
+	var out := PackedStringArray()
+	if typeof(lines) != TYPE_ARRAY or lines.is_empty():
+		out.append(str(data.get("opener", "...")))
+		return out
+	var start := mini(_line_i, lines.size() - 1)
+	for i in range(start, lines.size()):
+		out.append(str(lines[i]))
+	_line_i = lines.size() - 1
+	return out
+
+
 func grant_if_any() -> void:
 	if _granted:
 		return

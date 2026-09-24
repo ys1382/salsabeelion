@@ -110,7 +110,9 @@ func show_thinking(speaker: String) -> void:
 	show_line(speaker, "…")
 
 
-func show_line(speaker: String, text: String) -> void:
+## `more` means this person still has another box after this one. T then says
+## next. The last box, and any one-line talk, still says close.
+func show_line(speaker: String, text: String, more := false) -> void:
 	_hide_sign()
 	_prompt.hide()
 	_order.hide()
@@ -120,7 +122,7 @@ func show_line(speaker: String, text: String) -> void:
 	_body.text = text
 	_body.show()
 	close_key = "T"
-	_hint.text = "T — Close"
+	_hint.text = "T — Next" if more else "T — Close"
 	_hint.show()
 	_fit(text, speaker != "")
 	_panel.show()

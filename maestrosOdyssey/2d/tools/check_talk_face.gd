@@ -38,9 +38,21 @@ static func run(host: Node) -> void:
 		"Mara looked away during the panel: %s" % mara.facing)
 	await _expect(host, _looks_at(player.facing, mara.global_position - player.global_position),
 		"player looked away during the panel: %s" % player.facing)
+	await _expect(host, DialogueUI._hint.text == "T — Next",
+		"unread menu should keep Mara talking: %s" % DialogueUI._hint.text)
+	var hello := DialogueUI.body()
+	await _expect(host, player._try_close("T"), "T did not reach the menu line")
+	await host.get_tree().physics_frame
+	await _expect(host, DialogueUI.is_open(), "menu line closed early")
+	await _expect(host, DialogueUI.body() != hello, "menu line did not show")
+	await _expect(host, DialogueUI._hint.text == "T — Close",
+		"menu line should close so you can go read it: %s" % DialogueUI._hint.text)
+	await _expect(host, _looks_at(mara.facing, player.global_position - mara.global_position),
+		"Mara looked away on the menu line")
 
-	DialogueUI.close()
-	player._after_panel_close()
+	await _expect(host, player._try_close("T"), "menu line did not close")
+	await host.get_tree().physics_frame
+	await _expect(host, not DialogueUI.is_ordering(), "menu line opened the order box")
 	await host.get_tree().physics_frame
 	await _expect(host, not DialogueUI.is_open(), "panel stayed open")
 	await _expect(host, mara.facing.dot(before_mara) > 0.9,
@@ -72,7 +84,30 @@ static func run(host: Node) -> void:
 	player._after_panel_close()
 	player.stand_up()
 
+	# Menu already read: hello continues into the order, and that last box
+	# still opens the type box.
+	CafeOrder.intro_done = false
+	GameState.reveal("menu_read")
+	player.global_position = mara.global_position + Vector2(-28, 6)
+	player._talk_npc(mara)
+	await host.get_tree().physics_frame
+	await _expect(host, DialogueUI._hint.text == "T — Next",
+		"menu-first hello closed: %s" % DialogueUI._hint.text)
+	await _expect(host, player._try_close("T"), "T did not reach the order")
+	await host.get_tree().physics_frame
+	await _expect(host, DialogueUI.is_open(), "order line closed early")
+	await _expect(host, DialogueUI.body().contains("order"),
+		"order line missing: %s" % DialogueUI.body())
+	await _expect(host, DialogueUI._hint.text == "T — Close",
+		"order line should close: %s" % DialogueUI._hint.text)
+	await _expect(host, player._try_close("T"), "order line did not close")
+	await host.get_tree().physics_frame
+	await _expect(host, DialogueUI.is_ordering(), "order line did not open the type box")
+	DialogueUI.close()
+	player._after_panel_close()
+
 	var elder := _npc(host, "elder")
+	var elder_before := elder.facing
 	player.global_position = elder.global_position + Vector2(4, -22)
 	player._talk_npc(elder)
 	await host.get_tree().physics_frame
@@ -84,8 +119,33 @@ static func run(host: Node) -> void:
 		"elder profile looked the same way as a right-facing stand")
 	await _expect(host, Sheet.facing_suffix(player.facing)[0] != Sheet.facing_suffix(elder.facing)[0],
 		"elder lined up with the player")
-	DialogueUI.close()
-	player._after_panel_close()
+	var first := DialogueUI.body()
+	await _expect(host, DialogueUI._hint.text == "T — Next",
+		"first box offered close: %s" % DialogueUI._hint.text)
+	await _expect(host, not player._try_close("R"), "R dismissed a middle box")
+	await _expect(host, not player._try_close("E"), "E dismissed a middle box")
+	await _expect(host, DialogueUI.is_open() and DialogueUI.body() == first,
+		"R or E changed the first box")
+	await _expect(host, player._try_close("T"), "T did not advance")
+	await host.get_tree().physics_frame
+	await _expect(host, DialogueUI.is_open(), "first box closed the talk")
+	await _expect(host, DialogueUI.body() != first, "T did not show the next line")
+	await _expect(host, _looks_side_toward(elder.facing, player.global_position.x - elder.global_position.x),
+		"elder looked away on the next box: %s" % elder.facing)
+	await _expect(host, _looks_at(player.facing, elder.global_position - player.global_position),
+		"player looked away on the next box: %s" % player.facing)
+	var guard := 0
+	while DialogueUI._hint.text != "T — Close" and guard < 12:
+		await _expect(host, player._try_close("T"), "could not reach the last box")
+		await _expect(host, DialogueUI.is_open(), "closed before the last box")
+		guard += 1
+	await _expect(host, DialogueUI._hint.text == "T — Close",
+		"last box did not offer close: %s" % DialogueUI._hint.text)
+	await _expect(host, player._try_close("T"), "last box did not close")
+	await host.get_tree().physics_frame
+	await _expect(host, not DialogueUI.is_open(), "last box stayed open")
+	await _expect(host, elder.facing.dot(elder_before) > 0.9,
+		"elder did not turn back after the talk: %s vs %s" % [elder.facing, elder_before])
 	print("talk-face check ok")
 	host.get_tree().quit(0)
 
