@@ -81,6 +81,21 @@ func entry_point() -> Vector2:
 	return Shade.center_of(_entry)
 
 
+## Face away from the exit strip and into the woods.
+func arrival_facing() -> Vector2:
+	if _exit.is_empty():
+		return Vector2.LEFT
+	var acc := Vector2.ZERO
+	for c in _exit:
+		acc += Vector2(c)
+	var into := Vector2(_entry) - acc / float(_exit.size())
+	if into.length_squared() < 0.25:
+		into = Vector2(room) * 0.5 - Vector2(_entry)
+	if absf(into.x) >= absf(into.y):
+		return Vector2.RIGHT if into.x > 0.0 else Vector2.LEFT
+	return Vector2.DOWN if into.y > 0.0 else Vector2.UP
+
+
 func tree_standing() -> bool:
 	return not _felled and _dead != null and is_instance_valid(_dead)
 
@@ -209,30 +224,47 @@ func _flash(node: Node2D) -> void:
 ## when you walk up to the rim.
 func _add_outer_woods() -> void:
 	var n := 0
+	var gap := _village_gap()
 	var bushes := ["tree.bush_emerald_5", "tree.bush_emerald_6", "tree.bush_emerald_7"]
 	for x in range(-1, room.x + 1, 2):
 		_place_outer(bushes[n % bushes.size()], x, -1, n)
 		n += 1
-		if x < 20 or x > 27:
-			_place_outer(bushes[n % bushes.size()], x, room.y, n)
-			n += 1
+		_place_outer(bushes[n % bushes.size()], x, room.y, n)
+		n += 1
 	for y in range(1, room.y, 3):
 		_place_outer(bushes[n % bushes.size()], -1, y, n)
 		n += 1
-		_place_outer(bushes[n % bushes.size()], room.x, y, n)
-		n += 1
+		if not _in_gap(y, gap):
+			_place_outer(bushes[n % bushes.size()], room.x, y, n)
+			n += 1
 	var trees := ["tree.tree_emerald_1", "tree.tree_emerald_2"]
 	for x in range(-2, room.x + 2, 6):
 		_place_outer(trees[n % trees.size()], x, -5, n)
 		n += 1
-		if x < 18 or x > 28:
-			_place_outer(trees[n % trees.size()], x, room.y + 1, n)
-			n += 1
+		_place_outer(trees[n % trees.size()], x, room.y + 1, n)
+		n += 1
 	for y in range(0, room.y, 6):
 		_place_outer(trees[n % trees.size()], -5, y, n)
 		n += 1
-		_place_outer(trees[n % trees.size()], room.x + 1, y, n)
-		n += 1
+		if not _in_gap(y, gap):
+			_place_outer(trees[n % trees.size()], room.x + 1, y, n)
+			n += 1
+
+
+## East edge that faces the village. Outer trees stay off that mouth.
+func _village_gap() -> Vector2i:
+	var y0 := room.y
+	var y1 := -1
+	for c in _exit:
+		if c.x < room.x - 3:
+			continue
+		y0 = mini(y0, c.y)
+		y1 = maxi(y1, c.y)
+	return Vector2i(y0, y1)
+
+
+func _in_gap(y: int, gap: Vector2i) -> bool:
+	return gap.y >= 0 and y >= gap.x - 1 and y <= gap.y + 1
 
 
 func _place_outer(asset: String, x: int, y: int, n: int) -> void:

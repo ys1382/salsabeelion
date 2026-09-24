@@ -1,17 +1,17 @@
 {
   "title": "Dragon's Brew",
-  "premise": "You live on this block. Before you head out, a community elder wants to see you — then Dragon's Brew is the kindest place to start the week.",
+  "premise": "You live on this block. Before you head out, a community elder wants to see you \u2014 then Dragon's Brew is the kindest place to start the week.",
   "hidden_truth": "The neighborhood already decided you belong here. The learning card is how they show it, not a test.",
   "seed": "maestro-odyssey-dragons-brew-week-one",
   "goal": {
     "summary": "settle in at Dragon's Brew",
-    "detail": "Talk with the elder, go inside the café, meet Mara, and read the menu and house rules. Listening in a public room counts."
+    "detail": "Talk with the elder, go inside the caf\u00e9, meet Mara, and read the menu and house rules. Listening in a public room counts."
   },
   "items": [
     {
       "id": "learning_card",
       "name": "a prepaid learning card",
-      "text": "About a week's meals at the counter — 400 pesos. When the balance reads zero, that's the end of it. No borrowing past zero."
+      "text": "About a week's meals at the counter \u2014 400 pesos. When the balance reads zero, that's the end of it. No borrowing past zero."
     },
     {
       "id": "logs",
@@ -42,9 +42,18 @@
     "paths": [
       {
         "points": [
-          { "x": 4, "y": 20 },
-          { "x": 20, "y": 20 },
-          { "x": 20, "y": 13 }
+          {
+            "x": 4,
+            "y": 20
+          },
+          {
+            "x": 20,
+            "y": 20
+          },
+          {
+            "x": 20,
+            "y": 13
+          }
         ],
         "width": 2
       }
@@ -53,12 +62,23 @@
       {
         "id": "forest_path",
         "enters": "forest_clearing",
-        "mouth": { "x": 0, "y": 6, "w": 2, "h": 4 },
-        "return": { "x": 3, "y": 8 }
+        "mouth": {
+          "x": 0,
+          "y": 6,
+          "w": 2,
+          "h": 4
+        },
+        "return": {
+          "x": 3,
+          "y": 8
+        }
       }
     ]
   },
-  "player_start": { "x": 10, "y": 11 },
+  "player_start": {
+    "x": 10,
+    "y": 11
+  },
   "objects": [
     {
       "id": "dragons_brew",
@@ -187,7 +207,7 @@
       "asset": "prop.sign_1",
       "x": 24,
       "y": 10,
-      "text": "Dragon's Brew — neighborhood café. Come in. Sit. Order at the counter.",
+      "text": "Dragon's Brew \u2014 neighborhood caf\u00e9. Come in. Sit. Order at the counter.",
       "beat": "",
       "on": "",
       "gives_item": "",
@@ -249,12 +269,12 @@
       "reveal_beat": "",
       "scripted_lines": [
         "Good morning, dear. I'm one of the elders who helps look after this block. You've been part of the neighborhood for a while now.",
-        "When someone wants to learn the block properly — not just pass through like a tourist — the community keeps a learning card for them. I'd like you to have one.",
-        "I'm loading yours with about a week's worth of meals at the counter — 400 pesos. Use it when you order. When the balance reads zero, that's the end of it. We don't borrow past zero, so you never owe more than what's on the card.",
+        "When someone wants to learn the block properly \u2014 not just pass through like a tourist \u2014 the community keeps a learning card for them. I'd like you to have one.",
+        "I'm loading yours with about a week's worth of meals at the counter \u2014 400 pesos. Use it when you order. When the balance reads zero, that's the end of it. We don't borrow past zero, so you never owe more than what's on the card.",
         "Dragon's Brew down the path is the kindest place to start. It's a warm room with a good counter, and every species is welcome there. Take your mornings there when you're ready.",
-        "While you're there, notice the menu, the house rules on the wall, and the people who share the room — not gossip, nothing like that. Just what a good neighbor would notice, with kind eyes.",
-        "On the same weekday next week, I'll check in with you. Tell me your favorite drink and your favorite food — the way they say it there, with something extra like con leche.",
-        "The card is in the basket by my door — take it when you're ready. The street is waiting."
+        "While you're there, notice the menu, the house rules on the wall, and the people who share the room \u2014 not gossip, nothing like that. Just what a good neighbor would notice, with kind eyes.",
+        "On the same weekday next week, I'll check in with you. Tell me your favorite drink and your favorite food \u2014 the way they say it there, with something extra like con leche.",
+        "The card is in the basket by my door \u2014 take it when you're ready. The street is waiting."
       ]
     },
     {
@@ -269,16 +289,16 @@
       "persona": "Smart, gentle, keeps her mouth shut when she wants. Makes the room feel safe.",
       "secret": "Notices more than she says, and will not pass table talk.",
       "could_know": "Works the counter at Dragon's Brew every morning and sees who comes through the door",
-      "opener": "You're fine — take your time. The board is there when you're ready.",
+      "opener": "You're fine \u2014 take your time. The board is there when you're ready.",
       "movement": "idle",
       "tint": "#241c1e",
       "look": "campire",
       "wants_item": "",
       "reveal_beat": "mara_campire",
       "scripted_lines": [
-        "Laughs gently, and waves a hand as if waving away your nervousness. \"You're fine, there's not a lot of my kind in this area. I'm a Çampire—vampire and werecat somewhere down the line. The wings plus the tail are a fun conversation starter.\"",
-        "When you're ready, the drink menu is on the wall. Have a look — then I can take your order.",
-        "What's your order? (café, té, or a muffin this morning — 35, 30, or 28 pesos.)"
+        "Laughs gently, and waves a hand as if waving away your nervousness. \"You're fine, there's not a lot of my kind in this area. I'm a \u00c7ampire\u2014vampire and werecat somewhere down the line. The wings plus the tail are a fun conversation starter.\"",
+        "When you're ready, the drink menu is on the wall. Have a look \u2014 then I can take your order.",
+        "What's your order? (caf\u00e9, t\u00e9, or a muffin this morning \u2014 35, 30, or 28 pesos.)"
       ]
     },
     {
@@ -295,7 +315,7 @@
       "persona": "Plain-spoken, tired of policy talk, not looking for a fight.",
       "secret": "Worried the sea routes are getting harder for ordinary people, not because merfolk started it.",
       "could_know": "Sits at Dragon's Brew on Mondays with her riverfolk friend; hears ferry and sea-region news",
-      "opener": "Morning. We're just talking ferries — nothing dramatic.",
+      "opener": "Morning. We're just talking ferries \u2014 nothing dramatic.",
       "movement": "idle",
       "tint": "#3f8f5a",
       "wants_item": "",
@@ -316,14 +336,14 @@
       "name": "Riverfolk neighbor",
       "role": "crocodilian riverfolk",
       "persona": "Steady, low voice, careful with other people's business.",
-      "secret": "Would rather keep the café a warm room than a news desk.",
-      "could_know": "Monday mornings at the café with the iguana neighbor; knows the river and the coast both",
+      "secret": "Would rather keep the caf\u00e9 a warm room than a news desk.",
+      "could_know": "Monday mornings at the caf\u00e9 with the iguana neighbor; knows the river and the coast both",
       "opener": "Coffee first. News second, if you want it.",
       "movement": "idle",
       "tint": "#4a6b4e",
       "wants_item": "",
       "scripted_lines": [
-        "I work the water. People still need to get home. Closing ferries doesn't make anyone safer — it just makes them late.",
+        "I work the water. People still need to get home. Closing ferries doesn't make anyone safer \u2014 it just makes them late.",
         "Give the sea table room if you see it later this week. Respect, not fear. They're not the ones starting trouble."
       ]
     },
@@ -335,14 +355,16 @@
       "inside_x": 1,
       "inside_y": 8,
       "facing": "right",
-      "weekdays": ["Tuesday"],
-      "name": "Werewolf fiancé",
-      "role": "werewolf fiancé, here as a person",
+      "weekdays": [
+        "Tuesday"
+      ],
+      "name": "Werewolf fianc\u00e9",
+      "role": "werewolf fianc\u00e9, here as a person",
       "species": "werewolf",
       "persona": "Calm, plain, keeps the table easy.",
-      "secret": "His other shape stays home. The café gets the person.",
+      "secret": "His other shape stays home. The caf\u00e9 gets the person.",
       "could_know": "Sits at Dragon's Brew on Tuesdays with his sister and a vampire friend",
-      "opener": "Morning. This is me — no wolf shape.",
+      "opener": "Morning. This is me \u2014 no wolf shape.",
       "movement": "idle",
       "tint": "#6e6e72",
       "wants_item": "",
@@ -359,7 +381,9 @@
       "inside_x": 5,
       "inside_y": 8,
       "facing": "left",
-      "weekdays": ["Tuesday"],
+      "weekdays": [
+        "Tuesday"
+      ],
       "name": "Werewolf sister",
       "role": "werewolf sister and chaperone, here as a person",
       "species": "werewolf",
@@ -383,7 +407,9 @@
       "inside_x": 0,
       "inside_y": 7,
       "facing": "right",
-      "weekdays": ["Tuesday"],
+      "weekdays": [
+        "Tuesday"
+      ],
       "name": "Vampire neighbor",
       "role": "vampire woman",
       "species": "vampire",
@@ -395,7 +421,7 @@
       "tint": "#e8e6ee",
       "wants_item": "",
       "scripted_lines": [
-        "Té is a good idea, when you're ready to order.",
+        "T\u00e9 is a good idea, when you're ready to order.",
         "We're not here to make a fuss. Just the table."
       ]
     }
@@ -409,7 +435,7 @@
     },
     {
       "id": "mara_campire",
-      "desc": "Mara, the barista, is a Çampire — vampire and werecat somewhere down the line.",
+      "desc": "Mara, the barista, is a \u00c7ampire \u2014 vampire and werecat somewhere down the line.",
       "hint": "The woman at the counter has wings and a cat tail, and she laughs gently."
     },
     {
@@ -420,7 +446,7 @@
     {
       "id": "house_rules",
       "desc": "The house will not serve customer blood, bovine blood, or lizard or cow meat, and it refuses racism, fighting, smoking, and alcohol.",
-      "hint": "An erasable board and a fixed sign hang in the café."
+      "hint": "An erasable board and a fixed sign hang in the caf\u00e9."
     },
     {
       "id": "sea_talk",
@@ -435,17 +461,40 @@
       "menu_read",
       "house_rules"
     ],
-    "finale": "You've found your mornings. Dragon's Brew will still be here tomorrow — same counter, same pesos, same warm room. The elder will want to hear what you noticed, with kind eyes."
+    "finale": "You've found your mornings. Dragon's Brew will still be here tomorrow \u2014 same counter, same pesos, same warm room. The elder will want to hear what you noticed, with kind eyes."
   },
   "rival": {},
   "interiors": {
     "dragons_brew": {
-      "room": { "x": 14, "y": 10 },
+      "room": {
+        "x": 14,
+        "y": 10
+      },
       "objects": [
-        { "id": "cafe_table", "asset": "prop.table_medium_1", "x": 2, "y": 4 },
-        { "id": "cafe_neighbors_table", "asset": "prop.table_medium_1", "x": 10, "y": 4 },
-        { "id": "cafe_plant", "asset": "prop.plant_2", "x": 1, "y": 5 },
-        { "id": "dish_cart", "asset": "prop.crate_large_empty", "x": 4, "y": 2 }
+        {
+          "id": "cafe_table",
+          "asset": "prop.table_medium_1",
+          "x": 2,
+          "y": 4
+        },
+        {
+          "id": "cafe_neighbors_table",
+          "asset": "prop.table_medium_1",
+          "x": 10,
+          "y": 4
+        },
+        {
+          "id": "cafe_plant",
+          "asset": "prop.plant_2",
+          "x": 1,
+          "y": 5
+        },
+        {
+          "id": "dish_cart",
+          "asset": "prop.crate_large_empty",
+          "x": 4,
+          "y": 2
+        }
       ],
       "interactables": [
         {
@@ -453,7 +502,7 @@
           "asset": "prop.sign_2",
           "x": 9,
           "y": 1,
-          "text": "Hoy / today\n\ncafé — 35 pesos (coffee)\nté — 30 pesos (tea)\nmuffin — 28 pesos\n\nMore of the board opens as the week goes on. One language at a time on the wall.",
+          "text": "Hoy / today\n\ncaf\u00e9 \u2014 35 pesos (coffee)\nt\u00e9 \u2014 30 pesos (tea)\nmuffin \u2014 28 pesos\n\nMore of the board opens as the week goes on. One language at a time on the wall.",
           "beat": "menu_read",
           "on": "",
           "gives_item": "",
@@ -465,7 +514,7 @@
           "asset": "prop.bulletinboard_1",
           "x": 1,
           "y": 1,
-          "text": "House rules\n\nNo customer (sentient / people) blood served here.\nNo bovine blood served here.\nNo lizard or cow meat.\nFish is fine.\n\nWe reserve the right to refuse service due to\n- Racism\n- Predator-Attitude\n- Fighting\n- Loud Arguments\n- Smoking\n- Drinking Alcohol\n- And picking on customers for any not-aforementioned reasons.\n\nStrike of the week: the board is blank today — nothing pulled from the menu.",
+          "text": "House rules\n\nNo customer (sentient / people) blood served here.\nNo bovine blood served here.\nNo lizard or cow meat.\nFish is fine.\n\nWe reserve the right to refuse service due to\n- Racism\n- Predator-Attitude\n- Fighting\n- Loud Arguments\n- Smoking\n- Drinking Alcohol\n- And picking on customers for any not-aforementioned reasons.\n\nStrike of the week: the board is blank today \u2014 nothing pulled from the menu.",
           "beat": "house_rules",
           "on": "",
           "gives_item": "",
@@ -489,7 +538,7 @@
           "asset": "prop.bench_3",
           "x": 5,
           "y": 5,
-          "text": "Your table. Sit if you like — the room is for lingering.",
+          "text": "Your table. Sit if you like \u2014 the room is for lingering.",
           "beat": "",
           "on": "",
           "gives_item": "",
@@ -500,11 +549,29 @@
     },
     "player_house": {
       "floor": "planks",
-      "room": { "x": 12, "y": 8 },
+      "room": {
+        "x": 12,
+        "y": 8
+      },
       "objects": [
-        { "id": "home_table", "asset": "prop.table_medium_1", "x": 1, "y": 2 },
-        { "id": "home_crate", "asset": "prop.crate_medium_closed", "x": 10, "y": 1 },
-        { "id": "home_barrel", "asset": "prop.barrel_small_empty", "x": 1, "y": 5 }
+        {
+          "id": "home_table",
+          "asset": "prop.table_medium_1",
+          "x": 1,
+          "y": 2
+        },
+        {
+          "id": "home_crate",
+          "asset": "prop.crate_medium_closed",
+          "x": 10,
+          "y": 1
+        },
+        {
+          "id": "home_barrel",
+          "asset": "prop.barrel_small_empty",
+          "x": 1,
+          "y": 5
+        }
       ],
       "interactables": [
         {
@@ -512,7 +579,7 @@
           "asset": "prop.bench_3",
           "x": 5,
           "y": 5,
-          "text": "Your bench. Sit if you like — the room will wait.",
+          "text": "Your bench. Sit if you like \u2014 the room will wait.",
           "beat": "",
           "on": "",
           "gives_item": "",
@@ -560,67 +627,513 @@
   },
   "clearings": {
     "forest_clearing": {
-      "room": { "x": 48, "y": 30 },
-      "entry": { "x": 23, "y": 24 },
-      "exit": { "x": 22, "y": 28, "w": 4, "h": 2 },
+      "room": {
+        "x": 48,
+        "y": 30
+      },
+      "entry": {
+        "x": 43,
+        "y": 14
+      },
+      "exit": {
+        "x": 46,
+        "y": 12,
+        "w": 2,
+        "h": 6
+      },
       "objects": [
-        { "id": "clearing_tree_n0", "asset": "tree.tree_emerald_1", "x": 0, "y": 0 },
-        { "id": "clearing_tree_n1", "asset": "tree.tree_emerald_1", "x": 5, "y": 0 },
-        { "id": "clearing_tree_n2", "asset": "tree.tree_emerald_1", "x": 10, "y": 0 },
-        { "id": "clearing_tree_n3", "asset": "tree.tree_emerald_1", "x": 15, "y": 0 },
-        { "id": "clearing_tree_n4", "asset": "tree.tree_emerald_1", "x": 20, "y": 0 },
-        { "id": "clearing_tree_n5", "asset": "tree.tree_emerald_1", "x": 25, "y": 0 },
-        { "id": "clearing_tree_n6", "asset": "tree.tree_emerald_1", "x": 30, "y": 0 },
-        { "id": "clearing_tree_n7", "asset": "tree.tree_emerald_1", "x": 35, "y": 0 },
-        { "id": "clearing_tree_n8", "asset": "tree.tree_emerald_1", "x": 40, "y": 0 },
-        { "id": "clearing_tree_n9", "asset": "tree.tree_emerald_1", "x": 44, "y": 0 },
-        { "id": "clearing_tree_w0", "asset": "tree.tree_emerald_2", "x": 0, "y": 5 },
-        { "id": "clearing_tree_w1", "asset": "tree.tree_emerald_2", "x": 0, "y": 10 },
-        { "id": "clearing_tree_w2", "asset": "tree.tree_emerald_2", "x": 0, "y": 15 },
-        { "id": "clearing_tree_w3", "asset": "tree.tree_emerald_2", "x": 0, "y": 20 },
-        { "id": "clearing_tree_w4", "asset": "tree.tree_emerald_2", "x": 0, "y": 25 },
-        { "id": "clearing_tree_e0", "asset": "tree.tree_emerald_2", "x": 45, "y": 5 },
-        { "id": "clearing_tree_e1", "asset": "tree.tree_emerald_2", "x": 45, "y": 10 },
-        { "id": "clearing_tree_e2", "asset": "tree.tree_emerald_2", "x": 45, "y": 15 },
-        { "id": "clearing_tree_e3", "asset": "tree.tree_emerald_2", "x": 45, "y": 20 },
-        { "id": "clearing_tree_e4", "asset": "tree.tree_emerald_2", "x": 45, "y": 25 },
-        { "id": "clearing_tree_s0", "asset": "tree.tree_emerald_2", "x": 4, "y": 26 },
-        { "id": "clearing_tree_s1", "asset": "tree.tree_emerald_2", "x": 8, "y": 26 },
-        { "id": "clearing_tree_s2", "asset": "tree.tree_emerald_2", "x": 12, "y": 26 },
-        { "id": "clearing_tree_s3", "asset": "tree.tree_emerald_2", "x": 16, "y": 26 },
-        { "id": "clearing_tree_s4", "asset": "tree.tree_emerald_2", "x": 28, "y": 26 },
-        { "id": "clearing_tree_s5", "asset": "tree.tree_emerald_2", "x": 32, "y": 26 },
-        { "id": "clearing_tree_s6", "asset": "tree.tree_emerald_2", "x": 36, "y": 26 },
-        { "id": "clearing_tree_s7", "asset": "tree.tree_emerald_2", "x": 40, "y": 26 },
-        { "id": "clearing_bush_n0", "asset": "tree.bush_emerald_5", "x": 4, "y": 2 },
-        { "id": "clearing_bush_n1", "asset": "tree.bush_emerald_5", "x": 9, "y": 2 },
-        { "id": "clearing_bush_n2", "asset": "tree.bush_emerald_5", "x": 14, "y": 2 },
-        { "id": "clearing_bush_n3", "asset": "tree.bush_emerald_5", "x": 19, "y": 2 },
-        { "id": "clearing_bush_n4", "asset": "tree.bush_emerald_5", "x": 24, "y": 2 },
-        { "id": "clearing_bush_n5", "asset": "tree.bush_emerald_5", "x": 29, "y": 2 },
-        { "id": "clearing_bush_n6", "asset": "tree.bush_emerald_5", "x": 34, "y": 2 },
-        { "id": "clearing_bush_n7", "asset": "tree.bush_emerald_5", "x": 39, "y": 2 },
-        { "id": "clearing_bush_w0", "asset": "tree.bush_emerald_6", "x": 1, "y": 4 },
-        { "id": "clearing_bush_w1", "asset": "tree.bush_emerald_6", "x": 1, "y": 9 },
-        { "id": "clearing_bush_w2", "asset": "tree.bush_emerald_6", "x": 1, "y": 14 },
-        { "id": "clearing_bush_w3", "asset": "tree.bush_emerald_6", "x": 1, "y": 19 },
-        { "id": "clearing_bush_w4", "asset": "tree.bush_emerald_6", "x": 1, "y": 24 },
-        { "id": "clearing_bush_e0", "asset": "tree.bush_emerald_7", "x": 46, "y": 4 },
-        { "id": "clearing_bush_e1", "asset": "tree.bush_emerald_7", "x": 46, "y": 9 },
-        { "id": "clearing_bush_e2", "asset": "tree.bush_emerald_7", "x": 46, "y": 14 },
-        { "id": "clearing_bush_e3", "asset": "tree.bush_emerald_7", "x": 46, "y": 19 },
-        { "id": "clearing_bush_e4", "asset": "tree.bush_emerald_7", "x": 46, "y": 24 },
-        { "id": "clearing_bush_s0", "asset": "tree.bush_emerald_5", "x": 3, "y": 28 },
-        { "id": "clearing_bush_s1", "asset": "tree.bush_emerald_5", "x": 19, "y": 28 },
-        { "id": "clearing_bush_s2", "asset": "tree.bush_emerald_5", "x": 20, "y": 28 },
-        { "id": "clearing_bush_s3", "asset": "tree.bush_emerald_5", "x": 21, "y": 28 },
-        { "id": "clearing_bush_s4", "asset": "tree.bush_emerald_5", "x": 26, "y": 28 },
-        { "id": "clearing_bush_s5", "asset": "tree.bush_emerald_5", "x": 27, "y": 28 },
-        { "id": "clearing_bush_s6", "asset": "tree.bush_emerald_5", "x": 43, "y": 28 },
-        { "id": "dead_tree", "asset": "tree.tree_emerald_1", "x": 22, "y": 7 },
-        { "id": "clearing_rock_a", "asset": "rock.rock_brown_4", "x": 8, "y": 16 },
-        { "id": "clearing_rock_b", "asset": "rock.rock_brown_1", "x": 34, "y": 18 },
-        { "id": "clearing_rock_c", "asset": "rock.rock_brown_6", "x": 12, "y": 21 }
+        {
+          "id": "dead_tree",
+          "asset": "tree.tree_emerald_1",
+          "x": 16,
+          "y": 12
+        },
+        {
+          "id": "clearing_tree_n0",
+          "asset": "tree.tree_emerald_1",
+          "x": 1,
+          "y": 1
+        },
+        {
+          "id": "clearing_tree_1",
+          "asset": "tree.tree_emerald_2",
+          "x": 8,
+          "y": 1
+        },
+        {
+          "id": "clearing_tree_2",
+          "asset": "tree.tree_emerald_1",
+          "x": 15,
+          "y": 1
+        },
+        {
+          "id": "clearing_tree_3",
+          "asset": "tree.tree_emerald_2",
+          "x": 22,
+          "y": 1
+        },
+        {
+          "id": "clearing_tree_4",
+          "asset": "tree.tree_emerald_1",
+          "x": 29,
+          "y": 1
+        },
+        {
+          "id": "clearing_tree_5",
+          "asset": "tree.tree_emerald_2",
+          "x": 36,
+          "y": 1
+        },
+        {
+          "id": "clearing_tree_6",
+          "asset": "tree.tree_emerald_2",
+          "x": 4,
+          "y": 7
+        },
+        {
+          "id": "clearing_tree_7",
+          "asset": "tree.tree_emerald_1",
+          "x": 11,
+          "y": 7
+        },
+        {
+          "id": "clearing_tree_8",
+          "asset": "tree.tree_emerald_2",
+          "x": 18,
+          "y": 7
+        },
+        {
+          "id": "clearing_tree_9",
+          "asset": "tree.tree_emerald_1",
+          "x": 25,
+          "y": 7
+        },
+        {
+          "id": "clearing_tree_10",
+          "asset": "tree.tree_emerald_2",
+          "x": 32,
+          "y": 7
+        },
+        {
+          "id": "clearing_tree_11",
+          "asset": "tree.tree_emerald_1",
+          "x": 39,
+          "y": 7
+        },
+        {
+          "id": "clearing_tree_12",
+          "asset": "tree.tree_emerald_1",
+          "x": 1,
+          "y": 13
+        },
+        {
+          "id": "clearing_tree_13",
+          "asset": "tree.tree_emerald_2",
+          "x": 8,
+          "y": 13
+        },
+        {
+          "id": "clearing_tree_14",
+          "asset": "tree.tree_emerald_2",
+          "x": 22,
+          "y": 13
+        },
+        {
+          "id": "clearing_tree_15",
+          "asset": "tree.tree_emerald_1",
+          "x": 29,
+          "y": 13
+        },
+        {
+          "id": "clearing_tree_16",
+          "asset": "tree.tree_emerald_2",
+          "x": 4,
+          "y": 19
+        },
+        {
+          "id": "clearing_tree_17",
+          "asset": "tree.tree_emerald_1",
+          "x": 11,
+          "y": 19
+        },
+        {
+          "id": "clearing_tree_18",
+          "asset": "tree.tree_emerald_2",
+          "x": 18,
+          "y": 19
+        },
+        {
+          "id": "clearing_tree_19",
+          "asset": "tree.tree_emerald_1",
+          "x": 25,
+          "y": 19
+        },
+        {
+          "id": "clearing_tree_20",
+          "asset": "tree.tree_emerald_2",
+          "x": 32,
+          "y": 19
+        },
+        {
+          "id": "clearing_tree_21",
+          "asset": "tree.tree_emerald_1",
+          "x": 39,
+          "y": 19
+        },
+        {
+          "id": "clearing_tree_22",
+          "asset": "tree.tree_emerald_1",
+          "x": 1,
+          "y": 25
+        },
+        {
+          "id": "clearing_tree_23",
+          "asset": "tree.tree_emerald_2",
+          "x": 8,
+          "y": 25
+        },
+        {
+          "id": "clearing_tree_24",
+          "asset": "tree.tree_emerald_1",
+          "x": 15,
+          "y": 25
+        },
+        {
+          "id": "clearing_tree_25",
+          "asset": "tree.tree_emerald_2",
+          "x": 22,
+          "y": 25
+        },
+        {
+          "id": "clearing_tree_26",
+          "asset": "tree.tree_emerald_1",
+          "x": 29,
+          "y": 25
+        },
+        {
+          "id": "clearing_tree_27",
+          "asset": "tree.tree_emerald_2",
+          "x": 36,
+          "y": 25
+        },
+        {
+          "id": "clearing_bush_0",
+          "asset": "tree.bush_emerald_6",
+          "x": 2,
+          "y": 5
+        },
+        {
+          "id": "clearing_bush_1",
+          "asset": "tree.bush_emerald_7",
+          "x": 6,
+          "y": 5
+        },
+        {
+          "id": "clearing_bush_2",
+          "asset": "tree.bush_emerald_5",
+          "x": 10,
+          "y": 5
+        },
+        {
+          "id": "clearing_bush_3",
+          "asset": "tree.bush_emerald_6",
+          "x": 14,
+          "y": 5
+        },
+        {
+          "id": "clearing_bush_4",
+          "asset": "tree.bush_emerald_7",
+          "x": 18,
+          "y": 5
+        },
+        {
+          "id": "clearing_bush_5",
+          "asset": "tree.bush_emerald_5",
+          "x": 22,
+          "y": 5
+        },
+        {
+          "id": "clearing_bush_6",
+          "asset": "tree.bush_emerald_6",
+          "x": 26,
+          "y": 5
+        },
+        {
+          "id": "clearing_bush_7",
+          "asset": "tree.bush_emerald_7",
+          "x": 30,
+          "y": 5
+        },
+        {
+          "id": "clearing_bush_8",
+          "asset": "tree.bush_emerald_5",
+          "x": 34,
+          "y": 5
+        },
+        {
+          "id": "clearing_bush_9",
+          "asset": "tree.bush_emerald_6",
+          "x": 38,
+          "y": 5
+        },
+        {
+          "id": "clearing_bush_10",
+          "asset": "tree.bush_emerald_7",
+          "x": 42,
+          "y": 5
+        },
+        {
+          "id": "clearing_bush_11",
+          "asset": "tree.bush_emerald_6",
+          "x": 2,
+          "y": 11
+        },
+        {
+          "id": "clearing_bush_12",
+          "asset": "tree.bush_emerald_7",
+          "x": 6,
+          "y": 11
+        },
+        {
+          "id": "clearing_bush_13",
+          "asset": "tree.bush_emerald_5",
+          "x": 10,
+          "y": 11
+        },
+        {
+          "id": "clearing_bush_14",
+          "asset": "tree.bush_emerald_6",
+          "x": 14,
+          "y": 11
+        },
+        {
+          "id": "clearing_bush_15",
+          "asset": "tree.bush_emerald_5",
+          "x": 22,
+          "y": 11
+        },
+        {
+          "id": "clearing_bush_16",
+          "asset": "tree.bush_emerald_6",
+          "x": 26,
+          "y": 11
+        },
+        {
+          "id": "clearing_bush_17",
+          "asset": "tree.bush_emerald_7",
+          "x": 30,
+          "y": 11
+        },
+        {
+          "id": "clearing_bush_18",
+          "asset": "tree.bush_emerald_5",
+          "x": 34,
+          "y": 11
+        },
+        {
+          "id": "clearing_bush_19",
+          "asset": "tree.bush_emerald_6",
+          "x": 2,
+          "y": 17
+        },
+        {
+          "id": "clearing_bush_20",
+          "asset": "tree.bush_emerald_7",
+          "x": 6,
+          "y": 17
+        },
+        {
+          "id": "clearing_bush_21",
+          "asset": "tree.bush_emerald_5",
+          "x": 10,
+          "y": 17
+        },
+        {
+          "id": "clearing_bush_22",
+          "asset": "tree.bush_emerald_6",
+          "x": 14,
+          "y": 17
+        },
+        {
+          "id": "clearing_bush_23",
+          "asset": "tree.bush_emerald_5",
+          "x": 22,
+          "y": 17
+        },
+        {
+          "id": "clearing_bush_24",
+          "asset": "tree.bush_emerald_6",
+          "x": 26,
+          "y": 17
+        },
+        {
+          "id": "clearing_bush_25",
+          "asset": "tree.bush_emerald_7",
+          "x": 30,
+          "y": 17
+        },
+        {
+          "id": "clearing_bush_26",
+          "asset": "tree.bush_emerald_5",
+          "x": 34,
+          "y": 17
+        },
+        {
+          "id": "clearing_bush_27",
+          "asset": "tree.bush_emerald_6",
+          "x": 2,
+          "y": 23
+        },
+        {
+          "id": "clearing_bush_28",
+          "asset": "tree.bush_emerald_7",
+          "x": 6,
+          "y": 23
+        },
+        {
+          "id": "clearing_bush_29",
+          "asset": "tree.bush_emerald_5",
+          "x": 10,
+          "y": 23
+        },
+        {
+          "id": "clearing_bush_30",
+          "asset": "tree.bush_emerald_6",
+          "x": 14,
+          "y": 23
+        },
+        {
+          "id": "clearing_bush_31",
+          "asset": "tree.bush_emerald_7",
+          "x": 18,
+          "y": 23
+        },
+        {
+          "id": "clearing_bush_32",
+          "asset": "tree.bush_emerald_5",
+          "x": 22,
+          "y": 23
+        },
+        {
+          "id": "clearing_bush_33",
+          "asset": "tree.bush_emerald_6",
+          "x": 26,
+          "y": 23
+        },
+        {
+          "id": "clearing_bush_34",
+          "asset": "tree.bush_emerald_7",
+          "x": 30,
+          "y": 23
+        },
+        {
+          "id": "clearing_bush_35",
+          "asset": "tree.bush_emerald_5",
+          "x": 34,
+          "y": 23
+        },
+        {
+          "id": "clearing_bush_36",
+          "asset": "tree.bush_emerald_6",
+          "x": 38,
+          "y": 23
+        },
+        {
+          "id": "clearing_bush_37",
+          "asset": "tree.bush_emerald_7",
+          "x": 42,
+          "y": 23
+        },
+        {
+          "id": "clearing_bush_38",
+          "asset": "tree.bush_emerald_5",
+          "x": 6,
+          "y": 27
+        },
+        {
+          "id": "clearing_bush_39",
+          "asset": "tree.bush_emerald_7",
+          "x": 14,
+          "y": 27
+        },
+        {
+          "id": "clearing_bush_40",
+          "asset": "tree.bush_emerald_7",
+          "x": 26,
+          "y": 27
+        },
+        {
+          "id": "clearing_bush_41",
+          "asset": "tree.bush_emerald_6",
+          "x": 34,
+          "y": 27
+        },
+        {
+          "id": "clearing_bush_42",
+          "asset": "tree.bush_emerald_5",
+          "x": 42,
+          "y": 27
+        },
+        {
+          "id": "clearing_tree_28",
+          "asset": "tree.tree_emerald_2",
+          "x": 22,
+          "y": 18
+        },
+        {
+          "id": "clearing_rock_a",
+          "asset": "rock.rock_brown_4",
+          "x": 2,
+          "y": 6
+        },
+        {
+          "id": "clearing_rock_b",
+          "asset": "rock.rock_brown_1",
+          "x": 36,
+          "y": 5
+        },
+        {
+          "id": "clearing_rock_c",
+          "asset": "rock.rock_brown_6",
+          "x": 28,
+          "y": 26
+        },
+        {
+          "id": "clearing_front_0",
+          "asset": "tree.tree_emerald_1",
+          "x": 44,
+          "y": 0
+        },
+        {
+          "id": "clearing_front_1",
+          "asset": "tree.tree_emerald_1",
+          "x": 44,
+          "y": 4
+        },
+        {
+          "id": "clearing_front_2",
+          "asset": "tree.tree_emerald_1",
+          "x": 44,
+          "y": 8
+        },
+        {
+          "id": "clearing_front_3",
+          "asset": "tree.tree_emerald_1",
+          "x": 44,
+          "y": 18
+        },
+        {
+          "id": "clearing_front_4",
+          "asset": "tree.tree_emerald_1",
+          "x": 44,
+          "y": 22
+        },
+        {
+          "id": "clearing_front_5",
+          "asset": "tree.tree_emerald_1",
+          "x": 44,
+          "y": 26
+        }
       ]
     }
   },

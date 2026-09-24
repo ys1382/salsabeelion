@@ -90,6 +90,25 @@ def _check(path: Path) -> None:
     entry = (int(clearing["entry"]["x"]), int(clearing["entry"]["y"]))
     assert entry not in exit_cells
     assert 0 <= entry[0] < room_w and 0 <= entry[1] < room_h
+    # Village is to the east. The mouth is that edge, not a strip along the bottom.
+    assert exit_cells
+    assert all(x >= room_w - 2 for x, _y in exit_cells)
+    assert any(x == room_w - 1 for x, _y in exit_cells)
+    assert all(y < room_h - 1 for _x, y in exit_cells)
+    assert entry[0] < min(x for x, _y in exit_cells)
+    assert entry[0] > room_w // 2
+    # The village-facing edge is trees except the entrance, so you cannot
+    # walk along that side and off the map.
+    front = {
+        (x, y)
+        for obj in clearing["objects"]
+        if str(obj["asset"]).startswith("tree.tree_")
+        for x, y in _cells(obj)
+        if x == room_w - 1
+    }
+    mouth_y = {y for x, y in exit_cells if x == room_w - 1}
+    assert mouth_y
+    assert all((room_w - 1, y) in front for y in range(room_h) if y not in mouth_y)
     for obj in clearing["objects"]:
         asset = obj["asset"]
         assert asset in catalog.objects()
@@ -112,6 +131,40 @@ def _check(path: Path) -> None:
     )
     dead_cells = _cells(dead[0])
     assert all(0 < x < room_w - 1 and 0 < y < room_h - 1 for x, y in dead_cells)
+    # Woods through the space, with a clear walk in from the village side.
+    occupied: set[tuple[int, int]] = set()
+    for obj in clearing["objects"]:
+        got = _cells(obj)
+        assert occupied.isdisjoint(got)
+        occupied |= got
+    inner = {
+        (x, y)
+        for x in range(6, room_w - 6)
+        for y in range(6, room_h - 6)
+        if (x, y) in occupied
+        and str(next(o["asset"] for o in clearing["objects"] if (x, y) in _cells(o))).startswith("tree.tree_")
+    }
+    assert len(inner) >= 40
+    open_forest = {
+        (x, y)
+        for x in range(room_w)
+        for y in range(room_h)
+        if (x, y) not in occupied
+    }
+    stack = [entry]
+    reached = {entry}
+    while stack:
+        x, y = stack.pop()
+        for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+            nxt = (x + dx, y + dy)
+            if nxt in open_forest and nxt not in reached:
+                reached.add(nxt)
+                stack.append(nxt)
+    assert any(
+        (x + dx, y + dy) in reached
+        for x, y in dead_cells
+        for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))
+    )
     names = {n["id"] for n in world["npcs"]}
     assert "forest" not in names
     for n in world["npcs"]:

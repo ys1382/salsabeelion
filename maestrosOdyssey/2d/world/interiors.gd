@@ -104,7 +104,8 @@ func enter_clearing(place_id: String) -> void:
 
 	p.reparent(clearing.get_node("Objects"), false)
 	p.position = clearing.entry_point()
-	p.facing = Vector2.UP
+	# Into the trees, away from the village-side mouth. Not a fixed up.
+	p.facing = clearing.arrival_facing()
 	p.y_sort_enabled = false
 	p.velocity = Vector2.ZERO
 	p.agent_input = Vector2.ZERO

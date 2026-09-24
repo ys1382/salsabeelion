@@ -9,6 +9,8 @@ static func run(host: Node) -> void:
 	assert(gs.day_index == 1)
 	assert(not gs.forest_morning())
 	gs.take_item("learning_card")
+	var elder := WorldManager.world_root.entities["elder"] as Npc
+	elder.morning_done = true
 	var arrow: Node = host.get_node("/root/WaypointHud")
 	assert(arrow.current_id() == "dragons_brew")
 
@@ -30,6 +32,8 @@ static func run(host: Node) -> void:
 	var interiors: Node = host.get_node("/root/Interiors")
 	interiors.enter_clearing("forest_clearing")
 	assert(interiors.inside())
+	var arrived := WorldManager.world_root.player as Player
+	assert(arrived.facing.x < -0.5)
 	var clearing: Node = interiors.current
 	assert(clearing.tree_standing())
 	var dead := clearing.get_node("Objects/dead_tree") as Node2D
@@ -58,9 +62,58 @@ static func run(host: Node) -> void:
 	assert(arrow.current_id() == "dragons_brew")
 	player._refresh_held()
 	assert(held.visible)
+	DialogueUI.close()
+	await _walk_forest_mouth(host, player, interiors, clearing)
+	assert(gs.day_index == 6)
 	_assert_goodbye(host, true)
 	print("forest chop: ok")
 	host.get_tree().quit()
+
+
+## Off the village's left edge, into the east side of the woods, then back to that gap.
+static func _walk_forest_mouth(host: Node, player: Player, interiors: Node, _clearing: Node) -> void:
+	var shade := load("res://world/shade_path.gd")
+	await host.get_tree().create_timer(0.6).timeout
+	player.global_position = shade.center_of(Vector2i(44, 14))
+	player.velocity = Vector2.ZERO
+	player.agent_input = Vector2.RIGHT
+	var left := false
+	for _i in 180:
+		await host.get_tree().physics_frame
+		if not interiors.inside():
+			left = true
+			break
+	player.agent_input = Vector2.ZERO
+	assert(left)
+	var back: Vector2 = interiors._return_from_forest()
+	assert(player.global_position.distance_to(back) < 20.0)
+	assert(player.facing.x > 0.5)
+	await host.get_tree().create_timer(0.6).timeout
+	player.global_position = shade.center_of(Vector2i(2, 8))
+	player.velocity = Vector2.ZERO
+	player.agent_input = Vector2.LEFT
+	var entered := false
+	for _i in 180:
+		await host.get_tree().physics_frame
+		if interiors.inside():
+			entered = true
+			break
+	player.agent_input = Vector2.ZERO
+	assert(entered)
+	assert(player.facing.x < -0.5)
+	var woods: Node = interiors.current
+	assert(player.global_position.x > woods.room.x * 16 * 0.6)
+	player.agent_input = Vector2.RIGHT
+	var back_out := false
+	for _i in 180:
+		await host.get_tree().physics_frame
+		if not interiors.inside():
+			back_out = true
+			break
+	player.agent_input = Vector2.ZERO
+	assert(back_out)
+	assert(player.global_position.distance_to(back) < 24.0)
+	assert(player.facing.x > 0.5)
 
 
 ## Goodbye still lets you out. The chilly line is Saturday only, after the nod.
