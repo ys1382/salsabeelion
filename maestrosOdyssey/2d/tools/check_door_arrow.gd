@@ -57,6 +57,14 @@ static func run(host: Node) -> void:
 	var outside_at: Vector2 = arrow._target_pos(arrow.current_id())
 	await _expect(host, house != null and outside_at.distance_to(house.global_position) < 1.0,
 		"outdoor arrow is not on the house")
+	var brew := WorldManager.world_root.entities.get("dragons_brew") as Node2D
+	var brew_at: Vector2 = arrow._target_pos("dragons_brew")
+	var brew_sprite := brew.get_node("Sprite") as Sprite2D
+	var brew_door := brew.to_global(brew_sprite.position + Vector2(107, 104))
+	await _expect(host, brew_at.distance_to(brew.global_position) > 20.0,
+		"café arrow is still on the wall")
+	await _expect(host, brew_at.distance_to(brew_door) < 1.0,
+		"café arrow missed the door")
 
 	print("door arrow: ok")
 	host.get_tree().quit()

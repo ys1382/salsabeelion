@@ -466,5 +466,16 @@ func _target_pos(id: String) -> Vector2:
 		return Vector2.ZERO
 	var node := root.entities.get(id) as Node2D
 	if node != null and is_instance_valid(node):
+		if id == "dragons_brew":
+			return _cafe_door(node)
 		return node.global_position
 	return Vector2.ZERO
+
+
+## House_Hay_2's ground door sits to the right of the building's feet.
+## The feet are the wall beside that door.
+func _cafe_door(node: Node2D) -> Vector2:
+	var sprite := node.get_node_or_null("Sprite") as Sprite2D
+	if sprite == null:
+		return node.global_position
+	return node.to_global(sprite.position + Vector2(107, 104))

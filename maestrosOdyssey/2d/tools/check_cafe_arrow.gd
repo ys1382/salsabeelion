@@ -79,6 +79,23 @@ static func run(host: Node) -> void:
 		"food did not point at the chair: %s" % arrow.current_id())
 	await _aim_at(host, player, arrow, seat, "cafe_seat")
 
+	GameState.cafe_meal_done = true
+	CafeOrder.carrying_dishes = false
+	CafeOrder.awaiting_serve = false
+	CafeOrder.cup_left = 0
+	CafeOrder.muffin_left = 0
+	DialogueUI.show_line("Mara", "The door's there when you're ready.")
+	for _i in 5:
+		await host.get_tree().process_frame
+	var door := room.get_node("Objects/Doorway") as Node2D
+	await _expect(host, arrow.current_id() == "player_house",
+		"home arrow left the café for %s" % arrow.current_id())
+	var home_at: Vector2 = arrow._target_pos("player_house")
+	await _expect(host, home_at.distance_to(door.global_position) < 1.0,
+		"home arrow left the door")
+	await _expect(host, arrow._wanted, "home arrow hid while you are still inside")
+	DialogueUI.close()
+
 	print("cafe arrow: ok")
 	host.get_tree().quit()
 
