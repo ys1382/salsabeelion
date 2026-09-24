@@ -31,10 +31,9 @@ const ATTACK_CONE := 0.35
 const ATTACK_DAMAGE := 1
 ## Long enough to read the death animation before the world snaps back.
 const RESPAWN_S := 1.6
-## Idle sprite sits this far above the feet. Dropped a little while seated so
-## the character reads as on the bench rather than standing in front of it.
+## Idle sprite sits this far above the feet. There is no sit pose on the sheet,
+## so a seat uses the same upright stand.
 const SPRITE_STAND := Vector2(0, -16)
-const SPRITE_SIT := Vector2(0, -10)
 
 signal interact_pressed
 signal health_changed(current: int, maximum: int)
@@ -61,6 +60,7 @@ var _stand_pos := Vector2.ZERO
 var _walk_mask := 1
 var _held: Sprite2D
 var _seat: Node2D = null
+var _seat_z := 0
 var _push_dir := Vector2.ZERO
 var _push_held := 0.0
 ## Which way we are sliding off the person we bumped. Zero until the hold
@@ -559,10 +559,10 @@ func sit_on(host: Node2D) -> void:
 	if host is PhysicsBody2D:
 		add_collision_exception_with(host)
 	collision_mask = 0
-	global_position = host.global_position + Vector2(0, -4)
+	global_position = _seat_gap(host)
+	_draw_seat_behind()
 	velocity = Vector2.ZERO
-	facing = Vector2.UP
-	_sprite.position = SPRITE_SIT
+	_sprite.position = SPRITE_STAND
 	_play("idle")
 	_sprite.frame = 0
 	_sprite.pause()
@@ -576,8 +576,11 @@ func stand_up(restore := true) -> void:
 	_clear_bump()
 	collision_mask = _walk_mask
 	_sprite.position = SPRITE_STAND
-	if _seat != null and is_instance_valid(_seat) and _seat is PhysicsBody2D:
-		remove_collision_exception_with(_seat)
+	if _seat != null and is_instance_valid(_seat):
+		if _seat is PhysicsBody2D:
+			remove_collision_exception_with(_seat)
+		if _seat is CanvasItem:
+			(_seat as CanvasItem).z_index = _seat_z
 	if restore:
 		global_position = _stand_pos
 		_stand_clear_of_seat()
@@ -588,6 +591,64 @@ func stand_up(restore := true) -> void:
 	_face_on_stand = Vector2.ZERO
 	_play("idle")
 	_place_held()
+
+
+## Midway on the floor between the chair picture and the nearest table.
+## The chair is drawn behind for this sit, so it does not cover the head.
+func _seat_gap(host: Node2D) -> Vector2:
+	var table := _nearest_table(host)
+	if table == null:
+		facing = Vector2.UP
+		return host.global_position + Vector2(0, 8)
+	var chair_r := _prop_rect(host)
+	var table_r := _prop_rect(table)
+	var on_chair := _closest_on_rect(chair_r, table_r.get_center())
+	var on_table := _closest_on_rect(table_r, chair_r.get_center())
+	var mid := (on_chair + on_table) * 0.5
+	var toward := table_r.get_center() - mid
+	facing = Vector2.UP if toward.length_squared() < 1.0 else toward.normalized()
+	return mid
+
+
+## While you are in the gap the chair's feet may be closer to the camera.
+## Drop its draw order so the upright sprite stays in front of it.
+func _draw_seat_behind() -> void:
+	if _seat is CanvasItem:
+		_seat_z = (_seat as CanvasItem).z_index
+		(_seat as CanvasItem).z_index = -2
+
+
+func _nearest_table(host: Node2D) -> Node2D:
+	var parent := host.get_parent()
+	if parent == null:
+		return null
+	var best: Node2D = null
+	var best_d := INF
+	for child in parent.get_children():
+		if child == host or not (child is Node2D):
+			continue
+		if not str(child.name).to_lower().contains("table"):
+			continue
+		var d := host.global_position.distance_squared_to((child as Node2D).global_position)
+		if d < best_d:
+			best_d = d
+			best = child as Node2D
+	return best
+
+
+func _closest_on_rect(rect: Rect2, point: Vector2) -> Vector2:
+	if rect.size == Vector2.ZERO:
+		return point
+	return Vector2(
+		clampf(point.x, rect.position.x, rect.end.x),
+		clampf(point.y, rect.position.y, rect.end.y))
+
+
+func _prop_rect(prop: Node2D) -> Rect2:
+	var spr := prop.get_node_or_null("Sprite") as Sprite2D
+	if spr == null or spr.texture == null:
+		return Rect2()
+	return Rect2(prop.global_position + spr.position, spr.texture.get_size())
 
 
 ## Back on the side you came from, south of the chair's feet when that was the

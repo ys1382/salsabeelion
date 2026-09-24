@@ -42,8 +42,14 @@ static func run(host: Node) -> void:
 		"did not slide past Mara's side: %s mara %s" % [player.global_position, mara.global_position])
 
 	await _place(host, player, seat.global_position + Vector2(0, 18))
+	var gap := _gap_mid(table, seat)
 	player.sit_on(seat)
+	await _expect(host, player.seated and player.global_position.distance_to(gap) < 2.0,
+		"not midway between chair and table: %s gap %s" % [player.global_position, gap])
+	await _expect(host, seat.z_index < 0,
+		"chair can still paint over the head")
 	player.stand_up()
+	await _expect(host, seat.z_index == 0, "chair draw order stuck behind")
 	for _i in 8:
 		await host.get_tree().physics_frame
 	await _expect(host, player.global_position.y > seat.global_position.y,
@@ -88,6 +94,16 @@ static func run(host: Node) -> void:
 	await host.get_tree().physics_frame
 	var home: Node = interiors.current
 	var crate := home.get_node("Objects/home_crate") as Node2D
+	var home_seat := home.get_node_or_null("Objects/home_seat") as Node2D
+	if home_seat != null:
+		var home_table := home.get_node("Objects/home_table") as Node2D
+		await _place(host, player, home_seat.global_position + Vector2(0, 18))
+		var home_gap := _gap_mid(home_table, home_seat)
+		player.sit_on(home_seat)
+		await _expect(host, player.global_position.distance_to(home_gap) < 2.0,
+			"not midway at home: %s gap %s" % [player.global_position, home_gap])
+		await _expect(host, home_seat.z_index < 0, "home chair can paint over the head")
+		player.stand_up()
 	await _hold(host, player, crate.global_position + Vector2(0, 24), Vector2.UP, 70)
 	await _expect(host, player.global_position.y > crate.global_position.y,
 		"home crate slipped: %s" % player.global_position)
@@ -124,6 +140,25 @@ static func _hold(host: Node, player: Player, at: Vector2, dir: Vector2, frames:
 		await host.get_tree().physics_frame
 	player.agent_input = Vector2.ZERO
 	player.velocity = Vector2.ZERO
+
+
+static func _gap_mid(table: Node2D, chair: Node2D) -> Vector2:
+	var table_r := _prop_rect(table)
+	var chair_r := _prop_rect(chair)
+	var on_chair := Vector2(
+		clampf(table_r.get_center().x, chair_r.position.x, chair_r.end.x),
+		clampf(table_r.get_center().y, chair_r.position.y, chair_r.end.y))
+	var on_table := Vector2(
+		clampf(chair_r.get_center().x, table_r.position.x, table_r.end.x),
+		clampf(chair_r.get_center().y, table_r.position.y, table_r.end.y))
+	return (on_chair + on_table) * 0.5
+
+
+static func _prop_rect(prop: Node2D) -> Rect2:
+	var spr := prop.get_node_or_null("Sprite") as Sprite2D
+	if spr == null or spr.texture == null:
+		return Rect2()
+	return Rect2(prop.global_position + spr.position, spr.texture.get_size())
 
 
 static func _expect(host: Node, ok: bool, msg: String) -> void:
