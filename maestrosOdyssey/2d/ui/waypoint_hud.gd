@@ -155,8 +155,11 @@ func at_destination() -> bool:
 		return _focus_id() == "dish_cart"
 	if id == "cafe_seat":
 		var seated := _player() as Player
-		if seated != null and seated.seated:
-			return true
+		return seated != null and seated.seated
+	# Walking up to the menu, Mara, or a customer is not the action yet.
+	# The arrow stays until that menu or talk is actually open.
+	if id == "drink_menu" or id == "mara" or _cafe_guest(id):
+		return false
 	if id != "elder" and id != "card_basket" and id != "dragons_brew" and id != "player_house":
 		return _focus_id() == id
 	if Interiors.inside() and Interiors.current != null:
@@ -171,8 +174,16 @@ func elder_met() -> bool:
 	return _elder_met()
 
 
+func _cafe_guest(id: String) -> bool:
+	if not Interiors.inside() or Interiors.current == null:
+		return false
+	if Interiors.current.building_id != "dragons_brew":
+		return false
+	return _entity(id) is Npc
+
+
 func _process(delta: float) -> void:
-	if Journal.is_open():
+	if Journal.is_open() or DialogueUI.blocks_arrow():
 		_set_wanted(false)
 		return
 	var id := current_id()

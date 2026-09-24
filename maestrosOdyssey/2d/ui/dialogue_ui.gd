@@ -218,6 +218,14 @@ func is_sign_open() -> bool:
 	return _sign.visible
 
 
+## A menu, an order box, or someone talking. The door's welcome line
+## has no speaker, so it does not count.
+func blocks_arrow() -> bool:
+	if is_sign_open() or is_ordering():
+		return true
+	return _panel.visible and _speaker.visible
+
+
 ## What the panel is currently saying. The agent bridge reads this to assert on
 ## lines the game produces locally — item pickups, locked_text, gift lines —
 ## which never go through the model and so never reach dialogue_received.

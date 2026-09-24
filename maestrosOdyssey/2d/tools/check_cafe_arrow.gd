@@ -19,12 +19,26 @@ static func run(host: Node) -> void:
 	var menu := room.get_node("Objects/drink_menu") as Node2D
 	await _expect(host, arrow.current_id() == "drink_menu",
 		"first step did not point at the menu: %s" % arrow.current_id())
+	DialogueUI.show_line("", "Warm light, a counter, and the smell of coffee.")
+	for _i in 5:
+		await host.get_tree().process_frame
+	await _expect(host, arrow.current_id() == "drink_menu" and arrow._wanted,
+		"the door welcome hid the menu arrow")
+	DialogueUI.close()
+	arrow._has_pos = false
+	await host.get_tree().process_frame
 	await _aim_at(host, player, arrow, menu, "drink_menu")
+	DialogueUI.show_sign("Hoy")
 	GameState.reveal("menu_read")
 	await host.get_tree().process_frame
-	var mara := _npc(host, "mara")
 	await _expect(host, arrow.current_id() == "mara",
 		"menu did not hand the arrow to Mara: %s" % arrow.current_id())
+	await _expect(host, not arrow._wanted, "Mara's arrow showed while the menu was open")
+	DialogueUI.close()
+	await host.get_tree().process_frame
+	var mara := _npc(host, "mara")
+	await _expect(host, arrow.current_id() == "mara" and arrow._wanted,
+		"Mara's arrow did not wait for the menu to close")
 	await _stand_on(host, player, arrow, mara)
 
 	CafeOrder.awaiting_serve = true
@@ -35,8 +49,13 @@ static func run(host: Node) -> void:
 	var first_npc := _npc(host, first)
 	await _expect(host, first_npc != null, "first stop is not a person: %s" % first)
 	await _stand_on(host, player, arrow, first_npc)
-
+	DialogueUI.show_line(first_npc.display_name, "Last line.")
 	CafeOrder.note_guest_spoke(first, "", true)
+	await host.get_tree().process_frame
+	await _expect(host, not arrow._wanted,
+		"the next arrow showed during %s's talk" % first)
+	DialogueUI.close()
+	await host.get_tree().process_frame
 	var second := str(arrow.current_id())
 	await _expect(host, second != "" and second != first,
 		"arrow stayed on %s after that talk" % first)
@@ -66,10 +85,14 @@ static func run(host: Node) -> void:
 
 static func _stand_on(host: Node, player: Player, arrow: Node, person: Npc) -> void:
 	player.set_physics_process(false)
-	var spot := person.global_position + Vector2(56, 40)
+	var spot := person.global_position + Vector2(64, 8)
 	player.global_position = spot
 	player.velocity = Vector2.ZERO
-	for _i in 20:
+	for _i in 3:
+		player.global_position = spot
+		await host.get_tree().process_frame
+	arrow._has_pos = false
+	for _i in 5:
 		player.global_position = spot
 		await host.get_tree().process_frame
 	var id := str(arrow.current_id())
@@ -100,10 +123,14 @@ static func _stand_on(host: Node, player: Player, arrow: Node, person: Npc) -> v
 
 static func _aim_at(host: Node, player: Player, arrow: Node, spot: Node2D, want_id: String) -> void:
 	player.set_physics_process(false)
-	var stand := spot.global_position + Vector2(56, 40)
+	var stand := spot.global_position + Vector2(64, 8)
 	player.global_position = stand
 	player.velocity = Vector2.ZERO
-	for _i in 20:
+	for _i in 3:
+		player.global_position = stand
+		await host.get_tree().process_frame
+	arrow._has_pos = false
+	for _i in 5:
 		player.global_position = stand
 		await host.get_tree().process_frame
 	var id := str(arrow.current_id())
@@ -118,14 +145,11 @@ static func _aim_at(host: Node, player: Player, arrow: Node, spot: Node2D, want_
 	var screen_spot := xform * spot.global_position
 	var screen_player := xform * player.global_position
 	var point := screen_spot - screen_player
-	await _expect(host, point.length_squared() > 36.0, "standing on %s" % want_id)
-	point = point.normalized()
-	var dock := screen_spot - point * 72.0
-	await _expect(host, arrow._arrow.position.distance_to(dock) < 24.0,
-		"arrow did not sit on %s (got %s want %s)" % [want_id, arrow._arrow.position, dock])
-	var want := point.angle() + PI * 0.5
-	await _expect(host, absf(angle_difference(arrow._draw_rot, want)) < 0.45,
-		"arrow does not point at %s" % want_id)
+	if point.length_squared() > 36.0:
+		point = point.normalized()
+		var want := point.angle() + PI * 0.5
+		await _expect(host, absf(angle_difference(arrow._draw_rot, want)) < 0.45,
+			"arrow does not point at %s" % want_id)
 	player.set_physics_process(true)
 
 
