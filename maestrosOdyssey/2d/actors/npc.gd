@@ -18,6 +18,8 @@ var display_name: String = ""
 ## sentence every time. After the first hello it stops being a greeting and
 ## starts being a stuck record, so later visits get an ellipsis instead.
 var met: bool = false
+## Morning talk finished: her last scripted line was on screen, then that box closed.
+var morning_done: bool = false
 ## Whether they have already been given what they were waiting for.
 var _gave: bool = false
 var _line_i: int = 0

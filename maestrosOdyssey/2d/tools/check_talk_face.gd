@@ -119,7 +119,13 @@ static func run(host: Node) -> void:
 		"elder profile looked the same way as a right-facing stand")
 	await _expect(host, Sheet.facing_suffix(player.facing)[0] != Sheet.facing_suffix(elder.facing)[0],
 		"elder lined up with the player")
+	var arrow: Node = host.get_node("/root/WaypointHud")
+	var tasks: Node = host.get_node("/root/TaskList")
 	var first := DialogueUI.body()
+	await _expect(host, arrow.current_id() == "elder",
+		"arrow left the elder on the first line: %s" % arrow.current_id())
+	await _expect(host, _task_now(tasks) == "Talk to the elder",
+		"talk step left early: %s" % _task_now(tasks))
 	await _expect(host, DialogueUI._hint.text == "T — Next",
 		"first box offered close: %s" % DialogueUI._hint.text)
 	await _expect(host, not player._try_close("R"), "R dismissed a middle box")
@@ -141,13 +147,40 @@ static func run(host: Node) -> void:
 		guard += 1
 	await _expect(host, DialogueUI._hint.text == "T — Close",
 		"last box did not offer close: %s" % DialogueUI._hint.text)
+	await _expect(host, arrow.current_id() == "elder",
+		"arrow left the elder while the last line was still up: %s" % arrow.current_id())
+	await _expect(host, _task_now(tasks) == "Talk to the elder",
+		"talk step finished before the last line closed: %s" % _task_now(tasks))
+	GameState.take_item("learning_card")
+	await _expect(host, arrow.current_id() == "elder",
+		"an early card moved the arrow: %s" % arrow.current_id())
+	GameState.inventory.erase("learning_card")
 	await _expect(host, player._try_close("T"), "last box did not close")
 	await host.get_tree().physics_frame
 	await _expect(host, not DialogueUI.is_open(), "last box stayed open")
 	await _expect(host, elder.facing.dot(elder_before) > 0.9,
 		"elder did not turn back after the talk: %s vs %s" % [elder.facing, elder_before])
+	await _expect(host, elder.morning_done, "morning talk did not count as finished")
+	await _expect(host, arrow.current_id() == "card_basket",
+		"arrow did not move to the basket: %s" % arrow.current_id())
+	await _expect(host, _task_now(tasks) == "Take the card",
+		"take-the-card did not become the step: %s" % _task_now(tasks))
+	GameState.take_item("learning_card")
+	await _expect(host, arrow.current_id() == "dragons_brew",
+		"card did not point at the café: %s" % arrow.current_id())
+	GameState.day_index = 8
+	ElderReport.done = false
+	await _expect(host, arrow.current_id() == "elder",
+		"day 8 did not point at the elder: %s" % arrow.current_id())
 	print("talk-face check ok")
 	host.get_tree().quit(0)
+
+
+static func _task_now(tasks: Node) -> String:
+	for step in tasks._steps():
+		if str(step.get("state", "")) == "now":
+			return str(step.get("text", ""))
+	return ""
 
 
 static func _looks_side_toward(facing: Vector2, x_to_player: float) -> bool:

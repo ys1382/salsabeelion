@@ -112,11 +112,13 @@ func current_id() -> String:
 		return "player_house"
 	if GameState.wood_chore_open():
 		return "forest_clearing"
+	# Her whole morning talk, through the basket line, then that box closed.
+	# Taking the card early does not move the arrow. Day 8 is handled above.
+	if not elder_met():
+		return "elder"
 	if GameState.has_item("learning_card"):
 		return "dragons_brew"
-	if elder_met():
-		return "card_basket"
-	return "elder"
+	return "card_basket"
 
 
 func marker_name(id: String) -> String:
@@ -383,7 +385,7 @@ func _elder_met() -> bool:
 	if root == null:
 		return false
 	var npc := root.entities.get("elder") as Npc
-	return npc != null and npc.met
+	return npc != null and npc.morning_done
 
 
 func _focus_id() -> String:

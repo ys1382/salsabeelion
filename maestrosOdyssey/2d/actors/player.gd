@@ -475,6 +475,7 @@ func _try_close(key: String) -> bool:
 
 
 func _after_panel_close() -> void:
+	_mark_elder_morning()
 	_clear_pages()
 	CafeOrder.on_speech_closed()
 	if CafeOrder.open_box_on_close:
@@ -766,6 +767,21 @@ func _sit_shows(to: Vector2) -> bool:
 	if _sprite.sprite_frames == null:
 		return false
 	return _sprite.sprite_frames.has_animation("idle_%s" % parts[0])
+
+
+## The arrow waits for this close. A middle box never gets here.
+## Day-8 report lines are not her morning script, so they do not count.
+func _mark_elder_morning() -> void:
+	if _talk_with == null or not is_instance_valid(_talk_with):
+		return
+	if _talk_with.npc_id != "elder" or _talk_with.morning_done:
+		return
+	var lines = _talk_with.data.get("scripted_lines", [])
+	if typeof(lines) != TYPE_ARRAY or lines.is_empty():
+		return
+	if DialogueUI.body() != str(lines[lines.size() - 1]):
+		return
+	_talk_with.morning_done = true
 
 
 func _end_talk_face() -> void:

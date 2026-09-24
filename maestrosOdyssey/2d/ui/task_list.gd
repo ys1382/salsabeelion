@@ -171,7 +171,7 @@ func _steps() -> Array[Dictionary]:
 		or CafeOrder.goodbye_done
 	)
 	var bits: Array[Dictionary] = [
-		{"text": "Talk to the elder", "done": met or card},
+		{"text": "Talk to the elder", "done": met},
 		{"text": "Take the card", "done": card},
 	]
 	# Saturday of week one cuts wood first. Other mornings stay the café.
