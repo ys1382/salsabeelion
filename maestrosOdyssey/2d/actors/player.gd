@@ -13,6 +13,11 @@ const SACK_TEX := preload("res://assets/The Fan-tasy Tileset (Free)/Art/Props/Sa
 const SPEED := 70.0
 const ACCEL := 900.0
 const FRICTION := 1100.0
+## Villagers live on this layer. Furniture and walls stay on the environment
+## layer. People are never turned off — you slide around them.
+const NPC_LAYER := 8
+## A tap only bumps. Holding longer than this starts the sideways slide.
+const PERSON_BUMP_S := 0.30
 
 const MAX_HP := 5
 ## After a hit you are untouchable for this long, and flash. Without it a slime
@@ -55,6 +60,12 @@ var seated := false
 var _stand_pos := Vector2.ZERO
 var _walk_mask := 1
 var _held: Sprite2D
+var _seat: Node2D = null
+var _push_dir := Vector2.ZERO
+var _push_held := 0.0
+## Which way we are sliding off the person we bumped. Zero until the hold
+## is long enough. Collision stays on the whole time.
+var _step_side := Vector2.ZERO
 
 
 func _ready() -> void:
@@ -63,6 +74,7 @@ func _ready() -> void:
 	# The sheet's feet sit near the bottom of the 48x48 cell; lift the sprite so
 	# the node origin is the feet (matches prop anchors and makes Y-sort work).
 	_sprite.position = SPRITE_STAND
+	collision_mask |= NPC_LAYER
 	_walk_mask = collision_mask
 	_sprite.animation_finished.connect(_on_anim_finished)
 	_held = Sprite2D.new()
@@ -112,12 +124,163 @@ func _physics_process(delta: float) -> void:
 	if input != Vector2.ZERO:
 		velocity = velocity.move_toward(input.normalized() * SPEED, ACCEL * delta)
 		facing = input
+		_steer_past_person(input)
 	else:
 		velocity = velocity.move_toward(Vector2.ZERO, FRICTION * delta)
+	var before := global_position
 	move_and_slide()
+	_update_person_bump(delta, input, before)
 	if not _attacking:
 		_play("move" if input != Vector2.ZERO else "idle")
 	_update_focus()
+
+
+## People stop you. Hold the same way and you slide off to the open side,
+## still bumping them. You never overlap their body. Furniture does not do this.
+func _steer_past_person(input: Vector2) -> void:
+	if _step_side == Vector2.ZERO or _push_held < PERSON_BUMP_S:
+		return
+	var dir := _held_axis(input)
+	var forward := 0.0
+	if not _shoulder_blocked(dir, _step_side):
+		forward = SPEED * 0.9
+	velocity = _step_side * SPEED * 1.35 + dir * forward
+
+
+func _update_person_bump(delta: float, input: Vector2, before: Vector2) -> void:
+	if seated:
+		return
+	if input == Vector2.ZERO:
+		_clear_bump()
+		return
+	var dir := _held_axis(input)
+	if dir != _push_dir:
+		_push_dir = dir
+		_push_held = 0.0
+		_step_side = Vector2.ZERO
+	var moved := global_position.distance_to(before)
+	if _pushing_into_person(dir, moved):
+		_push_held += delta
+		if _push_held >= PERSON_BUMP_S and _step_side == Vector2.ZERO:
+			_step_side = _clearer_side(dir)
+	elif _step_side == Vector2.ZERO:
+		_push_held = 0.0
+	elif not _still_beside(dir):
+		_clear_bump()
+	if _step_side != Vector2.ZERO and _env_blocked(global_position + _step_side * 14.0):
+		var other := -_step_side
+		if not _env_blocked(global_position + other * 14.0):
+			_step_side = other
+
+
+func _clear_bump() -> void:
+	_push_dir = Vector2.ZERO
+	_push_held = 0.0
+	_step_side = Vector2.ZERO
+
+
+func _pushing_into_person(dir: Vector2, moved: float) -> bool:
+	if _blocked_by_person():
+		return true
+	return moved < 0.45 and _person_ahead(dir)
+
+
+func _blocked_by_person() -> bool:
+	for i in get_slide_collision_count():
+		if get_slide_collision(i).get_collider() is Npc:
+			return true
+	return false
+
+
+func _person_ahead(dir: Vector2) -> bool:
+	for n in get_tree().get_nodes_in_group("npc"):
+		var npc := n as Node2D
+		if npc == null or not is_instance_valid(npc):
+			continue
+		var to := npc.global_position - global_position
+		var along := to.dot(dir)
+		if along < 2.0 or along > 20.0:
+			continue
+		if (to - dir * along).length() <= 14.0:
+			return true
+	return false
+
+
+## Still on their shoulder. Used so the slide keeps going until you are past,
+## instead of turning back into their front.
+func _still_beside(dir: Vector2) -> bool:
+	var side_axis := Vector2(-dir.y, dir.x)
+	for n in get_tree().get_nodes_in_group("npc"):
+		var npc := n as Node2D
+		if npc == null or not is_instance_valid(npc):
+			continue
+		var to := npc.global_position - global_position
+		var along := to.dot(dir)
+		if along > -14.0 and along < 20.0 and absf(to.dot(side_axis)) < 22.0:
+			return true
+	return false
+
+
+## Someone is still in the way of stepping forward on this side, so we only
+## slide along the row until the end of it opens.
+func _shoulder_blocked(dir: Vector2, side: Vector2) -> bool:
+	for n in get_tree().get_nodes_in_group("npc"):
+		var npc := n as Node2D
+		if npc == null or not is_instance_valid(npc):
+			continue
+		var to := npc.global_position - global_position
+		var along := to.dot(dir)
+		var lateral := to.dot(side)
+		if along > -4.0 and along < 18.0 and lateral > -8.0 and lateral < 16.0:
+			return true
+	return false
+
+
+func _clearer_side(dir: Vector2) -> Vector2:
+	var left := Vector2(-dir.y, dir.x)
+	var right := -left
+	var left_wall := _env_blocked(global_position + left * 16.0)
+	var right_wall := _env_blocked(global_position + right * 16.0)
+	if left_wall and not right_wall:
+		return right
+	if right_wall and not left_wall:
+		return left
+	if _people_on_side(dir, left) <= _people_on_side(dir, right):
+		return left
+	return right
+
+
+func _people_on_side(dir: Vector2, side: Vector2) -> int:
+	var n := 0
+	for body in get_tree().get_nodes_in_group("npc"):
+		var npc := body as Node2D
+		if npc == null or not is_instance_valid(npc):
+			continue
+		var to := npc.global_position - global_position
+		var along := to.dot(dir)
+		var lateral := to.dot(side)
+		if along > -12.0 and along < 28.0 and lateral > 4.0 and lateral < 48.0:
+			n += 1
+	return n
+
+
+func _env_blocked(at: Vector2) -> bool:
+	var space := get_world_2d().direct_space_state
+	var shape := CircleShape2D.new()
+	shape.radius = 6.0
+	var q := PhysicsShapeQueryParameters2D.new()
+	q.shape = shape
+	q.transform = Transform2D(0.0, at)
+	q.collision_mask = 1
+	q.collide_with_areas = false
+	q.exclude = [get_rid()]
+	return not space.intersect_shape(q, 1).is_empty()
+
+
+func _held_axis(input: Vector2) -> Vector2:
+	if absf(input.x) >= absf(input.y):
+		return Vector2(signf(input.x), 0.0)
+	return Vector2(0.0, signf(input.y))
 
 
 # --- interaction -------------------------------------------------------------
@@ -353,7 +516,9 @@ func sit_on(host: Node2D) -> void:
 	if seated or host == null or not is_instance_valid(host):
 		return
 	seated = true
+	_clear_bump()
 	_stand_pos = global_position
+	_seat = host
 	if host is PhysicsBody2D:
 		add_collision_exception_with(host)
 	collision_mask = 0
@@ -371,13 +536,33 @@ func stand_up(restore := true) -> void:
 	if not seated:
 		return
 	seated = false
+	_clear_bump()
 	collision_mask = _walk_mask
 	_sprite.position = SPRITE_STAND
+	if _seat != null and is_instance_valid(_seat) and _seat is PhysicsBody2D:
+		remove_collision_exception_with(_seat)
 	if restore:
 		global_position = _stand_pos
+		_stand_clear_of_seat()
+	_seat = null
 	velocity = Vector2.ZERO
 	_play("idle")
 	_place_held()
+
+
+## Back on the side you came from, south of the chair's feet when that was the
+## approach. Otherwise the chair's box shoves you north and the chair draws
+## over your head.
+func _stand_clear_of_seat() -> void:
+	if _seat == null or not is_instance_valid(_seat):
+		return
+	var away := _stand_pos - _seat.global_position
+	if away.length_squared() < 1.0:
+		away = Vector2.DOWN
+	var pos := _seat.global_position + away.normalized() * 14.0
+	if pos.y < _seat.global_position.y + 10.0:
+		pos.y = _seat.global_position.y + 10.0
+	global_position = pos
 
 
 ## Returns what happened, so a caller knows whether a model reply is still

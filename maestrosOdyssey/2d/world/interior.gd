@@ -14,6 +14,7 @@ extends Node2D
 # tried first and renders nothing for a solid fill — it only has cliff edges.
 
 const TILE := Catalog.TILE
+const FeetBox := preload("res://world/feet_box.gd")
 const MenuBoardScript := preload("res://world/menu_board.gd")
 ## Wall band thickness in tiles. Wide enough to cover the floor terrain's own
 ## edge tiles, which are drawn as grass meeting a path.
@@ -234,6 +235,7 @@ func _furnish() -> void:
 			Vector2i(spot.x, spot.y + fp.y - 1)) \
 			+ Vector2((fp.x - 1) * TILE * 0.5, 0)
 		_objects.add_child(node)
+		FeetBox.apply(node, asset)
 		placed += 1
 
 
@@ -277,6 +279,7 @@ func _instance_interior_asset(entry: Dictionary) -> Node2D:
 		Vector2i(cell.x, cell.y + fp.y - 1)) \
 		+ Vector2((fp.x - 1) * TILE * 0.5, 0)
 	_objects.add_child(node)
+	FeetBox.apply(node, asset)
 	return node
 
 

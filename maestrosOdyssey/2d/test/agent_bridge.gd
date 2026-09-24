@@ -593,11 +593,11 @@ func _goto(tx: int, ty: int) -> void:
 ## on the far side of a wall. Unreachable candidates are dropped for free here
 ## instead of costing GOTO_TIMEOUT each.
 ##
-## The NPC's OWN tile leads the list: the player collides with the environment
-## only (mask 1) and villagers sit on layer 8, so standing on top of someone is
-## both legal and the surest way to be in reach of them. Ring 2 is included
-## because a villager tucked into a nook can have every immediate neighbour
-## walled off, which is what made this fail on a different NPC most runs.
+## The NPC's own tile still leads the list. Villagers are solid, so a walk
+## onto that tile bumps, then slides off their side if the key stays down. Ring 2 is
+## included because a villager tucked into a nook can have every immediate
+## neighbour walled off, which is what made this fail on a different NPC most
+## runs.
 func _stand_tiles_near(tile: Vector2i, limit: int = 8) -> Array[Vector2i]:
 	var grid := _grid()
 	var p := _player()

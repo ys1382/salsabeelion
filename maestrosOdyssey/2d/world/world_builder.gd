@@ -12,6 +12,7 @@ extends Node2D
 # lets the VLM repair pass rebuild a patched world in place.
 
 const TILE := Catalog.TILE
+const FeetBox := preload("res://world/feet_box.gd")
 const StreetSignScript := preload("res://world/street_sign.gd")
 ## Behind the cottage, on open grass, clear of the café to the east.
 ## Top-left tile. The ring is 2×2, so it occupies (8,1) through (9,2).
@@ -342,6 +343,7 @@ func _instance_asset(entry: Dictionary) -> Node2D:
 		Vector2i(entry["x"], entry["y"] + fp.y - 1)) \
 		+ Vector2((fp.x - 1) * TILE * 0.5, 0)
 	_objects.add_child(node)
+	FeetBox.apply(node, asset)
 	entities[entry["id"]] = node
 	return node
 

@@ -73,6 +73,8 @@ func _ready() -> void:
 		call_deferred("_run_forest_check")
 	elif _has_flag("--check-campfire"):
 		call_deferred("_run_campfire_check")
+	elif _has_flag("--check-bump"):
+		call_deferred("_run_bump_check")
 	elif not _has_flag("--agent-bridge"):
 		Journal.show_opening()
 
@@ -338,4 +340,9 @@ func _run_forest_check() -> void:
 
 func _run_campfire_check() -> void:
 	var check: Script = load("res://tools/check_campfire.gd")
+	check.run(self)
+
+
+func _run_bump_check() -> void:
+	var check: Script = load("res://tools/check_bump.gd")
 	check.run(self)
