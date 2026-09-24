@@ -79,6 +79,8 @@ func _ready() -> void:
 		call_deferred("_run_door_arrow_check")
 	elif _has_flag("--check-talk-face"):
 		call_deferred("_run_talk_face_check")
+	elif _has_flag("--check-cafe-arrow"):
+		call_deferred("_run_cafe_arrow_check")
 	elif not _has_flag("--agent-bridge"):
 		Journal.show_opening()
 
@@ -359,4 +361,9 @@ func _run_door_arrow_check() -> void:
 
 func _run_talk_face_check() -> void:
 	var check: Script = load("res://tools/check_talk_face.gd")
+	check.run(self)
+
+
+func _run_cafe_arrow_check() -> void:
+	var check: Script = load("res://tools/check_cafe_arrow.gd")
 	check.run(self)

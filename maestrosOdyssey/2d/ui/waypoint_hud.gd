@@ -1,8 +1,7 @@
 extends CanvasLayer
-# Direction for the next stop. On the street, and for the way home, a compass
-# arrow sits on the screen edge, then bounces on the place once you can see it.
-# In the café, the next person gets a small mark over their head instead,
-# so two people at one table don't share one arrow.
+# Direction for the next stop. One arrow sits on the screen edge, then
+# bounces on that place once you can see it — the elder, the café, and
+# the next person inside, the same way.
 
 const INK := Color(0.96, 0.90, 0.78)
 const OUTLINE := Color(0.08, 0.07, 0.05, 0.9)
@@ -19,7 +18,6 @@ const DOOR_DOCK := 28.0
 
 var _arrow: Node2D
 var _label: Label
-var _mark: Node2D
 var _parts: Array[Polygon2D] = []
 var _wanted := false
 var _fade: Tween
@@ -49,12 +47,6 @@ func _ready() -> void:
 	_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_label.modulate.a = 0.0
 	add_child(_label)
-	_mark = Node2D.new()
-	_mark.modulate.a = 0.0
-	_mark.visible = false
-	add_child(_mark)
-	_add_mark(OUTLINE, 1.35)
-	_add_mark(INK, 1.0)
 	hide()
 
 
@@ -71,18 +63,6 @@ func _add_arrow(color: Color, scale_mul: float) -> void:
 		color, scale_mul)
 	_parts.append(shaft)
 	_parts.append(head)
-
-
-## A small downward mark. Used over the next person in the café,
-## instead of the compass, so two people at one table don't share it.
-func _add_mark(color: Color, scale_mul: float) -> void:
-	var p := Polygon2D.new()
-	p.polygon = PackedVector2Array([
-		Vector2(0, 7), Vector2(7, -4), Vector2(-7, -4),
-	])
-	p.color = color
-	p.scale = Vector2(scale_mul, scale_mul)
-	_mark.add_child(p)
 
 
 func _poly(pts: PackedVector2Array, color: Color, scale_mul: float) -> Polygon2D:
@@ -205,17 +185,7 @@ func _process(delta: float) -> void:
 	var screen_player := xform * player.global_position
 	var view := get_viewport().get_visible_rect().size
 	_bob += delta
-	if _over_person(id) and _in_view(screen_target, view, 12.0):
-		var head := xform * (target + Vector2(0, -34))
-		var bob := sin(_bob * BOUNCE_SPEED) * 4.0
-		_arrow.visible = false
-		_label.visible = false
-		_mark.visible = true
-		_mark.position = head + Vector2(0, bob)
-		_set_wanted(true)
-		return
 	_arrow.visible = true
-	_mark.visible = false
 	_label.visible = true
 	var exit_door := _aiming_at_door(id)
 	if _aim_id != id:
@@ -255,9 +225,6 @@ func _process(delta: float) -> void:
 			point = point.normalized()
 			_last_point = point
 		on_screen = _in_view(screen_target, view, MARGIN)
-		if _over_person(id):
-			# Off screen, point toward them. Do not bounce onto the person beside them.
-			on_screen = false
 	var desired := screen_target if exit_door and on_screen \
 		else (screen_target - point * DOCK_GAP if on_screen \
 		else _edge_point(view * 0.5, point, view, MARGIN))
@@ -289,18 +256,6 @@ func _process(delta: float) -> void:
 	_label.reset_size()
 	_label.position = _label_pos(shown, point, _label.size, view)
 	_set_wanted(true)
-
-
-## The next person to hear, while you are in the room with them.
-func _over_person(id: String) -> bool:
-	if not Interiors.inside() or Interiors.current == null:
-		return false
-	if id == "" or id == "dish_cart" or id == "dragons_brew" \
-			or id == "player_house" or id == "elder" or id == "card_basket" \
-			or id == "campfire":
-		return false
-	var person := _entity(id)
-	return person is Npc
 
 
 ## The next stop is not this room, so the arrow aims at the way out.
@@ -410,13 +365,11 @@ func _set_wanted(on: bool) -> void:
 		_fade = create_tween()
 		_fade.tween_property(_arrow, "modulate:a", 1.0, FADE_IN)
 		_fade.parallel().tween_property(_label, "modulate:a", 1.0, FADE_IN)
-		_fade.parallel().tween_property(_mark, "modulate:a", 1.0, FADE_IN)
 	else:
 		_has_pos = false
 		_fade = create_tween()
 		_fade.tween_property(_arrow, "modulate:a", 0.0, FADE_OUT)
 		_fade.parallel().tween_property(_label, "modulate:a", 0.0, FADE_OUT)
-		_fade.parallel().tween_property(_mark, "modulate:a", 0.0, FADE_OUT)
 		_fade.tween_callback(hide)
 
 

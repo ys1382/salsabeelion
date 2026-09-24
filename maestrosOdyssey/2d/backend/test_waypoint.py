@@ -62,7 +62,9 @@ def main() -> int:
     assert "_edge_point" in gd
     assert "blunt end" in gd
     assert "_pointing_outside" in gd
-    assert "_over_person" in gd
+    assert "_over_person" not in gd
+    assert "_add_mark" not in gd
+    assert "nav_target" in gd
     assert "leave" in gd
 
     project = PROJECT.read_text(encoding="utf-8")
