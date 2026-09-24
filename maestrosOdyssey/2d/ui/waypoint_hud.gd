@@ -174,8 +174,8 @@ func at_destination() -> bool:
 	if Interiors.inside() and Interiors.current != null:
 		if Interiors.current.building_id == id:
 			return true
-		# At the café door on the way home. Fade here; it comes back outside.
-		return _facing_exit()
+		# Still indoors. The arrow stays on this room's door until you leave.
+		return false
 	return _focus_id() == id
 
 
@@ -217,36 +217,62 @@ func _process(delta: float) -> void:
 	_arrow.visible = true
 	_mark.visible = false
 	_label.visible = true
-	var point := screen_target - screen_player
-	if point.length_squared() < 36.0:
-		point = _last_point
-	else:
-		point = point.normalized()
-		_last_point = point
-	var exit_door := _pointing_outside()
+	var exit_door := _aiming_at_door(id)
 	if _aim_id != id:
 		_aim_id = id
 		_door_docked = false
 		_has_pos = false
-	var on_screen := _in_view(screen_target, view, MARGIN)
+	var point := Vector2.DOWN
+	var on_screen := false
 	if exit_door:
-		var inset := _edge_inset(screen_target, view)
-		# Stay on the screen edge until the door is clearly in the room,
-		# so the arrow does not flicker on and off the bottom of the café.
-		if _door_docked:
-			_door_docked = inset > 40.0
+		# Direction comes from the doorway in this room, never from a place
+		# outside. A tiny vector means you are standing on the door: rest
+		# there and keep the last steady aim.
+		var world_delta := target - player.global_position
+		var on_door := world_delta.length_squared() < DOOR_DOCK * DOOR_DOCK
+		if on_door:
+			point = _last_point if _last_point.length_squared() > 0.01 else Vector2.DOWN
 		else:
-			_door_docked = inset > 78.0
+			var screen_delta := xform.basis_xform(world_delta)
+			if screen_delta.length_squared() < 1.0:
+				point = _last_point if _last_point.length_squared() > 0.01 else Vector2.DOWN
+			else:
+				point = screen_delta.normalized()
+				_last_point = point
+		var off := _outside_px(screen_target, view)
+		if on_door:
+			_door_docked = true
+		elif _door_docked:
+			_door_docked = off < 72.0
+		else:
+			_door_docked = off <= 2.0
 		on_screen = _door_docked
-	elif _over_person(id):
-		# Off screen, point toward them. Do not bounce onto the person beside them.
-		on_screen = false
-	var gap := DOOR_DOCK if exit_door else DOCK_GAP
-	var desired := screen_target - point * gap if on_screen \
-		else _edge_point(view * 0.5, point, view, MARGIN)
+	else:
+		point = screen_target - screen_player
+		if point.length_squared() < 36.0:
+			point = _last_point
+		else:
+			point = point.normalized()
+			_last_point = point
+		on_screen = _in_view(screen_target, view, MARGIN)
+		if _over_person(id):
+			# Off screen, point toward them. Do not bounce onto the person beside them.
+			on_screen = false
+	var desired := screen_target if exit_door and on_screen \
+		else (screen_target - point * DOCK_GAP if on_screen \
+		else _edge_point(view * 0.5, point, view, MARGIN))
 	desired = _clear_tasks(desired)
 	var desired_rot := point.angle() + PI * 0.5
-	if not _has_pos:
+	if exit_door:
+		# Face the doorway at once. Lerping here is what made it turn in place.
+		_draw_rot = desired_rot
+		if not _has_pos:
+			_draw_pos = desired
+			_has_pos = true
+		else:
+			var t := 1.0 - exp(-FOLLOW * delta)
+			_draw_pos = _draw_pos.lerp(desired, t)
+	elif not _has_pos:
 		_draw_pos = desired
 		_draw_rot = desired_rot
 		_has_pos = true
@@ -255,7 +281,7 @@ func _process(delta: float) -> void:
 		_draw_pos = _draw_pos.lerp(desired, t)
 		_draw_rot = lerp_angle(_draw_rot, desired_rot, t)
 	var shown := _draw_pos
-	if on_screen:
+	if on_screen and not exit_door:
 		shown -= point * sin(_bob * BOUNCE_SPEED) * BOUNCE_PX
 	_arrow.position = shown
 	_arrow.rotation = _draw_rot
@@ -286,15 +312,43 @@ func _pointing_outside() -> bool:
 	)
 
 
-func _facing_exit() -> bool:
-	var p := _player() as Player
-	if p == null or not (p.focus is Interactable):
+## Way out of this room. A person, the dish cart, or a seat already here
+## stays the target. The doorway is the only other indoor mark.
+func _aiming_at_door(id: String) -> bool:
+	return _pointing_outside() and not _stop_is_in_room(id)
+
+
+func _stop_is_in_room(id: String) -> bool:
+	if not Interiors.inside() or Interiors.current == null or id == "":
 		return false
-	return (p.focus as Interactable).verb == "leave"
+	var here := Interiors.current.building_id
+	if id == "forest_clearing" and here == "forest_clearing" \
+			and Interiors.current.has_method("tree_standing") \
+			and Interiors.current.tree_standing():
+		return true
+	if id == "dish_cart" and here == "dragons_brew":
+		return true
+	var node := _entity(id)
+	if node != null and Interiors.current.is_ancestor_of(node):
+		return true
+	var seat := Interiors.current.get_node_or_null("Objects/" + id) as Node2D
+	return seat != null and seat.name != "Doorway"
 
 
-func _edge_inset(screen: Vector2, view: Vector2) -> float:
-	return minf(minf(screen.x, view.x - screen.x), minf(screen.y, view.y - screen.y))
+## How far `screen` sits outside the viewport. Zero when it is on screen,
+## including a door that rests on the bottom edge of a small room.
+func _outside_px(screen: Vector2, view: Vector2) -> float:
+	var dx := 0.0
+	if screen.x < 0.0:
+		dx = -screen.x
+	elif screen.x > view.x:
+		dx = screen.x - view.x
+	var dy := 0.0
+	if screen.y < 0.0:
+		dy = -screen.y
+	elif screen.y > view.y:
+		dy = screen.y - view.y
+	return maxf(dx, dy)
 
 
 func _in_view(screen: Vector2, view: Vector2, margin: float) -> bool:
@@ -415,30 +469,30 @@ func _entity(id: String) -> Node2D:
 func _target_pos(id: String) -> Vector2:
 	if id == "":
 		return Vector2.ZERO
-	if id == "forest_clearing":
-		if Interiors.inside() and Interiors.current != null \
-				and Interiors.current.building_id == "forest_clearing" \
+	if Interiors.inside() and Interiors.current != null:
+		if id == "forest_clearing" and Interiors.current.building_id == "forest_clearing" \
 				and Interiors.current.has_method("tree_standing") \
 				and Interiors.current.tree_standing():
 			var tree := Interiors.current.get_node_or_null("Objects/dead_tree") as Node2D
 			if tree != null:
 				return tree.global_position
-		return Interiors.forest_mouth_position()
-	if id != "dish_cart" and id != "dragons_brew" and id != "player_house" \
-			and id != "elder" and id != "card_basket" and id != "campfire":
-		var person := _entity(id)
-		if person != null:
-			return person.global_position
-	if id == "dish_cart" and Interiors.inside() and Interiors.current != null \
-			and Interiors.current.building_id == "dragons_brew":
-		var cart := Interiors.current.get_node_or_null("Objects/dish_cart") as Node2D
-		if cart != null:
-			return cart.global_position
-	if Interiors.inside() and Interiors.current != null \
-			and Interiors.current.building_id != id:
+		if id == "dish_cart" and Interiors.current.building_id == "dragons_brew":
+			var cart := Interiors.current.get_node_or_null("Objects/dish_cart") as Node2D
+			if cart != null:
+				return cart.global_position
+		if _stop_is_in_room(id):
+			var here := _entity(id)
+			if here == null:
+				here = Interiors.current.get_node_or_null("Objects/" + id) as Node2D
+			if here != null:
+				return here.global_position
+		# Still indoors, and the stop is not in this room: the doorway only.
 		var door := Interiors.current.get_node_or_null("Objects/Doorway") as Node2D
 		if door != null:
 			return door.global_position
+		return Vector2.ZERO
+	if id == "forest_clearing":
+		return Interiors.forest_mouth_position()
 	var root := WorldManager.world_root
 	if root == null:
 		return Vector2.ZERO
