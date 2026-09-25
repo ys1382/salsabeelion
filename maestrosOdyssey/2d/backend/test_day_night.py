@@ -31,6 +31,10 @@ def main() -> int:
     assert "prop.lamppost_3" in dn
     assert "BLEND_MODE_ADD" in dn
     assert "NightFx" in dn
+    assert "crickets_night.mp3" in dn
+    assert "CRICKET_DB" in dn
+    assert "forest_clearing" in dn
+    assert (ROOT / "audio" / "crickets_night.mp3").is_file()
     # Richer glass (sun / moon / stars) stays post-upgrade — not drawn here.
     assert "make_star" not in dn and "draw_moon" not in dn
     print("day/night outdoor look: ok")

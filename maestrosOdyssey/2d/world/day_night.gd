@@ -7,6 +7,10 @@ extends Node
 #
 # Night falls while you are inside Dragon's Brew, so the street is night when
 # you step out. Morning (night pass at home) fades the street back to day.
+#
+# Crickets are the only ambience. They start when you step out into that
+# night, stay on for the walk home and the campfire, and ease off indoors
+# or when morning returns. The café stay itself stays quiet.
 
 ## 0 = full day, 1 = full night.
 var amount := 0.0
@@ -19,6 +23,10 @@ const NIGHT := Color(0.48, 0.52, 0.72, 1)
 
 const FADE_IN_CAFE_S := 10.0
 const FADE_TO_DAY_S := 2.2
+## Distant bed, not a swarm in the ear.
+const CRICKET_DB := -22.0
+const CRICKET_SILENT_DB := -80.0
+const CRICKETS := preload("res://audio/crickets_night.mp3")
 
 ## Dark window rectangles in texture pixels (top-left of the house PNG).
 const WINDOWS := {
@@ -40,6 +48,8 @@ const DOORS := {
 }
 
 var _tween: Tween
+var _cricket_tween: Tween
+var _crickets: AudioStreamPlayer
 var _fx: Node2D
 var _layers: Array[CanvasItem] = []
 var _soft: Texture2D
@@ -52,6 +62,7 @@ func _ready() -> void:
 	_window_tex = _make_window_glow(14, 10)
 	Interiors.entered.connect(_on_entered)
 	Interiors.left.connect(_on_left)
+	_ensure_crickets()
 
 
 ## Call after every WorldBuilder.build() so FX and layer refs stay live.
@@ -76,6 +87,7 @@ func attach(builder: WorldBuilder) -> void:
 func begin_night(duration: float = FADE_IN_CAFE_S) -> void:
 	_want_night = true
 	_tween_to(1.0, duration)
+	_sync_crickets()
 
 
 ## Street must read as night the moment you leave the café (instant — the fade
@@ -87,22 +99,28 @@ func ensure_night() -> void:
 		_tween = null
 	amount = 1.0
 	_apply(1.0)
+	_sync_crickets()
 
 
 func begin_day(duration: float = FADE_TO_DAY_S) -> void:
 	_want_night = false
 	_tween_to(0.0, duration)
+	_sync_crickets()
 
 
 func _on_entered(building_id: String) -> void:
 	if building_id == "dragons_brew":
 		begin_night()
+	else:
+		_sync_crickets()
 
 
 func _on_left() -> void:
 	# Only finish the café→night fade. Do not yank morning back to night.
 	if _want_night:
 		ensure_night()
+	else:
+		_sync_crickets()
 
 
 func _tween_to(target: float, duration: float) -> void:
@@ -125,6 +143,79 @@ func _tween_to(target: float, duration: float) -> void:
 func _set_amount(v: float) -> void:
 	amount = v
 	_apply(v)
+
+
+## True when the night street (or the campfire clearing) should carry crickets.
+func crickets_playing() -> bool:
+	return _crickets != null and _crickets.playing
+
+
+func crickets_looping() -> bool:
+	var stream := _crickets.stream if _crickets != null else null
+	return stream is AudioStreamMP3 and (stream as AudioStreamMP3).loop
+
+
+func crickets_db() -> float:
+	if _crickets == null:
+		return CRICKET_SILENT_DB
+	return _crickets.volume_db
+
+
+func _outdoor_night() -> bool:
+	if not _want_night:
+		return false
+	if not Interiors.inside():
+		return true
+	var room := Interiors.current
+	return room != null and room.building_id == "forest_clearing"
+
+
+func _ensure_crickets() -> void:
+	if _crickets != null:
+		return
+	var stream := CRICKETS.duplicate() as AudioStreamMP3
+	stream.loop = true
+	_crickets = AudioStreamPlayer.new()
+	_crickets.name = "Crickets"
+	_crickets.process_mode = Node.PROCESS_MODE_ALWAYS
+	_crickets.stream = stream
+	_crickets.volume_db = CRICKET_SILENT_DB
+	add_child(_crickets)
+
+
+func _sync_crickets() -> void:
+	_ensure_crickets()
+	if _outdoor_night():
+		_fade_crickets(CRICKET_DB, true)
+	else:
+		_fade_crickets(CRICKET_SILENT_DB, false)
+
+
+func _fade_crickets(target_db: float, keep: bool) -> void:
+	if keep:
+		if _crickets.playing and absf(_crickets.volume_db - target_db) < 0.4:
+			return
+		if not _crickets.playing:
+			_crickets.volume_db = CRICKET_SILENT_DB
+			_crickets.play()
+	elif not _crickets.playing:
+		return
+	if _cricket_tween != null:
+		_cricket_tween.kill()
+		_cricket_tween = null
+	_cricket_tween = create_tween()
+	_cricket_tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+	_cricket_tween.tween_property(_crickets, "volume_db", target_db, FADE_TO_DAY_S) \
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	if not keep:
+		_cricket_tween.tween_callback(_stop_crickets)
+
+
+func _stop_crickets() -> void:
+	if _crickets != null and _crickets.playing:
+		_crickets.stop()
+	if _crickets != null:
+		_crickets.volume_db = CRICKET_SILENT_DB
 
 
 func _apply(v: float) -> void:
