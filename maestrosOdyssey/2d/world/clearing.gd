@@ -62,6 +62,7 @@ func build_clearing(id: String, spec: Dictionary) -> void:
 	for entry_obj in spec.get("objects", []):
 		_instance_interior_asset(entry_obj)
 	_apply_dead_tree()
+	_paint_berry_bushes()
 	_add_outer_woods()
 
 	var door := Marker2D.new()
@@ -101,7 +102,7 @@ func tree_standing() -> bool:
 
 
 func chop_ready(from: Vector2, facing: Vector2) -> bool:
-	if not tree_standing():
+	if not GameState.forest_morning() or not tree_standing():
 		return false
 	var to := _dead.global_position - from
 	if to.length() > CHOP_REACH:
@@ -124,6 +125,111 @@ func try_chop(from: Vector2, facing: Vector2) -> bool:
 	_swap_stump(tree)
 	GameState.note_wood_cut()
 	DialogueUI.show_line("", "The dead tree comes down. You take the wood.")
+	return true
+
+
+const PICK_REACH := 52.0
+
+
+func berry_ready(from: Vector2, facing: Vector2) -> bool:
+	return _bush_in_front(from, facing) != null
+
+
+func try_pick_berries(from: Vector2, facing: Vector2) -> bool:
+	var bush := _bush_in_front(from, facing)
+	if bush == null:
+		return false
+	if not GameState.note_berry_pick(str(bush.name)):
+		return false
+	var sprite := bush.get_node_or_null("Sprite") as Sprite2D
+	if sprite != null and bush.has_meta("plain_tex"):
+		sprite.texture = bush.get_meta("plain_tex")
+	return true
+
+
+func nearest_ripe_bush(from: Vector2) -> Node2D:
+	var best: Node2D = null
+	var best_d := INF
+	for child in _objects.get_children():
+		var bush := child as Node2D
+		if bush == null or not str(bush.name).begins_with("berry_bush_"):
+			continue
+		if not GameState.bush_has_berries(str(bush.name)):
+			continue
+		var d := from.distance_squared_to(bush.global_position)
+		if d < best_d:
+			best_d = d
+			best = bush
+	return best
+
+
+func _bush_in_front(from: Vector2, facing: Vector2) -> Node2D:
+	var best: Node2D = null
+	var best_d := PICK_REACH
+	var face := facing.normalized()
+	for child in _objects.get_children():
+		var bush := child as Node2D
+		if bush == null or not str(bush.name).begins_with("berry_bush_"):
+			continue
+		if not GameState.bush_has_berries(str(bush.name)):
+			continue
+		var to := bush.global_position - from
+		var dist := to.length()
+		if dist > best_d:
+			continue
+		if dist >= 1.0 and face.dot(to.normalized()) < 0.35:
+			continue
+		best_d = dist
+		best = bush
+	return best
+
+
+func _paint_berry_bushes() -> void:
+	for child in _objects.get_children():
+		var bush := child as Node2D
+		if bush == null or not str(bush.name).begins_with("berry_bush_"):
+			continue
+		var sprite := bush.get_node_or_null("Sprite") as Sprite2D
+		if sprite == null or sprite.texture == null:
+			continue
+		bush.set_meta("plain_tex", sprite.texture)
+		if not GameState.bush_has_berries(str(bush.name)):
+			continue
+		var dotted := _berry_dots(sprite.texture)
+		if dotted != null:
+			sprite.texture = dotted
+
+
+## Small blue dots on leaf pixels, inset so they stay inside the shrub.
+func _berry_dots(tex: Texture2D) -> Texture2D:
+	var img := tex.get_image()
+	if img == null:
+		return null
+	img = img.duplicate()
+	if img.is_compressed():
+		img.decompress()
+	var painted := 0
+	for y in range(2, img.get_height() - 2):
+		for x in range(2, img.get_width() - 2):
+			if (x + y * 3) % 6 != 0:
+				continue
+			if not _leaf_inside(img, x, y):
+				continue
+			img.set_pixel(x, y, Color(0.18, 0.28, 0.72, 1.0))
+			painted += 1
+	if painted == 0:
+		return null
+	return ImageTexture.create_from_image(img)
+
+
+func _leaf_inside(img: Image, x: int, y: int) -> bool:
+	var c := img.get_pixel(x, y)
+	if c.a < 0.85 or c.g < c.r or c.g < 0.12:
+		return false
+	for oy in range(-2, 3):
+		for ox in range(-2, 3):
+			if img.get_pixel(x + ox, y + oy).a < 0.75:
+				return false
 	return true
 
 

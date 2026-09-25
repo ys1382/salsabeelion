@@ -351,6 +351,8 @@ func _update_focus() -> void:
 		DialogueUI.show_prompt("T — Talk to %s" % (focus as Npc).display_name)
 	elif _chop_prompt():
 		DialogueUI.show_prompt("J — Chop")
+	elif _pick_prompt():
+		DialogueUI.show_prompt("P — Pick")
 	else:
 		DialogueUI.hide_prompt()
 
@@ -369,6 +371,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		if event.is_action_pressed("ui_cancel"):
 			DialogueUI.close()
 			_end_talk_face()
+			get_viewport().set_input_as_handled()
+		return
+	if _key_down(event, KEY_P):
+		if try_pick():
 			get_viewport().set_input_as_handled()
 		return
 	if seated and event is InputEventKey and event.pressed and not event.echo:
@@ -886,6 +892,25 @@ func _chop_prompt() -> bool:
 	return place.chop_ready(global_position, facing)
 
 
+func _pick_prompt() -> bool:
+	var place := Interiors.current
+	if place == null or not place.has_method("berry_ready"):
+		return false
+	return place.berry_ready(global_position, facing)
+
+
+func try_pick() -> bool:
+	if DialogueUI.is_open() or DialogueUI.is_ordering() or seated:
+		return false
+	var place := Interiors.current
+	if place == null or not place.has_method("try_pick_berries"):
+		return false
+	var ok: bool = place.try_pick_berries(global_position, facing)
+	if ok:
+		_refresh_held()
+	return ok
+
+
 func _refresh_held() -> void:
 	if _held == null:
 		return
@@ -918,6 +943,8 @@ func _in_cafe() -> bool:
 
 
 func _axe_out() -> bool:
+	if not GameState.forest_morning():
+		return false
 	var place := Interiors.current
 	if place == null or not place.has_method("tree_standing"):
 		return false

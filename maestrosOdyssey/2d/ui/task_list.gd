@@ -174,9 +174,14 @@ func _steps() -> Array[Dictionary]:
 		{"text": "Talk to the elder", "done": met},
 		{"text": "Take the card", "done": card},
 	]
-	# Saturday of week one cuts wood first. Other mornings stay the café.
+	# Saturday of week one cuts wood first. Tuesday picks berries first.
 	# Once the meal is finished, home ends the day even if the tree was skipped.
-	if GameState.forest_morning() and not GameState.cafe_meal_done:
+	if GameState.berry_morning() and not GameState.cafe_meal_done:
+		bits.append({
+			"text": "Pick blueberries",
+			"done": not GameState.berries_waiting(),
+		})
+	elif GameState.forest_morning() and not GameState.cafe_meal_done:
 		bits.append({
 			"text": "Cut wood in the forest",
 			"done": GameState.wood_cut_today(),

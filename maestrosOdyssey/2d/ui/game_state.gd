@@ -58,6 +58,12 @@ var wood_cut_day: int = 0
 var campfire_stage: int = 0
 ## Weekday index on which today's wood went onto the fire. 0 means not yet.
 var wood_stowed_day: int = 0
+## Berries in hand. The bottom box shows this number.
+var blueberries: int = 0
+## Bush id -> day_index it was last picked. Dots stay gone until the next Tuesday.
+var berry_picked: Dictionary = {}
+const BERRY_BUSHES: Array[String] = ["berry_bush_0", "berry_bush_1", "berry_bush_2"]
+const BERRY_HANDFUL := 4
 
 ## "explore" -> "showdown_pending" (card up, boss not spawned yet) ->
 ## "showdown" (boss alive) -> "won". Worlds with no rival skip straight from
@@ -98,6 +104,8 @@ func set_world(w: Dictionary) -> void:
 	wood_cut_day = 0
 	campfire_stage = 0
 	wood_stowed_day = 0
+	blueberries = 0
+	berry_picked.clear()
 	_sync_clock()
 	if has_node("/root/CafeOrder"):
 		CafeOrder.reset_session()
@@ -199,6 +207,46 @@ func advance_day() -> void:
 ## Saturday of week one only. Every other morning is the café, same as Monday.
 func forest_morning() -> bool:
 	return week_number == 1 and day_index == 6
+
+
+## Every Tuesday. Not the wood day, and not the other mornings.
+func berry_morning() -> bool:
+	return weekday == "Tuesday"
+
+
+func bush_has_berries(bush_id: String) -> bool:
+	var picked := int(berry_picked.get(bush_id, 0))
+	if picked <= 0:
+		return true
+	return day_index >= _next_tuesday_after(picked)
+
+
+func _next_tuesday_after(from_day: int) -> int:
+	var d := from_day + 1
+	while ((d - 1) % 7) != 1:
+		d += 1
+	return d
+
+
+func berries_waiting() -> bool:
+	for id in BERRY_BUSHES:
+		if bush_has_berries(id):
+			return true
+	return false
+
+
+## Arrow's first job on Tuesday, until each bush has been picked.
+func berry_chore_open() -> bool:
+	return berry_morning() and berries_waiting() and not cafe_meal_done
+
+
+func note_berry_pick(bush_id: String) -> bool:
+	if bush_id == "" or not bush_has_berries(bush_id):
+		return false
+	berry_picked[bush_id] = day_index
+	blueberries += BERRY_HANDFUL
+	carry_changed.emit()
+	return true
 
 
 func wood_cut_today() -> bool:

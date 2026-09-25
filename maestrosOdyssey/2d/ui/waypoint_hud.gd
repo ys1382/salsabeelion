@@ -96,9 +96,11 @@ func current_id() -> String:
 	# Taking the card early does not move the arrow. Day 8 is handled above.
 	if not elder_met():
 		return "elder"
-	if GameState.has_item("learning_card"):
-		return "dragons_brew"
-	return "card_basket"
+	if not GameState.has_item("learning_card"):
+		return "card_basket"
+	if GameState.berry_chore_open():
+		return "berry_patch"
+	return "dragons_brew"
 
 
 func marker_name(id: String) -> String:
@@ -115,6 +117,8 @@ func marker_name(id: String) -> String:
 			return "Fire"
 		"forest_clearing":
 			return "Woods"
+		"berry_patch":
+			return "Berries"
 		"dish_cart":
 			return "Dishes"
 		"mara":
@@ -151,6 +155,16 @@ func at_destination() -> bool:
 				return true
 			return false
 		return true
+	if id == "berry_patch":
+		if not Interiors.inside() or Interiors.current == null:
+			return false
+		if Interiors.current.building_id != "forest_clearing":
+			return false
+		var picker := _player() as Player
+		if picker != null and Interiors.current.has_method("berry_ready") \
+				and Interiors.current.berry_ready(picker.global_position, picker.facing):
+			return true
+		return false
 	if id == "dish_cart":
 		return _focus_id() == "dish_cart"
 	if id == "cafe_seat":
@@ -218,9 +232,10 @@ func _process(delta: float) -> void:
 	var point := Vector2.DOWN
 	var on_screen := false
 	if exit_door:
-		# The door is the bottom of the room. Aim down at it. Aiming from
-		# the player makes the arrow swing left and right as you walk across.
-		var world_delta := Vector2.DOWN
+		# House and café doors sit on the bottom, so the arrow stays down.
+		# The forest gap is on the village side, not the bottom of the woods.
+		# Aiming from the player makes that arrow swing as you walk.
+		var world_delta := _exit_aim(target)
 		var on_door := target.distance_to(player.global_position) < DOOR_DOCK
 		point = world_delta
 		_last_point = point
@@ -273,6 +288,21 @@ func _process(delta: float) -> void:
 	_set_wanted(true)
 
 
+## Stable direction toward this room's way out. Bottom doors stay down.
+## A gap on the side (the forest, toward the village) stays on that side.
+func _exit_aim(target: Vector2) -> Vector2:
+	var room := Interiors.current
+	if room == null:
+		return Vector2.DOWN
+	var mid := room.global_position + Vector2(room.pixel_size()) * 0.5
+	var from_mid := target - mid
+	if absf(from_mid.x) > absf(from_mid.y) + 8.0:
+		return Vector2.RIGHT if from_mid.x > 0.0 else Vector2.LEFT
+	if from_mid.y < -8.0:
+		return Vector2.UP
+	return Vector2.DOWN
+
+
 ## The next stop is not this room, so the arrow aims at the way out.
 func _pointing_outside() -> bool:
 	return (
@@ -296,6 +326,10 @@ func _stop_is_in_room(id: String) -> bool:
 			and Interiors.current.has_method("tree_standing") \
 			and Interiors.current.tree_standing():
 		return true
+	if id == "berry_patch" and here == "forest_clearing" \
+			and Interiors.current.has_method("nearest_ripe_bush"):
+		var who := _player()
+		return who != null and Interiors.current.nearest_ripe_bush(who.global_position) != null
 	if id == "dish_cart" and here == "dragons_brew":
 		return true
 	var node := _entity(id)
@@ -444,6 +478,13 @@ func _target_pos(id: String) -> Vector2:
 			var tree := Interiors.current.get_node_or_null("Objects/dead_tree") as Node2D
 			if tree != null:
 				return tree.global_position
+		if id == "berry_patch" and Interiors.current.building_id == "forest_clearing" \
+				and Interiors.current.has_method("nearest_ripe_bush"):
+			var who := _player()
+			var bush: Node2D = Interiors.current.nearest_ripe_bush(
+				who.global_position if who != null else Vector2.ZERO)
+			if bush != null:
+				return bush.global_position
 		if id == "dish_cart" and Interiors.current.building_id == "dragons_brew":
 			var cart := Interiors.current.get_node_or_null("Objects/dish_cart") as Node2D
 			if cart != null:
@@ -459,7 +500,7 @@ func _target_pos(id: String) -> Vector2:
 		if door != null:
 			return door.global_position
 		return Vector2.ZERO
-	if id == "forest_clearing":
+	if id == "forest_clearing" or id == "berry_patch":
 		return Interiors.forest_mouth_position()
 	var root := WorldManager.world_root
 	if root == null:

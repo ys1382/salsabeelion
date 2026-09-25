@@ -649,6 +649,24 @@
           "y": 12
         },
         {
+          "id": "berry_bush_0",
+          "asset": "tree.bush_emerald_1",
+          "x": 33,
+          "y": 14
+        },
+        {
+          "id": "berry_bush_1",
+          "asset": "tree.bush_emerald_3",
+          "x": 22,
+          "y": 9
+        },
+        {
+          "id": "berry_bush_2",
+          "asset": "tree.bush_emerald_1",
+          "x": 29,
+          "y": 9
+        },
+        {
           "id": "clearing_tree_n0",
           "asset": "tree.tree_emerald_1",
           "x": 1,
