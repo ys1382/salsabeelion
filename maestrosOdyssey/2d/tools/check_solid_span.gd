@@ -54,6 +54,21 @@ func _initialize() -> void:
 			return
 		print(id, " solids ", solids, " top ", top, " picture ", picture_top)
 		node.queue_free()
+	var cafe: StaticBody2D = load(Catalog.object("prop.sign_1")["scene"]).instantiate()
+	root.add_child(cafe)
+	FeetBox.apply(cafe, "prop.sign_1")
+	var painted = preload("res://world/street_sign.gd").new()
+	cafe.add_child(painted)
+	painted.setup("Dragon's Brew", false)
+	if _hits(cafe, Vector2(0, 0)) or _hits(cafe, Vector2(0, -8)):
+		push_error("cafe sign still has a street post")
+		quit(1)
+		return
+	if cafe.collision_layer != 0:
+		push_error("cafe sign still blocks the street")
+		quit(1)
+		return
+	print("cafe hanging sign: ok")
 	print("solid span: ok")
 	quit()
 
