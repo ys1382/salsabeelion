@@ -8,9 +8,10 @@ extends Node
 # Night falls while you are inside Dragon's Brew, so the street is night when
 # you step out. Morning (night pass at home) fades the street back to day.
 #
-# Crickets are the only ambience. They start when you step out into that
-# night, stay on for the walk home and the campfire, and ease off indoors
-# or when morning returns. The café stay itself stays quiet.
+# Two loops, same kind of player. A light café track plays only inside
+# Dragon's Brew. Crickets start when you step out into that night, stay on
+# for the walk home and the campfire, and ease off indoors or when morning
+# returns. They stay off while you are ordering.
 
 ## 0 = full day, 1 = full night.
 var amount := 0.0
@@ -30,6 +31,14 @@ const CRICKET_SILENT_DB := -80.0
 ## Quieter while Mara is speaking, so the line stays clear. Not silence.
 const CRICKET_DUCK_DB := -2.0
 const CRICKETS := preload("res://audio/crickets_night.mp3")
+## Light background under the room. The file is already a normal music
+## level, so this stays under Mara instead of boosting it.
+const CAFE_DB := -14.0
+const CAFE_SILENT_DB := -80.0
+## Eased down while she is speaking, so the line stays clear. Not silence.
+const CAFE_DUCK_DB := -28.0
+const CAFE_FADE_S := 1.6
+const CAFE_MUSIC := preload("res://audio/little_cafe.mp3")
 
 ## Dark window rectangles in texture pixels (top-left of the house PNG).
 const WINDOWS := {
@@ -53,6 +62,8 @@ const DOORS := {
 var _tween: Tween
 var _cricket_tween: Tween
 var _crickets: AudioStreamPlayer
+var _cafe_tween: Tween
+var _cafe: AudioStreamPlayer
 ## True only while a Mara clip is playing. Never starts the night loop by itself.
 var _voice_duck := false
 var _fx: Node2D
@@ -68,6 +79,7 @@ func _ready() -> void:
 	Interiors.entered.connect(_on_entered)
 	Interiors.left.connect(_on_left)
 	_ensure_crickets()
+	_ensure_cafe()
 
 
 ## Call after every WorldBuilder.build() so FX and layer refs stay live.
@@ -118,6 +130,7 @@ func _on_entered(building_id: String) -> void:
 		begin_night()
 	else:
 		_sync_crickets()
+	_sync_cafe()
 
 
 func _on_left() -> void:
@@ -126,6 +139,7 @@ func _on_left() -> void:
 		ensure_night()
 	else:
 		_sync_crickets()
+	_sync_cafe()
 
 
 func _tween_to(target: float, duration: float) -> void:
@@ -188,19 +202,24 @@ func _ensure_crickets() -> void:
 	add_child(_crickets)
 
 
-## Ease the night loop down for a spoken line, then bring it back.
-## Daytime and the café stay quiet — this does not start crickets.
+## Ease the night loop, or the café track, down for a spoken line, then
+## bring it back. This does not start crickets in the daytime or the café.
 func duck_for_voice(on: bool) -> void:
 	if _voice_duck == on:
 		return
 	_voice_duck = on
-	if not _outdoor_night():
-		return
-	_ensure_crickets()
-	if on:
-		_fade_crickets(CRICKET_DUCK_DB, true, 0.35)
-	else:
-		_fade_crickets(CRICKET_DB, true, 0.7)
+	if _outdoor_night():
+		_ensure_crickets()
+		if on:
+			_fade_crickets(CRICKET_DUCK_DB, true, 0.35)
+		else:
+			_fade_crickets(CRICKET_DB, true, 0.7)
+	if _in_cafe():
+		_ensure_cafe()
+		if on:
+			_fade_cafe(CAFE_DUCK_DB, true, 0.35)
+		else:
+			_fade_cafe(CAFE_DB, true, 0.7)
 
 
 func _sync_crickets() -> void:
@@ -240,6 +259,80 @@ func _stop_crickets() -> void:
 		_crickets.stop()
 	if _crickets != null:
 		_crickets.volume_db = CRICKET_SILENT_DB
+
+
+func cafe_playing() -> bool:
+	return _cafe != null and _cafe.playing
+
+
+func cafe_looping() -> bool:
+	var stream := _cafe.stream if _cafe != null else null
+	return stream is AudioStreamMP3 and (stream as AudioStreamMP3).loop
+
+
+func cafe_db() -> float:
+	if _cafe == null:
+		return CAFE_SILENT_DB
+	return _cafe.volume_db
+
+
+func _in_cafe() -> bool:
+	if not Interiors.inside():
+		return false
+	var room := Interiors.current
+	return room != null and room.building_id == "dragons_brew"
+
+
+func _ensure_cafe() -> void:
+	if _cafe != null:
+		return
+	var stream := CAFE_MUSIC.duplicate() as AudioStreamMP3
+	stream.loop = true
+	_cafe = AudioStreamPlayer.new()
+	_cafe.name = "CafeMusic"
+	_cafe.process_mode = Node.PROCESS_MODE_ALWAYS
+	_cafe.stream = stream
+	_cafe.volume_db = CAFE_SILENT_DB
+	add_child(_cafe)
+
+
+func _sync_cafe() -> void:
+	_ensure_cafe()
+	if _in_cafe():
+		var db := CAFE_DUCK_DB if _voice_duck else CAFE_DB
+		var dur := 0.35 if _voice_duck else CAFE_FADE_S
+		_fade_cafe(db, true, dur)
+	else:
+		_fade_cafe(CAFE_SILENT_DB, false, CAFE_FADE_S)
+
+
+func _fade_cafe(target_db: float, keep: bool, duration: float = -1.0) -> void:
+	if duration < 0.0:
+		duration = CAFE_FADE_S
+	if keep:
+		if _cafe.playing and absf(_cafe.volume_db - target_db) < 0.4:
+			return
+		if not _cafe.playing:
+			_cafe.volume_db = CAFE_SILENT_DB
+			_cafe.play()
+	elif not _cafe.playing:
+		return
+	if _cafe_tween != null:
+		_cafe_tween.kill()
+		_cafe_tween = null
+	_cafe_tween = create_tween()
+	_cafe_tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+	_cafe_tween.tween_property(_cafe, "volume_db", target_db, duration) \
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	if not keep:
+		_cafe_tween.tween_callback(_stop_cafe)
+
+
+func _stop_cafe() -> void:
+	if _cafe != null and _cafe.playing:
+		_cafe.stop()
+	if _cafe != null:
+		_cafe.volume_db = CAFE_SILENT_DB
 
 
 func _apply(v: float) -> void:

@@ -35,6 +35,9 @@ def main() -> int:
     assert "CRICKET_DB" in dn
     assert "forest_clearing" in dn
     assert (ROOT / "audio" / "crickets_night.mp3").is_file()
+    assert "little_cafe.mp3" in dn
+    assert "CAFE_DB" in dn
+    assert (ROOT / "audio" / "little_cafe.mp3").is_file()
     # Richer glass (sun / moon / stars) stays post-upgrade — not drawn here.
     assert "make_star" not in dn and "draw_moon" not in dn
     print("day/night outdoor look: ok")
