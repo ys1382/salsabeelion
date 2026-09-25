@@ -54,6 +54,9 @@ const CALLOUT_SEC := 3.0
 var carrying_dishes := false
 ## Dish cart used; waiting on the Spanish goodbye typed back.
 var awaiting_bye := false
+## Monday only: the blueberry visit, then the goodbye you already had.
+var visit_hint := false
+var visit_hint_said := false
 var goodbye_done := false
 
 const NIGHT_PASS_LINE := "Night passes. It's morning."
@@ -89,6 +92,7 @@ func reset_session() -> void:
 	_practice_earned = 0
 	_practice_earned_day = 0
 	intro_done = false
+	visit_hint_said = false
 	meal_done = false
 	GameState.cafe_meal_done = false
 	clear_table_rounds()
@@ -121,6 +125,7 @@ func _clear_order() -> void:
 	muffin_left = 0
 	carrying_dishes = false
 	awaiting_bye = false
+	visit_hint = false
 	goodbye_done = false
 	awaiting_serve = false
 	called_out = false
@@ -136,7 +141,7 @@ func _clear_order() -> void:
 ## The café door stays where it is. After a paid order it also waits until
 ## the food is in your hands. Then it waits on the dish cart and the goodbye.
 func may_leave() -> bool:
-	return not awaiting_serve and not carrying_dishes and not awaiting_bye
+	return not awaiting_serve and not carrying_dishes and not awaiting_bye and not visit_hint
 
 
 func leave_blocked_line() -> String:
@@ -352,12 +357,36 @@ func use_dish_cart() -> String:
 			return "Mara glances over. \"Finish first — then the cup and plate go in the cart.\""
 		return "An empty dish cart. Staff take what's left here back to wash."
 	carrying_dishes = false
+	if GameState.day_index == 1 and not visit_hint_said:
+		visit_hint = true
+		visit_hint_said = true
+		open_box_on_close = false
+		if is_inside_tree() and has_node("/root/Journal"):
+			Journal.show_note("Optional. Blueberries for the elder, if you want to visit.")
+		return (
+			"You set the cup and plate in the dish cart.\n\n"
+			+ "Mara looks over. \"If you like, pick some blueberries and bring them to the elder. She gets a little lonely.\""
+		)
 	awaiting_bye = true
 	open_box_on_close = true
+	return cart_goodbye_line()
+
+
+func cart_goodbye_line() -> String:
 	return (
 		"You set the cup and plate in the dish cart.\n\n"
 		+ "Mara looks over. \"%s.\" That means goodbye, and good night. Say it back."
 	) % _goodbye_spoken()
+
+
+## The hint box just closed. The goodbye you already had comes next.
+func take_visit_hint() -> bool:
+	if not visit_hint:
+		return false
+	visit_hint = false
+	awaiting_bye = true
+	open_box_on_close = true
+	return true
 
 
 ## Shown in the type box so a missed line can still be typed. Not spoken again.

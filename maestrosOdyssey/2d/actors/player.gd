@@ -58,6 +58,8 @@ var seated := false
 var _stand_pos := Vector2.ZERO
 var _walk_mask := 1
 var _held: Sprite2D
+var _bag: Sprite2D
+var _bag_tex: Texture2D
 var _seat: Node2D = null
 var _seat_z := 0
 var _push_dir := Vector2.ZERO
@@ -90,9 +92,16 @@ func _ready() -> void:
 	_held.z_index = 2
 	_held.hide()
 	add_child(_held)
+	_bag = Sprite2D.new()
+	_bag.name = "Satchel"
+	_bag.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_bag.z_index = 1
+	_bag.hide()
+	add_child(_bag)
+	_bag_tex = _draw_satchel()
 	CafeOrder.order_ready.connect(_on_order_ready)
 	CafeOrder.order_cleared.connect(_refresh_held)
-	GameState.carry_changed.connect(_refresh_held)
+	GameState.carry_changed.connect(_refresh_worn)
 	Interiors.entered.connect(func(_id): _refresh_held())
 	Interiors.left.connect(_refresh_held)
 	_play("idle")
@@ -348,6 +357,11 @@ func _update_focus() -> void:
 		var look_id := str(it.data.get("id", ""))
 		if look_id == "home_crate_look" or look_id == "home_barrel_look":
 			DialogueUI.show_prompt(Hud.crate_prompt())
+		elif it.enters == "elder_house":
+			if GameState.can_knock_elder():
+				DialogueUI.show_prompt("K — Knock")
+			else:
+				DialogueUI.hide_prompt()
 		else:
 			DialogueUI.show_prompt("%s — %s" % [_prompt_key(it), it.prompt()])
 	elif focus is Npc:
@@ -397,13 +411,14 @@ func _unhandled_input(event: InputEvent) -> void:
 			_end_talk_face()
 			get_viewport().set_input_as_handled()
 		return
-	if _key_down(event, KEY_1):
-		GameState.select_slot(0)
-		get_viewport().set_input_as_handled()
-		return
-	if _key_down(event, KEY_2):
-		GameState.select_slot(1)
-		get_viewport().set_input_as_handled()
+	for slot_i in 5:
+		if _key_down(event, KEY_1 + slot_i):
+			GameState.select_slot(slot_i)
+			get_viewport().set_input_as_handled()
+			return
+	if _key_down(event, KEY_K):
+		if _knock_elder():
+			get_viewport().set_input_as_handled()
 		return
 	if _key_down(event, KEY_P):
 		if try_pick():
@@ -478,6 +493,27 @@ func _unhandled_input(event: InputEvent) -> void:
 		swing()
 
 
+## K is only this knock. In the type box it stays a letter.
+func _knock_elder() -> bool:
+	if DialogueUI.is_open() or seated:
+		return false
+	if not GameState.can_knock_elder():
+		return false
+	if not focus is Interactable:
+		return false
+	var it := focus as Interactable
+	if it.enters != "elder_house":
+		return false
+	GameState.elder_visit_pending = true
+	Interiors.enter("elder_house", "")
+	DialogueUI.show_line("Elder",
+		"She opens the door, surprised, and glad.\n\n"
+		+ "\"Mara's been worried. I can tell. Thank you for deciding to come — that kindness is yours.\"\n\n"
+		+ "She gives you a satchel. The blueberries leave your pockets.")
+	DialogueUI.set_close_key("E")
+	return true
+
+
 func _key_down(event: InputEvent, key: Key) -> bool:
 	return event is InputEventKey and event.pressed and not event.echo \
 		and (event.keycode == key or event.physical_keycode == key)
@@ -515,6 +551,12 @@ func _try_close(key: String) -> bool:
 func _after_panel_close() -> void:
 	_mark_elder_morning()
 	_clear_pages()
+	if CafeOrder.take_visit_hint():
+		DialogueUI.show_line("Mara", CafeOrder.cart_goodbye_line())
+		return
+	if GameState.elder_visit_pending:
+		GameState.grant_satchel()
+		_refresh_worn()
 	CafeOrder.on_speech_closed()
 	if CafeOrder.open_box_on_close:
 		CafeOrder.open_box_on_close = false
@@ -881,6 +923,7 @@ func _mark_elder_morning() -> void:
 	if DialogueUI.body() != str(lines[lines.size() - 1]):
 		return
 	_talk_with.morning_done = true
+	GameState.elder_morning_done = true
 
 
 func _end_talk_face() -> void:
@@ -1011,6 +1054,47 @@ func _axe_texture() -> Texture2D:
 	return ImageTexture.create_from_image(img)
 
 
+func _refresh_worn() -> void:
+	_refresh_held()
+	_place_bag()
+
+
+func _draw_satchel() -> Texture2D:
+	# Tall enough to reach the shoulder. Bag at the hip, strap from the other shoulder.
+	var img := Image.create(16, 28, false, Image.FORMAT_RGBA8)
+	img.fill(Color(0, 0, 0, 0))
+	var cloth := Color(0.46, 0.32, 0.18)
+	var flap := Color(0.36, 0.24, 0.14)
+	var strap := Color(0.40, 0.27, 0.16)
+	for i in 20:
+		var x := 1 + int(i * 8 / 19)
+		var y := i
+		img.set_pixel(x, y, strap)
+		if x + 1 < 16:
+			img.set_pixel(x + 1, y, strap)
+	for y in range(20, 28):
+		for x in range(7, 16):
+			img.set_pixel(x, y, cloth)
+	for x in range(7, 16):
+		img.set_pixel(x, 19, flap)
+		img.set_pixel(x, 20, flap)
+	return ImageTexture.create_from_image(img)
+
+
+func _place_bag() -> void:
+	if _bag == null:
+		return
+	if not GameState.has_satchel:
+		_bag.hide()
+		return
+	_bag.texture = _bag_tex
+	_bag.show()
+	_bag.flip_h = facing.x < -0.3
+	# Centered on the body: strap top at the shoulder, box down at the hip.
+	_bag.position = Vector2(0, -16)
+	_bag.z_index = 1
+
+
 func _hide_held() -> void:
 	if _held != null:
 		_held.hide()
@@ -1044,3 +1128,4 @@ func _play(state: String) -> void:
 	if _sprite.animation != anim or not _sprite.is_playing():
 		_sprite.play(anim)
 	_place_held()
+	_place_bag()

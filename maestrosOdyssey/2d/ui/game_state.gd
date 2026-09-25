@@ -66,11 +66,18 @@ var logs: int = 0
 ## its own stacks for the whole play. Storing wood does not touch the fire.
 var crate: Dictionary = {}
 var barrel: Dictionary = {}
-## What is sitting in slot 1 and slot 2. Empty string means that box is free.
+## What is sitting in each pocket. Empty string means that box is free.
 ## The learning card uses one of these when it is on you.
+## Two pockets until the elder's satchel. Then five. Empty ones stay.
 var carry_slot: Array[String] = ["", ""]
-## 0 is slot 1. 1 is slot 2.
+## 0 is slot 1.
 var held_slot: int = 0
+## The messenger bag from the elder. First storage upgrade.
+var has_satchel: bool = false
+## Monday morning talk finished. Stays when she is indoors on Tuesday.
+var elder_morning_done: bool = false
+## Knocked with berries. The gift lands when her line closes.
+var elder_visit_pending: bool = false
 ## True after the basket hands over the card. Storing it does not clear this.
 var card_picked_up: bool = false
 const STACK_IDS: Array[String] = ["blueberries", "logs"]
@@ -124,6 +131,9 @@ func set_world(w: Dictionary) -> void:
 	barrel.clear()
 	carry_slot = ["", ""]
 	held_slot = 0
+	has_satchel = false
+	elder_morning_done = false
+	elder_visit_pending = false
 	card_picked_up = false
 	berry_picked.clear()
 	_sync_clock()
@@ -249,6 +259,9 @@ func advance_day() -> void:
 	# Outdoor street returns to morning while you are still inside the house.
 	if has_node("/root/DayNight"):
 		DayNight.begin_day()
+	var root := WorldManager.world_root
+	if root != null and root.has_method("settle_elder_day"):
+		root.settle_elder_day()
 	carry_changed.emit()
 
 
@@ -366,6 +379,27 @@ func _stow_wood() -> void:
 	inventory.erase("logs")
 	_clear_slot("logs")
 	campfire_changed.emit()
+	carry_changed.emit()
+
+
+func pocket_count() -> int:
+	return 5 if has_satchel else 2
+
+
+## Berries in a pocket, and she has not already given the bag.
+func can_knock_elder() -> bool:
+	return blueberries > 0 and not has_satchel
+
+
+func grant_satchel() -> void:
+	if has_satchel:
+		return
+	has_satchel = true
+	elder_visit_pending = false
+	blueberries = 0
+	_clear_slot("blueberries")
+	while carry_slot.size() < 5:
+		carry_slot.append("")
 	carry_changed.emit()
 
 

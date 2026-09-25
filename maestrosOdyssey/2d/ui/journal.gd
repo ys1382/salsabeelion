@@ -117,6 +117,10 @@ func _set_paused(on: bool) -> void:
 
 ## After a finished café meal, stepping into your house. Same card shape as
 ## the opener so the E that opened the door cannot eat the beat.
+func show_note(text: String) -> void:
+	_show_toast(text)
+
+
 func show_night_pass() -> void:
 	_card_title.text = "Morning"
 	_card_body.text = CafeOrder.NIGHT_PASS_LINE

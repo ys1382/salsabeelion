@@ -91,6 +91,8 @@ func _ready() -> void:
 		call_deferred("_run_learning_card_check")
 	elif _has_flag("--check-slots"):
 		call_deferred("_run_slots_check")
+	elif _has_flag("--check-elder-visit"):
+		call_deferred("_run_elder_visit_check")
 	elif not _has_flag("--agent-bridge"):
 		Journal.show_opening()
 
@@ -401,4 +403,9 @@ func _run_learning_card_check() -> void:
 
 func _run_slots_check() -> void:
 	var check: Script = load("res://tools/check_slots.gd")
+	check.run(self)
+
+
+func _run_elder_visit_check() -> void:
+	var check: Script = load("res://tools/check_elder_visit.gd")
 	check.run(self)

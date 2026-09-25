@@ -14,14 +14,14 @@ const FILL := Color(0.14, 0.10, 0.07, 0.92)
 const GOLD := Color(0.55, 0.42, 0.26)
 const GOLD_BRIGHT := Color(0.95, 0.78, 0.38)
 const SLOT := 22
-## Two numbered pockets. The learning card uses one of them when it is on you.
-const POCKETS := 2
+## Two pockets until the satchel, then five. Empty ones stay.
 const CRATE_SLOTS := 8
 const GAP := 2
 
 var _day: Label
 var _week: Label
 var _pesos: Label
+var _bar_host: CenterContainer
 var _bar: HBoxContainer
 var _crate_panel: PanelContainer
 var _crate_row: HBoxContainer
@@ -66,23 +66,32 @@ func _make_line(y: float) -> Label:
 
 
 func _build_bar() -> void:
-	var width := float(POCKETS * SLOT + (POCKETS - 1) * GAP)
-	var host := CenterContainer.new()
-	_pin_bottom(host, width, -34, -6)
-	host.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(host)
+	_bar_host = CenterContainer.new()
+	_bar_host.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_bar_host)
 	_bar = HBoxContainer.new()
 	_bar.add_theme_constant_override("separation", GAP)
 	_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	host.add_child(_bar)
-	for i in POCKETS:
+	_bar_host.add_child(_bar)
+	_fill_pockets(2)
+	_bar.hide()
+
+
+func _fill_pockets(n: int) -> void:
+	for child in _bar.get_children():
+		child.queue_free()
+	_carry_buttons.clear()
+	var width := float(n * SLOT + (n - 1) * GAP)
+	_pin_bottom(_bar_host, width, -34, -6)
+	for i in n:
 		var btn := _make_slot(false, i)
 		_bar.add_child(btn)
 		_carry_buttons.append(btn)
 		_add_mark(btn, str(i + 1))
+	if _carry_buttons.is_empty():
+		return
 	_card_button = _carry_buttons[0]
 	berry_count = _count_label(_carry_buttons[0])
-	_bar.hide()
 
 
 func _build_crate() -> void:
@@ -197,6 +206,8 @@ func _process(_delta: float) -> void:
 		_week.hide()
 		_pesos.hide()
 	_bar.show()
+	if _carry_buttons.size() != GameState.pocket_count():
+		_fill_pockets(GameState.pocket_count())
 	if (crate_open or barrel_open) and not _at_home():
 		_close_crate()
 	GameState.settle_slots()
@@ -259,7 +270,7 @@ func crate_prompt() -> String:
 
 func _on_carry_slot(index: int) -> void:
 	# The learning card is not slot 1 or slot 2.
-	if index < 0 or index >= POCKETS:
+	if index < 0 or index >= GameState.pocket_count():
 		return
 	GameState.select_slot(index)
 	crate_choice = ""

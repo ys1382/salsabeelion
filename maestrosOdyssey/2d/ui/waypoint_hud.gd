@@ -89,6 +89,9 @@ func current_id() -> String:
 		return "player_house"
 	if GameState.wood_chore_open():
 		return "forest_clearing"
+	# Tuesday berries come before anyone on the street. She is indoors.
+	if GameState.berry_chore_open():
+		return "berry_patch"
 	# The morning talk, then the card. A café stop does not jump ahead.
 	# Taking the card early does not move the arrow off the elder.
 	if not elder_met():
@@ -98,8 +101,6 @@ func current_id() -> String:
 	var table := CafeOrder.nav_target()
 	if table != "":
 		return table
-	if GameState.berry_chore_open():
-		return "berry_patch"
 	return "dragons_brew"
 
 
@@ -437,6 +438,8 @@ func _camera() -> Camera2D:
 
 
 func _elder_met() -> bool:
+	if GameState.elder_morning_done:
+		return true
 	var root := WorldManager.world_root
 	if root == null:
 		return false

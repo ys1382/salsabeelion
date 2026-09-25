@@ -172,6 +172,7 @@ func enter(building_id: String, flavour: String = "") -> void:
 	current.exit_requested.connect(leave)
 	_spawn_tuesday_table(building_id, current)
 	_spawn_inside_npcs(building_id, current)
+	_spawn_tuesday_elder(building_id, current)
 
 	root.visible = false
 	root.process_mode = Node.PROCESS_MODE_DISABLED
@@ -240,6 +241,8 @@ func leave() -> void:
 			for n in root.world.get("npcs", []):
 				if str(n.get("inside", "")) == current.building_id:
 					root.entities.erase(n["id"])
+			if current.building_id == "elder_house" and root.has_method("restore_street_elder"):
+				root.restore_street_elder()
 
 	current.queue_free()
 	current = null
@@ -259,6 +262,30 @@ func _spawn_tuesday_table(building_id: String, interior: Interior) -> void:
 		"x": 2,
 		"y": 7,
 	})
+
+
+func _spawn_tuesday_elder(building_id: String, interior: Interior) -> void:
+	if building_id != "elder_house" or not GameState.berry_morning():
+		return
+	var objects := interior.get_node_or_null("Objects") as Node2D
+	var root := WorldManager.world_root
+	if objects == null or root == null:
+		return
+	var data := {}
+	for n in root.world.get("npcs", []):
+		if str(n.get("id", "")) == "elder":
+			data = n
+			break
+	if data.is_empty():
+		return
+	var npc: Npc = preload("res://actors/npc.tscn").instantiate()
+	npc.setup(data)
+	npc.name = "elder"
+	npc.morning_done = true
+	npc.position = Catalog.cell_to_anchor(Vector2i(interior.room.x / 2, 3))
+	npc.y_sort_enabled = false
+	objects.add_child(npc)
+	root.entities["elder"] = npc
 
 
 func _spawn_inside_npcs(building_id: String, interior: Interior) -> void:

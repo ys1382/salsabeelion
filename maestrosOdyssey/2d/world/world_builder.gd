@@ -33,6 +33,8 @@ var _objects: Node2D
 
 ## id -> node, for the repair pass and for story bindings.
 var entities: Dictionary = {}
+var _street_elder: Npc
+var _elder_layer := 0
 
 ## Counts up as spawn_minions() adds enemies at runtime, so their ids never
 ## collide with each other or with anything the generator placed.
@@ -385,6 +387,8 @@ func _spawn_cast() -> void:
 		npc.position = Catalog.cell_to_anchor(Vector2i(n["x"], n["y"]))
 		_objects.add_child(npc)
 		entities[n["id"]] = npc
+		if str(n["id"]) == "elder":
+			_street_elder = npc
 
 	for e: Dictionary in world["enemies"]:
 		var slime: Slime = preload("res://actors/slime.tscn").instantiate()
@@ -392,6 +396,29 @@ func _spawn_cast() -> void:
 		slime.position = Catalog.cell_to_anchor(Vector2i(e["x"], e["y"]))
 		_objects.add_child(slime)
 		entities[e["id"]] = slime
+
+
+## Tuesday morning she is indoors. Monday's street spot stays in the world data.
+func settle_elder_day() -> void:
+	if _street_elder == null or not is_instance_valid(_street_elder):
+		return
+	if _elder_layer == 0:
+		_elder_layer = _street_elder.collision_layer
+	var indoors := GameState.berry_morning() and not GameState.cafe_meal_done
+	_street_elder.visible = not indoors
+	_street_elder.collision_layer = 0 if indoors else _elder_layer
+	_street_elder.process_mode = Node.PROCESS_MODE_DISABLED if indoors else Node.PROCESS_MODE_INHERIT
+	if indoors:
+		_street_elder.position = Vector2(-400, -400)
+	else:
+		var data := _street_elder.data
+		_street_elder.position = Catalog.cell_to_anchor(Vector2i(int(data["x"]), int(data["y"])))
+		entities["elder"] = _street_elder
+
+
+func restore_street_elder() -> void:
+	if _street_elder != null and is_instance_valid(_street_elder):
+		entities["elder"] = _street_elder
 
 
 # --- rival escalation: runtime spawns ----------------------------------------

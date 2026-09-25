@@ -96,6 +96,8 @@ func prompt() -> String:
 		return "Look"
 	if locked():
 		return "Try"
+	if enters == "elder_house":
+		return "Knock" if GameState.can_knock_elder() else "Shut"
 	if enters != "":
 		return PROMPTS["enter"]
 	if gives != "" and not GameState.has_item(gives):
@@ -132,6 +134,9 @@ func use() -> String:
 	# Going inside is the whole response — the flavour text, if any, is shown
 	# once the player is standing in the room rather than over the doorstep.
 	if enters != "":
+		# The elder's door opens with K, and only when you brought berries.
+		if enters == "elder_house":
+			return ""
 		if beat != "":
 			GameState.reveal(beat)
 		used.emit(self)
