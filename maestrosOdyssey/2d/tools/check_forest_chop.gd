@@ -159,7 +159,8 @@ static func _check_boxes(host: Node, player: Player, interiors: Node, hud: Node,
 	for btn in hud._carry_buttons:
 		if str((btn.get_node("Count") as Label).text) == "":
 			empty += 1
-	assert(empty == 7)
+	assert(hud._carry_buttons.size() == 2)
+	assert(empty == 1)
 	interiors.enter("dragons_brew", "")
 	assert(gs.blueberries == 12)
 	assert(gs.logs == 0)

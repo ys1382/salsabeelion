@@ -13,7 +13,9 @@ const FILL := Color(0.14, 0.10, 0.07, 0.92)
 const GOLD := Color(0.55, 0.42, 0.26)
 const GOLD_BRIGHT := Color(0.95, 0.78, 0.38)
 const SLOT := 22
-const SLOTS := 8
+## Two pockets at the start. The crate is storage, not a third pocket.
+const POCKETS := 2
+const CRATE_SLOTS := 8
 const GAP := 2
 
 var _day: Label
@@ -60,14 +62,14 @@ func _make_line(y: float) -> Label:
 
 func _build_bar() -> void:
 	var host := CenterContainer.new()
-	_pin_bottom(host, 190, -34, -6)
+	_pin_bottom(host, 46, -34, -6)
 	host.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(host)
 	_bar = HBoxContainer.new()
 	_bar.add_theme_constant_override("separation", GAP)
 	_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	host.add_child(_bar)
-	for i in SLOTS:
+	for i in POCKETS:
 		var btn := _make_slot(false, i)
 		_bar.add_child(btn)
 		_carry_buttons.append(btn)
@@ -88,7 +90,7 @@ func _build_crate() -> void:
 	_crate_row = HBoxContainer.new()
 	_crate_row.add_theme_constant_override("separation", GAP)
 	center.add_child(_crate_row)
-	for i in SLOTS:
+	for i in CRATE_SLOTS:
 		var btn := _make_slot(true, i)
 		_crate_row.add_child(btn)
 		_crate_buttons.append(btn)
