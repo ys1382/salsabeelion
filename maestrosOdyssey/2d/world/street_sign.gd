@@ -14,7 +14,6 @@ const PLANK_A := Color(0.62, 0.40, 0.20)
 const PLANK_B := Color(0.52, 0.32, 0.16)
 const PLANK_C := Color(0.44, 0.26, 0.12)
 const WOOD_DARK := Color(0.26, 0.14, 0.07)
-const FONT_SIZE := 3
 
 var caption := ""
 var _lines: PackedStringArray = PackedStringArray()
@@ -84,25 +83,24 @@ class HangingBoard extends Node2D:
 		var lines: PackedStringArray = sign._lines
 		if lines.is_empty():
 			return
-		var font := _pixel_font()
-		var widest := 0.0
+		var widest := 0
 		for line in lines:
-			widest = maxf(widest, font.get_string_size(line, HORIZONTAL_ALIGNMENT_LEFT, -1, sign.FONT_SIZE).x)
-		var line_h := font.get_height(sign.FONT_SIZE)
-		var board_w: float = ceil((widest + 4.0) / 2.0) * 2.0
-		var board := Vector2(maxf(board_w, 16.0), 12.0)
+			widest = maxi(widest, _line_width(line))
+		var board_w := float(maxi(widest + 4, 16))
+		if int(board_w) % 2 == 1:
+			board_w += 1.0
+		var board := Vector2(board_w, 12.0)
 		var top := Vector2(-board.x * 0.5, -board.y)
 		draw_rect(Rect2(top, board), sign.WOOD_DARK)
 		var plank_h := board.y / 3.0
 		var tones: Array[Color] = [sign.PLANK_A, sign.PLANK_B, sign.PLANK_C]
 		for i in 3:
 			draw_rect(Rect2(top + Vector2(1, plank_h * i), Vector2(board.x - 2, plank_h)), tones[i])
-		var y := top.y + 1.0 + font.get_ascent(sign.FONT_SIZE)
+		var y := int(top.y) + 1
 		for line in lines:
-			var w := font.get_string_size(line, HORIZONTAL_ALIGNMENT_LEFT, -1, sign.FONT_SIZE).x
-			var x := top.x + (board.x - w) * 0.5
-			draw_string(font, Vector2(round(x), round(y)), line, HORIZONTAL_ALIGNMENT_LEFT, -1, sign.FONT_SIZE, sign.INK)
-			y += line_h
+			var x := int(round(top.x + (board.x - _line_width(line)) * 0.5))
+			_draw_line(x, y, line, sign.INK)
+			y += 6
 
 
 	func _sign() -> Node:
@@ -118,12 +116,45 @@ class HangingBoard extends Node2D:
 		return street.get_node_or_null("StreetSign")
 
 
-	func _pixel_font() -> Font:
-		var src := ThemeDB.fallback_font
-		if not (src is FontFile):
-			return src
-		var copy := (src as FontFile).duplicate() as FontFile
-		copy.antialiasing = TextServer.FONT_ANTIALIASING_NONE
-		copy.hinting = TextServer.HINTING_NONE
-		copy.subpixel_positioning = TextServer.SUBPIXEL_POSITIONING_DISABLED
-		return copy
+	## Five-pixel letters. The system font at this size either smears or fills in.
+	const _GLYPHS := {
+		"D": ["1110", "1001", "1001", "1001", "1110"],
+		"r": ["110", "101", "100", "100", "100"],
+		"a": ["011", "001", "111", "101", "111"],
+		"g": ["011", "101", "011", "001", "110"],
+		"o": ["010", "101", "101", "101", "010"],
+		"n": ["110", "101", "101", "101", "101"],
+		"'": ["1", "1", "0", "0", "0"],
+		"s": ["011", "100", "010", "001", "110"],
+		"B": ["110", "101", "110", "101", "110"],
+		"e": ["111", "100", "110", "100", "111"],
+		"w": ["10101", "10101", "10101", "10101", "01110"],
+	}
+
+
+	func _line_width(line: String) -> int:
+		var width := 0
+		for i in line.length():
+			var rows: PackedStringArray = _GLYPHS.get(line[i], PackedStringArray())
+			if rows.is_empty():
+				continue
+			if width > 0:
+				width += 1
+			width += rows[0].length()
+		return width
+
+
+	func _draw_line(x: int, y: int, line: String, ink: Color) -> void:
+		var cursor := x
+		for i in line.length():
+			var rows: PackedStringArray = _GLYPHS.get(line[i], PackedStringArray())
+			if rows.is_empty():
+				continue
+			if cursor != x:
+				cursor += 1
+			for row in rows.size():
+				var bits: String = rows[row]
+				for col in bits.length():
+					if bits[col] == "1":
+						draw_rect(Rect2(cursor + col, y + row, 1, 1), ink)
+			cursor += rows[0].length()
