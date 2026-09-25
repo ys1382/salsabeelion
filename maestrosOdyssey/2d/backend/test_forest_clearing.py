@@ -189,7 +189,8 @@ def main() -> int:
     player = (ROOT / "actors" / "player.gd").read_text(encoding="utf-8")
     assert "try_chop" in player
     assert "_axe_texture" in player
-    assert "Sack_3.png" in player
+    assert "Sack_3.png" not in player
+    assert "Hud.icon_for" in player
     assert "_logs_texture" not in player
     state = (ROOT / "ui" / "game_state.gd").read_text(encoding="utf-8")
     assert "func forest_morning" in state

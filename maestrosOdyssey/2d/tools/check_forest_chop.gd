@@ -76,13 +76,16 @@ static func run(host: Node) -> void:
 	assert(not gs.bush_has_berries("berry_bush_0"))
 	assert(_blue_dots(bush) == 0)
 	var hud: Node = host.get_node("/root/Hud")
+	player._refresh_held()
+	assert(held.visible)
+	assert(held.texture == hud.icon_for("blueberries"))
 	hud._process(0.0)
 	assert(str(hud.berry_count.text) == "4")
 	assert(not str(hud.berry_count.text).contains("Blueberries"))
 	player._unhandled_input(press)
 	assert(gs.blueberries == 4)
 	player._refresh_held()
-	assert(not held.visible)
+	assert(held.visible)
 	assert(not gs.carrying_sack())
 	for bush_id in ["berry_bush_1", "berry_bush_2"]:
 		var other_bush := clearing.get_node("Objects/" + bush_id) as Node2D

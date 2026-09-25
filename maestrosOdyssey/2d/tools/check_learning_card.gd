@@ -41,7 +41,10 @@ static func run(host: Node) -> void:
 	assert(hud._carry_buttons.size() == 2)
 	gs.blueberries = 0
 	hud._process(0.0)
-	assert(str(hud.berry_count.text) == "1")
+	assert(str(hud.berry_count.text) == "")
+	assert(str((hud._carry_buttons[1].get_node("Count") as Label).text) == "1")
+	assert(str((hud._carry_buttons[0].get_node("Mark") as Label).text) == "1")
+	assert(str((hud._carry_buttons[1].get_node("Mark") as Label).text) == "2")
 	gs.blueberries = 4
 	hud._process(0.0)
 

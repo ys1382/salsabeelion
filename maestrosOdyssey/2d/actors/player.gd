@@ -9,7 +9,6 @@ extends CharacterBody2D
 
 const CafePhrasesScript := preload("res://ui/cafe_phrases.gd")
 const StreetSignScript := preload("res://world/street_sign.gd")
-const SACK_TEX := preload("res://assets/The Fan-tasy Tileset (Free)/Art/Props/Sack_3.png")
 const SPEED := 70.0
 const ACCEL := 900.0
 const FRICTION := 1100.0
@@ -346,7 +345,8 @@ func _update_focus() -> void:
 		return
 	if focus is Interactable:
 		var it := focus as Interactable
-		if str(it.data.get("id", "")) == "home_crate_look":
+		var look_id := str(it.data.get("id", ""))
+		if look_id == "home_crate_look" or look_id == "home_barrel_look":
 			DialogueUI.show_prompt(Hud.crate_prompt())
 		else:
 			DialogueUI.show_prompt("%s — %s" % [_prompt_key(it), it.prompt()])
@@ -396,6 +396,14 @@ func _unhandled_input(event: InputEvent) -> void:
 			DialogueUI.close()
 			_end_talk_face()
 			get_viewport().set_input_as_handled()
+		return
+	if _key_down(event, KEY_1):
+		GameState.select_slot(0)
+		get_viewport().set_input_as_handled()
+		return
+	if _key_down(event, KEY_2):
+		GameState.select_slot(1)
+		get_viewport().set_input_as_handled()
 		return
 	if _key_down(event, KEY_P):
 		if try_pick():
@@ -933,12 +941,21 @@ func try_pick() -> bool:
 			if picked:
 				_refresh_held()
 			return picked
-	if not Hud.crate_open:
+	if not Hud.storage_open():
 		return false
+	var store := "barrel" if Hud.barrel_open else "crate"
 	if Hud.crate_choice != "":
-		return GameState.take_stack(Hud.crate_choice)
-	if Hud.chosen_carry != "" and GameState.carry_count(Hud.chosen_carry) > 0:
-		return GameState.place_stack(Hud.chosen_carry)
+		var took := GameState.take_stack(Hud.crate_choice, store)
+		if took:
+			Hud.crate_choice = ""
+			_refresh_held()
+		return took
+	var held_id := GameState.held_item()
+	if GameState.carry_count(held_id) > 0:
+		var placed := GameState.place_stack(held_id, store)
+		if placed:
+			_refresh_held()
+		return placed
 	return false
 
 
@@ -951,26 +968,19 @@ func _refresh_held() -> void:
 		_held.show()
 		_place_held()
 		return
-	# Axe while the dead tree is still up. After it falls, the sack shows.
+	# Axe while the dead tree is still up. After it falls, the held slot shows.
 	if _axe_out():
 		_held.texture = _axe_texture()
 		_held.show()
 		_place_held()
 		return
-	if GameState.carrying_sack() and not _in_cafe():
-		_held.texture = SACK_TEX
+	var carried := GameState.held_item()
+	if GameState.carry_count(carried) > 0:
+		_held.texture = Hud.icon_for(carried)
 		_held.show()
 		_place_held()
 		return
 	_hide_held()
-
-
-func _in_cafe() -> bool:
-	return (
-		Interiors.inside()
-		and Interiors.current != null
-		and Interiors.current.building_id == "dragons_brew"
-	)
 
 
 func _axe_out() -> bool:

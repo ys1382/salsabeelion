@@ -118,6 +118,10 @@ func use() -> String:
 		used.emit(self)
 		Hud.toggle_crate()
 		return ""
+	if str(data.get("id", "")) == "home_barrel_look":
+		used.emit(self)
+		Hud.toggle_barrel()
+		return ""
 	if str(data.get("id", "")) == "dish_cart":
 		used.emit(self)
 		return CafeOrder.use_dish_cart()

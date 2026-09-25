@@ -62,7 +62,8 @@ def main() -> int:
     assert "CAMPFIRE_CELL := Vector2i(8, 1)" in builder
     assert "_place_campfire" in builder
     player = (ROOT / "actors" / "player.gd").read_text(encoding="utf-8")
-    assert "Sack_3.png" in player
+    assert "Sack_3.png" not in player
+    assert "Hud.icon_for" in player
     tasks = (ROOT / "ui" / "task_list.gd").read_text(encoding="utf-8")
     assert "Light the campfire" in tasks
     arrow = (ROOT / "ui" / "waypoint_hud.gd").read_text(encoding="utf-8")

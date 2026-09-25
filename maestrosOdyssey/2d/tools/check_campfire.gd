@@ -25,8 +25,7 @@ static func run(host: Node) -> void:
 	assert(gs.forest_morning())
 	assert(gs.carrying_sack())
 	player._refresh_held()
-	assert(held.visible)
-	assert(held.texture.resource_path.ends_with("Sack_3.png"))
+	assert(not held.visible)
 
 	var root := WorldManager.world_root
 	var spot := root.entities["campfire"] as Node2D
@@ -52,9 +51,14 @@ static func run(host: Node) -> void:
 	assert(gs.has_item("logs"))
 	assert(gs.wood_for_fire())
 	interiors.leave()
+	var two := InputEventKey.new()
+	two.keycode = KEY_2
+	two.pressed = true
+	player._unhandled_input(two)
 	player._refresh_held()
+	assert(gs.held_slot == 1)
 	assert(held.visible)
-	assert(held.texture.resource_path.ends_with("Sack_3.png"))
+	assert(held.texture == host.get_node("/root/Hud").icon_for("logs"))
 
 	var it := spot.get_node("Interact") as Interactable
 	player.global_position = spot.global_position + Vector2(0, 28)

@@ -3,9 +3,9 @@ extends CanvasLayer
 # pesos — three short lines, top-left. Hearts stay off; this is not a fighting
 # game.
 #
-# The bottom row is two slots. The learning card fills the right one and stays
-# there. Berries, or logs when there are no berries, use the left one. The
-# home crate opens a second row of the same boxes for those stacks.
+# The bottom row is slot 1, slot 2, then the learning card. Slot 1 is berries
+# and slot 2 is logs, even when empty. A small 1 and 2 sit on those boxes.
+# The home crate and the home barrel each open the same row of storage boxes.
 
 const PAD := 10
 const LINE := 16
@@ -14,7 +14,7 @@ const FILL := Color(0.14, 0.10, 0.07, 0.92)
 const GOLD := Color(0.55, 0.42, 0.26)
 const GOLD_BRIGHT := Color(0.95, 0.78, 0.38)
 const SLOT := 22
-## Two pockets at the start. The crate is storage, not a third pocket.
+## Two numbered pockets, plus the learning card beside them.
 const POCKETS := 2
 const CRATE_SLOTS := 8
 const GAP := 2
@@ -29,9 +29,8 @@ var _carry_buttons: Array[Button] = []
 var _crate_buttons: Array[Button] = []
 var berry_count: Label
 var crate_open := false
-## Bottom box the next Place will move. Empty string if none.
-var chosen_carry := ""
-## Crate stack the next Pick will bring back. Empty string if none.
+var barrel_open := false
+## Stored stack the next Pick will bring back. Empty string if none.
 var crate_choice := ""
 
 var _berry_tex: Texture2D
@@ -67,7 +66,8 @@ func _make_line(y: float) -> Label:
 
 
 func _build_bar() -> void:
-	var width := float(POCKETS * SLOT + (POCKETS - 1) * GAP)
+	var slots := POCKETS + 1
+	var width := float(slots * SLOT + (slots - 1) * GAP)
 	var host := CenterContainer.new()
 	_pin_bottom(host, width, -34, -6)
 	host.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -80,7 +80,9 @@ func _build_bar() -> void:
 		var btn := _make_slot(false, i)
 		_bar.add_child(btn)
 		_carry_buttons.append(btn)
-	_card_button = _carry_buttons[1]
+		_add_mark(btn, str(i + 1))
+	_card_button = _make_slot(false, -1)
+	_bar.add_child(_card_button)
 	var card_icon := _card_button.get_node("Icon") as TextureRect
 	card_icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	card_icon.offset_left = 1
@@ -160,9 +162,22 @@ func _make_slot(in_crate: bool, index: int) -> Button:
 	btn.add_child(num)
 	if in_crate:
 		btn.pressed.connect(_on_crate_slot.bind(index))
-	else:
+	elif index >= 0:
 		btn.pressed.connect(_on_carry_slot.bind(index))
 	return btn
+
+
+func _add_mark(btn: Button, text: String) -> void:
+	var mark := Label.new()
+	mark.name = "Mark"
+	mark.text = text
+	mark.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	mark.add_theme_font_size_override("font_size", 8)
+	mark.add_theme_color_override("font_color", INK)
+	mark.add_theme_color_override("font_outline_color", Color.BLACK)
+	mark.add_theme_constant_override("outline_size", 2)
+	mark.position = Vector2(1, -1)
+	btn.add_child(mark)
 
 
 func _count_label(btn: Button) -> Label:
@@ -184,67 +199,94 @@ func _process(_delta: float) -> void:
 	_week.show()
 	_pesos.show()
 	_bar.show()
-	if crate_open and not _at_home():
+	if (crate_open or barrel_open) and not _at_home():
 		_close_crate()
-	var stacks := GameState.carry_ids()
-	var shown: Array[String] = []
-	if not stacks.is_empty():
-		shown.append(stacks[0])
-	_paint(_carry_buttons, shown, false)
+	_paint_carry()
 	_paint_card()
-	_paint(_crate_buttons, GameState.crate_ids(), true)
-	if chosen_carry != "" and GameState.carry_count(chosen_carry) <= 0:
-		chosen_carry = ""
-	if crate_choice != "" and GameState.crate_count(crate_choice) <= 0:
+	var store := _open_store()
+	_paint(_crate_buttons, GameState.store_ids(store), true)
+	if crate_choice != "" and GameState.store_count(store, crate_choice) <= 0:
 		crate_choice = ""
-	if chosen_carry == "" and crate_choice == "" and not GameState.carry_ids().is_empty():
-		chosen_carry = GameState.carry_ids()[0]
 
 
 func toggle_crate() -> void:
-	if crate_open:
+	_toggle_store("crate")
+
+
+func toggle_barrel() -> void:
+	_toggle_store("barrel")
+
+
+func _toggle_store(which: String) -> void:
+	var already := (which == "crate" and crate_open) or (which == "barrel" and barrel_open)
+	if already:
 		_close_crate()
+		return
+	_close_crate()
+	crate_choice = ""
+	if which == "barrel":
+		barrel_open = true
 	else:
 		crate_open = true
-		crate_choice = ""
-		_crate_panel.show()
+	_crate_panel.show()
 
 
 func _close_crate() -> void:
 	crate_open = false
+	barrel_open = false
 	crate_choice = ""
 	if _crate_panel != null:
 		_crate_panel.hide()
 
 
+func storage_open() -> bool:
+	return crate_open or barrel_open
+
+
+func _open_store() -> String:
+	return "barrel" if barrel_open else "crate"
+
+
 func crate_prompt() -> String:
-	if not crate_open:
+	if not storage_open():
 		return "E — Open"
 	var bits: PackedStringArray = ["E — Close"]
 	if crate_choice != "":
 		bits.append("P — Pick")
-	elif chosen_carry != "" and GameState.carry_count(chosen_carry) > 0:
+	elif GameState.carry_count(GameState.held_item()) > 0:
 		bits.append("P — Place")
 	return "   ".join(bits)
 
 
 func _on_carry_slot(index: int) -> void:
-	# The right slot is the learning card. Place never selects it.
-	if index != 0:
+	# The learning card is not slot 1 or slot 2.
+	if index < 0 or index >= POCKETS:
 		return
-	var ids := GameState.carry_ids()
-	if ids.is_empty():
-		return
-	chosen_carry = ids[0]
+	GameState.select_slot(index)
 	crate_choice = ""
 
 
 func _on_crate_slot(index: int) -> void:
-	var ids := GameState.crate_ids()
+	var ids := GameState.store_ids(_open_store())
 	if index < 0 or index >= ids.size():
 		return
 	crate_choice = ids[index]
-	chosen_carry = ""
+
+
+func _paint_carry() -> void:
+	for i in _carry_buttons.size():
+		var btn := _carry_buttons[i]
+		var item_id := GameState.slot_item(i)
+		var icon := btn.get_node("Icon") as TextureRect
+		var num := btn.get_node("Count") as Label
+		var n := GameState.carry_count(item_id)
+		if n <= 0:
+			icon.texture = null
+			num.text = ""
+		else:
+			icon.texture = icon_for(item_id)
+			num.text = str(n)
+		_style_slot(btn, i == GameState.held_slot)
 
 
 func _paint(buttons: Array[Button], ids: Array[String], in_crate: bool) -> void:
@@ -258,13 +300,11 @@ func _paint(buttons: Array[Button], ids: Array[String], in_crate: bool) -> void:
 			icon.texture = null
 			num.text = ""
 		else:
-			icon.texture = _icon_for(item_id)
-			var n := GameState.crate_count(item_id) if in_crate else GameState.carry_count(item_id)
+			icon.texture = icon_for(item_id)
+			var n := GameState.store_count(_open_store(), item_id) if in_crate else GameState.carry_count(item_id)
 			num.text = str(n)
 			if in_crate:
 				bright = item_id == crate_choice
-			else:
-				bright = item_id == chosen_carry and crate_choice == ""
 		_style_slot(btn, bright)
 
 
@@ -307,7 +347,7 @@ func _settle_card(icon: TextureRect) -> void:
 	tween.parallel().tween_property(icon, "offset_bottom", -3.0, 0.35)
 
 
-func _icon_for(item_id: String) -> Texture2D:
+func icon_for(item_id: String) -> Texture2D:
 	if item_id == "logs":
 		return _log_tex
 	return _berry_tex
