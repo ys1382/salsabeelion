@@ -23,8 +23,9 @@ const NIGHT := Color(0.48, 0.52, 0.72, 1)
 
 const FADE_IN_CAFE_S := 10.0
 const FADE_TO_DAY_S := 2.2
-## Distant bed, not a swarm in the ear.
-const CRICKET_DB := -22.0
+## The recording is very quiet. This brings it up to a normal
+## listening level, so a low computer volume is enough.
+const CRICKET_DB := 16.0
 const CRICKET_SILENT_DB := -80.0
 const CRICKETS := preload("res://audio/crickets_night.mp3")
 
