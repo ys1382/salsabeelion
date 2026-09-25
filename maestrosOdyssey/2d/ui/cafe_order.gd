@@ -72,6 +72,7 @@ const PRACTICE_MAX_DAY := 36
 const ITEMS := [
 	{"needles": ["chocolate caliente", "hot chocolate", "chocolate"], "lemma": "chocolate caliente", "en": "hot chocolate", "pesos": 48, "kind": "drink", "unlock_day": 2, "new_today": true},
 	{"needles": ["espresso"], "lemma": "espresso", "en": "espresso", "pesos": 40, "kind": "drink", "unlock_day": 7, "new_today": false},
+	{"needles": ["sugarplum juice"], "lemma": "sugarplum juice", "en": "sugarplum juice", "pesos": 40, "kind": "drink", "unlock_day": 0, "new_today": false, "skip_practice": true},
 	{"needles": ["croissant"], "lemma": "croissant", "en": "croissant", "pesos": 32, "kind": "food", "unlock_day": 6, "new_today": false},
 	{"needles": ["tostada", "toast"], "lemma": "tostada", "en": "toast", "pesos": 22, "kind": "food", "unlock_day": 3, "new_today": true},
 	{"needles": ["galleta", "cookie"], "lemma": "galleta", "en": "cookie", "pesos": 24, "kind": "food", "unlock_day": 4, "new_today": true},
@@ -286,15 +287,15 @@ func _counter_while_waiting() -> String:
 		# She calls across the room. Pressing T early must not take that line.
 		return ""
 	_put_in_hands()
-	return "Mara sets it in your hands. \"Here you go — that's ready.\""
+	return "Mara sets it in your hands. \"Here you go — that's ready.\"" + _picked_line()
 
 
 func _hand_over_now(total: int) -> String:
 	_put_in_hands()
 	return (
 		"Mara repeats it back, calm and clear: \"%s.\"\n\n"
-		+ "That's %d pesos from your card. \"Here you go — that's ready.\""
-	) % [_echo(served), total]
+		+ "That's %d pesos from your card. \"Here you go — that's ready.\"%s"
+	) % [_echo(served), total, _picked_line()]
 
 
 func _put_in_hands() -> void:
@@ -303,7 +304,15 @@ func _put_in_hands() -> void:
 	_callout_left = -1.0
 	cup_left = 4 if _drink != "" else 0
 	muffin_left = 3 if _food != "" else 0
+	if _drink == "sugarplum juice":
+		GameState.note_sugarplum_served()
 	order_ready.emit(served)
+
+
+func _picked_line() -> String:
+	if _drink != "sugarplum juice":
+		return ""
+	return " \"I picked the sugarplums this morning.\""
 
 
 func _guest_dicts() -> Array:
@@ -620,6 +629,8 @@ func sip() -> bool:
 	if cup_left <= 0:
 		return false
 	cup_left -= 1
+	if cup_left <= 0 and _drink == "sugarplum juice":
+		GameState.note_sugarplum_drunk()
 	_mark_meal_if_done()
 	return true
 
@@ -725,7 +736,14 @@ func visible_items() -> Array:
 	var out: Array = []
 	for d in range(1, day + 1):
 		for item in ITEMS:
-			if int(item["unlock_day"]) == d:
+			if int(item["unlock_day"]) != d:
+				continue
+			if str(item["lemma"]) == "espresso" and GameState.day_index == 7:
+				continue
+			out.append(item)
+	if GameState.sugarplum_day():
+		for item in ITEMS:
+			if str(item["lemma"]) == "sugarplum juice":
 				out.append(item)
 	return out
 
@@ -768,6 +786,8 @@ func _menu_line(item: Dictionary) -> String:
 		return "%s — %s" % [str(item["lemma"]), str(item["en"])]
 	var pesos := int(item["pesos"])
 	var price := "included" if pesos == 0 else "%d pesos" % pesos
+	if str(item["lemma"]) == "sugarplum juice":
+		return "%s — %s" % [str(item["lemma"]), price]
 	return "%s — %s (%s)" % [str(item["lemma"]), price, str(item["en"])]
 
 
@@ -780,8 +800,8 @@ func _echo(lemmas: PackedStringArray) -> String:
 	if lemmas.has("calentado") and food != "":
 		food = food + " calentado"
 	if needs_article():
-		if drink != "":
-			drink = _article_for(_lemma_of_kind(lemmas, "drink")) + " " + drink
+		if drink != "" and _article_for(drink) != "":
+			drink = _article_for(drink) + " " + drink
 		if food != "":
 			food = _article_for(_lemma_of_kind(lemmas, "food")) + " " + food
 	var core := ""
@@ -838,6 +858,8 @@ func _article_nudge(lemmas: PackedStringArray) -> String:
 ## Masculine on this board: café, té, chocolate caliente, espresso, muffin,
 ## croissant, bolillo. Feminine: tostada, galleta. Add-ons stay with con.
 func _article_for(lemma: String) -> String:
+	if lemma == "sugarplum juice":
+		return ""
 	if lemma == "tostada" or lemma == "galleta":
 		return "una"
 	return "un"
@@ -848,8 +870,10 @@ func _articles_ok(order: String, lemmas: PackedStringArray) -> bool:
 	var food := _lemma_of_kind(lemmas, "food")
 	if drink == "" or food == "":
 		return false
-	return _article_before(order, drink) == _article_for(drink) \
-		and _article_before(order, food) == _article_for(food)
+	var drink_ok := true
+	if _article_for(drink) != "":
+		drink_ok = _article_before(order, drink) == _article_for(drink)
+	return drink_ok and _article_before(order, food) == _article_for(food)
 
 
 func _article_before(order: String, lemma: String) -> String:
@@ -882,7 +906,7 @@ func _model_order(lemmas: PackedStringArray) -> String:
 	if lemmas.has("calentado") and food != "":
 		food_bit = food + " calentado"
 	if needs_article():
-		if drink != "":
+		if drink != "" and _article_for(drink) != "":
 			drink_bit = _article_for(drink) + " " + drink_bit
 		if food != "":
 			food_bit = _article_for(food) + " " + food_bit
@@ -928,14 +952,14 @@ func _begin_practice() -> bool:
 func _practice_pick() -> Dictionary:
 	if _practice_lemma != "" and not ordered.has(_practice_lemma):
 		for item in visible_items():
-			if _is_extra(item):
+			if _is_extra(item) or bool(item.get("skip_practice", false)):
 				continue
 			if str(item["lemma"]) == _practice_lemma:
 				return item
 	var fresh: Array = []
 	var any_item: Array = []
 	for item in visible_items():
-		if _is_extra(item):
+		if _is_extra(item) or bool(item.get("skip_practice", false)):
 			continue
 		any_item.append(item)
 		if not ordered.has(str(item["lemma"])):
@@ -1095,6 +1119,8 @@ func _draw_cup(img: Image, ox: int, drink: String) -> void:
 		liquid = Color(0.42, 0.22, 0.14)
 	elif drink == "espresso":
 		liquid = Color(0.28, 0.16, 0.10)
+	elif drink == "sugarplum juice":
+		liquid = Color(0.48, 0.22, 0.62)
 	_fill(img, ox + 1, 4, 6, 7, cream)
 	_fill(img, ox + 2, 5, 4, 5, inner)
 	_fill(img, ox + 0, 6, 2, 3, handle)

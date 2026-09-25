@@ -83,6 +83,10 @@ var card_picked_up: bool = false
 const STACK_IDS: Array[String] = ["blueberries", "logs"]
 ## Bush id -> day_index it was last picked. Dots stay gone until the next Tuesday.
 var berry_picked: Dictionary = {}
+## Sunday of week one only. Dots leave the tree once the juice is served.
+var sugarplum_served := false
+## After the cup is finished. Clears when the day turns at home.
+var sugarplum_sparkle := false
 const BERRY_BUSHES: Array[String] = ["berry_bush_0", "berry_bush_1", "berry_bush_2"]
 const BERRY_HANDFUL := 4
 
@@ -136,6 +140,8 @@ func set_world(w: Dictionary) -> void:
 	elder_visit_pending = false
 	card_picked_up = false
 	berry_picked.clear()
+	sugarplum_served = false
+	sugarplum_sparkle = false
 	_sync_clock()
 	if has_node("/root/CafeOrder"):
 		CafeOrder.reset_session()
@@ -257,12 +263,102 @@ func advance_day() -> void:
 	inventory.erase("logs")
 	_clear_slot("logs")
 	# Outdoor street returns to morning while you are still inside the house.
+	sugarplum_sparkle = false
 	if has_node("/root/DayNight"):
 		DayNight.begin_day()
 	var root := WorldManager.world_root
 	if root != null and root.has_method("settle_elder_day"):
 		root.settle_elder_day()
+	if root != null and root.has_method("refresh_sugarplum"):
+		root.refresh_sugarplum()
 	carry_changed.emit()
+
+
+## Owner test only. On the website this stays off unless the nightofhonour
+## Google account is signed in. A real night pass still uses advance_day.
+var day_skip_allowed := true
+
+
+func skip_to_morning(day: int) -> void:
+	if OS.has_feature("web") and not day_skip_allowed:
+		return
+	if day < 2 or day > 8:
+		return
+	day_index = day
+	_sync_clock()
+	cafe_meal_done = false
+	sugarplum_sparkle = false
+	if sugarplum_day():
+		sugarplum_served = false
+	elder_morning_done = true
+	if not has_item("learning_card") and not card_is_stored():
+		take_item("learning_card")
+	var cafe := _autoload("CafeOrder")
+	if cafe != null:
+		cafe.reset_session()
+	var talk := _autoload("DialogueUI")
+	if talk != null and talk.get("_order") != null:
+		talk.close()
+		talk.hide_prompt()
+	var journal := _autoload("Journal")
+	if journal != null and journal.get("_panel") != null:
+		journal.dismiss()
+	var sky := _autoload("DayNight")
+	if sky != null:
+		sky.begin_day()
+	var root := WorldManager.world_root
+	if root != null and root.has_method("settle_elder_day"):
+		root.settle_elder_day()
+	if root != null and root.has_method("refresh_sugarplum"):
+		root.refresh_sugarplum()
+	_land_outside_cottage()
+	carry_changed.emit()
+
+
+func _autoload(node_name: String) -> Node:
+	var loop := Engine.get_main_loop()
+	if loop == null or not (loop is SceneTree):
+		return null
+	return (loop as SceneTree).root.get_node_or_null(node_name)
+
+
+func _land_outside_cottage() -> void:
+	var rooms := _autoload("Interiors")
+	if rooms != null and rooms.inside():
+		rooms.leave()
+	var root := WorldManager.world_root
+	if root == null or root.player == null:
+		return
+	var p := root.player as Player
+	if p == null:
+		return
+	if p.seated:
+		p.stand_up(false)
+	if p.has_method("clear_talk"):
+		p.clear_talk()
+	p.velocity = Vector2.ZERO
+	p.position = p.spawn_point
+	p.facing = Vector2.DOWN
+
+
+## Sunday of week one. The juice is on the board that morning only.
+func sugarplum_day() -> bool:
+	return week_number == 1 and day_index == 7
+
+
+func sugarplum_fruit_on_tree() -> bool:
+	return sugarplum_day() and not sugarplum_served
+
+
+func note_sugarplum_served() -> void:
+	sugarplum_served = true
+	var root := WorldManager.world_root
+	if root != null and root.has_method("refresh_sugarplum"):
+		root.refresh_sugarplum()
+
+
+func note_sugarplum_drunk() -> void:
+	sugarplum_sparkle = true
 
 
 ## Saturday of week one only. Every other morning is the café, same as Monday.

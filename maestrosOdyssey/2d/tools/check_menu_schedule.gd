@@ -38,9 +38,15 @@ func _initialize() -> void:
 	gs.day_index = 7
 	gs._sync_clock()
 	var d7: String = cafe.board_text()
-	assert(d7.contains("espresso") and d7.contains("crema") and d7.contains("croissant") and d7.contains("frío"))
-	var late: PackedStringArray = cafe.match_lemmas("espresso y galleta")
-	assert(late.has("espresso") and late.has("galleta"))
+	assert(d7.contains("sugarplum juice"), d7)
+	assert(d7.contains("40 pesos"), d7)
+	assert(d7.contains("café") and d7.contains("té") and d7.contains("chocolate caliente"))
+	assert(d7.contains("crema") and d7.contains("croissant") and d7.contains("frío"))
+	assert(not d7.contains("espresso"), d7)
+	assert(cafe.match_lemmas("espresso").is_empty())
+	assert(cafe.match_lemmas("sugarplum juice").has("sugarplum juice"))
+	var late: PackedStringArray = cafe.match_lemmas("sugarplum juice y galleta")
+	assert(late.has("sugarplum juice") and late.has("galleta"))
 
 	gs.day_index = 1
 	gs._sync_clock()
@@ -252,6 +258,43 @@ func _initialize() -> void:
 	cafe.reset_session()
 	gs.take_item("learning_card")
 	gs.card_balance = 400
+	gs.sugarplum_served = false
+	gs.sugarplum_sparkle = false
+	var plum_bare: String = cafe.reply_for("sugarplum juice y galleta")
+	assert(plum_bare.contains("una galleta"), plum_bare)
+	assert(not plum_bare.contains("Here you go"))
+	assert(int(gs.card_balance) == 400)
+	var plum_ok: String = cafe.reply_for("sugarplum juice y una galleta")
+	assert(plum_ok.contains("Here you go"), plum_ok)
+	assert(plum_ok.contains("sugarplum juice"), plum_ok)
+	assert(plum_ok.contains("I picked the sugarplums this morning"), plum_ok)
+	assert(not plum_ok.contains("un sugarplum"), plum_ok)
+	assert(int(gs.card_balance) == 336)
+	assert(gs.sugarplum_served)
+	assert(not gs.sugarplum_sparkle)
+	assert(cafe.sip())
+	assert(cafe.sip())
+	assert(cafe.sip())
+	assert(not gs.sugarplum_sparkle)
+	assert(cafe.sip())
+	assert(gs.sugarplum_sparkle)
+	cafe.reset_session()
+	gs.take_item("learning_card")
+	gs.card_balance = 400
+	var cafe_sunday: String = cafe.reply_for("un café y una galleta")
+	assert(cafe_sunday.contains("Here you go"), cafe_sunday)
+	assert(not cafe_sunday.contains("sugarplum"), cafe_sunday)
+	assert(gs.sugarplum_sparkle)
+	gs.cafe_meal_done = true
+	assert(gs.try_night_pass())
+	assert(gs.day_index == 8)
+	assert(not gs.sugarplum_sparkle)
+	var d8: String = cafe.board_text()
+	assert(d8.contains("espresso"), d8)
+	assert(not d8.contains("sugarplum"), d8)
+	cafe.reset_session()
+	gs.take_item("learning_card")
+	gs.card_balance = 400
 	var iced_en: String = cafe.reply_for("un iced espresso y un muffin")
 	assert(iced_en.contains("frío"), iced_en)
 	assert(not iced_en.contains("Here you go"))
@@ -262,6 +305,7 @@ func _initialize() -> void:
 	var iced_ok: String = cafe.reply_for("un espresso frío y un muffin")
 	assert(iced_ok.contains("Here you go"), iced_ok)
 	assert(iced_ok.contains("frío"), iced_ok)
+	assert(not iced_ok.contains("sugarplum"), iced_ok)
 	assert(int(gs.card_balance) == 332)
 
 	gs.day_index = 8
@@ -437,5 +481,69 @@ func _initialize() -> void:
 	assert(cafe.may_leave())
 	gs.world = {}
 	cafe.reset_session()
+
+	gs.day_index = 1
+	gs._sync_clock()
+	gs.card_balance = 0
+	gs.card_picked_up = false
+	gs.inventory.clear()
+	gs.carry_slot[0] = ""
+	gs.carry_slot[1] = ""
+	gs.elder_morning_done = false
+	gs.has_satchel = false
+	gs.blueberries = 0
+	gs.logs = 0
+	gs.crate = {"blueberries": 2}
+	gs.barrel = {"logs": 1}
+	gs.berry_picked = {}
+	gs.wood_cut_day = 0
+	gs.cafe_meal_done = true
+	cafe.cup_left = 4
+	gs.skip_to_morning(2)
+	assert(gs.day_index == 2)
+	assert(gs.weekday == "Tuesday")
+	assert(gs.berry_morning())
+	assert(not gs.cafe_meal_done)
+	assert(int(cafe.cup_left) == 0)
+	assert(gs.elder_morning_done)
+	assert(gs.has_item("learning_card"))
+	assert(int(gs.card_balance) == 400)
+	assert(not gs.has_satchel)
+	assert(gs.berry_picked.is_empty())
+	assert(gs.wood_cut_day == 0)
+	assert(int(gs.crate["blueberries"]) == 2)
+	assert(int(gs.barrel["logs"]) == 1)
+	gs.card_balance = 120
+	gs.blueberries = 4
+	gs.skip_to_morning(6)
+	assert(gs.weekday == "Saturday")
+	assert(gs.forest_morning())
+	assert(int(gs.card_balance) == 120)
+	assert(int(gs.blueberries) == 4)
+	assert(not gs.has_satchel)
+	assert(gs.wood_cut_day == 0)
+	gs.skip_to_morning(7)
+	assert(gs.sugarplum_day())
+	assert(not gs.sugarplum_served)
+	var sunday: String = cafe.board_text()
+	assert(sunday.contains("sugarplum juice"))
+	assert(not sunday.contains("espresso"))
+	var not_a_skip: String = cafe.reply_for("day 2")
+	assert(gs.day_index == 7, not_a_skip)
+	assert(not_a_skip.contains("didn't catch") or not_a_skip.contains("I didn't catch"))
+	gs.skip_to_morning(8)
+	assert(gs.day_index == 8)
+	assert(gs.weekday == "Monday")
+	assert(gs.week_number == 2)
+	assert(not gs.sugarplum_day())
+	var monday: String = cafe.board_text()
+	assert(monday.contains("espresso"))
+	assert(not monday.contains("sugarplum"))
+	gs.day_index = 3
+	gs._sync_clock()
+	gs.cafe_meal_done = true
+	assert(gs.try_night_pass())
+	assert(gs.day_index == 4)
+
 	print("menu_schedule_runtime: ok")
 	quit()

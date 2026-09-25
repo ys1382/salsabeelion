@@ -40,6 +40,9 @@ var _card_button: Button
 var _card_settled := false
 
 
+var _day_skip: Control
+
+
 func _ready() -> void:
 	layer = 15
 	_day = _make_line(0)
@@ -50,6 +53,9 @@ func _ready() -> void:
 	_card_tex = _draw_card()
 	_build_bar()
 	_build_crate()
+	_build_day_skip()
+	get_viewport().size_changed.connect(_place_day_skip)
+	_gate_day_skip()
 	GameState.item_taken.connect(_on_item_taken)
 
 
@@ -92,6 +98,80 @@ func _fill_pockets(n: int) -> void:
 		return
 	_card_button = _carry_buttons[0]
 	berry_count = _count_label(_carry_buttons[0])
+
+
+## Owner test. Not a story control. Top-right, clear of talk and the pockets.
+func _build_day_skip() -> void:
+	var stack := VBoxContainer.new()
+	stack.name = "DaySkip"
+	stack.add_theme_constant_override("separation", 2)
+	stack.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(stack)
+	_day_skip = stack
+	var top := HBoxContainer.new()
+	var bottom := HBoxContainer.new()
+	for row in [top, bottom]:
+		row.add_theme_constant_override("separation", 2)
+		row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		stack.add_child(row)
+	for day in range(2, 9):
+		var btn := Button.new()
+		btn.text = "Day %d" % day
+		btn.focus_mode = Control.FOCUS_NONE
+		btn.add_theme_font_size_override("font_size", 10)
+		btn.custom_minimum_size = Vector2(44, 18)
+		btn.pressed.connect(GameState.skip_to_morning.bind(day))
+		if day <= 5:
+			top.add_child(btn)
+		else:
+			bottom.add_child(btn)
+	_place_day_skip()
+
+
+func _place_day_skip() -> void:
+	if _day_skip == null:
+		return
+	var need := _day_skip.get_combined_minimum_size().x
+	var w := get_viewport().get_visible_rect().size.x
+	_day_skip.position = Vector2(maxf(8.0, w - need - 64.0), 6.0)
+
+
+const OWNER_EMAIL := "nightofhonour@gmail.com"
+
+
+func _gate_day_skip() -> void:
+	if _day_skip == null:
+		return
+	if not OS.has_feature("web"):
+		_day_skip.show()
+		return
+	_day_skip.hide()
+	GameState.day_skip_allowed = false
+	var window = JavaScriptBridge.get_interface("window")
+	if window == null:
+		return
+	window.moOnOwner = JavaScriptBridge.create_callback(_on_owner_json)
+	JavaScriptBridge.eval(
+		"""
+		fetch('/hub/api/auth/me', {credentials:'include', cache:'no-store'})
+			.then(function(r){ return r.json(); })
+			.then(function(d){ if (window.moOnOwner) window.moOnOwner(JSON.stringify(d)); })
+			.catch(function(){ if (window.moOnOwner) window.moOnOwner('{}'); });
+		""",
+		true
+	)
+
+
+func _on_owner_json(args: Array) -> void:
+	var raw := str(args[0]) if not args.is_empty() else ""
+	var data = JSON.parse_string(raw)
+	var ok := false
+	if typeof(data) == TYPE_DICTIONARY:
+		var email := str(data.get("email", "")).strip_edges().to_lower()
+		ok = bool(data.get("signedIn")) and bool(data.get("isOwner")) and email == OWNER_EMAIL
+	GameState.day_skip_allowed = ok
+	if _day_skip != null:
+		_day_skip.visible = ok
 
 
 func _build_crate() -> void:

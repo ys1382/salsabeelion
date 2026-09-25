@@ -87,6 +87,12 @@
       "y": 5
     },
     {
+      "id": "sugarplum_tree",
+      "asset": "tree.tree_emerald_2",
+      "x": 28,
+      "y": 9
+    },
+    {
       "id": "elder_house",
       "asset": "building.house_hay_1",
       "x": 2,

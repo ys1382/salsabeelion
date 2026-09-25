@@ -99,6 +99,11 @@ func _ready() -> void:
 	_bag.hide()
 	add_child(_bag)
 	_bag_tex = _draw_satchel()
+	var sparkles := Node2D.new()
+	sparkles.name = "SugarplumSparkles"
+	sparkles.set_script(preload("res://actors/sugarplum_sparkles.gd"))
+	sparkles.z_index = 3
+	add_child(sparkles)
 	CafeOrder.order_ready.connect(_on_order_ready)
 	CafeOrder.order_cleared.connect(_refresh_held)
 	GameState.carry_changed.connect(_refresh_worn)
@@ -924,6 +929,12 @@ func _mark_elder_morning() -> void:
 		return
 	_talk_with.morning_done = true
 	GameState.elder_morning_done = true
+
+
+func clear_talk() -> void:
+	_pages = PackedStringArray()
+	_page = 0
+	_end_talk_face()
 
 
 func _end_talk_face() -> void:

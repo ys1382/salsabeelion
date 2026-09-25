@@ -247,6 +247,7 @@ func _place_objects() -> void:
 	_make_houses_enterable()
 	_place_street_signs()
 	_place_campfire()
+	refresh_sugarplum()
 
 
 ## Every house gets a door, whether the model thought to give it one or not.
@@ -320,6 +321,61 @@ func _place_campfire() -> void:
 		host.queue_free()
 		return
 	entities["campfire"] = host
+
+
+## Purple fruit dots on the café tree. Same inset as the berry bushes.
+## Gone once the juice is served, and gone the morning after Sunday either way.
+func refresh_sugarplum() -> void:
+	var tree := entities.get("sugarplum_tree") as Node2D
+	if tree == null:
+		return
+	var sprite := tree.get_node_or_null("Sprite") as Sprite2D
+	if sprite == null or sprite.texture == null:
+		return
+	if not sprite.has_meta("plain_tex"):
+		sprite.set_meta("plain_tex", sprite.texture)
+	var plain: Texture2D = sprite.get_meta("plain_tex")
+	if not GameState.sugarplum_fruit_on_tree():
+		sprite.texture = plain
+		return
+	if not sprite.has_meta("plum_tex"):
+		var dotted := _plum_dots(plain)
+		if dotted == null:
+			return
+		sprite.set_meta("plum_tex", dotted)
+	sprite.texture = sprite.get_meta("plum_tex")
+
+
+func _plum_dots(tex: Texture2D) -> Texture2D:
+	var img := tex.get_image()
+	if img == null:
+		return null
+	img = img.duplicate()
+	if img.is_compressed():
+		img.decompress()
+	var painted := 0
+	for y in range(2, img.get_height() - 2):
+		for x in range(2, img.get_width() - 2):
+			if (x + y * 3) % 6 != 0:
+				continue
+			if not _plum_leaf(img, x, y):
+				continue
+			img.set_pixel(x, y, Color(0.42, 0.16, 0.48, 1.0))
+			painted += 1
+	if painted == 0:
+		return null
+	return ImageTexture.create_from_image(img)
+
+
+func _plum_leaf(img: Image, x: int, y: int) -> bool:
+	var c := img.get_pixel(x, y)
+	if c.a < 0.85 or c.g < c.r or c.g < 0.12:
+		return false
+	for oy in range(-2, 3):
+		for ox in range(-2, 3):
+			if img.get_pixel(x + ox, y + oy).a < 0.75:
+				return false
+	return true
 
 
 func _asset_of(object_id: String) -> String:
