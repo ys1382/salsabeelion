@@ -17,13 +17,18 @@ static func run(host: Node) -> void:
 			"missing mara clip %s" % id)
 
 	var monday: PackedStringArray = MaraVoice.ids_for(CafeOrder.order_prompt())
-	await _expect(host, monday.size() == 1 and monday[0] == "order",
-		"monday prompt voiced extra words: %s" % str(monday))
+	await _expect(host, monday.has("order"),
+		"monday prompt missed the order: %s" % str(monday))
+
+	var camp := "Laughs gently, and waves a hand as if waving away your nervousness. \"You're fine, there's not a lot of my kind in this area. I'm a Çampire—vampire and werecat somewhere down the line. The wings plus the tail are a fun conversation starter.\""
+	var camp_ids: PackedStringArray = MaraVoice.ids_for(camp)
+	await _expect(host, camp_ids.has("campire"),
+		"Çampire line was silent: %s" % str(camp_ids))
 
 	var teach := "What's your order? Un or una, then a drink y a food, con if you want extras."
 	var taught: PackedStringArray = MaraVoice.ids_for(teach)
-	await _expect(host, taught == PackedStringArray(["order", "y", "con", "un", "una"]),
-		"teaching line missed a word: %s" % str(taught))
+	await _expect(host, taught.has("order") and taught.has("teach_later"),
+		"teaching line missed her sentence: %s" % str(taught))
 	var bye: PackedStringArray = MaraVoice.ids_for(
 		"Mara looks over. \"Adiós, y buenas noches.\" That means goodbye, and good night.")
 	await _expect(host, bye.size() == 1 and bye[0] == "bye_y",
@@ -31,6 +36,22 @@ static func run(host: Node) -> void:
 	var bye_and: PackedStringArray = MaraVoice.ids_for("Adiós, and buenas noches")
 	await _expect(host, bye_and.size() == 1 and bye_and[0] == "bye_and",
 		"monday goodbye used the wrong clip")
+	var y_nudge: PackedStringArray = MaraVoice.ids_for(
+		"Mara tilts her head, kind. \"Almost — here we say y. café y muffin?\"")
+	await _expect(host, y_nudge.has("almost_y"),
+		"y nudge did not speak: %s" % str(y_nudge))
+	var con_nudge: PackedStringArray = MaraVoice.ids_for(
+		"Mara tilts her head, kind. \"Almost — extras use con. café con azúcar?\"")
+	await _expect(host, con_nudge.has("almost_con"),
+		"con nudge did not speak: %s" % str(con_nudge))
+
+	DialogueUI.show_line("Mara", camp)
+	await host.get_tree().create_timer(0.3).timeout
+	await _expect(host, DialogueUI.body() == camp, "Çampire text left the screen")
+	await _expect(host, MaraVoice.speaking(), "Çampire line did not speak")
+	await _expect(host, not DayNight.crickets_playing(),
+		"crickets played under the Çampire line in the daytime")
+	MaraVoice.stop()
 
 	var prompt := CafeOrder.order_prompt()
 	DialogueUI.show_line("Mara", prompt)
@@ -40,18 +61,36 @@ static func run(host: Node) -> void:
 	await _expect(host, not DayNight.crickets_playing(),
 		"crickets played under her voice in the daytime")
 
-	DialogueUI.show_line("Mara", "Mara smiles. \"The door's there when you're ready.\"")
+	var cart := "You set the cup and plate in the dish cart.\n\nMara looks over. \"Adiós, y buenas noches.\" That means goodbye, and good night. Say it back."
+	DialogueUI.show_line("", cart)
+	await host.get_tree().create_timer(0.3).timeout
+	await _expect(host, DialogueUI.body() == cart, "goodbye text left the screen")
+	await _expect(host, MaraVoice.speaking(), "goodbye did not speak")
+	DialogueUI.close()
+	await host.get_tree().create_timer(0.3).timeout
+	await _expect(host, MaraVoice.speaking(), "closing the line cut off the goodbye")
+	MaraVoice.stop()
+
+	var words := "What's your order? A drink y a food."
+	DialogueUI.show_line("Mara", words)
+	DialogueUI.close()
+	await host.get_tree().create_timer(2.5).timeout
+	await _expect(host, MaraVoice.speaking(), "y did not follow the order line")
+	await _expect(host, not DayNight.crickets_playing(),
+		"crickets played under the second clip in the daytime")
+	MaraVoice.stop()
+
+	var quiet := "The dish cart is waiting for the next wash."
+	DialogueUI.show_line("Mara", quiet)
 	await host.get_tree().create_timer(0.25).timeout
-	await _expect(host, DialogueUI.body().contains("door's there"),
-		"a line without a clip hid the text")
+	await _expect(host, DialogueUI.body() == quiet, "a line without a clip hid the text")
 	await _expect(host, not MaraVoice.speaking(), "a missing line beeped or spoke")
 	await _expect(host, not DayNight.crickets_playing(), "daytime crickets started late")
 
 	MaraVoice.play_ids(PackedStringArray(["not_a_clip"]))
 	await host.get_tree().process_frame
 	await _expect(host, not MaraVoice.speaking(), "a missing file beeped")
-	await _expect(host, DialogueUI.body().contains("door's there"),
-		"a missing clip cleared the line")
+	await _expect(host, DialogueUI.body() == quiet, "a missing clip cleared the line")
 
 	DayNight.begin_night(0.0)
 	await host.get_tree().create_timer(2.6).timeout

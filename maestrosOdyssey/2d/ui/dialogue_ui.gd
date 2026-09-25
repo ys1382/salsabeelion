@@ -237,7 +237,6 @@ func body() -> String:
 
 
 func close() -> void:
-	MaraVoice.stop()
 	_order.hide()
 	_order.release_focus()
 	_hint.hide()

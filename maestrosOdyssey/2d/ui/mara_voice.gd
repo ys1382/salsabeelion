@@ -5,20 +5,17 @@ extends Node
 # voice, no network. A missing clip leaves the on-screen line alone.
 
 const VOICE := "es-MX-DaliaNeural"
+const Lines := preload("res://ui/mara_phrases.gd")
+const CLIPS: Dictionary = Lines.CLIPS
 
-const CLIPS := {
-	"order": preload("res://audio/mara_order.mp3"),
-	"y": preload("res://audio/mara_y.mp3"),
-	"con": preload("res://audio/mara_con.mp3"),
-	"un": preload("res://audio/mara_un.mp3"),
-	"una": preload("res://audio/mara_una.mp3"),
-	"bye_and": preload("res://audio/mara_bye_and.mp3"),
-	"bye_y": preload("res://audio/mara_bye_y.mp3"),
-}
+var _phrases: Array = []
 
 var _player: AudioStreamPlayer
 var _queue: PackedStringArray = PackedStringArray()
 var _speaking := false
+## Bumped when a line is cut off, so a web build can advance clips by length
+## without the finished signal starting the next word twice.
+var _token := 0
 
 
 func _ready() -> void:
@@ -26,34 +23,56 @@ func _ready() -> void:
 	_player = AudioStreamPlayer.new()
 	_player.name = "Mara"
 	_player.process_mode = Node.PROCESS_MODE_ALWAYS
-	_player.finished.connect(_on_finished)
 	add_child(_player)
+	for row in Lines.ROWS:
+		var needle := _core(str(row[0]))
+		_phrases.append({"needle": needle, "id": str(row[1]), "len": needle.length()})
+	_phrases.sort_custom(func(a, b): return int(a["len"]) > int(b["len"]))
 
 
 func note_line(speaker: String, text: String) -> void:
-	_halt()
-	if speaker != "Mara":
+	var hers := speaker == "Mara" or (speaker == "" and text.contains("Mara"))
+	if not hers:
+		_halt()
 		DayNight.duck_for_voice(false)
 		return
+	_halt()
 	play_ids(ids_for(text))
 
 
+## Every phrase of hers that appears in the line, in the order she says them.
+## A longer sentence wins over the single word inside it. Parenthetical
+## board hints stay on screen and are not spoken.
 func ids_for(text: String) -> PackedStringArray:
-	if text.contains("Adiós, y buenas noches"):
-		return PackedStringArray(["bye_y"])
-	if text.contains("Adiós, and buenas noches"):
-		return PackedStringArray(["bye_and"])
-	if not text.begins_with("What's your order?"):
-		return PackedStringArray()
-	var out := PackedStringArray(["order"])
-	var flat := _flat(text)
-	if " y " in flat:
-		out.append("y")
-	if " con " in flat:
-		out.append("con")
-	if "un and una" in flat or "un or una" in flat:
-		out.append("un")
-		out.append("una")
+	var flat := _core(_strip_parens(text))
+	var spans: Array = []
+	for phrase in _phrases:
+		var needle := str(phrase["needle"])
+		if needle == "":
+			continue
+		var at := flat.find(needle)
+		if at < 0:
+			continue
+		var end := at + needle.length()
+		# The spaces around a phrase are only there so "y" does not match
+		# inside "your". They are not part of the words, so two sentences
+		# that sit next to each other do not count as overlapping.
+		if needle.begins_with(" "):
+			at += 1
+		if needle.ends_with(" "):
+			end -= 1
+		var covered := false
+		for span in spans:
+			if at < int(span["end"]) and end > int(span["at"]):
+				covered = true
+				break
+		if covered:
+			continue
+		spans.append({"at": at, "end": end, "id": str(phrase["id"])})
+	spans.sort_custom(func(a, b): return int(a["at"]) < int(b["at"]))
+	var out := PackedStringArray()
+	for span in spans:
+		out.append(str(span["id"]))
 	return out
 
 
@@ -78,6 +97,7 @@ func stop() -> void:
 
 
 func _halt() -> void:
+	_token += 1
 	_queue = PackedStringArray()
 	_speaking = false
 	if _player != null and _player.playing:
@@ -93,20 +113,39 @@ func _play_next() -> void:
 			continue
 		_player.stream = stream
 		_player.play()
+		var token := _token
+		var wait := maxf(stream.get_length(), 0.2)
+		get_tree().create_timer(wait).timeout.connect(_advance.bind(token), CONNECT_ONE_SHOT)
 		return
 	_speaking = false
 	DayNight.duck_for_voice(false)
 
 
-func _on_finished() -> void:
-	if not _speaking:
+func _advance(token: int) -> void:
+	if token != _token or not _speaking:
 		return
 	_play_next()
 
 
-func _flat(text: String) -> String:
+func _strip_parens(text: String) -> String:
+	var out := ""
+	var depth := 0
+	for i in text.length():
+		var c := text[i]
+		if c == "(":
+			depth += 1
+		elif c == ")" and depth > 0:
+			depth -= 1
+		elif depth == 0:
+			out += c
+	return out
+
+
+func _core(text: String) -> String:
 	var out := text.to_lower()
-	for mark in ["—", "–", ".", ",", "?", "!", ":", ";", "\"", "'"]:
+	for mark in ["'", "’", "‘", "`"]:
+		out = out.replace(mark, "")
+	for mark in ["—", "–", ".", ",", "?", "!", ":", ";", "\"", "¿", "¡"]:
 		out = out.replace(mark, " ")
 	while "  " in out:
 		out = out.replace("  ", " ")
