@@ -126,6 +126,7 @@ func show_line(speaker: String, text: String, more := false) -> void:
 	_hint.show()
 	_fit(text, speaker != "")
 	_panel.show()
+	MaraVoice.note_line(speaker, text)
 
 
 ## Close-up of a wall sign. One paper: title and rules together, not a thin
@@ -236,6 +237,7 @@ func body() -> String:
 
 
 func close() -> void:
+	MaraVoice.stop()
 	_order.hide()
 	_order.release_focus()
 	_hint.hide()

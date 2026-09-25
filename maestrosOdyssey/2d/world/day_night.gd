@@ -27,6 +27,8 @@ const FADE_TO_DAY_S := 2.2
 ## listening level, so a low computer volume is enough.
 const CRICKET_DB := 16.0
 const CRICKET_SILENT_DB := -80.0
+## Quieter while Mara is speaking, so the line stays clear. Not silence.
+const CRICKET_DUCK_DB := -2.0
 const CRICKETS := preload("res://audio/crickets_night.mp3")
 
 ## Dark window rectangles in texture pixels (top-left of the house PNG).
@@ -51,6 +53,8 @@ const DOORS := {
 var _tween: Tween
 var _cricket_tween: Tween
 var _crickets: AudioStreamPlayer
+## True only while a Mara clip is playing. Never starts the night loop by itself.
+var _voice_duck := false
 var _fx: Node2D
 var _layers: Array[CanvasItem] = []
 var _soft: Texture2D
@@ -184,15 +188,34 @@ func _ensure_crickets() -> void:
 	add_child(_crickets)
 
 
+## Ease the night loop down for a spoken line, then bring it back.
+## Daytime and the café stay quiet — this does not start crickets.
+func duck_for_voice(on: bool) -> void:
+	if _voice_duck == on:
+		return
+	_voice_duck = on
+	if not _outdoor_night():
+		return
+	_ensure_crickets()
+	if on:
+		_fade_crickets(CRICKET_DUCK_DB, true, 0.35)
+	else:
+		_fade_crickets(CRICKET_DB, true, 0.7)
+
+
 func _sync_crickets() -> void:
 	_ensure_crickets()
 	if _outdoor_night():
-		_fade_crickets(CRICKET_DB, true)
+		var db := CRICKET_DUCK_DB if _voice_duck else CRICKET_DB
+		var dur := 0.35 if _voice_duck else FADE_TO_DAY_S
+		_fade_crickets(db, true, dur)
 	else:
 		_fade_crickets(CRICKET_SILENT_DB, false)
 
 
-func _fade_crickets(target_db: float, keep: bool) -> void:
+func _fade_crickets(target_db: float, keep: bool, duration: float = -1.0) -> void:
+	if duration < 0.0:
+		duration = FADE_TO_DAY_S
 	if keep:
 		if _crickets.playing and absf(_crickets.volume_db - target_db) < 0.4:
 			return
@@ -206,7 +229,7 @@ func _fade_crickets(target_db: float, keep: bool) -> void:
 		_cricket_tween = null
 	_cricket_tween = create_tween()
 	_cricket_tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
-	_cricket_tween.tween_property(_crickets, "volume_db", target_db, FADE_TO_DAY_S) \
+	_cricket_tween.tween_property(_crickets, "volume_db", target_db, duration) \
 		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	if not keep:
 		_cricket_tween.tween_callback(_stop_crickets)
