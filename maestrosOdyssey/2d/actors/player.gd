@@ -1060,24 +1060,17 @@ func _refresh_worn() -> void:
 
 
 func _draw_satchel() -> Texture2D:
-	# Tall enough to reach the shoulder. Bag at the hip, strap from the other shoulder.
-	var img := Image.create(16, 28, false, Image.FORMAT_RGBA8)
+	# Box and flap only. No strap.
+	var img := Image.create(10, 8, false, Image.FORMAT_RGBA8)
 	img.fill(Color(0, 0, 0, 0))
 	var cloth := Color(0.46, 0.32, 0.18)
 	var flap := Color(0.36, 0.24, 0.14)
-	var strap := Color(0.40, 0.27, 0.16)
-	for i in 20:
-		var x := 1 + int(i * 8 / 19)
-		var y := i
-		img.set_pixel(x, y, strap)
-		if x + 1 < 16:
-			img.set_pixel(x + 1, y, strap)
-	for y in range(20, 28):
-		for x in range(7, 16):
+	for y in range(2, 8):
+		for x in range(1, 9):
 			img.set_pixel(x, y, cloth)
-	for x in range(7, 16):
-		img.set_pixel(x, 19, flap)
-		img.set_pixel(x, 20, flap)
+	for x in range(1, 9):
+		img.set_pixel(x, 1, flap)
+		img.set_pixel(x, 2, flap)
 	return ImageTexture.create_from_image(img)
 
 
@@ -1089,10 +1082,25 @@ func _place_bag() -> void:
 		return
 	_bag.texture = _bag_tex
 	_bag.show()
-	_bag.flip_h = facing.x < -0.3
-	# Centered on the body: strap top at the shoulder, box down at the hip.
-	_bag.position = Vector2(0, -16)
-	_bag.z_index = 1
+	var side := absf(facing.x) > absf(facing.y)
+	var toward_you := not side and facing.y >= 0.0
+	var away := not side and facing.y < 0.0
+	# On the back. Facing the screen, it stays behind the body, off the face.
+	# The body sits low in the frame. This is the back, under the hair.
+	var on_back := Vector2(0, -5)
+	if toward_you:
+		_bag.z_index = -1
+		_bag.position = on_back
+		_bag.flip_h = false
+	elif away:
+		_bag.z_index = 2
+		_bag.position = on_back
+		_bag.flip_h = false
+	else:
+		_bag.z_index = 1
+		var left := facing.x < 0.0
+		_bag.flip_h = left
+		_bag.position = Vector2(3 if left else -3, on_back.y)
 
 
 func _hide_held() -> void:
