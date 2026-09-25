@@ -109,16 +109,11 @@ body {
 			<div id="status-notice"></div>
 		</div>
 
-		<script src="brew.js?v=5656412"></script>
+		<script src="brew.js"></script>
 		<script>
-const GODOT_CONFIG = {"args":[],"canvasResizePolicy":1,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":false,"executable":"brew","experimentalVK":false,"fileSizes":{"brew.pck":5656412,"brew.wasm":39514754},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
+const GODOT_CONFIG = {"args":[],"canvasResizePolicy":1,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":false,"executable":"brew","experimentalVK":false,"fileSizes":{"brew.pck":5660488,"brew.wasm":39514754},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
 const GODOT_THREADS_ENABLED = false;
 const engine = new Engine(GODOT_CONFIG);
-const _preload = engine.preloadFile.bind(engine);
-engine.preloadFile = function (file, path) {
-	if (file === 'brew.pck') return _preload('brew.pck?v=5656412', 'brew.pck');
-	return _preload(file, path);
-};
 
 (function () {
 	const statusOverlay = document.getElementById('status');

@@ -171,6 +171,15 @@ func _steer_past_person(input: Vector2) -> void:
 	if _step_side == Vector2.ZERO or _push_held < PERSON_BUMP_S:
 		return
 	var dir := _held_axis(input)
+	# The gap between people is a real opening. Take it instead of sliding
+	# into a table at the end of the row.
+	if not _spot_taken(global_position + dir * 11.0):
+		velocity = dir * SPEED
+		return
+	if _env_blocked(global_position + _step_side * 10.0):
+		var other := -_step_side
+		if not _env_blocked(global_position + other * 10.0):
+			_step_side = other
 	var forward := 0.0
 	if not _shoulder_blocked(dir, _step_side):
 		forward = SPEED * 0.9
@@ -292,6 +301,19 @@ func _people_on_side(dir: Vector2, side: Vector2) -> int:
 		if along > -12.0 and along < 28.0 and lateral > 4.0 and lateral < 48.0:
 			n += 1
 	return n
+
+
+func _spot_taken(at: Vector2) -> bool:
+	var space := get_world_2d().direct_space_state
+	var shape := CircleShape2D.new()
+	shape.radius = 5.0
+	var q := PhysicsShapeQueryParameters2D.new()
+	q.shape = shape
+	q.transform = Transform2D(0.0, at)
+	q.collision_mask = 1 | NPC_LAYER
+	q.collide_with_areas = false
+	q.exclude = [get_rid()]
+	return not space.intersect_shape(q, 1).is_empty()
 
 
 func _env_blocked(at: Vector2) -> bool:
