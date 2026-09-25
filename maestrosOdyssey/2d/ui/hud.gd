@@ -3,9 +3,9 @@ extends CanvasLayer
 # pesos — three short lines, top-left. Hearts stay off; this is not a fighting
 # game.
 #
-# The bottom row is what you are carrying. Empty boxes stay so it reads as a
-# bar. The learning card has its own slot on the left and stays there. The
-# home crate opens a second row of the same boxes for berries and logs.
+# The bottom row is two slots. The learning card fills the right one and stays
+# there. Berries, or logs when there are no berries, use the left one. The
+# home crate opens a second row of the same boxes for those stacks.
 
 const PAD := 10
 const LINE := 16
@@ -67,8 +67,7 @@ func _make_line(y: float) -> Label:
 
 
 func _build_bar() -> void:
-	var slots := POCKETS + 1
-	var width := float(slots * SLOT + (slots - 1) * GAP)
+	var width := float(POCKETS * SLOT + (POCKETS - 1) * GAP)
 	var host := CenterContainer.new()
 	_pin_bottom(host, width, -34, -6)
 	host.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -77,13 +76,17 @@ func _build_bar() -> void:
 	_bar.add_theme_constant_override("separation", GAP)
 	_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	host.add_child(_bar)
-	_card_button = _make_slot(false, -1)
-	(_card_button.get_node("Icon") as TextureRect).texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	_bar.add_child(_card_button)
 	for i in POCKETS:
 		var btn := _make_slot(false, i)
 		_bar.add_child(btn)
 		_carry_buttons.append(btn)
+	_card_button = _carry_buttons[1]
+	var card_icon := _card_button.get_node("Icon") as TextureRect
+	card_icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	card_icon.offset_left = 1
+	card_icon.offset_top = 3
+	card_icon.offset_right = -1
+	card_icon.offset_bottom = -3
 	berry_count = _count_label(_carry_buttons[0])
 	_bar.hide()
 
@@ -183,7 +186,11 @@ func _process(_delta: float) -> void:
 	_bar.show()
 	if crate_open and not _at_home():
 		_close_crate()
-	_paint(_carry_buttons, GameState.carry_ids(), false)
+	var stacks := GameState.carry_ids()
+	var shown: Array[String] = []
+	if not stacks.is_empty():
+		shown.append(stacks[0])
+	_paint(_carry_buttons, shown, false)
 	_paint_card()
 	_paint(_crate_buttons, GameState.crate_ids(), true)
 	if chosen_carry != "" and GameState.carry_count(chosen_carry) <= 0:
@@ -222,10 +229,13 @@ func crate_prompt() -> String:
 
 
 func _on_carry_slot(index: int) -> void:
-	var ids := GameState.carry_ids()
-	if index < 0 or index >= ids.size():
+	# The right slot is the learning card. Place never selects it.
+	if index != 0:
 		return
-	chosen_carry = ids[index]
+	var ids := GameState.carry_ids()
+	if ids.is_empty():
+		return
+	chosen_carry = ids[0]
 	crate_choice = ""
 
 
@@ -288,13 +298,13 @@ func _on_item_taken(item: Dictionary) -> void:
 
 
 func _settle_card(icon: TextureRect) -> void:
-	icon.offset_top = -16.0
-	icon.offset_bottom = -24.0
+	icon.offset_top = -14.0
+	icon.offset_bottom = -20.0
 	var tween := create_tween()
 	tween.set_trans(Tween.TRANS_QUAD)
 	tween.set_ease(Tween.EASE_OUT)
-	tween.tween_property(icon, "offset_top", 2.0, 0.35)
-	tween.parallel().tween_property(icon, "offset_bottom", -6.0, 0.35)
+	tween.tween_property(icon, "offset_top", 3.0, 0.35)
+	tween.parallel().tween_property(icon, "offset_bottom", -3.0, 0.35)
 
 
 func _icon_for(item_id: String) -> Texture2D:

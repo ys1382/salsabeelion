@@ -37,8 +37,13 @@ static func run(host: Node) -> void:
 	gs.logs = 1
 	hud._process(0.0)
 	assert(str(hud.berry_count.text) == "4")
-	assert(str((hud._carry_buttons[1].get_node("Count") as Label).text) == "1")
 	assert(num.text == "")
+	assert(hud._carry_buttons.size() == 2)
+	gs.blueberries = 0
+	hud._process(0.0)
+	assert(str(hud.berry_count.text) == "1")
+	gs.blueberries = 4
+	hud._process(0.0)
 
 	hud._on_carry_slot(-1)
 	var press := InputEventKey.new()
@@ -54,7 +59,7 @@ static func run(host: Node) -> void:
 	assert(num.text == "")
 
 	await host.get_tree().create_timer(0.45).timeout
-	assert(absf(icon.offset_top - 2.0) < 0.5)
+	assert(absf(icon.offset_top - 3.0) < 0.5)
 	print("learning card slot: ok")
 	host.get_tree().quit()
 
