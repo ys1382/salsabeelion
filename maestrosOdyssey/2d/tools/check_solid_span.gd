@@ -18,6 +18,9 @@ func _initialize() -> void:
 		"prop.crate_large_empty",
 		"prop.barrel_small_empty",
 		"prop.bench_1",
+		"tree.tree_emerald_1",
+		"prop.lamppost_3",
+		"building.well_hay_1",
 	]
 	for id in ids:
 		var node: StaticBody2D = load(Catalog.object(id)["scene"]).instantiate()

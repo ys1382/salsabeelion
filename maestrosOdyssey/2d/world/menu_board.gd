@@ -20,7 +20,39 @@ func setup() -> void:
 	var sprite := get_parent().get_node_or_null("Sprite") as CanvasItem
 	if sprite != null:
 		sprite.hide()
+	_match_solid()
 	queue_redraw()
+
+
+## The sign picture is hidden. The solid shape is this chalkboard, legs included,
+## with the gap between the legs left open.
+func _match_solid() -> void:
+	var body := get_parent() as CollisionObject2D
+	if body == null:
+		return
+	for child in body.get_children():
+		if child is CollisionPolygon2D:
+			(child as CollisionPolygon2D).disabled = true
+			(child as Node).queue_free()
+		elif child is CollisionShape2D and str(child.name).begins_with("Solid"):
+			(child as Node).queue_free()
+	var top := Vector2(-BOARD_W * 0.5, -(LEG_H + BOARD_H))
+	var frame_pos := top + Vector2(-FRAME_T, -FRAME_T)
+	var frame_size := Vector2(BOARD_W + FRAME_T * 2.0, BOARD_H + FRAME_T * 2.0)
+	_add_box(body, "SolidBoard", frame_pos, frame_size)
+	var leg := Vector2(3, LEG_H)
+	_add_box(body, "SolidLegL", Vector2(-BOARD_W * 0.34, -LEG_H), leg)
+	_add_box(body, "SolidLegR", Vector2(BOARD_W * 0.34 - 3.0, -LEG_H), leg)
+
+
+func _add_box(body: CollisionObject2D, box_name: String, pos: Vector2, size: Vector2) -> void:
+	var shape := CollisionShape2D.new()
+	shape.name = box_name
+	var rect := RectangleShape2D.new()
+	rect.size = size
+	shape.shape = rect
+	shape.position = pos + size * 0.5
+	body.add_child(shape)
 
 
 func _draw() -> void:

@@ -5,7 +5,7 @@ extends CharacterBody2D
 #
 # The collider is a small ellipse at the character's feet, not the whole 48x48
 # cell — top-down games read correctly when only the feet collide, and it lets
-# the player tuck under the overhanging parts of trees and roofs.
+# the player overlap the empty part of a picture, not the trunk or the roof.
 
 const CafePhrasesScript := preload("res://ui/cafe_phrases.gd")
 const StreetSignScript := preload("res://world/street_sign.gd")

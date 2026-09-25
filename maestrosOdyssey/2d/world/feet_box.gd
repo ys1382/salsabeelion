@@ -12,6 +12,9 @@ const SHAPE := {
 	"notice": true,
 	"sign": true,
 	"house": true,
+	"tree": true,
+	"lamp": true,
+	"well": true,
 }
 
 
