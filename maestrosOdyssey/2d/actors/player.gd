@@ -313,7 +313,7 @@ func _held_axis(input: Vector2) -> Vector2:
 func _update_focus() -> void:
 	var best: Node = null
 	var best_score := INF
-	for area in _reach.get_overlapping_areas():
+	for area in _areas_in_reach():
 		if area is Interactable:
 			# Outdoor place names are already painted on the sign.
 			if StreetSignScript.caption_for(str((area as Interactable).data.get("id", ""))) != "":
@@ -346,7 +346,10 @@ func _update_focus() -> void:
 		return
 	if focus is Interactable:
 		var it := focus as Interactable
-		DialogueUI.show_prompt("%s — %s" % [_prompt_key(it), it.prompt()])
+		if str(it.data.get("id", "")) == "home_crate_look":
+			DialogueUI.show_prompt(Hud.crate_prompt())
+		else:
+			DialogueUI.show_prompt("%s — %s" % [_prompt_key(it), it.prompt()])
 	elif focus is Npc:
 		DialogueUI.show_prompt("T — Talk to %s" % (focus as Npc).display_name)
 	elif _chop_prompt():
@@ -358,6 +361,27 @@ func _update_focus() -> void:
 
 
 ## Leave is a big reach box by the door. Nudge it so wall boards win nearby.
+func _areas_in_reach() -> Array:
+	var areas := _reach.get_overlapping_areas()
+	if not areas.is_empty():
+		return areas
+	var shape := _reach.get_node_or_null("Shape") as CollisionShape2D
+	if shape == null or shape.shape == null:
+		return areas
+	var q := PhysicsShapeQueryParameters2D.new()
+	q.shape = shape.shape
+	q.transform = shape.global_transform
+	q.collision_mask = _reach.collision_mask
+	q.collide_with_areas = true
+	q.collide_with_bodies = false
+	q.exclude = [_reach.get_rid()]
+	var found: Array = []
+	for row in get_world_2d().direct_space_state.intersect_shape(q, 8):
+		if row.collider is Area2D and row.collider != _reach:
+			found.append(row.collider)
+	return found
+
+
 func _focus_bias(it: Interactable) -> float:
 	if it.verb == "leave":
 		return 900.0
@@ -902,13 +926,20 @@ func _pick_prompt() -> bool:
 func try_pick() -> bool:
 	if DialogueUI.is_open() or DialogueUI.is_ordering() or seated:
 		return false
-	var place := Interiors.current
-	if place == null or not place.has_method("try_pick_berries"):
+	if _pick_prompt():
+		var place := Interiors.current
+		if place != null and place.has_method("try_pick_berries"):
+			var picked: bool = place.try_pick_berries(global_position, facing)
+			if picked:
+				_refresh_held()
+			return picked
+	if not Hud.crate_open:
 		return false
-	var ok: bool = place.try_pick_berries(global_position, facing)
-	if ok:
-		_refresh_held()
-	return ok
+	if Hud.crate_choice != "":
+		return GameState.take_stack(Hud.crate_choice)
+	if Hud.chosen_carry != "" and GameState.carry_count(Hud.chosen_carry) > 0:
+		return GameState.place_stack(Hud.chosen_carry)
+	return false
 
 
 func _refresh_held() -> void:

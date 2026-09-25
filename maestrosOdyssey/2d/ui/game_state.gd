@@ -60,6 +60,10 @@ var campfire_stage: int = 0
 var wood_stowed_day: int = 0
 ## Berries in hand. The bottom box shows this number.
 var blueberries: int = 0
+## Cut wood still in hand. The log box uses this number, then goes away on the fire.
+var logs: int = 0
+## Home crate. Same item ids as the bottom row. Stays for the whole play.
+var crate: Dictionary = {}
 ## Bush id -> day_index it was last picked. Dots stay gone until the next Tuesday.
 var berry_picked: Dictionary = {}
 const BERRY_BUSHES: Array[String] = ["berry_bush_0", "berry_bush_1", "berry_bush_2"]
@@ -105,6 +109,8 @@ func set_world(w: Dictionary) -> void:
 	campfire_stage = 0
 	wood_stowed_day = 0
 	blueberries = 0
+	logs = 0
+	crate.clear()
 	berry_picked.clear()
 	_sync_clock()
 	if has_node("/root/CafeOrder"):
@@ -197,6 +203,8 @@ func advance_day() -> void:
 	day_index += 1
 	_sync_clock()
 	# Yesterday's bundle is done. Only Saturday asks for wood again, next week.
+	# Berries and anything already in the crate stay.
+	logs = 0
 	inventory.erase("logs")
 	# Outdoor street returns to morning while you are still inside the house.
 	if has_node("/root/DayNight"):
@@ -261,7 +269,9 @@ func wood_chore_open() -> bool:
 
 func note_wood_cut() -> void:
 	wood_cut_day = day_index
-	take_item("logs")
+	logs += 1
+	if not has_item("logs"):
+		take_item("logs")
 	carry_changed.emit()
 
 
@@ -276,7 +286,7 @@ func wood_stowed_today() -> bool:
 
 ## Cut wood still in the sack, ready for the campfire.
 func wood_for_fire() -> bool:
-	return wood_cut_today() and not wood_stowed_today()
+	return wood_cut_today() and not wood_stowed_today() and logs > 0
 
 
 func campfire_prompt() -> String:
@@ -311,9 +321,75 @@ func tend_campfire() -> String:
 
 func _stow_wood() -> void:
 	wood_stowed_day = day_index
+	logs = 0
 	inventory.erase("logs")
 	campfire_changed.emit()
 	carry_changed.emit()
+
+
+## Bottom-row kinds. The card, the meal, the sack, and the basket are not slots.
+func carry_ids() -> Array[String]:
+	var ids: Array[String] = []
+	if blueberries > 0:
+		ids.append("blueberries")
+	if logs > 0:
+		ids.append("logs")
+	return ids
+
+
+func carry_count(item_id: String) -> int:
+	if item_id == "blueberries":
+		return blueberries
+	if item_id == "logs":
+		return logs
+	return 0
+
+
+func crate_ids() -> Array[String]:
+	var ids: Array[String] = []
+	for item_id in ["blueberries", "logs"]:
+		if int(crate.get(item_id, 0)) > 0:
+			ids.append(item_id)
+	return ids
+
+
+func crate_count(item_id: String) -> int:
+	return int(crate.get(item_id, 0))
+
+
+## The whole chosen stack goes into the crate and adds to the same kind.
+func place_stack(item_id: String) -> bool:
+	var n := carry_count(item_id)
+	if n <= 0:
+		return false
+	crate[item_id] = crate_count(item_id) + n
+	_clear_carry(item_id)
+	carry_changed.emit()
+	return true
+
+
+## The whole crate stack comes back to the bottom row and adds there.
+func take_stack(item_id: String) -> bool:
+	var n := crate_count(item_id)
+	if n <= 0:
+		return false
+	crate.erase(item_id)
+	if item_id == "blueberries":
+		blueberries += n
+	elif item_id == "logs":
+		logs += n
+		if not has_item("logs"):
+			take_item("logs")
+	carry_changed.emit()
+	return true
+
+
+func _clear_carry(item_id: String) -> void:
+	if item_id == "blueberries":
+		blueberries = 0
+	elif item_id == "logs":
+		logs = 0
+		inventory.erase("logs")
 
 
 func _sync_clock() -> void:

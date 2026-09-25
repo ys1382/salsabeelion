@@ -114,9 +114,10 @@ func use() -> String:
 	if str(data.get("id", "")) == "campfire":
 		used.emit(self)
 		return GameState.tend_campfire()
-	if str(data.get("id", "")) == "home_crate_look" and GameState.carrying_sack():
+	if str(data.get("id", "")) == "home_crate_look":
 		used.emit(self)
-		return "Your sack is with you, for the wood."
+		Hud.toggle_crate()
+		return ""
 	if str(data.get("id", "")) == "dish_cart":
 		used.emit(self)
 		return CafeOrder.use_dish_cart()

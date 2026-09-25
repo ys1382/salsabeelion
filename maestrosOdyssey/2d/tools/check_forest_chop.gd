@@ -77,7 +77,8 @@ static func run(host: Node) -> void:
 	assert(_blue_dots(bush) == 0)
 	var hud: Node = host.get_node("/root/Hud")
 	hud._process(0.0)
-	assert(str(hud.berry_count.text).ends_with("4"))
+	assert(str(hud.berry_count.text) == "4")
+	assert(not str(hud.berry_count.text).contains("Blueberries"))
 	player._unhandled_input(press)
 	assert(gs.blueberries == 4)
 	player._refresh_held()
@@ -98,6 +99,9 @@ static func run(host: Node) -> void:
 	interiors.leave()
 	assert(not interiors.inside())
 	interiors._travel_ready_at = 0
+	if not await _check_boxes(host, player, interiors, hud, gs):
+		host.get_tree().quit(1)
+		return
 
 	gs.day_index = 6
 	gs._sync_clock()
@@ -144,10 +148,101 @@ static func run(host: Node) -> void:
 	host.get_tree().quit()
 
 
+## Berry box instead of the text line, then the home crate stores and returns the stack.
+static func _check_boxes(host: Node, player: Player, interiors: Node, hud: Node, gs: Node) -> bool:
+	assert(gs.blueberries == 12)
+	hud._process(0.0)
+	assert(hud._bar.visible)
+	assert(str(hud.berry_count.text) == "12")
+	assert(str(hud._pesos.text).ends_with("pesos"))
+	var empty := 0
+	for btn in hud._carry_buttons:
+		if str((btn.get_node("Count") as Label).text) == "":
+			empty += 1
+	assert(empty == 7)
+	interiors.enter("dragons_brew", "")
+	assert(gs.blueberries == 12)
+	assert(gs.logs == 0)
+	interiors.leave()
+	gs.cafe_meal_done = false
+	interiors.enter("player_house", "")
+	assert(gs.blueberries == 12)
+	var crate := interiors.current.get_node("Objects/home_crate") as Node2D
+	player.agent_input = Vector2.ZERO
+	player.velocity = Vector2.ZERO
+	player.global_position = crate.global_position + Vector2(0, 24)
+	player.facing = Vector2.UP
+	await host.get_tree().physics_frame
+	player.agent_input = Vector2.UP
+	for _i in 40:
+		await host.get_tree().physics_frame
+	player.agent_input = Vector2.ZERO
+	player.velocity = Vector2.ZERO
+	player.facing = Vector2.UP
+	await host.get_tree().physics_frame
+	player._update_focus()
+	if not (player.focus is Interactable):
+		var shape := player._reach.get_node("Shape") as CollisionShape2D
+		var q := PhysicsShapeQueryParameters2D.new()
+		q.shape = shape.shape
+		q.transform = shape.global_transform
+		q.collision_mask = player._reach.collision_mask
+		q.collide_with_areas = true
+		q.collide_with_bodies = false
+		for row in player.get_world_2d().direct_space_state.intersect_shape(q, 8):
+			if row.collider is Interactable:
+				player.focus = row.collider
+				break
+	assert(player.focus is Interactable)
+	assert(str((player.focus as Interactable).data.get("id", "")) == "home_crate_look")
+	var use := InputEventAction.new()
+	use.action = "interact"
+	use.pressed = true
+	player._unhandled_input(use)
+	assert(hud.crate_open)
+	assert(hud._crate_panel.visible)
+	DialogueUI.show_prompt(Hud.crate_prompt())
+	assert(str(DialogueUI._prompt.text).begins_with("E — Close"))
+	hud._on_carry_slot(0)
+	var press := InputEventKey.new()
+	press.keycode = KEY_P
+	press.pressed = true
+	player._unhandled_input(press)
+	assert(gs.blueberries == 0)
+	assert(gs.crate_count("blueberries") == 12)
+	gs.blueberries = 4
+	hud._process(0.0)
+	hud._on_carry_slot(0)
+	player._unhandled_input(press)
+	assert(gs.blueberries == 0)
+	assert(gs.crate_count("blueberries") == 16)
+	hud._on_crate_slot(0)
+	DialogueUI.show_prompt(Hud.crate_prompt())
+	assert(str(DialogueUI._prompt.text).contains("P — Pick"))
+	player._unhandled_input(press)
+	assert(gs.blueberries == 16)
+	assert(gs.crate_count("blueberries") == 0)
+	DialogueUI.show_prompt("T — Talk")
+	var prompt: Label = DialogueUI._prompt
+	assert(prompt.visible)
+	assert("T — Talk" in prompt.text)
+	# The prompt control is a tall anchor. The words themselves sit in the top of it.
+	var text_top := prompt.get_global_rect().position.y
+	var text_bottom := text_top + 16.0
+	var bar: Rect2 = hud._bar.get_global_rect()
+	var store: Rect2 = hud._crate_panel.get_global_rect()
+	assert(text_bottom < bar.position.y)
+	assert(store.end.y < text_top)
+	interiors.leave()
+	assert(gs.blueberries == 16)
+	return true
+
+
 ## Off the village's left edge, into the east side of the woods, then back to that gap.
 static func _walk_forest_mouth(host: Node, player: Player, interiors: Node, _clearing: Node) -> void:
 	var shade := load("res://world/shade_path.gd")
 	await host.get_tree().create_timer(0.6).timeout
+	player._attacking = false
 	player.global_position = shade.center_of(Vector2i(44, 14))
 	player.velocity = Vector2.ZERO
 	player.agent_input = Vector2.RIGHT
