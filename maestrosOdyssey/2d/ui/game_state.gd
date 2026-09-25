@@ -327,7 +327,8 @@ func _stow_wood() -> void:
 	carry_changed.emit()
 
 
-## Bottom-row kinds. The card, the meal, the sack, and the basket are not slots.
+## Bottom-row stacks. Berries and logs only. The learning card has its own
+## slot and is not a stack, so Place never moves it into the crate.
 func carry_ids() -> Array[String]:
 	var ids: Array[String] = []
 	if blueberries > 0:
@@ -358,7 +359,10 @@ func crate_count(item_id: String) -> int:
 
 
 ## The whole chosen stack goes into the crate and adds to the same kind.
+## The learning card stays in its slot. It is not a stack.
 func place_stack(item_id: String) -> bool:
+	if item_id == "learning_card":
+		return false
 	var n := carry_count(item_id)
 	if n <= 0:
 		return false

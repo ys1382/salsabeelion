@@ -87,6 +87,8 @@ func _ready() -> void:
 		call_deferred("_run_mara_voice_check")
 	elif _has_flag("--check-cafe-music"):
 		call_deferred("_run_cafe_music_check")
+	elif _has_flag("--check-learning-card"):
+		call_deferred("_run_learning_card_check")
 	elif not _has_flag("--agent-bridge"):
 		Journal.show_opening()
 
@@ -387,4 +389,9 @@ func _run_mara_voice_check() -> void:
 
 func _run_cafe_music_check() -> void:
 	var check: Script = load("res://tools/check_cafe_music.gd")
+	check.run(self)
+
+
+func _run_learning_card_check() -> void:
+	var check: Script = load("res://tools/check_learning_card.gd")
 	check.run(self)

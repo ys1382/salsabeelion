@@ -4,7 +4,8 @@ extends CanvasLayer
 # game.
 #
 # The bottom row is what you are carrying. Empty boxes stay so it reads as a
-# bar. The home crate opens a second row of the same boxes.
+# bar. The learning card has its own slot on the left and stays there. The
+# home crate opens a second row of the same boxes for berries and logs.
 
 const PAD := 10
 const LINE := 16
@@ -35,6 +36,9 @@ var crate_choice := ""
 
 var _berry_tex: Texture2D
 var _log_tex: Texture2D
+var _card_tex: Texture2D
+var _card_button: Button
+var _card_settled := false
 
 
 func _ready() -> void:
@@ -44,8 +48,10 @@ func _ready() -> void:
 	_pesos = _make_line(LINE * 2)
 	_berry_tex = _draw_berries()
 	_log_tex = _draw_log()
+	_card_tex = _draw_card()
 	_build_bar()
 	_build_crate()
+	GameState.item_taken.connect(_on_item_taken)
 
 
 func _make_line(y: float) -> Label:
@@ -61,14 +67,19 @@ func _make_line(y: float) -> Label:
 
 
 func _build_bar() -> void:
+	var slots := POCKETS + 1
+	var width := float(slots * SLOT + (slots - 1) * GAP)
 	var host := CenterContainer.new()
-	_pin_bottom(host, 46, -34, -6)
+	_pin_bottom(host, width, -34, -6)
 	host.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(host)
 	_bar = HBoxContainer.new()
 	_bar.add_theme_constant_override("separation", GAP)
 	_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	host.add_child(_bar)
+	_card_button = _make_slot(false, -1)
+	(_card_button.get_node("Icon") as TextureRect).texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_bar.add_child(_card_button)
 	for i in POCKETS:
 		var btn := _make_slot(false, i)
 		_bar.add_child(btn)
@@ -173,6 +184,7 @@ func _process(_delta: float) -> void:
 	if crate_open and not _at_home():
 		_close_crate()
 	_paint(_carry_buttons, GameState.carry_ids(), false)
+	_paint_card()
 	_paint(_crate_buttons, GameState.crate_ids(), true)
 	if chosen_carry != "" and GameState.carry_count(chosen_carry) <= 0:
 		chosen_carry = ""
@@ -258,10 +270,75 @@ func _style_slot(btn: Button, bright: bool) -> void:
 	btn.add_theme_stylebox_override("focus", box)
 
 
+func _paint_card() -> void:
+	var icon := _card_button.get_node("Icon") as TextureRect
+	var num := _card_button.get_node("Count") as Label
+	icon.texture = _card_tex
+	num.text = ""
+	_style_slot(_card_button, false)
+	if not _card_settled:
+		_card_settled = true
+		_settle_card(icon)
+
+
+func _on_item_taken(item: Dictionary) -> void:
+	if str(item.get("id", "")) != "learning_card":
+		return
+	_card_settled = false
+
+
+func _settle_card(icon: TextureRect) -> void:
+	icon.offset_top = -16.0
+	icon.offset_bottom = -24.0
+	var tween := create_tween()
+	tween.set_trans(Tween.TRANS_QUAD)
+	tween.set_ease(Tween.EASE_OUT)
+	tween.tween_property(icon, "offset_top", 2.0, 0.35)
+	tween.parallel().tween_property(icon, "offset_bottom", -6.0, 0.35)
+
+
 func _icon_for(item_id: String) -> Texture2D:
 	if item_id == "logs":
 		return _log_tex
 	return _berry_tex
+
+
+## A wide cream card with a dull gold edge and a small café cup.
+## Not a bank card: no chip, no stripe, no brand colors.
+func _draw_card() -> Texture2D:
+	var img := Image.create(16, 16, false, Image.FORMAT_RGBA8)
+	img.fill(Color(0, 0, 0, 0))
+	var paper := Color(0.94, 0.88, 0.74, 1.0)
+	var edge := Color(0.55, 0.42, 0.26, 1.0)
+	var cup := Color(0.48, 0.30, 0.16, 1.0)
+	var inside := Color(0.72, 0.48, 0.28, 1.0)
+	for x in range(2, 14):
+		img.set_pixel(x, 5, edge)
+		img.set_pixel(x, 11, edge)
+	for y in range(6, 11):
+		img.set_pixel(1, y, edge)
+		img.set_pixel(14, y, edge)
+	for x in range(2, 14):
+		for y in range(6, 11):
+			img.set_pixel(x, y, paper)
+	img.set_pixel(2, 5, Color(0, 0, 0, 0))
+	img.set_pixel(13, 5, Color(0, 0, 0, 0))
+	img.set_pixel(2, 11, Color(0, 0, 0, 0))
+	img.set_pixel(13, 11, Color(0, 0, 0, 0))
+	img.set_pixel(2, 6, edge)
+	img.set_pixel(13, 6, edge)
+	img.set_pixel(2, 10, edge)
+	img.set_pixel(13, 10, edge)
+	for x in range(6, 10):
+		img.set_pixel(x, 7, cup)
+	img.set_pixel(6, 8, cup)
+	img.set_pixel(7, 8, inside)
+	img.set_pixel(8, 8, inside)
+	img.set_pixel(9, 8, cup)
+	img.set_pixel(10, 8, cup)
+	for x in range(6, 10):
+		img.set_pixel(x, 9, cup)
+	return ImageTexture.create_from_image(img)
 
 
 func _at_home() -> bool:

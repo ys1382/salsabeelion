@@ -32,6 +32,7 @@ def main() -> int:
     assert "♥" not in hud and "♡" not in hud
     assert "MAX_HP" not in hud
     assert "learning_card" in hud
+    assert "_draw_card" in hud
     assert "Week %d" in hud
     assert "pesos" in hud
     state = STATE.read_text(encoding="utf-8")
@@ -39,6 +40,8 @@ def main() -> int:
     assert "weekday" in state and "week_number" in state
     assert "card_balance" in state
     assert "refill_card" in state
+    assert 'item_id == "learning_card"' in state
+    assert "return false" in state.split("func place_stack", 1)[1].split("func take_stack", 1)[0]
     print("learning card hud: ok")
     return 0
 
