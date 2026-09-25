@@ -66,7 +66,8 @@ static func run(host: Node) -> void:
 	player.facing = Vector2.UP
 	player._refresh_held()
 	var held := player.get_node("Held") as Sprite2D
-	assert(not held.visible)
+	assert(gs.held_item() == "learning_card")
+	assert(held.visible)
 	assert(clearing.berry_ready(player.global_position, player.facing))
 	var press := InputEventKey.new()
 	press.keycode = KEY_P
@@ -76,10 +77,12 @@ static func run(host: Node) -> void:
 	assert(not gs.bush_has_berries("berry_bush_0"))
 	assert(_blue_dots(bush) == 0)
 	var hud: Node = host.get_node("/root/Hud")
+	hud._process(0.0)
+	var berry_slot := _slot_of(gs, "blueberries")
+	gs.select_slot(berry_slot)
 	player._refresh_held()
 	assert(held.visible)
 	assert(held.texture == hud.icon_for("blueberries"))
-	hud._process(0.0)
 	assert(str(hud.berry_count.text) == "4")
 	assert(not str(hud.berry_count.text).contains("Blueberries"))
 	player._unhandled_input(press)
@@ -207,7 +210,8 @@ static func _check_boxes(host: Node, player: Player, interiors: Node, hud: Node,
 	assert(hud._crate_panel.visible)
 	DialogueUI.show_prompt(Hud.crate_prompt())
 	assert(str(DialogueUI._prompt.text).begins_with("E — Close"))
-	hud._on_carry_slot(0)
+	var berry_slot := _slot_of(gs, "blueberries")
+	hud._on_carry_slot(berry_slot)
 	var press := InputEventKey.new()
 	press.keycode = KEY_P
 	press.pressed = true
@@ -216,7 +220,7 @@ static func _check_boxes(host: Node, player: Player, interiors: Node, hud: Node,
 	assert(gs.crate_count("blueberries") == 12)
 	gs.blueberries = 4
 	hud._process(0.0)
-	hud._on_carry_slot(0)
+	hud._on_carry_slot(_slot_of(gs, "blueberries"))
 	player._unhandled_input(press)
 	assert(gs.blueberries == 0)
 	assert(gs.crate_count("blueberries") == 16)
@@ -287,6 +291,14 @@ static func _walk_forest_mouth(host: Node, player: Player, interiors: Node, _cle
 	assert(back_out)
 	assert(player.global_position.distance_to(back) < 24.0)
 	assert(player.facing.x > 0.5)
+
+
+static func _slot_of(gs: Node, item_id: String) -> int:
+	gs.settle_slots()
+	for i in 2:
+		if gs.slot_item(i) == item_id:
+			return i
+	return 0
 
 
 ## Goodbye still lets you out. The chilly line is Saturday only, after the nod.

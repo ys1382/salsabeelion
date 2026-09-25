@@ -51,12 +51,10 @@ static func run(host: Node) -> void:
 	assert(gs.has_item("logs"))
 	assert(gs.wood_for_fire())
 	interiors.leave()
-	var two := InputEventKey.new()
-	two.keycode = KEY_2
-	two.pressed = true
-	player._unhandled_input(two)
+	gs.settle_slots()
+	gs.select_slot(gs.carry_slot.find("logs"))
 	player._refresh_held()
-	assert(gs.held_slot == 1)
+	assert(gs.held_item() == "logs")
 	assert(held.visible)
 	assert(held.texture == host.get_node("/root/Hud").icon_for("logs"))
 
@@ -122,7 +120,8 @@ static func run(host: Node) -> void:
 	gs.take_item("learning_card")
 	assert(arrow.current_id() == "dragons_brew")
 	player._refresh_held()
-	assert(not held.visible)
+	assert(gs.held_item() == "learning_card")
+	assert(held.visible)
 
 	print("campfire: ok")
 	host.get_tree().quit()

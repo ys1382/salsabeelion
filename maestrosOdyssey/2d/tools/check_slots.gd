@@ -14,8 +14,11 @@ static func run(host: Node) -> void:
 	if Journal.is_open():
 		Journal.dismiss()
 	gs.take_item("learning_card")
+	assert(gs.place_stack("learning_card", "barrel"))
+	assert(gs.card_balance == 400)
 	gs.blueberries = 4
 	gs.logs = 2
+	gs.settle_slots()
 	if not gs.has_item("logs"):
 		gs.take_item("logs")
 	hud._process(0.0)
@@ -99,12 +102,29 @@ static func run(host: Node) -> void:
 	assert(held.texture == hud.icon_for("logs"))
 	assert(gs.has_item("logs"))
 
-	assert(not gs.place_stack("learning_card", "crate"))
-	assert(not gs.place_stack("learning_card", "barrel"))
-	assert(gs.crate_count("learning_card") == 0)
-	assert(gs.barrel_count("learning_card") == 0)
+	var kept: int = gs.card_balance
+	gs.blueberries = 0
+	gs.logs = 0
+	gs.settle_slots()
+	assert(gs.take_stack("learning_card", "barrel"))
 	assert(gs.has_item("learning_card"))
-	assert((hud._card_button.get_node("Icon") as TextureRect).texture != null)
+	assert(gs.held_item() == "learning_card")
+	assert(gs.card_balance == kept)
+	player._refresh_held()
+	assert(held.texture == hud.icon_for("learning_card"))
+	assert(gs.place_stack("learning_card", "crate"))
+	assert(not gs.has_item("learning_card"))
+	assert(gs.crate_count("learning_card") == 1)
+	assert(gs.barrel_count("learning_card") == 0)
+	assert(gs.card_balance == kept)
+	player._refresh_held()
+	assert(not held.visible)
+	var cafe_line: String = host.get_node("/root/CafeOrder").reply_for("café and muffin")
+	assert(cafe_line.contains("isn't on you"), cafe_line)
+	assert(gs.take_stack("learning_card", "crate"))
+	assert(gs.has_item("learning_card"))
+	assert(gs.card_balance == kept)
+	assert(gs.held_item() == "learning_card")
 
 	var berries: int = gs.blueberries
 	var slot: int = gs.held_slot
@@ -114,7 +134,7 @@ static func run(host: Node) -> void:
 	player._unhandled_input(place)
 	assert(gs.held_slot == slot)
 	assert(gs.blueberries == berries)
-	assert(gs.logs == 2)
+	assert(gs.logs == 0)
 	DialogueUI.close()
 
 	_use(player)
@@ -129,11 +149,11 @@ static func run(host: Node) -> void:
 	assert(gs.crate_count("blueberries") == 0)
 
 	interiors.leave()
-	assert(gs.blueberries == 4)
-	assert(gs.logs == 2)
+	assert(gs.blueberries == 0)
+	assert(gs.logs == 0)
 	interiors.enter("dragons_brew", "")
-	assert(gs.blueberries == 4)
-	assert(gs.logs == 2)
+	assert(gs.blueberries == 0)
+	assert(gs.logs == 0)
 	assert(gs.barrel_count("logs") == 0)
 
 	print("carry slots: ok")

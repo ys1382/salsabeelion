@@ -39,25 +39,48 @@ static func run(host: Node) -> void:
 	assert(str(hud.berry_count.text) == "4")
 	assert(num.text == "")
 	assert(hud._carry_buttons.size() == 2)
-	gs.blueberries = 0
+	gs.logs = 0
 	hud._process(0.0)
-	assert(str(hud.berry_count.text) == "")
-	assert(str((hud._carry_buttons[1].get_node("Count") as Label).text) == "1")
-	assert(str((hud._carry_buttons[0].get_node("Mark") as Label).text) == "1")
-	assert(str((hud._carry_buttons[1].get_node("Mark") as Label).text) == "2")
-	gs.blueberries = 4
-	hud._process(0.0)
+	assert(num.text == "")
 
-	hud._on_carry_slot(-1)
-	var press := InputEventKey.new()
-	press.keycode = KEY_P
-	press.pressed = true
-	var player := WorldManager.world_root.player as Player
-	player._unhandled_input(press)
-	assert(not gs.place_stack("learning_card"))
-	assert(gs.crate_count("learning_card") == 0)
-	assert(gs.has_item("learning_card"))
+	var kept: int = gs.card_balance
+	gs.select_slot(gs.carry_slot.find("learning_card"))
+	assert(gs.place_stack("learning_card", "crate"))
+	assert(not gs.has_item("learning_card"))
+	assert(gs.crate_count("learning_card") == 1)
+	assert(gs.card_balance == kept)
+	assert(not gs.try_pay(10))
+	assert(gs.card_balance == kept)
 	assert(gs.blueberries == 4)
+	var refused: String = host.get_node("/root/CafeOrder").reply_for("café and muffin")
+	assert(refused.contains("isn't on you"), refused)
+	assert(gs.card_balance == kept)
+	assert(gs.take_stack("learning_card", "crate"))
+	assert(gs.has_item("learning_card"))
+	assert(gs.crate_count("learning_card") == 0)
+	assert(gs.card_balance == kept)
+	assert(gs.held_item() == "learning_card")
+	assert(gs.try_pay(10))
+	assert(gs.card_balance == kept - 10)
+	gs.card_balance = kept
+	var other: int = 1 if gs.held_slot == 0 else 0
+	gs.select_slot(other)
+	assert(not gs.card_held_out())
+	assert(not gs.try_pay(10))
+	assert(gs.card_balance == kept)
+	var tucked: String = host.get_node("/root/CafeOrder").reply_for("café and muffin")
+	assert(tucked.contains("Hold the learning card out"), tucked)
+	gs.select_slot(gs.carry_slot.find("learning_card"))
+	var away: int = gs.carry_slot.find("learning_card")
+	gs.carry_slot[away] = ""
+	assert(not gs.card_in_slot())
+	assert(not gs.try_pay(10))
+	assert(gs.card_balance == kept)
+	gs.carry_slot[away] = "learning_card"
+	hud._process(0.0)
+	card = hud._card_button
+	icon = card.get_node("Icon") as TextureRect
+	num = card.get_node("Count") as Label
 	assert(icon.texture != null)
 	assert(num.text == "")
 

@@ -499,7 +499,7 @@ func needs_article() -> bool:
 
 
 func too_broke_to_order() -> bool:
-	if not GameState.has_item("learning_card"):
+	if not GameState.card_held_out():
 		return false
 	return GameState.card_balance < cheapest_pair_price()
 
@@ -552,7 +552,11 @@ func reply_for(text: String) -> String:
 		return _con_nudge(lemmas)
 	if needs_article() and not _articles_ok(order, lemmas):
 		return _article_nudge(lemmas)
-	if not GameState.has_item("learning_card"):
+	if not GameState.card_held_out():
+		if GameState.card_in_slot():
+			return "Mara looks at your hands. \"Hold the learning card out, and I can take the pesos.\""
+		if GameState.card_picked_up:
+			return "Mara looks at your hands. \"The learning card isn't on you. I can't take a paid order until you have it back.\""
 		return "Mara glances at the reader. \"You'll want the learning card from the elder's basket first — no borrowing past zero.\""
 	var total := order_total(lemmas)
 	if total <= 0 or not GameState.try_pay(total):

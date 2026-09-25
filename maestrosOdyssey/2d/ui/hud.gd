@@ -3,9 +3,9 @@ extends CanvasLayer
 # pesos — three short lines, top-left. Hearts stay off; this is not a fighting
 # game.
 #
-# The bottom row is slot 1, slot 2, then the learning card. Slot 1 is berries
-# and slot 2 is logs, even when empty. A small 1 and 2 sit on those boxes.
-# The home crate and the home barrel each open the same row of storage boxes.
+# The bottom row is slot 1 and slot 2. Berries, logs, or the one learning
+# card sit in those boxes. A small 1 and 2 stay on them. The home crate and
+# the home barrel each open the same row of storage boxes.
 
 const PAD := 10
 const LINE := 16
@@ -14,7 +14,7 @@ const FILL := Color(0.14, 0.10, 0.07, 0.92)
 const GOLD := Color(0.55, 0.42, 0.26)
 const GOLD_BRIGHT := Color(0.95, 0.78, 0.38)
 const SLOT := 22
-## Two numbered pockets, plus the learning card beside them.
+## Two numbered pockets. The learning card uses one of them when it is on you.
 const POCKETS := 2
 const CRATE_SLOTS := 8
 const GAP := 2
@@ -66,8 +66,7 @@ func _make_line(y: float) -> Label:
 
 
 func _build_bar() -> void:
-	var slots := POCKETS + 1
-	var width := float(slots * SLOT + (slots - 1) * GAP)
+	var width := float(POCKETS * SLOT + (POCKETS - 1) * GAP)
 	var host := CenterContainer.new()
 	_pin_bottom(host, width, -34, -6)
 	host.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -81,14 +80,7 @@ func _build_bar() -> void:
 		_bar.add_child(btn)
 		_carry_buttons.append(btn)
 		_add_mark(btn, str(i + 1))
-	_card_button = _make_slot(false, -1)
-	_bar.add_child(_card_button)
-	var card_icon := _card_button.get_node("Icon") as TextureRect
-	card_icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	card_icon.offset_left = 1
-	card_icon.offset_top = 3
-	card_icon.offset_right = -1
-	card_icon.offset_bottom = -3
+	_card_button = _carry_buttons[0]
 	berry_count = _count_label(_carry_buttons[0])
 	_bar.hide()
 
@@ -185,22 +177,29 @@ func _count_label(btn: Button) -> Label:
 
 
 func _process(_delta: float) -> void:
-	if not GameState.has_item("learning_card"):
+	var on_you := GameState.has_item("learning_card")
+	if not on_you and not GameState.card_picked_up:
 		_day.hide()
 		_week.hide()
 		_pesos.hide()
 		_bar.hide()
 		_close_crate()
 		return
-	_day.text = GameState.weekday
-	_week.text = "Week %d" % GameState.week_number
-	_pesos.text = "%d pesos" % GameState.card_balance
-	_day.show()
-	_week.show()
-	_pesos.show()
+	if on_you:
+		_day.text = GameState.weekday
+		_week.text = "Week %d" % GameState.week_number
+		_pesos.text = "%d pesos" % GameState.card_balance
+		_day.show()
+		_week.show()
+		_pesos.show()
+	else:
+		_day.hide()
+		_week.hide()
+		_pesos.hide()
 	_bar.show()
 	if (crate_open or barrel_open) and not _at_home():
 		_close_crate()
+	GameState.settle_slots()
 	_paint_carry()
 	_paint_card()
 	var store := _open_store()
@@ -274,19 +273,32 @@ func _on_crate_slot(index: int) -> void:
 
 
 func _paint_carry() -> void:
+	var found_card: Button = null
 	for i in _carry_buttons.size():
 		var btn := _carry_buttons[i]
 		var item_id := GameState.slot_item(i)
 		var icon := btn.get_node("Icon") as TextureRect
 		var num := btn.get_node("Count") as Label
 		var n := GameState.carry_count(item_id)
-		if n <= 0:
+		if item_id == "" or n <= 0:
 			icon.texture = null
 			num.text = ""
+			_reset_icon(icon)
+		elif item_id == "learning_card":
+			icon.texture = _card_tex
+			icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+			num.text = ""
+			found_card = btn
 		else:
 			icon.texture = icon_for(item_id)
 			num.text = str(n)
+			_reset_icon(icon)
+			if item_id == "blueberries":
+				berry_count = num
 		_style_slot(btn, i == GameState.held_slot)
+	if found_card != _card_button:
+		_card_settled = false
+	_card_button = found_card
 
 
 func _paint(buttons: Array[Button], ids: Array[String], in_crate: bool) -> void:
@@ -302,7 +314,7 @@ func _paint(buttons: Array[Button], ids: Array[String], in_crate: bool) -> void:
 		else:
 			icon.texture = icon_for(item_id)
 			var n := GameState.store_count(_open_store(), item_id) if in_crate else GameState.carry_count(item_id)
-			num.text = str(n)
+			num.text = "" if item_id == "learning_card" else str(n)
 			if in_crate:
 				bright = item_id == crate_choice
 		_style_slot(btn, bright)
@@ -321,13 +333,16 @@ func _style_slot(btn: Button, bright: bool) -> void:
 
 
 func _paint_card() -> void:
+	if _card_button == null:
+		return
 	var icon := _card_button.get_node("Icon") as TextureRect
 	var num := _card_button.get_node("Count") as Label
 	icon.texture = _card_tex
 	num.text = ""
-	_style_slot(_card_button, false)
 	if not _card_settled:
 		_card_settled = true
+		icon.offset_left = 1
+		icon.offset_right = -1
 		_settle_card(icon)
 
 
@@ -350,7 +365,16 @@ func _settle_card(icon: TextureRect) -> void:
 func icon_for(item_id: String) -> Texture2D:
 	if item_id == "logs":
 		return _log_tex
+	if item_id == "learning_card":
+		return _card_tex
 	return _berry_tex
+
+
+func _reset_icon(icon: TextureRect) -> void:
+	icon.offset_left = 3
+	icon.offset_top = 2
+	icon.offset_right = -3
+	icon.offset_bottom = -6
 
 
 ## A wide cream card with a dull gold edge and a small café cup.

@@ -66,9 +66,14 @@ var logs: int = 0
 ## its own stacks for the whole play. Storing wood does not touch the fire.
 var crate: Dictionary = {}
 var barrel: Dictionary = {}
-## 0 is slot 1 (berries). 1 is slot 2 (logs). The learning card is not a slot.
+## What is sitting in slot 1 and slot 2. Empty string means that box is free.
+## The learning card uses one of these when it is on you.
+var carry_slot: Array[String] = ["", ""]
+## 0 is slot 1. 1 is slot 2.
 var held_slot: int = 0
-const CARRY_SLOTS: Array[String] = ["blueberries", "logs"]
+## True after the basket hands over the card. Storing it does not clear this.
+var card_picked_up: bool = false
+const STACK_IDS: Array[String] = ["blueberries", "logs"]
 ## Bush id -> day_index it was last picked. Dots stay gone until the next Tuesday.
 var berry_picked: Dictionary = {}
 const BERRY_BUSHES: Array[String] = ["berry_bush_0", "berry_bush_1", "berry_bush_2"]
@@ -117,7 +122,9 @@ func set_world(w: Dictionary) -> void:
 	logs = 0
 	crate.clear()
 	barrel.clear()
+	carry_slot = ["", ""]
 	held_slot = 0
+	card_picked_up = false
 	berry_picked.clear()
 	_sync_clock()
 	if has_node("/root/CafeOrder"):
@@ -157,6 +164,23 @@ func has_item(item_id: String) -> bool:
 	return item_id != "" and inventory.has(item_id)
 
 
+func card_is_stored() -> bool:
+	return (
+		not has_item("learning_card")
+		and (crate_count("learning_card") > 0 or barrel_count("learning_card") > 0)
+	)
+
+
+## The card is in slot 1 or slot 2, whether or not you are holding it out.
+func card_in_slot() -> bool:
+	return has_item("learning_card") and carry_slot.has("learning_card")
+
+
+## Pesos come off only while you are holding the card out.
+func card_held_out() -> bool:
+	return held_item() == "learning_card"
+
+
 ## Items are kept once taken — nothing consumes them. Handing the smith their
 ## tongs shouldn't make the tongs vanish from a child's bag with no explanation,
 ## and there is no second use for anything, so keeping them costs nothing.
@@ -165,13 +189,21 @@ func take_item(item_id: String) -> bool:
 		return false
 	inventory.append(item_id)
 	if item_id == "learning_card":
-		card_balance = CARD_START_PESOS
+		if not card_picked_up:
+			card_balance = CARD_START_PESOS
+			card_picked_up = true
+		var index := _empty_slot()
+		if index >= 0:
+			carry_slot[index] = "learning_card"
+			held_slot = index
+	elif item_id == "logs":
+		_fill_empty("logs")
 	item_taken.emit(item(item_id))
 	return true
 
 
 func try_pay(amount: int) -> bool:
-	if amount <= 0 or not has_item("learning_card"):
+	if amount <= 0 or not card_held_out():
 		return false
 	if card_balance < amount:
 		return false
@@ -213,6 +245,7 @@ func advance_day() -> void:
 	# Berries, and anything already in the crate or the barrel, stay.
 	logs = 0
 	inventory.erase("logs")
+	_clear_slot("logs")
 	# Outdoor street returns to morning while you are still inside the house.
 	if has_node("/root/DayNight"):
 		DayNight.begin_day()
@@ -260,6 +293,7 @@ func note_berry_pick(bush_id: String) -> bool:
 		return false
 	berry_picked[bush_id] = day_index
 	blueberries += BERRY_HANDFUL
+	_fill_empty("blueberries")
 	carry_changed.emit()
 	return true
 
@@ -330,14 +364,15 @@ func _stow_wood() -> void:
 	wood_stowed_day = day_index
 	logs = 0
 	inventory.erase("logs")
+	_clear_slot("logs")
 	campfire_changed.emit()
 	carry_changed.emit()
 
 
 func slot_item(index: int) -> String:
-	if index < 0 or index >= CARRY_SLOTS.size():
+	if index < 0 or index >= carry_slot.size():
 		return ""
-	return CARRY_SLOTS[index]
+	return carry_slot[index]
 
 
 func held_item() -> String:
@@ -345,7 +380,7 @@ func held_item() -> String:
 
 
 func select_slot(index: int) -> void:
-	if index < 0 or index >= CARRY_SLOTS.size():
+	if index < 0 or index >= carry_slot.size():
 		return
 	if held_slot == index:
 		carry_changed.emit()
@@ -354,8 +389,7 @@ func select_slot(index: int) -> void:
 	carry_changed.emit()
 
 
-## Bottom-row stacks. Berries and logs only. The learning card has its own
-## slot and is not a stack, so Place never moves it into a container.
+## Bottom-row stacks. The learning card is one object, not a stack.
 func carry_ids() -> Array[String]:
 	var ids: Array[String] = []
 	if blueberries > 0:
@@ -370,6 +404,8 @@ func carry_count(item_id: String) -> int:
 		return blueberries
 	if item_id == "logs":
 		return logs
+	if item_id == "learning_card" and has_item("learning_card"):
+		return 1
 	return 0
 
 
@@ -383,7 +419,7 @@ func barrel_ids() -> Array[String]:
 
 func _store_ids(bag: Dictionary) -> Array[String]:
 	var ids: Array[String] = []
-	for item_id in CARRY_SLOTS:
+	for item_id in ["blueberries", "logs", "learning_card"]:
 		if int(bag.get(item_id, 0)) > 0:
 			ids.append(item_id)
 	return ids
@@ -405,17 +441,25 @@ func store_count(store: String, item_id: String) -> int:
 	return barrel_count(item_id) if store == "barrel" else crate_count(item_id)
 
 
-## The whole held stack goes into that container and adds to the same kind.
-## The learning card stays in its slot. Wood here is storage, not the fire.
+## The held stack, or the one learning card, goes into that container.
+## Wood here is storage, not the fire. Storing the card keeps its pesos.
 func place_stack(item_id: String, store: String = "crate") -> bool:
-	if item_id == "learning_card" or item_id == "":
+	if item_id == "" or held_item() != item_id:
 		return false
 	if store != "crate" and store != "barrel":
 		return false
+	var bag := barrel if store == "barrel" else crate
+	if item_id == "learning_card":
+		if not has_item("learning_card"):
+			return false
+		bag["learning_card"] = 1
+		inventory.erase("learning_card")
+		_clear_slot("learning_card")
+		carry_changed.emit()
+		return true
 	var n := carry_count(item_id)
 	if n <= 0:
 		return false
-	var bag := barrel if store == "barrel" else crate
 	bag[item_id] = int(bag.get(item_id, 0)) + n
 	_clear_carry(item_id)
 	carry_changed.emit()
@@ -430,6 +474,17 @@ func take_stack(item_id: String, store: String = "crate") -> bool:
 	var n := int(bag.get(item_id, 0))
 	if n <= 0:
 		return false
+	if item_id == "learning_card":
+		var open := _empty_slot()
+		if open < 0:
+			return false
+		bag.erase(item_id)
+		if not inventory.has("learning_card"):
+			inventory.append("learning_card")
+		carry_slot[open] = "learning_card"
+		held_slot = open
+		carry_changed.emit()
+		return true
 	bag.erase(item_id)
 	if item_id == "blueberries":
 		blueberries += n
@@ -437,7 +492,8 @@ func take_stack(item_id: String, store: String = "crate") -> bool:
 		logs += n
 		if not has_item("logs"):
 			take_item("logs")
-	var index := CARRY_SLOTS.find(item_id)
+	_fill_empty(item_id)
+	var index := carry_slot.find(item_id)
 	if index >= 0:
 		held_slot = index
 	carry_changed.emit()
@@ -450,6 +506,50 @@ func _clear_carry(item_id: String) -> void:
 	elif item_id == "logs":
 		logs = 0
 		inventory.erase("logs")
+	_clear_slot(item_id)
+
+
+func _clear_slot(item_id: String) -> void:
+	for i in carry_slot.size():
+		if carry_slot[i] == item_id:
+			carry_slot[i] = ""
+
+
+func _empty_slot() -> int:
+	return carry_slot.find("")
+
+
+func _fill_empty(item_id: String) -> void:
+	if item_id == "" or carry_slot.has(item_id):
+		return
+	if item_id == "learning_card":
+		if not has_item("learning_card"):
+			return
+	elif carry_count(item_id) <= 0:
+		return
+	var index := _empty_slot()
+	if index >= 0:
+		carry_slot[index] = item_id
+
+
+## Put berries, logs, and the card into free boxes. Counts set by a test
+## still show up. A full row leaves the extra waiting.
+func settle_slots() -> void:
+	for i in carry_slot.size():
+		var item_id := carry_slot[i]
+		if item_id == "":
+			continue
+		if item_id == "learning_card":
+			if not has_item("learning_card"):
+				carry_slot[i] = ""
+		elif carry_count(item_id) <= 0:
+			carry_slot[i] = ""
+	if has_item("learning_card"):
+		_fill_empty("learning_card")
+	if blueberries > 0:
+		_fill_empty("blueberries")
+	if logs > 0:
+		_fill_empty("logs")
 
 
 func _sync_clock() -> void:
