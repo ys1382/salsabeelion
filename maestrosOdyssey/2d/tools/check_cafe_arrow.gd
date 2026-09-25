@@ -11,6 +11,9 @@ static func run(host: Node) -> void:
 	var player := WorldManager.world_root.player as Player
 	if Journal.is_open():
 		Journal.dismiss()
+	var elder := _npc(host, "elder")
+	elder.morning_done = true
+	GameState.take_item("learning_card")
 
 	interiors.enter("dragons_brew")
 	await host.get_tree().physics_frame

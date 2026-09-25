@@ -113,6 +113,8 @@ static func run(host: Node) -> void:
 	assert(not gs.wood_for_fire())
 	assert(it.prompt() == "Look")
 	gs.cafe_meal_done = false
+	var elder := WorldManager.world_root.entities["elder"] as Npc
+	elder.morning_done = true
 	gs.take_item("learning_card")
 	assert(arrow.current_id() == "dragons_brew")
 	player._refresh_held()

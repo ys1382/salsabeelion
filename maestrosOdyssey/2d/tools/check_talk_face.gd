@@ -165,6 +165,8 @@ static func run(host: Node) -> void:
 		"arrow did not move to the basket: %s" % arrow.current_id())
 	await _expect(host, _task_now(tasks) == "Take the card",
 		"take-the-card did not become the step: %s" % _task_now(tasks))
+	interiors.leave()
+	await host.get_tree().physics_frame
 	GameState.take_item("learning_card")
 	await _expect(host, arrow.current_id() == "dragons_brew",
 		"card did not point at the café: %s" % arrow.current_id())

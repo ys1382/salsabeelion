@@ -80,9 +80,6 @@ func current_id() -> String:
 		return ""
 	if CafeOrder.carrying_dishes:
 		return "dish_cart"
-	var table := CafeOrder.nav_target()
-	if table != "":
-		return table
 	if GameState.day_index >= 8 and not ElderReport.done:
 		return "elder"
 	# Wood still in the sack: the fire behind home, then the door.
@@ -92,12 +89,15 @@ func current_id() -> String:
 		return "player_house"
 	if GameState.wood_chore_open():
 		return "forest_clearing"
-	# Her whole morning talk, through the basket line, then that box closed.
-	# Taking the card early does not move the arrow. Day 8 is handled above.
+	# The morning talk, then the card. A café stop does not jump ahead.
+	# Taking the card early does not move the arrow off the elder.
 	if not elder_met():
 		return "elder"
 	if not GameState.has_item("learning_card"):
 		return "card_basket"
+	var table := CafeOrder.nav_target()
+	if table != "":
+		return table
 	if GameState.berry_chore_open():
 		return "berry_patch"
 	return "dragons_brew"
