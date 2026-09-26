@@ -594,12 +594,14 @@ func _try_give() -> bool:
 	_begin_talk_face(npc)
 	if result == "take" and GameState.last_given == "gooseberries" and npc.npc_id == "elder":
 		GameState.arm_goose_eat(npc.npc_id)
-		if not GameState.player_honks():
-			GameState.goose_ask = true
-		_open_pages(npc, PackedStringArray([
+		var lines := PackedStringArray([
 			"Thank you. I'll take that.",
 			"She eats one. It is bright and tart.",
-		]))
+		])
+		if not GameState.player_honks():
+			GameState.goose_ask = true
+			lines.append("Do you want one?")
+		_open_pages(npc, lines)
 		return true
 	if result == "take":
 		DialogueUI.show_line(npc.display_name, "Thank you. I'll take that.")
@@ -679,7 +681,7 @@ func _after_panel_close() -> void:
 		_refresh_worn()
 	CafeOrder.on_speech_closed()
 	if GameState.goose_ask:
-		DialogueUI.show_order_box("Elder")
+		DialogueUI.show_order_box("Elder", "Do you want one?")
 		return
 	if CafeOrder.open_box_on_close:
 		CafeOrder.open_box_on_close = false

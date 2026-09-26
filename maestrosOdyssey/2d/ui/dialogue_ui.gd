@@ -154,14 +154,18 @@ func set_close_key(key: String) -> void:
 	_hint.text = "%s — Close" % key
 
 
-func show_order_box(speaker: String = "Mara") -> void:
+func show_order_box(speaker: String = "Mara", keep_line: String = "") -> void:
 	_hide_sign()
 	_prompt.hide()
 	_speaker.text = speaker
 	_speaker.visible = true
-	_body.hide()
-	_hint.hide()
 	_order.text = ""
+	if keep_line != "":
+		_body.text = keep_line
+		_body.show()
+	else:
+		_body.hide()
+	_hint.hide()
 	if speaker == "Elder":
 		_order.placeholder_text = "Yes or no, then Enter"
 	elif CafeOrder.awaiting_bye:
@@ -170,7 +174,11 @@ func show_order_box(speaker: String = "Mara") -> void:
 		_order.placeholder_text = "Type your order, then Enter"
 	_order.show()
 	_panel.show()
-	_panel.offset_top = -(SPEAKER_SIZE + SPACING + 28 + PAD * 2 + PAD)
+	if keep_line != "":
+		_fit(keep_line, speaker != "")
+		_panel.offset_top -= 36
+	else:
+		_panel.offset_top = -(SPEAKER_SIZE + SPACING + 28 + PAD * 2 + PAD)
 	_order.call_deferred("grab_focus")
 
 
