@@ -114,8 +114,16 @@ const MARA_SKIN := {
 
 static var _mara_frames: SpriteFrames
 
-# Same skin keys as the villager face. Light water-and-sky blue, lighter than
-# the ocean merfolk wash. Hair, eyes, shirt, pants, and boots stay.
+# Face is quiet water-and-sky blue, lighter than the ocean wash. Hair is the
+# light green of a sunlit lily pad. Shirt, pants, and boots stay. The same
+# brown keys below the hair line are boots, so they are not painted.
+const RIVER_HAIR := {
+	0x593f2d: Color("#6f9a58"),
+	0x784d36: Color("#7eaa62"),
+	0x886644: Color("#8fba6e"),
+	0x986641: Color("#a8ce84"),
+	0xb87f4c: Color("#c4e2a4"),
+}
 const RIVER_SKIN := {
 	0x48302a: Color("#5a849c"),
 	0x6c483e: Color("#6896ae"),
@@ -184,16 +192,20 @@ static func _frames_on(tex: Texture2D, cell: Vector2i, rows: Array) -> SpriteFra
 static func _paint_riverfolk(src: Image) -> Image:
 	var img: Image = src.duplicate()
 	for y in img.get_height():
+		var on_hair: bool = (y % VILLAGER_CELL.y) < MARA_HAIR_MAX_Y
 		for x in img.get_width():
 			var c: Color = img.get_pixel(x, y)
 			if c.a < 0.04:
 				continue
 			var key := (_byte(c.r) << 16) | (_byte(c.g) << 8) | _byte(c.b)
-			if not RIVER_SKIN.has(key):
-				continue
-			var skin: Color = RIVER_SKIN[key]
-			skin.a = c.a
-			img.set_pixel(x, y, skin)
+			if on_hair and RIVER_HAIR.has(key):
+				var hair: Color = RIVER_HAIR[key]
+				hair.a = c.a
+				img.set_pixel(x, y, hair)
+			elif RIVER_SKIN.has(key):
+				var skin: Color = RIVER_SKIN[key]
+				skin.a = c.a
+				img.set_pixel(x, y, skin)
 	return img
 
 

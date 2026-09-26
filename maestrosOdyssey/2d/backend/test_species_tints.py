@@ -103,6 +103,7 @@ def _river_face_is_lighter_than_ocean() -> None:
 
     sheet = SHEET.read_text()
     skin = _block(sheet, "RIVER_SKIN")
+    hair_map = _block(sheet, "RIVER_HAIR")
     ocean = WANTED["merfolk"].lstrip("#").lower()
     im = Image.open(IDLE).convert("RGBA")
     px = im.load()
@@ -111,16 +112,23 @@ def _river_face_is_lighter_than_ocean() -> None:
     def painted_at(x: int, y: int) -> str:
         r, g, b, _a = px[origin[0] + x, origin[1] + y]
         src = f"{r:02x}{g:02x}{b:02x}"
+        if y < 30 and src in hair_map:
+            return hair_map[src]
         return skin.get(src, src)
 
     face = painted_at(16, 20)
     shadow = painted_at(14, 20)
     shirt = painted_at(16, 26)
-    hair = painted_at(14, 10)
+    hair = painted_at(16, 10)
+    boot = painted_at(14, 38)
     assert face == "a6cedc", face
     assert shadow == "6896ae", shadow
     assert shirt == "b3b094", shirt
-    assert hair == "593f2d", hair
+    assert hair == "a8ce84", hair
+    assert boot == "b87f4c", boot
+    hr, hg, hb = (int(hair[i:i + 2], 16) for i in (0, 2, 4))
+    assert hg > hr > hb
+    assert hair != WANTED["lizardfolk"].lstrip("#")
     assert face != ocean and shadow != ocean
     assert _lum(shadow) > _lum(ocean)
     assert _lum(face) > _lum(shadow)
@@ -128,7 +136,7 @@ def _river_face_is_lighter_than_ocean() -> None:
     assert shadow != "4a6b4e"
     sr, sg, sb = (int(shadow[i:i + 2], 16) for i in (0, 2, 4))
     assert sb > sg > sr
-    print("species tints: river face is light blue, clothes stay")
+    print("species tints: river face is light blue, hair is lily-pad green")
 
 
 def main() -> int:
