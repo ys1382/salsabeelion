@@ -22,17 +22,17 @@ Design and tasks **committed here**; implementation waits until you approve task
 ### Build queue (in order — all `[ ]` until shipped locally + owner OK)
 
 - [x] **#10** — Prologue elder + card grant (`www/` — shipped locally; deploy when owner OK)
-- [ ] **#11** — Café lane vocab — **Spanish or Arabic** menu lemmas (`mo-cafe-language.js` + menu `ar` labels; owner review Arabic per `docs/LANGUAGE-VOCAB-WORKFLOW.md`)
+- [ ] **#11** — **Arabic lane** — post-upgrade possibility (2026-09-25). Week one stays Spanish. Dirhams when Arabic. Not this stretch.
 - [x] **#12** — In-game days (same weekday tracking)
 - [x] **#26** — Menu unlock schedule (3 drinks day 1 → espresso day 2; stagger 5 foods through day 4)
 - [ ] **#27** — Day-2+ order depth (con/sin azúcar, upsell, Mara read-back)
 - [ ] **#13–19** — Week-one **mellow room** (species + language basics; one day per task — see **Your additions**)
-- [ ] **#25** — Vocab progress tracker (familiarity bands, **menu fade**, tourism gate, elder prompts — no grade UI)
+- [ ] **#25** — **Private vocab tracker** — post-upgrade possibility (2026-09-25). Familiarity bands, menu fade, no grade screen. Not this stretch.
 - [x] **#28** — Day-8 elder report call (two lines only; not a quiz screen)
 - [ ] **#29** — Café revisit when elder asks player to go back and find out more
 - [ ] **#24** — Train gate / next stage (after #28)
 - [ ] **#23** — Plaza floor (echo café words)
-- [ ] **#20–22** — Optional order check; **evening werewolf/vampire table (week one)**; goblin watch → **post–train / later arc** (not week one)
+- [ ] **#20–22** — Optional harder order check is a **post-upgrade** possibility (2026-09-25), off unless chosen. **Evening werewolf/vampire table** still waits on animation. Goblin watch stays **post–train**.
 - [x] **Menu trim + language picker (owner 2026-06)** — generic core; ES/AR popup at start + restart; 1–2 new lemmas/day; extras → `MOUNTAIN_MENU_POOL`
 - [x] **Day-8 balance tuning** — **superseded 2026-09-21:** leftover pesos OK; not forced to 0. See elder-before-buy below.
 
@@ -205,7 +205,8 @@ Needs **#3** and **#12**. **Tone:** nature-wonder café week — friendly regula
 
 - [ ] **#13 — Monday** — warm room; Mara + wall + strike board; **friendly customers**. No café TV yet (that waits until after animation upgrades).
 - [x] **#14 — Tuesday** — **daytime** table: werewolf fiancé + chaperone twin + vampire woman, all looking like people (werewolves **not transformed** — no wolf-form animation yet). Pale vampire tint. Strike board can still tick. **Not** a minotaur. Shipped 2026-09-22 (Tuesday only; gray / pale on the villager sheet). Mara teaches **y** this day (instead of *and*).
-- [ ] **#15 — Wednesday** — **family night** human table; light species beat. Vampire usual now sits Tuesday with the couple (not a separate blue-night mystery). Mara teaches **con** this day (extras).
+- [x] **#15 — Wednesday** — **family** human table during the Wednesday café visit; light species beat. Vampire usual now sits Tuesday with the couple. Shipped 2026-09-25 as three adults on the villager sheet. The child is the next bullet.
+- [ ] **Wednesday child** (owner — 2026-09-25) — One child at that table, on the **player** sprite, drawn smaller. They run around the table. Adults stay on the villager sheet. Door-to-counter stays open.
 - [ ] **#16 — Thursday** — mellow Thursday room; **un / una** enter café talk. Evening **werewolf form** waits until animation upgrades. No centaur/detective overlap.
 - [ ] **#17 — Friday** — mellow Friday regulars; **no** dragonfolk mafia beat in week one
 - [ ] **#18 — Saturday** — mellow Saturday regulars the current sheet can carry. **Pegasus + griffin** wait until after animation upgrades (very detailed creatures; do not placeholder them).
@@ -215,12 +216,12 @@ Needs **#3** and **#12**. **Tone:** nature-wonder café week — friendly regula
 
 ### Later (#20–29)
 
-- [ ] **#20 — Real order check** (optional hard mode — ES or AR lane; not default path; see Design pillars)
+- [ ] **#20 — Real order check** — **post-upgrade** possibility (2026-09-25). Optional harder typed order. Off unless the player turns it on. Not this stretch.
 - [ ] **#21 — Goblin detective visual watch** — **post–train / later arc** (not week one)
 - [ ] **#22 — Evening werewolf + vampire table** — daytime people shipped 2026-09-22 (Tuesday only, no wolf form). Transformed Thu+ evenings still wait on animation.
 - [ ] **#23 — Plaza floor** (same learning card rules; echo café words on signs)
 - [ ] **#24 — Train gate / arrive at station** (after #28 elder upgrade) — **end of the demo** when this plot deploys. Wider world after. Non-humanoid **animation upgrades** wait until after this ships. Mechanics still rank above that animation work.
-- [ ] **#25 — Wire vocab into progress tracker** (familiarity bands, **bilingual menu fade**, **tourism competence gate**, elder prompt source, subtitle fade — no grade UI)
+- [ ] **#25 — Private vocab tracker** — **post-upgrade** possibility (2026-09-25). Familiarity stays private. No grade screen. Not this stretch.
 - [x] **#26 — Menu unlock schedule** — visit 1: 3 drinks + 2 foods; day 2: espresso + croissant; foods through day 4 per **generic menu canon**; chalkboard “new today” ticks
 - [ ] **#27 — Day-2+ order depth** — player extras shipped. Still later: *For your té — con azúcar or sin azúcar?*; same-or-different; one food upsell; Mara read-back before pay; no new specialty drinks
 - [x] **#28 — Day-8 elder report** — fiction week 2 + language week goal; natural report conversation (not quiz UI); two elder lines only; card upgrade; revisit flag when under hood pass
@@ -268,6 +269,8 @@ Demo ending = arrive at the train station (#24). **Pegasus, griffin, and other v
 - [ ] **Have to read the board to order** — you already must tap the menu once, but Mara then lists today’s items in chat (`What's your order? (café, té, muffin…)`), so you can skip the wall after that. Stop spoon-feeding the day’s words in her prompt; the player should **check the menu** for practice. Keep the type box and same-reply drink.
 - [ ] **Accent letters in the type box** (owner — 2026-09-22) — press-and-hold **any** letter that has accents (E is only an example) shows the usual picker (é / á / ñ / ü…), but you **cannot click or select** it. The box keeps repeating the base letter (`eeeee`, `aaaaa`, …) instead. Make the pick land in the box (café, té, azúcar). Same box for Mara and the elder.
 - [ ] **Owner day skip** (owner — 2026-09-25) — test buttons, not story. **Day 2**, **Day 3**, and on through **Day 8** jump to the start of that morning, outside the cottage, before the café. The order box does not do this. Card and pockets stay. Skipping does not grant the satchel.
+- [x] **G gives what you are holding** (owner — 2026-09-25) — **G** offers the held pocket stack to the person you are facing. They take it or they don’t. Cup, plate, and the learning card stay put. In the type box, G is a letter. **K** still knocks at the elder’s door. Shipped 2026-09-25.
+- [ ] **Satchel holds the meal** (owner — 2026-09-25) — Once you have the satchel, the drink takes one pocket and the food takes another when you pick the order up. **D** still sips and **F** still eats. Empty cup and plate still go in the dish cart. Without the satchel, the meal stays in the hands as it does now.
 - [x] **Only the key on the prompt does that action** — **T** talk / close a line. **E** doors (basket and dish cart stay on **E**). **R** menu and house rules. **S** sit / stand, and **S** still walks down when you are not at a chair. **D** sip only (no stand). **F** eat. **Space** is not a second interact. Order type box still uses **Enter**.
 - [x] **P is pick or place** (owner — 2026-09-24) — **mechanics.** One key, the word depends on where you are. **P — Pick** at a berry bush, and **P — Pick** / **P — Place** at the open home crate. In the order type box, P is just the letter. It does not walk, talk, open doors, sit, sip, eat, or chop. Shipped 2026-09-24.
 - [x] **Elder test has a clear language aim** (2026-09-22) — still not a quiz screen. She asks for a favorite drink and a favorite food, with an add-on (*con leche*, *con azúcar*, *y leche*). Tue–Sun café neighbors say that shape with a different board item each day.
@@ -286,11 +289,12 @@ Demo ending = arrive at the train station (#24). **Pegasus, griffin, and other v
 - [ ] **Café service counter for Mara** (owner — 2026-09-23) — drawn long wooden counter (café, not liquor bar). No bottle shelf. Invented like the cup if no pack counter exists.
 - [ ] **Stepping-stone paths on grass** (owner — 2026-09-23) — open ground is **grass**. Real walkways are **invented stepping stones** on that grass (natural, not sidewalk). No big dirt rectangles. No road-tile strip for village paths.
 - [x] **Blueberry bushes** (owner — 2026-09-23; size and Tuesday 2026-09-24) — **pre-animation-upgrade, before the train station.** Fuller shrubs already in the pack (about as wide as a person, about half as tall as the trees). Small blue dots sit in the leaves. A few of those in the forest are the patch. Tiny edge tufts stay ground cover. **Tuesday morning**, after you leave the house, the first job is the forest: **P** picks the berries into the bottom count. No sack on screen. The café, including **y**, still happens after. Not week-one wood day. Shipped 2026-09-24.
+- [x] **Gooseberries from the Wednesday parents** (owner — 2026-09-25) — **G** offers the pastry to the running child. He stops. Parents thank you with gooseberries. He laughs. Not a forest pick. **G** on the elder, or on anyone, can hand them over. **F** eats a held food, **D** drinks a held drink. Eating one makes you honk on your own speaking turns until the next morning. If they eat one, they honk on theirs. One public-domain goose honk, trimmed to a single sound. Words stay readable. Shipped 2026-09-25.
 - [x] **Blueberries for the elder, then a messenger bag** (owner — 2026-09-24) — **plot, optional.** Monday hint after the dishes, then the same goodbye. Tuesday she is indoors; **K** with berries gives the satchel and five pockets. Skip keeps two slots. Shipped 2026-09-24.
 - [x] **Sugarplum juice + sugarplum tree** (owner — 2026-09-23; pick beat 2026-09-24) — **pre-animation-upgrade, before the train station.** **Sunday** of week one is **sugarplum juice**, once, same 40 pesos. Espresso stays on its normal days: it is not on the board Monday through Saturday, it is off that Sunday only, and it is back every day after. Do not remove it for good. An existing tree beside the café, with purple dots in the leaves. Mara says she picked them; she does not walk outside, and there is no picking animation. After the juice is served, the dots are gone. Spanish word still TBD — the type box takes “sugarplum juice” until then. Keep café / té / chocolate. Espresso returns the day after sugarplum day and stays.
 - [x] **Sugarplum sparkles** (owner — 2026-09-23) — On the day you order sugarplum juice, after you **finish drinking** it, purple sparkles appear around the player. Small blinking dots that move with you (invented, like the cup). A sparkle, not a light that reveals the forest. Café, té, and chocolate stay repeatable; the specials do not.
-- [ ] **Golden apple tree by the elder** (owner — 2026-09-23; pie locked 2026-09-23) — **pre-animation-upgrade, before the train station.** The house right next to the elder **is** her house. Invent a **golden apple tree** beside it. Fruit is actually golden and edible. Menu: **golden apple pie** instead of **galleta** / cookies (not tarts). Unlocks **week-one Saturday**. **Once only** in this pre-upgrade stretch (same rule as sugarplum juice). Spanish lemma TBD.
-- [ ] **Week-one Saturday: pie, then Mara’s deadwood ask** (owner — 2026-09-23) — After you finish the golden apple pie, put the dishes away, then Mara asks you to bring her some **deadwood** while you are out getting firewood for your house. A whole dead tree (even leaving the stump) is more than your house needs; the extra is for her. She is the one who tells you to **only chop dead trees** (or deadfall: logs, fallen branches). Why waits: later, **dryads live in the living trees**, so only dead wood is safe. Do not dump the dryad reveal on Saturday — advice only that day. Once-a-week wood day can be this Saturday if it fits the already-shipped loop; do not make wood every day.
+- [ ] **Golden apple tree by the elder** (owner — 2026-09-23; pie locked 2026-09-23; Saturday 2026-09-25) — **pre-animation-upgrade, before the train station.** The house right next to the elder **is** her house. An existing tree beside it, with golden fruit dots. **Saturday** of week one, the cookie steps aside and the board has **golden apple pie** once, same pesos as the cookie, not a tart. Thursday, Friday, and every day after that Saturday, the cookie is back. Do not remove it for good. Spanish word still TBD — the type box takes “golden apple pie” until then.
+- [ ] **Week-one Saturday: pie, then Mara’s deadwood ask** (owner — 2026-09-23; order 2026-09-25) — Café first that morning, not the forest. After you finish the golden apple pie, put the dishes away, then Mara asks you to bring her some **deadwood** while you are out getting firewood for your house. Then the one Saturday chop. A whole dead tree (even leaving the stump) is more than your house needs; the extra is for her. She is the one who tells you to **only chop dead trees** (or deadfall: logs, fallen branches). Why waits: later, **dryads live in the living trees**, so only dead wood is safe. Do not dump the dryad reveal on Saturday — advice only that day. If you skip the pie, you still cut wood for the house. Do not make wood every day.
 - [ ] **Pie light: a small pool at your feet** (owner — 2026-09-23) — After the golden apple pie, you are your own light because the lamp posts are out (the people who tend them ran out of wood). A **small pool** moves with you, around your feet, on the walk home and in the forest. You can see the ground and trees inside that circle. The rest of the forest stays dark. It does not light the whole woods. Same idea on the street. Windows can still glow from indoors. The lamp posts themselves stay dark that night.
 - [x] **Leave-café close-out (paired — shipped 2026-09-22)** — after the cup and plate are finished, put them in the dish cart by the counter. Mara says **adiós** (Wednesday: **buenas noches**) and you type it back before the doorway lets you out. The door tiles stay put. Morning still comes when you step into your house.
   - **Dishes vs the street (locked):** you **cannot** leave the café, walk the block, or end the day still holding dishes. Empty cup/plate stay in hand **inside** until the cart. Mara stops you at the door. You will not wander outside with them until you come back.
@@ -307,9 +311,9 @@ Demo ending = arrive at the train station (#24). **Pegasus, griffin, and other v
 - [ ] **#13–19 week-one mellow room** — rotating regulars the current sheet can carry, species + language in small beats, not mystery. Monday iguana + crocodilian riverfolk are **seated at a café table** with ferry talk (2026-09-22). Tuesday werewolf fiancé (male) + sister + female vampire sit as people (2026-09-22); no wolf form. You already have to hear everyone before the food comes (2026-09-22). The door-to-counter walk stays open (2026-09-22). Still open: human table, then Thu–Sun mellow rooms. **No pegasus, griffin, minotaur, or other very detailed creatures until after animation upgrades.** No café TV until then. Keep the favorite-drink / favorite-food / add-on lines.
 - [ ] **#22 evening werewolf + vampire table** — **daytime people shipped 2026-09-22** (Tuesday only, no wolf form). Transformed evening table still waits on animation.
 - [ ] **#27 day-2+ order depth** — player extras shipped (con / calentado / frío). Still later: Mara *con o sin* prompt, one food upsell, read-back before pay.
-- [ ] **#11 café lane + tourist money** — Spanish **or** Arabic menu lemmas; Arabic wall translit + script + English; dirham when Arabic. **Lane picker** at first load / restart (Phaser had it; Godot does not).
-- [ ] **#25 vocab tracker** — private familiarity bands, menu-hint fade, tourism gate, elder prompts. No grade UI. Optional later in-game lane switch.
-- [ ] **#20 optional hard mode** — stricter typed order check; opt-in only.
+- [ ] **#11 Arabic lane** — **post-upgrade** possibility (2026-09-25). Week one stays Spanish. Dirhams when Arabic. Not this stretch.
+- [ ] **#25 private vocab tracker** — **post-upgrade** possibility (2026-09-25). No grades. Not this stretch.
+- [ ] **#20 optional harder order check** — **post-upgrade** possibility (2026-09-25). Off unless chosen. Not this stretch.
 - [x] **Must order a drink and a food** (2026-09-22) — each café day; quiz only when no pair fits the card.
 - [ ] **Day-8 elder-before-buy** — leftover pesos on day 8 are **OK**. You **cannot buy anything** on day 8 until you talk to the elder first; then she can refill. Mara turns you toward the elder if you try to order first.
 - [ ] **#29 café revisit** — when the elder asks you to go back and find out more; bring one asked detail.
@@ -339,6 +343,14 @@ Demo ending = arrive at the train station (#24). **Pegasus, griffin, and other v
 - [ ] **Griffin interpreter + pegasus sky-sign / SL animation** — full teaching/animation TBD (`WORLD-AND-CAST.md`); after demo.
 - [ ] **Other non-humanoid bodies** (giants’ scale, legendary dragons/wyverns, animal-level life) — animation later; legendary stay later in plot too.
 - [ ] **Basket holding** (owner — 2026-09-23) — **post-upgrade** only. The player actually holds a basket in their hands (berry picking and the like). Before that, berries and other goods sit in the bottom inventory boxes and the home crate. Do not fake a held basket on the current sheet.
+
+### After the upgrade — language possibilities (owner — 2026-09-25)
+
+Not this stretch. Week one stays the Spanish café it already is.
+
+- [ ] **Arabic lane** — a second menu lane, with dirhams. Off until after the upgrade.
+- [ ] **Private vocab tracker** — familiarity for one player only. No grades, no score screen.
+- [ ] **Optional harder order check** — a stricter typed order. Off unless the player turns it on.
 
 ### Week-one tone + café language (owner — pinned 2026-06)
 

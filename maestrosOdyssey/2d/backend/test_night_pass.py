@@ -46,8 +46,12 @@ def main() -> int:
     practice = _fn(cafe, "_practice_reply")
     assert "note_cafe_meal_done" in practice
     assert "_remember" in practice
-    assert "if not seated" in _fn(player, "try_sip")
-    assert "if not seated" in _fn(player, "try_bite")
+    sip_key = _fn(player, "try_sip")
+    bite_key = _fn(player, "try_bite")
+    assert "seated and CafeOrder.cup_left" in sip_key
+    assert "drink_held" in sip_key
+    assert "seated and CafeOrder.muffin_left" in bite_key
+    assert "eat_held_food" in bite_key
 
     reset = _fn(cafe, "reset_session")
     assert "meal_done = false" in reset

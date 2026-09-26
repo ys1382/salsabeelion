@@ -60,6 +60,28 @@ var campfire_stage: int = 0
 var wood_stowed_day: int = 0
 ## Berries in hand. The bottom box shows this number.
 var blueberries: int = 0
+var gooseberries: int = 0
+## Day the handful was given. The elder visit is the next morning only.
+var goose_day: int = 0
+var goose_visit_done := false
+var player_honk := false
+## She asked if you want one. Yes is not a bite.
+var goose_ask := false
+## Display names of people who ate a gooseberry today. Cleared at morning.
+var _honk_names: Dictionary = {}
+var _goose_eat_id := ""
+var last_given := ""
+var child_settled := false
+var _honk_on := false
+var _honk_wait := 0
+var _honk_player: AudioStreamPlayer
+var _laugh_player: AudioStreamPlayer
+var _held_speaker := ""
+var _held_line := ""
+const GOOSE_HANDFUL := 4
+## One honk cut from the public-domain Branta canadensis recording.
+const HONK_PATH := "res://audio/goose_honk.wav"
+const LAUGH_PATH := "res://audio/child_laugh.mp3"
 ## Cut wood still in hand. The log box uses this number, then goes away on the fire.
 var logs: int = 0
 ## Home crate and home barrel. Same item ids as the bottom row. Each keeps
@@ -80,7 +102,7 @@ var elder_morning_done: bool = false
 var elder_visit_pending: bool = false
 ## True after the basket hands over the card. Storing it does not clear this.
 var card_picked_up: bool = false
-const STACK_IDS: Array[String] = ["blueberries", "logs"]
+const STACK_IDS: Array[String] = ["blueberries", "gooseberries", "logs"]
 ## Bush id -> day_index it was last picked. Dots stay gone until the next Tuesday.
 var berry_picked: Dictionary = {}
 ## Sunday of week one only. Dots leave the tree once the juice is served.
@@ -130,6 +152,15 @@ func set_world(w: Dictionary) -> void:
 	campfire_stage = 0
 	wood_stowed_day = 0
 	blueberries = 0
+	gooseberries = 0
+	goose_day = 0
+	goose_visit_done = false
+	player_honk = false
+	goose_ask = false
+	_honk_names.clear()
+	_goose_eat_id = ""
+	last_given = ""
+	child_settled = false
 	logs = 0
 	crate.clear()
 	barrel.clear()
@@ -264,6 +295,10 @@ func advance_day() -> void:
 	_clear_slot("logs")
 	# Outdoor street returns to morning while you are still inside the house.
 	sugarplum_sparkle = false
+	player_honk = false
+	goose_ask = false
+	_honk_names.clear()
+	_goose_eat_id = ""
 	if has_node("/root/DayNight"):
 		DayNight.begin_day()
 	var root := WorldManager.world_root
@@ -487,6 +522,99 @@ func can_knock_elder() -> bool:
 	return blueberries > 0 and not has_satchel
 
 
+## Thursday after the handful. Optional. Not the satchel visit.
+func can_knock_goose() -> bool:
+	return (
+		gooseberries > 0
+		and not goose_visit_done
+		and goose_day > 0
+		and day_index == goose_day + 1
+	)
+
+
+func player_honks() -> bool:
+	return player_honk
+
+
+func person_honks(speaker: String) -> bool:
+	return speaker != "" and bool(_honk_names.get(speaker, false))
+
+
+## The thank-you line comes first. The next line is them eating one.
+func arm_goose_eat(npc_id: String) -> void:
+	_goose_eat_id = npc_id
+
+
+func commit_goose_eat(npc_id: String, display_name: String) -> bool:
+	if _goose_eat_id == "" or _goose_eat_id != npc_id:
+		return false
+	_goose_eat_id = ""
+	if display_name != "":
+		_honk_names[display_name] = true
+	return true
+
+
+func holding_pocket_drink() -> bool:
+	return (
+		held_item() == "cafe_drink"
+		and has_node("/root/CafeOrder")
+		and CafeOrder.cup_left > 0
+	)
+
+
+## One drink from the pocket cup. An empty cup, berries, and logs are not this.
+func drink_held() -> bool:
+	if not holding_pocket_drink():
+		return false
+	return CafeOrder.sip()
+
+
+## One bite of the food in hand. Gooseberries and blueberries count.
+## Logs, the learning card, and an empty plate do not.
+func eat_held_food() -> bool:
+	var item_id := held_item()
+	if item_id == "gooseberries" or item_id == "blueberries":
+		if carry_count(item_id) <= 0:
+			return false
+		if item_id == "gooseberries":
+			gooseberries -= 1
+			player_honk = true
+		else:
+			blueberries -= 1
+		if carry_count(item_id) <= 0:
+			_clear_slot(item_id)
+		carry_changed.emit()
+		return true
+	if item_id == "cafe_food" and has_node("/root/CafeOrder") and CafeOrder.muffin_left > 0:
+		return CafeOrder.bite()
+	return false
+
+
+func honk_playing() -> bool:
+	return _honk_on
+
+
+## Yes agrees. It does not eat, and it does not honk.
+func goose_reply(text: String) -> String:
+	var words := text.strip_edges().to_lower()
+	if words == "yes" or words == "si" or words == "sí" or words.begins_with("yes") \
+			or words.begins_with("i'll") or words.begins_with("i will"):
+		return "You have not eaten one yet."
+	return "You leave it."
+
+
+func gain_gooseberries() -> void:
+	gooseberries += GOOSE_HANDFUL
+	goose_day = day_index
+	_fill_empty("gooseberries")
+	carry_changed.emit()
+
+
+func clear_slot_item(item_id: String) -> void:
+	_clear_slot(item_id)
+	carry_changed.emit()
+
+
 func grant_satchel() -> void:
 	if has_satchel:
 		return
@@ -507,6 +635,71 @@ func slot_item(index: int) -> String:
 
 func held_item() -> String:
 	return slot_item(held_slot)
+
+
+func free_pockets() -> int:
+	var n := 0
+	for i in pocket_count():
+		if slot_item(i) == "":
+			n += 1
+	return n
+
+
+## Drink in one pocket, food in another. Only after the satchel exists.
+func stow_meal() -> void:
+	_fill_empty("cafe_drink")
+	_fill_empty("cafe_food")
+	carry_changed.emit()
+
+
+func clear_meal_slots() -> void:
+	_clear_slot("cafe_drink")
+	_clear_slot("cafe_food")
+	carry_changed.emit()
+
+
+## A pocket stack held out, ready to offer. The cup, the plate, and the
+## learning card are not this. A stray press must not move the week's money.
+func offer_item() -> String:
+	var item_id := held_item()
+	if item_id == "" or item_id == "learning_card":
+		return ""
+	if item_id == "cafe_drink" or item_id == "cafe_food" or item_id not in STACK_IDS:
+		return ""
+	if carry_count(item_id) <= 0:
+		return ""
+	return item_id
+
+
+func npc_takes(npc_id: String, item_id: String) -> bool:
+	for n in world.get("npcs", []):
+		if typeof(n) != TYPE_DICTIONARY or str(n.get("id", "")) != npc_id:
+			continue
+		var takes = n.get("takes", [])
+		if typeof(takes) != TYPE_ARRAY:
+			return false
+		return item_id in takes
+	return false
+
+
+## Hand the held stack to that person. "" if it cannot be offered.
+## "take" clears the pockets. "refuse" leaves the stack in hand.
+func give_held(npc_id: String) -> String:
+	var item_id := offer_item()
+	if item_id == "":
+		return ""
+	if not npc_takes(npc_id, item_id):
+		return "refuse"
+	last_given = item_id
+	if item_id == "gooseberries":
+		var n := 2 if gooseberries >= 2 else gooseberries
+		gooseberries -= n
+		if gooseberries <= 0:
+			_clear_slot("gooseberries")
+	else:
+		_clear_carry(item_id)
+	carry_changed.emit()
+	return "take"
 
 
 func select_slot(index: int) -> void:
@@ -536,6 +729,10 @@ func carry_count(item_id: String) -> int:
 		return logs
 	if item_id == "learning_card" and has_item("learning_card"):
 		return 1
+	if item_id == "cafe_drink" or item_id == "cafe_food":
+		return 1 if carry_slot.has(item_id) else 0
+	if item_id == "gooseberries":
+		return gooseberries
 	return 0
 
 
@@ -549,7 +746,7 @@ func barrel_ids() -> Array[String]:
 
 func _store_ids(bag: Dictionary) -> Array[String]:
 	var ids: Array[String] = []
-	for item_id in ["blueberries", "logs", "learning_card"]:
+	for item_id in ["blueberries", "gooseberries", "logs", "learning_card"]:
 		if int(bag.get(item_id, 0)) > 0:
 			ids.append(item_id)
 	return ids
@@ -574,6 +771,8 @@ func store_count(store: String, item_id: String) -> int:
 ## The held stack, or the one learning card, goes into that container.
 ## Wood here is storage, not the fire. Storing the card keeps its pesos.
 func place_stack(item_id: String, store: String = "crate") -> bool:
+	if item_id == "cafe_drink" or item_id == "cafe_food":
+		return false
 	if item_id == "" or held_item() != item_id:
 		return false
 	if store != "crate" and store != "barrel":
@@ -618,6 +817,8 @@ func take_stack(item_id: String, store: String = "crate") -> bool:
 	bag.erase(item_id)
 	if item_id == "blueberries":
 		blueberries += n
+	elif item_id == "gooseberries":
+		gooseberries += n
 	elif item_id == "logs":
 		logs += n
 		if not has_item("logs"):
@@ -636,6 +837,8 @@ func _clear_carry(item_id: String) -> void:
 	elif item_id == "logs":
 		logs = 0
 		inventory.erase("logs")
+	elif item_id == "gooseberries":
+		gooseberries = 0
 	_clear_slot(item_id)
 
 
@@ -655,7 +858,7 @@ func _fill_empty(item_id: String) -> void:
 	if item_id == "learning_card":
 		if not has_item("learning_card"):
 			return
-	elif carry_count(item_id) <= 0:
+	elif item_id != "cafe_drink" and item_id != "cafe_food" and carry_count(item_id) <= 0:
 		return
 	var index := _empty_slot()
 	if index >= 0:
@@ -680,6 +883,8 @@ func settle_slots() -> void:
 		_fill_empty("blueberries")
 	if logs > 0:
 		_fill_empty("logs")
+	if gooseberries > 0:
+		_fill_empty("gooseberries")
 
 
 func _sync_clock() -> void:
@@ -807,6 +1012,97 @@ func notify_boss_defeated() -> void:
 	text += ending_text
 	game_won.emit(text)
 	finale_reached.emit(ending_text)  # legacy listeners
+
+
+## A missing recording stays silent. Never Mara's voice, never a second speaker.
+## One honk at a time. A second turn waits until the first finishes.
+func play_honk() -> void:
+	if not ResourceLoader.exists(HONK_PATH):
+		_honk_on = false
+		_honk_wait = 0
+		_release_voice()
+		return
+	if _honk_on:
+		_honk_wait += 1
+		return
+	_start_honk()
+
+
+func _start_honk() -> void:
+	var player := _clip_player(true)
+	var stream := load(HONK_PATH)
+	if stream == null:
+		_honk_on = false
+		_honk_wait = 0
+		_release_voice()
+		return
+	_honk_on = true
+	player.stream = stream
+	player.play()
+
+
+func play_laugh() -> void:
+	_play_clip(LAUGH_PATH, false)
+
+
+func hold_voice(speaker: String, text: String) -> void:
+	_held_speaker = speaker
+	_held_line = text
+
+
+func _play_clip(path: String, is_honk: bool) -> void:
+	if not ResourceLoader.exists(path):
+		if is_honk:
+			_honk_on = false
+			_release_voice()
+		return
+	var player := _clip_player(is_honk)
+	var stream := load(path)
+	if stream == null:
+		if is_honk:
+			_honk_on = false
+			_release_voice()
+		return
+	if is_honk:
+		_honk_on = true
+	player.stream = stream
+	player.play()
+
+
+func _clip_player(is_honk: bool) -> AudioStreamPlayer:
+	if is_honk:
+		if _honk_player == null:
+			_honk_player = AudioStreamPlayer.new()
+			_honk_player.name = "Honk"
+			_honk_player.finished.connect(_honk_finished)
+			_honk_player.volume_db = 0.0
+			add_child(_honk_player)
+		return _honk_player
+	if _laugh_player == null:
+		_laugh_player = AudioStreamPlayer.new()
+		_laugh_player.name = "Laugh"
+		add_child(_laugh_player)
+	return _laugh_player
+
+
+func _honk_finished() -> void:
+	_honk_on = false
+	if _honk_wait > 0:
+		_honk_wait -= 1
+		_start_honk()
+		return
+	_release_voice()
+
+
+func _release_voice() -> void:
+	if _held_line == "":
+		return
+	var speaker := _held_speaker
+	var text := _held_line
+	_held_speaker = ""
+	_held_line = ""
+	if has_node("/root/MaraVoice"):
+		MaraVoice.note_line(speaker, text)
 
 
 func set_cast(new_cast: Array, new_title: String) -> void:

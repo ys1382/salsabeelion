@@ -34,6 +34,7 @@ var barrel_open := false
 var crate_choice := ""
 
 var _berry_tex: Texture2D
+var _goose_tex: Texture2D
 var _log_tex: Texture2D
 var _card_tex: Texture2D
 var _card_button: Button
@@ -51,6 +52,7 @@ func _ready() -> void:
 	_week = _make_line(LINE)
 	_pesos = _make_line(LINE * 2)
 	_berry_tex = _draw_berries()
+	_goose_tex = _draw_gooseberries()
 	_log_tex = _draw_log()
 	_card_tex = _draw_card()
 	_build_bar()
@@ -367,6 +369,10 @@ func _paint_carry() -> void:
 			icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 			num.text = ""
 			found_card = btn
+		elif item_id == "cafe_drink" or item_id == "cafe_food":
+			icon.texture = icon_for(item_id)
+			num.text = ""
+			_reset_icon(icon)
 		else:
 			icon.texture = icon_for(item_id)
 			num.text = str(n)
@@ -443,8 +449,12 @@ func _settle_card(icon: TextureRect) -> void:
 func icon_for(item_id: String) -> Texture2D:
 	if item_id == "logs":
 		return _log_tex
+	if item_id == "gooseberries":
+		return _goose_tex
 	if item_id == "learning_card":
 		return _card_tex
+	if item_id == "cafe_drink" or item_id == "cafe_food":
+		return CafeOrder.slot_icon(item_id)
 	return _berry_tex
 
 
@@ -510,6 +520,18 @@ func _draw_berries() -> Texture2D:
 	for p in [Vector2i(4, 10), Vector2i(5, 10), Vector2i(4, 11), Vector2i(8, 8), Vector2i(9, 8)]:
 		img.set_pixel(p.x, p.y, leaf)
 	for p in [Vector2i(6, 6), Vector2i(7, 6), Vector2i(6, 7), Vector2i(10, 9), Vector2i(11, 9), Vector2i(10, 10), Vector2i(5, 12), Vector2i(8, 5)]:
+		img.set_pixel(p.x, p.y, dot)
+	return ImageTexture.create_from_image(img)
+
+
+func _draw_gooseberries() -> Texture2D:
+	var img := Image.create(16, 16, false, Image.FORMAT_RGBA8)
+	img.fill(Color(0, 0, 0, 0))
+	var leaf := Color(0.22, 0.42, 0.22, 1.0)
+	var dot := Color(0.55, 0.62, 0.28, 1.0)
+	for p in [Vector2i(4, 10), Vector2i(5, 10), Vector2i(8, 8)]:
+		img.set_pixel(p.x, p.y, leaf)
+	for p in [Vector2i(6, 6), Vector2i(7, 6), Vector2i(10, 9), Vector2i(11, 9), Vector2i(5, 12)]:
 		img.set_pixel(p.x, p.y, dot)
 	return ImageTexture.create_from_image(img)
 

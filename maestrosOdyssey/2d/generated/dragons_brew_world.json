@@ -270,6 +270,7 @@
       "opener": "Good morning, dear. I'm one of the elders who helps look after this block. You've been part of the neighborhood for a while now.",
       "movement": "idle",
       "tint": "#d4af6a",
+      "takes": ["gooseberries"],
       "wants_item": "",
       "gives_item": "",
       "reveal_beat": "",
@@ -315,6 +316,7 @@
       "inside_x": 11,
       "inside_y": 7,
       "facing": "up",
+      "weekdays": ["Monday", "Tuesday", "Thursday", "Friday", "Saturday", "Sunday"],
       "name": "Iguana neighbor",
       "role": "marine iguana lizardfolk",
       "species": "lizardfolk",
@@ -339,6 +341,7 @@
       "inside_x": 11,
       "inside_y": 3,
       "facing": "down",
+      "weekdays": ["Monday", "Tuesday", "Thursday", "Friday", "Saturday", "Sunday"],
       "name": "Riverfolk neighbor",
       "role": "crocodilian riverfolk",
       "persona": "Steady, low voice, careful with other people's business.",
@@ -429,6 +432,98 @@
       "scripted_lines": [
         "T\u00e9 is a good idea, when you're ready to order.",
         "We're not here to make a fuss. Just the table."
+      ]
+    },
+    {
+      "id": "family_neighbor",
+      "x": 21,
+      "y": 16,
+      "inside": "dragons_brew",
+      "inside_x": 10,
+      "inside_y": 2,
+      "facing": "down",
+      "weekdays": ["Wednesday"],
+      "name": "Family neighbor",
+      "role": "human, here with family",
+      "persona": "Warm, ordinary, glad to sit down for a meal.",
+      "secret": "Nothing hidden. Breakfast is the whole visit.",
+      "could_know": "Comes to Dragon's Brew on Wednesday mornings with two relatives",
+      "opener": "Morning. We came in for breakfast.",
+      "movement": "idle",
+      "takes": ["blueberries", "gooseberries"],
+      "wants_item": "",
+      "scripted_lines": [
+        "Morning. We came in for breakfast.",
+        "Café con leche is my favorite."
+      ]
+    },
+    {
+      "id": "family_brother",
+      "x": 22,
+      "y": 17,
+      "inside": "dragons_brew",
+      "inside_x": 10,
+      "inside_y": 7,
+      "facing": "up",
+      "weekdays": ["Wednesday"],
+      "name": "Family brother",
+      "role": "human brother",
+      "persona": "Easy, hungry, not in a hurry.",
+      "secret": "He just likes the food.",
+      "could_know": "Shares the Wednesday table with his sister and their aunt",
+      "opener": "The tostada is my favorite.",
+      "movement": "idle",
+      "takes": ["logs", "gooseberries"],
+      "wants_item": "",
+      "scripted_lines": [
+        "The tostada is my favorite.",
+        "I'm glad this room has space for everyone, humans included."
+      ]
+    },
+    {
+      "id": "family_aunt",
+      "x": 23,
+      "y": 16,
+      "inside": "dragons_brew",
+      "inside_x": 12,
+      "inside_y": 2,
+      "facing": "left",
+      "weekdays": ["Wednesday"],
+      "name": "Family aunt",
+      "role": "human aunt",
+      "persona": "Settled, kind, content to linger.",
+      "secret": "She likes a quiet table.",
+      "could_know": "Sits with the Wednesday family and is not looking for news",
+      "opener": "We'll take our time.",
+      "movement": "idle",
+      "takes": ["gooseberries"],
+      "wants_item": "",
+      "scripted_lines": [
+        "We'll take our time.",
+        "The food is warm, and that's enough."
+      ]
+    },
+    {
+      "id": "family_child",
+      "x": 24,
+      "y": 16,
+      "inside": "dragons_brew",
+      "inside_x": 10,
+      "inside_y": 5,
+      "facing": "right",
+      "weekdays": ["Wednesday"],
+      "name": "Family child",
+      "role": "human child",
+      "persona": "Busy, happy, stays near the family table.",
+      "secret": "Nothing hidden. They just want to run.",
+      "could_know": "Runs around the Wednesday family table",
+      "opener": "I'm staying by the table.",
+      "movement": "table_run",
+      "look": "child",
+      "takes": [],
+      "wants_item": "",
+      "scripted_lines": [
+        "I'm staying by the table."
       ]
     }
   ],

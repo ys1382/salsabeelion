@@ -97,7 +97,9 @@ func prompt() -> String:
 	if locked():
 		return "Try"
 	if enters == "elder_house":
-		return "Knock" if GameState.can_knock_elder() else "Shut"
+		if GameState.can_knock_elder() or GameState.can_knock_goose():
+			return "Knock"
+		return "Shut"
 	if enters != "":
 		return PROMPTS["enter"]
 	if gives != "" and not GameState.has_item(gives):

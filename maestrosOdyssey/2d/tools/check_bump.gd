@@ -72,6 +72,18 @@ static func run(host: Node) -> void:
 	await _expect(host, player.global_position.y < 90.0,
 		"crowd jailed the player at %s" % player.global_position)
 
+	var gs_wed: Node = host.get_node("/root/GameState")
+	gs_wed.day_index = 3
+	gs_wed._sync_clock()
+	interiors.leave()
+	await host.get_tree().physics_frame
+	interiors.enter("dragons_brew")
+	await host.get_tree().physics_frame
+	await host.get_tree().physics_frame
+	await _stand_by(host, player, "family_neighbor", Vector2(9 * 16 + 8, 3 * 16))
+	await _stand_by(host, player, "family_aunt", Vector2(12 * 16 + 8, 4 * 16))
+	await _stand_by(host, player, "family_brother", Vector2(9 * 16 + 8, 8 * 16))
+
 	interiors.leave()
 	await host.get_tree().physics_frame
 	var gs: Node = host.get_node("/root/GameState")
@@ -113,6 +125,14 @@ static func run(host: Node) -> void:
 
 	print("bump: ok")
 	host.get_tree().quit()
+
+
+static func _stand_by(host: Node, player: Player, id: String, at: Vector2) -> void:
+	var who := _npc(host, id)
+	await _place(host, player, at)
+	var nearest := player.global_position.distance_to(who.global_position)
+	await _expect(host, nearest < 28.0 and nearest > 8.0,
+		"cannot stand by %s at %s (dist %s)" % [id, player.global_position, nearest])
 
 
 static func _npc(host: Node, id: String) -> Npc:

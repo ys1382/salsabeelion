@@ -23,6 +23,7 @@ def main() -> int:
     assert names == {
         "elder", "mara", "iguana_neighbor", "riverfolk_neighbor",
         "werewolf_fiance", "werewolf_sister", "vampire_neighbor",
+        "family_neighbor", "family_brother", "family_aunt", "family_child",
     }
     mara = next(n for n in world["npcs"] if n["id"] == "mara")
     assert mara["inside"] == "dragons_brew"
@@ -59,6 +60,35 @@ def main() -> int:
     assert sister.get("facing") == "left"
     assert int(vampire["inside_x"]) == 0 and int(vampire["inside_y"]) == 7
     assert vampire.get("facing") == "right"
+    monday = [n for n in world["npcs"] if n["id"] in {
+        "iguana_neighbor", "riverfolk_neighbor",
+    }]
+    for n in monday:
+        assert "Wednesday" not in n.get("weekdays", [])
+        assert "Monday" in n.get("weekdays", [])
+    family = [n for n in world["npcs"] if n["id"] in {
+        "family_neighbor", "family_brother", "family_aunt",
+    }]
+    assert len(family) == 3
+    joined_family = []
+    for n in family:
+        assert n.get("weekdays") == ["Wednesday"]
+        assert n["inside"] == "dragons_brew"
+        assert n.get("species", "") == ""
+        assert "child" not in n["name"].lower()
+        assert int(n["inside_x"]) not in (6, 7, 8)
+        joined_family.extend(n["scripted_lines"])
+    blob = " ".join(joined_family).lower()
+    assert "café con leche" in blob
+    assert "tostada" in blob
+    assert "humans included" in blob
+    assert "merfolk" not in blob
+    assert "detective" not in blob
+    child = next(n for n in world["npcs"] if n["id"] == "family_child")
+    assert child.get("look") == "child"
+    assert child.get("movement") == "table_run"
+    assert child.get("weekdays") == ["Wednesday"]
+    assert int(child["inside_x"]) not in (6, 7, 8)
     for n in tuesday:
         assert int(n["inside_x"]) not in (6, 7, 8)
     assert fiance.get("species") == "werewolf"

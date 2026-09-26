@@ -5,8 +5,13 @@ extends CharacterBody2D
 # looking anything up, and wanders gently if the world asked it to.
 
 const SPEED := 18.0
+const RUN_SPEED := 96.0
 const WANDER_EVERY := 3.0
 const WANDER_RADIUS := 40.0
+## Cells east of the door-to-counter walk (x 6–8). A lap around the family table.
+const TABLE_LAP := [
+	Vector2i(11, 4), Vector2i(12, 4), Vector2i(12, 5), Vector2i(11, 5),
+]
 const LooksLib := preload("res://actors/looks.gd")
 
 @onready var _sprite: AnimatedSprite2D = $Sprite
@@ -33,6 +38,8 @@ var _paused := 0.0
 ## Talk hold. Negative pause means "until the panel closes," not a timer.
 var _talk_locked := false
 var _facing_before := Vector2.DOWN
+var _lap_i := 0
+var _child := false
 
 
 func setup(d: Dictionary) -> void:
@@ -44,7 +51,12 @@ func setup(d: Dictionary) -> void:
 
 func _ready() -> void:
 	add_to_group("npc")
-	_sprite.sprite_frames = Sheet.villager_frames()
+	_child = str(data.get("look", "")) == "child"
+	if _child:
+		_sprite.sprite_frames = Sheet.player_frames()
+		_sprite.scale = Vector2(0.62, 0.62)
+	else:
+		_sprite.sprite_frames = Sheet.villager_frames()
 	_sprite.position = Vector2(0, -16)
 	LooksLib.apply_body_tint(_sprite, data)
 	var look := str(data.get("look", ""))
@@ -53,10 +65,16 @@ func _ready() -> void:
 	LooksLib.attach(self, look)
 	_home = position
 	_timer = randf() * WANDER_EVERY
+	if _child and GameState.child_settled:
+		settle_beside_table()
+		return
 	_play("idle")
 
 
 func _physics_process(delta: float) -> void:
+	if str(data.get("movement", "")) == "table_run":
+		_run_table(delta)
+		return
 	if data.get("movement", "idle") != "wander":
 		return
 	# A villager who strides off mid-conversation is maddening; zij3d had to add
@@ -79,6 +97,46 @@ func _physics_process(delta: float) -> void:
 
 	velocity = _heading * SPEED
 	move_and_slide()
+	if _heading != Vector2.ZERO:
+		facing = _heading
+	_play("move" if _heading != Vector2.ZERO else "idle")
+
+
+## Run a lap around the family table. Stay off the middle walk.
+func _run_table(_delta: float) -> void:
+	if _paused < 0.0 or _paused > 0.0:
+		if _paused > 0.0:
+			_paused -= _delta
+		velocity = Vector2.ZERO
+		_play("idle")
+		return
+	var goal := Catalog.cell_to_anchor(TABLE_LAP[_lap_i])
+	var to := goal - position
+	if to.length() < 3.0:
+		_lap_i = (_lap_i + 1) % TABLE_LAP.size()
+		goal = Catalog.cell_to_anchor(TABLE_LAP[_lap_i])
+		to = goal - position
+	if to.length_squared() < 0.01:
+		velocity = Vector2.ZERO
+		_play("idle")
+		return
+	facing = to
+	velocity = to.normalized() * RUN_SPEED
+	move_and_slide()
+	# Door-to-counter is cells 6–8. The lap starts at cell 9.
+	var aisle_edge := 9 * Catalog.TILE + 2.0
+	if position.x < aisle_edge:
+		position.x = aisle_edge
+		velocity.x = absf(velocity.x)
+	_play("move")
+
+
+func settle_beside_table() -> void:
+	data["movement"] = "idle"
+	position = Catalog.cell_to_anchor(Vector2i(11, 5))
+	velocity = Vector2.ZERO
+	facing = Vector2.UP
+	_play("idle")
 	if _heading != Vector2.ZERO:
 		facing = _heading
 	_play("move" if _heading != Vector2.ZERO else "idle")
@@ -200,7 +258,8 @@ func _play(state: String) -> void:
 	# Side row on this sheet already faces left. The shared helper flips
 	# for a sheet that faces right, so undo that or they look the same way.
 	var flip := bool(parts[1])
-	if parts[0] == "side":
+	# Villager side art faces left. The player sheet faces right.
+	if parts[0] == "side" and not _child:
 		flip = not flip
 	_sprite.flip_h = flip
 	LooksLib.face(self, flip)

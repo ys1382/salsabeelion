@@ -127,6 +127,10 @@ func _physics_process(delta: float) -> void:
 
 	var input := agent_input if agent_input != Vector2.ZERO \
 		else Input.get_vector("move_left", "move_right", "move_up", "move_down")
+	# D drinks while a pocket cup is in hand. Arrows still walk.
+	if not seated and GameState.holding_pocket_drink() and Input.is_key_pressed(KEY_D):
+		if not Input.is_key_pressed(KEY_RIGHT) and input.x > 0.0:
+			input.x = 0.0
 	if DialogueUI.is_ordering():
 		velocity = Vector2.ZERO
 		move_and_slide()
@@ -385,14 +389,20 @@ func _update_focus() -> void:
 		if look_id == "home_crate_look" or look_id == "home_barrel_look":
 			DialogueUI.show_prompt(Hud.crate_prompt())
 		elif it.enters == "elder_house":
-			if GameState.can_knock_elder():
+			if GameState.can_knock_elder() or GameState.can_knock_goose():
 				DialogueUI.show_prompt("K — Knock")
 			else:
 				DialogueUI.hide_prompt()
 		else:
 			DialogueUI.show_prompt("%s — %s" % [_prompt_key(it), it.prompt()])
 	elif focus is Npc:
-		DialogueUI.show_prompt("T — Talk to %s" % (focus as Npc).display_name)
+		var npc := focus as Npc
+		if _pastry_for_child(npc):
+			DialogueUI.show_prompt("G — Give")
+		elif GameState.offer_item() != "":
+			DialogueUI.show_prompt("G — Give")
+		else:
+			DialogueUI.show_prompt("T — Talk to %s" % npc.display_name)
 	elif _chop_prompt():
 		DialogueUI.show_prompt("J — Chop")
 	elif _pick_prompt():
@@ -447,6 +457,20 @@ func _unhandled_input(event: InputEvent) -> void:
 		if _knock_elder():
 			get_viewport().set_input_as_handled()
 		return
+	if _key_down(event, KEY_G):
+		if _try_give():
+			get_viewport().set_input_as_handled()
+		return
+	if not seated and not DialogueUI.is_open() and event is InputEventKey \
+			and event.pressed and not event.echo:
+		if event.keycode == KEY_D or event.physical_keycode == KEY_D:
+			if try_sip():
+				get_viewport().set_input_as_handled()
+				return
+		if event.keycode == KEY_F or event.physical_keycode == KEY_F:
+			if try_bite():
+				get_viewport().set_input_as_handled()
+				return
 	if _key_down(event, KEY_P):
 		if try_pick():
 			get_viewport().set_input_as_handled()
@@ -524,21 +548,89 @@ func _unhandled_input(event: InputEvent) -> void:
 func _knock_elder() -> bool:
 	if DialogueUI.is_open() or seated:
 		return false
-	if not GameState.can_knock_elder():
+	if not GameState.can_knock_elder() and not GameState.can_knock_goose():
 		return false
 	if not focus is Interactable:
 		return false
 	var it := focus as Interactable
 	if it.enters != "elder_house":
 		return false
-	GameState.elder_visit_pending = true
+	if GameState.can_knock_elder():
+		GameState.elder_visit_pending = true
+		Interiors.enter("elder_house", "")
+		DialogueUI.show_line("Elder",
+			"She opens the door, surprised, and glad.\n\n"
+			+ "\"Mara's been worried. I can tell. Thank you for deciding to come — that kindness is yours.\"\n\n"
+			+ "She gives you a satchel. The blueberries leave your pockets.")
+		DialogueUI.set_close_key("E")
+		return true
+	GameState.goose_visit_done = true
 	Interiors.enter("elder_house", "")
-	DialogueUI.show_line("Elder",
-		"She opens the door, surprised, and glad.\n\n"
-		+ "\"Mara's been worried. I can tell. Thank you for deciding to come — that kindness is yours.\"\n\n"
-		+ "She gives you a satchel. The blueberries leave your pockets.")
-	DialogueUI.set_close_key("E")
+	DialogueUI.show_line("Elder", "She opens the door.")
+	DialogueUI.set_close_key("T")
 	return true
+
+
+## G offers the held pocket stack to the person right here. It does not knock,
+## and it does not grant a satchel. In the type box it stays a letter.
+func _try_give() -> bool:
+	if DialogueUI.is_open() or DialogueUI.is_ordering() or seated:
+		return false
+	if GameState.elder_visit_pending:
+		return false
+	if not focus is Npc:
+		return false
+	var npc := focus as Npc
+	if _pastry_for_child(npc):
+		_give_pastry(npc)
+		return true
+	var result := GameState.give_held(npc.npc_id)
+	if result == "":
+		_begin_talk_face(npc)
+		DialogueUI.show_line(npc.display_name, "That stays with you.", false, false)
+		DialogueUI.set_close_key("T")
+		return true
+	_refresh_held()
+	_begin_talk_face(npc)
+	if result == "take" and GameState.last_given == "gooseberries" and npc.npc_id == "elder":
+		GameState.arm_goose_eat(npc.npc_id)
+		GameState.goose_ask = true
+		_open_pages(npc, PackedStringArray([
+			"Thank you. I'll take that.",
+			"She eats one. It is bright and tart.",
+		]))
+		return true
+	if result == "take":
+		DialogueUI.show_line(npc.display_name, "Thank you. I'll take that.")
+	else:
+		DialogueUI.show_line(npc.display_name, "No thank you. You keep it.")
+	DialogueUI.set_close_key("T")
+	return true
+
+
+func _pastry_for_child(npc: Npc) -> bool:
+	if npc.npc_id != "family_child" or GameState.child_settled:
+		return false
+	if GameState.held_item() != "cafe_food":
+		return false
+	return CafeOrder.muffin_left > 0
+
+
+func _give_pastry(npc: Npc) -> void:
+	CafeOrder.muffin_left = 0
+	GameState.clear_slot_item("cafe_food")
+	CafeOrder._mark_meal_if_done()
+	npc.settle_beside_table()
+	GameState.child_settled = true
+	GameState.gain_gooseberries()
+	GameState.play_laugh()
+	_refresh_held()
+	_begin_talk_face(npc)
+	DialogueUI.show_line(npc.display_name,
+		"He stops. His parents get him over to the table, standing beside it.\n\n"
+		+ "They thank you with a handful of gooseberries.\n\n"
+		+ "He laughs.")
+	DialogueUI.set_close_key("T")
 
 
 func _key_down(event: InputEvent, key: Key) -> bool:
@@ -585,6 +677,9 @@ func _after_panel_close() -> void:
 		GameState.grant_satchel()
 		_refresh_worn()
 	CafeOrder.on_speech_closed()
+	if GameState.goose_ask:
+		DialogueUI.show_order_box("Elder")
+		return
 	if CafeOrder.open_box_on_close:
 		CafeOrder.open_box_on_close = false
 		DialogueUI.show_order_box()
@@ -825,6 +920,8 @@ func _use_prop(it: Interactable) -> String:
 
 
 func _talk_npc(npc: Npc) -> String:
+	if GameState.player_honks():
+		GameState.play_honk()
 	var gift := npc.accept_item()
 	npc.met = true
 	_clear_pages()
@@ -893,7 +990,10 @@ func _show_page(npc: Npc) -> void:
 	var line := _pages[_page]
 	CafeOrder.note_guest_spoke(npc.npc_id, line, false)
 	_begin_talk_face(npc)
-	DialogueUI.show_line(npc.display_name, line, _more_lines())
+	var speak := _page == 0
+	if _page > 0 and GameState.commit_goose_eat(npc.npc_id, npc.display_name):
+		speak = true
+	DialogueUI.show_line(npc.display_name, line, _more_lines(), speak)
 
 
 func _advance_page() -> void:
@@ -976,20 +1076,37 @@ func _on_order_ready(_lemmas: PackedStringArray) -> void:
 
 
 func try_sip() -> bool:
-	if not seated or DialogueUI.is_open() or DialogueUI.is_ordering():
+	if DialogueUI.is_open() or DialogueUI.is_ordering():
 		return false
-	if not CafeOrder.sip():
+	if seated and CafeOrder.cup_left > 0:
+		if not CafeOrder.sip():
+			return false
+		_refresh_held()
+		return true
+	if seated:
+		return false
+	if not GameState.drink_held():
 		return false
 	_refresh_held()
 	return true
 
 
 func try_bite() -> bool:
-	if not seated or DialogueUI.is_open() or DialogueUI.is_ordering():
+	if DialogueUI.is_open() or DialogueUI.is_ordering():
 		return false
-	if not CafeOrder.bite():
+	if seated and CafeOrder.muffin_left > 0:
+		if not CafeOrder.bite():
+			return false
+		_refresh_held()
+		return true
+	var before := GameState.gooseberries
+	if not GameState.eat_held_food():
 		return false
 	_refresh_held()
+	if GameState.gooseberries < before:
+		GameState.play_honk()
+		DialogueUI.show_line("", "You eat one. It is bright and tart.")
+		DialogueUI.set_close_key("T")
 	return true
 
 
@@ -1038,8 +1155,8 @@ func try_pick() -> bool:
 func _refresh_held() -> void:
 	if _held == null:
 		return
-	# The cup and plate stay as they are. The sack never replaces them.
-	if CafeOrder.still_holding():
+	# Before the satchel, the cup and plate stay in the hands.
+	if CafeOrder.still_holding() and not GameState.has_satchel:
 		_held.texture = CafeOrder.texture_for()
 		_held.show()
 		_place_held()

@@ -286,27 +286,41 @@ func _counter_while_waiting() -> String:
 	if not called_out:
 		# She calls across the room. Pressing T early must not take that line.
 		return ""
-	_put_in_hands()
+	if not _put_in_hands():
+		return "Mara looks at your satchel. \"Two pockets are full. I'll keep this at the counter.\""
 	return "Mara sets it in your hands. \"Here you go — that's ready.\"" + _picked_line()
 
 
 func _hand_over_now(total: int) -> String:
-	_put_in_hands()
+	if not _put_in_hands():
+		awaiting_serve = true
+		called_out = true
+		cup_left = 0
+		muffin_left = 0
+		return (
+			"Mara repeats it back, calm and clear: \"%s.\"\n\n"
+			+ "That's %d pesos from your card. \"Two pockets are full. I'll keep this at the counter.\""
+		) % [_echo(served), total]
 	return (
 		"Mara repeats it back, calm and clear: \"%s.\"\n\n"
 		+ "That's %d pesos from your card. \"Here you go — that's ready.\"%s"
 	) % [_echo(served), total, _picked_line()]
 
 
-func _put_in_hands() -> void:
+func _put_in_hands() -> bool:
+	if GameState.has_satchel and GameState.free_pockets() < 2:
+		return false
 	awaiting_serve = false
 	called_out = false
 	_callout_left = -1.0
 	cup_left = 4 if _drink != "" else 0
 	muffin_left = 3 if _food != "" else 0
+	if GameState.has_satchel:
+		GameState.stow_meal()
 	if _drink == "sugarplum juice":
 		GameState.note_sugarplum_served()
 	order_ready.emit(served)
+	return true
 
 
 func _picked_line() -> String:
@@ -325,7 +339,9 @@ func _guest_dicts() -> Array:
 			continue
 		if str(n.get("inside", "")) != "dragons_brew":
 			continue
-		if str(n.get("id", "")) == "mara":
+		if str(n.get("id", "")) == "mara" or str(n.get("id", "")) == "family_child":
+			continue
+		if str(n.get("movement", "")) == "table_run":
 			continue
 		if not Interiors._here_today(n):
 			continue
@@ -366,6 +382,7 @@ func use_dish_cart() -> String:
 			return "Mara glances over. \"Finish first — then the cup and plate go in the cart.\""
 		return "An empty dish cart. Staff take what's left here back to wash."
 	carrying_dishes = false
+	GameState.clear_meal_slots()
 	if GameState.day_index == 1 and not visit_hint_said:
 		visit_hint = true
 		visit_hint_said = true
@@ -677,6 +694,19 @@ func texture_for(lemmas: PackedStringArray = PackedStringArray()) -> Texture2D:
 	if has_food:
 		_draw_muffin(img, 8 if has_drink else 1, food)
 	return ImageTexture.create_from_image(img)
+
+
+func slot_icon(item_id: String) -> Texture2D:
+	var icon := Image.create(10, 12, false, Image.FORMAT_RGBA8)
+	icon.fill(Color(0, 0, 0, 0))
+	if item_id == "cafe_food":
+		if muffin_left > 0:
+			_draw_muffin(icon, 1, _food if _food != "" else "muffin")
+		else:
+			_fill(icon, 1, 9, 8, 2, Color(0.91, 0.88, 0.82))
+	else:
+		_draw_cup(icon, 0, _drink if _drink != "" else "café")
+	return ImageTexture.create_from_image(icon)
 
 
 func order_total(lemmas: PackedStringArray) -> int:

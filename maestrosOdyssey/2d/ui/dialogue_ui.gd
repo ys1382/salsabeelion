@@ -112,7 +112,7 @@ func show_thinking(speaker: String) -> void:
 
 ## `more` means this person still has another box after this one. T then says
 ## next. The last box, and any one-line talk, still says close.
-func show_line(speaker: String, text: String, more := false) -> void:
+func show_line(speaker: String, text: String, more := false, speak := true) -> void:
 	_hide_sign()
 	_prompt.hide()
 	_order.hide()
@@ -126,7 +126,13 @@ func show_line(speaker: String, text: String, more := false) -> void:
 	_hint.show()
 	_fit(text, speaker != "")
 	_panel.show()
-	MaraVoice.note_line(speaker, text)
+	if speak and GameState.person_honks(speaker):
+		MaraVoice.note_line("", "")
+		GameState.play_honk()
+	elif GameState.honk_playing():
+		GameState.hold_voice(speaker, text)
+	else:
+		MaraVoice.note_line(speaker, text)
 
 
 ## Close-up of a wall sign. One paper: title and rules together, not a thin
@@ -157,7 +163,7 @@ func show_order_box(speaker: String = "Mara") -> void:
 	_hint.hide()
 	_order.text = ""
 	if speaker == "Elder":
-		_order.placeholder_text = "Favorite drink and food, then Enter"
+		_order.placeholder_text = "Yes or no, then Enter"
 	elif CafeOrder.awaiting_bye:
 		_order.placeholder_text = CafeOrder.goodbye_box_hint()
 	else:
@@ -175,6 +181,12 @@ func is_ordering() -> bool:
 func _on_order_submitted(text: String) -> void:
 	_order.hide()
 	_order.release_focus()
+	if GameState.goose_ask:
+		GameState.goose_ask = false
+		show_line("", GameState.goose_reply(text))
+		return
+	if GameState.player_honks():
+		GameState.play_honk()
 	if ElderReport.awaiting:
 		show_line(ElderReport.speaker_name(), ElderReport.reply_for(text))
 	else:
