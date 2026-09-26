@@ -16,6 +16,10 @@ def main() -> int:
     assert "menu_read" in cafe, "order still requires reading the board first"
     assert "A drink and a food" in cafe
     assert "A drink y a food" in cafe
+    prompt = cafe.split("func order_prompt()", 1)[1].split("\nfunc ", 1)[0]
+    assert "this morning" not in prompt, "the order line must not list the board"
+    assert "_visible_lemmas" not in prompt
+    assert "pesos" not in prompt, "prices stay on the board"
     assert "say y instead of and" in cafe
     assert "here we say y" in cafe
     assert "needs_y" in cafe

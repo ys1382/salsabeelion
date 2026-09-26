@@ -15,7 +15,9 @@ extends Node
 # can't cover any
 # pair, Mara quizzes board words instead (cycling, not the same lemma on a
 # loop). One new café word a day, and it stays: y from Tuesday, con for extras
-# from Wednesday, un / una (with gender) from Thursday. Later Mondays do not
+# from Wednesday, un / una (with gender) from Thursday. Her order prompt
+# teaches that shape only. It does not name the board or the prices — those
+# stay on the wall. Later Mondays do not
 # go back to English "and". Add-ons are Spanish. A good quiz also lets home turn the weekday.
 
 signal order_ready(lemmas: PackedStringArray)
@@ -512,30 +514,30 @@ func _counter_or_order_line() -> String:
 	return order_prompt()
 
 
+## Asks for the order and teaches the day's shape. The wall has the items
+## and the prices. This line does not.
 func order_prompt() -> String:
-	var names := _visible_lemmas(false)
-	var board := ", ".join(names)
 	if GameState.day_index == 2:
 		return (
-			"What's your order? (%s this morning.)\n\n"
+			"What's your order?\n\n"
 			+ "Today I'd like you to say y instead of and — a drink y a food."
-		) % board
+		)
 	if GameState.day_index == 3:
 		return (
-			"What's your order? A drink y a food. (%s this morning.)\n\n"
+			"What's your order? A drink y a food.\n\n"
 			+ "Extras use con, like con azúcar."
-		) % board
+		)
 	if GameState.day_index == 4:
 		return (
-			"What's your order? (%s this morning.)\n\n"
+			"What's your order?\n\n"
 			+ "Today, un and una mean a, or one — un café, a coffee. "
 			+ "un café y una galleta. Y still joins them, and extras still use con."
-		) % board
+		)
 	if needs_article():
-		return "What's your order? Un or una, then a drink y a food, con if you want extras. (%s this morning.)" % board
+		return "What's your order? Un or una, then a drink y a food, con if you want extras."
 	if needs_y():
-		return "What's your order? A drink y a food. (%s this morning.)" % board
-	return "What's your order? A drink and a food. (%s this morning.)" % board
+		return "What's your order? A drink y a food."
+	return "What's your order? A drink and a food."
 
 
 ## Tuesday onward. Stays on later Mondays — day_index does not wrap.
@@ -592,9 +594,7 @@ func reply_for(text: String) -> String:
 		return "Mara waits patiently. \"Take your time — look at the board again if you need to.\""
 	var lemmas := match_lemmas(order)
 	if lemmas.is_empty() or (_lemma_of_kind(lemmas, "drink") == "" and _lemma_of_kind(lemmas, "food") == ""):
-		return (
-			"Mara tilts her head. \"I didn't catch that — %s this morning?\""
-		) % ", ".join(_visible_lemmas(false))
+		return "Mara tilts her head. \"I didn't catch that. The menu is on the wall.\""
 	var missing := _missing_half_line(lemmas)
 	if missing != "":
 		return missing
@@ -789,15 +789,6 @@ func match_lemmas(order: String) -> PackedStringArray:
 				found.append(str(item["lemma"]))
 				break
 	return found
-
-
-func _visible_lemmas(include_addons: bool) -> PackedStringArray:
-	var names: PackedStringArray = []
-	for item in visible_items():
-		if not include_addons and _is_extra(item):
-			continue
-		names.append(str(item["lemma"]))
-	return names
 
 
 func _new_today_items() -> Array:
