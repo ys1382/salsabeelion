@@ -89,13 +89,48 @@ static func player_frames() -> SpriteFrames:
 
 
 static func villager_frames() -> SpriteFrames:
-	var sf := build(VILLAGER_IDLE, VILLAGER_CELL, [
+	return _villager_from(load(VILLAGER_IDLE), load(VILLAGER_WALK))
+
+
+# Hair is a lighter brown. Skin is a darker brown. Same frames as everyone
+# else — only Mara uses this copy. Outfit pixels, including boots that share
+# a hair brown, stay the original colors. Hair colors below this row are boots.
+const MARA_HAIR_MAX_Y := 30
+const MARA_HAIR := {
+	0x593f2d: Color("#8f5a34"),
+	0x784d36: Color("#a87240"),
+	0x886644: Color("#c08850"),
+	0x986641: Color("#d4a060"),
+	0xb87f4c: Color("#e0b878"),
+}
+const MARA_SKIN := {
+	0x48302a: Color("#4a2e1c"),
+	0x6c483e: Color("#543422"),
+	0xb58a73: Color("#5c3a24"),
+	0xd9aa8d: Color("#68422a"),
+	0xf4c8a3: Color("#70482e"),
+	0xf4dbbc: Color("#7a5032"),
+}
+
+static var _mara_frames: SpriteFrames
+
+
+static func mara_frames() -> SpriteFrames:
+	if _mara_frames != null:
+		return _mara_frames
+	var idle := ImageTexture.create_from_image(_paint_mara(load(VILLAGER_IDLE).get_image()))
+	var walk := ImageTexture.create_from_image(_paint_mara(load(VILLAGER_WALK).get_image()))
+	_mara_frames = _villager_from(idle, walk)
+	return _mara_frames
+
+
+static func _villager_from(idle: Texture2D, walk_tex: Texture2D) -> SpriteFrames:
+	var sf := _frames_on(idle, VILLAGER_CELL, [
 		Row.new("idle_side", 0, 4, 6.0),
 		Row.new("idle_up", 2, 4, 6.0),
 		Row.new("idle_down", 3, 4, 6.0),
 	])
-	# Merge the walk sheet's rows into the same SpriteFrames.
-	var walk := build(VILLAGER_WALK, VILLAGER_CELL, [
+	var walk := _frames_on(walk_tex, VILLAGER_CELL, [
 		Row.new("move_side", 0, 4, 10.0),
 		Row.new("move_up", 2, 4, 10.0),
 		Row.new("move_down", 3, 4, 10.0),
@@ -106,6 +141,46 @@ static func villager_frames() -> SpriteFrames:
 		for i in walk.get_frame_count(anim):
 			sf.add_frame(anim, walk.get_frame_texture(anim, i))
 	return sf
+
+
+static func _frames_on(tex: Texture2D, cell: Vector2i, rows: Array) -> SpriteFrames:
+	assert(tex != null, "missing villager sheet")
+	var sf := SpriteFrames.new()
+	sf.remove_animation("default")
+	for r: Row in rows:
+		sf.add_animation(r.anim)
+		sf.set_animation_speed(r.anim, r.fps)
+		sf.set_animation_loop(r.anim, r.loop)
+		for i in r.frames:
+			var at := AtlasTexture.new()
+			at.atlas = tex
+			at.region = Rect2(i * cell.x, r.row * cell.y, cell.x, cell.y)
+			sf.add_frame(r.anim, at)
+	return sf
+
+
+static func _paint_mara(src: Image) -> Image:
+	var img: Image = src.duplicate()
+	for y in img.get_height():
+		var on_hair: bool = (y % VILLAGER_CELL.y) < MARA_HAIR_MAX_Y
+		for x in img.get_width():
+			var c: Color = img.get_pixel(x, y)
+			if c.a < 0.04:
+				continue
+			var key := (_byte(c.r) << 16) | (_byte(c.g) << 8) | _byte(c.b)
+			if on_hair and MARA_HAIR.has(key):
+				var hair: Color = MARA_HAIR[key]
+				hair.a = c.a
+				img.set_pixel(x, y, hair)
+			elif MARA_SKIN.has(key):
+				var skin: Color = MARA_SKIN[key]
+				skin.a = c.a
+				img.set_pixel(x, y, skin)
+	return img
+
+
+static func _byte(channel: float) -> int:
+	return clampi(int(round(channel * 255.0)), 0, 255)
 
 
 static func slime_frames() -> SpriteFrames:

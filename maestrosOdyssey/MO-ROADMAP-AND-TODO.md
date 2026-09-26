@@ -25,7 +25,7 @@ Design and tasks **committed here**; implementation waits until you approve task
 - [ ] **#11** — **Arabic lane** — post-upgrade possibility (2026-09-25). Week one stays Spanish. Dirhams when Arabic. Not this stretch.
 - [x] **#12** — In-game days (same weekday tracking)
 - [x] **#26** — Menu unlock schedule (3 drinks day 1 → espresso day 2; stagger 5 foods through day 4)
-- [ ] **#27** — Day-2+ order depth (con/sin azúcar, upsell, Mara read-back)
+- [x] **#27** — Day-2+ order depth — **dropped** (owner 2026-09-26). No Mara *con o sin* question, no food upsell, no read-back. Player extras already shipped.
 - [ ] **#13–19** — Week-one **mellow room** (species + language basics; one day per task — see **Your additions**)
 - [ ] **#25** — **Private vocab tracker** — post-upgrade possibility (2026-09-25). Familiarity bands, menu fade, no grade screen. Not this stretch.
 - [x] **#28** — Day-8 elder report call (two lines only; not a quiz screen)
@@ -223,7 +223,7 @@ Needs **#3** and **#12**. **Tone:** nature-wonder café week — friendly regula
 - [ ] **#24 — Train gate / arrive at station** (after #28 elder upgrade) — **end of the demo** when this plot deploys. Wider world after. Non-humanoid **animation upgrades** wait until after this ships. Mechanics still rank above that animation work.
 - [ ] **#25 — Private vocab tracker** — **post-upgrade** possibility (2026-09-25). Familiarity stays private. No grade screen. Not this stretch.
 - [x] **#26 — Menu unlock schedule** — visit 1: 3 drinks + 2 foods; day 2: espresso + croissant; foods through day 4 per **generic menu canon**; chalkboard “new today” ticks
-- [ ] **#27 — Day-2+ order depth** — player extras shipped. Still later: *For your té — con azúcar or sin azúcar?*; same-or-different; one food upsell; Mara read-back before pay; no new specialty drinks
+- [x] **#27 — Day-2+ order depth** — **dropped** (owner 2026-09-26). Player extras stay. Mara does not ask *con o sin*, offer an extra food, or read the order back.
 - [x] **#28 — Day-8 elder report** — fiction week 2 + language week goal; natural report conversation (not quiz UI); two elder lines only; card upgrade; revisit flag when under hood pass
 - [ ] **#29 — Café revisit quest** — when #28 “go back and find out more” branch; player brings back one asked detail; train opens after elder pass (≥80% under hood)
 
@@ -245,7 +245,7 @@ Community elder → **prepaid learning card** (debit, in-game only, **no overdra
 - [x] **New Godot build started** — `maestrosOdyssey/2d/` (zij2d engine + authored Dragon's Brew world). Live `/maestros/` is the Godot web export. Phaser snapshot: `archive/phaser-cafe-prototype/`.
 - [x] **Mara typed order (gold, 2026-09-21)** — menu first, type box, Spanish echo, visible cup/muffin. Sit and **D** sip / **F** eat. Do not drop; see `.cursor/rules/maestros-mara-order-gold.mdc`. **2026-09-22:** if anyone is seated, the cup waits at the counter until those talks finish.
 - [x] **Learning-card HUD (gold, 2026-09-21)** — hearts off; take the card from the elder's basket; then weekday / week / pesos as three short lines. Matched orders deduct pesos in the same reply; **finished meal + step into your house** turns the weekday. See `.cursor/rules/maestros-learning-card-hud-gold.mdc`.
-- [x] **Drink extras + warmed food (2026-09-22)** — *leche* / *azúcar* from Monday (Spanish only); *crema* Saturday; drink *frío* Sunday; food *calentado* optional. Still one drink + one food, ready in the same reply. #27 Mara *con o sin* prompt and food upsell still later.
+- [x] **Drink extras + warmed food (2026-09-22)** — *leche* / *azúcar* from Monday (Spanish only); *crema* Saturday; drink *frío* Sunday; food *calentado* optional. Still one drink + one food, ready in the same reply. #27’s extra questions were dropped 2026-09-26.
   - **Week-one connector schedule (owner — 2026-09-23):** **Tuesday = y** (instead of *and*). **Wednesday = con** (extras). **Thursday = un / una**. Live build still taught **y** and **con** together on Wednesday — retarget when that ships.
 
 #### Future Godot adaptations (combined — 2026-09-21)
@@ -303,14 +303,14 @@ Demo ending = arrive at the train station (#24). **Pegasus, griffin, and other v
 - [ ] **Face each other when talking** (owner — 2026-09-22; player added 2026-09-23) — **mechanics.** The NPC turns toward you, and you turn toward them, for the conversation.
 - [ ] **No close until they finish talking** (owner — 2026-09-23) — **mechanics.** You do **not** get a discussion close (e.g. **T**) until that person has finished all their lines for this talk. Elder has four or five boxes — you cannot close after the first. Same rule for **every NPC**, not only the elder.
 - [ ] **Stand between table and seat on S** (owner — 2026-09-23) — **mechanics.** When you press **S** facing a table, you stand in the gap between the table and the seat. Even if a real sit pose is unfinished, the chair must **not** draw above your head.
-- [ ] **Mara reads Bombay-black, evenly** (owner — 2026-09-22) — pin only. On screen she is dark brown, and not the same brown all over. She is not black at all.
+- [x] **Mara’s hair light brown, body darker brown** (owner — 2026-09-26) — Hair is a lighter brown. Face, arms, and the rest of her skin are a darker brown, one even read, not a shadow over the whole picture. Shirt, pants, and the rest of the outfit stay the original villager colors. Wings stay as they are. No new walk. Shipped 2026-09-26.
 - [ ] **Merfolk read blue** (owner — 2026-09-22) — pin only. The Monday riverfolk is a crocodilian, their own people, not a merfolk subtype, so they do not take the merfolk blue. Actual merfolk still need to be blue.
 
 **From original MO — not in Godot yet**
 
 - [ ] **#13–19 week-one mellow room** — rotating regulars the current sheet can carry, species + language in small beats, not mystery. Monday iguana + crocodilian riverfolk are **seated at a café table** with ferry talk (2026-09-22). Tuesday werewolf fiancé (male) + sister + female vampire sit as people (2026-09-22); no wolf form. You already have to hear everyone before the food comes (2026-09-22). The door-to-counter walk stays open (2026-09-22). Still open: human table, then Thu–Sun mellow rooms. **No pegasus, griffin, minotaur, or other very detailed creatures until after animation upgrades.** No café TV until then. Keep the favorite-drink / favorite-food / add-on lines.
 - [ ] **#22 evening werewolf + vampire table** — **daytime people shipped 2026-09-22** (Tuesday only, no wolf form). Transformed evening table still waits on animation.
-- [ ] **#27 day-2+ order depth** — player extras shipped (con / calentado / frío). Still later: Mara *con o sin* prompt, one food upsell, read-back before pay.
+- [x] **#27 day-2+ order depth** — **dropped** (owner 2026-09-26). Extras stay. No *con o sin* prompt, no upsell, no read-back.
 - [ ] **#11 Arabic lane** — **post-upgrade** possibility (2026-09-25). Week one stays Spanish. Dirhams when Arabic. Not this stretch.
 - [ ] **#25 private vocab tracker** — **post-upgrade** possibility (2026-09-25). No grades. Not this stretch.
 - [ ] **#20 optional harder order check** — **post-upgrade** possibility (2026-09-25). Off unless chosen. Not this stretch.
