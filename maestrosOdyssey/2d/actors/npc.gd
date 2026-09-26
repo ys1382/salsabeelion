@@ -57,6 +57,8 @@ func _ready() -> void:
 		_sprite.scale = Vector2(0.62, 0.62)
 	elif npc_id == "mara":
 		_sprite.sprite_frames = Sheet.mara_frames()
+	elif npc_id == "riverfolk_neighbor":
+		_sprite.sprite_frames = Sheet.riverfolk_frames()
 	else:
 		_sprite.sprite_frames = Sheet.villager_frames()
 	_sprite.position = Vector2(0, -16)

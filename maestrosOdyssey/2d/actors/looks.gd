@@ -21,11 +21,16 @@ static func species_of(data: Dictionary) -> String:
 	if look == "campire":
 		return "campire"
 	var species := str(data.get("species", "")).to_lower()
+	# Painted on the face. Not the ocean merfolk wash.
+	if species == "riverfolk":
+		return "riverfolk"
 	if SPECIES_TINT.has(species):
 		return species
 	var blob := (str(data.get("role", "")) + " " + str(data.get("name", ""))).to_lower()
 	if "lizardfolk" in blob or "iguana" in blob:
 		return "lizardfolk"
+	if "riverfolk" in blob or "river merfolk" in blob:
+		return "riverfolk"
 	if "merfolk" in blob:
 		return "merfolk"
 	if "dragonfolk" in blob:
@@ -40,7 +45,10 @@ static func species_of(data: Dictionary) -> String:
 static func apply_body_tint(sprite: CanvasItem, data: Dictionary) -> void:
 	# Leave Mara at full color. Her JSON tint key stays, but it must not
 	# wash the whole picture or the clothes go brown with her.
-	if species_of(data) == "campire":
+	# Riverfolk are the same: the face carries the light blue. Their tint
+	# key stays in the world file and is not applied, so the outfit does
+	# not turn into one blue block. Ocean merfolk keep the deeper blue below.
+	if species_of(data) == "campire" or species_of(data) == "riverfolk":
 		sprite.modulate = Color.WHITE
 		return
 	var key := species_of(data)

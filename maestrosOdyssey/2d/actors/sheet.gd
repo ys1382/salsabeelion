@@ -114,6 +114,19 @@ const MARA_SKIN := {
 
 static var _mara_frames: SpriteFrames
 
+# Same skin keys as the villager face. Light water-and-sky blue, lighter than
+# the ocean merfolk wash. Hair, eyes, shirt, pants, and boots stay.
+const RIVER_SKIN := {
+	0x48302a: Color("#5a849c"),
+	0x6c483e: Color("#6896ae"),
+	0xb58a73: Color("#78aac0"),
+	0xd9aa8d: Color("#8cbcce"),
+	0xf4c8a3: Color("#a6cedc"),
+	0xf4dbbc: Color("#c4e0ea"),
+}
+
+static var _riverfolk_frames: SpriteFrames
+
 
 static func mara_frames() -> SpriteFrames:
 	if _mara_frames != null:
@@ -122,6 +135,15 @@ static func mara_frames() -> SpriteFrames:
 	var walk := ImageTexture.create_from_image(_paint_mara(load(VILLAGER_WALK).get_image()))
 	_mara_frames = _villager_from(idle, walk)
 	return _mara_frames
+
+
+static func riverfolk_frames() -> SpriteFrames:
+	if _riverfolk_frames != null:
+		return _riverfolk_frames
+	var idle := ImageTexture.create_from_image(_paint_riverfolk(load(VILLAGER_IDLE).get_image()))
+	var walk := ImageTexture.create_from_image(_paint_riverfolk(load(VILLAGER_WALK).get_image()))
+	_riverfolk_frames = _villager_from(idle, walk)
+	return _riverfolk_frames
 
 
 static func _villager_from(idle: Texture2D, walk_tex: Texture2D) -> SpriteFrames:
@@ -157,6 +179,22 @@ static func _frames_on(tex: Texture2D, cell: Vector2i, rows: Array) -> SpriteFra
 			at.region = Rect2(i * cell.x, r.row * cell.y, cell.x, cell.y)
 			sf.add_frame(r.anim, at)
 	return sf
+
+
+static func _paint_riverfolk(src: Image) -> Image:
+	var img: Image = src.duplicate()
+	for y in img.get_height():
+		for x in img.get_width():
+			var c: Color = img.get_pixel(x, y)
+			if c.a < 0.04:
+				continue
+			var key := (_byte(c.r) << 16) | (_byte(c.g) << 8) | _byte(c.b)
+			if not RIVER_SKIN.has(key):
+				continue
+			var skin: Color = RIVER_SKIN[key]
+			skin.a = c.a
+			img.set_pixel(x, y, skin)
+	return img
 
 
 static func _paint_mara(src: Image) -> Image:
