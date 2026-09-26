@@ -594,7 +594,8 @@ func _try_give() -> bool:
 	_begin_talk_face(npc)
 	if result == "take" and GameState.last_given == "gooseberries" and npc.npc_id == "elder":
 		GameState.arm_goose_eat(npc.npc_id)
-		GameState.goose_ask = true
+		if not GameState.player_honks():
+			GameState.goose_ask = true
 		_open_pages(npc, PackedStringArray([
 			"Thank you. I'll take that.",
 			"She eats one. It is bright and tart.",

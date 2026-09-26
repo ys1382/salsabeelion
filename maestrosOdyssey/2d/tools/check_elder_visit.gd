@@ -270,6 +270,23 @@ static func run(host: Node) -> void:
 	assert(gs.goose_reply("no") == "You leave it.")
 	assert(gs.has_satchel)
 	assert(gs.pocket_count() == pockets)
+	DialogueUI.close()
+	gs.gooseberries = 4
+	gs.player_honk = true
+	gs.goose_ask = false
+	gs.settle_slots()
+	gs.held_slot = gs.carry_slot.find("gooseberries")
+	cafe.open_box_on_close = false
+	player.focus = elder_npc
+	player._unhandled_input(_key(KEY_G))
+	assert(gs.gooseberries == 2)
+	assert(not gs.goose_ask)
+	player._unhandled_input(_key(KEY_T))
+	assert(gs.person_honks("Elder"))
+	player._unhandled_input(_key(KEY_T))
+	assert(not DialogueUI.is_ordering())
+	assert(not gs.goose_ask)
+	assert(gs.player_honks())
 	gs.advance_day()
 	assert(not gs.person_honks("Elder"))
 	assert(not gs.player_honks())
