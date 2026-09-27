@@ -142,6 +142,12 @@ func _steps() -> Array[Dictionary]:
 	if GameState.day_index >= 8 and not ElderReport.done:
 		rows.append({"text": "Talk to the elder", "state": "now"})
 		return rows
+	if ElderReport.needs_revisit and not ElderReport.detail_heard:
+		rows.append({"text": "Hear a favorite at the café", "state": "now"})
+		return rows
+	if ElderReport.needs_revisit and ElderReport.detail_heard:
+		rows.append({"text": "Tell the elder the favorite", "state": "now"})
+		return rows
 
 	var met := WaypointHud.elder_met()
 	var card := GameState.has_item("learning_card")

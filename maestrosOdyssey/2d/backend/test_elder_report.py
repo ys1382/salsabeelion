@@ -25,6 +25,8 @@ def main() -> int:
     assert "Can you go back and find out more for me?" in report
     assert "I haven't been to Dragon's Brew" in report
     assert "favorite drink and your favorite food" in report
+    assert "word for favorite" in report
+    assert "by itself is not enough" in report
     assert "con leche" in report
     assert "A few more words from the wall" in report
     assert "_favorites_ok" in report

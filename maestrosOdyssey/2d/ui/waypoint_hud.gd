@@ -82,6 +82,11 @@ func current_id() -> String:
 		return "dish_cart"
 	if GameState.day_index >= 8 and not ElderReport.done:
 		return "elder"
+	# She sent you back. Hear one favorite at the café, then tell her.
+	if ElderReport.needs_revisit:
+		if ElderReport.detail_heard:
+			return "elder"
+		return "dragons_brew"
 	# Wood still in the sack: the fire behind home, then the door.
 	if GameState.cafe_meal_done and GameState.wood_for_fire():
 		return "campfire"

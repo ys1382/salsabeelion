@@ -946,6 +946,7 @@ func _talk_npc(npc: Npc) -> String:
 	if phrase != "":
 		npc.grant_if_any()
 		CafeOrder.note_guest_spoke(npc.npc_id, phrase, true)
+		ElderReport.note_detail_heard(phrase)
 		_begin_talk_face(npc)
 		DialogueUI.show_line(npc.display_name, phrase)
 		return "talk"

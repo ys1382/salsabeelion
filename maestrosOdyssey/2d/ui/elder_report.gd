@@ -7,9 +7,16 @@ var awaiting := false
 var done := false
 var passed := false
 var needs_revisit := false
+## One café line from the send-back has been heard. She will not take the
+## second report until then.
+var detail_heard := false
 
 const SPEAKER := "Elder"
-const ASK := "I haven't been to Dragon's Brew in quite some time, dear. Tell me your favorite drink and your favorite food — the way they say it there, with something extra like con leche."
+const ASK := "I haven't been to Dragon's Brew in quite some time, dear. Tell me your favorite drink and your favorite food, the way they say it there, with something extra. Include their word for favorite. The drink or the food by itself is not enough."
+## Same errand as ASK. She says it again when the first answer was thin,
+## and again if you come back before you have heard it at the café.
+const SEND_BACK := "I love that place. Can you go back and find out more for me? I still need a favorite drink and a favorite food, their word for favorite in the line, and something extra. The names alone won't do."
+const TAKE_TIME := "Take your time. Include their word for favorite with the drink, the food, and something extra. The names alone won't do."
 
 
 func reset() -> void:
@@ -18,6 +25,7 @@ func reset() -> void:
 	done = false
 	passed = false
 	needs_revisit = false
+	detail_heard = false
 
 
 func speaker_name() -> String:
@@ -36,10 +44,7 @@ func talk(npc: Npc) -> String:
 	npc.met = true
 	if done:
 		if needs_revisit:
-			done = false
-			open_box_on_close = true
-			awaiting = true
-			return ASK
+			return _revisit_ask()
 		return "That still sounds lovely, dear. Dragon's Brew will be there in the morning."
 	if GameState.day_index < 8:
 		return ""
@@ -57,14 +62,39 @@ func reply_for(text: String) -> String:
 	if report == "":
 		awaiting = true
 		open_box_on_close = true
-		return "Take your time — your favorite drink and your favorite food, with something like con leche."
+		return TAKE_TIME
 	passed = _favorites_ok(report)
 	done = true
 	needs_revisit = not passed
+	if needs_revisit:
+		detail_heard = false
 	GameState.refill_card()
 	if passed:
 		return "That sounds lovely, dear."
-	return "I love that place. Can you go back and find out more for me?"
+	return SEND_BACK
+
+
+## The table said one of the lines she sent you to hear.
+func note_detail_heard(line: String) -> void:
+	if not needs_revisit:
+		return
+	for said in CafePhrases.REVISIT.values():
+		if line == str(said):
+			detail_heard = true
+			return
+
+
+## Before the detail, she repeats the errand and does not open the type box.
+## After it, she asks for the same favorites again.
+func _revisit_ask() -> String:
+	if not detail_heard:
+		open_box_on_close = false
+		awaiting = false
+		return SEND_BACK
+	done = false
+	open_box_on_close = true
+	awaiting = true
+	return ASK
 
 
 ## A drink, a food, the favorite word, and an add-on joined with con or y.

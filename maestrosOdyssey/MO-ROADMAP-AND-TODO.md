@@ -225,7 +225,7 @@ Needs **#3** and **#12**. **Tone:** nature-wonder café week — friendly regula
 - [x] **#26 — Menu unlock schedule** — visit 1: 3 drinks + 2 foods; day 2: espresso + croissant; foods through day 4 per **generic menu canon**; chalkboard “new today” ticks
 - [x] **#27 — Day-2+ order depth** — **dropped** (owner 2026-09-26). Player extras stay. Mara does not ask *con o sin*, offer an extra food, or read the order back.
 - [x] **#28 — Day-8 elder report** — fiction week 2 + language week goal; natural report conversation (not quiz UI); two elder lines only; card upgrade; revisit flag when under hood pass
-- [ ] **#29 — Café revisit quest** — when #28 “go back and find out more” branch; player brings back one asked detail; train opens after elder pass (≥80% under hood)
+- [ ] **#29 — Café revisit quest** — when #28 “go back and find out more” branch; she restates the favorite drink and favorite food, and the second report waits until one of those café lines was heard (2026-09-27). Train still opens only after a later elder pass.
 
 **Build order note:** #12 days → #26 unlocks → #27 order depth → #13–19 plot → #25 tracker (can start earlier for elder) → #28 → #24.
 
@@ -318,7 +318,7 @@ Demo ending = arrive at the train station (#24). **Pegasus, griffin, and other v
 - [ ] **#20 optional harder order check** — **post-upgrade** possibility (2026-09-25). Off unless chosen. Not this stretch.
 - [x] **Must order a drink and a food** (2026-09-22) — each café day; quiz only when no pair fits the card.
 - [x] **Day-8 elder-before-buy** — leftover pesos on day 8 are **OK**. You **cannot buy anything** on day 8 until you talk to the elder first; then she can refill. Mara turns you toward the elder if you try to order first. Shipped 2026-09-27.
-- [ ] **#29 café revisit** — when the elder asks you to go back and find out more; bring one asked detail.
+- [ ] **#29 café revisit** — when the elder asks you to go back and find out more; bring one asked detail. Heard-detail check shipped 2026-09-27: she restates the favorite drink and favorite food when she sends you, and again if you come back before you have heard one of those lines. Train still waits on a later pass.
 - [ ] **#24 train gate / arrive at station** — week 3 if elder pass; otherwise more neighborhood time. No fail screen. **This arrival is the demo ending** when it deploys.
 - [ ] **#23 plaza** — same learning-card rules; echo café words on signs.
 - [ ] **#21 goblin detective watch** — post-train / later arc, not week one. Detective / mafia / sea-policy plot stays later.

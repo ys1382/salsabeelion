@@ -371,9 +371,32 @@ func _initialize() -> void:
 	elder.awaiting = true
 	var thin := String(elder.reply_for("The café is warm. Neighbors at the table."))
 	assert(thin.contains("find out more"), thin)
+	assert(thin.contains("favorite drink"), thin)
+	assert(thin.contains("favorite food"), thin)
+	assert(thin.contains("word for favorite"), thin)
+	assert(thin.contains("names alone"), thin)
 	assert(not bool(elder.passed))
 	assert(bool(elder.done))
+	assert(bool(elder.needs_revisit))
+	assert(not bool(elder.detail_heard))
 	assert(int(gs.card_balance) == 400)
+	var revisit_early := String(elder._revisit_ask())
+	assert(revisit_early == thin, revisit_early)
+	assert(not bool(elder.open_box_on_close))
+	elder.note_detail_heard("just the ferry")
+	assert(not bool(elder.detail_heard))
+	elder.note_detail_heard(CafePhrasesScript.line_for("iguana_neighbor", 8, true))
+	assert(bool(elder.detail_heard))
+	var revisit_ready := String(elder._revisit_ask())
+	assert(revisit_ready.contains("favorite drink"), revisit_ready)
+	assert(revisit_ready.contains("word for favorite"), revisit_ready)
+	assert(revisit_ready.contains("by itself is not enough"), revisit_ready)
+	assert(bool(elder.open_box_on_close))
+	assert(not bool(elder.done))
+	elder.done = true
+	elder.needs_revisit = true
+	elder.detail_heard = false
+	elder.open_box_on_close = false
 	var after_thin: String = cafe.reply_for("un café y un muffin")
 	assert(after_thin.contains("Here you go"), after_thin)
 	assert(CafePhrasesScript.line_for("iguana_neighbor", 1, false) == "")
