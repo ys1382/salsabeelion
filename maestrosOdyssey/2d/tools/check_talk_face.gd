@@ -126,7 +126,7 @@ static func run(host: Node) -> void:
 	player.global_position = mara.global_position + Vector2(-28, 6)
 	player._talk_npc(mara)
 	await host.get_tree().physics_frame
-	await _expect(host, DialogueUI.body().contains("accent marks"),
+	await _expect(host, DialogueUI.body().contains("its own accent mark"),
 		"accent line missing: %s" % DialogueUI.body())
 	var accent_at := player.global_position
 	Input.action_press("move_right")

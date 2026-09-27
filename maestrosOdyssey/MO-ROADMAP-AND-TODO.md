@@ -55,7 +55,7 @@ Design and tasks **committed here**; implementation waits until you approve task
 
 **Voice:** Not every NPC is a sweet elder — Mara, minotaur clerk, pegasus platform agent each match their place. **Same philosophy**, different character.
 
-**Stricter order (#20, shipped 2026-09-27):** from Monday of week 2, after the elder's pass, accent marks have to be on the words. Before that, a missing accent still counts.
+**Stricter order (#20, shipped 2026-09-27):** from Monday of week 2, after the elder's pass, each word needs its own accent mark. A different mark does not count. Before that, a missing accent still counts.
 
 ---
 
@@ -216,7 +216,7 @@ Needs **#3** and **#12**. **Tone:** nature-wonder café week — friendly regula
 
 ### Later (#20–29)
 
-- [x] **#20 — Real order check** — shipped 2026-09-27. From Monday of week 2, after the elder's pass, accent marks have to be on the words. She says so. She does not list the spellings. Before that pass, a missing accent still counts.
+- [x] **#20 — Real order check** — shipped 2026-09-27. From Monday of week 2, after the elder's pass, each word needs its own accent mark. A different mark does not count. She says so. She does not list the spellings. Before that pass, a missing accent still counts.
 - [ ] **#21 — Goblin detective visual watch** — **post–train / later arc** (not week one)
 - [ ] **#22 — Evening werewolf + vampire table** — daytime people shipped 2026-09-22 (Tuesday only, no wolf form). Transformed Thu+ evenings still wait on animation.
 - [ ] **#23 — Plaza floor** (same learning card rules; echo café words on signs)
@@ -315,7 +315,7 @@ Demo ending = arrive at the train station (#24). **Pegasus, griffin, and other v
 - [x] **#27 day-2+ order depth** — **dropped** (owner 2026-09-26). Extras stay. No *con o sin* prompt, no upsell, no read-back.
 - [ ] **#11 Arabic lane** — **post-upgrade** possibility (2026-09-25). Week one stays Spanish. Dirhams when Arabic. Not this stretch.
 - [ ] **#25 private vocab tracker** — **post-upgrade** possibility (2026-09-25). No grades. Not this stretch.
-- [x] **#20 stricter typed order** — shipped 2026-09-27. On from Monday of week 2, only after the elder's pass. Accent marks required. She says the marks have to be there, and does not list the words.
+- [x] **#20 stricter typed order** — shipped 2026-09-27. On from Monday of week 2, only after the elder's pass. Each word needs its own accent mark. A different mark does not count. She does not list the words.
 - [x] **Must order a drink and a food** (2026-09-22) — each café day; quiz only when no pair fits the card.
 - [x] **Day-8 elder-before-buy** — leftover pesos on day 8 are **OK**. You **cannot buy anything** on day 8 until you talk to the elder first; then she can refill. Mara turns you toward the elder if you try to order first. Shipped 2026-09-27.
 - [ ] **#29 café revisit** — when the elder asks you to go back and find out more; bring one asked detail. Heard-detail check shipped 2026-09-27: she restates the favorite drink and favorite food when she sends you, and again if you come back before you have heard one of those lines. Train still waits on a later pass.
@@ -352,7 +352,7 @@ Not this stretch. Week one stays the Spanish café it already is.
 
 - [ ] **Arabic lane** — a second menu lane, with dirhams. Off until after the upgrade.
 - [ ] **Private vocab tracker** — familiarity for one player only. No grades, no score screen.
-- [x] **Stricter typed order** — shipped 2026-09-27. On from Monday of week 2, after the elder's pass. Accent marks required.
+- [x] **Stricter typed order** — shipped 2026-09-27. On from Monday of week 2, after the elder's pass. Each word needs its own accent mark. A different mark does not count.
 
 ### Week-one tone + café language (owner — pinned 2026-06)
 

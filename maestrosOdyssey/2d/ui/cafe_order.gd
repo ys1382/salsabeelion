@@ -20,7 +20,8 @@ extends Node
 # stay on the wall. Later Mondays do not
 # go back to English "and". Add-ons are Spanish. A missing accent still
 # counts until Monday of week 2, and only after the elder's pass. From
-# then on the accent marks have to be on the words. A good quiz also lets home turn the weekday.
+# then on each word needs its own accent mark. A different mark does not
+# count. A good quiz also lets home turn the weekday.
 
 signal order_ready(lemmas: PackedStringArray)
 signal order_cleared
@@ -523,11 +524,11 @@ func _counter_or_order_line() -> String:
 
 ## Asks for the order and teaches the day's shape. The wall has the items
 ## and the prices. This line does not. After the elder's pass, Monday of
-## week 2 onward, she also says the accent marks have to be there.
+## week 2 onward, she also says each word needs its own accent mark.
 func order_prompt() -> String:
 	var line := _order_shape_line()
 	if needs_accents():
-		line += "\n\nThe accent marks have to be on the words. A word without its mark is not enough."
+		line += "\n\nEach word needs its own accent mark. A different mark is not enough."
 	return line
 
 
@@ -909,10 +910,11 @@ func _article_nudge(lemmas: PackedStringArray) -> String:
 
 
 func _accent_nudge() -> String:
-	return "Mara tilts her head, kind. \"Almost — the accent marks have to be on the words.\""
+	return "Mara tilts her head, kind. \"Almost — the accent has to be the one that word uses.\""
 
 
-## café, té, azúcar, frío. Other board words have no mark to miss.
+## Exact spellings. café is not cafè or cáfe. azúcar is not azùcar.
+## Other board words have no mark to miss.
 const _ACCENTED := {
 	"café": "café",
 	"té": "té",
@@ -922,31 +924,72 @@ const _ACCENTED := {
 
 
 func _accents_ok(order: String, lemmas: PackedStringArray) -> bool:
-	var raw := _keep_accents(order)
+	var tokens := _mark_tokens(order)
 	for lemma in lemmas:
 		if not _ACCENTED.has(lemma):
 			continue
-		if not _has_raw_word(raw, str(_ACCENTED[lemma])):
+		var want := str(_ACCENTED[lemma])
+		var plain := _fold(want)
+		var matched := false
+		for token in tokens:
+			if _fold(token) != plain:
+				continue
+			matched = true
+			if token != want:
+				return false
+		if not matched:
 			return false
 	return true
 
 
-func _keep_accents(s: String) -> String:
-	var t := s.strip_edges().to_lower()
-	var out := ""
+## Lowercase words, with a typed mark joined onto its letter first.
+func _mark_tokens(order: String) -> PackedStringArray:
+	var t := _compose_marks(order.strip_edges().to_lower())
+	var out := PackedStringArray()
+	var cur := ""
 	for i in t.length():
 		var ch := t.substr(i, 1)
-		if (ch >= "a" and ch <= "z") or "áéíóúüñ".contains(ch):
-			out += ch
-		else:
-			out += " "
-	return out.strip_edges()
+		if (ch >= "a" and ch <= "z") or _MARKED.contains(ch):
+			cur += ch
+		elif cur != "":
+			out.append(cur)
+			cur = ""
+	if cur != "":
+		out.append(cur)
+	return out
 
 
-func _has_raw_word(hay: String, needle: String) -> bool:
-	if needle == "":
-		return false
-	return (" " + hay + " ").find(" " + needle + " ") >= 0
+## Press-and-hold marks, already joined to the letter.
+const _MARKED := "áéíóúüñàèìòùâêîôûäëïöÿãõåāēīōūăĕĭŏŭąęėĭőůűý"
+
+
+func _compose_marks(s: String) -> String:
+	var t := s
+	var pairs := [
+		["a\u0301", "á"], ["e\u0301", "é"], ["i\u0301", "í"], ["o\u0301", "ó"], ["u\u0301", "ú"],
+		["a\u0300", "à"], ["e\u0300", "è"], ["i\u0300", "ì"], ["o\u0300", "ò"], ["u\u0300", "ù"],
+		["a\u0302", "â"], ["e\u0302", "ê"], ["i\u0302", "î"], ["o\u0302", "ô"], ["u\u0302", "û"],
+		["a\u0308", "ä"], ["e\u0308", "ë"], ["i\u0308", "ï"], ["o\u0308", "ö"], ["u\u0308", "ü"],
+		["a\u0303", "ã"], ["n\u0303", "ñ"], ["o\u0303", "õ"],
+	]
+	for pair in pairs:
+		t = t.replace(pair[0], pair[1])
+	return t
+
+
+func _strip_marks(s: String) -> String:
+	var t := s
+	var pairs := [
+		["á", "a"], ["à", "a"], ["â", "a"], ["ä", "a"], ["ã", "a"], ["å", "a"], ["ā", "a"], ["ă", "a"], ["ą", "a"],
+		["é", "e"], ["è", "e"], ["ê", "e"], ["ë", "e"], ["ē", "e"], ["ĕ", "e"], ["ė", "e"], ["ę", "e"],
+		["í", "i"], ["ì", "i"], ["î", "i"], ["ï", "i"], ["ī", "i"], ["ĭ", "i"], ["į", "i"],
+		["ó", "o"], ["ò", "o"], ["ô", "o"], ["ö", "o"], ["õ", "o"], ["ō", "o"], ["ŏ", "o"], ["ő", "o"],
+		["ú", "u"], ["ù", "u"], ["û", "u"], ["ü", "u"], ["ū", "u"], ["ŭ", "u"], ["ů", "u"], ["ű", "u"],
+		["ñ", "n"], ["ý", "y"], ["ÿ", "y"],
+	]
+	for pair in pairs:
+		t = t.replace(pair[0], pair[1])
+	return t
 
 
 ## Masculine on this board: café, té, chocolate caliente, espresso, muffin,
@@ -1090,7 +1133,7 @@ func _practice_reply(attempt: String) -> String:
 	if needs_accents() and not _accents_ok(attempt, PackedStringArray([_practice_lemma])):
 		_practicing = true
 		open_box_on_close = true
-		return "Mara tilts her head, kind. \"Almost — the accent mark has to be on the word.\""
+		return "Mara tilts her head, kind. \"Almost — the accent has to be the one that word uses.\""
 	var grant := _practice_grant()
 	_remember(PackedStringArray([_practice_lemma]))
 	meal_done = true
@@ -1260,9 +1303,7 @@ func _fill(img: Image, x: int, y: int, w: int, h: int, c: Color) -> void:
 
 
 func _fold(s: String) -> String:
-	var t := s.strip_edges().to_lower()
-	t = t.replace("é", "e").replace("á", "a").replace("í", "i")
-	t = t.replace("ó", "o").replace("ú", "u").replace("ü", "u").replace("ñ", "n")
+	var t := _strip_marks(_compose_marks(s.strip_edges().to_lower()))
 	var out := ""
 	for i in t.length():
 		var ch := t.substr(i, 1)
