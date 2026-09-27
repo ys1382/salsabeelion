@@ -5,6 +5,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 REPORT = ROOT / "ui" / "elder_report.gd"
+CAFE = ROOT / "ui" / "cafe_order.gd"
 PLAYER = ROOT / "actors" / "player.gd"
 DIALOGUE = ROOT / "ui" / "dialogue_ui.gd"
 STATE = ROOT / "ui" / "game_state.gd"
@@ -13,6 +14,7 @@ PROJECT = ROOT / "project.godot"
 
 def main() -> int:
     report = REPORT.read_text(encoding="utf-8")
+    cafe = CAFE.read_text(encoding="utf-8")
     player = PLAYER.read_text(encoding="utf-8")
     dialogue = DIALOGUE.read_text(encoding="utf-8")
     state = STATE.read_text(encoding="utf-8")
@@ -24,9 +26,13 @@ def main() -> int:
     assert "I haven't been to Dragon's Brew" in report
     assert "favorite drink and your favorite food" in report
     assert "con leche" in report
+    assert "A few more words from the wall" in report
     assert "_favorites_ok" in report
     assert "80%" not in report and "percentage" not in report.lower()
     assert "refill_card" in report and "refill_card" in state
+    assert "needs_elder_first" in cafe
+    assert "See the elder first, dear." in cafe
+    assert "ElderReport.done" in cafe
     assert "npc_id == \"elder\"" in player
     assert (
         '\tif DialogueUI.is_ordering():\n'

@@ -62,6 +62,8 @@ var visit_hint_said := false
 var goodbye_done := false
 
 const NIGHT_PASS_LINE := "Night passes. It's morning."
+## Day 8. She will not take a paid order until the elder has answered.
+const ELDER_FIRST := "Mara turns toward the lane. \"See the elder first, dear.\""
 
 const PRACTICE_PESOS := 12
 const PRACTICE_MAX_DAY := 36
@@ -505,6 +507,9 @@ func _counter_or_order_line() -> String:
 		if goodbye_done:
 			return "Mara smiles. \"The door's there when you're ready.\""
 		return "That's already yours. Sit if you like — the room is for lingering."
+	if needs_elder_first():
+		open_box_on_close = false
+		return ELDER_FIRST
 	if too_broke_to_order():
 		if not _begin_practice():
 			return "Mara checks your card. \"Not quite enough for the board today — and you've already practiced what's up. Sit if you like.\""
@@ -584,12 +589,21 @@ func cheapest_price() -> int:
 	return cheapest_pair_price()
 
 
+## Leftover pesos stay. Hello is not enough, and neither is a week she is
+## still waiting to hear. Either of her answers opens the counter.
+func needs_elder_first() -> bool:
+	return GameState.day_index >= 8 and not ElderReport.done
+
+
 func reply_for(text: String) -> String:
 	var order := text.strip_edges()
 	if awaiting_bye:
 		return _bye_reply(order)
 	if _practicing:
 		return _practice_reply(order)
+	if needs_elder_first():
+		open_box_on_close = false
+		return ELDER_FIRST
 	if order == "":
 		return "Mara waits patiently. \"Take your time — look at the board again if you need to.\""
 	var lemmas := match_lemmas(order)

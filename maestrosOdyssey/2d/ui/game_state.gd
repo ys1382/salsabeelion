@@ -331,6 +331,10 @@ func skip_to_morning(day: int) -> void:
 	var cafe := _autoload("CafeOrder")
 	if cafe != null:
 		cafe.reset_session()
+		# The Day 8 button skips the week. She can hear the report that morning.
+		# A real week still uses whatever was ordered. Hello does not count.
+		if day == 8:
+			cafe.ordered = PackedStringArray(["café", "té", "muffin"])
 	var talk := _autoload("DialogueUI")
 	if talk != null and talk.get("_order") != null:
 		talk.close()

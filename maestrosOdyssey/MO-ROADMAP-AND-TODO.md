@@ -254,6 +254,8 @@ This chat’s later list **plus** original MO items **not in the Godot build yet
 
 **When listing open todos (owner — 2026-09-22, priority later that night):** Show **only items not done**. For **pre-animation-upgrades**, list **plot**, then **mechanics**, then **look you can do on the current sprites**. Do not drop the rest when naming a priority.
 
+**After the short list (owner — 2026-09-27):** Once the short unimplemented items are finished, sort what is left by ease again. Some medium items will be easier than others, and some harder, so medium and long get a fresh easy-to-hard order. Do not keep the old medium / long buckets as the ranking.
+
 **Next to deploy (owner — 2026-09-22; connectors 2026-09-23; bump shipped 2026-09-23):** Plot first: **human table**, then week-one language by day — **Tue y**, **Wed con**, **Thu un / una**. Mechanics first: **read the board**, then the **strike board**. Everything else stays on the list under that.
 
 Demo ending = arrive at the train station (#24). **Pegasus, griffin, and other very detailed creatures** are **post-upgrade**, same as minotaurs — do not placeholder them. A **soft café TV** is a potential **post-upgrade** item; anything earlier would look flat. Mechanics still rank above the big animation work.
@@ -315,7 +317,7 @@ Demo ending = arrive at the train station (#24). **Pegasus, griffin, and other v
 - [ ] **#25 private vocab tracker** — **post-upgrade** possibility (2026-09-25). No grades. Not this stretch.
 - [ ] **#20 optional harder order check** — **post-upgrade** possibility (2026-09-25). Off unless chosen. Not this stretch.
 - [x] **Must order a drink and a food** (2026-09-22) — each café day; quiz only when no pair fits the card.
-- [ ] **Day-8 elder-before-buy** — leftover pesos on day 8 are **OK**. You **cannot buy anything** on day 8 until you talk to the elder first; then she can refill. Mara turns you toward the elder if you try to order first.
+- [x] **Day-8 elder-before-buy** — leftover pesos on day 8 are **OK**. You **cannot buy anything** on day 8 until you talk to the elder first; then she can refill. Mara turns you toward the elder if you try to order first. Shipped 2026-09-27.
 - [ ] **#29 café revisit** — when the elder asks you to go back and find out more; bring one asked detail.
 - [ ] **#24 train gate / arrive at station** — week 3 if elder pass; otherwise more neighborhood time. No fail screen. **This arrival is the demo ending** when it deploys.
 - [ ] **#23 plaza** — same learning-card rules; echo café words on signs.
