@@ -100,11 +100,48 @@ static func run(host: Node) -> void:
 		"order line missing: %s" % DialogueUI.body())
 	await _expect(host, DialogueUI._hint.text == "T — Close",
 		"order line should close: %s" % DialogueUI._hint.text)
+	var order_at := player.global_position
+	Input.action_press("move_left")
+	player.agent_input = Vector2.LEFT
 	await _expect(host, player._try_close("T"), "order line did not close")
-	await host.get_tree().physics_frame
+	for _i in 12:
+		await host.get_tree().physics_frame
+	await _expect(host, player.global_position.distance_to(order_at) < 1.0,
+		"T opened the type box and walked: %s" % player.global_position)
 	await _expect(host, DialogueUI.is_ordering(), "order line did not open the type box")
+	Input.action_release("move_left")
+	player.agent_input = Vector2.ZERO
 	DialogueUI.close()
 	player._after_panel_close()
+	for _i in 12:
+		await host.get_tree().physics_frame
+	await _expect(host, player.global_position.distance_to(order_at) < 1.0,
+		"closing the type box walked: %s" % player.global_position)
+
+	# Monday week 2, after her pass: the accent line still opens the box,
+	# and T still does not step you off.
+	GameState.day_index = 8
+	ElderReport.done = true
+	ElderReport.passed = true
+	player.global_position = mara.global_position + Vector2(-28, 6)
+	player._talk_npc(mara)
+	await host.get_tree().physics_frame
+	await _expect(host, DialogueUI.body().contains("accent marks"),
+		"accent line missing: %s" % DialogueUI.body())
+	var accent_at := player.global_position
+	Input.action_press("move_right")
+	await _expect(host, player._try_close("T"), "accent line did not close")
+	for _i in 12:
+		await host.get_tree().physics_frame
+	await _expect(host, player.global_position.distance_to(accent_at) < 1.0,
+		"T on the accent line walked: %s" % player.global_position)
+	await _expect(host, DialogueUI.is_ordering(), "accent line did not open the type box")
+	Input.action_release("move_right")
+	DialogueUI.close()
+	player._after_panel_close()
+	ElderReport.done = false
+	ElderReport.passed = false
+	GameState.day_index = 1
 
 	var elder := _npc(host, "elder")
 	var elder_before := elder.facing

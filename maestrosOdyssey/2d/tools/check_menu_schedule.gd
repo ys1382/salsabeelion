@@ -399,6 +399,30 @@ func _initialize() -> void:
 	elder.open_box_on_close = false
 	var after_thin: String = cafe.reply_for("un café y un muffin")
 	assert(after_thin.contains("Here you go"), after_thin)
+	cafe.reset_session()
+	gs.take_item("learning_card")
+	gs.card_balance = 400
+	elder.passed = false
+	elder.done = true
+	assert(not cafe.order_prompt().contains("accent marks"))
+	var week2_loose: String = cafe.reply_for("un cafe y un muffin")
+	assert(week2_loose.contains("Here you go"), week2_loose)
+	cafe.reset_session()
+	gs.card_balance = 400
+	elder.passed = true
+	var strict_prompt := String(cafe.order_prompt())
+	assert(strict_prompt.contains("accent marks"), strict_prompt)
+	assert(strict_prompt.contains("not enough"), strict_prompt)
+	var strict_miss: String = cafe.reply_for("un cafe y un muffin")
+	assert(strict_miss.contains("accent marks"), strict_miss)
+	assert(not strict_miss.contains("Here you go"))
+	assert(int(gs.card_balance) == 400)
+	var strict_sugar: String = cafe.reply_for("un café con azucar y un muffin")
+	assert(strict_sugar.contains("accent marks"), strict_sugar)
+	assert(int(gs.card_balance) == 400)
+	var strict_ok: String = cafe.reply_for("un café y un muffin")
+	assert(strict_ok.contains("Here you go"), strict_ok)
+	elder.passed = false
 	assert(CafePhrasesScript.line_for("iguana_neighbor", 1, false) == "")
 	assert(CafePhrasesScript.line_for("iguana_neighbor", 2, false).to_lower().contains("té"))
 	assert(CafePhrasesScript.line_for("riverfolk_neighbor", 3, false).contains("tostada"))

@@ -56,6 +56,7 @@ func _ready() -> void:
 	_panel.offset_left = PAD * 2
 	_panel.offset_right = -PAD * 2
 	_panel.offset_bottom = -PAD
+	_panel.focus_mode = Control.FOCUS_NONE
 	_panel.hide()
 	add_child(_panel)
 
@@ -64,6 +65,7 @@ func _ready() -> void:
 	_panel.add_child(_box)
 
 	_speaker = Label.new()
+	_speaker.focus_mode = Control.FOCUS_NONE
 	_speaker.add_theme_font_size_override("font_size", SPEAKER_SIZE)
 	_speaker.add_theme_color_override("font_color", Color(1, 0.86, 0.5))
 	_box.add_child(_speaker)
@@ -72,12 +74,17 @@ func _ready() -> void:
 	_body.bbcode_enabled = false
 	_body.scroll_active = true
 	_body.fit_content = true
+	# Clicking a long line must not take the keyboard. T would stop closing,
+	# and arrows would scroll the text while also counting as walking.
+	_body.focus_mode = Control.FOCUS_NONE
+	_body.mouse_filter = Control.MOUSE_FILTER_STOP
 	_body.add_theme_font_size_override("normal_font_size", BODY_SIZE)
 	_box.add_child(_body)
 
 	_hint = Label.new()
 	_hint.add_theme_font_size_override("font_size", HINT_SIZE)
 	_hint.add_theme_color_override("font_color", Color(0.78, 0.74, 0.62))
+	_hint.focus_mode = Control.FOCUS_NONE
 	_hint.text = "T — Close"
 	_hint.hide()
 	_box.add_child(_hint)
@@ -85,6 +92,7 @@ func _ready() -> void:
 	_order = LineEdit.new()
 	_order.placeholder_text = "Type your order, then Enter"
 	_order.add_theme_font_size_override("font_size", BODY_SIZE)
+	_order.focus_mode = Control.FOCUS_NONE
 	_order.text_submitted.connect(_on_order_submitted)
 	_order.hide()
 	_box.add_child(_order)
@@ -116,7 +124,10 @@ func show_line(speaker: String, text: String, more := false, speak := true) -> v
 	_hide_sign()
 	_prompt.hide()
 	_order.hide()
-	_order.release_focus()
+	_order.focus_mode = Control.FOCUS_NONE
+	# release_focus during Enter's submit does not stick. Defer it so the
+	# hidden box cannot keep the next T.
+	_order.call_deferred("release_focus")
 	_speaker.text = speaker
 	_speaker.visible = speaker != ""
 	_body.text = text
@@ -160,6 +171,7 @@ func show_order_box(speaker: String = "Mara", keep_line: String = "") -> void:
 	_speaker.text = speaker
 	_speaker.visible = true
 	_order.text = ""
+	_order.focus_mode = Control.FOCUS_ALL
 	if keep_line != "":
 		_body.text = keep_line
 		_body.show()

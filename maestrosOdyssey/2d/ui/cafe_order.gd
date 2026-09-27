@@ -18,7 +18,9 @@ extends Node
 # from Wednesday, un / una (with gender) from Thursday. Her order prompt
 # teaches that shape only. It does not name the board or the prices — those
 # stay on the wall. Later Mondays do not
-# go back to English "and". Add-ons are Spanish. A good quiz also lets home turn the weekday.
+# go back to English "and". Add-ons are Spanish. A missing accent still
+# counts until Monday of week 2, and only after the elder's pass. From
+# then on the accent marks have to be on the words. A good quiz also lets home turn the weekday.
 
 signal order_ready(lemmas: PackedStringArray)
 signal order_cleared
@@ -520,8 +522,16 @@ func _counter_or_order_line() -> String:
 
 
 ## Asks for the order and teaches the day's shape. The wall has the items
-## and the prices. This line does not.
+## and the prices. This line does not. After the elder's pass, Monday of
+## week 2 onward, she also says the accent marks have to be there.
 func order_prompt() -> String:
+	var line := _order_shape_line()
+	if needs_accents():
+		line += "\n\nThe accent marks have to be on the words. A word without its mark is not enough."
+	return line
+
+
+func _order_shape_line() -> String:
 	if GameState.day_index == 2:
 		return (
 			"What's your order?\n\n"
@@ -558,6 +568,11 @@ func needs_con() -> bool:
 ## Thursday onward. un / una in front of the drink and the food, by gender.
 func needs_article() -> bool:
 	return GameState.day_index >= 4
+
+
+## Monday of week 2 is day 8. Strict accents stay off until her pass.
+func needs_accents() -> bool:
+	return GameState.day_index >= 8 and ElderReport.passed
 
 
 func too_broke_to_order() -> bool:
@@ -621,6 +636,9 @@ func reply_for(text: String) -> String:
 		return _con_nudge(lemmas)
 	if needs_article() and not _articles_ok(order, lemmas):
 		return _article_nudge(lemmas)
+	if needs_accents() and not _accents_ok(order, lemmas):
+		open_box_on_close = true
+		return _accent_nudge()
 	if not GameState.card_held_out():
 		if GameState.card_in_slot():
 			return "Mara looks at your hands. \"Hold the learning card out, and I can take the pesos.\""
@@ -890,6 +908,47 @@ func _article_nudge(lemmas: PackedStringArray) -> String:
 	) % _model_order(lemmas)
 
 
+func _accent_nudge() -> String:
+	return "Mara tilts her head, kind. \"Almost — the accent marks have to be on the words.\""
+
+
+## café, té, azúcar, frío. Other board words have no mark to miss.
+const _ACCENTED := {
+	"café": "café",
+	"té": "té",
+	"azúcar": "azúcar",
+	"frío": "frío",
+}
+
+
+func _accents_ok(order: String, lemmas: PackedStringArray) -> bool:
+	var raw := _keep_accents(order)
+	for lemma in lemmas:
+		if not _ACCENTED.has(lemma):
+			continue
+		if not _has_raw_word(raw, str(_ACCENTED[lemma])):
+			return false
+	return true
+
+
+func _keep_accents(s: String) -> String:
+	var t := s.strip_edges().to_lower()
+	var out := ""
+	for i in t.length():
+		var ch := t.substr(i, 1)
+		if (ch >= "a" and ch <= "z") or "áéíóúüñ".contains(ch):
+			out += ch
+		else:
+			out += " "
+	return out.strip_edges()
+
+
+func _has_raw_word(hay: String, needle: String) -> bool:
+	if needle == "":
+		return false
+	return (" " + hay + " ").find(" " + needle + " ") >= 0
+
+
 ## Masculine on this board: café, té, chocolate caliente, espresso, muffin,
 ## croissant, bolillo. Feminine: tostada, galleta. Add-ons stay with con.
 func _article_for(lemma: String) -> String:
@@ -1028,6 +1087,10 @@ func _practice_reply(attempt: String) -> String:
 		return (
 			"Mara points gently at the board. \"Not quite — look for %s up there. The word is %s. Come back when you're ready to try again.\""
 		) % [_practice_en, _practice_lemma]
+	if needs_accents() and not _accents_ok(attempt, PackedStringArray([_practice_lemma])):
+		_practicing = true
+		open_box_on_close = true
+		return "Mara tilts her head, kind. \"Almost — the accent mark has to be on the word.\""
 	var grant := _practice_grant()
 	_remember(PackedStringArray([_practice_lemma]))
 	meal_done = true

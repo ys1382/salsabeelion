@@ -75,6 +75,10 @@ var _pages: PackedStringArray = PackedStringArray()
 var _page := 0
 ## Sit pose could not show this facing. Applied if we stand while the panel is open.
 var _face_on_stand := Vector2.ZERO
+## After a line or the type box closes, ignore direction keys this long.
+## A key still down from reading or typing must not step you off when T closes.
+const MOVE_SETTLE := 0.3
+var _move_settle := 0.0
 
 
 func _ready() -> void:
@@ -125,26 +129,22 @@ func _physics_process(delta: float) -> void:
 		move_and_slide()
 		return
 
+	# Her line and the type box plant the feet. T closing that line must not
+	# carry a direction key into a step.
+	if _feet_locked():
+		_move_settle = MOVE_SETTLE
+		_stand_still()
+		return
+	if _move_settle > 0.0:
+		_move_settle -= delta
+		_stand_still()
+		return
 	var input := agent_input if agent_input != Vector2.ZERO \
 		else Input.get_vector("move_left", "move_right", "move_up", "move_down")
 	# D drinks while a pocket cup is in hand. Arrows still walk.
 	if not seated and GameState.holding_pocket_drink() and Input.is_key_pressed(KEY_D):
 		if not Input.is_key_pressed(KEY_RIGHT) and input.x > 0.0:
 			input.x = 0.0
-	if DialogueUI.is_ordering():
-		velocity = Vector2.ZERO
-		move_and_slide()
-		_play("idle")
-		return
-	if _talking():
-		velocity = Vector2.ZERO
-		move_and_slide()
-		if not seated:
-			_play("idle")
-		else:
-			_place_held()
-		_update_focus()
-		return
 	if seated:
 		# Stay seated unless S. D is sip (and walk-right when standing);
 		# walking must not stand or sit you.
@@ -439,6 +439,38 @@ func _focus_bias(it: Interactable) -> float:
 	if _prompt_key(it) == "R":
 		return -120.0
 	return 0.0
+
+
+## A line is up, or the type box is. Signs stay put so you can still step away
+## from the menu board. Direction keys are dropped so a stuck letter cannot
+## launch a step the moment T closes the line.
+func _feet_locked() -> bool:
+	if DialogueUI.is_ordering():
+		return true
+	return DialogueUI.is_open() and not DialogueUI.is_sign_open()
+
+
+func _stand_still() -> void:
+	for action in ["move_left", "move_right", "move_up", "move_down"]:
+		if Input.is_action_pressed(action):
+			Input.action_release(action)
+	# Do not slide while planted. A zero-velocity slide still shoves you out of
+	# whoever you are standing against, which reads as a step the moment T talks.
+	velocity = Vector2.ZERO
+	if not seated:
+		_play("idle")
+	else:
+		_place_held()
+	_update_focus()
+
+
+func _input(event: InputEvent) -> void:
+	# Before the type box sees the key. A focused line must not swallow T,
+	# and T must not be typed into the box that this same press opens.
+	if DialogueUI.is_ordering() or not DialogueUI.is_open() or DialogueUI.is_sign_open():
+		return
+	if _key_down(event, KEY_T) and _try_close("T"):
+		get_viewport().set_input_as_handled()
 
 
 func _unhandled_input(event: InputEvent) -> void:
