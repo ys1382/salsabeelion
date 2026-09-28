@@ -248,6 +248,7 @@ func _place_objects() -> void:
 	_place_street_signs()
 	_place_campfire()
 	refresh_sugarplum()
+	refresh_golden_apples()
 
 
 ## Every house gets a door, whether the model thought to give it one or not.
@@ -323,6 +324,26 @@ func _place_campfire() -> void:
 	entities["campfire"] = host
 
 
+## Gold fruit dots on the tree at the south corner of the elder's house.
+## They stay. Not the café sugarplum tree, and not the bushes along her wall.
+func refresh_golden_apples() -> void:
+	var tree := entities.get("border_tree_s2") as Node2D
+	if tree == null:
+		return
+	var sprite := tree.get_node_or_null("Sprite") as Sprite2D
+	if sprite == null or sprite.texture == null:
+		return
+	if not sprite.has_meta("plain_tex"):
+		sprite.set_meta("plain_tex", sprite.texture)
+	var plain: Texture2D = sprite.get_meta("plain_tex")
+	if not sprite.has_meta("apple_tex"):
+		var dotted := _fruit_dots(plain, Color(0.95, 0.74, 0.18, 1.0))
+		if dotted == null:
+			return
+		sprite.set_meta("apple_tex", dotted)
+	sprite.texture = sprite.get_meta("apple_tex")
+
+
 ## Purple fruit dots on the café tree. Same inset as the berry bushes.
 ## Gone once the juice is served, and gone the morning after Sunday either way.
 func refresh_sugarplum() -> void:
@@ -339,14 +360,14 @@ func refresh_sugarplum() -> void:
 		sprite.texture = plain
 		return
 	if not sprite.has_meta("plum_tex"):
-		var dotted := _plum_dots(plain)
+		var dotted := _fruit_dots(plain, Color(0.42, 0.16, 0.48, 1.0))
 		if dotted == null:
 			return
 		sprite.set_meta("plum_tex", dotted)
 	sprite.texture = sprite.get_meta("plum_tex")
 
 
-func _plum_dots(tex: Texture2D) -> Texture2D:
+func _fruit_dots(tex: Texture2D, color: Color) -> Texture2D:
 	var img := tex.get_image()
 	if img == null:
 		return null
@@ -360,7 +381,7 @@ func _plum_dots(tex: Texture2D) -> Texture2D:
 				continue
 			if not _plum_leaf(img, x, y):
 				continue
-			img.set_pixel(x, y, Color(0.42, 0.16, 0.48, 1.0))
+			img.set_pixel(x, y, color)
 			painted += 1
 	if painted == 0:
 		return null

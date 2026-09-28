@@ -67,6 +67,18 @@ def _check(path: Path) -> None:
     ]
     for house_obj in houses:
         assert border_cells.isdisjoint(_cells(house_obj))
+    elder = next(o for o in houses if o["id"] == "elder_house")
+    apple = next(o for o in world["objects"] if o["id"] == "border_tree_s2")
+    plum = next(o for o in world["objects"] if o["id"] == "sugarplum_tree")
+    assert str(apple["asset"]).startswith("tree.tree_")
+    assert apple["id"] != plum["id"]
+    elder_cells = _cells(elder)
+    apple_cells = _cells(apple)
+    assert any(
+        max(abs(x1 - x2), abs(y1 - y2)) == 1
+        for x1, y1 in elder_cells
+        for x2, y2 in apple_cells
+    )
     # Stay on the forest side — do not spill into the café column.
     cafe = next(o for o in houses if o["id"] == "dragons_brew")
     assert all(max(x for x, _y in _cells(o)) < int(cafe["x"]) for o in border)
@@ -204,6 +216,8 @@ def main() -> int:
     assert "wood_chore_open" in waypoint
     builder = (ROOT / "world" / "world_builder.gd").read_text(encoding="utf-8")
     assert "Shade.paint(_ground" not in builder
+    assert 'entities.get("border_tree_s2")' in builder
+    assert "refresh_golden_apples" in builder
     print("forest clearing: ok")
     return 0
 
