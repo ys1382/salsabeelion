@@ -455,10 +455,22 @@ func wood_cut_today() -> bool:
 	return wood_cut_day == day_index and day_index > 0
 
 
-## The arrow's first job, until the tree is down. A finished meal still
-## sends you home — the café loop is allowed later the same day.
+## After the café visit, until the one dead tree is down. The morning
+## arrow stays on the café. A finished meal can still turn the day at home.
 func wood_chore_open() -> bool:
-	return forest_morning() and not wood_cut_today() and not cafe_meal_done
+	return (
+		forest_morning()
+		and not wood_cut_today()
+		and cafe_meal_done
+		and not saturday_visit_open()
+	)
+
+
+## Dishes, the cart line, and the goodbye are still the café visit.
+func saturday_visit_open() -> bool:
+	if not forest_morning():
+		return false
+	return CafeOrder.visit_hint or CafeOrder.awaiting_bye or CafeOrder.carrying_dishes
 
 
 func note_wood_cut() -> void:

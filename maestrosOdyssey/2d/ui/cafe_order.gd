@@ -59,7 +59,7 @@ const CALLOUT_SEC := 3.0
 var carrying_dishes := false
 ## Dish cart used; waiting on the Spanish goodbye typed back.
 var awaiting_bye := false
-## Monday only: the blueberry visit, then the goodbye you already had.
+## Monday blueberries, or Saturday deadwood after the pie. Then the goodbye.
 var visit_hint := false
 var visit_hint_said := false
 var goodbye_done := false
@@ -401,6 +401,14 @@ func use_dish_cart() -> String:
 			"You set the cup and plate in the dish cart.\n\n"
 			+ "Mara looks over. \"If you like, pick some blueberries and bring them to the elder. She gets a little lonely.\""
 		)
+	if _deadwood_ask() and not visit_hint_said:
+		visit_hint = true
+		visit_hint_said = true
+		open_box_on_close = false
+		return (
+			"You set the cup and plate in the dish cart.\n\n"
+			+ "Mara looks over. \"While you're out getting firewood for your house, bring me some deadwood. Chop only dead trees, or deadfall: logs and fallen branches. A whole dead tree, even leaving the stump, is more than the house needs. The extra is for me.\""
+		)
 	awaiting_bye = true
 	open_box_on_close = true
 	return cart_goodbye_line()
@@ -411,6 +419,11 @@ func cart_goodbye_line() -> String:
 		"You set the cup and plate in the dish cart.\n\n"
 		+ "Mara looks over. \"%s.\" That means goodbye, and good night. Say it back."
 	) % _goodbye_spoken()
+
+
+## Saturday pie only. Advice at the cart. No dryad reason, and no return trip.
+func _deadwood_ask() -> bool:
+	return GameState.golden_apple_day() and _food == "golden apple pie"
 
 
 ## The hint box just closed. The goodbye you already had comes next.

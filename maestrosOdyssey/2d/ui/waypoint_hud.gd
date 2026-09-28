@@ -90,10 +90,11 @@ func current_id() -> String:
 	# Wood still in the sack: the fire behind home, then the door.
 	if GameState.cafe_meal_done and GameState.wood_for_fire():
 		return "campfire"
-	if GameState.cafe_meal_done:
-		return "player_house"
+	# Saturday woods wait until the café visit is finished.
 	if GameState.wood_chore_open():
 		return "forest_clearing"
+	if GameState.cafe_meal_done and not GameState.saturday_visit_open():
+		return "player_house"
 	# Tuesday berries come before anyone on the street. She is indoors.
 	if GameState.berry_chore_open():
 		return "berry_patch"

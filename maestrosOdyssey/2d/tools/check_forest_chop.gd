@@ -1,8 +1,8 @@
 extends RefCounted
 # Run from the real game: godot --path . -- --check-forest
 # Monday points at the café. Tuesday leaves home toward the woods, P picks
-# blueberries once, then the arrow goes on to the café. Saturday still cuts
-# the dead tree into the sack.
+# blueberries once, then the arrow goes on to the café. Saturday is the café
+# first. After the pie dishes she asks for deadwood, then the one chop.
 
 
 static func run(host: Node) -> void:
@@ -113,6 +113,9 @@ static func run(host: Node) -> void:
 	gs._sync_clock()
 	assert(gs.weekday == "Saturday")
 	assert(gs.forest_morning())
+	assert(not gs.wood_chore_open())
+	assert(arrow.current_id() == "dragons_brew")
+	_assert_pie_ask(host)
 	assert(gs.wood_chore_open())
 	assert(arrow.current_id() == "forest_clearing")
 
@@ -143,13 +146,18 @@ static func run(host: Node) -> void:
 	assert(gs.wood_cut_today())
 	assert(gs.has_item("logs"))
 	assert(not gs.wood_chore_open())
-	assert(arrow.current_id() == "dragons_brew")
+	assert(arrow.current_id() == "campfire")
 	player._refresh_held()
 	assert(held.visible)
 	DialogueUI.close()
 	await _walk_forest_mouth(host, player, interiors, clearing)
 	assert(gs.day_index == 6)
 	_assert_goodbye(host, true)
+	gs.day_index = 3
+	gs._sync_clock()
+	_assert_no_wood_ask(host)
+	assert(not gs.forest_morning())
+	assert(not gs.wood_chore_open())
 	print("forest chop: ok")
 	host.get_tree().quit()
 
@@ -301,6 +309,50 @@ static func _slot_of(gs: Node, item_id: String) -> int:
 	return 0
 
 
+## Pie dishes ask for deadwood. Goodbye and the chilly line still follow.
+static func _assert_pie_ask(host: Node) -> void:
+	var cafe: Node = host.get_node("/root/CafeOrder")
+	cafe.reset_session()
+	cafe.taken = true
+	cafe._drink = "café"
+	cafe._food = "golden apple pie"
+	cafe.served = PackedStringArray(["café", "golden apple pie"])
+	cafe.cup_left = 0
+	cafe.muffin_left = 0
+	cafe._mark_meal_if_done()
+	var asked: String = cafe.use_dish_cart()
+	assert(cafe.visit_hint, asked)
+	assert(asked.contains("deadwood"))
+	assert(asked.contains("only dead trees"))
+	assert(asked.contains("deadfall"))
+	assert(asked.contains("stump"))
+	assert(not asked.to_lower().contains("dryad"))
+	assert(cafe.take_visit_hint())
+	var said: String = cafe.reply_for("Adiós, y buenas noches")
+	assert(cafe.goodbye_done, said)
+	assert(cafe.may_leave())
+	assert(said.begins_with("Mara smiles and nods."))
+	assert(said.contains("chilly tonight"))
+	DialogueUI.close()
+
+
+## Another day, even with the pie named, does not ask and does not open the chop.
+static func _assert_no_wood_ask(host: Node) -> void:
+	var cafe: Node = host.get_node("/root/CafeOrder")
+	cafe.reset_session()
+	cafe.taken = true
+	cafe._drink = "café"
+	cafe._food = "golden apple pie"
+	cafe.served = PackedStringArray(["café", "golden apple pie"])
+	cafe.cup_left = 0
+	cafe.muffin_left = 0
+	cafe._mark_meal_if_done()
+	var asked: String = cafe.use_dish_cart()
+	assert(not asked.contains("deadwood"))
+	assert(not cafe.visit_hint)
+	GameState.cafe_meal_done = false
+
+
 ## Goodbye still lets you out. The chilly line is Saturday only, after the nod.
 static func _assert_goodbye(host: Node, wood_day: bool) -> void:
 	var cafe: Node = host.get_node("/root/CafeOrder")
@@ -313,7 +365,9 @@ static func _assert_goodbye(host: Node, wood_day: bool) -> void:
 	cafe.muffin_left = 0
 	cafe._mark_meal_if_done()
 	var phrase := "Adiós, y buenas noches" if GameState.day_index >= 2 else "Adiós, and buenas noches"
-	cafe.use_dish_cart()
+	var cart: String = cafe.use_dish_cart()
+	assert(not cart.contains("deadwood"))
+	assert(not cafe.visit_hint)
 	var said: String = cafe.reply_for(phrase)
 	assert(cafe.goodbye_done, said)
 	assert(cafe.may_leave())
