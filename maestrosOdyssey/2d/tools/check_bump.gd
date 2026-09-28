@@ -79,8 +79,14 @@ static func run(host: Node) -> void:
 		used += 1
 	await _expect(host, used >= 3, "need three people for the crowd")
 	await _hold(host, player, Vector2(120, 156), Vector2.UP, 200)
-	await _expect(host, player.global_position.y < 115.0 \
-			and player.global_position.y > counter.global_position.y,
+	var solid := counter.get_node("Solid") as CollisionShape2D
+	var solid_rect := solid.shape as RectangleShape2D
+	var counter_right := counter.global_position.x + solid.position.x + solid_rect.size.x * 0.5
+	var at_front := player.global_position.y < 115.0 \
+			and player.global_position.y > counter.global_position.y
+	var by_the_menu := player.global_position.x > counter_right \
+			and player.global_position.y < counter.global_position.y
+	await _expect(host, at_front or by_the_menu,
 		"crowd jailed the player at %s" % player.global_position)
 
 	var gs_wed: Node = host.get_node("/root/GameState")

@@ -5,10 +5,10 @@ extends StaticBody2D
 # Mara stands just north of it (smaller y). The player walks up from the
 # door and stops on the south face. The middle walk stays open until that face.
 
-## Pixel span in the café. Left stays clear of the bench. Right stays clear
-## of the family table and the Wednesday child's lap.
+## Pixel span in the café. Left stays clear of the bench. The right end stops
+## short of the neighbors' table so you can walk past it to the menu.
 const LEFT := 98
-const RIGHT := 154
+const RIGHT := 136
 const TOP := 76
 const BOTTOM := 94
 ## Solid from here down, so Mara's feet are not inside the wood.
