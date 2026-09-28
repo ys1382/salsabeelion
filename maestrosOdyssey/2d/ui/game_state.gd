@@ -385,6 +385,11 @@ func sugarplum_day() -> bool:
 	return week_number == 1 and day_index == 7
 
 
+## Saturday of week one. The pie is on the board that morning only.
+func golden_apple_day() -> bool:
+	return week_number == 1 and day_index == 6
+
+
 func sugarplum_fruit_on_tree() -> bool:
 	return sugarplum_day() and not sugarplum_served
 

@@ -80,6 +80,7 @@ const ITEMS := [
 	{"needles": ["chocolate caliente", "hot chocolate", "chocolate"], "lemma": "chocolate caliente", "en": "hot chocolate", "pesos": 48, "kind": "drink", "unlock_day": 2, "new_today": true},
 	{"needles": ["espresso"], "lemma": "espresso", "en": "espresso", "pesos": 40, "kind": "drink", "unlock_day": 7, "new_today": false},
 	{"needles": ["sugarplum juice"], "lemma": "sugarplum juice", "en": "sugarplum juice", "pesos": 40, "kind": "drink", "unlock_day": 0, "new_today": false, "skip_practice": true},
+	{"needles": ["golden apple pie"], "lemma": "golden apple pie", "en": "golden apple pie", "pesos": 24, "kind": "food", "unlock_day": 0, "new_today": false, "skip_practice": true},
 	{"needles": ["croissant"], "lemma": "croissant", "en": "croissant", "pesos": 32, "kind": "food", "unlock_day": 6, "new_today": false},
 	{"needles": ["tostada", "toast"], "lemma": "tostada", "en": "toast", "pesos": 22, "kind": "food", "unlock_day": 3, "new_today": true},
 	{"needles": ["galleta", "cookie"], "lemma": "galleta", "en": "cookie", "pesos": 24, "kind": "food", "unlock_day": 4, "new_today": true},
@@ -765,7 +766,12 @@ func board_text() -> String:
 			addons.append(item)
 		else:
 			preps.append(item)
-	var lines: PackedStringArray = ["Hoy / today", "", "Hot drinks"]
+	var lines: PackedStringArray = ["Hoy / today"]
+	if GameState.golden_apple_day():
+		lines.append("")
+		lines.append("golden apple pie — 24 pesos")
+	lines.append("")
+	lines.append("Hot drinks")
 	for item in drinks:
 		lines.append(_menu_line(item))
 	if not foods.is_empty():
@@ -803,10 +809,16 @@ func visible_items() -> Array:
 				continue
 			if str(item["lemma"]) == "espresso" and GameState.day_index == 7:
 				continue
+			if str(item["lemma"]) == "galleta" and GameState.golden_apple_day():
+				continue
 			out.append(item)
 	if GameState.sugarplum_day():
 		for item in ITEMS:
 			if str(item["lemma"]) == "sugarplum juice":
+				out.append(item)
+	if GameState.golden_apple_day():
+		for item in ITEMS:
+			if str(item["lemma"]) == "golden apple pie":
 				out.append(item)
 	return out
 
@@ -840,7 +852,7 @@ func _menu_line(item: Dictionary) -> String:
 		return "%s — %s" % [str(item["lemma"]), str(item["en"])]
 	var pesos := int(item["pesos"])
 	var price := "included" if pesos == 0 else "%d pesos" % pesos
-	if str(item["lemma"]) == "sugarplum juice":
+	if str(item["lemma"]) == "sugarplum juice" or str(item["lemma"]) == "golden apple pie":
 		return "%s — %s" % [str(item["lemma"]), price]
 	return "%s — %s (%s)" % [str(item["lemma"]), price, str(item["en"])]
 
@@ -856,8 +868,8 @@ func _echo(lemmas: PackedStringArray) -> String:
 	if needs_article():
 		if drink != "" and _article_for(drink) != "":
 			drink = _article_for(drink) + " " + drink
-		if food != "":
-			food = _article_for(_lemma_of_kind(lemmas, "food")) + " " + food
+		if food != "" and _article_for(food) != "":
+			food = _article_for(food) + " " + food
 	var core := ""
 	if drink != "" and food != "":
 		if needs_y() or GameState.week_number >= 2:
@@ -995,7 +1007,7 @@ func _strip_marks(s: String) -> String:
 ## Masculine on this board: café, té, chocolate caliente, espresso, muffin,
 ## croissant, bolillo. Feminine: tostada, galleta. Add-ons stay with con.
 func _article_for(lemma: String) -> String:
-	if lemma == "sugarplum juice":
+	if lemma == "sugarplum juice" or lemma == "golden apple pie":
 		return ""
 	if lemma == "tostada" or lemma == "galleta":
 		return "una"
@@ -1010,7 +1022,10 @@ func _articles_ok(order: String, lemmas: PackedStringArray) -> bool:
 	var drink_ok := true
 	if _article_for(drink) != "":
 		drink_ok = _article_before(order, drink) == _article_for(drink)
-	return drink_ok and _article_before(order, food) == _article_for(food)
+	var food_ok := true
+	if _article_for(food) != "":
+		food_ok = _article_before(order, food) == _article_for(food)
+	return drink_ok and food_ok
 
 
 func _article_before(order: String, lemma: String) -> String:
@@ -1045,7 +1060,7 @@ func _model_order(lemmas: PackedStringArray) -> String:
 	if needs_article():
 		if drink != "" and _article_for(drink) != "":
 			drink_bit = _article_for(drink) + " " + drink_bit
-		if food != "":
+		if food != "" and _article_for(food) != "":
 			food_bit = _article_for(food) + " " + food_bit
 	var core := drink_bit + " y " + food_bit
 	if _has_addon(lemmas) and needs_con():
@@ -1284,6 +1299,15 @@ func _draw_muffin(img: Image, ox: int, food: String = "muffin") -> void:
 	elif food == "galleta":
 		cake = Color(0.72, 0.50, 0.28)
 		top = Color(0.55, 0.34, 0.18)
+	elif food == "golden apple pie":
+		var crust := Color(0.86, 0.62, 0.22)
+		var lid := Color(0.95, 0.78, 0.28)
+		_fill(img, ox, 9, 8, 2, plate)
+		var slice := mini(muffin_left, 3) + 1
+		_fill(img, ox, 10 - slice, 8, slice, crust)
+		if muffin_left >= 2:
+			_fill(img, ox + 1, 9 - slice, 6, 1, lid)
+		return
 	elif food == "bolillo":
 		cake = Color(0.90, 0.80, 0.58)
 		top = Color(0.82, 0.68, 0.42)
