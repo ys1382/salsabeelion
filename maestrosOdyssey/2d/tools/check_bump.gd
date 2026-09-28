@@ -15,7 +15,11 @@ static func run(host: Node) -> void:
 	var table := room.get_node("Objects/cafe_table") as Node2D
 	var cart := room.get_node("Objects/dish_cart") as Node2D
 	var seat := room.get_node("Objects/cafe_seat") as Node2D
+	var counter := room.get_node("Objects/cafe_counter") as Node2D
 	var mara := _npc(host, "mara")
+	await _expect(host, counter != null, "café counter missing")
+	await _expect(host, mara.global_position.y < counter.global_position.y - 8.0,
+		"Mara is not behind the counter: %s vs %s" % [mara.global_position, counter.global_position])
 
 	await _hold(host, player, table.global_position + Vector2(0, 28), Vector2.UP, 70)
 	await _expect(host, player.global_position.y > table.global_position.y,
@@ -25,21 +29,27 @@ static func run(host: Node) -> void:
 	await _expect(host, player.global_position.y > cart.global_position.y,
 		"crate slipped: %s vs %s" % [player.global_position, cart.global_position])
 
-	await _place(host, player, mara.global_position + Vector2(0, 22))
+	await _place(host, player, counter.global_position + Vector2(0, 28))
 	player.agent_input = Vector2.UP
 	for _i in 8:
 		await host.get_tree().physics_frame
-	await _expect(host, player.global_position.y > mara.global_position.y,
-		"short press walked through Mara: %s" % player.global_position)
+	await _expect(host, player.global_position.y > counter.global_position.y,
+		"short press walked through the counter: %s" % player.global_position)
 	var closest := 999.0
-	for _i in 90:
+	for _i in 120:
 		await host.get_tree().physics_frame
 		closest = minf(closest, player.global_position.distance_to(mara.global_position))
 	await _expect(host, closest >= 8.0,
 		"walked through Mara, closest %s" % closest)
-	await _expect(host, player.global_position.y < mara.global_position.y \
-			and absf(player.global_position.x - mara.global_position.x) > 8.0,
-		"did not slide past Mara's side: %s mara %s" % [player.global_position, mara.global_position])
+	await _expect(host, player.global_position.y > counter.global_position.y \
+			and player.global_position.y < counter.global_position.y + 22.0,
+		"counter did not stop the player: %s counter %s" % [player.global_position, counter.global_position])
+	player.agent_input = Vector2.ZERO
+	for _i in 4:
+		await host.get_tree().physics_frame
+	player._update_focus()
+	await _expect(host, player.focus is Npc and (player.focus as Npc).npc_id == "mara",
+		"T would not reach Mara from the counter front")
 
 	await _place(host, player, seat.global_position + Vector2(0, 18))
 	var gap := _gap_mid(table, seat)
@@ -57,7 +67,7 @@ static func run(host: Node) -> void:
 
 	var door: Vector2 = room.entry_point()
 	await _hold(host, player, door, Vector2.UP, 180)
-	await _expect(host, player.global_position.y > 4.0 and player.global_position.y < 32.0,
+	await _expect(host, _stopped_at_counter(player, counter, door),
 		"door-to-counter walk stopped at %s" % player.global_position)
 
 	var spots := [Vector2(100, 120), Vector2(120, 120), Vector2(140, 120)]
@@ -69,7 +79,8 @@ static func run(host: Node) -> void:
 		used += 1
 	await _expect(host, used >= 3, "need three people for the crowd")
 	await _hold(host, player, Vector2(120, 156), Vector2.UP, 200)
-	await _expect(host, player.global_position.y < 90.0,
+	await _expect(host, player.global_position.y < 115.0 \
+			and player.global_position.y > counter.global_position.y,
 		"crowd jailed the player at %s" % player.global_position)
 
 	var gs_wed: Node = host.get_node("/root/GameState")
@@ -80,6 +91,12 @@ static func run(host: Node) -> void:
 	interiors.enter("dragons_brew")
 	await host.get_tree().physics_frame
 	await host.get_tree().physics_frame
+	var child := _npc(host, "family_child")
+	await _expect(host, child != null, "Wednesday child missing")
+	for _i in 90:
+		await host.get_tree().physics_frame
+	await _expect(host, child.global_position.x >= 9 * 16 + 2.0,
+		"Wednesday child crossed the walk: %s" % child.global_position)
 	await _stand_by(host, player, "family_neighbor", Vector2(9 * 16 + 8, 3 * 16))
 	await _stand_by(host, player, "family_aunt", Vector2(12 * 16 + 8, 4 * 16))
 	await _stand_by(host, player, "family_brother", Vector2(9 * 16 + 8, 8 * 16))
@@ -94,9 +111,11 @@ static func run(host: Node) -> void:
 	await host.get_tree().physics_frame
 	var tuesday: Node = interiors.current
 	var extra := tuesday.get_node_or_null("Objects/cafe_tuesday_table") as Node2D
+	var tue_counter := tuesday.get_node("Objects/cafe_counter") as Node2D
 	await _expect(host, extra != null, "Tuesday table missing")
-	await _hold(host, player, tuesday.entry_point(), Vector2.UP, 180)
-	await _expect(host, player.global_position.y > 4.0 and player.global_position.y < 32.0,
+	var tue_door: Vector2 = tuesday.entry_point()
+	await _hold(host, player, tue_door, Vector2.UP, 180)
+	await _expect(host, _stopped_at_counter(player, tue_counter, tue_door),
 		"Tuesday door-to-counter walk stopped at %s" % player.global_position)
 
 	interiors.leave()
@@ -140,6 +159,13 @@ static func _npc(host: Node, id: String) -> Npc:
 		if (n as Npc).npc_id == id:
 			return n as Npc
 	return null
+
+
+static func _stopped_at_counter(player: Player, counter: Node2D, door: Vector2) -> bool:
+	var y := player.global_position.y
+	var front := counter.global_position.y
+	return y > front and y < front + 22.0 and y < door.y - 40.0 \
+			and absf(player.global_position.x - door.x) < 28.0
 
 
 static func _place(host: Node, player: Player, at: Vector2) -> void:

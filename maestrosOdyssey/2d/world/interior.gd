@@ -16,6 +16,7 @@ extends Node2D
 const TILE := Catalog.TILE
 const FeetBox := preload("res://world/feet_box.gd")
 const MenuBoardScript := preload("res://world/menu_board.gd")
+const CafeCounterScript := preload("res://world/cafe_counter.gd")
 ## Wall band thickness in tiles. Wide enough to cover the floor terrain's own
 ## edge tiles, which are drawn as grass meeting a path.
 const WALL := 2
@@ -67,6 +68,7 @@ func build(id: String, footprint: Vector2i, seed_text: String, spec: Dictionary 
 		_place_spec(spec)
 	else:
 		_furnish()
+	_add_service_counter()
 	_add_doorway()
 
 
@@ -281,6 +283,16 @@ func _instance_interior_asset(entry: Dictionary) -> Node2D:
 	_objects.add_child(node)
 	FeetBox.apply(node, asset)
 	return node
+
+
+## Dragon's Brew only. A drawn wooden counter in front of Mara. The pack has
+## no counter piece. Tables, the cart, the boards, and the bench stay put.
+func _add_service_counter() -> void:
+	if building_id != "dragons_brew":
+		return
+	var counter: StaticBody2D = CafeCounterScript.new()
+	counter.name = "cafe_counter"
+	_objects.add_child(counter)
 
 
 ## The way out. An Area2D on the interactable layer so the player's existing
