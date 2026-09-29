@@ -69,6 +69,7 @@ func build(id: String, footprint: Vector2i, seed_text: String, spec: Dictionary 
 	else:
 		_furnish()
 	_add_service_counter()
+	_ease_strike_board()
 	_add_doorway()
 
 
@@ -293,6 +294,28 @@ func _add_service_counter() -> void:
 	var counter: StaticBody2D = CafeCounterScript.new()
 	counter.name = "cafe_counter"
 	_objects.add_child(counter)
+
+
+## The house-rules board is a picture on the wall. Keep a low foot so it stays
+## put, and leave the floor in front of it open to walk.
+func _ease_strike_board() -> void:
+	if building_id != "dragons_brew":
+		return
+	var board := _objects.get_node_or_null("house_board") as Node2D
+	if board == null:
+		return
+	for child in board.get_children():
+		if child is CollisionShape2D and str(child.name).begins_with("Solid"):
+			child.queue_free()
+		elif child is CollisionPolygon2D:
+			child.queue_free()
+	var shape := CollisionShape2D.new()
+	shape.name = "SolidFoot"
+	var rect := RectangleShape2D.new()
+	rect.size = Vector2(36, 8)
+	shape.shape = rect
+	shape.position = Vector2(0, -4)
+	board.add_child(shape)
 
 
 ## The way out. An Area2D on the interactable layer so the player's existing
