@@ -124,7 +124,8 @@ func try_chop(from: Vector2, facing: Vector2) -> bool:
 	var tree := _dead
 	_swap_stump(tree)
 	GameState.note_wood_cut()
-	DialogueUI.show_line("", "The dead tree comes down. You take the wood.")
+	# A talk box plants the feet. This is a note, so the walk home can start.
+	Journal.show_note("The dead tree comes down. You take the wood.")
 	return true
 
 

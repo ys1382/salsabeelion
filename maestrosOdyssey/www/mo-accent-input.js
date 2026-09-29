@@ -1,3 +1,35 @@
+/* Which move keys are really down. Godot only hears keys on the canvas, so a
+   key-up that lands on a line or the type box never arrives and the walk sticks. */
+(function () {
+	var held = {};
+	function set(code, down) {
+		if (!code) {
+			return;
+		}
+		if (down) {
+			held[code] = 1;
+		} else {
+			delete held[code];
+		}
+	}
+	window.addEventListener("keydown", function (e) { set(e.code, true); }, true);
+	window.addEventListener("keyup", function (e) { set(e.code, false); }, true);
+	window.addEventListener("blur", function () { held = {}; });
+	document.addEventListener("visibilitychange", function () {
+		if (document.hidden) {
+			held = {};
+		}
+	});
+	window.MO_MOVE = function () {
+		var s = "";
+		if (held.KeyA || held.ArrowLeft) s += "l";
+		if (held.KeyD || held.ArrowRight) s += "r";
+		if (held.KeyW || held.ArrowUp) s += "u";
+		if (held.KeyS || held.ArrowDown) s += "d";
+		return s;
+	};
+})();
+
 /* macOS press-and-hold accent menu on the Godot web type box.
    The hidden text field shows the system picker, but each key repeat was
    also typed into the box (eeeee). A pick should leave one accented letter. */

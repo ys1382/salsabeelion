@@ -53,6 +53,10 @@ var _dead := false
 ## Set by the agent bridge to drive the player without keyboard input; zero
 ## means "use the real input". Public so test/agent_bridge.gd can steer.
 var agent_input := Vector2.ZERO
+## Web only. The page reports which move keys are down, once per physics frame.
+var _move_frame := -1
+var _move_live := ""
+var _move_have_page := false
 var focus: Node = null
 var seated := false
 var _stand_pos := Vector2.ZERO
@@ -139,8 +143,7 @@ func _physics_process(delta: float) -> void:
 		_move_settle -= delta
 		_stand_still()
 		return
-	var input := agent_input if agent_input != Vector2.ZERO \
-		else Input.get_vector("move_left", "move_right", "move_up", "move_down")
+	var input := agent_input if agent_input != Vector2.ZERO else _read_move()
 	# D drinks while a pocket cup is in hand. Arrows still walk.
 	if not seated and GameState.holding_pocket_drink() and Input.is_key_pressed(KEY_D):
 		if not Input.is_key_pressed(KEY_RIGHT) and input.x > 0.0:
@@ -153,6 +156,8 @@ func _physics_process(delta: float) -> void:
 		_place_held()
 		_update_focus()
 		return
+	if _attacking and not str(_sprite.animation).begins_with("attack"):
+		_attacking = false
 	if _attacking:
 		input = Vector2.ZERO
 	if input != Vector2.ZERO:
@@ -441,6 +446,63 @@ func _focus_bias(it: Interactable) -> float:
 	return 0.0
 
 
+## Godot hears keys only on the game canvas. A café line or the type box can
+## take the key-up, and the walk never ends. On the web, the page is the
+## source of truth for which move keys are still down.
+func _read_move() -> Vector2:
+	if not OS.has_feature("web"):
+		return Input.get_vector("move_left", "move_right", "move_up", "move_down")
+	var live := _page_move()
+	if not _move_have_page:
+		return Input.get_vector("move_left", "move_right", "move_up", "move_down")
+	_release_lifted_move()
+	var v := Vector2.ZERO
+	if "l" in live:
+		v.x -= 1.0
+	if "r" in live:
+		v.x += 1.0
+	if "u" in live:
+		v.y -= 1.0
+	if "d" in live:
+		v.y += 1.0
+	return v
+
+
+func _page_move() -> String:
+	var frame := Engine.get_physics_frames()
+	if frame == _move_frame:
+		return _move_live
+	_move_frame = frame
+	var raw = JavaScriptBridge.eval("window.MO_MOVE?window.MO_MOVE():null", true)
+	_move_have_page = raw != null
+	_move_live = str(raw) if _move_have_page else ""
+	return _move_live
+
+
+func _release_lifted_move() -> void:
+	var live := ""
+	if OS.has_feature("web"):
+		live = _page_move()
+		if not _move_have_page:
+			return
+	if not ("l" in live):
+		Input.action_release("move_left")
+	if not ("r" in live):
+		Input.action_release("move_right")
+	if not ("u" in live):
+		Input.action_release("move_up")
+	if not ("d" in live):
+		Input.action_release("move_down")
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_APPLICATION_FOCUS_OUT or what == NOTIFICATION_WM_WINDOW_FOCUS_OUT:
+		velocity = Vector2.ZERO
+		_move_frame = -1
+		for action in ["move_left", "move_right", "move_up", "move_down"]:
+			Input.action_release(action)
+
+
 ## A line is up, or the type box is. Signs stay put so you can still step away
 ## from the menu board. Direction keys are dropped so a stuck letter cannot
 ## launch a step the moment T closes the line.
@@ -451,9 +513,7 @@ func _feet_locked() -> bool:
 
 
 func _stand_still() -> void:
-	for action in ["move_left", "move_right", "move_up", "move_down"]:
-		if Input.is_action_pressed(action):
-			Input.action_release(action)
+	_release_lifted_move()
 	# Do not slide while planted. A zero-velocity slide still shoves you out of
 	# whoever you are standing against, which reads as a step the moment T talks.
 	velocity = Vector2.ZERO

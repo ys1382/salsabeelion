@@ -147,6 +147,17 @@ static func run(host: Node) -> void:
 	assert(gs.has_item("logs"))
 	assert(not gs.wood_chore_open())
 	assert(arrow.current_id() == "campfire")
+	assert(not DialogueUI.is_open())
+	var before: Vector2 = player.global_position
+	player.agent_input = Vector2.DOWN
+	var walked := false
+	for _step in 40:
+		await host.get_tree().physics_frame
+		if player.global_position.distance_to(before) > 4.0:
+			walked = true
+			break
+	player.agent_input = Vector2.ZERO
+	assert(walked)
 	player._refresh_held()
 	assert(held.visible)
 	DialogueUI.close()
