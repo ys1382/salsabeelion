@@ -67,6 +67,8 @@ static func run(host: Node) -> void:
 	var built := it.use()
 	assert(gs.campfire_stage == 1)
 	assert("stones" in built)
+	await _assert_stones_stop(host, player, spot, Vector2(0, -13))
+	_assert_front_draws_over_stones(player, spot)
 	assert(spot.get_node_or_null("Pit") != null or _named(spot, "Pit"))
 	assert(gs.carrying_sack())
 	await _shot(host, "campfire_pit.png")
@@ -87,6 +89,8 @@ static func run(host: Node) -> void:
 	assert(frame.region.size == Vector2(32, 32))
 	assert(flame.is_playing())
 	assert(_named(spot, "Pit") == null)
+	await _assert_stones_stop(host, player, spot, Vector2(0, -9))
+	_assert_front_draws_over_stones(player, spot)
 	await _shot(host, "campfire_lit.png")
 
 	# The fire stays outside. Stepping into the house does not bring it along.
@@ -138,6 +142,32 @@ static func _shot(host: Node, name: String) -> void:
 	var dir := ProjectSettings.globalize_path("res://test_output/")
 	DirAccess.make_dir_recursive_absolute(dir)
 	img.save_png(dir + name)
+
+
+## Walk into the ring from the side and from behind. The old foot only
+## blocked the front, so both of these used to pass through the stones.
+static func _assert_stones_stop(host: Node, player: Player, spot: Node2D, local_center: Vector2) -> void:
+	var center: Vector2 = spot.global_position + local_center
+	for approach in [Vector2(-46, 0), Vector2(0, -40)]:
+		player.global_position = center + approach
+		player.agent_input = approach.normalized() * -1.0
+		var closest := 9999.0
+		for _i in 90:
+			await host.get_tree().physics_frame
+			closest = minf(closest, player.global_position.distance_to(center))
+		player.agent_input = Vector2.ZERO
+		await host.get_tree().physics_frame
+		assert(closest < 32.0, "never reached the stones from %s: %s" % [approach, closest])
+		assert(closest > 10.0, "walked through the stones from %s: %s" % [approach, closest])
+
+
+## Standing at the front edge, your picture sorts in front of the ring.
+## Otherwise the bottom stones draw on top of your hair.
+static func _assert_front_draws_over_stones(player: Player, spot: Node2D) -> void:
+	player.global_position = spot.global_position + Vector2(0, 12)
+	var body := _named(spot, "SolidStones").get_parent() as Node2D
+	var picture: float = player.global_position.y - 16.0
+	assert(picture > body.global_position.y, "stones still draw over you at the front edge")
 
 
 static func _named(node: Node, wanted: String) -> Node:
