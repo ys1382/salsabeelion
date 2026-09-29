@@ -29,6 +29,9 @@ def main() -> int:
     assert "building.house_hay_1" in dn
     assert "building.house_hay_2" in dn
     assert "prop.lamppost_3" in dn
+    assert "lamp_glow" in dn
+    assert "pie_light" in state
+    assert "POOL_RADIUS" in dn
     assert "BLEND_MODE_ADD" in dn
     assert "NightFx" in dn
     assert "crickets_night.mp3" in dn

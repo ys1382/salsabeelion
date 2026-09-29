@@ -413,6 +413,7 @@ func _instance_asset(entry: Dictionary) -> Node2D:
 		return null
 	var node: Node2D = load(Catalog.object(asset)["scene"]).instantiate()
 	node.name = entry["id"]
+	node.set_meta("mo_asset", asset)
 	node.y_sort_enabled = true
 	# The schema places objects by their TOP-LEFT tile (same convention as
 	# terrain regions), but the catalog anchors the art bottom-centre. Walk to

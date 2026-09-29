@@ -17,6 +17,10 @@ extends Node
 var amount := 0.0
 ## True after a café visit starts night, until morning resets the street.
 var _want_night := false
+## Saturday pie night only. Ground and trees show inside a small circle.
+const POOL_RADIUS := 52.0
+const REVEAL_SHADER := preload("res://world/pie_light.gdshader")
+const VEIL_SHADER := preload("res://world/pie_veil.gdshader")
 
 const DAY := Color(1, 1, 1, 1)
 ## Cool, dim outdoor cast — grass, dirt, trees, house walls.
@@ -70,6 +74,18 @@ var _fx: Node2D
 var _layers: Array[CanvasItem] = []
 var _soft: Texture2D
 var _window_tex: Texture2D
+var _builder: WorldBuilder
+var _reveal_on := false
+var _mat_reveal: ShaderMaterial
+var _mat_dark: ShaderMaterial
+var _painted: Array[CanvasItem] = []
+var _pool: Sprite2D
+var _veil: Sprite2D
+var _veil_mat: ShaderMaterial
+var _street_veil: Sprite2D
+var _street_veil_mat: ShaderMaterial
+var _campfire: CanvasItem
+var _campfire_mod := Color.WHITE
 
 
 func _ready() -> void:
@@ -84,6 +100,15 @@ func _ready() -> void:
 
 ## Call after every WorldBuilder.build() so FX and layer refs stay live.
 func attach(builder: WorldBuilder) -> void:
+	_builder = builder
+	_painted.clear()
+	_reveal_on = false
+	_mat_reveal = null
+	_mat_dark = null
+	_pool = null
+	_campfire = null
+	_street_veil = null
+	_street_veil_mat = null
 	_clear_fx()
 	_layers.clear()
 	if builder == null:
@@ -128,12 +153,16 @@ func begin_day(duration: float = FADE_TO_DAY_S) -> void:
 func _on_entered(building_id: String) -> void:
 	if building_id == "dragons_brew":
 		begin_night()
+	elif building_id == "forest_clearing":
+		_ensure_veil()
+		_sync_crickets()
 	else:
 		_sync_crickets()
 	_sync_cafe()
 
 
 func _on_left() -> void:
+	_veil = null
 	# Only finish the café→night fade. Do not yank morning back to night.
 	if _want_night:
 		ensure_night()
@@ -335,14 +364,244 @@ func _stop_cafe() -> void:
 		_cafe.volume_db = CAFE_SILENT_DB
 
 
+func sync_pie_light() -> void:
+	_apply(amount)
+	_ensure_veil()
+
+
+func _process(_delta: float) -> void:
+	if not _reveal_on and _veil == null:
+		return
+	var pos := _feet()
+	if _mat_reveal != null:
+		_mat_reveal.set_shader_parameter("light_pos", pos)
+	if _mat_dark != null:
+		_mat_dark.set_shader_parameter("light_pos", pos)
+	if _pool != null and is_instance_valid(_pool):
+		var on_street := _reveal_on and not _in_woods() and not _indoors_room()
+		_pool.visible = on_street
+		if on_street and _pool.get_parent() != null:
+			_pool.position = _pool.get_parent().to_local(pos)
+	if _veil != null and is_instance_valid(_veil) and _veil_mat != null:
+		_veil_mat.set_shader_parameter("light_pos", pos)
+		if _veil.get_parent() != null:
+			_veil.position = _veil.get_parent().to_local(pos)
+	if _street_veil != null and is_instance_valid(_street_veil) and _street_veil_mat != null:
+		_street_veil_mat.set_shader_parameter("light_pos", pos)
+		if _street_veil.get_parent() != null:
+			_street_veil.position = _street_veil.get_parent().to_local(pos)
+
+
 func _apply(v: float) -> void:
+	var pie := GameState.pie_light and v >= 0.999
 	var tint := DAY.lerp(NIGHT, clampf(v, 0.0, 1.0))
 	for layer in _layers:
-		if is_instance_valid(layer):
-			layer.modulate = tint
+		if not is_instance_valid(layer):
+			continue
+		# Pie night paints its own dark, so the street tint would stack.
+		layer.modulate = Color.WHITE if pie else tint
+	if pie:
+		_install_reveal()
+	else:
+		_clear_reveal()
+	_set_lamp_glow(not pie)
 	if _fx != null and is_instance_valid(_fx):
 		_fx.modulate = Color(1, 1, 1, clampf(v, 0.0, 1.0))
 		_fx.visible = v > 0.01
+
+
+func _feet() -> Vector2:
+	if _builder != null and is_instance_valid(_builder) and _builder.player != null:
+		return _builder.player.global_position
+	return Vector2.ZERO
+
+
+func _indoors_room() -> bool:
+	if not Interiors.inside():
+		return false
+	var room := Interiors.current
+	return room != null and room.building_id != "forest_clearing"
+
+
+func _in_woods() -> bool:
+	if not Interiors.inside():
+		return false
+	var room := Interiors.current
+	return room != null and room.building_id == "forest_clearing"
+
+
+func _install_reveal() -> void:
+	if _reveal_on or _builder == null or not is_instance_valid(_builder):
+		return
+	_reveal_on = true
+	_mat_reveal = _make_light_mat(1.0)
+	_mat_dark = _make_light_mat(0.0)
+	for layer in _layers:
+		if is_instance_valid(layer) and str(layer.name) == "Objects":
+			_paint_tree(layer)
+	# Ground stays a flat picture. A veil darkens it, with a hole at the feet.
+	# Tile maps do not report a usable position in a shader, so the hole is a sprite.
+	_set_ground_z(-2)
+	_ensure_street_veil()
+	_ensure_pool()
+	var pos := _feet()
+	_mat_reveal.set_shader_parameter("light_pos", pos)
+	_mat_dark.set_shader_parameter("light_pos", pos)
+
+
+func _paint_tree(node: Node) -> void:
+	var player := _builder.player if _builder != null else null
+	for child in node.get_children():
+		if child == player or str(child.name) == "PiePool":
+			continue
+		# The fire keeps its own look. The foot pool does not brighten it.
+		if str(child.name) == "campfire" and child is CanvasItem:
+			_campfire = child
+			_campfire_mod = _campfire.modulate
+			_campfire.modulate = NIGHT
+			continue
+		if child is Sprite2D or child is AnimatedSprite2D:
+			_assign(child, _reveal_ok(child))
+		_paint_tree(child)
+
+
+func _reveal_ok(node: Node) -> bool:
+	var n: Node = node
+	while n != null:
+		if str(n.name) == "campfire":
+			return false
+		if n.has_meta("mo_asset"):
+			return str(n.get_meta("mo_asset")).begins_with("tree.")
+		if n is TileMapLayer and str(n.name) in ["Ground", "Water", "Road", "Shade"]:
+			return true
+		n = n.get_parent()
+	return false
+
+
+func _assign(item: CanvasItem, reveal: bool) -> void:
+	item.material = _mat_reveal if reveal else _mat_dark
+	_painted.append(item)
+
+
+func _make_light_mat(reveal: float) -> ShaderMaterial:
+	var mat := ShaderMaterial.new()
+	mat.shader = REVEAL_SHADER
+	mat.set_shader_parameter("can_reveal", reveal)
+	mat.set_shader_parameter("light_radius", POOL_RADIUS)
+	mat.set_shader_parameter("night_tint", NIGHT)
+	return mat
+
+
+func _clear_reveal() -> void:
+	if not _reveal_on and _painted.is_empty():
+		return
+	for item in _painted:
+		if is_instance_valid(item):
+			item.material = null
+	_painted.clear()
+	_reveal_on = false
+	_mat_reveal = null
+	_mat_dark = null
+	if _campfire != null and is_instance_valid(_campfire):
+		_campfire.modulate = _campfire_mod
+	_campfire = null
+	if _pool != null and is_instance_valid(_pool):
+		_pool.visible = false
+	_set_ground_z(0)
+	_drop_veil()
+	_drop_street_veil()
+
+
+func _ensure_pool() -> void:
+	var ground := _builder.get_node_or_null("Ground") as Node2D if _builder != null else null
+	if ground == null:
+		return
+	if _pool != null and is_instance_valid(_pool):
+		return
+	_pool = Sprite2D.new()
+	_pool.name = "PiePool"
+	_pool.texture = _soft
+	_pool.centered = true
+	_pool.scale = Vector2(1.15, 0.9)
+	_pool.modulate = Color(1.0, 0.86, 0.55, 0.28)
+	_add_add_blend(_pool)
+	ground.add_child(_pool)
+	_pool.visible = false
+
+
+func _set_ground_z(z: int) -> void:
+	for layer in _layers:
+		if not is_instance_valid(layer) or str(layer.name) == "Objects":
+			continue
+		layer.z_index = z
+
+
+func _ensure_street_veil() -> void:
+	if _builder == null or not is_instance_valid(_builder):
+		return
+	if _street_veil != null and is_instance_valid(_street_veil):
+		return
+	_street_veil = _make_veil_sprite("PieStreetVeil")
+	_street_veil.z_index = -1
+	_street_veil_mat = _street_veil.material as ShaderMaterial
+	_builder.add_child(_street_veil)
+	_street_veil.position = _builder.to_local(_feet())
+
+
+func _drop_street_veil() -> void:
+	if _street_veil != null and is_instance_valid(_street_veil):
+		_street_veil.queue_free()
+	_street_veil = null
+	_street_veil_mat = null
+
+
+func _make_veil_sprite(node_name: String) -> Sprite2D:
+	var veil := Sprite2D.new()
+	veil.name = node_name
+	var img := Image.create(4, 4, false, Image.FORMAT_RGBA8)
+	img.fill(Color.WHITE)
+	veil.texture = ImageTexture.create_from_image(img)
+	veil.centered = true
+	veil.scale = Vector2(900, 900)
+	var mat := ShaderMaterial.new()
+	mat.shader = VEIL_SHADER
+	mat.set_shader_parameter("light_radius", POOL_RADIUS)
+	mat.set_shader_parameter("night_tint", NIGHT)
+	mat.set_shader_parameter("light_pos", _feet())
+	veil.material = mat
+	return veil
+
+
+func _ensure_veil() -> void:
+	if not _reveal_on or not _in_woods():
+		_drop_veil()
+		return
+	var room := Interiors.current
+	if room == null:
+		return
+	if _veil != null and is_instance_valid(_veil) and _veil.get_parent() == room:
+		return
+	_drop_veil()
+	_veil = _make_veil_sprite("PieLightVeil")
+	_veil.z_as_relative = false
+	_veil.z_index = 40
+	_veil_mat = _veil.material as ShaderMaterial
+	room.add_child(_veil)
+	_veil.position = room.to_local(_feet())
+
+
+func _drop_veil() -> void:
+	if _veil != null and is_instance_valid(_veil):
+		_veil.queue_free()
+	_veil = null
+	_veil_mat = null
+
+
+func _set_lamp_glow(show_lamps: bool) -> void:
+	# Posts stay. Only the hanging light is out, and only on the pie night.
+	for node in get_tree().get_nodes_in_group("lamp_glow"):
+		if node is CanvasItem:
+			(node as CanvasItem).visible = show_lamps
 
 
 func _place_house_glows(builder: WorldBuilder) -> void:
@@ -400,6 +659,7 @@ func _place_lamp_pools(builder: WorldBuilder) -> void:
 			lantern.scale = Vector2(0.2, 0.16)
 			lantern.modulate = Color(1.0, 0.9, 0.45, 1.0)
 			lantern.z_index = 2
+			lantern.add_to_group("lamp_glow")
 			_add_add_blend(lantern)
 			_fx.add_child(lantern)
 			var core := Sprite2D.new()
@@ -409,6 +669,7 @@ func _place_lamp_pools(builder: WorldBuilder) -> void:
 			core.scale = Vector2(0.08, 0.07)
 			core.modulate = Color(1.0, 0.95, 0.7, 1.0)
 			core.z_index = 3
+			core.add_to_group("lamp_glow")
 			_add_add_blend(core)
 			_fx.add_child(core)
 

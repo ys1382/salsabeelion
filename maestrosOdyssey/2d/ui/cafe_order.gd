@@ -703,6 +703,8 @@ func bite() -> bool:
 	if muffin_left <= 0:
 		return false
 	muffin_left -= 1
+	if muffin_left <= 0 and _food == "golden apple pie":
+		GameState.note_pie_light()
 	_mark_meal_if_done()
 	return true
 

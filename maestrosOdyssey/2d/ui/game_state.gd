@@ -109,6 +109,9 @@ var berry_picked: Dictionary = {}
 var sugarplum_served := false
 ## After the cup is finished. Clears when the day turns at home.
 var sugarplum_sparkle := false
+## Saturday night, after the golden apple pie is finished. A small pool at
+## the feet. Morning clears it. Skipping the pie leaves the night as it is.
+var pie_light := false
 const BERRY_BUSHES: Array[String] = ["berry_bush_0", "berry_bush_1", "berry_bush_2"]
 const BERRY_HANDFUL := 4
 
@@ -173,6 +176,7 @@ func set_world(w: Dictionary) -> void:
 	berry_picked.clear()
 	sugarplum_served = false
 	sugarplum_sparkle = false
+	pie_light = false
 	_sync_clock()
 	if has_node("/root/CafeOrder"):
 		CafeOrder.reset_session()
@@ -295,6 +299,7 @@ func advance_day() -> void:
 	_clear_slot("logs")
 	# Outdoor street returns to morning while you are still inside the house.
 	sugarplum_sparkle = false
+	pie_light = false
 	player_honk = false
 	goose_ask = false
 	_honk_names.clear()
@@ -323,6 +328,7 @@ func skip_to_morning(day: int) -> void:
 	_sync_clock()
 	cafe_meal_done = false
 	sugarplum_sparkle = false
+	pie_light = false
 	if sugarplum_day():
 		sugarplum_served = false
 	elder_morning_done = true
@@ -403,6 +409,15 @@ func note_sugarplum_served() -> void:
 
 func note_sugarplum_drunk() -> void:
 	sugarplum_sparkle = true
+
+
+## The last bite of the Saturday pie. Not the order, and not any other food.
+func note_pie_light() -> void:
+	if not golden_apple_day() or pie_light:
+		return
+	pie_light = true
+	if has_node("/root/DayNight"):
+		DayNight.sync_pie_light()
 
 
 ## Saturday of week one only. Every other morning is the café, same as Monday.
