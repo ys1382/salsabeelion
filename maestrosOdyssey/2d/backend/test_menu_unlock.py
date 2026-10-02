@@ -36,7 +36,12 @@ def main() -> int:
     assert '"pesos": 24' in cafe and "skip_practice" in cafe
     assert "golden_apple_day" in cafe
     assert "needs_con" in cafe
-    assert "Extras use con" in cafe
+    assert "extras use con" in cafe
+    assert '"needles": ["café", "cafe"]' in cafe
+    assert '"needles": ["té"]' in cafe
+    assert '"needles": ["tostada"]' in cafe
+    assert '"needles": ["galleta"]' in cafe
+    assert '"needles": ["chocolate caliente"]' in cafe
     assert '"needles": ["azúcar", "azucar"]' in cafe
     assert '"needles": ["azúcar", "azucar", "sugar"]' not in cafe
     assert '"pesos": 48' in cafe and '"pesos": 40' in cafe

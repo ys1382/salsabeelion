@@ -25,17 +25,18 @@ static func run(host: Node) -> void:
 	await _expect(host, camp_ids.has("campire"),
 		"Çampire line was silent: %s" % str(camp_ids))
 
-	var teach := "What's your order? Un or una, then a drink y a food, con if you want extras."
+	var teach := CafeOrder.order_prompt()
 	var taught: PackedStringArray = MaraVoice.ids_for(teach)
-	await _expect(host, taught.has("order") and taught.has("teach_later"),
-		"teaching line missed her sentence: %s" % str(taught))
+	await _expect(host, taught.has("order") and not taught.has("teach_later"),
+		"order prompt still taught the shape: %s" % str(taught))
+	await _expect(host, not teach.contains("mean"), teach)
 	var bye: PackedStringArray = MaraVoice.ids_for(
-		"Mara looks over. \"Adiós, y buenas noches.\" That means goodbye, and good night.")
+		"Mara looks over. \"Adiós y buenas noches.\"")
 	await _expect(host, bye.size() == 1 and bye[0] == "bye_y",
 		"goodbye used the wrong clip: %s" % str(bye))
-	var bye_and: PackedStringArray = MaraVoice.ids_for("Adiós, and buenas noches")
-	await _expect(host, bye_and.size() == 1 and bye_and[0] == "bye_and",
-		"monday goodbye used the wrong clip")
+	var bye_night: PackedStringArray = MaraVoice.ids_for("Adiós, and buenas night.")
+	await _expect(host, bye_night.size() == 1 and bye_night[0] == "bye_night",
+		"first goodbye used the wrong clip")
 	var y_nudge: PackedStringArray = MaraVoice.ids_for(
 		"Mara tilts her head, kind. \"Almost — here we say y. café y muffin?\"")
 	await _expect(host, y_nudge.has("almost_y"),
@@ -61,7 +62,7 @@ static func run(host: Node) -> void:
 	await _expect(host, not DayNight.crickets_playing(),
 		"crickets played under her voice in the daytime")
 
-	var cart := "You set the cup and plate in the dish cart.\n\nMara looks over. \"Adiós, y buenas noches.\" That means goodbye, and good night. Say it back."
+	var cart := "You set the cup and plate in the dish cart.\n\nMara looks over. \"Adiós y buenas noches.\""
 	DialogueUI.show_line("", cart)
 	await host.get_tree().create_timer(0.3).timeout
 	await _expect(host, DialogueUI.body() == cart, "goodbye text left the screen")

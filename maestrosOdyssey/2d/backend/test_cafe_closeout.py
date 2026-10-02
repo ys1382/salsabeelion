@@ -37,15 +37,14 @@ def main() -> int:
     _cart(BACKEND)
     _cart(GENERATED)
 
-    assert "Adiós, and buenas noches" in cafe
-    assert "Adiós, y buenas noches" in cafe
-    assert "goodbye, and good night" in cafe
+    assert "Adiós, and buenas night." in cafe
+    assert "Adiós y good noches" in cafe
+    assert "Adiós y buenas noches" in cafe
+    assert "goodbye, and good night" not in cafe
+    assert "Say it back" not in cafe
     spoken = _fn(cafe, "_goodbye_spoken")
-    expected = _fn(cafe, "_goodbye_expected")
-    assert "day_index >= 2" in spoken
-    assert "day_index >= 2" in expected
-    assert "day_index >= 3" not in spoken
-    assert "day_index >= 3" not in expected
+    assert "day_index" not in spoken
+    assert "cafe_knows" in spoken
     assert "day_index >= 2" in _fn(cafe, "needs_y")
     assert "day_index >= 3" in _fn(cafe, "needs_con")
     assert "day_index >= 4" in _fn(cafe, "needs_article")
@@ -66,7 +65,8 @@ def main() -> int:
     assert "may_leave" in blocked
     assert "leave_cafe()" in blocked
     assert blocked.index("may_leave") < blocked.index("leave_cafe()")
-    assert "goodbye_box_hint" in dialogue
+    assert "respond? (optional)" in dialogue
+    assert "goodbye_box_hint" not in dialogue
     assert "Type your order, then Enter" in dialogue
     arrow = _fn(waypoint, "current_id")
     assert "dish_cart" in arrow

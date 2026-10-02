@@ -107,6 +107,8 @@ const STACK_IDS: Array[String] = ["blueberries", "gooseberries", "logs"]
 var berry_picked: Dictionary = {}
 ## Sunday of week one only. Dots leave the tree once the juice is served.
 var sugarplum_served := false
+## Café words a line already made clear. Not the calendar.
+var cafe_words: Array[String] = []
 ## After the cup is finished. Clears when the day turns at home.
 var sugarplum_sparkle := false
 ## Saturday night, after the golden apple pie is finished. A small pool at
@@ -177,6 +179,7 @@ func set_world(w: Dictionary) -> void:
 	sugarplum_served = false
 	sugarplum_sparkle = false
 	pie_light = false
+	cafe_words.clear()
 	_sync_clock()
 	if has_node("/root/CafeOrder"):
 		CafeOrder.reset_session()
@@ -196,6 +199,34 @@ func beat(beat_id: String) -> Dictionary:
 
 func known(beat_id: String) -> bool:
 	return revealed_beats.has(beat_id)
+
+
+func note_cafe_word(word: String) -> void:
+	if word == "" or cafe_words.has(word):
+		return
+	cafe_words.append(word)
+
+
+func cafe_knows(word: String) -> bool:
+	return cafe_words.has(word)
+
+
+## Short journal lines. Only words a moment already showed.
+func cafe_word_notes() -> PackedStringArray:
+	var out := PackedStringArray()
+	for word in cafe_words:
+		match word:
+			"buenas":
+				out.append("Buenas--good.")
+			"noches":
+				out.append("Noches--night.")
+			"y":
+				out.append("Y--and.")
+			"un":
+				out.append("Un--one (masculine).")
+			"una":
+				out.append("Una--one (feminine).")
+	return out
 
 
 func rival() -> Dictionary:
@@ -485,7 +516,12 @@ func wood_chore_open() -> bool:
 func saturday_visit_open() -> bool:
 	if not forest_morning():
 		return false
-	return CafeOrder.visit_hint or CafeOrder.awaiting_bye or CafeOrder.carrying_dishes
+	return (
+		CafeOrder.visit_hint
+		or CafeOrder.bye_optional
+		or CafeOrder.awaiting_bye
+		or CafeOrder.carrying_dishes
+	)
 
 
 func note_wood_cut() -> void:

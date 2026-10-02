@@ -285,6 +285,8 @@ func contents() -> String:
 	else:
 		for k in known:
 			lines.append("  ✦ %s" % k)
+	for note in GameState.cafe_word_notes():
+		lines.append("  %s" % note)
 
 	return "\n".join(lines)
 

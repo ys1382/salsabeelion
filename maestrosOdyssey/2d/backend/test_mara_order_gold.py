@@ -15,22 +15,25 @@ def main() -> int:
     player = PLAYER.read_text(encoding="utf-8")
     assert "menu_read" in cafe, "order still requires reading the board first"
     assert "A drink and a food" in cafe
-    assert "A drink y a food" in cafe
     prompt = cafe.split("func order_prompt()", 1)[1].split("\nfunc ", 1)[0]
     assert "this morning" not in prompt, "the order line must not list the board"
     assert "_visible_lemmas" not in prompt
     assert "pesos" not in prompt, "prices stay on the board"
-    assert "say y instead of and" in cafe
+    assert "say y instead of and" not in cafe
+    assert "mean a, or one" not in cafe
+    assert "That means goodbye" not in cafe
+    assert "Say it back" not in cafe
     assert "here we say y" in cafe
     assert "needs_y" in cafe
-    assert "Extras use con" in cafe
-    assert "con azúcar" in cafe
+    assert "extras use con" in cafe
+    assert "azúcar" in cafe
     assert "needs_con" in cafe
     assert "leche" in cafe
     assert "calentado" in cafe
     assert "something to eat with it" in cafe
     assert "show_order_box" in dialogue
     assert "Type your order, then Enter" in dialogue
+    assert "respond? (optional)" in dialogue
     assert "T — Close" in dialogue
     assert "R — Close" in dialogue
     assert "_hint.hide()" in dialogue

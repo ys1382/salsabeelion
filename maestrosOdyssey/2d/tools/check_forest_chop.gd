@@ -339,7 +339,7 @@ static func _assert_pie_ask(host: Node) -> void:
 	assert(asked.contains("stump"))
 	assert(not asked.to_lower().contains("dryad"))
 	assert(cafe.take_visit_hint())
-	var said: String = cafe.reply_for("Adiós, y buenas noches")
+	var said: String = cafe.reply_for(cafe.last_goodbye())
 	assert(cafe.goodbye_done, said)
 	assert(cafe.may_leave())
 	assert(said.begins_with("Mara smiles and nods."))
@@ -375,11 +375,11 @@ static func _assert_goodbye(host: Node, wood_day: bool) -> void:
 	cafe.cup_left = 0
 	cafe.muffin_left = 0
 	cafe._mark_meal_if_done()
-	var phrase := "Adiós, y buenas noches" if GameState.day_index >= 2 else "Adiós, and buenas noches"
 	var cart: String = cafe.use_dish_cart()
 	assert(not cart.contains("deadwood"))
 	assert(not cafe.visit_hint)
-	var said: String = cafe.reply_for(phrase)
+	assert(cafe.may_leave())
+	var said: String = cafe.reply_for(cafe.last_goodbye())
 	assert(cafe.goodbye_done, said)
 	assert(cafe.may_leave())
 	assert(said.begins_with("Mara smiles and nods."))

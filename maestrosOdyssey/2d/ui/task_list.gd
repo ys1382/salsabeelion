@@ -156,7 +156,6 @@ func _steps() -> Array[Dictionary]:
 	var homeward := (
 		GameState.cafe_meal_done
 		and not CafeOrder.carrying_dishes
-		and not CafeOrder.awaiting_bye
 		and not CafeOrder.visit_hint
 		and not CafeOrder.still_holding()
 	)
@@ -207,10 +206,6 @@ func _steps() -> Array[Dictionary]:
 	if plated:
 		bits.append({
 			"text": "Put the dishes away",
-			"done": CafeOrder.awaiting_bye or CafeOrder.goodbye_done or homeward,
-		})
-		bits.append({
-			"text": "Say goodbye",
 			"done": CafeOrder.goodbye_done or homeward,
 		})
 	if GameState.forest_morning() and (

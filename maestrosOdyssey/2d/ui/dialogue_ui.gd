@@ -22,6 +22,7 @@ var _speaker: Label
 var _body: RichTextLabel
 var _hint: Label
 var _order: LineEdit
+var _respond_row: HBoxContainer
 ## Wall-sign close-up: one paper that holds the whole copy.
 var _sign: PanelContainer
 var _sign_body: RichTextLabel
@@ -97,6 +98,25 @@ func _ready() -> void:
 	_order.hide()
 	_box.add_child(_order)
 
+	_respond_row = HBoxContainer.new()
+	_respond_row.hide()
+	var respond := Label.new()
+	respond.text = "respond? (optional)"
+	respond.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	respond.add_theme_font_size_override("font_size", HINT_SIZE)
+	respond.add_theme_color_override("font_color", Color(0.78, 0.74, 0.62))
+	_respond_row.add_child(respond)
+	var bye_x := Button.new()
+	bye_x.text = "X"
+	bye_x.focus_mode = Control.FOCUS_NONE
+	bye_x.flat = true
+	bye_x.add_theme_font_size_override("font_size", HINT_SIZE)
+	bye_x.custom_minimum_size = Vector2(22, 18)
+	bye_x.pressed.connect(_dismiss_optional_reply)
+	_respond_row.add_child(bye_x)
+	_box.add_child(_respond_row)
+	_box.move_child(_respond_row, _order.get_index())
+
 	_build_sign()
 
 
@@ -124,6 +144,7 @@ func show_line(speaker: String, text: String, more := false, speak := true) -> v
 	_hide_sign()
 	_prompt.hide()
 	_order.hide()
+	_respond_row.hide()
 	_order.focus_mode = Control.FOCUS_NONE
 	# release_focus during Enter's submit does not stick. Defer it so the
 	# hidden box cannot keep the next T.
@@ -178,10 +199,12 @@ func show_order_box(speaker: String = "Mara", keep_line: String = "") -> void:
 	else:
 		_body.hide()
 	_hint.hide()
+	_respond_row.hide()
 	if speaker == "Elder":
 		_order.placeholder_text = "Yes or no, then Enter"
-	elif CafeOrder.awaiting_bye:
-		_order.placeholder_text = CafeOrder.goodbye_box_hint()
+	elif CafeOrder.bye_optional:
+		_order.placeholder_text = ""
+		_respond_row.show()
 	else:
 		_order.placeholder_text = "Type your order, then Enter"
 	_order.show()
@@ -190,7 +213,8 @@ func show_order_box(speaker: String = "Mara", keep_line: String = "") -> void:
 		_fit(keep_line, speaker != "")
 		_panel.offset_top -= 36
 	else:
-		_panel.offset_top = -(SPEAKER_SIZE + SPACING + 28 + PAD * 2 + PAD)
+		var extra := 22 if CafeOrder.bye_optional else 0
+		_panel.offset_top = -(SPEAKER_SIZE + SPACING + 28 + PAD * 2 + PAD + extra)
 	_order.call_deferred("grab_focus")
 
 
@@ -199,6 +223,17 @@ func is_ordering() -> bool:
 
 
 func _on_order_submitted(text: String) -> void:
+	if CafeOrder.bye_optional:
+		var reply := CafeOrder.reply_for(text)
+		if reply == "":
+			_order.text = ""
+			_order.call_deferred("grab_focus")
+			return
+		_order.hide()
+		_order.release_focus()
+		_respond_row.hide()
+		show_line("Mara", reply)
+		return
 	_order.hide()
 	_order.release_focus()
 	if GameState.goose_ask:
@@ -268,8 +303,17 @@ func body() -> String:
 	return _body.text
 
 
+func _dismiss_optional_reply() -> void:
+	CafeOrder.dismiss_optional_reply()
+	close()
+	var players := get_tree().get_nodes_in_group("player")
+	if players.size() > 0 and players[0].has_method("_end_talk_face"):
+		players[0]._end_talk_face()
+
+
 func close() -> void:
 	_order.hide()
+	_respond_row.hide()
 	_order.release_focus()
 	_hint.hide()
 	_body.show()

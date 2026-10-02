@@ -25,8 +25,11 @@ static func run(host: Node) -> void:
 	assert(not cafe.awaiting_bye)
 	assert(cafe.take_visit_hint())
 	var bye: String = cafe.cart_goodbye_line()
-	assert(bye.contains("Adiós, and buenas noches"))
-	var said: String = cafe.reply_for("Adiós, and buenas noches")
+	assert(bye.contains("Adiós, and buenas night."))
+	assert(not bye.contains("means"))
+	assert(not bye.contains("Say it back"))
+	assert(cafe.may_leave())
+	var said: String = cafe.reply_for("Adiós, and buenas night.")
 	assert(cafe.goodbye_done, said)
 	assert(said == "Mara smiles and nods.")
 

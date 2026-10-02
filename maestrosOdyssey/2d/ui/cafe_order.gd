@@ -7,17 +7,19 @@ extends Node
 # is ready. You walk back and press T; it does not appear in your hands
 # before that. An empty room still hands it over in that same reply. Sit to
 # sip (D) and eat (F). After both are finished,
-# the empty cup and plate go in the dish cart, and you say her goodbye back
-# before the door will let you out. Monday that is adiós, and buenas noches.
-# From Tuesday on — the day she teaches y — it is adiós, y buenas noches.
-# A right spelling gets a smile and a nod. Stepping into your
-# house turns the weekday. If the card
+# the empty cup and plate go in the dish cart. She says goodbye. The door
+# does not wait on a reply. The first goodbye is "Adiós, and buenas night."
+# After a line has already made y clear, and buenas is already known, it is
+# "Adiós y good noches." "Adiós y buenas noches" waits until both buenas and
+# noches are already known. The weekday alone does not switch those lines.
+# A matching reply gets a smile. Closing the box still lets you leave.
+# Stepping into your house turns the weekday. If the card
 # can't cover any
 # pair, Mara quizzes board words instead (cycling, not the same lemma on a
 # loop). One new café word a day, and it stays: y from Tuesday, con for extras
-# from Wednesday, un / una (with gender) from Thursday. Her order prompt
-# teaches that shape only. It does not name the board or the prices — those
-# stay on the wall. Later Mondays do not
+# from Wednesday, un / una (with gender) from Thursday. She asks what's your
+# order. She does not explain what the words mean. The wall has the items
+# and the prices. Later Mondays do not
 # go back to English "and". Add-ons are Spanish. A missing accent still
 # counts until Monday of week 2, and only after the elder's pass. From
 # then on each word needs its own accent mark. A different mark does not
@@ -57,14 +59,20 @@ var _heard := {}
 const CALLOUT_SEC := 3.0
 ## Empty cup and plate still in hand after the meal, until the dish cart.
 var carrying_dishes := false
-## Dish cart used; waiting on the Spanish goodbye typed back.
+## Kept so older checks can clear it. The door does not wait on it.
 var awaiting_bye := false
 ## Monday blueberries, or Saturday deadwood after the pie. Then the goodbye.
 var visit_hint := false
 var visit_hint_said := false
 var goodbye_done := false
+## She has said goodbye. A reply is optional. The door does not wait on it.
+var bye_optional := false
+## The goodbye she just said. A matching reply uses this, not the calendar.
+var _bye_line := ""
 
 const NIGHT_PASS_LINE := "Night passes. It's morning."
+## The language of the café counter. Spanish until another is added.
+const CAFE_LANGUAGE := "Spanish"
 ## Day 8. She will not take a paid order until the elder has answered.
 const ELDER_FIRST := "Mara turns toward the lane. \"See the elder first, dear.\""
 
@@ -72,27 +80,29 @@ const PRACTICE_PESOS := 12
 const PRACTICE_MAX_DAY := 36
 
 ## Canon #26 unlocks. Day 1 is café / té / muffin, plus leche / azúcar.
-## Later days add on; the full board stays after day 7. Add-ons are Spanish
-## only. From Wednesday, extras use con. From Thursday, un / una matches gender.
+## Later days add on; the full board stays after day 7. Drinks and foods
+## are ordered by their Spanish names. The wall can still show the English
+## gloss. Add-ons are Spanish too. From Wednesday, extras use con. From
+## Thursday, un / una matches gender.
 ## new_today marks a new café-lane lemma
 ## (cognates skip). prep is how you like it (calentado, frío) — not a new drink.
 const ITEMS := [
-	{"needles": ["chocolate caliente", "hot chocolate", "chocolate"], "lemma": "chocolate caliente", "en": "hot chocolate", "pesos": 48, "kind": "drink", "unlock_day": 2, "new_today": true},
+	{"needles": ["chocolate caliente"], "lemma": "chocolate caliente", "en": "hot chocolate", "pesos": 48, "kind": "drink", "unlock_day": 2, "new_today": true},
 	{"needles": ["espresso"], "lemma": "espresso", "en": "espresso", "pesos": 40, "kind": "drink", "unlock_day": 7, "new_today": false},
 	{"needles": ["sugarplum juice"], "lemma": "sugarplum juice", "en": "sugarplum juice", "pesos": 40, "kind": "drink", "unlock_day": 0, "new_today": false, "skip_practice": true},
 	{"needles": ["golden apple pie"], "lemma": "golden apple pie", "en": "golden apple pie", "pesos": 24, "kind": "food", "unlock_day": 0, "new_today": false, "skip_practice": true},
 	{"needles": ["croissant"], "lemma": "croissant", "en": "croissant", "pesos": 32, "kind": "food", "unlock_day": 6, "new_today": false},
-	{"needles": ["tostada", "toast"], "lemma": "tostada", "en": "toast", "pesos": 22, "kind": "food", "unlock_day": 3, "new_today": true},
-	{"needles": ["galleta", "cookie"], "lemma": "galleta", "en": "cookie", "pesos": 24, "kind": "food", "unlock_day": 4, "new_today": true},
+	{"needles": ["tostada"], "lemma": "tostada", "en": "toast", "pesos": 22, "kind": "food", "unlock_day": 3, "new_today": true},
+	{"needles": ["galleta"], "lemma": "galleta", "en": "cookie", "pesos": 24, "kind": "food", "unlock_day": 4, "new_today": true},
 	{"needles": ["bolillo"], "lemma": "bolillo", "en": "bolillo roll", "pesos": 20, "kind": "food", "unlock_day": 5, "new_today": true},
 	{"needles": ["leche"], "lemma": "leche", "en": "milk", "pesos": 0, "kind": "addon", "unlock_day": 1, "new_today": true},
 	{"needles": ["azúcar", "azucar"], "lemma": "azúcar", "en": "sugar", "pesos": 0, "kind": "addon", "unlock_day": 1, "new_today": true},
 	{"needles": ["crema"], "lemma": "crema", "en": "creamer", "pesos": 0, "kind": "addon", "unlock_day": 6, "new_today": true},
 	{"needles": ["calentado", "calentada"], "lemma": "calentado", "en": "warmed", "pesos": 0, "kind": "prep", "unlock_day": 1, "new_today": false},
 	{"needles": ["frío", "frio"], "lemma": "frío", "en": "iced", "pesos": 0, "kind": "prep", "unlock_day": 7, "new_today": true},
-	{"needles": ["café", "cafe", "coffee"], "lemma": "café", "en": "coffee", "pesos": 35, "kind": "drink", "unlock_day": 1, "new_today": true},
+	{"needles": ["café", "cafe"], "lemma": "café", "en": "coffee", "pesos": 35, "kind": "drink", "unlock_day": 1, "new_today": true},
 	{"needles": ["muffin"], "lemma": "muffin", "en": "muffin", "pesos": 28, "kind": "food", "unlock_day": 1, "new_today": false},
-	{"needles": ["té", "tea"], "lemma": "té", "en": "tea", "pesos": 30, "kind": "drink", "unlock_day": 1, "new_today": true},
+	{"needles": ["té"], "lemma": "té", "en": "tea", "pesos": 30, "kind": "drink", "unlock_day": 1, "new_today": true},
 ]
 
 
@@ -136,6 +146,8 @@ func _clear_order() -> void:
 	awaiting_bye = false
 	visit_hint = false
 	goodbye_done = false
+	bye_optional = false
+	_bye_line = ""
 	awaiting_serve = false
 	called_out = false
 	_callout_left = -1.0
@@ -148,9 +160,10 @@ func _clear_order() -> void:
 
 
 ## The café door stays where it is. After a paid order it also waits until
-## the food is in your hands. Then it waits on the dish cart and the goodbye.
+## the food is in your hands. Then it waits on the dish cart. It does not
+## wait on a goodbye reply.
 func may_leave() -> bool:
-	return not awaiting_serve and not carrying_dishes and not awaiting_bye and not visit_hint
+	return not awaiting_serve and not carrying_dishes and not visit_hint
 
 
 func leave_blocked_line() -> String:
@@ -174,8 +187,7 @@ func leave_blocked_line() -> String:
 			"Mara calls over before you reach the door. "
 			+ "\"The dish cart is by the counter. Cups and plates go there to be washed.\""
 		)
-	open_box_on_close = true
-	return "Mara is still waiting. Say it back before you go."
+	return "Mara smiles. \"The door's there when you're ready.\""
 
 
 ## Inside the café, one stop at a time: the menu, then Mara, then each
@@ -295,6 +307,7 @@ func _counter_while_waiting() -> String:
 		# She calls across the room. Pressing T early must not take that line.
 		return ""
 	if not _put_in_hands():
+		_note_gender_set_down()
 		return "Mara looks at your satchel. \"Two pockets are full. I'll keep this at the counter.\""
 	return "Mara sets it in your hands. \"Here you go — that's ready.\"" + _picked_line()
 
@@ -305,6 +318,7 @@ func _hand_over_now(total: int) -> String:
 		called_out = true
 		cup_left = 0
 		muffin_left = 0
+		_note_gender_set_down()
 		return (
 			"Mara repeats it back, calm and clear: \"%s.\"\n\n"
 			+ "That's %d pesos from your card. \"Two pockets are full. I'll keep this at the counter.\""
@@ -328,6 +342,7 @@ func _put_in_hands() -> bool:
 	if _drink == "sugarplum juice":
 		GameState.note_sugarplum_served()
 	order_ready.emit(served)
+	_note_gender_set_down()
 	return true
 
 
@@ -380,9 +395,6 @@ func _next_unheard_id() -> String:
 
 
 func use_dish_cart() -> String:
-	if awaiting_bye:
-		open_box_on_close = true
-		return "Mara waits by the cart. Say it back."
 	if goodbye_done:
 		return "The dish cart is waiting for the next wash."
 	if not carrying_dishes:
@@ -409,16 +421,16 @@ func use_dish_cart() -> String:
 			"You set the cup and plate in the dish cart.\n\n"
 			+ "Mara looks over. \"While you're out getting firewood for your house, bring me some deadwood. Chop only dead trees, or deadfall: logs and fallen branches. A whole dead tree, even leaving the stump, is more than the house needs. The extra is for me.\""
 		)
-	awaiting_bye = true
-	open_box_on_close = true
+	_arm_goodbye()
 	return cart_goodbye_line()
 
 
 func cart_goodbye_line() -> String:
+	_arm_goodbye()
 	return (
 		"You set the cup and plate in the dish cart.\n\n"
-		+ "Mara looks over. \"%s.\" That means goodbye, and good night. Say it back."
-	) % _goodbye_spoken()
+		+ "Mara looks over. \"%s.\""
+	) % _bye_line
 
 
 ## Saturday pie only. Advice at the cart. No dryad reason, and no return trip.
@@ -431,39 +443,120 @@ func take_visit_hint() -> bool:
 	if not visit_hint:
 		return false
 	visit_hint = false
-	awaiting_bye = true
+	_arm_goodbye()
 	open_box_on_close = true
 	return true
 
 
-## Shown in the type box so a missed line can still be typed. Not spoken again.
-func goodbye_box_hint() -> String:
-	return _goodbye_spoken()
+## The line she just said, so a reply can match it.
+func last_goodbye() -> String:
+	return _bye_line
 
 
-## Monday still uses English "and". From Tuesday, y stays — including later Mondays.
+## Closing the optional box. The door was already free.
+func dismiss_optional_reply() -> void:
+	if not bye_optional:
+		return
+	bye_optional = false
+	open_box_on_close = false
+
+
+func _arm_goodbye() -> void:
+	if _bye_line != "":
+		return
+	_bye_line = _goodbye_spoken()
+	_remember_goodbye_word(_bye_line)
+	goodbye_done = true
+	bye_optional = true
+	awaiting_bye = false
+	open_box_on_close = true
+
+
+## Night stays English until noches is the new word. Good stays English until
+## both buenas and noches are already known. y is not the calendar.
 func _goodbye_spoken() -> String:
-	if GameState.day_index >= 2:
-		return "Adiós, y buenas noches"
-	return "Adiós, and buenas noches"
+	if GameState.cafe_knows("buenas") and GameState.cafe_knows("noches"):
+		return "Adiós y buenas noches"
+	if GameState.cafe_knows("y") and GameState.cafe_knows("buenas"):
+		return "Adiós y good noches"
+	return "Adiós, and buenas night."
 
 
-func _goodbye_expected() -> String:
-	if GameState.day_index >= 2:
-		return "adios y buenas noches"
-	return "adios and buenas noches"
+func _remember_goodbye_word(line: String) -> void:
+	if line.contains("buenas night"):
+		GameState.note_cafe_word("buenas")
+	elif line.contains("good noches"):
+		GameState.note_cafe_word("noches")
 
 
 func _bye_reply(text: String) -> String:
-	if _flat_spanish(text) == _goodbye_expected():
-		awaiting_bye = false
+	if _bye_line != "" and _flat_spanish(text) == _flat_spanish(_bye_line):
+		bye_optional = false
 		goodbye_done = true
 		open_box_on_close = false
+		_float_hands()
 		if GameState.forest_morning():
 			return "Mara smiles and nods. \"It's chilly tonight. That's why you light the fire at home.\""
 		return "Mara smiles and nods."
-	open_box_on_close = true
-	return "Mara waits, gentle. Say it back the way she did."
+	return ""
+
+
+## The echo used y in the and-slot. The journal keeps the short note.
+func _note_y_shown(echo: String) -> void:
+	if _has_word(_fold(echo), "y"):
+		GameState.note_cafe_word("y")
+
+
+## Gender notes only when un café or una galleta is actually set down.
+func _note_gender_set_down() -> void:
+	var echo := _echo(served).to_lower()
+	if echo.contains("un café") or echo.contains("un cafe"):
+		GameState.note_cafe_word("un")
+	if echo.contains("una galleta"):
+		GameState.note_cafe_word("una")
+
+
+## Two hands locked into a heart. Very small. It rises off her and fades.
+func _float_hands() -> void:
+	if not is_inside_tree():
+		return
+	var mara: Node2D = null
+	for n in get_tree().get_nodes_in_group("npc"):
+		if n is Npc and (n as Npc).npc_id == "mara":
+			mara = n
+			break
+	if mara == null:
+		return
+	var sprite := Sprite2D.new()
+	sprite.texture = _hands_heart_tex()
+	sprite.position = Vector2(0, -30)
+	sprite.z_index = 20
+	mara.add_child(sprite)
+	var tw := mara.create_tween()
+	tw.tween_property(sprite, "position:y", -46.0, 0.85)
+	tw.parallel().tween_property(sprite, "modulate:a", 0.0, 0.85)
+	tw.tween_callback(sprite.queue_free)
+
+
+func _hands_heart_tex() -> Texture2D:
+	var img := Image.create(9, 8, false, Image.FORMAT_RGBA8)
+	img.fill(Color(0, 0, 0, 0))
+	var skin := Color(0.93, 0.76, 0.62, 1)
+	var heart := Color(0.82, 0.28, 0.38, 1)
+	var hands := [Vector2i(0, 3), Vector2i(1, 2), Vector2i(1, 3), Vector2i(1, 4), Vector2i(2, 3)]
+	var other := [Vector2i(8, 3), Vector2i(7, 2), Vector2i(7, 3), Vector2i(7, 4), Vector2i(6, 3)]
+	var lock := [
+		Vector2i(3, 1), Vector2i(4, 0), Vector2i(5, 1),
+		Vector2i(3, 2), Vector2i(4, 2), Vector2i(5, 2),
+		Vector2i(4, 3), Vector2i(4, 4),
+	]
+	for p in hands:
+		img.set_pixel(p.x, p.y, skin)
+	for p in other:
+		img.set_pixel(p.x, p.y, skin)
+	for p in lock:
+		img.set_pixel(p.x, p.y, heart)
+	return ImageTexture.create_from_image(img)
 
 
 func _flat_spanish(raw: String) -> String:
@@ -518,9 +611,6 @@ func _counter_or_order_line() -> String:
 			return _counter_while_waiting()
 		if carrying_dishes:
 			return "Mara nods toward the cart. \"Dishes in the cart first. Then we say goodbye.\""
-		if awaiting_bye:
-			open_box_on_close = true
-			return "Mara waits. Say it back."
 		if goodbye_done:
 			return "Mara smiles. \"The door's there when you're ready.\""
 		return "That's already yours. Sit if you like — the room is for lingering."
@@ -536,38 +626,17 @@ func _counter_or_order_line() -> String:
 	return order_prompt()
 
 
-## Asks for the order and teaches the day's shape. The wall has the items
-## and the prices. This line does not. After the elder's pass, Monday of
-## week 2 onward, she also says each word needs its own accent mark.
+## Asks for the order. The wall has the items and the prices. This line
+## does not name them, and it does not explain what y, con, un, or una mean.
+## After the elder's pass, Monday of week 2 onward, she also says each word
+## needs its own accent mark.
 func order_prompt() -> String:
-	var line := _order_shape_line()
+	var line := "What's your order?"
+	if not needs_y():
+		line = "What's your order? A drink and a food."
 	if needs_accents():
 		line += "\n\nEach word needs its own accent mark. A different mark is not enough."
 	return line
-
-
-func _order_shape_line() -> String:
-	if GameState.day_index == 2:
-		return (
-			"What's your order?\n\n"
-			+ "Today I'd like you to say y instead of and — a drink y a food."
-		)
-	if GameState.day_index == 3:
-		return (
-			"What's your order? A drink y a food.\n\n"
-			+ "Extras use con, like con azúcar."
-		)
-	if GameState.day_index == 4:
-		return (
-			"What's your order?\n\n"
-			+ "Today, un and una mean a, or one — un café, a coffee. "
-			+ "un café y una galleta. Y still joins them, and extras still use con."
-		)
-	if needs_article():
-		return "What's your order? Un or una, then a drink y a food, con if you want extras."
-	if needs_y():
-		return "What's your order? A drink y a food."
-	return "What's your order? A drink and a food."
 
 
 ## Tuesday onward. Stays on later Mondays — day_index does not wrap.
@@ -627,7 +696,7 @@ func needs_elder_first() -> bool:
 
 func reply_for(text: String) -> String:
 	var order := text.strip_edges()
-	if awaiting_bye:
+	if bye_optional:
 		return _bye_reply(order)
 	if _practicing:
 		return _practice_reply(order)
@@ -638,9 +707,11 @@ func reply_for(text: String) -> String:
 		return "Mara waits patiently. \"Take your time — look at the board again if you need to.\""
 	var lemmas := match_lemmas(order)
 	if lemmas.is_empty() or (_lemma_of_kind(lemmas, "drink") == "" and _lemma_of_kind(lemmas, "food") == ""):
-		return "Mara tilts her head. \"I didn't catch that. The menu is on the wall.\""
+		return _language_ask_line()
 	var missing := _missing_half_line(lemmas)
 	if missing != "":
+		if _used_english_menu_word(order):
+			return _language_ask_line()
 		return missing
 	if needs_y() and not _has_y(order):
 		return _y_nudge(lemmas)
@@ -672,6 +743,7 @@ func reply_for(text: String) -> String:
 	_drink = _lemma_of_kind(lemmas, "drink")
 	_food = _lemma_of_kind(lemmas, "food")
 	_remember(lemmas)
+	_note_y_shown(_echo(lemmas))
 	if _guest_dicts().is_empty() or _tables_heard():
 		return _hand_over_now(total)
 	awaiting_serve = true
@@ -717,6 +789,8 @@ func _mark_meal_if_done() -> void:
 		carrying_dishes = true
 		awaiting_bye = false
 		goodbye_done = false
+		bye_optional = false
+		_bye_line = ""
 		GameState.note_cafe_meal_done()
 
 
@@ -932,7 +1006,7 @@ func _con_nudge(lemmas: PackedStringArray) -> String:
 
 func _article_nudge(lemmas: PackedStringArray) -> String:
 	return (
-		"Mara tilts her head, kind. \"Almost — un or una means a, or one. %s?\""
+		"Mara tilts her head, kind. \"Almost — un or una. %s?\""
 	) % _model_order(lemmas)
 
 
@@ -1081,6 +1155,27 @@ func _model_order(lemmas: PackedStringArray) -> String:
 	if _has_addon(lemmas) and needs_con():
 		return core + " con " + _join_y(_lemmas_of_kind(lemmas, "addon"))
 	return core
+
+
+func _language_ask_line() -> String:
+	return (
+		"Mara tilts her head. \"Here we use %s to ask for things. "
+		+ "You can go glance at the menu again if you don't know the words for your order.\""
+	) % CAFE_LANGUAGE
+
+
+## English names for board items. Muffin alone is still the Spanish word.
+## "chocolate" inside chocolate caliente is the Spanish drink, not this list.
+func _used_english_menu_word(order: String) -> bool:
+	var hay := _fold(order)
+	if _has_word(hay, "hot chocolate"):
+		return true
+	if _has_word(hay, "chocolate") and not _has_word(hay, "caliente"):
+		return true
+	for word in ["coffee", "tea", "toast", "cookie"]:
+		if _has_word(hay, word):
+			return true
+	return false
 
 
 func _missing_half_line(lemmas: PackedStringArray) -> String:

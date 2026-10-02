@@ -536,6 +536,7 @@ func _input(event: InputEvent) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if DialogueUI.is_ordering():
 		if event.is_action_pressed("ui_cancel"):
+			CafeOrder.dismiss_optional_reply()
 			DialogueUI.close()
 			_end_talk_face()
 			get_viewport().set_input_as_handled()
