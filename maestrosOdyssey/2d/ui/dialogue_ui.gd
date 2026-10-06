@@ -30,6 +30,8 @@ var _sign_text := ""
 ## Which key dismisses the open panel. Talk lines use T, the menu and house
 ## rules use R, and a door, basket, cart, or look uses E.
 var close_key := "T"
+## Enter can reach both the line and this handler in one frame.
+var _submit_frame := -1
 
 
 func _ready() -> void:
@@ -106,13 +108,15 @@ func _ready() -> void:
 	respond.add_theme_font_size_override("font_size", HINT_SIZE)
 	respond.add_theme_color_override("font_color", Color(0.78, 0.74, 0.62))
 	_respond_row.add_child(respond)
-	var bye_x := Button.new()
+	# A Button takes Enter as a click, so the line never sends. X is only a click.
+	var bye_x := Label.new()
 	bye_x.text = "X"
 	bye_x.focus_mode = Control.FOCUS_NONE
-	bye_x.flat = true
+	bye_x.mouse_filter = Control.MOUSE_FILTER_STOP
 	bye_x.add_theme_font_size_override("font_size", HINT_SIZE)
+	bye_x.add_theme_color_override("font_color", Color(0.78, 0.74, 0.62))
 	bye_x.custom_minimum_size = Vector2(22, 18)
-	bye_x.pressed.connect(_dismiss_optional_reply)
+	bye_x.gui_input.connect(_on_bye_x_input)
 	_respond_row.add_child(bye_x)
 	_box.add_child(_respond_row)
 	_box.move_child(_respond_row, _order.get_index())
@@ -222,12 +226,25 @@ func is_ordering() -> bool:
 	return _panel.visible and _order.visible
 
 
+func _on_bye_x_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		_dismiss_optional_reply()
+		get_viewport().set_input_as_handled()
+
+
 func _on_order_submitted(text: String) -> void:
+	var frame := Engine.get_process_frames()
+	if frame == _submit_frame:
+		return
+	_submit_frame = frame
 	if CafeOrder.bye_optional:
 		var reply := CafeOrder.reply_for(text)
 		if reply == "":
-			_order.text = ""
-			_order.call_deferred("grab_focus")
+			# A real reply still sends. Only a blank Return leaves the box up.
+			if text.strip_edges() != "":
+				_dismiss_optional_reply()
+			else:
+				_order.call_deferred("grab_focus")
 			return
 		_order.hide()
 		_order.release_focus()

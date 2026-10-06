@@ -127,6 +127,15 @@ def main() -> int:
     assert "prop.fireplace_1" not in cafe_objects
     assert "prop.sack_3" not in home_objects
     assert "prop.plant_2" not in home_objects
+    assert world["map"]["base_terrain"] == "grass"
+    assert all(r["terrain"] != "dirt" for r in world["map"]["regions"])
+    assert world["map"]["paths"] == []
+    bench = next(i for i in world["interactables"] if i["id"] == "street_bench")
+    assert "dirt" not in bench["text"]
+    generated = json.loads(
+        (WORLD.parent.parent / "generated" / "dragons_brew_world.json").read_text())
+    assert generated["map"]["regions"] == world["map"]["regions"]
+    assert generated["map"]["paths"] == world["map"]["paths"]
     print("dragons_brew_world.json: ok")
     return 0
 

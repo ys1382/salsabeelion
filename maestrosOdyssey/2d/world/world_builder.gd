@@ -141,12 +141,13 @@ func _paint_terrain() -> void:
 	var road_terrain := Catalog.terrain_index("Road", "Road")
 	for p: Dictionary in m["paths"]:
 		var cells := _path_cells(p, size)
-		if not cells.is_empty():
-			_road.set_cells_terrain_connect(cells, 0, road_terrain)
-			# A road crossing water is a bridge as far as the player is
-			# concerned — clear the water under it so it isn't solid.
-			for c in cells:
-				_water.erase_cell(c)
+		if cells.is_empty():
+			continue
+		# A path crossing water is a bridge as far as the player is
+		# concerned — clear the water under it so it isn't solid.
+		for c in cells:
+			_water.erase_cell(c)
+		_road.set_cells_terrain_connect(cells, 0, road_terrain)
 
 
 ## A rectangle with its four edges eaten into by 0-1 tiles, so terrain

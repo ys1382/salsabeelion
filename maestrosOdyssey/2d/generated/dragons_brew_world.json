@@ -25,13 +25,6 @@
     "base_terrain": "grass",
     "regions": [
       {
-        "terrain": "dirt",
-        "x": 6,
-        "y": 12,
-        "w": 26,
-        "h": 12
-      },
-      {
         "terrain": "water",
         "x": 32,
         "y": 3,
@@ -39,25 +32,7 @@
         "h": 5
       }
     ],
-    "paths": [
-      {
-        "points": [
-          {
-            "x": 4,
-            "y": 20
-          },
-          {
-            "x": 20,
-            "y": 20
-          },
-          {
-            "x": 20,
-            "y": 13
-          }
-        ],
-        "width": 2
-      }
-    ],
+    "paths": [],
     "shade_paths": [
       {
         "id": "forest_path",
@@ -237,7 +212,7 @@
       "asset": "prop.bench_1",
       "x": 22,
       "y": 14,
-      "text": "A bench on the dirt path, facing Dragon's Brew. Good for catching your breath.",
+      "text": "A bench on the grass, facing Dragon's Brew. Good for catching your breath.",
       "beat": "",
       "on": "",
       "gives_item": "",
