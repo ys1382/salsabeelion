@@ -20,7 +20,11 @@
 
 ## Story shape (not chosen-one)
 
-The world was already running. The protagonist belongs here. Ordinary mornings intersect situations already in motion — they **noticed**, **cared**, or **happened to be useful**, and a thread pulled.
+### Why you are here
+
+Humans and sentient fantasy peoples share ordinary life in peace, with tension left over from old wars. The peace is real, and people still have to keep it.
+
+You are in this village because you already live here, next to the elder. The world was already going on around you. She is the human who keeps good terms with the other peoples in this county. She cannot travel the way she used to, so she is training you to take up that work. That work is the next generation of the same job: keeping terms where old harm still has a shadow. Human stories still glorify violence against dragons. Relations with merfolk are tight. Prejudice against vampires can still land on bystanders.
 
 ### Spine + body
 

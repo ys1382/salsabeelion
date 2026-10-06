@@ -325,9 +325,10 @@ Demo ending = arrive at the train station (#24). **Pegasus, griffin, and other v
 - [ ] **Player-frame language + Mara tail** — UI/chat in the language you already speak; Irish / Japanese / Turkish locked until the train. Mara tail overlay still later.
 - [ ] **Revise `DRAGONS-BREW-PRE-TRAIN.md`** when owner asks — old week-one detective/sea table → later-arc section; align with #13–19. Pegasus, griffin, and other very detailed creatures are **post-upgrade**, not week-one placeholders.
 
-### After demo — elder as ambassador (owner — pinned 2026-09-22)
+### Elder as ambassador — why you are here (owner — pinned 2026-09-22, premise 2026-10-06)
 
-- [ ] **Elder is a human ambassador** to supernatural peoples, after the train-station demo ending. The player is **her apprentice** — that is why she granted the learning card and the café week. She is training you to take her place because she cannot travel as much; her work now is the next generation, and keeping good terms with this county / city / suburbia. Not week one. Not a lecture on day one.
+- [ ] Humans and sentient fantasy peoples share ordinary life in peace, with tension left over from old wars. The peace is real, and people still have to keep it. You are in this village because you already live here, next to the elder. The world was already going on around you. She is the human who keeps good terms with the other peoples in this county. She cannot travel the way she used to, so she is training you to take up that work. That work is the next generation of the same job: keeping terms where old harm still has a shadow. Human stories still glorify violence against dragons. Relations with merfolk are tight. Prejudice against vampires can still land on bystanders.
+- [x] **Short village page (2026-10-06)** — text and pictures at `www/village.html`. A few days beside the elder: the split street, the shore, the shop porch, then arrive at the train station and stop. No picking things up. Dragons and the café are not in this page. The old build is still the front door. The next part continues from the platform.
 
 ### After demo — non-humanoid animation (owner — pinned 2026-09-22, corrected same day)
 

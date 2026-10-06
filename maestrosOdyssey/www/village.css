@@ -1,0 +1,95 @@
+:root {
+  color-scheme: light;
+  --ink: #2a241c;
+  --muted: #5c5348;
+  --paper: #f4efe4;
+  --card: #fffaf3;
+  --line: #e2d6c4;
+  --choice: #3e5344;
+  --choice-ink: #f7f3ea;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  min-height: 100vh;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: Georgia, "Iowan Old Style", Palatino, serif;
+  line-height: 1.45;
+}
+
+main {
+  max-width: 42rem;
+  margin: 0 auto;
+  padding: 1rem 1rem 2.5rem;
+}
+
+.day {
+  margin: 0 0 0.6rem;
+  font-family: "Segoe UI", system-ui, sans-serif;
+  font-size: 0.85rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.picture {
+  display: block;
+  width: 100%;
+  max-height: 52vh;
+  object-fit: cover;
+  border-radius: 0.4rem;
+  background: #ddd4c6;
+}
+
+.prose p {
+  margin: 0.9rem 0 0;
+  font-size: 1.12rem;
+}
+
+.choices {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  margin-top: 1.2rem;
+}
+
+.choices button {
+  font: inherit;
+  text-align: left;
+  padding: 0.75rem 0.9rem;
+  border-radius: 0.4rem;
+  border: 1px solid var(--choice);
+  background: var(--choice);
+  color: var(--choice-ink);
+  cursor: pointer;
+}
+
+.choices button:hover,
+.choices button:focus-visible {
+  background: #314636;
+}
+
+.choices button:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+@media (max-width: 640px) {
+  .picture {
+    max-height: 42vh;
+  }
+
+  .prose p {
+    font-size: 1.05rem;
+  }
+}
