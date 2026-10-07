@@ -62,6 +62,14 @@ main {
   line-height: 1.35;
 }
 
+.listen-banner.pass {
+  background: rgba(36, 72, 44, 0.96);
+}
+
+.listen-banner.miss {
+  background: rgba(92, 42, 32, 0.96);
+}
+
 .day {
   position: absolute;
   z-index: 2;

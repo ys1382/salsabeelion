@@ -783,10 +783,6 @@
   var practiceGen = 0;
   var activeRec = null;
   var WORD_GAP_MS = 900;
-  var gradeEl = document.createElement("p");
-  gradeEl.className = "grade";
-  gradeEl.hidden = true;
-  if (choicesEl && choicesEl.parentNode) choicesEl.parentNode.appendChild(gradeEl);
   var bannerEl = document.createElement("div");
   bannerEl.className = "listen-banner";
   bannerEl.hidden = true;
@@ -1170,6 +1166,33 @@
     writeSave();
   }
 
+  function choiceEnglish(sayId) {
+    return lineTokens(sayId).map(function (tok) {
+      return tok.en || "";
+    }).join(" ").replace(/\s+/g, " ").trim();
+  }
+
+  function alreadySaid(sayId) {
+    var key = dayKeyFromScene();
+    var list = (state.said && state.said[key]) || [];
+    var english = choiceEnglish(sayId);
+    return !!english && list.indexOf(english) !== -1;
+  }
+
+  function withoutRepeats(list) {
+    var full = list || [];
+    var open = full.filter(function (choice) {
+      return !choice.say || !alreadySaid(choice.say);
+    });
+    if (open.length) return open;
+    var exit = null;
+    full.forEach(function (choice) {
+      if (!choice.say) exit = choice;
+    });
+    if (exit) return [exit];
+    return full.length ? [full[full.length - 1]] : [];
+  }
+
   function setSayLabel(button, text) {
     var label = button.querySelector(".say-this");
     if (label) label.textContent = text;
@@ -1183,22 +1206,21 @@
 
   function showBanner(title, detail) {
     bannerEl.hidden = false;
+    bannerEl.className = "listen-banner";
     bannerTitle.textContent = title;
     bannerHeard.textContent = detail || "";
   }
 
   function clearGrade() {
-    gradeEl.hidden = true;
-    gradeEl.className = "grade";
-    gradeEl.textContent = "";
     hideBanner();
+    bannerEl.className = "listen-banner";
   }
 
   function showGrade(kind, text) {
-    hideBanner();
-    gradeEl.hidden = false;
-    gradeEl.className = "grade " + kind;
-    gradeEl.textContent = text;
+    bannerEl.hidden = false;
+    bannerEl.className = "listen-banner " + (kind === "pass" ? "pass" : "miss");
+    bannerTitle.textContent = kind === "pass" ? "That landed" : "Not yet";
+    bannerHeard.textContent = text;
   }
 
   function gradeSentence(graded, heard, passed) {
@@ -1635,6 +1657,7 @@
     }
     var list = typeof scene.choices === "function" ? scene.choices() : scene.choices;
     if (scene.report && !state.reports[scene.report]) list = choicesFor(scene.report);
+    list = withoutRepeats(list);
     buttons(list, function (choice) {
       if (choice.nextLang) {
         var total = (window.VILLAGE_LANGS || []).length || 1;
