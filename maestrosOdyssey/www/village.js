@@ -948,7 +948,7 @@
     chunks.push(said);
   }
 
-  function listenOnce(voiceLang, maxMs, onUpdate) {
+  function listenOnce(voiceLang, maxMs, onUpdate, shouldStop) {
     return new Promise(function (resolve, reject) {
       var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!SR) {
@@ -973,6 +973,22 @@
       }
       function notify() {
         if (onUpdate && !settled) onUpdate(displayLine());
+      }
+      function snapshot() {
+        var heard = displayLine();
+        var sample = texts.slice();
+        if (heard) sample.push(heard);
+        return sample;
+      }
+      function caught() {
+        if (!shouldStop || settled) return false;
+        var sample = snapshot();
+        if (!sample.length) return false;
+        try {
+          return !!shouldStop(sample);
+        } catch (err) {
+          return false;
+        }
       }
       function ok() {
         if (settled) return;
@@ -1029,6 +1045,10 @@
             live = said;
           }
           notify();
+          if (caught()) {
+            ok();
+            return;
+          }
           scheduleQuiet();
         };
         rec.onerror = function (event) {
@@ -1043,6 +1063,10 @@
             addChunk(chunks, live);
             live = "";
             notify();
+          }
+          if (caught()) {
+            ok();
+            return;
           }
           if (lastHeard && Date.now() - lastHeard > 2800 && displayLine()) {
             ok();
@@ -1192,6 +1216,8 @@
       listenOnce(pack.voice, maxMs, function (heard) {
         if (mine !== practiceGen) return;
         showBanner("Listening now", heard ? "Heard so far: " + heard : "Say the whole line. A pause between words is fine.");
+      }, function (sample) {
+        return !!(window.villageGrade && window.villageGrade(pack.id, words, sample, needRatio()).passed);
       }).then(function (result) {
           if (mine !== practiceGen) return;
           var graded = window.villageGrade(pack.id, words, result.texts, needRatio());
