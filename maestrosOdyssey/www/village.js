@@ -331,7 +331,7 @@
       paragraphs: ["They lift their net so you can see how small it is."],
       speaker: "A person on the rocks says",
       say: "mer_net",
-      learn: "tue-cove",
+      learn: "tue-net",
       mark: "shore",
       choices: [
         { say: "bye", next: "tue_shore" }
@@ -562,124 +562,13 @@
 
 
   var NOTES = {
-    "mon-walk": "She glanced toward the hills, then back at the neighbors beside her, when other towns came up.",
-    "mon-letter": "His cousin's letter came from another town. He kept walking in step with her while he told it.",
-    "tue-cove": "On the rocks they talked about what is farther out, and the small net stayed in their hands.",
-    "tue-fish": "He was already among them. Farther off, he said, people do not fish together.",
-    "wed-door": "His hand stayed open toward his own door while he spoke of a friend turned away somewhere else.",
-    "wed-pair": "They were going in side by side. She looked down the road, not at him, when she said other towns would refuse that."
-  };
-
-  var REPORTS = {
-    mon: {
-      both: {
-        right: "mon-sum",
-        options: [
-          { id: "mon-kinder", label: "Alderhart is simply kinder than those other towns, and kindness is the whole story." },
-          { id: "mon-letter-place", label: "The cousin's letter is the real news. The street was only where he happened to say it." },
-          { id: "mon-sum", label: "In Alderhart they keep sharing the street while news arrives that other towns keep people apart. The walk is the life that news is set against." }
-        ]
-      },
-      "mon-walk": {
-        right: "mon-walk-full",
-        options: [
-          { id: "mon-walk-chat", label: "She was only making talk about far-off places. It does not bear on life in Alderhart." },
-          { id: "mon-walk-hills", label: "The trouble is off toward the hills she looked at. This street stands aside from it." },
-          { id: "mon-walk-full", label: "She could look toward other towns and still be in the middle of a shared walk in Alderhart. The separation is elsewhere. The company is here." }
-        ]
-      },
-      "mon-letter": {
-        right: "mon-letter-full",
-        options: [
-          { id: "mon-letter-private", label: "A family letter is private news. Daily life in Alderhart is a separate matter." },
-          { id: "mon-letter-worry", label: "He is worried about his cousin. Alderhart is only the place he happened to say so." },
-          { id: "mon-letter-full", label: "He could speak of a town that keeps people apart without stepping out of the walk he was already sharing in Alderhart." }
-        ]
-      }
-    },
-    tue: {
-      both: {
-        right: "tue-sum",
-        options: [
-          { id: "tue-water", label: "The far water is the story. This cove is only a quiet contrast." },
-          { id: "tue-calm", label: "They fish together because the day is calm, not because the farther trouble matters." },
-          { id: "tue-sum", label: "On Alderhart's cove the shared work is what they are doing. What is worse, or more divided, is the water they are not standing in." }
-        ]
-      },
-      "tue-cove": {
-        right: "tue-cove-full",
-        options: [
-          { id: "tue-cove-far", label: "They were really talking about a different shore. The net in their hands was beside the point." },
-          { id: "tue-cove-tools", label: "It was a practical remark about nets and dirty water, with no bearing on who stands together." },
-          { id: "tue-cove-full", label: "They could describe a harder shore somewhere else without putting down the small net they were using here in Alderhart." }
-        ]
-      },
-      "tue-fish": {
-        right: "tue-fish-full",
-        options: [
-          { id: "tue-fish-them", label: "He was describing other people's habits. His own company on the rocks was incidental." },
-          { id: "tue-fish-news", label: "The news is that some shores do not share the work. Alderhart's cove was just the setting." },
-          { id: "tue-fish-full", label: "He named a place where people do not fish together, while he himself was already among them on Alderhart's cove." }
-        ]
-      }
-    },
-    wed: {
-      both: {
-        right: "wed-sum",
-        options: [
-          { id: "wed-rude", label: "The shopkeeper is generous, and the other towns are simply rude." },
-          { id: "wed-road", label: "What matters is the road she looked down. This doorway is incidental." },
-          { id: "wed-sum", label: "Alderhart's shop door stays open to people arriving together. The refusal they describe belongs on another town's threshold." }
-        ]
-      },
-      "wed-door": {
-        right: "wed-door-full",
-        options: [
-          { id: "wed-door-kind", label: "He is a kind shopkeeper. The friend he mentioned belongs to a different story." },
-          { id: "wed-door-shut", label: "The point is that somewhere a door is shut. His open hand was only a gesture." },
-          { id: "wed-door-full", label: "He could speak of a friend turned away somewhere else while his own hand stayed open toward Alderhart's door." }
-        ]
-      },
-      "wed-pair": {
-        right: "wed-pair-full",
-        options: [
-          { id: "wed-pair-them", label: "She was speaking about her own pair, not about how Alderhart keeps a door." },
-          { id: "wed-pair-road", label: "The road she looked down is the real subject. Going in together was just how they were standing." },
-          { id: "wed-pair-full", label: "She could say that other towns would refuse them, while the two of them were already crossing Alderhart's threshold together." }
-        ]
-      }
-    }
-  };
-
-  var ECHO = {
-    "mon-sum": "{Sub} answers from the reading you gave: in Alderhart, people keep sharing the street while news of separation comes from outside.",
-    "mon-kinder": "{Sub} answers the part you named: that Alderhart is simply kinder.",
-    "mon-letter-place": "{Sub} answers the part you named: the cousin's letter, as if the street were only where he said it.",
-    "mon-walk-full": "{Sub} answers from the reading you gave: other towns can be looked toward, and the shared walk in Alderhart still holds.",
-    "mon-walk-chat": "{Sub} answers the part you named: far-off talk, with no bearing on Alderhart.",
-    "mon-walk-hills": "{Sub} answers the part you named: trouble toward the hills, and this street aside from it.",
-    "mon-letter-full": "{Sub} answers from the reading you gave: he could name a divided town and stay inside the walk he was sharing.",
-    "mon-letter-private": "{Sub} answers the part you named: a private letter, separate from Alderhart's day.",
-    "mon-letter-worry": "{Sub} answers the part you named: a cousin's worry, spoken here only by chance.",
-    "tue-sum": "{Sub} answers from the reading you gave: the shared cove is the work, and the harder water is the water they are not standing in.",
-    "tue-water": "{Sub} answers the part you named: the far water, with this cove as a contrast.",
-    "tue-calm": "{Sub} answers the part you named: a calm day of fishing, and the farther trouble left aside.",
-    "tue-cove-full": "{Sub} answers from the reading you gave: they could describe a harder shore and keep the small net in their hands.",
-    "tue-cove-far": "{Sub} answers the part you named: a different shore, and the net beside the point.",
-    "tue-cove-tools": "{Sub} answers the part you named: nets and dirty water, as a practical remark.",
-    "tue-fish-full": "{Sub} answers from the reading you gave: he named a divided shore while already standing among the others.",
-    "tue-fish-them": "{Sub} answers the part you named: other people's habits, and his company left incidental.",
-    "tue-fish-news": "{Sub} answers the part you named: shores that do not share the work.",
-    "wed-sum": "{Sub} answers from the reading you gave: Alderhart's door stays open to people together, and the refusal belongs somewhere else.",
-    "wed-rude": "{Sub} answers the part you named: a kind shopkeeper, and rude towns elsewhere.",
-    "wed-road": "{Sub} answers the part you named: the road she looked down, and the doorway left incidental.",
-    "wed-door-full": "{Sub} answers from the reading you gave: a friend turned away elsewhere, and his hand still open toward this door.",
-    "wed-door-kind": "{Sub} answers the part you named: a kind shopkeeper.",
-    "wed-door-shut": "{Sub} answers the part you named: a shut door somewhere else.",
-    "wed-pair-full": "{Sub} answers from the reading you gave: other towns would refuse them, and they were already crossing this threshold together.",
-    "wed-pair-them": "{Sub} answers the part you named: the pair themselves, not the door.",
-    "wed-pair-road": "{Sub} answers the part you named: the road, and going in together left as how they stood.",
-    none: "You did not bring a reading back. {Sub} does not fill one in for you."
+    "mon-walk": "She stays with her neighbors on this street, and it is bad there.",
+    "mon-letter": "He stays with her on this street, and they are not here.",
+    "tue-cove": "They are at this water, and the water is bad there.",
+    "tue-net": "The net in their hands is small.",
+    "tue-fish": "He is fishing here with the others, and there they do not fish.",
+    "wed-door": "His door is open, and there the door is shut.",
+    "wed-pair": "They come in together, and there they do not."
   };
 
   var BACK = { mon: ["Back to the street.", "mon_street"], tue: ["Back to the shore.", "tue_shore"], wed: ["Back to the shop.", "wed_porch"] };
@@ -701,12 +590,38 @@
     if (state.notes[day].indexOf(id) === -1) state.notes[day].push(id);
   }
 
+  function heardSentence(day) {
+    return learned(day).map(function (id) {
+      return NOTES[id] || "";
+    }).filter(Boolean).join(" ");
+  }
+
   function reportPack(day) {
     var ids = learned(day);
-    var book = REPORTS[day];
-    if (!book || !ids.length) return null;
-    if (ids.length >= 2 && book.both) return book.both;
-    return book[ids[0]] || null;
+    var heard = heardSentence(day);
+    if (!ids.length || !heard) return null;
+    var onlyNet = ids.length === 1 && ids[0] === "tue-net";
+    var hasNet = ids.indexOf("tue-net") !== -1;
+    var full = onlyNet
+      ? heard + " That is the net in their hands, here."
+      : (hasNet
+        ? heard + " The small net is the one in their hands. The rest is about somewhere else, and the people speaking are here."
+        : heard + " The people who said it are here, together. What they named is somewhere else.");
+    var only = onlyNet
+      ? heard + " The net does not matter."
+      : heard + " That is the whole story. Where they were standing does not matter.";
+    var here = onlyNet
+      ? heard + " So the small net is somewhere else."
+      : heard + " So it is that way here, with the people who said it.";
+    return {
+      right: day + "-full",
+      heard: heard,
+      options: [
+        { id: day + "-only", label: only },
+        { id: day + "-here", label: here },
+        { id: day + "-full", label: full }
+      ]
+    };
   }
 
   function rightReport(day) {
@@ -718,7 +633,7 @@
     if (!learned(day).length) return ["You are back at the gate. You have no notes from today yet."];
     return [
       "{Sub} is at the gate. Your notes are beside you.",
-      "This is what you are learning about " + VILLAGE_NAME + " and the people who live here."
+      "These are the notes from what you noticed today."
     ];
   }
 
@@ -756,7 +671,21 @@
   function morningEcho(day) {
     var id = state.reports[day];
     if (!id) return "The morning is quiet at the gate.";
-    return ECHO[id] || ECHO.none;
+    if (id === "none") return "You did not bring a reading back. {Sub} does not fill one in for you.";
+    var heard = heardSentence(day);
+    if (!heard) return "{Sub} answers from what you brought back.";
+    var pack = reportPack(day);
+    if (pack && id === pack.right) {
+      var ids = learned(day);
+      if (ids.length === 1 && ids[0] === "tue-net") {
+        return "{Sub} answers from the reading you gave: " + heard + " That is the net in their hands, here.";
+      }
+      if (ids.indexOf("tue-net") !== -1) {
+        return "{Sub} answers from the reading you gave: " + heard + " The small net is here in their hands. The rest is about somewhere else.";
+      }
+      return "{Sub} answers from the reading you gave: " + heard + " They were here together. What they named is somewhere else.";
+    }
+    return "{Sub} answers the part you named: " + heard;
   }
 
   var dayEl = document.getElementById("day");
@@ -1573,8 +1502,7 @@
     notePlaceEl.textContent = VILLAGE_NAME;
     noteListEl.replaceChildren();
     var ids = learned(day);
-    var said = (state.said && state.said[day]) || [];
-    if (!ids.length && !said.length) {
+    if (!ids.length) {
       var empty = document.createElement("li");
       empty.textContent = "Nothing from today yet.";
       noteListEl.appendChild(empty);
@@ -1584,11 +1512,6 @@
       var item = document.createElement("li");
       item.textContent = NOTES[id] || "";
       noteListEl.appendChild(item);
-    });
-    said.forEach(function (text) {
-      var saidItem = document.createElement("li");
-      saidItem.textContent = text;
-      noteListEl.appendChild(saidItem);
     });
   }
 
