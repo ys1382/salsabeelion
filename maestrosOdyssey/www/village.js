@@ -3,15 +3,155 @@
   var SAVE_KEY = "mo-village-short-v2";
   var VILLAGE_NAME = "Alderhart";
 
+  var LOOKS = {
+    es: {
+      home: function () {
+        return state.gender === "boy"
+          ? "Both houses are limewashed, with clay tile roofs. His clothes are the plain daily ones men wear in this town."
+          : "Both houses are limewashed, with clay tile roofs. A rebozo covers her hair.";
+      },
+      homeAlt: "The elder talks with a young person between two limewashed houses.",
+      street: [
+        "The street is one street. Limewashed houses, clay tile roofs, and a small café with a cloth awning run the whole way, and people use them together.",
+        "Most of the people here are from this town. Women wear rebozos over their hair, and the men with them wear the town’s everyday clothes. They carry groceries and talk easily. A blue-green visitor walks with them, only passing through."
+      ],
+      streetAlt: "Townspeople in rebozos walk a limewashed street, with one blue-green visitor among them.",
+      shore: [
+        "The cove is quiet. Most of the people on the rocks are from this town, in work clothes, with rebozos on the women, and the nets in their hands are small. The water is clear."
+      ],
+      shoreAlt: "Local fishers stand on calm rocks with small nets.",
+      shop: [
+        "The café door is open. Limewashed walls and a cloth awning shade the step. The shopkeeper waves people in as they arrive together. Most of them are from this town, rebozos and everyday clothes passing the threshold. A visitor comes in with them. Nobody is turned away."
+      ],
+      shopAlt: "A shopkeeper waves townspeople in rebozos into an open café.",
+      station: [
+        "The platform is quiet. The little station matches the limewashed houses, and a short train waits on the track. This is the way toward the towns people have been telling you about.",
+        "A traveler with a small bag stands on the boards, already looking back toward the village."
+      ],
+      stationAlt: "A young person from the town stands on the platform, looking at a short train."
+    },
+    ar: {
+      home: function () {
+        return state.gender === "boy"
+          ? "Both houses are pale stone, with arched doors. His clothes are the plain daily ones men wear in this town."
+          : "Both houses are pale stone, with arched doors. A headscarf covers her hair and neck.";
+      },
+      homeAlt: "The elder talks with a young person between two stone houses.",
+      street: [
+        "The street is one street. Pale stone houses with arched doors, and a courtyard café, run the whole way, and people use them together.",
+        "Most of the people here are from this town. Women wear headscarves that cover the hair and neck, with long modest coats, and the men with them wear the town’s everyday clothes. They carry groceries and talk easily. A blue-green visitor walks with them, only passing through."
+      ],
+      streetAlt: "Townspeople in headscarves and long coats walk a stone street, with one blue-green visitor among them.",
+      shore: [
+        "The cove is quiet. Most of the people on the rocks are from this town, in work clothes, with headscarves on the women, and the nets in their hands are small. The water is clear."
+      ],
+      shoreAlt: "Local fishers in headscarves stand on calm rocks with small nets.",
+      shop: [
+        "The café door is open. Stone arches shade the step. The shopkeeper waves people in as they arrive together. Most of them are from this town, headscarves and long coats passing the threshold. A visitor comes in with them. Nobody is turned away."
+      ],
+      shopAlt: "A shopkeeper waves townspeople in headscarves into an open courtyard café.",
+      station: [
+        "The platform is quiet. The little station is pale stone, like the houses, and a short train waits on the track. This is the way toward the towns people have been telling you about.",
+        "A traveler with a small bag stands on the boards, already looking back toward the village."
+      ],
+      stationAlt: "A young person from the town stands on the platform, looking at a short train."
+    },
+    ga: {
+      home: function () {
+        return state.gender === "boy"
+          ? "Both houses are whitewashed, with stone walls. His clothes are the plain daily ones men wear in this town."
+          : "Both houses are whitewashed, with stone walls. A wool shawl covers her hair.";
+      },
+      homeAlt: "The elder talks with a young person between two whitewashed cottages.",
+      street: [
+        "The street is one street. Whitewashed cottages, stone walls, and a small tea shop run the whole way, and people use them together.",
+        "Most of the people here are from this town. Women wear wool shawls over their hair, and the men with them wear the town’s everyday clothes. They carry groceries and talk easily. A blue-green visitor walks with them, only passing through."
+      ],
+      streetAlt: "Townspeople in wool shawls walk a whitewashed lane, with one blue-green visitor among them.",
+      shore: [
+        "The cove is quiet. Most of the people on the rocks are from this town, in work clothes, with wool shawls on the women, and the nets in their hands are small. The water is clear."
+      ],
+      shoreAlt: "Local fishers in shawls stand on calm rocks with small nets.",
+      shop: [
+        "The tea shop door is open. Whitewashed walls shade the step. The shopkeeper waves people in as they arrive together. Most of them are from this town, wool shawls and everyday clothes passing the threshold. A visitor comes in with them. Nobody is turned away."
+      ],
+      shopAlt: "A shopkeeper waves townspeople in wool shawls into an open tea shop.",
+      station: [
+        "The platform is quiet. The little station is whitewashed, like the cottages, and a short train waits on the track. This is the way toward the towns people have been telling you about.",
+        "A traveler with a small bag stands on the boards, already looking back toward the village."
+      ],
+      stationAlt: "A young person from the town stands on the platform, looking at a short train."
+    },
+    ja: {
+      home: function () {
+        return state.gender === "boy"
+          ? "Both houses are wood, with dark tile roofs. His clothes are the plain daily ones men wear in this town."
+          : "Both houses are wood, with dark tile roofs. A cloth covers her hair.";
+      },
+      homeAlt: "The elder talks with a young person between two wooden houses.",
+      street: [
+        "The street is one street. Wooden houses, dark tile roofs, and a small café with a plain curtain run the whole way, and people use them together.",
+        "Most of the people here are from this town. Women wear a cloth over their hair, with modest everyday kimono, and the men with them wear plain work clothes. They carry groceries and talk easily. A blue-green visitor walks with them, only passing through."
+      ],
+      streetAlt: "Townspeople in modest kimono walk a wooden lane, with one blue-green visitor among them.",
+      shore: [
+        "The cove is quiet. Most of the people on the rocks are from this town, in work clothes, with a cloth over the women’s hair, and the nets in their hands are small. The water is clear."
+      ],
+      shoreAlt: "Local fishers stand on calm rocks with small nets.",
+      shop: [
+        "The café door is open. A plain curtain hangs in the wooden doorway. The shopkeeper waves people in as they arrive together. Most of them are from this town, modest kimono passing the threshold. A visitor comes in with them. Nobody is turned away."
+      ],
+      shopAlt: "A shopkeeper waves townspeople in modest kimono into an open café.",
+      station: [
+        "The platform is quiet. The little station is wood and tile, like the houses, and a short train waits on the track. This is the way toward the towns people have been telling you about.",
+        "A traveler with a small bag stands on the boards, already looking back toward the village."
+      ],
+      stationAlt: "A young person from the town stands on the platform, looking at a short train."
+    },
+    tr: {
+      home: function () {
+        return state.gender === "boy"
+          ? "Both houses are plaster, with red tile roofs. His clothes are the plain daily ones men wear in this town."
+          : "Both houses are plaster, with red tile roofs. A headscarf is tied over her hair.";
+      },
+      homeAlt: "The elder talks with a young person between two plaster houses.",
+      street: [
+        "The street is one street. Plaster houses, red tile roofs, and a tea house run the whole way, and people use them together.",
+        "Most of the people here are from this town. Women wear headscarves tied over the hair and neck, with long modest coats, and the men with them wear the town’s everyday clothes. They carry groceries and talk easily. A blue-green visitor walks with them, only passing through."
+      ],
+      streetAlt: "Townspeople in headscarves walk a plaster-house street, with one blue-green visitor among them.",
+      shore: [
+        "The cove is quiet. Most of the people on the rocks are from this town, in work clothes, with headscarves on the women, and the nets in their hands are small. The water is clear."
+      ],
+      shoreAlt: "Local fishers in headscarves stand on calm rocks with small nets.",
+      shop: [
+        "The tea house door is open. Plaster walls and red tile shade the step. The shopkeeper waves people in as they arrive together. Most of them are from this town, headscarves and long coats passing the threshold. A visitor comes in with them. Nobody is turned away."
+      ],
+      shopAlt: "A shopkeeper waves townspeople in headscarves into an open tea house.",
+      station: [
+        "The platform is quiet. The little station is plaster and red tile, like the houses, and a short train waits on the track. This is the way toward the towns people have been telling you about.",
+        "A traveler with a small bag stands on the boards, already looking back toward the village."
+      ],
+      stationAlt: "A young person from the town stands on the platform, looking at a short train."
+    }
+  };
+
+  function look() {
+    return LOOKS[langPack().id] || LOOKS.es;
+  }
+
   var scenes = {
     mon_home: {
       day: "Monday",
       image: "village-art/elder.jpg?v=20261006b",
-      alt: "The elder talks with a young person between two cottages.",
-      paragraphs: [
-        "You are already home in Alderhart. The cottage next to yours is the elder’s, and the gate between them has been there longer than this morning.",
-        "{Sub} leans on {pos} stick."
-      ],
+      alt: function () { return look().homeAlt; },
+      paragraphs: function () {
+        return [
+          "You are already home in Alderhart. The house next to yours is the elder’s, and the gate between them has been there longer than this morning.",
+          look().home(),
+          "{Sub} leans on {pos} stick."
+        ];
+      },
       speaker: "The elder says",
       say: "mon_home",
       choices: [{ label: "Go to the street.", next: "mon_street" }]
@@ -19,11 +159,8 @@
     mon_street: {
       day: "Monday",
       image: "village-art/street-together.jpg?v=20261006n",
-      alt: "Four neighbors walk one village street together, talking and carrying groceries.",
-      paragraphs: [
-        "The street is one street. Lamps, benches, and flower boxes run the whole way, and people use them together.",
-        "A woman in a headscarf and a pale neighbor carry groceries between them, talking easily. A blue-green neighbor walks with them, and a man in a long coat laughs at something just said."
-      ],
+      alt: function () { return look().streetAlt; },
+      paragraphs: function () { return look().street; },
       choices: [
         { say: "ch_hi_scarf", next: "scarf_hi" },
         { say: "ch_hi_friend", next: "friend_hi" },
@@ -33,9 +170,9 @@
     scarf_hi: {
       day: "Monday",
       image: "village-art/street-together.jpg?v=20261006n",
-      alt: "The woman in the headscarf smiles, groceries in her arms.",
+      alt: "A neighbor in a headscarf smiles, groceries in her arms.",
       paragraphs: ["She shifts the bag and makes room for you on the lane."],
-      speaker: "The woman in the headscarf says",
+      speaker: "A neighbor in a headscarf says",
       say: "scarf_well",
       choices: [
         { say: "ask_towns", next: "scarf_there" },
@@ -45,9 +182,9 @@
     scarf_there: {
       day: "Monday",
       image: "village-art/street-together.jpg?v=20261006n",
-      alt: "The woman in the headscarf keeps walking with her neighbors.",
+      alt: "A neighbor in a headscarf keeps walking with her neighbors.",
       paragraphs: ["She glances toward the hills, then back at the street you share."],
-      speaker: "The woman in the headscarf says",
+      speaker: "A neighbor in a headscarf says",
       say: "scarf_apart",
       learn: "mon-walk",
       mark: "street",
@@ -58,9 +195,9 @@
     scarf_bad: {
       day: "Monday",
       image: "village-art/street-together.jpg?v=20261006n",
-      alt: "The woman in the headscarf answers gently.",
+      alt: "A neighbor in a headscarf answers gently.",
       paragraphs: ["She does not lower her voice. This street is not the place she means."],
-      speaker: "The woman in the headscarf says",
+      speaker: "A neighbor in a headscarf says",
       say: "scarf_little",
       mark: "street",
       choices: [
@@ -71,9 +208,9 @@
     scarf_family: {
       day: "Monday",
       image: "village-art/street-together.jpg?v=20261006n",
-      alt: "The woman in the headscarf speaks about family far away.",
+      alt: "A neighbor in a headscarf speaks about family far away.",
       paragraphs: ["She nods toward the road out of town."],
-      speaker: "The woman in the headscarf says",
+      speaker: "A neighbor in a headscarf says",
       say: "scarf_family",
       mark: "street",
       choices: [
@@ -153,10 +290,8 @@
     tue_shore: {
       day: "Tuesday",
       image: "village-art/shore-calm.jpg?v=20261006n",
-      alt: "Merfolk and fishers stand together on calm rocks with small nets.",
-      paragraphs: [
-        "The cove is quiet. People with blue-green faces stand on the rocks in work coats beside the fishers. The nets in their hands are small, the kind for water this size. The water is clear."
-      ],
+      alt: function () { return look().shoreAlt; },
+      paragraphs: function () { return look().shore; },
       choices: [
         { say: "ch_hi_mer", next: "mer_hi" },
         { say: "ch_hi_fish", next: "fish_hi" },
@@ -273,10 +408,8 @@
     wed_porch: {
       day: "Wednesday",
       image: "village-art/porch-open.jpg?v=20261006n",
-      alt: "A shopkeeper waves neighbors into an open shop.",
-      paragraphs: [
-        "The shop door is open. The shopkeeper waves people in as they arrive together. Baskets, coats, and headscarves pass the threshold in no hurry. Nobody is turned away."
-      ],
+      alt: function () { return look().shopAlt; },
+      paragraphs: function () { return look().shop; },
       choices: [
         { say: "ch_hi_shop", next: "shop_hi" },
         { say: "ch_hi_pair", next: "pair_hi" },
@@ -356,7 +489,7 @@
       image: "village-art/elder.jpg?v=20261006b",
       alt: "The elder stays by the cottages while the lane leads away.",
       paragraphs: function () {
-        return [morningEcho("wed"), "{Sub} stays by the cottages. You walk the last of the lane alone."];
+        return [morningEcho("wed"), "{Sub} stays by the houses. You walk the last of the lane alone."];
       },
       speaker: "The elder says",
       say: "thu_home",
@@ -365,11 +498,8 @@
     thu_station: {
       day: "Thursday",
       image: "village-art/station.jpg?v=20261006b",
-      alt: "A young person stands on a wooden platform, looking at a short train.",
-      paragraphs: [
-        "The platform is quiet. A short train waits on the track. This is the way toward the towns people have been telling you about.",
-        "A traveler with a small bag stands on the boards, already looking back toward the village."
-      ],
+      alt: function () { return look().stationAlt; },
+      paragraphs: function () { return look().station; },
       choices: [
         { say: "ch_from", next: "trav_from" },
         { say: "ch_how", next: "trav_how" },
@@ -987,9 +1117,13 @@
 
   function pictureFor(scene) {
     var src = String(scene.image || "").split("?")[0];
-    if (src.indexOf("elder.jpg") !== -1) src = "village-art/elder-" + state.gender + ".jpg";
-    else if (src.indexOf("station.jpg") !== -1 && state.gender === "girl") src = "village-art/station-girl.jpg";
-    return src + "?v=20261006c";
+    var shot = "street";
+    var who = state.gender === "boy" ? "boy" : "girl";
+    if (src.indexOf("elder") !== -1) shot = "elder-" + who;
+    else if (src.indexOf("station") !== -1) shot = "station-" + who;
+    else if (src.indexOf("shore") !== -1) shot = "shore";
+    else if (src.indexOf("porch") !== -1) shot = "shop";
+    return "village-art/" + (langPack().id || "es") + "/" + shot + ".jpg?v=20261007a";
   }
 
   function buttons(list, onPick) {
@@ -1078,7 +1212,7 @@
     document.title = scene.day + " · " + VILLAGE_NAME + " · " + langPack().name + " — Maestro's Odyssey";
     renderNotes(scene.notesDay || scene.report || "");
     pictureEl.src = pictureFor(scene);
-    pictureEl.alt = fill(scene.alt);
+    pictureEl.alt = fill(typeof scene.alt === "function" ? scene.alt() : scene.alt);
     proseEl.replaceChildren();
     var paras = typeof scene.paragraphs === "function" ? scene.paragraphs() : scene.paragraphs;
     paras.forEach(function (text) {
