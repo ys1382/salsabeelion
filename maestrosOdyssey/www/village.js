@@ -775,9 +775,27 @@
     flags: {},
     note: "",
     notes: blankNotes(),
-    reports: {}
+    reports: {},
+    said: { mon: [], tue: [], wed: [], thu: [] }
   };
   var voices = [];
+  var speakGen = 0;
+  var practiceGen = 0;
+  var activeRec = null;
+  var WORD_GAP_MS = 900;
+  var gradeEl = document.createElement("p");
+  gradeEl.className = "grade";
+  gradeEl.hidden = true;
+  if (choicesEl && choicesEl.parentNode) choicesEl.parentNode.appendChild(gradeEl);
+  var bannerEl = document.createElement("div");
+  bannerEl.className = "listen-banner";
+  bannerEl.hidden = true;
+  var bannerTitle = document.createElement("strong");
+  var bannerHeard = document.createElement("p");
+  bannerEl.appendChild(bannerTitle);
+  bannerEl.appendChild(bannerHeard);
+  var pageMain = document.querySelector("main");
+  if (pageMain) pageMain.appendChild(bannerEl);
 
   if (window.speechSynthesis) {
     voices = window.speechSynthesis.getVoices();
@@ -816,6 +834,7 @@
         if (!restart && data.note) state.note = data.note;
         if (!restart && data.notes && typeof data.notes === "object") state.notes = data.notes;
         if (!restart && data.reports && typeof data.reports === "object") state.reports = data.reports;
+        if (!restart && data.said && typeof data.said === "object") state.said = data.said;
         if (typeof data.langIndex === "number") state.langIndex = data.langIndex;
       }
     } catch (err) {}
@@ -827,6 +846,7 @@
       state.note = "";
       state.notes = blankNotes();
       state.reports = {};
+      state.said = blankSaid();
     }
     if (state.gender !== "boy" && state.gender !== "girl") state.gender = readCookieGender();
   }
@@ -850,7 +870,8 @@
         flags: state.flags || {},
         note: state.note || "",
         notes: state.notes || blankNotes(),
-        reports: state.reports || {}
+        reports: state.reports || {},
+        said: state.said || blankSaid()
       };
       localStorage.setItem(WHO_KEY, JSON.stringify(all));
     } catch (err) {}
@@ -867,7 +888,8 @@
           flags: state.flags || {},
           note: state.note || "",
           notes: state.notes || blankNotes(),
-          reports: state.reports || {}
+          reports: state.reports || {},
+          said: state.said || blankSaid()
         })
       );
       writeCookieGender();
@@ -887,18 +909,377 @@
     return table[id] || [];
   }
 
-  function speak(text, voiceLang) {
-    if (!window.speechSynthesis || !text) return;
-    window.speechSynthesis.cancel();
-    var utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = voiceLang;
-    utterance.rate = 0.85;
+  function stopVoice() {
+    speakGen += 1;
+    practiceGen += 1;
+    if (window.speechSynthesis) window.speechSynthesis.cancel();
+    if (activeRec) {
+      try { activeRec.abort(); } catch (err) {}
+      activeRec = null;
+    }
+  }
+
+  function pickVoice(voiceLang) {
     var want = String(voiceLang || "").slice(0, 2).toLowerCase();
-    var match = voices.filter(function (voice) {
+    return voices.filter(function (voice) {
       return String(voice.lang || "").toLowerCase().indexOf(want) === 0;
-    })[0];
-    if (match) utterance.voice = match;
-    window.speechSynthesis.speak(utterance);
+    })[0] || null;
+  }
+
+  function speak(text, voiceLang) {
+    speakPaced(text ? [text] : [], voiceLang);
+  }
+
+  function speakPaced(words, voiceLang, done, nodes) {
+    speakGen += 1;
+    var gen = speakGen;
+    if (activeRec) {
+      try { activeRec.abort(); } catch (err) {}
+      activeRec = null;
+    }
+    function finish() {
+      if (nodes) {
+        nodes.forEach(function (node) {
+          if (node && node.el) node.el.classList.remove("now");
+        });
+      }
+      if (done) done(gen);
+    }
+    if (!window.speechSynthesis || !words || !words.length) {
+      finish();
+      return;
+    }
+    window.speechSynthesis.cancel();
+    var i = 0;
+    function step() {
+      if (gen !== speakGen) return;
+      if (nodes) {
+        nodes.forEach(function (node) {
+          if (node && node.el) node.el.classList.remove("now");
+        });
+      }
+      if (i >= words.length) {
+        finish();
+        return;
+      }
+      if (nodes && nodes[i] && nodes[i].el) nodes[i].el.classList.add("now");
+      var utterance = new SpeechSynthesisUtterance(words[i]);
+      utterance.lang = voiceLang;
+      utterance.rate = 0.8;
+      var match = pickVoice(voiceLang);
+      if (match) utterance.voice = match;
+      var moved = false;
+      function advance() {
+        if (moved || gen !== speakGen) return;
+        moved = true;
+        i += 1;
+        if (i >= words.length) {
+          finish();
+          return;
+        }
+        setTimeout(step, WORD_GAP_MS);
+      }
+      var wait = setTimeout(advance, 2600);
+      utterance.onend = function () {
+        clearTimeout(wait);
+        advance();
+      };
+      utterance.onerror = function () {
+        clearTimeout(wait);
+        advance();
+      };
+      if (window.speechSynthesis.paused) window.speechSynthesis.resume();
+      window.speechSynthesis.speak(utterance);
+    }
+    setTimeout(step, 60);
+  }
+
+  function armMic() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      return Promise.reject(new Error("none"));
+    }
+    return navigator.mediaDevices.getUserMedia({ audio: true }).then(function (stream) {
+      stream.getTracks().forEach(function (track) { track.stop(); });
+    });
+  }
+
+  function cleanHeard(text) {
+    return String(text || "").replace(/\s+/g, " ").trim();
+  }
+
+  function addChunk(chunks, said) {
+    said = cleanHeard(said);
+    if (!said) return;
+    var have = cleanHeard(chunks.join(" "));
+    if (!have) {
+      chunks.push(said);
+      return;
+    }
+    if (said === have || have.slice(-said.length) === said) return;
+    if (said.indexOf(have) === 0) {
+      chunks.splice(0, chunks.length, said);
+      return;
+    }
+    chunks.push(said);
+  }
+
+  function listenOnce(voiceLang, maxMs, onUpdate) {
+    return new Promise(function (resolve, reject) {
+      var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SR) {
+        reject(new Error("none"));
+        return;
+      }
+      var texts = [];
+      var chunks = [];
+      var live = "";
+      var settled = false;
+      var lastHeard = 0;
+      var started = Date.now();
+      var limit = maxMs || 12000;
+      var quietTimer = null;
+      var rec = null;
+      function displayLine() {
+        var base = cleanHeard(chunks.join(" "));
+        var now = cleanHeard(live);
+        if (!now) return base;
+        if (!base || now.indexOf(base) === 0) return now;
+        return cleanHeard(base + " " + now);
+      }
+      function notify() {
+        if (onUpdate && !settled) onUpdate(displayLine());
+      }
+      function ok() {
+        if (settled) return;
+        settled = true;
+        clearTimeout(quietTimer);
+        if (live) addChunk(chunks, live);
+        live = "";
+        var heard = displayLine();
+        if (heard) texts.push(heard);
+        if (activeRec === rec) activeRec = null;
+        try { if (rec) rec.abort(); } catch (err) {}
+        resolve({ texts: texts, heard: heard });
+      }
+      function bad(code) {
+        if (settled) return;
+        settled = true;
+        clearTimeout(quietTimer);
+        if (activeRec === rec) activeRec = null;
+        try { if (rec) rec.abort(); } catch (err) {}
+        reject(new Error(code));
+      }
+      function scheduleQuiet() {
+        clearTimeout(quietTimer);
+        if (!displayLine()) return;
+        quietTimer = setTimeout(function () {
+          if (!settled) ok();
+        }, 2800);
+      }
+      function arm() {
+        if (settled) return;
+        if (Date.now() - started > limit) {
+          if (displayLine()) ok();
+          else bad("quiet");
+          return;
+        }
+        rec = new SR();
+        activeRec = rec;
+        rec.lang = voiceLang;
+        rec.interimResults = true;
+        rec.continuous = false;
+        rec.maxAlternatives = 5;
+        rec.onresult = function (event) {
+          lastHeard = Date.now();
+          var row = event.results[event.results.length - 1];
+          var said = row && row[0] ? row[0].transcript : "";
+          var a;
+          if (row) {
+            for (a = 0; a < row.length; a++) texts.push(row[a].transcript);
+          }
+          if (row && row.isFinal) {
+            live = "";
+            addChunk(chunks, said);
+          } else {
+            live = said;
+          }
+          notify();
+          scheduleQuiet();
+        };
+        rec.onerror = function (event) {
+          var code = (event && event.error) || "error";
+          if (code === "aborted" || code === "no-speech") return;
+          if (code === "not-allowed" || code === "service-not-allowed") bad("denied");
+          else if (code !== "network") bad(code);
+        };
+        rec.onend = function () {
+          if (settled) return;
+          if (live) {
+            addChunk(chunks, live);
+            live = "";
+            notify();
+          }
+          if (lastHeard && Date.now() - lastHeard > 2800 && displayLine()) {
+            ok();
+            return;
+          }
+          if (Date.now() - started > limit) {
+            if (displayLine()) ok();
+            else bad("quiet");
+            return;
+          }
+          setTimeout(arm, 250);
+        };
+        try { rec.start(); }
+        catch (err) {
+          setTimeout(function () {
+            if (!settled) arm();
+          }, 400);
+        }
+      }
+      arm();
+    });
+  }
+
+  function needRatio() {
+    var day = scenes[state.scene] && scenes[state.scene].day;
+    if (day === "Thursday") return 1;
+    if (day === "Wednesday") return 0.8;
+    if (day === "Tuesday") return 0.66;
+    return 0.6;
+  }
+
+  function dayKeyFromScene() {
+    var day = scenes[state.scene] && scenes[state.scene].day;
+    if (day === "Tuesday") return "tue";
+    if (day === "Wednesday") return "wed";
+    if (day === "Thursday") return "thu";
+    return "mon";
+  }
+
+  function blankSaid() {
+    return { mon: [], tue: [], wed: [], thu: [] };
+  }
+
+  function rememberSaid(english) {
+    if (!english) return;
+    var key = dayKeyFromScene();
+    if (!state.said) state.said = blankSaid();
+    if (!state.said[key]) state.said[key] = [];
+    if (state.said[key].indexOf(english) === -1) state.said[key].push(english);
+    writeSave();
+  }
+
+  function setSayLabel(button, text) {
+    var label = button.querySelector(".say-this");
+    if (label) label.textContent = text;
+  }
+
+  function hideBanner() {
+    bannerEl.hidden = true;
+    bannerTitle.textContent = "";
+    bannerHeard.textContent = "";
+  }
+
+  function showBanner(title, detail) {
+    bannerEl.hidden = false;
+    bannerTitle.textContent = title;
+    bannerHeard.textContent = detail || "";
+  }
+
+  function clearGrade() {
+    gradeEl.hidden = true;
+    gradeEl.className = "grade";
+    gradeEl.textContent = "";
+    hideBanner();
+  }
+
+  function showGrade(kind, text) {
+    hideBanner();
+    gradeEl.hidden = false;
+    gradeEl.className = "grade " + kind;
+    gradeEl.textContent = text;
+  }
+
+  function gradeSentence(graded, heard, passed) {
+    var heardBit = heard ? " I heard: " + heard + "." : "";
+    if (!heard) return "I didn't catch that. Try again.";
+    if (graded.need === 1) {
+      return (passed ? "That word landed." : "That word didn't land.") + heardBit;
+    }
+    if (passed && graded.got === graded.need) {
+      return "All " + graded.need + " words landed." + heardBit;
+    }
+    return graded.got + " of " + graded.need + " words landed." + heardBit;
+  }
+
+  function markHits(nodes, hits) {
+    nodes.forEach(function (node, index) {
+      node.el.classList.remove("now", "hit", "miss");
+      if (!hits) return;
+      node.el.classList.add(hits[index] ? "hit" : "miss");
+    });
+  }
+
+  function practiceChoice(button, choice, onPick) {
+    var line = button.querySelector(".speech");
+    var nodes = (line && line._sayWords) || [];
+    var words = nodes.map(function (node) { return node.text; });
+    var sense = button.querySelector(".sense");
+    var english = sense ? sense.textContent : "";
+    var pack = langPack();
+    var mine = ++practiceGen;
+    button._busy = true;
+    clearGrade();
+    speakGen += 1;
+    if (window.speechSynthesis) window.speechSynthesis.cancel();
+    setSayLabel(button, "Your turn");
+    showBanner("Listening now", "Say the whole line. A pause between words is fine.");
+    armMic().then(function () {
+      if (mine !== practiceGen) return;
+      var maxMs = Math.min(18000, 5000 + words.length * 3200);
+      listenOnce(pack.voice, maxMs, function (heard) {
+        if (mine !== practiceGen) return;
+        showBanner("Listening now", heard ? "Heard so far: " + heard : "Say the whole line. A pause between words is fine.");
+      }).then(function (result) {
+          if (mine !== practiceGen) return;
+          var graded = window.villageGrade(pack.id, words, result.texts, needRatio());
+          markHits(nodes, graded.hits);
+          showGrade(graded.passed ? "pass" : "miss", gradeSentence(graded, result.heard, graded.passed));
+          if (graded.passed) {
+            setSayLabel(button, "That landed");
+            rememberSaid(english);
+            setTimeout(function () {
+              if (mine !== practiceGen) return;
+              button._busy = false;
+              onPick(choice);
+            }, 1600);
+          } else {
+            button._busy = false;
+            setSayLabel(button, "Try again");
+          }
+      }).catch(function (err) {
+        if (mine !== practiceGen) return;
+        button._busy = false;
+        var code = err && err.message;
+        if (code === "none" || code === "language-not-supported") {
+          setSayLabel(button, "Go on");
+          showGrade("miss", "This browser can't check the mic. Tap again to go on.");
+          button._skipMic = true;
+        } else if (code === "denied") {
+          setSayLabel(button, "Allow the mic");
+          showGrade("miss", "Allow the microphone, then try again.");
+        } else {
+          setSayLabel(button, "Try again");
+          showGrade("miss", "I didn't catch that. Try again.");
+        }
+      });
+    }).catch(function () {
+      if (mine !== practiceGen) return;
+      button._busy = false;
+      setSayLabel(button, "Allow the mic");
+      showGrade("miss", "Allow the microphone, then try again.");
+    });
   }
 
   function normKey(lang, word) {
@@ -1018,6 +1399,7 @@
     var pack = langPack();
     var spoken = [];
     var english = [];
+    var sayWords = [];
     var line = document.createElement("span");
     line.className = "speech";
     line.dir = pack.id === "ar" ? "rtl" : "ltr";
@@ -1076,11 +1458,13 @@
           markWord(true);
           speak(bit.text, pack.voice);
         });
+        sayWords.push({ text: bit.text, el: word });
         utter.appendChild(word);
       });
       spoken.push(tok.w);
       if (tok.en) english.push(tok.en);
     });
+    line._sayWords = sayWords;
     line.appendChild(utter);
     var hear = document.createElement("span");
     hear.className = "hear";
@@ -1090,7 +1474,7 @@
     function playLine(event) {
       event.preventDefault();
       event.stopPropagation();
-      speak(spoken.join(" "), pack.voice);
+      speakPaced(sayWords.map(function (node) { return node.text; }), pack.voice, null, sayWords);
     }
     hear.addEventListener("click", playLine);
     hear.addEventListener("keydown", function (event) {
@@ -1140,8 +1524,18 @@
       } else {
         button.textContent = choice.label;
       }
-      button.addEventListener("click", function () {
-        onPick(choice);
+      button.addEventListener("click", function (event) {
+        if (event.target.closest && event.target.closest(".hear, .word")) return;
+        if (!choice.say) {
+          onPick(choice);
+          return;
+        }
+        if (button._skipMic) {
+          onPick(choice);
+          return;
+        }
+        if (button._busy) return;
+        practiceChoice(button, choice, onPick);
       });
       choicesEl.appendChild(button);
     });
@@ -1157,7 +1551,8 @@
     notePlaceEl.textContent = VILLAGE_NAME;
     noteListEl.replaceChildren();
     var ids = learned(day);
-    if (!ids.length) {
+    var said = (state.said && state.said[day]) || [];
+    if (!ids.length && !said.length) {
       var empty = document.createElement("li");
       empty.textContent = "Nothing from today yet.";
       noteListEl.appendChild(empty);
@@ -1167,6 +1562,11 @@
       var item = document.createElement("li");
       item.textContent = NOTES[id] || "";
       noteListEl.appendChild(item);
+    });
+    said.forEach(function (text) {
+      var saidItem = document.createElement("li");
+      saidItem.textContent = text;
+      noteListEl.appendChild(saidItem);
     });
   }
 
@@ -1196,6 +1596,8 @@
   }
 
   function show(id) {
+    stopVoice();
+    clearGrade();
     if (!state.gender) {
       state.scene = scenes[id] ? id : "mon_home";
       showPick();
@@ -1242,6 +1644,7 @@
         state.note = "";
         state.notes = blankNotes();
         state.reports = {};
+        state.said = blankSaid();
       }
       if (choice.note) state.note = choice.note;
       if (choice.clearReport) delete state.reports[choice.clearReport];
@@ -1263,6 +1666,7 @@
         if (row.note) state.note = row.note;
         if (row.notes && typeof row.notes === "object") state.notes = row.notes;
         if (row.reports && typeof row.reports === "object") state.reports = row.reports;
+        if (row.said && typeof row.said === "object") state.said = row.said;
       }
       return;
     }

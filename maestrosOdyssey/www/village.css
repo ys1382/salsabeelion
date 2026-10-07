@@ -32,6 +32,36 @@ main {
   overflow: hidden;
 }
 
+.listen-banner {
+  position: absolute;
+  z-index: 5;
+  top: 2.7rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(36rem, calc(100% - 1.5rem));
+  padding: 0.9rem 1rem 0.75rem;
+  border: 2px solid #f4efe4;
+  border-radius: 0.45rem;
+  background: rgba(22, 48, 34, 0.95);
+  color: #f7f3ea;
+  text-align: center;
+  font-family: "Segoe UI", system-ui, sans-serif;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.listen-banner strong {
+  display: block;
+  font-size: 1.55rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.listen-banner p {
+  margin: 0.4rem 0 0;
+  font-size: 1.12rem;
+  line-height: 1.35;
+}
+
 .day {
   position: absolute;
   z-index: 2;
@@ -285,7 +315,63 @@ main {
 }
 
 .choices .sense {
+  display: block;
   border-top-color: rgba(247, 243, 234, 0.45);
+}
+
+.word.now .face {
+  background: rgba(255, 220, 140, 0.55);
+}
+
+.word.hit .face {
+  box-shadow: inset 0 -2px 0 #2f6b45;
+}
+
+.word.miss .face {
+  box-shadow: inset 0 -2px 0 #8a4030;
+}
+
+.choices .word.hit .face,
+.choices .word.miss .face,
+.choices .word.now .face {
+  background: transparent;
+}
+
+.choices .word.now .face {
+  text-decoration: underline;
+}
+
+.choices .word.hit .face {
+  background: #e7f6df;
+  color: #1d3b24;
+  box-shadow: none;
+}
+
+.choices .word.miss .face {
+  background: #f8d7ce;
+  color: #6a2a1e;
+  box-shadow: none;
+}
+
+.grade {
+  margin: 0.75rem 0 0;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid #c4b49a;
+  background: #fff8e8;
+  color: #3d3428;
+  font-family: "Segoe UI", system-ui, sans-serif;
+  font-size: 1rem;
+  line-height: 1.4;
+}
+
+.grade.pass {
+  background: #e7f6df;
+  border-color: #7d9a72;
+}
+
+.grade.miss {
+  background: #fde8e2;
+  border-color: #c4897c;
 }
 
 .choices .hear {
