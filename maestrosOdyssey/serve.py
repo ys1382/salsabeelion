@@ -246,11 +246,11 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             path = self.path.split("?", 1)[0]
             if not path.startswith("/api"):
                 if path in ("/", "/index.html") or path.endswith(
-                    (".html", ".js", ".wasm", ".pck")
+                    (".html", ".js", ".css", ".jpg", ".jpeg", ".wasm", ".pck")
                 ):
                     # Godot re-exports reuse the same filenames; a week-long
                     # cache left the café stuck on an old boot splash.
-                    self.send_header("Cache-Control", "no-cache")
+                    self.send_header("Cache-Control", "no-store, no-cache, must-revalidate")
                 else:
                     self.send_header("Cache-Control", "public, max-age=604800")
         super().end_headers()

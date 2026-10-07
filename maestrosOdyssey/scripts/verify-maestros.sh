@@ -6,9 +6,13 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 WWW="$ROOT/maestrosOdyssey/www"
 
-if grep -q 'new Engine' "$WWW/index.html" 2>/dev/null && ls "$WWW"/*.wasm >/dev/null 2>&1; then
+GODOT_HTML="$WWW/index.html"
+if ! grep -q 'new Engine' "$GODOT_HTML" 2>/dev/null && grep -q 'new Engine' "$WWW/cafe.html" 2>/dev/null; then
+  GODOT_HTML="$WWW/cafe.html"
+fi
+if grep -q 'new Engine' "$GODOT_HTML" 2>/dev/null && ls "$WWW"/*.wasm >/dev/null 2>&1; then
   echo "Maestro's verify: Godot web build..."
-  if ! grep -q 'Engine' "$WWW/index.html"; then
+  if ! grep -q 'Engine' "$GODOT_HTML"; then
     echo "Maestro's verify: index.html does not look like a Godot export" >&2
     exit 1
   fi

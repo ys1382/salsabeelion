@@ -328,7 +328,7 @@ Demo ending = arrive at the train station (#24). **Pegasus, griffin, and other v
 ### Elder as ambassador — why you are here (owner — pinned 2026-09-22, premise 2026-10-06)
 
 - [ ] Humans and sentient fantasy peoples share ordinary life in peace, with tension left over from old wars. The peace is real, and people still have to keep it. You are in this village because you already live here, next to the elder. The world was already going on around you. She is the human who keeps good terms with the other peoples in this county. She cannot travel the way she used to, so she is training you to take up that work. That work is the next generation of the same job: keeping terms where old harm still has a shadow. Human stories still glorify violence against dragons. Relations with merfolk are tight. Prejudice against vampires can still land on bystanders.
-- [x] **Short village page (2026-10-06)** — text and pictures at `www/village.html`. A few days beside the elder: the split street, the shore, the shop porch, then arrive at the train station and stop. No picking things up. Dragons and the café are not in this page. The old build is still the front door. The next part continues from the platform.
+- [x] **Short village page (2026-10-06)** — text and pictures. A few days beside the elder: the split street, the shore, the shop porch, then arrive at the train station and stop. No picking things up. Dragons and the café are not in this page. This is the front door (`www/index.html`, also `www/village.html`). The old build is at `www/cafe.html`. The next part continues from the platform.
 
 ### After demo — non-humanoid animation (owner — pinned 2026-09-22, corrected same day)
 
