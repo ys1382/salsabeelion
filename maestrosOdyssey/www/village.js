@@ -771,39 +771,187 @@
     window.speechSynthesis.speak(utterance);
   }
 
+  function normKey(lang, word) {
+    var s = String(word || "");
+    if (lang === "tr") s = s.replace(/\u0130/g, "i").replace(/\u0049/g, "\u0131");
+    if (lang === "ar" || lang === "ja") return s;
+    return s.toLowerCase();
+  }
+
+  function glossFor(lang, word, next) {
+    var key = normKey(lang, word);
+    var nextKey = next ? normKey(lang, next) : "";
+    var table = (window.VILLAGE_GLOSS && window.VILLAGE_GLOSS[lang]) || {};
+    if (lang === "ga" && key === "an") {
+      if (nextKey === "olc" || nextKey === "bhfuil") return "is";
+      if (nextKey === "bhfanfaidh") return "will";
+      if (nextKey === "mbíonn" || nextKey === "dtagann") return "do";
+      return "the";
+    }
+    if (lang === "ga" && key === "ar") {
+      if (nextKey === "chuala") return "did";
+      if (nextKey === "ball") return "in";
+      return "on";
+    }
+    if (lang === "ga" && key === "a") {
+      if (nextKey === "fheiceáil") return "to";
+      return "that";
+    }
+    if (lang === "ga" && key === "go") {
+      if (nextKey === "maith") return "so";
+      if (nextKey === "dtí") return "to";
+      return "that";
+    }
+    if (lang === "ga" && key === "do") {
+      if (nextKey === "mhuintir" || nextKey === "chol") return "your";
+      return "to";
+    }
+    if (lang === "ja" && key === "の") {
+      if (!next) return "right";
+      return "of";
+    }
+    if (lang === "ja" && key === "に") {
+      if (next === "いる" || next === "住んでる" || next === "住む") return "in";
+      if (next === "ある") return "at";
+      return "to";
+    }
+    return table[key] || "";
+  }
+
+  function isWordChar(ch) {
+    if (ch === "'" || ch === "’" || ch === "-") return true;
+    return /[\p{L}\p{M}\p{N}]/u.test(ch);
+  }
+
+  function peelToken(token, out) {
+    var i = 0;
+    while (i < token.length) {
+      if (!isWordChar(token.charAt(i))) {
+        var j = i + 1;
+        while (j < token.length && !isWordChar(token.charAt(j))) j += 1;
+        out.push({ kind: "plain", text: token.slice(i, j) });
+        i = j;
+        continue;
+      }
+      var k = i + 1;
+      while (k < token.length && isWordChar(token.charAt(k))) k += 1;
+      out.push({ kind: "word", text: token.slice(i, k) });
+      i = k;
+    }
+  }
+
+  function segmentJa(text) {
+    var table = (window.VILLAGE_GLOSS && window.VILLAGE_GLOSS.ja) || {};
+    var keys = Object.keys(table).sort(function (a, b) { return b.length - a.length; });
+    var punct = "、。？！「」… ";
+    var out = [];
+    var i = 0;
+    while (i < text.length) {
+      if (punct.indexOf(text.charAt(i)) !== -1) {
+        var j = i + 1;
+        while (j < text.length && punct.indexOf(text.charAt(j)) !== -1) j += 1;
+        out.push({ kind: "plain", text: text.slice(i, j) });
+        i = j;
+        continue;
+      }
+      var found = "";
+      var n;
+      for (n = 0; n < keys.length; n++) {
+        if (text.slice(i, i + keys[n].length) === keys[n]) {
+          found = keys[n];
+          break;
+        }
+      }
+      if (!found) {
+        out.push({ kind: "word", text: text.charAt(i) });
+        i += 1;
+        continue;
+      }
+      out.push({ kind: "word", text: found });
+      i += found.length;
+    }
+    return out;
+  }
+
+  function piecesOf(text, lang) {
+    if (lang === "ja") return segmentJa(String(text || ""));
+    var out = [];
+    String(text || "").split(/(\s+)/).forEach(function (part) {
+      if (!part) return;
+      if (/^\s+$/.test(part)) out.push({ kind: "plain", text: part });
+      else peelToken(part, out);
+    });
+    return out;
+  }
+
   function addWords(parent, tokens) {
     var pack = langPack();
     var spoken = [];
+    var english = [];
     var line = document.createElement("span");
     line.className = "speech";
     line.dir = pack.id === "ar" ? "rtl" : "ltr";
     line.lang = pack.voice;
+    var utter = document.createElement("span");
+    utter.className = "utter";
     tokens.forEach(function (tok, index) {
-      var word = document.createElement("span");
-      word.className = "word";
-      word.tabIndex = 0;
-      word.textContent = tok.w;
-      var gloss = document.createElement("span");
-      gloss.className = "gloss";
-      gloss.textContent = tok.en;
-      word.appendChild(gloss);
-      function showGloss(on) {
-        word.classList.toggle("show-gloss", on);
+      if (index) {
+        var gap = document.createElement("span");
+        gap.className = "plain";
+        gap.textContent = " ";
+        utter.appendChild(gap);
       }
-      word.addEventListener("mouseenter", function () { showGloss(true); });
-      word.addEventListener("mouseleave", function () { showGloss(false); });
-      word.addEventListener("focus", function () { showGloss(true); });
-      word.addEventListener("blur", function () { showGloss(false); });
-      word.addEventListener("click", function (event) {
-        event.preventDefault();
-        event.stopPropagation();
-        showGloss(true);
-        speak(tok.w, pack.voice);
+      var bits = piecesOf(tok.w, pack.id);
+      bits.forEach(function (bit, bitIndex) {
+        if (bit.kind !== "word") {
+          var plain = document.createElement("span");
+          plain.className = "plain";
+          plain.textContent = bit.text;
+          utter.appendChild(plain);
+          return;
+        }
+        var next = "";
+        var n;
+        for (n = bitIndex + 1; n < bits.length; n++) {
+          if (bits[n].kind === "word") {
+            next = bits[n].text;
+            break;
+          }
+        }
+        var word = document.createElement("span");
+        word.className = "word";
+        word.tabIndex = 0;
+        var face = document.createElement("span");
+        face.className = "face";
+        face.textContent = bit.text;
+        word.appendChild(face);
+        var glossText = glossFor(pack.id, bit.text, next);
+        if (glossText) {
+          var gloss = document.createElement("span");
+          gloss.className = "gloss";
+          gloss.dir = "ltr";
+          gloss.textContent = glossText;
+          word.appendChild(gloss);
+        }
+        function markWord(on) {
+          word.classList.toggle("mark", on);
+        }
+        word.addEventListener("mouseenter", function () { markWord(true); });
+        word.addEventListener("mouseleave", function () { markWord(false); });
+        word.addEventListener("focus", function () { markWord(true); });
+        word.addEventListener("blur", function () { markWord(false); });
+        word.addEventListener("click", function (event) {
+          event.preventDefault();
+          event.stopPropagation();
+          markWord(true);
+          speak(bit.text, pack.voice);
+        });
+        utter.appendChild(word);
       });
-      if (index) line.appendChild(document.createTextNode(" "));
-      line.appendChild(word);
       spoken.push(tok.w);
+      if (tok.en) english.push(tok.en);
     });
+    line.appendChild(utter);
     var hear = document.createElement("span");
     hear.className = "hear";
     hear.tabIndex = 0;
@@ -818,8 +966,13 @@
     hear.addEventListener("keydown", function (event) {
       if (event.key === "Enter" || event.key === " ") playLine(event);
     });
-    line.appendChild(document.createTextNode(" "));
-    line.appendChild(hear);
+    utter.appendChild(document.createTextNode(" "));
+    utter.appendChild(hear);
+    var sense = document.createElement("span");
+    sense.className = "sense";
+    sense.dir = "ltr";
+    sense.textContent = english.join(" ");
+    line.appendChild(sense);
     parent.appendChild(line);
     return spoken.join(" ");
   }
