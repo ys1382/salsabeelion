@@ -469,6 +469,150 @@ class DoesKnowNameTests(unittest.TestCase):
         self.assertIn("Stranger", answer)
         self.assertNotIn("Chroniker", answer)
 
+    def test_does_not_treat_stage_direction_quote_as_name(self) -> None:
+        entries = [
+            {
+                "id": "d1",
+                "title": "Draft",
+                "body": (
+                    "Mayor Sepior faces Etherei. "
+                    '"Obsidian asks, blunt." The beaver mayor waits.'
+                ),
+                "tags": ["Smoke and Mirrors"],
+                "kind": "doc",
+            },
+            {
+                "id": "m1",
+                "title": "Mayor Sepior",
+                "body": (
+                    "When addressing Etherei, he calls Etherei \"Stranger.\" "
+                    "Etherei's name is never spoken in his presence."
+                ),
+                "tags": ["Smoke and Mirrors"],
+                "kind": "note",
+            },
+        ]
+        answer, _ids = build_knowledge_pov_answer(self.Q, entries)
+        self.assertIsNotNone(answer)
+        assert answer is not None
+        self.assertTrue(answer_meets_does_know_name_gold_bar(answer), answer)
+        self.assertIn("Stranger", answer)
+        self.assertNotIn("Obsidian asks", answer)
+        self.assertNotIn("blunt", answer.lower())
+
+    def test_uses_knower_known_as_not_scene_quote(self) -> None:
+        entries = [
+            {
+                "id": "d1",
+                "title": "Draft",
+                "body": (
+                    "Mayor Sepior faces Etherei. "
+                    '"I am the welcoming committee," the beaver mayor says.'
+                ),
+                "tags": ["Smoke and Mirrors"],
+                "kind": "doc",
+            },
+            {
+                "id": "n1",
+                "title": "Names",
+                "body": (
+                    "Mayor Sepior knows Etherei as Stranger. "
+                    "Etherei's name is never spoken in his presence."
+                ),
+                "tags": ["Smoke and Mirrors"],
+                "kind": "note",
+            },
+        ]
+        answer, _ids = build_knowledge_pov_answer(self.Q, entries)
+        self.assertIsNotNone(answer)
+        assert answer is not None
+        self.assertTrue(answer_meets_does_know_name_gold_bar(answer), answer)
+        self.assertIn("Stranger", answer)
+        self.assertNotIn("welcoming committee", answer.lower())
+
+    def test_calls_as_alias_beats_scene_quote(self) -> None:
+        entries = [
+            {
+                "id": "d1",
+                "title": "Draft",
+                "body": (
+                    "Mayor Sepior meets Etherei. "
+                    '"Welcome to the welcoming committee," he says.'
+                ),
+                "tags": ["Smoke and Mirrors"],
+                "kind": "doc",
+            },
+            {
+                "id": "n1",
+                "title": "Names",
+                "body": (
+                    "The Beaver Mayor, Mayor Sepior, calls Etherei \"Stranger.\""
+                ),
+                "tags": ["Smoke and Mirrors"],
+                "kind": "note",
+            },
+        ]
+        answer, _ids = build_knowledge_pov_answer(self.Q, entries)
+        self.assertIsNotNone(answer)
+        assert answer is not None
+        self.assertTrue(answer_meets_does_know_name_gold_bar(answer), answer)
+        self.assertIn("Stranger", answer)
+        self.assertNotIn("welcoming committee", answer.lower())
+
+    def test_spoken_lowercase_beats_quoted_leftover(self) -> None:
+        entries = [
+            {
+                "id": "d1",
+                "title": "Draft",
+                "body": (
+                    "Mayor Sepior faces Etherei. "
+                    '"stranger, this way," the beaver mayor says. '
+                    "Etherei stands there, the Stranger in his borrowed coat."
+                ),
+                "tags": ["Smoke and Mirrors"],
+                "kind": "doc",
+            },
+            {
+                "id": "n1",
+                "title": "Mayor Sepior notes",
+                "body": (
+                    "Mayor Sepior and Etherei talk. "
+                    'He uses the word "Africa." He also says "Preyfolk."'
+                ),
+                "tags": ["Smoke and Mirrors"],
+                "kind": "note",
+            },
+        ]
+        answer, _ids = build_knowledge_pov_answer(self.Q, entries)
+        self.assertIsNotNone(answer)
+        assert answer is not None
+        self.assertTrue(answer_meets_does_know_name_gold_bar(answer), answer)
+        self.assertRegex(answer, r"[Ss]tranger")
+        self.assertNotIn("Africa", answer)
+        self.assertNotIn("Preyfolk", answer)
+
+    def test_dialogue_only_stranger_line_not_gap(self) -> None:
+        entries = [
+            {
+                "id": "d1",
+                "title": "Draft",
+                "body": (
+                    "Mayor Sepior faces Etherei.\n"
+                    '"stranger."\n'
+                    '"I am the welcoming committee," the beaver mayor says.'
+                ),
+                "tags": ["Smoke and Mirrors"],
+                "kind": "doc",
+            }
+        ]
+        answer, _ids = build_knowledge_pov_answer(self.Q, entries)
+        self.assertIsNotNone(answer)
+        assert answer is not None
+        self.assertNotIn("nothing saved yet", answer.lower())
+        self.assertRegex(answer, r"[Ss]tranger")
+        self.assertNotIn("welcoming committee", answer.lower())
+        self.assertTrue(answer_meets_does_know_name_gold_bar(answer), answer)
+
 
 class WhoRagEscalationTests(unittest.TestCase):
     def test_thin_who_does_not_skip_rag(self) -> None:

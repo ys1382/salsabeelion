@@ -812,6 +812,8 @@ def local_pipeline_skips_rag(
     if is_does_know_question(question) and kind in ("knowledge", "narrow_fact"):
         if not answer.strip():
             return False
+        if "nothing saved yet" in answer.lower():
+            return False
         if "knowledge about" in answer.lower() and "includes:" in answer.lower():
             return False
         if _PLOT_BLURB_RE.search(answer):
@@ -1461,7 +1463,10 @@ def recall_from_user_data(
             return _finish_local_pipeline(local_pipeline)
 
     if ask_plan and is_does_know_question(question):
-        if local_pipeline and str(local_pipeline.get("answer") or "").strip():
+        local_ans = (
+            str(local_pipeline.get("answer") or "").strip() if local_pipeline else ""
+        )
+        if local_ans and "nothing saved yet" not in local_ans.lower():
             return _finish_local_pipeline(local_pipeline)
         parts = knowledge_pov_parts(question)
         knower = parts[0] if parts else "they"

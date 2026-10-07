@@ -303,10 +303,10 @@ Run **one row at a time** in Cursor. Don’t skip Phase 0 — it costs nothing a
 
 - Q: *Does the beaver mayor know Etherei’s name?* (story silo / search-in = Smoke and Mirrors)
 - **Gold sample (owner-locked 2026-09-19 — floor only):** `lorekeeper/tests/fixtures/beaver_mayor_knows_etherei_name_gold.txt` + `test_gold_shape_locked`
-- Must keep: addresses Etherei as **Stranger** · therefore unlikely Mayor Sepior knows the name yet · invent-nothing footer · **spoken-address scan** (the named knower’s spoken address only — not epithets, glued names, dialogue leftovers, or another character’s name for him)
-- Must not: description quotes as vocatives (“a very far way away”) · Let · TheWhiteRabbit · Chroniker as Sepior’s address · story blurb / catch-up dump
+- Must keep: addresses Etherei as **Stranger** · therefore unlikely Mayor Sepior knows the name yet · invent-nothing footer · **spoken-address scan** (the named knower’s spoken address only — not epithets, glued names, dialogue leftovers, or another character’s name for him) · **knower known-as / calls-as alias first** (not random quotes in his scenes)
+- Must not: description quotes as vocatives (“a very far way away”) · Let · TheWhiteRabbit · stage-direction quotes (“Obsidian asks, blunt.”) · scene leftovers (“welcoming committee”) · Chroniker as Sepior’s address · story blurb / catch-up dump
 - Optional later raise: strange Rabbit · name never spoken in his presence · deeper Sepior-only address lines — do not drop the floor or the address scan to add them
-- Do **not** mix into who-is, leave-off, writing-next, or catch-up golds. Do **not** edit the fixture or soften the lock without owner OK. Address-scan tests must stay green: `test_does_not_treat_description_quote_as_name` · `test_does_not_treat_let_as_name` · `test_does_not_treat_white_rabbit_epithet_as_name` · `test_does_not_use_another_characters_name_for_him`.
+- Do **not** mix into who-is, leave-off, writing-next, or catch-up golds. Do **not** edit the fixture or soften the lock without owner OK. Address-scan tests must stay green: `test_does_not_treat_description_quote_as_name` · `test_does_not_treat_let_as_name` · `test_does_not_treat_white_rabbit_epithet_as_name` · `test_does_not_use_another_characters_name_for_him` · `test_does_not_treat_stage_direction_quote_as_name` · `test_uses_knower_known_as_not_scene_quote` · `test_calls_as_alias_beats_scene_quote`.
 
 ### Ask multi-turn + voice (owner pin — far off) — pinned 2026-08-12
 

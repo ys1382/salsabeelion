@@ -258,6 +258,14 @@ def answer_meets_does_know_name_gold_bar(answer: str) -> bool:
         return False
     if re.search(r'["\']chroniker["\']', low):
         return False
+    if "obsidian asks" in low:
+        return False
+    if "welcoming committee" in low:
+        return False
+    if re.search(r'["\']africa["\']', low):
+        return False
+    if re.search(r'["\']preyfolk["\']', low):
+        return False
     return True
 
 
@@ -446,6 +454,20 @@ def build_awareness_answer(
     return answer, ids[:8]
 
 
+def _title_looks_like_name(title: str) -> bool:
+    t = (title or "").strip()
+    if not t or "," in t or len(t) > 40:
+        return False
+    words = t.split()
+    if not words or len(words) > 4:
+        return False
+    if re.search(r"\b(notes?|draft|document|interactions|after)\b", t, re.I):
+        return False
+    if re.match(r"^Mayor\s+[A-Z]", t):
+        return True
+    return bool(re.match(r"^[A-Z][A-Za-z]+(?:\s+[A-Z][A-Za-z]+){0,2}$", t))
+
+
 def _knower_aliases(knower: str, entries: list[dict[str, Any]]) -> list[str]:
     from lorekeeper_aliases import expand_name_list
 
@@ -471,10 +493,19 @@ def _knower_aliases(knower: str, entries: list[dict[str, Any]]) -> list[str]:
         mentions = _name_in_text(core, blob) or _name_in_text(knower, blob)
         if not mentions:
             continue
-        add(title)
+        if _title_looks_like_name(title):
+            add(title)
         for m in re.finditer(r"\bMayor\s+([A-Z][a-z]{2,})\b", blob):
             add(m.group(0))
             add(m.group(1))
+    if re.search(r"\bmayor\b", knower, re.I):
+        for entry in entries:
+            if not isinstance(entry, dict):
+                continue
+            blob = f"{entry.get('title') or ''}\n{entry.get('body') or ''}"
+            for m in re.finditer(r"\bMayor\s+([A-Z][a-z]{2,})\b", blob):
+                add(m.group(0))
+                add(m.group(1))
     return expand_name_list(seeds, entries) or seeds
 
 
@@ -509,19 +540,37 @@ _DIALOGUE_OPENERS = frozenset(
     """.split()
 )
 
+_SPEECH_VERBS = frozenset(
+    """
+    ask asks asked saying says said tell tells told
+    reply replies replied shout shouts shouted
+    whisper whispers whispered answer answers answered
+    """.split()
+)
+
 
 def _looks_like_vocative(label: str, target: str) -> bool:
     """True for a spoken name/nickname (Stranger), not a quoted description."""
     text = _normalize_ask_quotes(label).strip().rstrip(".,;:!")
     if not text or text.lower() == (target or "").lower():
         return False
+    if "," in text:
+        return False
     words = text.split()
-    if not words or len(words) > 3:
+    if words and words[0].lower() in {"the", "a", "an"}:
+        words = words[1:]
+        text = " ".join(words)
+    if not text or text.lower() == (target or "").lower():
+        return False
+    if not words or len(words) > 2:
+        return False
+    if len(words) == 2 and not words[1][:1].isupper():
+        return False
+    tokens = [re.sub(r"[^a-zA-Z]", "", w).lower() for w in words]
+    if any(tok in _SPEECH_VERBS for tok in tokens if tok):
         return False
     low = text.lower()
     if words[0].lower() in _DIALOGUE_OPENERS:
-        return False
-    if words[0].lower() in {"a", "an"}:
         return False
     # Glued epithets ("TheWhiteRabbit"), not a spoken nickname.
     if re.search(r"[a-z][A-Z]", text) or re.match(r"^The[A-Z]", text):
@@ -542,10 +591,8 @@ def _looks_like_vocative(label: str, target: str) -> bool:
 def _vocative_score(label: str, *, explicit_call: bool = False) -> int:
     words = (label or "").split()
     score = 40
-    if len(words) == 1 and words[0][:1].isupper():
-        score = 100
-    elif len(words) == 1:
-        score = 50
+    if len(words) == 1:
+        score = 80
     if explicit_call:
         score += 40
     return score
@@ -581,16 +628,51 @@ def _alias_owned_by_other(
     return False
 
 
+def _knower_address_from_aliases(
+    target: str,
+    knower_aliases: list[str],
+    entries: list[dict[str, Any]],
+) -> str:
+    """The name this knower uses for the target, from saved known-as / calls-as facts."""
+    from lorekeeper_aliases import collect_alias_facts
+
+    best = ""
+    best_score = -1
+    for fact in collect_alias_facts(entries):
+        if fact.kind != "known_to" or not fact.alias or not fact.other:
+            continue
+        subject = fact.subject or ""
+        if not (
+            subject.lower() == (target or "").lower()
+            or _name_in_text(target, subject)
+            or _name_in_text(subject, target)
+        ):
+            continue
+        if not _any_alias_in_text(knower_aliases, fact.other):
+            continue
+        alias = fact.alias.strip().rstrip(".,;:")
+        if not _looks_like_vocative(alias, target):
+            continue
+        score = _vocative_score(alias, explicit_call=True)
+        if score > best_score:
+            best_score = score
+            best = alias
+    return best
+
+
 def _foreign_addresser(
     sentence: str, knower_aliases: list[str], target: str
 ) -> bool:
     """True when another named person is the one calling / knowing-as in this sentence."""
     s = _normalize_ask_quotes(sentence or "")
+    knower_blob = " ".join(knower_aliases)
     for m in re.finditer(r"\b([A-Z][a-z]{2,}(?:\s+[A-Z][a-z]{2,})?)\b", s):
         name = m.group(1)
         if name.lower() in {target.lower(), "when", "therefore", "nothing"}:
             continue
         if _any_alias_in_text(knower_aliases, name):
+            continue
+        if re.search(rf"\b{re.escape(name)}\b", knower_blob, re.I):
             continue
         if re.search(r"\bmayor\b", name, re.I) and _any_alias_in_text(
             knower_aliases, "mayor"
@@ -604,6 +686,66 @@ def _foreign_addresser(
         ):
             return True
     return False
+
+
+def _one_word_spoken_vocatives(
+    text: str, target: str, knower_aliases: list[str]
+) -> list[str]:
+    """Quoted nicknames that are the whole utterance (\"Stranger.\"), not scene leftovers."""
+    s = _normalize_ask_quotes(text or "")
+    found: list[str] = []
+    seen: set[str] = set()
+    for m in re.finditer(
+        r"[\"']([A-Za-z][A-Za-z]{1,23})[.,!?]*[\"']",
+        s,
+    ):
+        label = m.group(1)
+        key = label.lower()
+        if key in seen:
+            continue
+        if key == (target or "").lower():
+            continue
+        if _any_alias_in_text(knower_aliases, label):
+            continue
+        # "the word 'Africa'" is metalanguage, not a vocative.
+        prefix = s[max(0, m.start() - 24) : m.start()].lower()
+        if re.search(r"\bwords?\s*$", prefix):
+            continue
+        if not _looks_like_vocative(label, target):
+            continue
+        seen.add(key)
+        found.append(label)
+    return found
+
+
+def _epithet_near_target(
+    text: str, target: str, knower_aliases: list[str]
+) -> str:
+    """Unquoted 'the Nickname' used next to the target (the Stranger), not leftover quotes."""
+    s = _normalize_ask_quotes(text or "")
+    if not s or not target:
+        return ""
+    best = ""
+    best_score = -1
+    for m in re.finditer(r"\bthe\s+([A-Z][a-z]{2,24})\b", s):
+        nick = m.group(1)
+        if nick.lower() == target.lower():
+            continue
+        rest = s[m.end() : m.end() + 20]
+        if re.match(r"\s+[A-Z][a-z]+", rest):
+            continue
+        if _any_alias_in_text(knower_aliases, nick):
+            continue
+        window = s[max(0, m.start() - 100) : min(len(s), m.end() + 100)]
+        if not _name_in_text(target, window):
+            continue
+        if not _looks_like_vocative(nick, target):
+            continue
+        score = _vocative_score(nick, explicit_call=True)
+        if score > best_score:
+            best_score = score
+            best = nick
+    return best
 
 
 def _extract_address_label(
@@ -647,7 +789,7 @@ def _extract_address_label(
         add(quoted.group(1), explicit_call=True)
     bare = re.search(
         rf"(?:calls?|called|calling|addresses|addressed)\s+"
-        rf"{t}\s+(?:as\s+)?([A-Z][a-z]{{1,40}})\b",
+        rf"{t}\s+(?:as\s+)?([A-Za-z][A-Za-z]{{1,39}})\b",
         s,
         re.I,
     )
@@ -655,14 +797,24 @@ def _extract_address_label(
         add(bare.group(1), explicit_call=True)
     if knower_here:
         vocative_comma = re.finditer(
-            r"[\"']([A-Z][a-z]{1,24})[\"']\s*,",
+            r"[\"']([A-Za-z][A-Za-z]{1,23})[\"']\s*,",
             s,
         )
         for m in vocative_comma:
-            add(m.group(1))
-        if re.search(r"\b(said|says|asks|called|calls|address)\b", s, re.I):
-            for m in re.finditer(r"[\"']([^\"']{1,40})[\"']", s):
-                add(m.group(1))
+            add(m.group(1), explicit_call=True)
+        for m in re.finditer(r"[\"']([a-z][a-z]{2,23}),", s):
+            add(m.group(1), explicit_call=True)
+        for label in _one_word_spoken_vocatives(s, target, aliases):
+            add(label, explicit_call=True)
+    as_name = re.search(
+        rf"(?:calls?|called|calling|addresses|addressed|refers\s+to)\s+"
+        rf"(?:{t}|him|her|them)\s+as\s+"
+        rf"(?:[\"']([^\"']{{1,40}})[\"']|([A-Za-z][A-Za-z]{{1,39}}))\b",
+        s,
+        re.I,
+    )
+    if as_name:
+        add(as_name.group(1) or as_name.group(2) or "", explicit_call=True)
     if not candidates:
         return ""
     candidates.sort(key=lambda row: (-row[0], -row[1]))
@@ -723,23 +875,13 @@ def build_does_know_name_answer(
     where = f" in {work_title}" if work_title else ""
     aliases = _knower_aliases(knower, scope)
     footer = "— From your notes only. Nothing invented."
-
+    # Name-status must see alias/address notes, not only nearby mayor scenes.
     scan = scope
-    if fast_recall and len(scan) > 90:
-        keys = {a.lower() for a in aliases}
-        prioritized = [
-            e
-            for e in scan
-            if isinstance(e, dict)
-            and any(
-                k in f"{e.get('title') or ''} {str(e.get('body') or '')[:4000]}".lower()
-                for k in keys
-            )
-        ]
-        scan = (prioritized or scan)[:90]
 
     ids: list[str] = []
     knows_attr = ""
+    fact_label = _knower_address_from_aliases(target, aliases, scope)
+    epithet_label = ""
     address_label = ""
     never_spoken = False
     explicit_knows_name = False
@@ -754,6 +896,26 @@ def build_does_know_name_answer(
         title = str(entry.get("title") or "")
         blob = f"{title}\n{body}"
         entry_has_knower = _any_alias_in_text(aliases, blob)
+        if entry_has_knower or _name_in_text(target, blob):
+            epithet = _epithet_near_target(blob, target, aliases)
+            if epithet and _alias_owned_by_other(epithet, target, aliases, scope):
+                epithet = ""
+            if epithet and (
+                not epithet_label
+                or _vocative_score(epithet, explicit_call=True)
+                > _vocative_score(epithet_label)
+            ):
+                epithet_label = epithet
+                _record_source_id(ids, eid)
+        if entry_has_knower:
+            for label in _one_word_spoken_vocatives(blob, target, aliases):
+                if _alias_owned_by_other(label, target, aliases, scope):
+                    continue
+                if not address_label or _vocative_score(label) > _vocative_score(
+                    address_label
+                ):
+                    address_label = label
+                    _record_source_id(ids, eid)
         for sentence in _split_sentences(f"{title}. {body}" if title else body):
             s = sentence.strip()
             if not s:
@@ -763,6 +925,14 @@ def build_does_know_name_answer(
             relevant = _any_alias_in_text(aliases, s) or (
                 entry_has_knower and _name_in_text(target, s)
             )
+            he_calls = bool(
+                re.search(
+                    r"\b(?:he|she)\s+(?:calls?|called|calling|addresses|addressed)\b",
+                    s,
+                    re.I,
+                )
+                and _name_in_text(target, s)
+            )
             if relevant and re.search(r"\bhe\b", s, re.I):
                 uses_he = True
             if relevant:
@@ -770,6 +940,7 @@ def build_does_know_name_answer(
                 if attr and not knows_attr:
                     knows_attr = attr
                     _record_source_id(ids, eid)
+            if relevant or he_calls:
                 label = _extract_address_label(s, target, aliases)
                 if label and _alias_owned_by_other(label, target, aliases, scope):
                     label = ""
@@ -800,6 +971,14 @@ def build_does_know_name_answer(
                 ):
                     explicit_knows_name = True
                     _record_source_id(ids, eid)
+
+    spoken_label = address_label
+    if fact_label:
+        address_label = fact_label
+    elif spoken_label:
+        address_label = spoken_label
+    elif epithet_label:
+        address_label = epithet_label
 
     display, short_name = _knower_display(knower, aliases)
     if not knows_attr and not address_label and not never_spoken and not explicit_knows_name:

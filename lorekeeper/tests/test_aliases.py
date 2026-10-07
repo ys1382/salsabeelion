@@ -63,6 +63,22 @@ class AliasTests(unittest.TestCase):
         # Knower is a different person — must not merge into the subject's name set.
         self.assertNotIn("character b", keys)
 
+    def test_calls_as_is_known_to(self):
+        entries = [_entry("n1", "Character B calls Character A \"Ella.\"")]
+        facts = collect_alias_facts(entries, {"fairy tale"})
+        self.assertTrue(
+            any(
+                f.kind == "known_to"
+                and f.alias
+                and f.alias.lower() == "ella"
+                and f.other
+                and f.other.lower() == "character b"
+                and f.subject.lower() == "character a"
+                for f in facts
+            ),
+            msg=facts,
+        )
+
     def test_same_person_also_known_as(self):
         entries = [_entry("n1", "Ella is also known as Cinder Ella.")]
         facts = collect_alias_facts(entries, {"fairy tale"})

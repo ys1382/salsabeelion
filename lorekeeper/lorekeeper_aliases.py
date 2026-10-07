@@ -120,6 +120,11 @@ _KNOWS_AS = re.compile(
     rf"{NAME}\s+knows\s+{NAME}\s+(?:as|by(?:\s+the\s+name(?:\s+of)?)?)\s+{ALIAS}",
     re.I,
 )
+_CALLS_AS = re.compile(
+    rf"{NAME},?\s+(?:calls?|called|addresses|addressed)\s+{NAME}\s+"
+    rf"(?:as\s+)?{ALIAS}",
+    re.I,
+)
 
 _SHARED_NAME = re.compile(
     rf"{NAME}\s+has\s+shared\s+"
@@ -209,6 +214,15 @@ def _parse_sentence(sentence: str) -> list[AliasFact]:
                 return facts
 
     m = _KNOWS_AS.search(s)
+    if m:
+        other = _clean_name(m.group(1))
+        subject = _clean_name(m.group(2))
+        alias = _pick_alias(m.group(3), m.group(4), m.group(5))
+        if subject and other and alias and not _names_match(subject, other):
+            facts.append(AliasFact("known_to", subject, other=other, alias=alias))
+        return facts
+
+    m = _CALLS_AS.search(s)
     if m:
         other = _clean_name(m.group(1))
         subject = _clean_name(m.group(2))
