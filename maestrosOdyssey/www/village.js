@@ -1476,15 +1476,60 @@
       .replace(/\{pos\}/g, boy ? "his" : "her");
   }
 
-  function pictureFor(scene) {
+  function placeShot(scene) {
     var src = String(scene.image || "").split("?")[0];
-    var shot = "street";
     var who = state.gender === "boy" ? "boy" : "girl";
-    if (src.indexOf("elder") !== -1) shot = "elder-" + who;
-    else if (src.indexOf("station") !== -1) shot = "station-" + who;
-    else if (src.indexOf("shore") !== -1) shot = "shore";
-    else if (src.indexOf("porch") !== -1) shot = "shop";
-    return "village-art/" + (langPack().id || "es") + "/" + shot + ".jpg?v=20261007a";
+    if (src.indexOf("elder") !== -1) return "elder-" + who;
+    if (src.indexOf("station") !== -1) return "station-" + who;
+    if (src.indexOf("shore") !== -1) return "shore";
+    if (src.indexOf("porch") !== -1) return "shop";
+    return "street";
+  }
+
+  function talkBase(id, scene) {
+    if (scene && scene.shot) return scene.shot;
+    if (id.indexOf("scarf_") === 0) return "scarf";
+    if (id.indexOf("friend_") === 0) return "friend";
+    if (id.indexOf("mer_") === 0) return "mer";
+    if (id.indexOf("fish_") === 0) return "fish";
+    if (id.indexOf("shop_") === 0) return "shopkeep";
+    if (id.indexOf("pair_") === 0) return "pair";
+    if (id.indexOf("trav_") === 0) return "traveler";
+    return "";
+  }
+
+  function artUrl(name) {
+    return "village-art/" + (langPack().id || "es") + "/" + name + ".jpg?v=20261007k";
+  }
+
+  function pictureCandidates(id, scene) {
+    var urls = [];
+    var base = talkBase(id, scene);
+    if (base && scene && scene.face) urls.push(artUrl(base + "-" + scene.face));
+    if (base) urls.push(artUrl(base));
+    urls.push(artUrl(placeShot(scene)));
+    var unique = [];
+    urls.forEach(function (url) {
+      if (unique.indexOf(url) === -1) unique.push(url);
+    });
+    return unique;
+  }
+
+  function showPicture(id, scene) {
+    var urls = pictureCandidates(id, scene);
+    var i = 0;
+    function tryNext() {
+      if (i >= urls.length) return;
+      var probe = new Image();
+      var url = urls[i];
+      probe.onload = function () { pictureEl.src = url; };
+      probe.onerror = function () {
+        i += 1;
+        tryNext();
+      };
+      probe.src = url;
+    }
+    tryNext();
   }
 
   function buttons(list, onPick) {
@@ -1584,7 +1629,7 @@
     dayEl.textContent = scene.day + " · " + VILLAGE_NAME + " · " + langPack().name;
     document.title = scene.day + " · " + VILLAGE_NAME + " · " + langPack().name + " — Maestro's Odyssey";
     renderNotes(scene.notesDay || scene.report || "");
-    pictureEl.src = pictureFor(scene);
+    showPicture(id, scene);
     pictureEl.alt = fill(typeof scene.alt === "function" ? scene.alt() : scene.alt);
     proseEl.replaceChildren();
     var paras = typeof scene.paragraphs === "function" ? scene.paragraphs() : scene.paragraphs;
