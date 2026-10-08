@@ -10,7 +10,7 @@
           ? "Both houses are limewashed, with clay tile roofs. His clothes are the plain daily ones men wear in this town."
           : "Both houses are limewashed, with clay tile roofs. A rebozo covers her hair.";
       },
-      homeAlt: "The elder talks with a young person between two limewashed houses.",
+      homeAlt: "Elvora talks with a young person between two limewashed houses.",
       street: [
         "The street is one street. Limewashed houses, clay tile roofs, and a small café with a cloth awning run the whole way, and people use them together.",
         "Most of the people here are from this town. Women wear rebozos over their hair, and the men with them wear the town’s everyday clothes. They carry groceries and talk easily. A blue-green visitor walks with them, only passing through."
@@ -34,22 +34,22 @@
       home: function () {
         return state.gender === "boy"
           ? "Both houses are pale stone, with arched doors. His clothes are the plain daily ones men wear in this town."
-          : "Both houses are pale stone, with arched doors. A headscarf covers her hair and neck.";
+          : "Both houses are pale stone, with arched doors. A hijab covers her hair and neck.";
       },
-      homeAlt: "The elder talks with a young person between two stone houses.",
+      homeAlt: "Elvora talks with a young person between two stone houses.",
       street: [
         "The street is one street. Pale stone houses with arched doors, and a courtyard café, run the whole way, and people use them together.",
-        "Most of the people here are from this town. Women wear headscarves that cover the hair and neck, with long modest coats, and the men with them wear the town’s everyday clothes. They carry groceries and talk easily. A blue-green visitor walks with them, only passing through."
+        "Most of the people here are from this town. The women are hijabis, in long modest coats, and the men with them wear the town’s everyday clothes. They carry groceries and talk easily. A blue-green visitor walks with them, only passing through."
       ],
-      streetAlt: "Townspeople in headscarves and long coats walk a stone street, with one blue-green visitor among them.",
+      streetAlt: "Hijabis and men in everyday clothes walk a stone street, with one blue-green visitor among them.",
       shore: [
-        "The cove is quiet. Most of the people on the rocks are from this town, in work clothes, with headscarves on the women, and the nets in their hands are small. The water is clear."
+        "The cove is quiet. Most of the people on the rocks are from this town, in work clothes, hijabs on the women, and the nets in their hands are small. The water is clear."
       ],
-      shoreAlt: "Local fishers in headscarves stand on calm rocks with small nets.",
+      shoreAlt: "Local fishers stand on calm rocks with small nets. The women wear hijabs.",
       shop: [
-        "The café door is open. Stone arches shade the step. The shopkeeper waves people in as they arrive together. Most of them are from this town, headscarves and long coats passing the threshold. A visitor comes in with them. Nobody is turned away."
+        "The café door is open. Stone arches shade the step. The shopkeeper waves people in as they arrive together. Most of them are from this town, hijabis in long coats passing the threshold. A visitor comes in with them. Nobody is turned away."
       ],
-      shopAlt: "A shopkeeper waves townspeople in headscarves into an open courtyard café.",
+      shopAlt: "A shopkeeper waves hijabis into an open courtyard café.",
       station: [
         "The platform is quiet. The little station is pale stone, like the houses, and a short train waits on the track. This is the way toward the towns people have been telling you about.",
         "A traveler with a small bag stands on the boards, already looking back toward the village."
@@ -62,7 +62,7 @@
           ? "Both houses are whitewashed, with stone walls. His clothes are the plain daily ones men wear in this town."
           : "Both houses are whitewashed, with stone walls. A wool shawl covers her hair.";
       },
-      homeAlt: "The elder talks with a young person between two whitewashed cottages.",
+      homeAlt: "Elvora talks with a young person between two whitewashed cottages.",
       street: [
         "The street is one street. Whitewashed cottages, stone walls, and a small tea shop run the whole way, and people use them together.",
         "Most of the people here are from this town. Women wear wool shawls over their hair, and the men with them wear the town’s everyday clothes. They carry groceries and talk easily. A blue-green visitor walks with them, only passing through."
@@ -88,7 +88,7 @@
           ? "Both houses are wood, with dark tile roofs. His clothes are the plain daily ones men wear in this town."
           : "Both houses are wood, with dark tile roofs. A cloth covers her hair.";
       },
-      homeAlt: "The elder talks with a young person between two wooden houses.",
+      homeAlt: "Elvora talks with a young person between two wooden houses.",
       street: [
         "The street is one street. Wooden houses, dark tile roofs, and a small café with a plain curtain run the whole way, and people use them together.",
         "Most of the people here are from this town. Women wear a cloth over their hair, with modest everyday kimono, and the men with them wear plain work clothes. They carry groceries and talk easily. A blue-green visitor walks with them, only passing through."
@@ -112,22 +112,22 @@
       home: function () {
         return state.gender === "boy"
           ? "Both houses are plaster, with red tile roofs. His clothes are the plain daily ones men wear in this town."
-          : "Both houses are plaster, with red tile roofs. A headscarf is tied over her hair.";
+          : "Both houses are plaster, with red tile roofs. A hijab covers her hair and neck.";
       },
-      homeAlt: "The elder talks with a young person between two plaster houses.",
+      homeAlt: "Elvora talks with a young person between two plaster houses.",
       street: [
         "The street is one street. Plaster houses, red tile roofs, and a tea house run the whole way, and people use them together.",
-        "Most of the people here are from this town. Women wear headscarves tied over the hair and neck, with long modest coats, and the men with them wear the town’s everyday clothes. They carry groceries and talk easily. A blue-green visitor walks with them, only passing through."
+        "Most of the people here are from this town. The women are hijabis, in long modest coats, and the men with them wear the town’s everyday clothes. They carry groceries and talk easily. A blue-green visitor walks with them, only passing through."
       ],
-      streetAlt: "Townspeople in headscarves walk a plaster-house street, with one blue-green visitor among them.",
+      streetAlt: "Hijabis and men in everyday clothes walk a plaster-house street, with one blue-green visitor among them.",
       shore: [
-        "The cove is quiet. Most of the people on the rocks are from this town, in work clothes, with headscarves on the women, and the nets in their hands are small. The water is clear."
+        "The cove is quiet. Most of the people on the rocks are from this town, in work clothes, hijabs on the women, and the nets in their hands are small. The water is clear."
       ],
-      shoreAlt: "Local fishers in headscarves stand on calm rocks with small nets.",
+      shoreAlt: "Local fishers stand on calm rocks with small nets. The women wear hijabs.",
       shop: [
-        "The tea house door is open. Plaster walls and red tile shade the step. The shopkeeper waves people in as they arrive together. Most of them are from this town, headscarves and long coats passing the threshold. A visitor comes in with them. Nobody is turned away."
+        "The tea house door is open. Plaster walls and red tile shade the step. The shopkeeper waves people in as they arrive together. Most of them are from this town, hijabis in long coats passing the threshold. A visitor comes in with them. Nobody is turned away."
       ],
-      shopAlt: "A shopkeeper waves townspeople in headscarves into an open tea house.",
+      shopAlt: "A shopkeeper waves hijabis into an open tea house.",
       station: [
         "The platform is quiet. The little station is plaster and red tile, like the houses, and a short train waits on the track. This is the way toward the towns people have been telling you about.",
         "A traveler with a small bag stands on the boards, already looking back toward the village."
@@ -140,6 +140,41 @@
     return LOOKS[langPack().id] || LOOKS.es;
   }
 
+  function womanName() {
+    var names = { es: "Rosa", ar: "Fatima", ga: "Aoife", ja: "Hana", tr: "Elif" };
+    return names[langPack().id] || names.es;
+  }
+
+  function manName() {
+    var names = { es: "Miguel", ar: "Tariq", ga: "Sean", ja: "Kenji", tr: "Yusuf" };
+    return names[langPack().id] || names.es;
+  }
+
+  function womanSays() {
+    return womanName() + " says";
+  }
+
+  function manSays() {
+    return manName() + " says";
+  }
+
+  function rockName() {
+    return "Neris";
+  }
+
+  function fisherName() {
+    var names = { es: "Diego", ar: "Hassan", ga: "Cian", ja: "Daichi", tr: "Emre" };
+    return names[langPack().id] || names.es;
+  }
+
+  function rockSays() {
+    return rockName() + " says";
+  }
+
+  function fisherSays() {
+    return fisherName() + " says";
+  }
+
   var scenes = {
     mon_home: {
       day: "Monday",
@@ -147,12 +182,12 @@
       alt: function () { return look().homeAlt; },
       paragraphs: function () {
         return [
-          "You are already home in Alderhart. The house next to yours is the elder’s, and the gate between them has been there longer than this morning.",
+          "You are already home in Alderhart. The house next to yours is Elvora’s, and the gate between them has been there longer than this morning.",
           look().home(),
-          "{Sub} leans on {pos} stick."
+          "Elvora leans on her stick."
         ];
       },
-      speaker: "The elder says",
+      speaker: "Elvora says",
       say: "mon_home",
       choices: [{ label: "Go to the street.", next: "mon_street" }]
     },
@@ -161,19 +196,33 @@
       image: "village-art/street-together.jpg?v=20261006n",
       alt: function () { return look().streetAlt; },
       paragraphs: function () { return look().street; },
-      choices: [
-        { say: "ch_hi_scarf", next: "scarf_hi" },
-        { say: "ch_hi_friend", next: "friend_hi" },
-        { label: "Back to the elder.", next: "mon_return" }
-      ]
+      choices: function () {
+        var list = [];
+        if (!alreadySaid("ch_hi_scarf")) list.push({ say: "ch_hi_scarf", next: "scarf_hi" });
+        list.push({ label: "Back to Elvora.", next: "mon_return" });
+        return list;
+      }
     },
     scarf_hi: {
       day: "Monday",
       image: "village-art/street-together.jpg?v=20261006n",
-      alt: "A neighbor in a headscarf smiles, groceries in her arms.",
-      paragraphs: ["She shifts the bag and makes room for you on the lane."],
-      speaker: "A neighbor in a headscarf says",
+      alt: function () { return womanName() + " smiles, groceries in her arms."; },
+      paragraphs: function () { return [womanName() + " shifts the groceries and makes room for you on the lane."]; },
+      speaker: womanSays,
       say: "scarf_well",
+      choices: [
+        { say: "ch_hi_friend", next: "scarf_fine" },
+        { say: "ask_towns", next: "scarf_there" },
+        { say: "bye", next: "mon_street" }
+      ]
+    },
+    scarf_fine: {
+      day: "Monday",
+      image: "village-art/street-together.jpg?v=20261006n",
+      alt: function () { return womanName() + " answers you."; },
+      paragraphs: [],
+      speaker: womanSays,
+      say: "friend_far",
       choices: [
         { say: "ask_towns", next: "scarf_there" },
         { say: "bye", next: "mon_street" }
@@ -182,9 +231,9 @@
     scarf_there: {
       day: "Monday",
       image: "village-art/street-together.jpg?v=20261006n",
-      alt: "A neighbor in a headscarf keeps walking with her neighbors.",
-      paragraphs: ["She glances toward the hills, then back at the street you share."],
-      speaker: "A neighbor in a headscarf says",
+      alt: function () { return womanName() + " keeps walking with her neighbors."; },
+      paragraphs: function () { return [womanName() + " glances toward the hills, then back at the street you share."]; },
+      speaker: womanSays,
       say: "scarf_apart",
       face: "heavy",
       learn: "mon-walk",
@@ -196,9 +245,9 @@
     scarf_bad: {
       day: "Monday",
       image: "village-art/street-together.jpg?v=20261006n",
-      alt: "A neighbor in a headscarf answers gently.",
-      paragraphs: ["She does not lower her voice. This street is not the place she means."],
-      speaker: "A neighbor in a headscarf says",
+      alt: function () { return womanName() + " answers gently."; },
+      paragraphs: function () { return [womanName() + " does not lower her voice. This street is not the place she means."]; },
+      speaker: womanSays,
       say: "scarf_little",
       face: "gentle",
       mark: "street",
@@ -210,9 +259,9 @@
     scarf_family: {
       day: "Monday",
       image: "village-art/street-together.jpg?v=20261006n",
-      alt: "A neighbor in a headscarf speaks about family far away.",
-      paragraphs: ["She nods toward the road out of town."],
-      speaker: "A neighbor in a headscarf says",
+      alt: function () { return womanName() + " speaks about family far away."; },
+      paragraphs: function () { return [womanName() + " nods toward the road out of town."]; },
+      speaker: womanSays,
       say: "scarf_family",
       face: "road",
       mark: "street",
@@ -224,9 +273,9 @@
     friend_hi: {
       day: "Monday",
       image: "village-art/street-together.jpg?v=20261006n",
-      alt: "The pale neighbor with the groceries turns to you.",
-      paragraphs: ["He is walking in step with her. He looks glad you stopped."],
-      speaker: "Her neighbor says",
+      alt: function () { return manName() + " turns to you."; },
+      paragraphs: function () { return [manName() + " is walking with " + womanName() + ". He looks glad you stopped."]; },
+      speaker: manSays,
       say: "friend_far",
       choices: [
         { say: "ask_cousin", next: "friend_there" },
@@ -236,9 +285,9 @@
     friend_there: {
       day: "Monday",
       image: "village-art/street-together.jpg?v=20261006n",
-      alt: "The neighbor talks, still among friends.",
-      paragraphs: ["He keeps his voice ordinary. The news is not about this lane."],
-      speaker: "Her neighbor says",
+      alt: function () { return manName() + " talks, still among friends."; },
+      paragraphs: function () { return [manName() + " keeps his voice ordinary. The news is not about this lane."]; },
+      speaker: manSays,
       say: "friend_apart",
       face: "heavy",
       learn: "mon-letter",
@@ -250,9 +299,9 @@
     friend_here: {
       day: "Monday",
       image: "village-art/street-together.jpg?v=20261006n",
-      alt: "The neighbor smiles at the shared street.",
-      paragraphs: ["He tips his head at the benches, the lamps, the people passing."],
-      speaker: "Her neighbor says",
+      alt: function () { return manName() + " smiles at the shared street."; },
+      paragraphs: function () { return [manName() + " tips his head at the benches, the lamps, the people passing."]; },
+      speaker: manSays,
       say: "friend_here",
       face: "here",
       mark: "street",
@@ -264,9 +313,9 @@
     mon_return: {
       day: "Monday",
       image: "village-art/elder.jpg?v=20261006b",
-      alt: "The elder listens at the gate.",
+      alt: "Elvora listens at the gate.",
       paragraphs: function () { return reportIntro("mon"); },
-      speaker: "The elder says",
+      speaker: "Elvora says",
       say: "report_ask",
       report: "mon",
       choices: []
@@ -274,9 +323,9 @@
     mon_said: {
       day: "Monday",
       image: "village-art/elder.jpg?v=20261006b",
-      alt: "The elder answers at the gate.",
+      alt: "Elvora answers at the gate.",
       paragraphs: function () { return reportTaken("mon"); },
-      speaker: "The elder says",
+      speaker: "Elvora says",
       pick: function () { return reportSay("mon"); },
       face: "heard",
       notesDay: "mon",
@@ -285,11 +334,11 @@
     tue_home: {
       day: "Tuesday",
       image: "village-art/elder.jpg?v=20261006b",
-      alt: "The elder speaks with you at the cottage gate.",
+      alt: "Elvora speaks with you at the cottage gate.",
       paragraphs: function () {
-        return [morningEcho("mon"), "{Sub} is at the gate."];
+        return [morningEcho("mon"), "Elvora is at the gate."];
       },
-      speaker: "The elder says",
+      speaker: "Elvora says",
       pick: function () {
         return state.reports.mon && state.reports.mon !== "none" ? "tue_open_yes" : "tue_open_no";
       },
@@ -303,15 +352,15 @@
       choices: [
         { say: "ch_hi_mer", next: "mer_hi" },
         { say: "ch_hi_fish", next: "fish_hi" },
-        { label: "Back to the elder.", next: "tue_return" }
+        { label: "Back to Elvora.", next: "tue_return" }
       ]
     },
     mer_hi: {
       day: "Tuesday",
       image: "village-art/shore-calm.jpg?v=20261006n",
-      alt: "A blue-green person with a small net turns to you.",
-      paragraphs: ["They rest the net on the rock and make space beside them."],
-      speaker: "A person on the rocks says",
+      alt: function () { return rockName() + " turns to you, a small net in hand."; },
+      paragraphs: function () { return [rockName() + " rests the net on the rock and makes space beside you."]; },
+      speaker: rockSays,
       say: "mer_here",
       choices: [
         { say: "ask_waters", next: "mer_there" },
@@ -322,9 +371,9 @@
     mer_there: {
       day: "Tuesday",
       image: "village-art/shore-calm.jpg?v=20261006n",
-      alt: "The person on the rocks looks out toward a far shore.",
-      paragraphs: ["They nod at the far water, not at the cove under your feet."],
-      speaker: "A person on the rocks says",
+      alt: function () { return rockName() + " looks out toward a far shore."; },
+      paragraphs: function () { return [rockName() + " nods at the far water, not at the cove under your feet."]; },
+      speaker: rockSays,
       say: "mer_there",
       face: "heavy",
       learn: "tue-cove",
@@ -337,8 +386,8 @@
       day: "Tuesday",
       image: "village-art/shore-calm.jpg?v=20261006n",
       alt: "Small nets rest on the rocks beside clear water.",
-      paragraphs: ["They lift their net so you can see how small it is."],
-      speaker: "A person on the rocks says",
+      paragraphs: function () { return [rockName() + " lifts the net so you can see how small it is."]; },
+      speaker: rockSays,
       say: "mer_net",
       face: "net",
       learn: "tue-net",
@@ -350,9 +399,9 @@
     fish_hi: {
       day: "Tuesday",
       image: "village-art/shore-calm.jpg?v=20261006n",
-      alt: "A fisher in a long coat stands with the others.",
-      paragraphs: ["He has been talking with them already. He includes you without a fuss."],
-      speaker: "A fisher says",
+      alt: function () { return fisherName() + " stands with the others."; },
+      paragraphs: function () { return [fisherName() + " has been talking with " + rockName() + " already. He includes you without a fuss."]; },
+      speaker: fisherSays,
       say: "fish_here",
       choices: [
         { say: "ask_waters", next: "fish_there" },
@@ -363,9 +412,9 @@
     fish_there: {
       day: "Tuesday",
       image: "village-art/shore-calm.jpg?v=20261006n",
-      alt: "The fisher looks toward distant water.",
-      paragraphs: ["He means a shore you cannot see from here."],
-      speaker: "A fisher says",
+      alt: function () { return fisherName() + " looks toward distant water."; },
+      paragraphs: function () { return [fisherName() + " means a shore you cannot see from here."]; },
+      speaker: fisherSays,
       say: "fish_there",
       face: "heavy",
       learn: "tue-fish",
@@ -378,8 +427,8 @@
       day: "Tuesday",
       image: "village-art/shore-calm.jpg?v=20261006n",
       alt: "Clear water beside the rocks.",
-      paragraphs: ["He watches the cove, easy about it."],
-      speaker: "A fisher says",
+      paragraphs: function () { return [fisherName() + " watches the cove, easy about it."]; },
+      speaker: fisherSays,
       say: "fish_water",
       face: "easy",
       choices: [
@@ -389,9 +438,9 @@
     tue_return: {
       day: "Tuesday",
       image: "village-art/elder.jpg?v=20261006b",
-      alt: "The elder nods at the cottage gate.",
+      alt: "Elvora nods at the cottage gate.",
       paragraphs: function () { return reportIntro("tue"); },
-      speaker: "The elder says",
+      speaker: "Elvora says",
       say: "report_ask",
       report: "tue",
       choices: []
@@ -399,9 +448,9 @@
     tue_said: {
       day: "Tuesday",
       image: "village-art/elder.jpg?v=20261006b",
-      alt: "The elder answers at the cottage gate.",
+      alt: "Elvora answers at the cottage gate.",
       paragraphs: function () { return reportTaken("tue"); },
-      speaker: "The elder says",
+      speaker: "Elvora says",
       pick: function () { return reportSay("tue"); },
       face: "heard",
       notesDay: "tue",
@@ -410,11 +459,11 @@
     wed_home: {
       day: "Wednesday",
       image: "village-art/elder.jpg?v=20261006b",
-      alt: "The elder at the gate on a quieter morning.",
+      alt: "Elvora at the gate on a quieter morning.",
       paragraphs: function () {
-        return [morningEcho("tue"), "{Sub} is at the gate."];
+        return [morningEcho("tue"), "Elvora is at the gate."];
       },
-      speaker: "The elder says",
+      speaker: "Elvora says",
       pick: function () {
         return state.reports.tue && state.reports.tue !== "none" ? "wed_open_yes" : "wed_open_no";
       },
@@ -428,7 +477,7 @@
       choices: [
         { say: "ch_hi_shop", next: "shop_hi" },
         { say: "ch_hi_pair", next: "pair_hi" },
-        { label: "Back to the elder.", next: "wed_return" }
+        { label: "Back to Elvora.", next: "wed_return" }
       ]
     },
     shop_hi: {
@@ -486,9 +535,9 @@
     wed_return: {
       day: "Wednesday",
       image: "village-art/elder.jpg?v=20261006b",
-      alt: "The elder at the gate.",
+      alt: "Elvora at the gate.",
       paragraphs: function () { return reportIntro("wed"); },
-      speaker: "The elder says",
+      speaker: "Elvora says",
       say: "report_ask",
       report: "wed",
       choices: []
@@ -496,9 +545,9 @@
     wed_said: {
       day: "Wednesday",
       image: "village-art/elder.jpg?v=20261006b",
-      alt: "The elder answers at the gate.",
+      alt: "Elvora answers at the gate.",
       paragraphs: function () { return reportTaken("wed"); },
-      speaker: "The elder says",
+      speaker: "Elvora says",
       pick: function () { return reportSay("wed"); },
       face: "heard",
       notesDay: "wed",
@@ -507,11 +556,11 @@
     thu_home: {
       day: "Thursday",
       image: "village-art/elder.jpg?v=20261006b",
-      alt: "The elder stays by the cottages while the lane leads away.",
+      alt: "Elvora stays by the cottages while the lane leads away.",
       paragraphs: function () {
-        return [morningEcho("wed"), "{Sub} stays by the houses. You walk the last of the lane alone."];
+        return [morningEcho("wed"), "Elvora stays by the houses. You walk the last of the lane alone."];
       },
-      speaker: "The elder says",
+      speaker: "Elvora says",
       say: "thu_home",
       choices: [{ label: "Go to the station.", next: "thu_station" }]
     },
@@ -564,40 +613,44 @@
     scarf_bye: {
       day: "Monday",
       image: "village-art/street-together.jpg?v=20261006n",
-      alt: "A neighbor in a headscarf answers the goodbye.",
-      paragraphs: ["She says it back before you step off the lane."],
-      speaker: "A neighbor in a headscarf says",
+      alt: function () { return womanName() + " answers the goodbye."; },
+      paragraphs: [],
+      speaker: womanSays,
       say: "bye_back",
+      after: ["You step off the lane."],
       face: "bye",
       choices: [{ label: "Step back to the street.", next: "mon_street" }]
     },
     friend_bye: {
       day: "Monday",
       image: "village-art/street-together.jpg?v=20261006n",
-      alt: "The neighbor answers the goodbye.",
-      paragraphs: ["He says it back before you step off the lane."],
-      speaker: "Her neighbor says",
+      alt: function () { return manName() + " answers the goodbye."; },
+      paragraphs: [],
+      speaker: manSays,
       say: "bye_back",
+      after: ["You step off the lane."],
       face: "bye",
       choices: [{ label: "Step back to the street.", next: "mon_street" }]
     },
     mer_bye: {
       day: "Tuesday",
       image: "village-art/shore-calm.jpg?v=20261006n",
-      alt: "The person on the rocks answers the goodbye.",
-      paragraphs: ["They say it back before you leave the rocks."],
-      speaker: "A person on the rocks says",
+      alt: function () { return rockName() + " answers the goodbye."; },
+      paragraphs: [],
+      speaker: rockSays,
       say: "bye_back",
+      after: ["You leave the rocks."],
       face: "bye",
       choices: [{ label: "Step back from the rocks.", next: "tue_shore" }]
     },
     fish_bye: {
       day: "Tuesday",
       image: "village-art/shore-calm.jpg?v=20261006n",
-      alt: "The fisher answers the goodbye.",
-      paragraphs: ["He says it back before you leave the rocks."],
-      speaker: "A fisher says",
+      alt: function () { return fisherName() + " answers the goodbye."; },
+      paragraphs: [],
+      speaker: fisherSays,
       say: "bye_back",
+      after: ["You leave the rocks."],
       face: "bye",
       choices: [{ label: "Step back from the rocks.", next: "tue_shore" }]
     },
@@ -654,11 +707,11 @@
 
 
   var NOTES = {
-    "mon-walk": "She stays with her neighbors on this street, and it is bad there.",
-    "mon-letter": "He stays with her on this street, and they are not here.",
-    "tue-cove": "They are at this water, and the water is bad there.",
-    "tue-net": "The net in their hands is small.",
-    "tue-fish": "He is fishing here with the others, and there they do not fish.",
+    "mon-walk": function () { return womanName() + " stays with her neighbors on this street, and it is bad there."; },
+    "mon-letter": function () { return manName() + " stays with " + womanName() + " on this street, and they are not here."; },
+    "tue-cove": function () { return rockName() + " is at this water, and the water is bad there."; },
+    "tue-net": function () { return "The net in " + rockName() + "'s hands is small."; },
+    "tue-fish": function () { return fisherName() + " is fishing here with the others, and there they do not fish."; },
     "wed-door": "His door is open, and there the door is shut.",
     "wed-pair": "They come in together, and there they do not."
   };
@@ -682,9 +735,15 @@
     if (state.notes[day].indexOf(id) === -1) state.notes[day].push(id);
   }
 
+  function noteText(id) {
+    var text = NOTES[id];
+    if (typeof text === "function") text = text();
+    return text || "";
+  }
+
   function heardSentence(day) {
     return learned(day).map(function (id) {
-      return NOTES[id] || "";
+      return noteText(id);
     }).filter(Boolean).join(" ");
   }
 
@@ -724,7 +783,7 @@
   function reportIntro(day) {
     if (!learned(day).length) return ["You are back at the gate. There is nothing from today to tell yet."];
     return [
-      "{Sub} is at the gate.",
+      "Elvora is at the gate.",
       "You tell the day in your own words."
     ];
   }
@@ -738,9 +797,9 @@
   function reportTaken(day) {
     var id = state.reports[day];
     if (id && id === rightReport(day)) {
-      return ["{Sub} nods. The day you brought is enough to sit with."];
+      return ["Elvora nods. The day you brought is enough to sit with."];
     }
-    return ["{Sub} is quiet a moment. From the life {sub} has lived, a day like this often keeps a little more than the first telling."];
+    return ["Elvora is quiet a moment. From the life she has lived, a day like this often keeps a little more than the first telling."];
   }
 
   function afterReport(day, next) {
@@ -763,10 +822,10 @@
   function morningEcho(day) {
     var id = state.reports[day];
     if (!id) return "The morning is quiet at the gate.";
-    if (id === "none") return "Yesterday stayed where you left it. {Sub} does not press.";
+    if (id === "none") return "Yesterday stayed where you left it. Elvora does not press.";
     var pack = reportPack(day);
-    if (pack && id === pack.right) return "{Sub} still carries yesterday, quietly.";
-    return "{Sub} still has the sense that yesterday kept a little back.";
+    if (pack && id === pack.right) return "Elvora still carries yesterday, quietly.";
+    return "Elvora still has the sense that yesterday kept a little back.";
   }
 
   var dayEl = document.getElementById("day");
@@ -1663,7 +1722,7 @@
     }
     ids.forEach(function (id) {
       var item = document.createElement("li");
-      item.textContent = NOTES[id] || "";
+      item.textContent = noteText(id);
       noteListEl.appendChild(item);
     });
   }
@@ -1675,7 +1734,7 @@
     pictureEl.removeAttribute("src");
     pictureEl.alt = "";
     proseEl.replaceChildren();
-    ["You already live here, next to the elder.", "The elder is the same as you."].forEach(function (text) {
+    ["You already live here, next to Elvora.", "Elvora is the same as you."].forEach(function (text) {
       var p = document.createElement("p");
       p.textContent = text;
       proseEl.appendChild(p);
@@ -1723,13 +1782,24 @@
     var sayId = scene.pick ? scene.pick() : scene.say;
     if (scene.report && !learned(scene.report).length) sayId = "";
     if (sayId) {
-      if (scene.speaker) {
+      var speaker = scene.speaker;
+      if (typeof speaker === "function") speaker = speaker();
+      if (speaker) {
         var who = document.createElement("p");
         who.className = "speaker";
-        who.textContent = scene.speaker;
+        who.textContent = speaker;
         proseEl.appendChild(who);
       }
       addWords(proseEl, lineTokens(sayId));
+    }
+    var tail = scene.after;
+    if (typeof tail === "function") tail = tail();
+    if (tail && tail.length) {
+      tail.forEach(function (text) {
+        var p = document.createElement("p");
+        p.textContent = fill(text);
+        proseEl.appendChild(p);
+      });
     }
     var list = typeof scene.choices === "function" ? scene.choices() : scene.choices;
     if (scene.report && !state.reports[scene.report]) list = choicesFor(scene.report);
