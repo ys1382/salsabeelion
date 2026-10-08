@@ -77,7 +77,15 @@
         trav_how: line("Viven aparte.", "They live apart."),
         ch_stayq: line("¿Te quedas?", "Are you staying?"),
         trav_stay: line("No me quedo.", "I am not staying."),
-        ch_tomorrow: line("Hasta mañana.", "See you tomorrow.")
+        ch_tomorrow: line("Hasta mañana.", "See you tomorrow."),
+        ch_garden: line("Me gusta este jardín.", "I like this garden."),
+        ch_tends: line("Alguien pasa tiempo aquí.", "Someone spends time here."),
+        ch_cart: line("El carro está aquí.", "The cart is here."),
+        ch_brother: line("¿Tu hermano está en él?", "Is your brother on it?"),
+        eyes_mon: line("Es maravilloso.", "It is wonderful.", "El aire está muy claro.", "The air is so clear.", "Mejor que Bozkale.", "Better than Bozkale.", "De noche queman el carbón barato en las calles de abajo.", "After dark they burn the cheap coal in the lower streets.", "La loma cerró las puertas para dejar ese aire fuera.", "The ridge shut the gates to keep that air out.", "Mi hermano sigue del lado del carbón.", "My brother is still on the coal side."),
+        eyes_tue: line("Las rojas son tsubaki.", "The red ones are tsubaki.", "Las cultivamos junto a la puerta en Kirioka.", "We grow them by the gate in Kirioka.", "Se abren en el frío, aunque el camino esté vacío.", "They open in the cold, even when the walk is empty."),
+        eyes_office: line("En casa tengo un camino lleno de ellas.", "I have a whole walk of them at home.", "No salimos de la oficina hasta el último tren.", "We do not leave the office until the last train.", "Solo veo las flores con la lámpara del porche.", "I only meet the flowers by the porch lamp.", "Algunas noches esa lámpara ya está apagada.", "Some nights that lamp is already out."),
+        eyes_wed: line("El carro está aquí.", "The cart is here.", "Mi hermano no está en él.", "My brother is not on it.", "El fuego está en las calles de Jarales.", "The fire is in the streets of Jarales.", "Una línea soltó chispas sobre los pinos del molino y bajó a las casas.", "A line sparked over the mill pines and it came down into the houses.", "Mis padres siguen en la suya.", "My parents are still in theirs.", "El camino de la loma está cerrado.", "The ridge road is shut.")
       },
       ar: {
         mon_home: line("صباح الخير.", "Good morning."),
@@ -137,7 +145,15 @@
         trav_how: line("يعيشون منفصلين.", "They live apart."),
         ch_stayq: line("هل تبقى؟", "Are you staying?"),
         trav_stay: line("أنا لا أبقى.", "I am not staying."),
-        ch_tomorrow: line("أراك غدا.", "See you tomorrow.")
+        ch_tomorrow: line("أراك غدا.", "See you tomorrow."),
+        ch_garden: line("يعجبني هذا البستان.", "I like this garden."),
+        ch_tends: line("شخص ما يقضي وقتا هنا.", "Someone spends time here."),
+        ch_cart: line("العربة هنا.", "The cart is here."),
+        ch_brother: line("هل أخوك عليها؟", "Is your brother on it?"),
+        eyes_mon: line("إنه رائع.", "It is wonderful.", "الهواء صاف جدا.", "The air is so clear.", "أفضل من Bozkale.", "Better than Bozkale.", "بعد الظلام يحرقون الفحم الرخيص في الشوارع السفلى.", "After dark they burn the cheap coal in the lower streets.", "التلة أغلقت الأبواب لتبقي ذلك الهواء خارجا.", "The ridge shut the gates to keep that air out.", "أخي ما زال في جهة الفحم.", "My brother is still on the coal side."),
+        eyes_tue: line("الحمراء هي tsubaki.", "The red ones are tsubaki.", "نزرعها عند البوابة في Kirioka.", "We grow them by the gate in Kirioka.", "تفتح في البرد، حتى حين يكون الممر فارغا.", "They open in the cold, even when the walk is empty."),
+        eyes_office: line("عندي ممر كامل منها في البيت.", "I have a whole walk of them at home.", "لا نترك المكتب حتى آخر قطار.", "We do not leave the office until the last train.", "لا أرى الأزهار إلا عند مصباح الشرفة.", "I only meet the flowers by the porch lamp.", "بعض الليالي يكون ذلك المصباح مطفأ.", "Some nights that lamp is already out."),
+        eyes_wed: line("العربة هنا.", "The cart is here.", "أخي ليس عليها.", "My brother is not on it.", "النار في شوارع Jarales.", "The fire is in the streets of Jarales.", "شرارة من خط فوق صنوبر المطحنة ونزلت إلى البيوت.", "A line sparked over the mill pines and it came down into the houses.", "والداي ما زالا في بيتهما.", "My parents are still in theirs.", "طريق التلة مغلق.", "The ridge road is shut.")
       },
       ga: {
         mon_home: line("Maidin mhaith.", "Good morning."),
@@ -197,7 +213,15 @@
         trav_how: line("Maireann siad scartha.", "They live apart."),
         ch_stayq: line("An bhfanfaidh tú?", "Are you staying?"),
         trav_stay: line("Ní fhanfaidh mé.", "I am not staying."),
-        ch_tomorrow: line("Feicfidh mé thú amárach.", "See you tomorrow.")
+        ch_tomorrow: line("Feicfidh mé thú amárach.", "See you tomorrow."),
+        ch_garden: line("Is maith liom an gairdín seo.", "I like this garden."),
+        ch_tends: line("Caitheann duine éigin am anseo.", "Someone spends time here."),
+        ch_cart: line("Tá an cart anseo.", "The cart is here."),
+        ch_brother: line("An bhfuil do dheartháir air?", "Is your brother on it?"),
+        eyes_mon: line("Is iontach é.", "It is wonderful.", "Tá an t-aer chomh soiléir.", "The air is so clear.", "Níos fearr ná Bozkale.", "Better than Bozkale.", "Tar éis dorcha dóitear an gual saor sna sráideanna íochtaracha.", "After dark they burn the cheap coal in the lower streets.", "Dhún an t-iomair na geataí leis an aer sin a choinneáil amuigh.", "The ridge shut the gates to keep that air out.", "Tá mo dheartháir fós ar thaobh an ghuail.", "My brother is still on the coal side."),
+        eyes_tue: line("Is tsubaki iad na cinn dearga.", "The red ones are tsubaki.", "Fásaimid iad ag an ngeata i Kirioka.", "We grow them by the gate in Kirioka.", "Osclaíonn siad sa fuacht, fiú nuair atá an cosán folamh.", "They open in the cold, even when the walk is empty."),
+        eyes_office: line("Tá siúlóid iomlán díobh agam sa bhaile.", "I have a whole walk of them at home.", "Ní fhágaimid an oifig go dtí an traein dheireanach.", "We do not leave the office until the last train.", "Ní chasaim ar na bláthanna ach ag lampa an phóirse.", "I only meet the flowers by the porch lamp.", "Bíonn an lampa sin múchta cheana féin roinnt oícheanta.", "Some nights that lamp is already out."),
+        eyes_wed: line("Tá an cart anseo.", "The cart is here.", "Níl mo dheartháir air.", "My brother is not on it.", "Tá an tine i sráideanna Jarales.", "The fire is in the streets of Jarales.", "Spréach líne os cionn péine an mhuilinn agus tháinig sí anuas ar na tithe.", "A line sparked over the mill pines and it came down into the houses.", "Tá mo thuismitheoirí fós sa teach s'acu.", "My parents are still in theirs.", "Tá bóthar an iomaire dúnta.", "The ridge road is shut.")
       },
       ja: {
         mon_home: line("おはよう。", "Good morning."),
@@ -257,7 +281,15 @@
         trav_how: line("離れて 暮らしてる。", "They live apart."),
         ch_stayq: line("残る？", "Are you staying?"),
         trav_stay: line("残らない。", "I am not staying."),
-        ch_tomorrow: line("また あした。", "See you tomorrow.")
+        ch_tomorrow: line("また あした。", "See you tomorrow."),
+        ch_garden: line("この 庭 が 好き。", "I like this garden."),
+        ch_tends: line("誰か が ここで 時間 を 使う。", "Someone spends time here."),
+        ch_cart: line("荷車 が ここ に ある。", "The cart is here."),
+        ch_brother: line("弟 は 乗ってる？", "Is your brother on it?"),
+        eyes_mon: line("すばらしい です。", "It is wonderful.", "空気 は とても きれい です。", "The air is so clear.", "Bozkale より いい です。", "Better than Bozkale.", "夜 に 下 の 町 で 安い 石炭 を 焚きます。", "After dark they burn the cheap coal in the lower streets.", "尾根 は 門 を 閉めて その 空気 を 入れません。", "The ridge shut the gates to keep that air out.", "弟 は まだ 石炭 の 側 に います。", "My brother is still on the coal side."),
+        eyes_tue: line("赤い のは tsubaki です。", "The red ones are tsubaki.", "Kirioka の 門 の そば で 育てます。", "We grow them by the gate in Kirioka.", "寒くても 咲きます。 道 が 空でも。", "They open in the cold, even when the walk is empty."),
+        eyes_office: line("家 には 一通り あります。", "I have a whole walk of them at home.", "終電 まで 事務所 を 出ません。", "We do not leave the office until the last train.", "花 に 会う のは 玄関 の 灯り だけ。", "I only meet the flowers by the porch lamp.", "その 灯り が もう 消えている 夜 も あります。", "Some nights that lamp is already out."),
+        eyes_wed: line("荷車 は ここ に あります。", "The cart is here.", "弟 は 乗っていません。", "My brother is not on it.", "火事 は Jarales の 道 に あります。", "The fire is in the streets of Jarales.", "線 が 工場 の 松 の 上 で 火花 を 散らし、 家 まで 下りました。", "A line sparked over the mill pines and it came down into the houses.", "両親 は まだ その 家 に います。", "My parents are still in theirs.", "尾根 の 道 は 閉めて あります。", "The ridge road is shut.")
       },
       tr: {
         mon_home: line("Günaydın.", "Good morning."),
@@ -317,7 +349,15 @@
         trav_how: line("Ayrı yaşıyorlar.", "They live apart."),
         ch_stayq: line("Kalıyor musun?", "Are you staying?"),
         trav_stay: line("Kalmıyorum.", "I am not staying."),
-        ch_tomorrow: line("Yarın görüşürüz.", "See you tomorrow.")
+        ch_tomorrow: line("Yarın görüşürüz.", "See you tomorrow."),
+        ch_garden: line("Bu bahçeyi seviyorum.", "I like this garden."),
+        ch_tends: line("Birisi burada vakit geçiriyor.", "Someone spends time here."),
+        ch_cart: line("Araba burada.", "The cart is here."),
+        ch_brother: line("Kardeşin üstünde mi?", "Is your brother on it?"),
+        eyes_mon: line("Harika.", "It is wonderful.", "Hava çok açık.", "The air is so clear.", "Bozkale'den iyi.", "Better than Bozkale.", "Karanlıktan sonra aşağı sokaklarda ucuz kömür yakıyorlar.", "After dark they burn the cheap coal in the lower streets.", "Sırt, o havayı dışarıda tutmak için kapıları kapattı.", "The ridge shut the gates to keep that air out.", "Kardeşim hâlâ kömür tarafında.", "My brother is still on the coal side."),
+        eyes_tue: line("Kırmızılar tsubaki.", "The red ones are tsubaki.", "Onları Kirioka'da kapının yanında yetiştiririz.", "We grow them by the gate in Kirioka.", "Soğukta açarlar, yol boşken bile.", "They open in the cold, even when the walk is empty."),
+        eyes_office: line("Evde onlardan upuzun bir yol var.", "I have a whole walk of them at home.", "Son trene kadar ofisten çıkmayız.", "We do not leave the office until the last train.", "Çiçekleri ancak veranda lambasının yanında görürüm.", "I only meet the flowers by the porch lamp.", "Bazı geceler o lamba çoktan sönmüştür.", "Some nights that lamp is already out."),
+        eyes_wed: line("Araba burada.", "The cart is here.", "Kardeşim üstünde değil.", "My brother is not on it.", "Yangın Jarales sokaklarında.", "The fire is in the streets of Jarales.", "Değirmen çamlarının üstündeki hat kıvılcım saçtı ve evlere indi.", "A line sparked over the mill pines and it came down into the houses.", "Annemle babam hâlâ kendi evlerinde.", "My parents are still in theirs.", "Sırt yolu kapalı.", "The ridge road is shut.")
       }
     };
   window.VILLAGE_GLOSS = {

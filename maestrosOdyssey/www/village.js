@@ -193,6 +193,20 @@
         return list;
       }
     },
+    mon_eyes: {
+      day: "Monday",
+      picture: function () { return womanPicture("eyes-mon"); },
+      alt: function () { return womanName() + " on the lane. Her eyes hold a smoky street, a shut gate, and her brother."; },
+      paragraphs: [],
+      speaker: womanSays,
+      say: "eyes_mon",
+      learn: "mon-elif",
+      eyes: "mon",
+      choices: function () {
+        var next = state.afterEyes || "mon_street";
+        return [{ label: "Back to the street.", next: next, doneEyes: true }];
+      }
+    },
     scarf_hi: {
       day: "Monday",
       image: "village-art/street-together.jpg?v=20261006n",
@@ -332,7 +346,40 @@
       pick: function () {
         return state.reports.mon && state.reports.mon !== "none" ? "tue_open_yes" : "tue_open_no";
       },
-      choices: [{ label: "Go to the shore.", next: "tue_shore" }]
+      choices: [
+        { label: "Go to the garden.", next: "tue_meet" },
+        { label: "Go to the shore.", next: "tue_shore" }
+      ]
+    },
+    tue_meet: {
+      day: "Tuesday",
+      picture: function () { return womanPicture("scarf"); },
+      alt: function () { return womanName() + " is in the garden."; },
+      paragraphs: function () { return [womanName() + " is in the garden."]; },
+      choices: [
+        { say: "ch_garden", next: "hana_flowers" },
+        { say: "ch_tends", next: "hana_flowers" }
+      ]
+    },
+    hana_flowers: {
+      day: "Tuesday",
+      picture: function () { return womanPicture("eyes-tue"); },
+      alt: function () { return womanName() + " in the garden. Her eyes hold a gate, a path, and red camellias."; },
+      paragraphs: [],
+      speaker: womanSays,
+      say: "eyes_tue",
+      learn: "tue-flowers",
+      choices: [{ label: "Stay with her.", next: "hana_office" }]
+    },
+    hana_office: {
+      day: "Tuesday",
+      picture: function () { return womanPicture("eyes-office"); },
+      alt: function () { return womanName() + " in the same garden. Her eyes hold a lit office and a last train."; },
+      paragraphs: [],
+      speaker: womanSays,
+      say: "eyes_office",
+      learn: "tue-office",
+      choices: [{ label: "Back to Elvora.", next: "tue_return" }]
     },
     tue_shore: {
       day: "Tuesday",
@@ -340,6 +387,7 @@
       alt: function () { return look().shoreAlt; },
       paragraphs: function () { return look().shore; },
       choices: [
+        { label: "Go to the garden.", next: "tue_meet" },
         { say: "ch_hi_mer", next: "mer_hi" },
         { say: "ch_hi_fish", next: "fish_hi" },
         { label: "Back to Elvora.", next: "tue_return" }
@@ -457,7 +505,30 @@
       pick: function () {
         return state.reports.tue && state.reports.tue !== "none" ? "wed_open_yes" : "wed_open_no";
       },
-      choices: [{ label: "Go to the shop.", next: "wed_porch" }]
+      choices: [
+        { label: "Go to the lane.", next: "wed_meet" },
+        { label: "Go to the shop.", next: "wed_porch" }
+      ]
+    },
+    wed_meet: {
+      day: "Wednesday",
+      picture: function () { return womanPicture("scarf"); },
+      alt: function () { return womanName() + " stands by a cart. One seat is empty."; },
+      paragraphs: function () { return [womanName() + " is by the cart. One seat is empty."]; },
+      choices: [
+        { say: "ch_cart", next: "wed_eyes" },
+        { say: "ch_brother", next: "wed_eyes" }
+      ]
+    },
+    wed_eyes: {
+      day: "Wednesday",
+      picture: function () { return womanPicture("eyes-wed"); },
+      alt: function () { return womanName() + " by the cart. Her eyes hold a suburb and fire in the streets."; },
+      paragraphs: [],
+      speaker: womanSays,
+      say: "eyes_wed",
+      learn: "wed-lucia",
+      choices: [{ label: "Back to Elvora.", next: "wed_return" }]
     },
     wed_porch: {
       day: "Wednesday",
@@ -465,6 +536,7 @@
       alt: function () { return look().shopAlt; },
       paragraphs: function () { return look().shop; },
       choices: [
+        { label: "The cart is here.", next: "wed_meet" },
         { say: "ch_hi_shop", next: "shop_hi" },
         { say: "ch_hi_pair", next: "pair_hi" },
         { label: "Back to Elvora.", next: "wed_return" }
@@ -697,11 +769,15 @@
 
 
   var NOTES = {
+    "mon-elif": function () { return womanName() + " is here in clear air. In Bozkale, after dark, they burn cheap coal in the lower streets. The ridge shut the gates, and her brother is still on the coal side."; },
     "mon-walk": function () { return womanName() + " stays with her neighbors on this street, and it is bad there."; },
     "mon-letter": function () { return manName() + " stays with " + womanName() + " on this street, and they are not here."; },
+    "tue-flowers": function () { return womanName() + " tends red tsubaki here. In Kirioka they grow them by the gate, and they open in the cold even when the walk is empty."; },
+    "tue-office": function () { return "At home " + womanName() + " does not leave the office until the last train. She only meets the flowers by the porch lamp, and some nights that lamp is already out."; },
     "tue-cove": function () { return rockName() + " is at this water, and the water is bad there."; },
     "tue-net": function () { return "The net in " + rockName() + "'s hands is small."; },
     "tue-fish": function () { return fisherName() + " is fishing here with the others, and there they do not fish."; },
+    "wed-lucia": function () { return "The cart is here and " + womanName() + "’s brother is not on it. The fire is in the streets of Jarales. A line sparked over the mill pines and came down into the houses. Her parents are still in theirs. The ridge road is shut."; },
     "wed-door": "His door is open, and there the door is shut.",
     "wed-pair": "They come in together, and there they do not."
   };
@@ -841,7 +917,7 @@
   var speakGen = 0;
   var practiceGen = 0;
   var activeRec = null;
-  var WORD_GAP_MS = 900;
+  var WORD_GAP_MS = 300;
   var bannerEl = document.createElement("div");
   bannerEl.className = "listen-banner";
   bannerEl.hidden = true;
@@ -1632,6 +1708,10 @@
     return "village-art/" + (langPack().id || "es") + "/" + name + ".jpg?v=20261007q";
   }
 
+  function womanPicture(name) {
+    return "village-art/" + (langPack().id || "es") + "/" + name + ".jpg?v=20261008c";
+  }
+
   function pictureCandidates(id, scene) {
     var urls = [];
     var base = talkBase(id, scene);
@@ -1647,6 +1727,12 @@
   }
 
   function showPicture(id, scene) {
+    var pic = scene && scene.picture;
+    if (typeof pic === "function") pic = pic();
+    if (pic) {
+      pictureEl.src = pic;
+      return;
+    }
     var urls = pictureCandidates(id, scene);
     var i = 0;
     function tryNext() {
@@ -1755,6 +1841,7 @@
     state.scene = id;
     var scene = scenes[id];
     if (scene.mark) state.flags[scene.mark] = true;
+    if (scene.eyes) state.flags["eyes" + scene.eyes] = true;
     if (scene.learn) addLearn(scene.learn);
     writeSave();
     dayEl.textContent = scene.day + " · " + VILLAGE_NAME + " · " + langPack().name;
@@ -1805,6 +1892,14 @@
         else if (state.scene.indexOf("pair_") === 0) byeId = "pair_bye";
         choice.next = byeId;
       }
+      if (!state.flags.eyesmon && state.scene.indexOf("scarf_") === 0) {
+        var leaveHer = choice.next === "scarf_bye" || choice.next === "mon_street" || choice.next === "scarf_there";
+        if (leaveHer) {
+          state.afterEyes = choice.next === "scarf_there" ? "mon_street" : choice.next;
+          choice.next = "mon_eyes";
+        }
+      }
+      if (choice.doneEyes) state.afterEyes = "";
       if (choice.nextLang) {
         var total = (window.VILLAGE_LANGS || []).length || 1;
         state.langIndex = ((state.langIndex || 0) + 1) % total;
