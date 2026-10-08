@@ -6,24 +6,22 @@
   var LOOKS = {
     es: {
       home: function () {
-        return state.gender === "boy"
-          ? "Both houses are limewashed, with clay tile roofs. His clothes are the plain daily ones men wear in this town."
-          : "Both houses are limewashed, with clay tile roofs. A rebozo covers her hair.";
+        return "Both houses are limewashed, with clay tile roofs.";
       },
       homeAlt: "Elvora talks with a young person between two limewashed houses.",
       street: [
         "The street is one street. Limewashed houses, clay tile roofs, and a small café with a cloth awning run the whole way, and people use them together.",
-        "Most of the people here are from this town. Women wear rebozos over their hair, and the men with them wear the town’s everyday clothes. They carry groceries and talk easily. A blue-green visitor walks with them, only passing through."
+        "Neighbors come along with the groceries, talking as they go. A blue-green visitor walks with them, only passing through."
       ],
-      streetAlt: "Townspeople in rebozos walk a limewashed street, with one blue-green visitor among them.",
+      streetAlt: "Neighbors carry groceries down a limewashed street, talking, with one blue-green visitor among them.",
       shore: [
-        "The cove is quiet. Most of the people on the rocks are from this town, in work clothes, with rebozos on the women, and the nets in their hands are small. The water is clear."
+        "The cove is quiet. People stand on the rocks with small nets, talking while a boat waits on the clear water."
       ],
-      shoreAlt: "Local fishers stand on calm rocks with small nets.",
+      shoreAlt: "People stand on calm rocks with small nets, a boat waiting offshore.",
       shop: [
-        "The café door is open. Limewashed walls and a cloth awning shade the step. The shopkeeper waves people in as they arrive together. Most of them are from this town, rebozos and everyday clothes passing the threshold. A visitor comes in with them. Nobody is turned away."
+        "The café door is open. Limewashed walls and a cloth awning shade the step. The shopkeeper waves from the doorway while neighbors gather with baskets. A visitor comes in with them. Nobody is turned away."
       ],
-      shopAlt: "A shopkeeper waves townspeople in rebozos into an open café.",
+      shopAlt: "A shopkeeper waves neighbors with baskets into an open café.",
       station: [
         "The platform is quiet. The little station matches the limewashed houses, and a short train waits on the track. This is the way toward the towns people have been telling you about.",
         "A traveler with a small bag stands on the boards, already looking back toward the village."
@@ -32,24 +30,22 @@
     },
     ar: {
       home: function () {
-        return state.gender === "boy"
-          ? "Both houses are pale stone, with arched doors. His clothes are the plain daily ones men wear in this town."
-          : "Both houses are pale stone, with arched doors. A hijab covers her hair and neck.";
+        return "Both houses are pale stone, with arched doors.";
       },
       homeAlt: "Elvora talks with a young person between two stone houses.",
       street: [
         "The street is one street. Pale stone houses with arched doors, and a courtyard café, run the whole way, and people use them together.",
-        "Most of the people here are from this town. The women are hijabis, in long modest coats, and the men with them wear the town’s everyday clothes. They carry groceries and talk easily. A blue-green visitor walks with them, only passing through."
+        "Neighbors come along with baskets of groceries, talking as they go. A blue-green visitor walks with them, only passing through."
       ],
-      streetAlt: "Hijabis and men in everyday clothes walk a stone street, with one blue-green visitor among them.",
+      streetAlt: "Neighbors carry baskets down a stone street, talking, with one blue-green visitor among them.",
       shore: [
-        "The cove is quiet. Most of the people on the rocks are from this town, in work clothes, hijabs on the women, and the nets in their hands are small. The water is clear."
+        "The cove is quiet. People stand in the shallows with small nets, talking beside a boat on the clear water."
       ],
-      shoreAlt: "Local fishers stand on calm rocks with small nets. The women wear hijabs.",
+      shoreAlt: "People stand in calm shallows with small nets, a boat beside them.",
       shop: [
-        "The café door is open. Stone arches shade the step. The shopkeeper waves people in as they arrive together. Most of them are from this town, hijabis in long coats passing the threshold. A visitor comes in with them. Nobody is turned away."
+        "The café door is open. Stone arches shade the step. The shopkeeper waves from the doorway as neighbors come across the courtyard, a child among them. A visitor comes in with them. Nobody is turned away."
       ],
-      shopAlt: "A shopkeeper waves hijabis into an open courtyard café.",
+      shopAlt: "A shopkeeper waves neighbors across a courtyard café, a child with them.",
       station: [
         "The platform is quiet. The little station is pale stone, like the houses, and a short train waits on the track. This is the way toward the towns people have been telling you about.",
         "A traveler with a small bag stands on the boards, already looking back toward the village."
@@ -58,24 +54,22 @@
     },
     ga: {
       home: function () {
-        return state.gender === "boy"
-          ? "Both houses are whitewashed, with stone walls. His clothes are the plain daily ones men wear in this town."
-          : "Both houses are whitewashed, with stone walls. A wool shawl covers her hair.";
+        return "Both houses are whitewashed, with stone walls.";
       },
       homeAlt: "Elvora talks with a young person between two whitewashed cottages.",
       street: [
         "The street is one street. Whitewashed cottages, stone walls, and a small tea shop run the whole way, and people use them together.",
-        "Most of the people here are from this town. Women wear wool shawls over their hair, and the men with them wear the town’s everyday clothes. They carry groceries and talk easily. A blue-green visitor walks with them, only passing through."
+        "Neighbors come along the lane with the groceries, talking as they go. A blue-green visitor walks with them, only passing through."
       ],
-      streetAlt: "Townspeople in wool shawls walk a whitewashed lane, with one blue-green visitor among them.",
+      streetAlt: "Neighbors carry groceries along a whitewashed lane, talking, with one blue-green visitor among them.",
       shore: [
-        "The cove is quiet. Most of the people on the rocks are from this town, in work clothes, with wool shawls on the women, and the nets in their hands are small. The water is clear."
+        "The cove is quiet. People stand along the rocks with small nets, looking out over the clear water."
       ],
-      shoreAlt: "Local fishers in shawls stand on calm rocks with small nets.",
+      shoreAlt: "People stand on calm rocks with small nets, looking out over the water.",
       shop: [
-        "The tea shop door is open. Whitewashed walls shade the step. The shopkeeper waves people in as they arrive together. Most of them are from this town, wool shawls and everyday clothes passing the threshold. A visitor comes in with them. Nobody is turned away."
+        "The tea shop door is open. Whitewashed walls shade the step. The shopkeeper waves neighbors in as they come up the path. A visitor comes in with them. Nobody is turned away."
       ],
-      shopAlt: "A shopkeeper waves townspeople in wool shawls into an open tea shop.",
+      shopAlt: "A shopkeeper waves neighbors in from the path at an open tea shop.",
       station: [
         "The platform is quiet. The little station is whitewashed, like the cottages, and a short train waits on the track. This is the way toward the towns people have been telling you about.",
         "A traveler with a small bag stands on the boards, already looking back toward the village."
@@ -84,24 +78,22 @@
     },
     ja: {
       home: function () {
-        return state.gender === "boy"
-          ? "Both houses are wood, with dark tile roofs. His clothes are the plain daily ones men wear in this town."
-          : "Both houses are wood, with dark tile roofs. A cloth covers her hair.";
+        return "Both houses are wood, with dark tile roofs.";
       },
       homeAlt: "Elvora talks with a young person between two wooden houses.",
       street: [
         "The street is one street. Wooden houses, dark tile roofs, and a small café with a plain curtain run the whole way, and people use them together.",
-        "Most of the people here are from this town. Women wear a cloth over their hair, with modest everyday kimono, and the men with them wear plain work clothes. They carry groceries and talk easily. A blue-green visitor walks with them, only passing through."
+        "Neighbors come along with the groceries, talking as they go. A blue-green visitor walks with them, only passing through."
       ],
-      streetAlt: "Townspeople in modest kimono walk a wooden lane, with one blue-green visitor among them.",
+      streetAlt: "Neighbors carry groceries along a wooden lane, talking, with one blue-green visitor among them.",
       shore: [
-        "The cove is quiet. Most of the people on the rocks are from this town, in work clothes, with a cloth over the women’s hair, and the nets in their hands are small. The water is clear."
+        "The cove is quiet. People gather on the rocks with small nets, talking near the boats at the pier. The water is clear."
       ],
-      shoreAlt: "Local fishers stand on calm rocks with small nets.",
+      shoreAlt: "People gather on calm rocks with small nets, boats tied at the pier.",
       shop: [
-        "The café door is open. A plain curtain hangs in the wooden doorway. The shopkeeper waves people in as they arrive together. Most of them are from this town, modest kimono passing the threshold. A visitor comes in with them. Nobody is turned away."
+        "The café door is open. A plain curtain hangs in the wooden doorway. The shopkeeper waves from the step while neighbors come along with baskets, a small child holding a hand. A visitor comes in with them. Nobody is turned away."
       ],
-      shopAlt: "A shopkeeper waves townspeople in modest kimono into an open café.",
+      shopAlt: "A shopkeeper waves neighbors with baskets into an open café, a child with them.",
       station: [
         "The platform is quiet. The little station is wood and tile, like the houses, and a short train waits on the track. This is the way toward the towns people have been telling you about.",
         "A traveler with a small bag stands on the boards, already looking back toward the village."
@@ -110,24 +102,22 @@
     },
     tr: {
       home: function () {
-        return state.gender === "boy"
-          ? "Both houses are plaster, with red tile roofs. His clothes are the plain daily ones men wear in this town."
-          : "Both houses are plaster, with red tile roofs. A hijab covers her hair and neck.";
+        return "Both houses are plaster, with red tile roofs.";
       },
       homeAlt: "Elvora talks with a young person between two plaster houses.",
       street: [
         "The street is one street. Plaster houses, red tile roofs, and a tea house run the whole way, and people use them together.",
-        "Most of the people here are from this town. The women are hijabis, in long modest coats, and the men with them wear the town’s everyday clothes. They carry groceries and talk easily. A blue-green visitor walks with them, only passing through."
+        "Neighbors come along with baskets, talking as they go. People sit over tea at the tables. A blue-green visitor walks with them, only passing through."
       ],
-      streetAlt: "Hijabis and men in everyday clothes walk a plaster-house street, with one blue-green visitor among them.",
+      streetAlt: "Neighbors carry baskets down a plaster-house street, talking, with one blue-green visitor among them.",
       shore: [
-        "The cove is quiet. Most of the people on the rocks are from this town, in work clothes, hijabs on the women, and the nets in their hands are small. The water is clear."
+        "The cove is quiet. People sort nets and baskets on the rocks, with small boats pulled up on the clear water."
       ],
-      shoreAlt: "Local fishers stand on calm rocks with small nets. The women wear hijabs.",
+      shoreAlt: "People sort nets and baskets on calm rocks, boats pulled up nearby.",
       shop: [
-        "The tea house door is open. Plaster walls and red tile shade the step. The shopkeeper waves people in as they arrive together. Most of them are from this town, hijabis in long coats passing the threshold. A visitor comes in with them. Nobody is turned away."
+        "The tea house door is open. Plaster walls and red tile shade the step. The shopkeeper waves from the doorway as neighbors come up, a child with them. A visitor comes in with them. Nobody is turned away."
       ],
-      shopAlt: "A shopkeeper waves hijabis into an open tea house.",
+      shopAlt: "A shopkeeper waves neighbors in at an open tea house, a child with them.",
       station: [
         "The platform is quiet. The little station is plaster and red tile, like the houses, and a short train waits on the track. This is the way toward the towns people have been telling you about.",
         "A traveler with a small bag stands on the boards, already looking back toward the village."
