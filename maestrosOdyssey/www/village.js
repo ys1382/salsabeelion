@@ -274,8 +274,11 @@
     mon_said: {
       day: "Monday",
       image: "village-art/elder.jpg?v=20261006b",
-      alt: "The elder listens at the gate.",
+      alt: "The elder answers at the gate.",
       paragraphs: function () { return reportTaken("mon"); },
+      speaker: "The elder says",
+      pick: function () { return reportSay("mon"); },
+      face: "heard",
       notesDay: "mon",
       choices: function () { return afterReport("mon", "tue_home"); }
     },
@@ -396,8 +399,11 @@
     tue_said: {
       day: "Tuesday",
       image: "village-art/elder.jpg?v=20261006b",
-      alt: "The elder nods at the cottage gate.",
+      alt: "The elder answers at the cottage gate.",
       paragraphs: function () { return reportTaken("tue"); },
+      speaker: "The elder says",
+      pick: function () { return reportSay("tue"); },
+      face: "heard",
       notesDay: "tue",
       choices: function () { return afterReport("tue", "wed_home"); }
     },
@@ -490,8 +496,11 @@
     wed_said: {
       day: "Wednesday",
       image: "village-art/elder.jpg?v=20261006b",
-      alt: "The elder at the gate.",
+      alt: "The elder answers at the gate.",
       paragraphs: function () { return reportTaken("wed"); },
+      speaker: "The elder says",
+      pick: function () { return reportSay("wed"); },
+      face: "heard",
       notesDay: "wed",
       choices: function () { return afterReport("wed", "thu_home"); }
     },
@@ -525,7 +534,7 @@
       speaker: "The traveler says",
       say: "trav_from",
       choices: [
-        { say: "ch_tomorrow", next: "thu_stop", note: "from" }
+        { say: "ch_tomorrow", next: "trav_bye", note: "from" }
       ]
     },
     trav_how: {
@@ -537,7 +546,7 @@
       say: "trav_how",
       face: "heavy",
       choices: [
-        { say: "ch_tomorrow", next: "thu_stop", note: "how" }
+        { say: "ch_tomorrow", next: "trav_bye", note: "how" }
       ]
     },
     trav_stay: {
@@ -549,8 +558,78 @@
       say: "trav_stay",
       face: "back",
       choices: [
-        { say: "ch_tomorrow", next: "thu_stop", note: "stay" }
+        { say: "ch_tomorrow", next: "trav_bye", note: "stay" }
       ]
+    },
+    scarf_bye: {
+      day: "Monday",
+      image: "village-art/street-together.jpg?v=20261006n",
+      alt: "A neighbor in a headscarf answers the goodbye.",
+      paragraphs: ["She says it back before you step off the lane."],
+      speaker: "A neighbor in a headscarf says",
+      say: "bye_back",
+      face: "bye",
+      choices: [{ label: "Step back to the street.", next: "mon_street" }]
+    },
+    friend_bye: {
+      day: "Monday",
+      image: "village-art/street-together.jpg?v=20261006n",
+      alt: "The neighbor answers the goodbye.",
+      paragraphs: ["He says it back before you step off the lane."],
+      speaker: "Her neighbor says",
+      say: "bye_back",
+      face: "bye",
+      choices: [{ label: "Step back to the street.", next: "mon_street" }]
+    },
+    mer_bye: {
+      day: "Tuesday",
+      image: "village-art/shore-calm.jpg?v=20261006n",
+      alt: "The person on the rocks answers the goodbye.",
+      paragraphs: ["They say it back before you leave the rocks."],
+      speaker: "A person on the rocks says",
+      say: "bye_back",
+      face: "bye",
+      choices: [{ label: "Step back from the rocks.", next: "tue_shore" }]
+    },
+    fish_bye: {
+      day: "Tuesday",
+      image: "village-art/shore-calm.jpg?v=20261006n",
+      alt: "The fisher answers the goodbye.",
+      paragraphs: ["He says it back before you leave the rocks."],
+      speaker: "A fisher says",
+      say: "bye_back",
+      face: "bye",
+      choices: [{ label: "Step back from the rocks.", next: "tue_shore" }]
+    },
+    shop_bye: {
+      day: "Wednesday",
+      image: "village-art/porch-open.jpg?v=20261006n",
+      alt: "The shopkeeper answers the goodbye.",
+      paragraphs: ["He says it back before you leave the step."],
+      speaker: "The shopkeeper says",
+      say: "bye_back",
+      face: "bye",
+      choices: [{ label: "Step back from the shop.", next: "wed_porch" }]
+    },
+    pair_bye: {
+      day: "Wednesday",
+      image: "village-art/porch-open.jpg?v=20261006n",
+      alt: "The neighbor answers the goodbye.",
+      paragraphs: ["She says it back before you leave the step."],
+      speaker: "A neighbor says",
+      say: "bye_back",
+      face: "bye",
+      choices: [{ label: "Step back from the shop.", next: "wed_porch" }]
+    },
+    trav_bye: {
+      day: "Thursday",
+      image: "village-art/station.jpg?v=20261006b",
+      alt: "The traveler answers the goodbye.",
+      paragraphs: ["They say it back. The train is still there."],
+      speaker: "The traveler says",
+      say: "morn_back",
+      face: "bye",
+      choices: [{ label: "Stay on the platform.", next: "thu_stop" }]
     },
     thu_stop: {
       day: "Thursday",
@@ -643,29 +722,29 @@
   }
 
   function reportIntro(day) {
-    if (!learned(day).length) return ["You are back at the gate. You have no notes from today yet."];
+    if (!learned(day).length) return ["You are back at the gate. There is nothing from today to tell yet."];
     return [
-      "{Sub} is at the gate. Your notes are beside you.",
-      "These are the notes from what you noticed today."
+      "{Sub} is at the gate.",
+      "You tell the day in your own words."
     ];
+  }
+
+  function reportSay(day) {
+    var id = state.reports[day];
+    if (id && id === rightReport(day)) return "report_yes";
+    return "report_part";
   }
 
   function reportTaken(day) {
     var id = state.reports[day];
     if (id && id === rightReport(day)) {
-      return ["{Sub} takes that in. That is what your notes add up to about " + VILLAGE_NAME + "."];
+      return ["{Sub} nods. The day you brought is enough to sit with."];
     }
-    return ["{Sub} takes that in. It is a fair reading of part of the day."];
+    return ["{Sub} is quiet a moment. From the life {sub} has lived, a day like this often keeps a little more than the first telling."];
   }
 
   function afterReport(day, next) {
-    var right = rightReport(day);
-    var list = [];
-    if (state.reports[day] && right && state.reports[day] !== right) {
-      list.push({ label: "Choose again.", clearReport: day, next: day + "_return" });
-    }
-    list.push({ label: "Leave it until tomorrow.", next: next });
-    return list;
+    return [{ label: "That's enough for today.", next: next }];
   }
 
   function choicesFor(day) {
@@ -673,7 +752,7 @@
     if (!pack) {
       return [
         { label: BACK[day][0], next: BACK[day][1] },
-        { label: "Leave it until tomorrow.", report: "none", reportDay: day, next: NEXT[day] }
+        { label: "That's enough for today.", report: "none", reportDay: day, next: NEXT[day] }
       ];
     }
     return pack.options.map(function (option) {
@@ -684,21 +763,10 @@
   function morningEcho(day) {
     var id = state.reports[day];
     if (!id) return "The morning is quiet at the gate.";
-    if (id === "none") return "You did not bring a reading back. {Sub} does not fill one in for you.";
-    var heard = heardSentence(day);
-    if (!heard) return "{Sub} answers from what you brought back.";
+    if (id === "none") return "Yesterday stayed where you left it. {Sub} does not press.";
     var pack = reportPack(day);
-    if (pack && id === pack.right) {
-      var ids = learned(day);
-      if (ids.length === 1 && ids[0] === "tue-net") {
-        return "{Sub} answers from the reading you gave: " + heard + " That is the net in their hands, here.";
-      }
-      if (ids.indexOf("tue-net") !== -1) {
-        return "{Sub} answers from the reading you gave: " + heard + " The small net is here in their hands. The rest is about somewhere else.";
-      }
-      return "{Sub} answers from the reading you gave: " + heard + " They were here together. What they named is somewhere else.";
-    }
-    return "{Sub} answers the part you named: " + heard;
+    if (pack && id === pack.right) return "{Sub} still carries yesterday, quietly.";
+    return "{Sub} still has the sense that yesterday kept a little back.";
   }
 
   var dayEl = document.getElementById("day");
@@ -1512,15 +1580,16 @@
   }
 
   function artUrl(name) {
-    return "village-art/" + (langPack().id || "es") + "/" + name + ".jpg?v=20261007p";
+    return "village-art/" + (langPack().id || "es") + "/" + name + ".jpg?v=20261007q";
   }
 
   function pictureCandidates(id, scene) {
     var urls = [];
     var base = talkBase(id, scene);
-    if (base && scene && scene.face) urls.push(artUrl(base + "-" + scene.face));
+    var place = placeShot(scene);
+    if (scene && scene.face) urls.push(artUrl((base || place) + "-" + scene.face));
     if (base) urls.push(artUrl(base));
-    urls.push(artUrl(placeShot(scene)));
+    urls.push(artUrl(place));
     var unique = [];
     urls.forEach(function (url) {
       if (unique.indexOf(url) === -1) unique.push(url);
@@ -1666,6 +1735,16 @@
     if (scene.report && !state.reports[scene.report]) list = choicesFor(scene.report);
     list = withoutRepeats(list);
     buttons(list, function (choice) {
+      if (choice.say === "bye") {
+        var byeId = choice.next;
+        if (state.scene.indexOf("scarf_") === 0) byeId = "scarf_bye";
+        else if (state.scene.indexOf("friend_") === 0) byeId = "friend_bye";
+        else if (state.scene.indexOf("mer_") === 0) byeId = "mer_bye";
+        else if (state.scene.indexOf("fish_") === 0) byeId = "fish_bye";
+        else if (state.scene.indexOf("shop_") === 0) byeId = "shop_bye";
+        else if (state.scene.indexOf("pair_") === 0) byeId = "pair_bye";
+        choice.next = byeId;
+      }
       if (choice.nextLang) {
         var total = (window.VILLAGE_LANGS || []).length || 1;
         state.langIndex = ((state.langIndex || 0) + 1) % total;
