@@ -186,6 +186,7 @@
       paragraphs: ["She glances toward the hills, then back at the street you share."],
       speaker: "A neighbor in a headscarf says",
       say: "scarf_apart",
+      face: "heavy",
       learn: "mon-walk",
       mark: "street",
       choices: [
@@ -199,6 +200,7 @@
       paragraphs: ["She does not lower her voice. This street is not the place she means."],
       speaker: "A neighbor in a headscarf says",
       say: "scarf_little",
+      face: "gentle",
       mark: "street",
       choices: [
         { say: "ask_family", next: "scarf_family" },
@@ -212,6 +214,7 @@
       paragraphs: ["She nods toward the road out of town."],
       speaker: "A neighbor in a headscarf says",
       say: "scarf_family",
+      face: "road",
       mark: "street",
       choices: [
         { say: "ask_towns", next: "scarf_there" },
@@ -237,6 +240,7 @@
       paragraphs: ["He keeps his voice ordinary. The news is not about this lane."],
       speaker: "Her neighbor says",
       say: "friend_apart",
+      face: "heavy",
       learn: "mon-letter",
       mark: "street",
       choices: [
@@ -250,6 +254,7 @@
       paragraphs: ["He tips his head at the benches, the lamps, the people passing."],
       speaker: "Her neighbor says",
       say: "friend_here",
+      face: "here",
       mark: "street",
       choices: [
         { say: "ask_cousin", next: "friend_there" },
@@ -318,6 +323,7 @@
       paragraphs: ["They nod at the far water, not at the cove under your feet."],
       speaker: "A person on the rocks says",
       say: "mer_there",
+      face: "heavy",
       learn: "tue-cove",
       mark: "shore",
       choices: [
@@ -331,6 +337,7 @@
       paragraphs: ["They lift their net so you can see how small it is."],
       speaker: "A person on the rocks says",
       say: "mer_net",
+      face: "net",
       learn: "tue-net",
       mark: "shore",
       choices: [
@@ -357,6 +364,7 @@
       paragraphs: ["He means a shore you cannot see from here."],
       speaker: "A fisher says",
       say: "fish_there",
+      face: "heavy",
       learn: "tue-fish",
       mark: "shore",
       choices: [
@@ -370,6 +378,7 @@
       paragraphs: ["He watches the cove, easy about it."],
       speaker: "A fisher says",
       say: "fish_water",
+      face: "easy",
       choices: [
         { say: "bye", next: "tue_shore" }
       ]
@@ -435,6 +444,7 @@
       paragraphs: ["His hand stays open toward his own door. The cold welcome he means is somewhere else."],
       speaker: "The shopkeeper says",
       say: "shop_there",
+      face: "heavy",
       learn: "wed-door",
       mark: "shop",
       choices: [
@@ -460,6 +470,7 @@
       paragraphs: ["She looks down the road, not at the shopkeeper."],
       speaker: "A neighbor says",
       say: "pair_there",
+      face: "quiet",
       learn: "wed-pair",
       mark: "shop",
       choices: [
@@ -524,6 +535,7 @@
       paragraphs: ["They mean the places past this line, not the village behind you."],
       speaker: "The traveler says",
       say: "trav_how",
+      face: "heavy",
       choices: [
         { say: "ch_tomorrow", next: "thu_stop", note: "how" }
       ]
@@ -535,6 +547,7 @@
       paragraphs: ["They are not settling a bag on the train."],
       speaker: "The traveler says",
       say: "trav_stay",
+      face: "back",
       choices: [
         { say: "ch_tomorrow", next: "thu_stop", note: "stay" }
       ]
@@ -1499,7 +1512,7 @@
   }
 
   function artUrl(name) {
-    return "village-art/" + (langPack().id || "es") + "/" + name + ".jpg?v=20261007k";
+    return "village-art/" + (langPack().id || "es") + "/" + name + ".jpg?v=20261007p";
   }
 
   function pictureCandidates(id, scene) {
