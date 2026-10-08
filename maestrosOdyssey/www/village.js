@@ -1709,7 +1709,7 @@
   }
 
   function womanPicture(name) {
-    return "village-art/" + (langPack().id || "es") + "/" + name + ".jpg?v=20261008c";
+    return "village-art/" + (langPack().id || "es") + "/" + name + ".jpg?v=20261008d";
   }
 
   function pictureCandidates(id, scene) {
