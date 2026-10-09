@@ -1,6 +1,7 @@
 /* Short village. Next chapter continues from the scene id "thu_stop". */
 (function () {
   var SAVE_KEY = "mo-village-short-v2";
+  var LANG_ROSTER = "es-ar-ja-tr";
   var VILLAGE_NAME = "Alderhart";
 
   var LOOKS = {
@@ -954,6 +955,17 @@
     }
   }
 
+  function savedLangIndex(index, roster) {
+    var total = (window.VILLAGE_LANGS || []).length || 1;
+    var n = typeof index === "number" && isFinite(index) ? index : 0;
+    if (roster === LANG_ROSTER) {
+      if (n < 0 || n >= total) return 0;
+      return n;
+    }
+    if (n === 0 || n === 1) return n;
+    return 0;
+  }
+
   function readSave() {
     var restart = hardRefresh();
     try {
@@ -966,7 +978,7 @@
         if (!restart && data.notes && typeof data.notes === "object") state.notes = data.notes;
         if (!restart && data.reports && typeof data.reports === "object") state.reports = data.reports;
         if (!restart && data.said && typeof data.said === "object") state.said = data.said;
-        if (typeof data.langIndex === "number") state.langIndex = data.langIndex;
+        if (typeof data.langIndex === "number") state.langIndex = savedLangIndex(data.langIndex, data.langRoster);
       }
     } catch (err) {}
     if (!state.notes) state.notes = blankNotes();
@@ -997,6 +1009,7 @@
       all[state.email] = {
         gender: state.gender,
         langIndex: state.langIndex || 0,
+        langRoster: LANG_ROSTER,
         scene: state.scene,
         flags: state.flags || {},
         note: state.note || "",
@@ -1016,6 +1029,7 @@
           scene: state.scene,
           gender: state.gender,
           langIndex: state.langIndex || 0,
+          langRoster: LANG_ROSTER,
           flags: state.flags || {},
           note: state.note || "",
           notes: state.notes || blankNotes(),
@@ -1923,7 +1937,7 @@
     var row = readWho()[state.email];
     if (row && (row.gender === "boy" || row.gender === "girl")) {
       state.gender = row.gender;
-      if (typeof row.langIndex === "number") state.langIndex = row.langIndex;
+      if (typeof row.langIndex === "number") state.langIndex = savedLangIndex(row.langIndex, row.langRoster);
       if (!hardRefresh()) {
         if (row.scene && scenes[row.scene]) state.scene = row.scene;
         if (row.flags && typeof row.flags === "object") state.flags = row.flags;

@@ -12,8 +12,7 @@
 
   window.VILLAGE_LANGS = [
     { id: "es", name: "Spanish", voice: "es-ES" },
-    { id: "ar", name: "Arabic", voice: "ar" },
-    { id: "ga", name: "Irish", voice: "ga-IE" },
+    { id: "ar", name: "Saudi Arabic", voice: "ar-SA" },
     { id: "ja", name: "Japanese", voice: "ja-JP" },
     { id: "tr", name: "Turkish", voice: "tr-TR" }
   ];
