@@ -59,13 +59,13 @@
       homeAlt: "Elvora talks with a young person between two whitewashed cottages.",
       street: [
         "The street is one street. Whitewashed cottages, stone walls, and a small tea shop run the whole way, and people use them together.",
-        "Neighbors come along the lane with the groceries, talking as they go. A blue-green visitor walks with them, only passing through."
+        "Neighbors come along the lane with the groceries, talking as they go. A short neighbor sits by the wall, mending a shoe."
       ],
-      streetAlt: "Neighbors carry groceries along a whitewashed lane, talking, with one blue-green visitor among them.",
+      streetAlt: "Neighbors talk along a whitewashed lane, while a short neighbor mends a shoe.",
       shore: [
-        "The cove is quiet. People stand along the rocks with small nets, looking out over the clear water."
+        "The cove is quiet. People stand along the rocks with small nets, looking out over the clear water. A sea neighbor in a heavy wool coat stands with them."
       ],
-      shoreAlt: "People stand on calm rocks with small nets, looking out over the water.",
+      shoreAlt: "Neighbors stand on calm rocks with small nets, and a sea neighbor in a heavy wool coat stands with them.",
       shop: [
         "The tea shop door is open. Whitewashed walls shade the step. The shopkeeper waves neighbors in as they come up the path. A visitor comes in with them. Nobody is turned away."
       ],
@@ -1705,7 +1705,7 @@
   }
 
   function artUrl(name) {
-    return "village-art/" + (langPack().id || "es") + "/" + name + ".jpg?v=20261007q";
+    return "village-art/" + (langPack().id || "es") + "/" + name + ".jpg?v=20261008g";
   }
 
   function womanPicture(name) {
