@@ -11,8 +11,7 @@
   }
 
   window.VILLAGE_LANGS = [
-    { id: "es", name: "Spanish", voice: "es-ES" },
-    { id: "ar", name: "Saudi Arabic", voice: "ar-SA" },
+    { id: "es", name: "Spanish", voice: "es-MX" },
     { id: "ja", name: "Japanese", voice: "ja-JP" },
     { id: "tr", name: "Turkish", voice: "tr-TR" }
   ];
@@ -52,7 +51,7 @@
         ask_net: line("¿La red es pequeña?", "Is the net small?"),
         mer_net: line("La red es pequeña.", "The net is small."),
         mer_there: line("El agua está mal allí.", "The water is bad there."),
-        ch_hi_fish: line("¿Pescáis aquí?", "Do you fish here?"),
+        ch_hi_fish: line("¿Pescan aquí?", "Do you fish here?"),
         fish_here: line("Sí. Pescamos aquí.", "Yes. We fish here."),
         fish_there: line("Allí no pescan.", "There they do not fish."),
         fish_water: line("El agua está bien.", "The water is good."),
@@ -64,7 +63,7 @@
         ch_hi_shop: line("¿Cómo está la tienda?", "How is the shop?"),
         shop_here: line("La puerta está abierta.", "The door is open."),
         shop_there: line("Allí la puerta está cerrada.", "There the door is shut."),
-        ch_hi_pair: line("¿Estáis bien?", "Are you well?"),
+        ch_hi_pair: line("¿Están bien?", "Are you well?"),
         pair_here: line("Entramos juntos.", "We come in together."),
         pair_there: line("Allí no entran juntos.", "There they do not come in together."),
         wed_back_yes: line("Mañana, el tren.", "Tomorrow, the train."),
@@ -456,7 +455,6 @@
       "esta": "this",
       "cala": "cove",
       "limpia": "clean",
-      "pescáis": "you fish",
       "pescamos": "we fish",
       "pescan": "they fish",
       "tienda": "shop",
@@ -467,7 +465,6 @@
       "amigo": "friend",
       "puerta": "door",
       "abierta": "open",
-      "estáis": "you are",
       "para": "for",
       "todos": "everyone",
       "nos": "us",
@@ -1211,6 +1208,9 @@
   });
 
   window.VILLAGE_ALIAS = {
+    es: {
+      "Hola": ["hello", "holla"]
+    },
     ja: {
       "こんにちは": ["こんにちわ"],
       "おはよう": ["おはようございます"],

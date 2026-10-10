@@ -1,7 +1,7 @@
 /* Short village. Next chapter continues from the scene id "thu_stop". */
 (function () {
   var SAVE_KEY = "mo-village-short-v2";
-  var LANG_ROSTER = "es-ar-ja-tr";
+  var LANG_ROSTER = "es-ja-tr";
   var VILLAGE_NAME = "Alderhart";
 
   var LOOKS = {
@@ -108,9 +108,9 @@
       homeAlt: "Elvora talks with a young person between two plaster houses.",
       street: [
         "The street is one street. Plaster houses, red tile roofs, and a tea house run the whole way, and people use them together.",
-        "Neighbors come along with baskets, talking as they go. People sit over tea at the tables. A blue-green visitor walks with them, only passing through."
+        "Neighbors come along with baskets, talking as they go. People sit over tea at the tables. One neighbor walks with them, a faint brightness at her shoulders."
       ],
-      streetAlt: "Neighbors carry baskets down a plaster-house street, talking, with one blue-green visitor among them.",
+      streetAlt: "Neighbors carry baskets down a plaster-house street, talking, one of them with a faint brightness at the shoulders.",
       shore: [
         "The cove is quiet. People sort nets and baskets on the rocks, with small boats pulled up on the clear water."
       ],
@@ -166,6 +166,56 @@
     return fisherName() + " says";
   }
 
+  var TR_FOLK = [
+    {
+      file: "shahmeran",
+      alt: "A woman in a long coat and headscarf talks on the street, with a calm serpent body where her legs would be.",
+      line: "A neighbor in a long coat and scarf is in the conversation. Where her legs would be, a calm serpent rests on the stones."
+    },
+    {
+      file: "tulpar",
+      alt: "A winged horse stands at the edge of the plaster street, with no rider.",
+      line: "A horse with wings stands at the edge of the street. Nobody is riding it."
+    },
+    {
+      file: "tepegoz",
+      alt: "A neighbor in a modest coat has one eye in the forehead and is talking with someone.",
+      line: "A neighbor with one eye in the forehead is talking with someone. The clothes are ordinary, and the face is calm."
+    },
+    {
+      file: "itbarak",
+      alt: "Dog-headed neighbors in long modest coats walk and talk on the street.",
+      line: "Dog-headed neighbors in long coats walk and talk together."
+    },
+    {
+      file: "anka",
+      alt: "A great emerald and gold bird glides far above the red tile roofs.",
+      line: "Far above the roofs, a great bird glides. The feathers are emerald and gold."
+    },
+    {
+      file: "karakoncolos",
+      alt: "A tall shaggy figure stands at a winter door.",
+      line: "At a winter door, a tall shaggy figure stands. It only stands there."
+    }
+  ];
+
+  function trFolkIndex() {
+    var n = state.flags.trLook;
+    if (typeof n !== "number" || n < 0) return 0;
+    return n;
+  }
+
+  function trFolkNow() {
+    if (!langPack || langPack().id !== "tr") return null;
+    var n = trFolkIndex();
+    if (n >= TR_FOLK.length) return null;
+    return TR_FOLK[n];
+  }
+
+  function trFolkUrl(folk) {
+    return "village-art/tr/" + folk.file + ".jpg?v=20261009d";
+  }
+
   var scenes = {
     mon_home: {
       day: "Monday",
@@ -185,10 +235,25 @@
     mon_street: {
       day: "Monday",
       image: "village-art/street-together.jpg?v=20261006n",
-      alt: function () { return look().streetAlt; },
-      paragraphs: function () { return look().street; },
+      picture: function () {
+        var folk = trFolkNow();
+        if (folk) return trFolkUrl(folk);
+        if (langPack().id === "tr") return artUrl("street");
+        return "";
+      },
+      alt: function () {
+        var folk = trFolkNow();
+        return folk ? folk.alt : look().streetAlt;
+      },
+      paragraphs: function () {
+        var folk = trFolkNow();
+        return folk ? [folk.line] : look().street;
+      },
       choices: function () {
         var list = [];
+        if (langPack().id === "tr") {
+          list.push({ label: "Look further along the street.", next: "mon_street", trStep: true });
+        }
         if (!alreadySaid("ch_hi_scarf")) list.push({ say: "ch_hi_scarf", next: "scarf_hi" });
         list.push({ label: "Back to Elvora.", next: "mon_return" });
         return list;
@@ -962,7 +1027,11 @@
       if (n < 0 || n >= total) return 0;
       return n;
     }
-    if (n === 0 || n === 1) return n;
+    if (roster === "es-ar-ja-tr") {
+      if (n <= 1) return 0;
+      if (n === 2) return 1;
+      if (n === 3) return 2;
+    }
     return 0;
   }
 
@@ -1043,7 +1112,7 @@
   }
 
   function langPack() {
-    var langs = window.VILLAGE_LANGS || [{ id: "es", name: "Spanish", voice: "es-ES" }];
+    var langs = window.VILLAGE_LANGS || [{ id: "es", name: "Spanish", voice: "es-MX" }];
     var i = state.langIndex || 0;
     if (i < 0 || i >= langs.length) i = 0;
     return langs[i];
@@ -1054,10 +1123,21 @@
     return table[id] || [];
   }
 
+  function releaseSpeaker() {
+    var synth = window.speechSynthesis;
+    if (!synth) return;
+    try {
+      if (synth.paused) synth.resume();
+    } catch (err) {}
+    if (synth.speaking || synth.pending) {
+      try { synth.cancel(); } catch (err) {}
+    }
+  }
+
   function stopVoice() {
     speakGen += 1;
     practiceGen += 1;
-    if (window.speechSynthesis) window.speechSynthesis.cancel();
+    releaseSpeaker();
     if (activeRec) {
       try { activeRec.abort(); } catch (err) {}
       activeRec = null;
@@ -1139,9 +1219,14 @@
     setTimeout(step, 60);
   }
 
+  function isSafari() {
+    var ua = navigator.userAgent || "";
+    return /Safari/i.test(ua) && !/Chrom(e|ium)|CriOS|FxiOS|Edg/i.test(ua);
+  }
+
   function armMic() {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      return Promise.reject(new Error("none"));
+      return Promise.reject(new Error("denied"));
     }
     return navigator.mediaDevices.getUserMedia({ audio: true }).then(function (stream) {
       stream.getTracks().forEach(function (track) { track.stop(); });
@@ -1168,7 +1253,14 @@
     chunks.push(said);
   }
 
-  function listenOnce(voiceLang, maxMs, onUpdate, shouldStop) {
+  function listenOnce(voiceLang, maxMs, onUpdate, shouldStop, onReady) {
+    if (isSafari()) {
+      return listenSafari(voiceLang, maxMs, onUpdate, shouldStop, onReady);
+    }
+    return listenChromium(voiceLang, maxMs, onUpdate, shouldStop, onReady);
+  }
+
+  function listenSession(voiceLang, maxMs, onUpdate, shouldStop, onReady, opts) {
     return new Promise(function (resolve, reject) {
       var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!SR) {
@@ -1179,11 +1271,20 @@
       var chunks = [];
       var live = "";
       var settled = false;
+      var readySent = false;
       var lastHeard = 0;
       var started = Date.now();
       var limit = maxMs || 12000;
       var quietTimer = null;
+      var capTimer = null;
       var rec = null;
+      var continuous = !!(opts && opts.continuous);
+      var safari = !!(opts && opts.safari);
+      function ready() {
+        if (readySent || settled) return;
+        readySent = true;
+        if (onReady) onReady();
+      }
       function displayLine() {
         var base = cleanHeard(chunks.join(" "));
         var now = cleanHeard(live);
@@ -1210,24 +1311,33 @@
           return false;
         }
       }
+      function finishRec() {
+        if (activeRec === rec) activeRec = null;
+        try {
+          if (rec) {
+            if (continuous) rec.stop();
+            else rec.abort();
+          }
+        } catch (err) {}
+      }
       function ok() {
         if (settled) return;
         settled = true;
         clearTimeout(quietTimer);
+        clearTimeout(capTimer);
         if (live) addChunk(chunks, live);
         live = "";
         var heard = displayLine();
         if (heard) texts.push(heard);
-        if (activeRec === rec) activeRec = null;
-        try { if (rec) rec.abort(); } catch (err) {}
+        finishRec();
         resolve({ texts: texts, heard: heard });
       }
       function bad(code) {
         if (settled) return;
         settled = true;
         clearTimeout(quietTimer);
-        if (activeRec === rec) activeRec = null;
-        try { if (rec) rec.abort(); } catch (err) {}
+        clearTimeout(capTimer);
+        finishRec();
         reject(new Error(code));
       }
       function scheduleQuiet() {
@@ -1235,26 +1345,18 @@
         if (!displayLine()) return;
         quietTimer = setTimeout(function () {
           if (!settled) ok();
-        }, 2800);
+        }, safari ? 3200 : 2800);
       }
-      function arm() {
-        if (settled) return;
-        if (Date.now() - started > limit) {
-          if (displayLine()) ok();
-          else bad("quiet");
-          return;
-        }
-        rec = new SR();
-        activeRec = rec;
-        rec.lang = voiceLang;
-        rec.interimResults = true;
-        rec.continuous = false;
-        rec.maxAlternatives = 5;
-        rec.onresult = function (event) {
-          lastHeard = Date.now();
-          var row = event.results[event.results.length - 1];
-          var said = row && row[0] ? row[0].transcript : "";
-          var a;
+      function applyResults(event) {
+        ready();
+        lastHeard = Date.now();
+        var idx = typeof event.resultIndex === "number" ? event.resultIndex : 0;
+        var row;
+        var said;
+        var a;
+        for (idx; idx < event.results.length; idx++) {
+          row = event.results[idx];
+          said = row && row[0] ? row[0].transcript : "";
           if (row) {
             for (a = 0; a < row.length; a++) texts.push(row[a].transcript);
           }
@@ -1264,41 +1366,76 @@
           } else {
             live = said;
           }
+        }
+        notify();
+        if (caught()) {
+          ok();
+          return;
+        }
+        scheduleQuiet();
+      }
+      function onRecError(event) {
+        var code = (event && event.error) || "error";
+        if (code === "aborted" || code === "no-speech") return;
+        if (code === "not-allowed" || code === "service-not-allowed") bad("denied");
+        else if (!safari && code !== "network") bad(code);
+      }
+      function onRecEnd() {
+        if (settled) return;
+        if (live) {
+          addChunk(chunks, live);
+          live = "";
           notify();
-          if (caught()) {
-            ok();
-            return;
-          }
-          scheduleQuiet();
+        }
+        if (caught()) {
+          ok();
+          return;
+        }
+        if (lastHeard && Date.now() - lastHeard > 2800 && displayLine()) {
+          ok();
+          return;
+        }
+        if (Date.now() - started > limit) {
+          if (displayLine()) ok();
+          else bad("quiet");
+          return;
+        }
+        if (continuous) {
+          setTimeout(function () {
+            if (settled || activeRec !== rec) return;
+            try { rec.start(); }
+            catch (err) {
+              setTimeout(function () {
+                if (!settled && activeRec === rec) onRecEnd();
+              }, 450);
+            }
+          }, safari ? 400 : 250);
+          return;
+        }
+        setTimeout(arm, 250);
+      }
+      function wireRec(instance) {
+        rec = instance;
+        activeRec = rec;
+        rec.lang = voiceLang;
+        rec.interimResults = true;
+        rec.continuous = continuous;
+        rec.maxAlternatives = safari ? 1 : 5;
+        rec.onstart = function () {
+          ready();
         };
-        rec.onerror = function (event) {
-          var code = (event && event.error) || "error";
-          if (code === "aborted" || code === "no-speech") return;
-          if (code === "not-allowed" || code === "service-not-allowed") bad("denied");
-          else if (code !== "network") bad(code);
-        };
-        rec.onend = function () {
-          if (settled) return;
-          if (live) {
-            addChunk(chunks, live);
-            live = "";
-            notify();
-          }
-          if (caught()) {
-            ok();
-            return;
-          }
-          if (lastHeard && Date.now() - lastHeard > 2800 && displayLine()) {
-            ok();
-            return;
-          }
-          if (Date.now() - started > limit) {
-            if (displayLine()) ok();
-            else bad("quiet");
-            return;
-          }
-          setTimeout(arm, 250);
-        };
+        rec.onresult = applyResults;
+        rec.onerror = onRecError;
+        rec.onend = onRecEnd;
+      }
+      function arm() {
+        if (settled) return;
+        if (Date.now() - started > limit) {
+          if (displayLine()) ok();
+          else bad("quiet");
+          return;
+        }
+        wireRec(new SR());
         try { rec.start(); }
         catch (err) {
           setTimeout(function () {
@@ -1306,8 +1443,29 @@
           }, 400);
         }
       }
-      arm();
+      capTimer = setTimeout(function () {
+        if (settled) return;
+        if (displayLine()) ok();
+        else bad("quiet");
+      }, limit + 400);
+      if (continuous) {
+        wireRec(new SR());
+        try { rec.start(); }
+        catch (err) {
+          bad("none");
+        }
+      } else {
+        arm();
+      }
     });
+  }
+
+  function listenSafari(voiceLang, maxMs, onUpdate, shouldStop, onReady) {
+    return listenSession(voiceLang, maxMs, onUpdate, shouldStop, onReady, { continuous: true, safari: true });
+  }
+
+  function listenChromium(voiceLang, maxMs, onUpdate, shouldStop, onReady) {
+    return listenSession(voiceLang, maxMs, onUpdate, shouldStop, onReady, { continuous: false, safari: false });
   }
 
   function needRatio() {
@@ -1427,55 +1585,72 @@
     button._busy = true;
     clearGrade();
     speakGen += 1;
-    if (window.speechSynthesis) window.speechSynthesis.cancel();
     setSayLabel(button, "Your turn");
-    showBanner("Listening now", "Say the whole line. A pause between words is fine.");
-    armMic().then(function () {
+    releaseSpeaker();
+    var maxMs = Math.min(18000, 8000 + words.length * 3200);
+    var onHeard = function (heard) {
       if (mine !== practiceGen) return;
-      var maxMs = Math.min(18000, 5000 + words.length * 3200);
-      listenOnce(pack.voice, maxMs, function (heard) {
-        if (mine !== practiceGen) return;
-        showBanner("Listening now", heard ? "Heard so far: " + heard : "Say the whole line. A pause between words is fine.");
-      }, function (sample) {
-        return !!(window.villageGrade && window.villageGrade(pack.id, words, sample, needRatio()).passed);
-      }).then(function (result) {
-          if (mine !== practiceGen) return;
-          var graded = window.villageGrade(pack.id, words, result.texts, needRatio());
-          markHits(nodes, graded.hits);
-          showGrade(graded.passed ? "pass" : "miss", gradeSentence(graded, result.heard, graded.passed));
-          if (graded.passed) {
-            setSayLabel(button, "That landed");
-            rememberSaid(english);
-            setTimeout(function () {
-              if (mine !== practiceGen) return;
-              button._busy = false;
-              onPick(choice);
-            }, 1600);
-          } else {
-            button._busy = false;
-            setSayLabel(button, "Try again");
-          }
-      }).catch(function (err) {
-        if (mine !== practiceGen) return;
-        button._busy = false;
-        var code = err && err.message;
-        if (code === "none" || code === "language-not-supported") {
-          setSayLabel(button, "Go on");
-          showGrade("miss", "This browser can't check the mic. Tap again to go on.");
-          button._skipMic = true;
-        } else if (code === "denied") {
-          setSayLabel(button, "Allow the mic");
-          showGrade("miss", "Allow the microphone, then try again.");
-        } else {
-          setSayLabel(button, "Try again");
-          showGrade("miss", "I didn't catch that. Try again.");
-        }
+      showBanner("Listening now", heard ? "Heard so far: " + heard : "Say the whole line. A pause between words is fine.");
+    };
+    var onStop = function (sample) {
+      return !!(window.villageGrade && window.villageGrade(pack.id, words, sample, needRatio()).passed);
+    };
+    var onReady = function () {
+      if (mine !== practiceGen) return;
+      showBanner("Listening now", "Say the whole line. A pause between words is fine.");
+    };
+    var listenPromise;
+    if (isSafari()) {
+      showBanner("Listening now", "Say the whole line. A pause between words is fine.");
+      listenPromise = listenOnce(pack.voice, maxMs, onHeard, onStop, onReady);
+    } else {
+      showBanner("One moment", "The mic is opening.");
+      listenPromise = armMic().then(function () {
+        return listenOnce(pack.voice, maxMs, onHeard, onStop, onReady);
       });
-    }).catch(function () {
+    }
+    listenPromise.then(function (result) {
+      if (mine !== practiceGen) return;
+      var graded = window.villageGrade(pack.id, words, result.texts, needRatio());
+      markHits(nodes, graded.hits);
+      showGrade(graded.passed ? "pass" : "miss", gradeSentence(graded, result.heard, graded.passed));
+      if (graded.passed) {
+        setSayLabel(button, "That landed");
+        rememberSaid(english);
+        setTimeout(function () {
+          if (mine !== practiceGen) return;
+          button._busy = false;
+          onPick(choice);
+        }, 1600);
+      } else {
+        button._busy = false;
+        setSayLabel(button, "Try again");
+      }
+    }).catch(function (err) {
       if (mine !== practiceGen) return;
       button._busy = false;
-      setSayLabel(button, "Allow the mic");
-      showGrade("miss", "Allow the microphone, then try again.");
+      var code = err && err.message;
+      if (code === "none" || code === "language-not-supported") {
+        setSayLabel(button, "Go on");
+        showGrade("miss", "This browser can't check the mic. Tap again to go on.");
+        button._skipMic = true;
+      } else if (code === "denied") {
+        setSayLabel(button, "Allow the mic");
+        showGrade("miss", "Allow the microphone, then try again.");
+      } else if (isSafari() && code === "quiet") {
+        button._safariMiss = (button._safariMiss || 0) + 1;
+        if (button._safariMiss >= 3) {
+          setSayLabel(button, "Go on");
+          showGrade("miss", "Safari keeps missing speech. Tap Say this once more to go on without the mic check.");
+          button._skipMic = true;
+        } else {
+          setSayLabel(button, "Try again");
+          showGrade("miss", "Safari didn't catch that. Wait for Listening now, then speak a little louder.");
+        }
+      } else {
+        setSayLabel(button, "Try again");
+        showGrade("miss", "I didn't catch that. Try again.");
+      }
     });
   }
 
@@ -1518,6 +1693,8 @@
       if (!next) return "right";
       return "of";
     }
+    if (lang === "es" && key === "pescan" && nextKey === "aquí") return "you fish";
+    if (lang === "es" && key === "están" && nextKey === "bien") return "you are";
     if (lang === "ja" && key === "に") {
       if (next === "いる" || next === "住んでる" || next === "住む") return "in";
       if (next === "ある") return "at";
@@ -1650,6 +1827,7 @@
         word.addEventListener("focus", function () { markWord(true); });
         word.addEventListener("blur", function () { markWord(false); });
         word.addEventListener("click", function (event) {
+          if (word.closest("button")) return;
           event.preventDefault();
           event.stopPropagation();
           markWord(true);
@@ -1778,7 +1956,7 @@
         button.textContent = choice.label;
       }
       button.addEventListener("click", function (event) {
-        if (event.target.closest && event.target.closest(".hear, .word")) return;
+        if (event.target.closest && event.target.closest(".hear")) return;
         if (!choice.say) {
           onPick(choice);
           return;
@@ -1896,6 +2074,12 @@
     if (scene.report && !state.reports[scene.report]) list = choicesFor(scene.report);
     list = withoutRepeats(list);
     buttons(list, function (choice) {
+      if (choice.trStep) {
+        var n = trFolkIndex();
+        n += 1;
+        if (n > TR_FOLK.length) n = 0;
+        state.flags.trLook = n;
+      }
       if (choice.say === "bye") {
         var byeId = choice.next;
         if (state.scene.indexOf("scarf_") === 0) byeId = "scarf_bye";
