@@ -252,6 +252,61 @@
   }
 
   var scenes = {
+    intro_train_1: {
+      day: "Monday",
+      where: "The train",
+      picture: "village-art/intro/intro_train_1.jpg?v=20261010art2",
+      alt: "Rain-streaked glass on a train, and a letter in your hands.",
+      paragraphs: [
+        "The train hums. Rain has dried on the glass in streaks. Your reflection looks younger than you feel.",
+        "The letter crackles when you shift."
+      ],
+      choices: [{ label: "Continue.", next: "intro_train_2" }]
+    },
+    intro_train_2: {
+      day: "Monday",
+      where: "The train",
+      picture: "village-art/intro/intro_train_2.jpg?v=20261010art2",
+      alt: "A wide plaza, groups kept to their own sides, a courier crossing the middle.",
+      paragraphs: [
+        "Outside: a wide plaza. Humans on the steps of one arcade. Merfolk in the shallow fountain on the other — not forbidden, assigned.",
+        "A lizardfolk courier crosses the middle and every head turns the way a clock turns: polite, exact, empty of welcome."
+      ],
+      choices: [{ label: "Continue.", next: "intro_train_3" }]
+    },
+    intro_train_3: {
+      day: "Monday",
+      where: "The train",
+      picture: "village-art/intro/intro_train_3.jpg?v=20261010art2",
+      alt: "A harbor. Nets on one pier, a merfolk elder on the far rock.",
+      paragraphs: [
+        "The view slides to a harbor. Nets stacked on this pier; a merfolk elder on that rock, arms folded.",
+        "Two harbor clerks argue across the gap in voices kept pleasant. You cannot hear the words. You can hear the distance."
+      ],
+      choices: [{ label: "Continue.", next: "intro_train_4" }]
+    },
+    intro_train_4: {
+      day: "Monday",
+      where: "The train",
+      picture: "",
+      alt: "From the train, a high wall above a market.",
+      paragraphs: [
+        "Mountains. Dragonfolk silhouettes on a high wall. Lizardfolk market below. They do not mix; they coordinate.",
+        "Someone on the train coughs and you realize you have been holding your breath."
+      ],
+      choices: [{ label: "Continue.", next: "intro_train_5" }]
+    },
+    intro_train_5: {
+      day: "Monday",
+      where: "The train",
+      picture: "village-art/intro/intro_train_5.jpg?v=20261010art2",
+      alt: "A green lane where people pass close, and a still figure waiting on the platform.",
+      paragraphs: [
+        "Green. A lane where a human woman with groceries steps around a blue-green visitor and does not flinch. A café door open. Smoke from a chimney.",
+        "The train slows. Elvora is a still figure on the platform."
+      ],
+      choices: [{ label: "Step down.", next: "mon_home" }]
+    },
     mon_home: {
       day: "Monday",
       image: "village-art/elder.jpg?v=20261006b",
@@ -1004,6 +1059,16 @@
 
   var dayEl = document.getElementById("day");
   var pictureEl = document.getElementById("picture");
+  var trainChrome = document.createElement("div");
+  trainChrome.className = "train-chrome";
+  trainChrome.setAttribute("aria-hidden", "true");
+  var trainGlass = document.createElement("div");
+  trainGlass.className = "train-glass";
+  var trainMullion = document.createElement("div");
+  trainMullion.className = "train-mullion";
+  trainChrome.appendChild(trainGlass);
+  trainChrome.appendChild(trainMullion);
+  if (pictureEl && pictureEl.parentNode) pictureEl.parentNode.insertBefore(trainChrome, pictureEl.nextSibling);
   var proseEl = document.getElementById("prose");
   var choicesEl = document.getElementById("choices");
   var notesEl = document.getElementById("notes");
@@ -1011,7 +1076,7 @@
   var noteListEl = document.getElementById("note-list");
   var WHO_KEY = "mo-village-who-v1";
   var state = {
-    scene: "mon_home",
+    scene: "intro_train_1",
     gender: "",
     langIndex: 0,
     email: "",
@@ -1095,7 +1160,7 @@
     if (!state.notes) state.notes = blankNotes();
     if (!state.reports) state.reports = {};
     if (restart) {
-      state.scene = "mon_home";
+      state.scene = "intro_train_1";
       state.flags = {};
       state.note = "";
       state.notes = blankNotes();
@@ -1964,9 +2029,16 @@
     var pic = scene && scene.picture;
     if (typeof pic === "function") pic = pic();
     if (pic) {
+      pictureEl.hidden = false;
       pictureEl.src = pic;
       return;
     }
+    if (scene && Object.prototype.hasOwnProperty.call(scene, "picture")) {
+      pictureEl.removeAttribute("src");
+      pictureEl.hidden = true;
+      return;
+    }
+    pictureEl.hidden = false;
     var urls = pictureCandidates(id, scene);
     var i = 0;
     function tryNext() {
@@ -2037,10 +2109,18 @@
     });
   }
 
+  function setTrainWindow(id) {
+    var onTrain = id.indexOf("intro_train_") === 0;
+    document.body.classList.toggle("train-window", onTrain);
+    document.body.classList.toggle("train-rain", id === "intro_train_1");
+  }
+
   function showPick() {
+    setTrainWindow("");
     document.body.classList.add("picking");
     renderNotes("");
     dayEl.textContent = "";
+    document.title = "Maestro's Odyssey";
     pictureEl.removeAttribute("src");
     pictureEl.alt = "";
     proseEl.replaceChildren();
@@ -2065,12 +2145,14 @@
   function show(id) {
     stopVoice();
     clearGrade();
-    if (!state.gender) {
+    var opening = scenes[id] && scenes[id].where === "The train";
+    if (!state.gender && !opening) {
       state.scene = scenes[id] ? id : "mon_home";
       showPick();
       return;
     }
     if (!scenes[id]) id = "mon_home";
+    setTrainWindow(id);
     document.body.classList.remove("picking");
     state.scene = id;
     var scene = scenes[id];
@@ -2078,8 +2160,9 @@
     if (scene.eyes) state.flags["eyes" + scene.eyes] = true;
     if (scene.learn) addLearn(scene.learn);
     writeSave();
-    dayEl.textContent = scene.day + " · " + VILLAGE_NAME + " · " + langPack().name;
-    document.title = scene.day + " · " + VILLAGE_NAME + " · " + langPack().name + " — Maestro's Odyssey";
+    var placeName = scene.where || VILLAGE_NAME;
+    dayEl.textContent = scene.day + " · " + placeName + " · " + langPack().name;
+    document.title = scene.day + " · " + placeName + " · " + langPack().name + " — Maestro's Odyssey";
     renderNotes(scene.notesDay || scene.report || "");
     showPicture(id, scene);
     pictureEl.alt = fill(typeof scene.alt === "function" ? scene.alt() : scene.alt);

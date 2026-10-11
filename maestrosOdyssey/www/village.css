@@ -93,6 +93,79 @@ main {
   background: #1c1814;
 }
 
+.train-chrome {
+  display: none;
+}
+
+body.train-window {
+  --win-top: 4.2vh;
+  --win-left: 15vw;
+  --win-w: 68vw;
+  --win-h: 40vh;
+  background: #16110d;
+}
+
+body.train-window main {
+  background:
+    linear-gradient(90deg, #100c09 0%, #100c09 8%, #6b5340 8.15%, #3d2d22 13%, #2a211a 20%, #241c16 100%);
+}
+
+body.train-window .picture {
+  inset: auto;
+  top: var(--win-top);
+  left: var(--win-left);
+  width: var(--win-w);
+  height: var(--win-h);
+  border-radius: 0.2rem;
+  background: #7f8d86;
+}
+
+body.train-window .train-chrome {
+  display: block;
+  position: absolute;
+  z-index: 1;
+  top: calc(var(--win-top) - 1.05rem);
+  left: calc(var(--win-left) - 1.05rem);
+  width: calc(var(--win-w) + 2.1rem);
+  height: calc(var(--win-h) + 2.1rem);
+  pointer-events: none;
+  border: 1.05rem solid #5a4534;
+  border-radius: 0.7rem;
+  box-shadow:
+    0 0 0 0.42rem #1a130e,
+    inset 0 0 0 0.18rem #2c2118,
+    0 14px 28px rgba(0, 0, 0, 0.4);
+}
+
+body.train-window .train-glass {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(115deg, rgba(255, 255, 255, 0.24) 0%, rgba(255, 255, 255, 0.04) 26%, transparent 44%),
+    linear-gradient(180deg, rgba(186, 214, 220, 0.16), transparent 34%);
+}
+
+body.train-window .train-mullion {
+  position: absolute;
+  top: -1.05rem;
+  bottom: -1.05rem;
+  left: calc(50% - 0.32rem);
+  width: 0.64rem;
+  background: linear-gradient(90deg, #3a2c22, #7a624c 42%, #2a2018);
+  box-shadow: 0 0 0 1px #1a130e;
+}
+
+body.train-window.train-rain .train-glass {
+  background:
+    repeating-linear-gradient(
+      104deg,
+      transparent 0 20px,
+      rgba(232, 238, 240, 0.28) 20px 21px,
+      transparent 21px 48px
+    ),
+    linear-gradient(115deg, rgba(255, 255, 255, 0.2) 0%, transparent 42%);
+}
+
 .notes {
   position: absolute;
   z-index: 3;
@@ -412,6 +485,13 @@ body.picking .prose p {
 }
 
 @media (max-width: 640px) {
+  body.train-window {
+    --win-top: 3rem;
+    --win-left: 11vw;
+    --win-w: 76vw;
+    --win-h: 30vh;
+  }
+
   .notes {
     left: 0.75rem;
     right: 0.75rem;
