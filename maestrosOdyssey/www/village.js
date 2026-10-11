@@ -219,18 +219,18 @@
   var ES_MX_FOLK = [
     {
       file: "alux",
-      alt: "A small field guardian in modest clothes walks with neighbors in rebozos, carrying a basket of maize.",
-      line: "A small field guardian walks with them—the kind neighbors tell stories about. He wears the same modest clothes and carries maize."
+      alt: "A short alux in a white guayabera walks with tall neighbors in Oaxacan rebozos, carrying a basket of maize.",
+      line: "An alux from the old stories is with them—small, in a buttoned guayabera, with maize in his basket. The women wear rebozos and carry marigolds."
     },
     {
       file: "nahual",
-      alt: "One neighbor in modest clothes has a man's face and quiet amber eyes, talking with the others.",
-      line: "One neighbor is a nahual: a person first, in modest clothes like everyone else. Only his eyes remember the other shape."
+      alt: "A nahual with a coyote head wears a modest guayabera and talks with neighbors in rebozos on the village street.",
+      line: "A nahual is in the talk—a coyote head on a neighbor's body, in a guayabera and trousers like the other men. Marigolds are on the stones."
     },
     {
       file: "chaneque",
-      alt: "A forest guardian in modest clothes stands with neighbors in rebozos, a few leaves tucked behind his ear.",
-      line: "One neighbor is a chaneque—a forest guardian people still greet on the street. A few leaves are tucked behind his ear, and his clothes are modest like theirs."
+      alt: "A moss-green chaneque with living leaves in his hair gestures as he talks with neighbors in rebozos, in a modest guayabera.",
+      line: "A chaneque from the forest is speaking—moss-green skin, leaves in his hair, hands open as he listens. His guayabera is buttoned like the men's."
     }
   ];
 
@@ -248,7 +248,7 @@
   }
 
   function esMxFolkUrl(folk) {
-    return "village-art/es/mx/" + folk.file + ".jpg?v=20261010e";
+    return "village-art/es/mx/" + folk.file + ".jpg?v=20261010h";
   }
 
   var scenes = {
