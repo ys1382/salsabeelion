@@ -219,8 +219,8 @@
   var ES_MX_FOLK = [
     {
       file: "alux",
-      alt: "A short alux in a white guayabera walks with tall neighbors in Oaxacan rebozos, carrying a basket of maize.",
-      line: "An alux from the old stories is with them—small, in a buttoned guayabera, with maize in his basket. The women wear rebozos and carry marigolds."
+      alt: "At the milpa edge, a short alux in a buttoned guayabera talks with a woman in a rebozo beside tall maize.",
+      line: "Out at the milpa, an alux from the old stories stands among the maize—small, in a buttoned guayabera, with harvest in his basket."
     },
     {
       file: "nahual",
@@ -229,8 +229,8 @@
     },
     {
       file: "chaneque",
-      alt: "A moss-green chaneque with living leaves in his hair gestures as he talks with neighbors in rebozos, in a modest guayabera.",
-      line: "A chaneque from the forest is speaking—moss-green skin, leaves in his hair, hands open as he listens. His guayabera is buttoned like the men's."
+      alt: "At the forest edge, a moss-green chaneque with leaves in his hair talks with a woman in a rebozo on a shaded path.",
+      line: "Where the trees begin, a chaneque is speaking—moss-green skin, leaves in his hair, hands open. His guayabera is buttoned; a neighbor in a rebozo listens."
     }
   ];
 
@@ -248,7 +248,7 @@
   }
 
   function esMxFolkUrl(folk) {
-    return "village-art/es/mx/" + folk.file + ".jpg?v=20261010h";
+    return "village-art/es/mx/" + folk.file + ".jpg?v=20261010i";
   }
 
   var scenes = {
