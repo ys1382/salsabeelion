@@ -12,9 +12,9 @@
       homeAlt: "Elvora talks with a young person between two limewashed houses.",
       street: [
         "The street is one street. Limewashed houses, clay tile roofs, and a small café with a cloth awning run the whole way, and people use them together.",
-        "Neighbors come along with the groceries, talking as they go. A blue-green visitor walks with them, only passing through."
+        "Neighbors come along in modest everyday clothes, talking as they go. A blue-green visitor walks with them, only passing through."
       ],
-      streetAlt: "Neighbors carry groceries down a limewashed street, talking, with one blue-green visitor among them.",
+      streetAlt: "Neighbors in modest clothes carry groceries down a limewashed street, talking, with one blue-green visitor among them.",
       shore: [
         "The cove is quiet. People stand on the rocks with small nets, talking while a boat waits on the clear water."
       ],
@@ -216,6 +216,41 @@
     return "village-art/tr/" + folk.file + ".jpg?v=20261009d";
   }
 
+  var ES_MX_FOLK = [
+    {
+      file: "alux",
+      alt: "A small field guardian in modest clothes walks with neighbors in rebozos, carrying a basket of maize.",
+      line: "A small field guardian walks with them—the kind neighbors tell stories about. He wears the same modest clothes and carries maize."
+    },
+    {
+      file: "nahual",
+      alt: "One neighbor in modest clothes has a man's face and quiet amber eyes, talking with the others.",
+      line: "One neighbor is a nahual: a person first, in modest clothes like everyone else. Only his eyes remember the other shape."
+    },
+    {
+      file: "chaneque",
+      alt: "A forest guardian in modest clothes stands with neighbors in rebozos, a few leaves tucked behind his ear.",
+      line: "One neighbor is a chaneque—a forest guardian people still greet on the street. A few leaves are tucked behind his ear, and his clothes are modest like theirs."
+    }
+  ];
+
+  function esMxFolkIndex() {
+    var n = state.flags.esMxLook;
+    if (typeof n !== "number" || n < 0) return 0;
+    return n;
+  }
+
+  function esMxFolkNow() {
+    if (!langPack || langPack().id !== "es") return null;
+    var n = esMxFolkIndex();
+    if (n >= ES_MX_FOLK.length) return null;
+    return ES_MX_FOLK[n];
+  }
+
+  function esMxFolkUrl(folk) {
+    return "village-art/es/mx/" + folk.file + ".jpg?v=20261010e";
+  }
+
   var scenes = {
     mon_home: {
       day: "Monday",
@@ -238,21 +273,26 @@
       picture: function () {
         var folk = trFolkNow();
         if (folk) return trFolkUrl(folk);
+        folk = esMxFolkNow();
+        if (folk) return esMxFolkUrl(folk);
         if (langPack().id === "tr") return artUrl("street");
         return "";
       },
       alt: function () {
-        var folk = trFolkNow();
+        var folk = trFolkNow() || esMxFolkNow();
         return folk ? folk.alt : look().streetAlt;
       },
       paragraphs: function () {
-        var folk = trFolkNow();
+        var folk = trFolkNow() || esMxFolkNow();
         return folk ? [folk.line] : look().street;
       },
       choices: function () {
         var list = [];
         if (langPack().id === "tr") {
           list.push({ label: "Look further along the street.", next: "mon_street", trStep: true });
+        }
+        if (langPack().id === "es") {
+          list.push({ label: "Look further along the street.", next: "mon_street", esMxStep: true });
         }
         if (!alreadySaid("ch_hi_scarf")) list.push({ say: "ch_hi_scarf", next: "scarf_hi" });
         list.push({ label: "Back to Elvora.", next: "mon_return" });
@@ -2079,6 +2119,12 @@
         n += 1;
         if (n > TR_FOLK.length) n = 0;
         state.flags.trLook = n;
+      }
+      if (choice.esMxStep) {
+        var mx = esMxFolkIndex();
+        mx += 1;
+        if (mx > ES_MX_FOLK.length) mx = 0;
+        state.flags.esMxLook = mx;
       }
       if (choice.say === "bye") {
         var byeId = choice.next;
