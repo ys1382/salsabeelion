@@ -258,9 +258,11 @@
       alt: function () { return look().homeAlt; },
       paragraphs: function () {
         return [
-          "You are already home in Alderhart. The house next to yours is Elvora’s, and the gate between them has been there longer than this morning.",
+          "You stepped off the train this morning. The bag is still heavy. The house your family arranged is small and plain; the gate into the next garden is older than you are.",
           look().home(),
-          "Elvora leans on her stick."
+          "Elvora’s house sits beside yours. She was at the platform — not waving, just watching — and walked you home without making a speech. Your mother’s letter is folded in your pocket. You have read it twice.",
+          "You grew up where people kept to their own groups. This village is mixed, and that is new.",
+          "Elvora leans on her stick at the gate now. She does not ask if you are tired. She asks if you are here."
         ];
       },
       speaker: "Elvora says",
@@ -2042,7 +2044,7 @@
     pictureEl.removeAttribute("src");
     pictureEl.alt = "";
     proseEl.replaceChildren();
-    ["You already live here, next to Elvora.", "Elvora is the same as you."].forEach(function (text) {
+    ["You stepped off the train this morning. Elvora met you at the platform.", "Elvora is the same as you."].forEach(function (text) {
       var p = document.createElement("p");
       p.textContent = text;
       proseEl.appendChild(p);
