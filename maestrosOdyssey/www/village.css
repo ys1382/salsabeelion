@@ -229,6 +229,31 @@ body.train-window.train-rain .train-glass {
   margin-top: 0;
 }
 
+.you-line {
+  margin: 0.15rem 0 0.45rem 1.15rem;
+}
+
+.you-who {
+  display: block;
+  font-family: "Segoe UI", system-ui, sans-serif;
+  font-size: 0.82rem;
+  letter-spacing: 0.02em;
+  color: #5c5146;
+}
+
+.you-said {
+  font-family: Georgia, Palatino, serif;
+}
+
+.talk-lead {
+  margin: 0.85rem 0 0;
+  color: #5c5146;
+}
+
+.reply .you-model {
+  margin-top: 0.35rem;
+}
+
 .speaker {
   margin: 0.75rem 0 0;
   font-family: "Segoe UI", system-ui, sans-serif;
@@ -506,4 +531,100 @@ body.picking .prose p {
   .prose p {
     font-size: 1rem;
   }
+}
+
+.speech.no-hover .gloss,
+.speech.no-hover:hover .gloss,
+.speech.no-hover:focus-within .gloss,
+.speech.no-hover .sense {
+  display: none;
+}
+
+.speech.no-hover .word {
+  cursor: text;
+}
+
+.reply {
+  margin-top: 0.75rem;
+}
+
+.reply-ask,
+.letter-hint,
+.reply-note {
+  margin: 0.35rem 0 0;
+  font-family: "Segoe UI", system-ui, sans-serif;
+  font-size: 0.95rem;
+}
+
+.letter-hint {
+  color: #6a4a28;
+}
+
+.reply input {
+  display: block;
+  width: 100%;
+  margin-top: 0.45rem;
+  padding: 0.45rem 0.55rem;
+  border: 1px solid #8a7b68;
+  background: #fffaf2;
+  color: var(--ink);
+  font: 1.05rem Georgia, Palatino, serif;
+}
+
+.reply button,
+.kana-key,
+.hold-pop button {
+  font-family: "Segoe UI", system-ui, sans-serif;
+}
+
+.reply button {
+  margin-top: 0.55rem;
+  padding: 0.4rem 0.8rem;
+  border: 0;
+  background: var(--choice);
+  color: var(--choice-ink);
+  cursor: pointer;
+}
+
+.kana-board {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.28rem;
+  margin-top: 0.55rem;
+}
+
+.kana-key {
+  min-width: 2.4rem;
+  padding: 0.2rem 0.35rem 0.15rem;
+  border: 1px solid #8a7b68;
+  background: #fffaf2;
+  color: var(--ink);
+  cursor: pointer;
+  line-height: 1.05;
+}
+
+.kana-key b {
+  display: block;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.kana-key small {
+  display: block;
+  color: #6d6256;
+  font-size: 0.68rem;
+}
+
+.hold-pop {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.28rem;
+  margin-top: 0.35rem;
+}
+
+.hold-pop button {
+  padding: 0.25rem 0.5rem;
+  border: 1px solid #8a7b68;
+  background: #fff4dc;
+  cursor: pointer;
 }
