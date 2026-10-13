@@ -580,12 +580,15 @@
       var button = document.createElement("button");
       button.type = "button";
       button.textContent = ch;
-      button.addEventListener("mousedown", function (event) {
+      var used = false;
+      function choose(event) {
         event.preventDefault();
-      });
-      button.addEventListener("click", function () {
+        if (used) return;
+        used = true;
         onPick(ch);
-      });
+      }
+      button.addEventListener("mousedown", choose);
+      button.addEventListener("click", choose);
       pop.appendChild(button);
     });
   }
@@ -595,83 +598,120 @@
     var timer = 0;
     var held = "";
     var opened = false;
+    var mark = null;
     var saved = null;
     var applying = false;
-    var landedAt = 0;
+    var userDelete = false;
+    var watchPick = false;
+    var pickedValue = "";
+    var suppress = "";
+    var mods = { Shift: 1, Control: 1, Alt: 1, Meta: 1, CapsLock: 1 };
 
-    function remember() {
+    function snapshot() {
       var start = input.selectionStart;
       var end = input.selectionEnd;
-      saved = {
+      var len = input.value.length;
+      return {
         value: input.value,
-        start: typeof start === "number" ? start : input.value.length,
-        end: typeof end === "number" ? end : input.value.length
+        start: typeof start === "number" ? start : len,
+        end: typeof end === "number" ? end : len
       };
     }
 
-    function putBack() {
-      if (!saved) return;
-      input.value = saved.value;
-      try {
-        input.setSelectionRange(saved.start, saved.start);
-      } catch (err) {}
+    function restore(snap) {
+      if (!snap) return;
+      applying = true;
+      input.value = snap.value;
+      try { input.setSelectionRange(snap.start, snap.end); } catch (err) {}
+      applying = false;
     }
 
-    function closePop() {
-      pop.hidden = true;
-      opened = false;
+    function cancelTimer() {
       if (timer) clearTimeout(timer);
       timer = 0;
+    }
+
+    function endHold() {
+      cancelTimer();
+      pop.hidden = true;
+      opened = false;
       held = "";
-    }
-
-    function guarding() {
-      return !!held || pop.hidden === false;
-    }
-
-    function settling() {
-      return Date.now() - landedAt < 250;
+      mark = null;
     }
 
     function placeAccent(ch) {
       if (!ch || applying) return;
-      if (Date.now() - landedAt < 250) return;
+      var value = input.value;
+      var index = mark ? mark.index : (typeof input.selectionStart === "number" ? input.selectionStart : value.length);
+      var key = mark ? mark.key : "";
       applying = true;
-      var start = saved ? saved.start : (typeof input.selectionStart === "number" ? input.selectionStart : input.value.length);
-      var value = saved ? saved.value : input.value;
-      input.value = value.slice(0, start) + ch + value.slice(start);
-      var next = start + ch.length;
-      try { input.setSelectionRange(next, next); } catch (err) {}
-      saved = { value: input.value, start: next, end: next };
+      if (key && value.slice(index, index + key.length) === key) {
+        input.value = value.slice(0, index) + ch + value.slice(index + key.length);
+      } else {
+        input.value = value.slice(0, index) + ch + value.slice(index);
+      }
+      var caret = index + ch.length;
+      try { input.setSelectionRange(caret, caret); } catch (err) {}
       applying = false;
-      landedAt = Date.now();
-      closePop();
+      suppress = key;
+      watchPick = true;
+      pickedValue = input.value;
+      saved = snapshot();
+      endHold();
       input.focus();
     }
 
-    function keepWord(event) {
-      if (applying || !saved) return;
-      var open = guarding();
-      var settle = settling();
-      if (!open && !settle) return;
-      if (input.value === saved.value) return;
-      if (settle && !open && input.value.length >= saved.value.length) return;
-      var data = (event && event.data) || "";
-      var chars = Array.from(data);
-      putBack();
-      if (open && chars.length === 1 && data !== held && !settle) placeAccent(data);
+    function protectPick() {
+      if (!watchPick || applying || input.value === pickedValue) return;
+      var caret = saved ? saved.start : pickedValue.length;
+      applying = true;
+      input.value = pickedValue;
+      try { input.setSelectionRange(caret, caret); } catch (err) {}
+      applying = false;
+    }
+
+    function restoreMark() {
+      if (!mark) return;
+      applying = true;
+      input.value = mark.value;
+      var caret = mark.index + mark.key.length;
+      try { input.setSelectionRange(caret, caret); } catch (err) {}
+      applying = false;
+    }
+
+    function keepWord() {
+      if (applying) return;
+      if (userDelete) {
+        userDelete = false;
+        watchPick = false;
+        pickedValue = "";
+        suppress = "";
+        endHold();
+        return;
+      }
+      protectPick();
+      if (!mark || !held) return;
+      if (input.value === mark.value) return;
+      if (input.value.length < mark.value.length) {
+        restoreMark();
+        return;
+      }
+      var at = input.value.slice(mark.index, mark.index + mark.key.length);
+      if (at === mark.key) {
+        mark.value = input.value;
+        return;
+      }
+      restoreMark();
     }
 
     input.addEventListener("beforeinput", function (event) {
-      var open = guarding();
-      var settle = settling();
-      if (applying || (!open && !settle)) return;
+      if (applying || userDelete) return;
       var type = event.inputType || "";
-      var systemEdit = type === "insertReplacementText" || type === "insertCompositionText" || type.indexOf("delete") === 0 || (!!held && type === "insertText");
+      if (type.indexOf("delete") === 0) return;
+      if (!held && pop.hidden !== false) return;
+      var systemEdit = type === "insertReplacementText" || type === "insertCompositionText" || (!!held && type === "insertText");
       if (!systemEdit) return;
       event.preventDefault();
-      var data = event.data || "";
-      if (open && !settle && data && Array.from(data).length === 1 && data !== held && type.indexOf("delete") !== 0) placeAccent(data);
     }, true);
 
     input.addEventListener("input", keepWord);
@@ -688,55 +728,84 @@
         }
         return;
       }
-      if (event.key === "Escape" && pop.hidden === false) {
+      if (key === "Escape" && pop.hidden === false) {
         event.preventDefault();
-        putBack();
-        closePop();
+        watchPick = false;
+        pickedValue = "";
+        suppress = "";
+        endHold();
         return;
+      }
+      if (key === "Backspace" || key === "Delete") {
+        userDelete = true;
+        watchPick = false;
+        pickedValue = "";
+        suppress = "";
+        endHold();
+        setTimeout(function () { userDelete = false; }, 0);
+        return;
+      }
+      if (mods[key]) return;
+      if (suppress && key === suppress) {
+        event.preventDefault();
+        return;
+      }
+      if (watchPick) {
+        watchPick = false;
+        pickedValue = "";
       }
       if (event.repeat) {
-        event.preventDefault();
+        if (held || holds[key]) event.preventDefault();
         return;
       }
+      if (opened || (held && key !== held)) endHold();
       var options = holds[key];
-      if (!options) {
-        if (pop.hidden === false) {
-          pop.hidden = true;
-          opened = false;
-        }
-        return;
-      }
+      if (!options) return;
       event.preventDefault();
+      var before = snapshot();
+      applying = true;
+      insertAt(input, key);
+      applying = false;
+      mark = { value: input.value, index: before.start, key: key };
       held = key;
       opened = false;
-      remember();
-      if (timer) clearTimeout(timer);
+      cancelTimer();
       timer = setTimeout(function () {
+        if (held !== key || !mark) return;
+        if (input.value.slice(mark.index, mark.index + key.length) !== key) {
+          endHold();
+          return;
+        }
         opened = true;
         showHoldChoices(pop, options, placeAccent);
       }, 450);
     });
 
     input.addEventListener("keyup", function (event) {
+      if (suppress && event.key === suppress) {
+        var keyName = event.key;
+        setTimeout(function () {
+          protectPick();
+          if (suppress === keyName) {
+            suppress = "";
+            watchPick = false;
+            pickedValue = "";
+          }
+        }, 0);
+      }
       if (event.key !== held) return;
-      if (timer) clearTimeout(timer);
-      timer = 0;
-      var key = event.key;
+      cancelTimer();
       if (!opened) {
         held = "";
-        putBack();
-        insertAt(input, key);
-        remember();
-        return;
+        mark = null;
       }
-      if (saved && input.value !== saved.value) putBack();
-      held = "";
     });
 
     input.addEventListener("blur", function () {
-      if (timer) clearTimeout(timer);
-      timer = 0;
-      if (!opened) held = "";
+      cancelTimer();
+      if (opened || watchPick) return;
+      held = "";
+      mark = null;
     });
   }
 
