@@ -9,7 +9,7 @@
       home: function () {
         return "Both houses are limewashed, with clay tile roofs.";
       },
-      homeAlt: "Elvora talks with a young person between two limewashed houses.",
+      homeAlt: "{elder} talks with a young person between two limewashed houses.",
       street: [
         "The street is one street. Limewashed houses, clay tile roofs, and a small café with a cloth awning run the whole way, and people use them together.",
         "Neighbors come along in modest everyday clothes, talking as they go. A blue-green visitor walks with them, only passing through."
@@ -33,7 +33,7 @@
       home: function () {
         return "Both houses are pale stone, with arched doors.";
       },
-      homeAlt: "Elvora talks with a young person between two stone houses.",
+      homeAlt: "{elder} talks with a young person between two stone houses.",
       street: [
         "The street is one street. Pale stone houses with arched doors, and a courtyard café, run the whole way, and people use them together.",
         "Neighbors come along with baskets of groceries, talking as they go. A blue-green visitor walks with them, only passing through."
@@ -57,7 +57,7 @@
       home: function () {
         return "Both houses are whitewashed, with stone walls.";
       },
-      homeAlt: "Elvora talks with a young person between two whitewashed cottages.",
+      homeAlt: "{elder} talks with a young person between two whitewashed cottages.",
       street: [
         "The street is one street. Whitewashed cottages, stone walls, and a small tea shop run the whole way, and people use them together.",
         "Neighbors come along the lane with the groceries, talking as they go. A short neighbor sits by the wall, mending a shoe."
@@ -81,7 +81,7 @@
       home: function () {
         return "Both houses are wood, with dark tile roofs.";
       },
-      homeAlt: "Elvora talks with a young person between two wooden houses.",
+      homeAlt: "{elder} talks with a young person between two wooden houses.",
       street: [
         "The street is one street. Wooden houses, dark tile roofs, and a small café with a plain curtain run the whole way, and people use them together.",
         "Neighbors come along with the groceries, talking as they go. A blue-green visitor walks with them, only passing through."
@@ -105,7 +105,7 @@
       home: function () {
         return "Both houses are plaster, with red tile roofs.";
       },
-      homeAlt: "Elvora talks with a young person between two plaster houses.",
+      homeAlt: "{elder} talks with a young person between two plaster houses.",
       street: [
         "The street is one street. Plaster houses, red tile roofs, and a tea house run the whole way, and people use them together.",
         "Neighbors come along with baskets, talking as they go. People sit over tea at the tables. One neighbor walks with them, a faint brightness at her shoulders."
@@ -261,7 +261,14 @@
         "The train hums. Rain has dried on the glass in streaks. Your reflection looks younger than you feel.",
         "The letter crackles when you shift."
       ],
-      choices: [{ label: "Continue.", next: "intro_train_2" }]
+      letter: true,
+      choices: function () {
+        var list = [];
+        if (!state.flags.letterOpen) list.push({ label: "Read the letter.", readLetter: true });
+        list.push({ label: "Listen.", listenLetter: true });
+        list.push({ label: "Continue.", next: "intro_train_5" });
+        return list;
+      }
     },
     intro_train_2: {
       day: "Monday",
@@ -299,11 +306,11 @@
     intro_train_5: {
       day: "Monday",
       where: "The train",
-      picture: "village-art/intro/intro_train_5.jpg?v=20261010art2",
-      alt: "A green lane where people pass close, and a still figure waiting on the platform.",
+      picture: "",
+      alt: "{elder} waits on the platform.",
       paragraphs: [
-        "Green. A lane where a human woman with groceries steps around a blue-green visitor and does not flinch. A café door open. Smoke from a chimney.",
-        "The train slows. Elvora is a still figure on the platform."
+        "The train slows. A lane, a café door open, smoke from a chimney.",
+        "{elder} is a still figure on the platform."
       ],
       choices: [{ label: "Step down.", next: "mon_home" }]
     },
@@ -315,14 +322,14 @@
         return [
           "You stepped off the train this morning. The bag is still heavy. The house your family arranged is small and plain; the gate into the next garden is older than you are.",
           look().home(),
-          "Elvora’s house sits beside yours. She was at the platform — not waving, just watching — and walked you home without making a speech. Your mother’s letter is folded in your pocket. You have read it twice.",
-          "You grew up where people kept to their own groups. This village is mixed, and that is new.",
-          "Elvora leans on her stick at the gate now. She does not ask if you are tired. She asks if you are here."
+          "{elder}’s house sits beside yours. {Sub} was at the platform — not waving, just watching — and walked you home without making a speech. Your mother’s letter is folded in your pocket. You have read it twice.",
+          "{Sub} was good friends with your {grand}. That is why {sub} is here: fond of your family, and set against learning a language at a desk.",
+          "{elder} leans on {pos} stick at the gate now. {Sub} does not ask if you are tired. {Sub} asks if you are ready to live the language."
         ];
       },
-      speaker: "Elvora says",
+      speaker: "{elder} says",
       say: "mon_home",
-      choices: [{ label: "Go to the street.", next: "mon_street" }]
+      choices: [{ label: "Go to the street.", next: "lessons" }]
     },
     mon_street: {
       day: "Monday",
@@ -352,7 +359,7 @@
           list.push({ label: "Look further along the street.", next: "mon_street", esMxStep: true });
         }
         if (!alreadySaid("ch_hi_scarf")) list.push({ say: "ch_hi_scarf", next: "scarf_hi" });
-        list.push({ label: "Back to Elvora.", next: "mon_return" });
+        list.push({ label: "Back to {elder}.", next: "mon_return" });
         return list;
       }
     },
@@ -480,9 +487,9 @@
     mon_return: {
       day: "Monday",
       image: "village-art/elder.jpg?v=20261006b",
-      alt: "Elvora listens at the gate.",
+      alt: "{elder} listens at the gate.",
       paragraphs: function () { return reportIntro("mon"); },
-      speaker: "Elvora says",
+      speaker: "{elder} says",
       say: "report_ask",
       report: "mon",
       choices: []
@@ -490,9 +497,9 @@
     mon_said: {
       day: "Monday",
       image: "village-art/elder.jpg?v=20261006b",
-      alt: "Elvora answers at the gate.",
+      alt: "{elder} answers at the gate.",
       paragraphs: function () { return reportTaken("mon"); },
-      speaker: "Elvora says",
+      speaker: "{elder} says",
       pick: function () { return reportSay("mon"); },
       face: "heard",
       notesDay: "mon",
@@ -501,11 +508,11 @@
     tue_home: {
       day: "Tuesday",
       image: "village-art/elder.jpg?v=20261006b",
-      alt: "Elvora speaks with you at the cottage gate.",
+      alt: "{elder} speaks with you at the cottage gate.",
       paragraphs: function () {
-        return [morningEcho("mon"), "Elvora is at the gate."];
+        return [morningEcho("mon"), "{elder} is at the gate."];
       },
-      speaker: "Elvora says",
+      speaker: "{elder} says",
       pick: function () {
         return state.reports.mon && state.reports.mon !== "none" ? "tue_open_yes" : "tue_open_no";
       },
@@ -542,7 +549,7 @@
       speaker: womanSays,
       say: "eyes_office",
       learn: "tue-office",
-      choices: [{ label: "Back to Elvora.", next: "tue_return" }]
+      choices: [{ label: "Back to {elder}.", next: "tue_return" }]
     },
     tue_shore: {
       day: "Tuesday",
@@ -553,7 +560,7 @@
         { label: "Go to the garden.", next: "tue_meet" },
         { say: "ch_hi_mer", next: "mer_hi" },
         { say: "ch_hi_fish", next: "fish_hi" },
-        { label: "Back to Elvora.", next: "tue_return" }
+        { label: "Back to {elder}.", next: "tue_return" }
       ]
     },
     mer_hi: {
@@ -639,9 +646,9 @@
     tue_return: {
       day: "Tuesday",
       image: "village-art/elder.jpg?v=20261006b",
-      alt: "Elvora nods at the cottage gate.",
+      alt: "{elder} nods at the cottage gate.",
       paragraphs: function () { return reportIntro("tue"); },
-      speaker: "Elvora says",
+      speaker: "{elder} says",
       say: "report_ask",
       report: "tue",
       choices: []
@@ -649,9 +656,9 @@
     tue_said: {
       day: "Tuesday",
       image: "village-art/elder.jpg?v=20261006b",
-      alt: "Elvora answers at the cottage gate.",
+      alt: "{elder} answers at the cottage gate.",
       paragraphs: function () { return reportTaken("tue"); },
-      speaker: "Elvora says",
+      speaker: "{elder} says",
       pick: function () { return reportSay("tue"); },
       face: "heard",
       notesDay: "tue",
@@ -660,11 +667,11 @@
     wed_home: {
       day: "Wednesday",
       image: "village-art/elder.jpg?v=20261006b",
-      alt: "Elvora at the gate on a quieter morning.",
+      alt: "{elder} at the gate on a quieter morning.",
       paragraphs: function () {
-        return [morningEcho("tue"), "Elvora is at the gate."];
+        return [morningEcho("tue"), "{elder} is at the gate."];
       },
-      speaker: "Elvora says",
+      speaker: "{elder} says",
       pick: function () {
         return state.reports.tue && state.reports.tue !== "none" ? "wed_open_yes" : "wed_open_no";
       },
@@ -691,7 +698,7 @@
       speaker: womanSays,
       say: "eyes_wed",
       learn: "wed-lucia",
-      choices: [{ label: "Back to Elvora.", next: "wed_return" }]
+      choices: [{ label: "Back to {elder}.", next: "wed_return" }]
     },
     wed_porch: {
       day: "Wednesday",
@@ -702,7 +709,7 @@
         { label: "The cart is here.", next: "wed_meet" },
         { say: "ch_hi_shop", next: "shop_hi" },
         { say: "ch_hi_pair", next: "pair_hi" },
-        { label: "Back to Elvora.", next: "wed_return" }
+        { label: "Back to {elder}.", next: "wed_return" }
       ]
     },
     shop_hi: {
@@ -760,9 +767,9 @@
     wed_return: {
       day: "Wednesday",
       image: "village-art/elder.jpg?v=20261006b",
-      alt: "Elvora at the gate.",
+      alt: "{elder} at the gate.",
       paragraphs: function () { return reportIntro("wed"); },
-      speaker: "Elvora says",
+      speaker: "{elder} says",
       say: "report_ask",
       report: "wed",
       choices: []
@@ -770,9 +777,9 @@
     wed_said: {
       day: "Wednesday",
       image: "village-art/elder.jpg?v=20261006b",
-      alt: "Elvora answers at the gate.",
+      alt: "{elder} answers at the gate.",
       paragraphs: function () { return reportTaken("wed"); },
-      speaker: "Elvora says",
+      speaker: "{elder} says",
       pick: function () { return reportSay("wed"); },
       face: "heard",
       notesDay: "wed",
@@ -781,11 +788,11 @@
     thu_home: {
       day: "Thursday",
       image: "village-art/elder.jpg?v=20261006b",
-      alt: "Elvora stays by the cottages while the lane leads away.",
+      alt: "{elder} stays by the cottages while the lane leads away.",
       paragraphs: function () {
-        return [morningEcho("wed"), "Elvora stays by the houses. You walk the last of the lane alone."];
+        return [morningEcho("wed"), "{elder} stays by the houses. You walk the last of the lane alone."];
       },
-      speaker: "Elvora says",
+      speaker: "{elder} says",
       say: "thu_home",
       choices: [{ label: "Go to the station.", next: "thu_station" }]
     },
@@ -917,7 +924,7 @@
         var stay = "You stay on the platform. The train does not leave with you.";
         var again = "The next walk is the same days, and people speak the next language the whole way.";
         if (state.note === "how") {
-          return [stay, "You keep what the traveler said: out there, people live apart. Here, they do not.", again];
+          return [stay, "You keep the words the traveler actually said.", again];
         }
         if (state.note === "from") {
           return [stay, "The traveler came from far away, and is not staying today.", again];
@@ -943,6 +950,28 @@
     "wed-lucia": function () { return "The cart is here and " + womanName() + "’s brother is not on it. The fire is in the streets of Jarales. A line sparked over the mill pines and came down into the houses. Her parents are still in theirs. The ridge road is shut."; },
     "wed-door": "His door is open, and there the door is shut.",
     "wed-pair": "They come in together, and there they do not."
+  };
+
+  var LETTER = [
+    "My dear, by the time you hear this, you are already moving. I did not follow you to the platform. I would have cried, and you would have pretended not to notice.",
+    "Your father and I sent you to Alderhart so you would learn the language by living it. A desk and a chalkboard are not the way. {elder} agrees. {Sub} was good friends with your {grand}, and {sub} is still fond of this family.",
+    "Stay with {obj}, eat when you are hungry, and write when you can. I love you. Mother."
+  ];
+
+  var LETTER_FOLD = "You fold the letter again. The crease is already soft from your thumb.";
+
+  var NOTE_PLACES = {
+    "mon-elif": "The lane",
+    "mon-walk": "The street",
+    "mon-letter": "The street",
+    "tue-flowers": "The garden",
+    "tue-office": "The garden",
+    "tue-cove": "The shore",
+    "tue-net": "The shore",
+    "tue-fish": "The shore",
+    "wed-lucia": "The lane",
+    "wed-door": "The shop",
+    "wed-pair": "The shop"
   };
 
   var BACK = { mon: ["Back to the street.", "mon_street"], tue: ["Back to the shore.", "tue_shore"], wed: ["Back to the shop.", "wed_porch"] };
@@ -1012,7 +1041,7 @@
   function reportIntro(day) {
     if (!learned(day).length) return ["You are back at the gate. There is nothing from today to tell yet."];
     return [
-      "Elvora is at the gate.",
+      "{elder} is at the gate.",
       "You tell the day in your own words."
     ];
   }
@@ -1026,9 +1055,9 @@
   function reportTaken(day) {
     var id = state.reports[day];
     if (id && id === rightReport(day)) {
-      return ["Elvora nods. The day you brought is enough to sit with."];
+      return ["{elder} nods. The day you brought is enough to sit with."];
     }
-    return ["Elvora is quiet a moment. From the life she has lived, a day like this often keeps a little more than the first telling."];
+    return ["{elder} is quiet a moment. From the life {sub} has lived, a day like this often keeps a little more than the first telling."];
   }
 
   function afterReport(day, next) {
@@ -1051,10 +1080,10 @@
   function morningEcho(day) {
     var id = state.reports[day];
     if (!id) return "The morning is quiet at the gate.";
-    if (id === "none") return "Yesterday stayed where you left it. Elvora does not press.";
+    if (id === "none") return "Yesterday stayed where you left it. {elder} does not press.";
     var pack = reportPack(day);
-    if (pack && id === pack.right) return "Elvora still carries yesterday, quietly.";
-    return "Elvora still has the sense that yesterday kept a little back.";
+    if (pack && id === pack.right) return "{elder} still carries yesterday, quietly.";
+    return "{elder} still has the sense that yesterday kept a little back.";
   }
 
   var dayEl = document.getElementById("day");
@@ -1084,12 +1113,16 @@
     note: "",
     notes: blankNotes(),
     reports: {},
-    said: { mon: [], tue: [], wed: [], thu: [] }
+    said: { mon: [], tue: [], wed: [], thu: [] },
+    lesson: { day: 0, step: 0 }
   };
   var voices = [];
   var speakGen = 0;
   var practiceGen = 0;
+  var listenGen = 0;
   var activeRec = null;
+  var motherAudio = null;
+  var motherKeep = 0;
   var WORD_GAP_MS = 300;
   var bannerEl = document.createElement("div");
   bannerEl.className = "listen-banner";
@@ -1151,9 +1184,10 @@
         if (!restart && scenes[data.scene]) state.scene = data.scene;
         if (!restart && data.flags && typeof data.flags === "object") state.flags = data.flags;
         if (!restart && data.note) state.note = data.note;
-        if (!restart && data.notes && typeof data.notes === "object") state.notes = data.notes;
+        if (data.notes && typeof data.notes === "object") state.notes = data.notes;
         if (!restart && data.reports && typeof data.reports === "object") state.reports = data.reports;
         if (!restart && data.said && typeof data.said === "object") state.said = data.said;
+        if (!restart && data.lesson && typeof data.lesson.day === "number") state.lesson = data.lesson;
         if (typeof data.langIndex === "number") state.langIndex = savedLangIndex(data.langIndex, data.langRoster);
       }
     } catch (err) {}
@@ -1163,11 +1197,17 @@
       state.scene = "intro_train_1";
       state.flags = {};
       state.note = "";
-      state.notes = blankNotes();
       state.reports = {};
       state.said = blankSaid();
+      state.lesson = { day: 0, step: 0 };
     }
     if (state.gender !== "boy" && state.gender !== "girl") state.gender = readCookieGender();
+    if (!state.lesson || typeof state.lesson.day !== "number") state.lesson = { day: 0, step: 0 };
+    var keepScene = {
+      intro_train_1: 1, intro_train_2: 1, intro_train_3: 1, intro_train_4: 1, intro_train_5: 1,
+      mon_home: 1, lessons: 1
+    };
+    if (state.scene && !keepScene[state.scene]) state.scene = "lessons";
   }
 
   function readWho() {
@@ -1191,7 +1231,8 @@
         note: state.note || "",
         notes: state.notes || blankNotes(),
         reports: state.reports || {},
-        said: state.said || blankSaid()
+        said: state.said || blankSaid(),
+        lesson: state.lesson || { day: 0, step: 0 }
       };
       localStorage.setItem(WHO_KEY, JSON.stringify(all));
     } catch (err) {}
@@ -1210,7 +1251,8 @@
           note: state.note || "",
           notes: state.notes || blankNotes(),
           reports: state.reports || {},
-          said: state.said || blankSaid()
+          said: state.said || blankSaid(),
+          lesson: state.lesson || { day: 0, step: 0 }
         })
       );
       writeCookieGender();
@@ -1244,6 +1286,8 @@
   function stopVoice() {
     speakGen += 1;
     practiceGen += 1;
+    listenGen += 1;
+    stopMotherAudio();
     releaseSpeaker();
     if (activeRec) {
       try { activeRec.abort(); } catch (err) {}
@@ -1256,6 +1300,96 @@
     return voices.filter(function (voice) {
       return String(voice.lang || "").toLowerCase().indexOf(want) === 0;
     })[0] || null;
+  }
+
+  function pickMotherVoice() {
+    var list = voices.filter(function (voice) {
+      return /^en/i.test(String(voice.lang || ""));
+    });
+    var warm = ["samantha", "victoria", "moira", "karen", "fiona", "serena", "kathy", "zira", "susan", "female"];
+    var i;
+    var j;
+    for (i = 0; i < warm.length; i++) {
+      for (j = 0; j < list.length; j++) {
+        if (String(list[j].name || "").toLowerCase().indexOf(warm[i]) !== -1) return list[j];
+      }
+    }
+    return list[0] || null;
+  }
+
+  function stopMotherAudio() {
+    if (motherKeep) {
+      clearInterval(motherKeep);
+      motherKeep = 0;
+    }
+    var audio = motherAudio;
+    motherAudio = null;
+    if (!audio) return;
+    audio.onerror = null;
+    audio.onended = null;
+    try { audio.pause(); } catch (err) {}
+  }
+
+  function motherPassages(parts) {
+    var bits = [];
+    (parts || []).forEach(function (line) {
+      var clean = String(line || "").replace(/\s+/g, " ").trim();
+      if (clean) bits.push(clean);
+    });
+    if (bits.length <= 3) return bits;
+    var size = Math.ceil(bits.length / 3);
+    var passages = [];
+    var i;
+    for (i = 0; i < bits.length; i += size) passages.push(bits.slice(i, i + size).join(" "));
+    return passages.slice(0, 3);
+  }
+
+  function speakMotherTts(passages, gen) {
+    if (!window.speechSynthesis || gen !== speakGen || !passages.length) return;
+    var voice = pickMotherVoice();
+    var text = passages.join(" ");
+    var utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = (voice && voice.lang) || "en-US";
+    utterance.rate = 0.86;
+    utterance.pitch = 0.98;
+    if (voice) utterance.voice = voice;
+    if (motherKeep) clearInterval(motherKeep);
+    motherKeep = setInterval(function () {
+      if (gen !== speakGen) {
+        clearInterval(motherKeep);
+        motherKeep = 0;
+        return;
+      }
+      var synth = window.speechSynthesis;
+      if (!synth || !synth.speaking) return;
+      try {
+        synth.pause();
+        synth.resume();
+      } catch (err) {}
+    }, 8000);
+    function done() {
+      if (gen !== speakGen) return;
+      if (motherKeep) {
+        clearInterval(motherKeep);
+        motherKeep = 0;
+      }
+    }
+    utterance.onend = done;
+    utterance.onerror = done;
+    if (window.speechSynthesis.paused) window.speechSynthesis.resume();
+    window.speechSynthesis.speak(utterance);
+  }
+
+  function speakMother(parts) {
+    speakGen += 1;
+    var gen = speakGen;
+    stopMotherAudio();
+    var passages = motherPassages((parts || []).map(fill));
+    if (!passages.length) return;
+    if (window.speechSynthesis) {
+      try { window.speechSynthesis.cancel(); } catch (err) {}
+    }
+    speakMotherTts(passages, gen);
   }
 
   function speak(text, voiceLang) {
@@ -1385,6 +1519,7 @@
       var quietTimer = null;
       var capTimer = null;
       var rec = null;
+      var mine = listenGen;
       var continuous = !!(opts && opts.continuous);
       var safari = !!(opts && opts.safari);
       function ready() {
@@ -1429,6 +1564,10 @@
       }
       function ok() {
         if (settled) return;
+        if (mine !== listenGen) {
+          bad("cancelled");
+          return;
+        }
         settled = true;
         clearTimeout(quietTimer);
         clearTimeout(capTimer);
@@ -1489,6 +1628,10 @@
       }
       function onRecEnd() {
         if (settled) return;
+        if (mine !== listenGen) {
+          bad("cancelled");
+          return;
+        }
         if (live) {
           addChunk(chunks, live);
           live = "";
@@ -1537,6 +1680,10 @@
       }
       function arm() {
         if (settled) return;
+        if (mine !== listenGen) {
+          bad("cancelled");
+          return;
+        }
         if (Date.now() - started > limit) {
           if (displayLine()) ok();
           else bad("quiet");
@@ -1573,6 +1720,16 @@
 
   function listenChromium(voiceLang, maxMs, onUpdate, shouldStop, onReady) {
     return listenSession(voiceLang, maxMs, onUpdate, shouldStop, onReady, { continuous: false, safari: false });
+  }
+
+  function listenReply(voiceLang, onUpdate, shouldStop) {
+    stopVoice();
+    var mine = listenGen;
+    var maxMs = 14000;
+    if (mine !== listenGen) return Promise.reject(new Error("cancelled"));
+    return listenOnce(voiceLang, maxMs, onUpdate, shouldStop || null, function () {
+      if (onUpdate) onUpdate("");
+    });
   }
 
   function needRatio() {
@@ -1975,10 +2132,14 @@
 
   function fill(text) {
     var boy = state.gender === "boy";
-    return text
+    var elder = boy ? "Harlan" : "Elvora";
+    return String(text || "")
+      .replace(/\{elder\}/g, elder)
+      .replace(/\{grand\}/g, boy ? "grandfather" : "grandmother")
       .replace(/\{Sub\}/g, boy ? "He" : "She")
       .replace(/\{sub\}/g, boy ? "he" : "she")
-      .replace(/\{pos\}/g, boy ? "his" : "her");
+      .replace(/\{pos\}/g, boy ? "his" : "her")
+      .replace(/\{obj\}/g, boy ? "him" : "her");
   }
 
   function placeShot(scene) {
@@ -2067,7 +2228,7 @@
         say.textContent = "Say this";
         button.appendChild(say);
       } else {
-        button.textContent = choice.label;
+        button.textContent = fill(choice.label);
       }
       button.addEventListener("click", function (event) {
         if (event.target.closest && event.target.closest(".hear")) return;
@@ -2086,25 +2247,44 @@
     });
   }
 
-  function renderNotes(day) {
+  function storyIds() {
+    var out = [];
+    ["mon", "tue", "wed"].forEach(function (day) {
+      learned(day).forEach(function (id) {
+        if (out.indexOf(id) === -1) out.push(id);
+      });
+    });
+    return out;
+  }
+
+  function renderNotes(open, day) {
     if (!notesEl) return;
-    if (!day) {
+    var onTrain = String(state.scene || "").indexOf("intro_train_") === 0;
+    if (!open || onTrain || document.body.classList.contains("picking")) {
       notesEl.hidden = true;
       return;
     }
+    var ids = day ? learned(day) : storyIds();
     notesEl.hidden = false;
-    notePlaceEl.textContent = VILLAGE_NAME;
     noteListEl.replaceChildren();
-    var ids = learned(day);
     if (!ids.length) {
+      notePlaceEl.textContent = VILLAGE_NAME;
       var empty = document.createElement("li");
-      empty.textContent = "Nothing from today yet.";
+      empty.textContent = "Nothing yet.";
       noteListEl.appendChild(empty);
       return;
     }
+    var places = [];
+    ids.forEach(function (id) {
+      var place = NOTE_PLACES[id] || VILLAGE_NAME;
+      if (places.indexOf(place) === -1) places.push(place);
+    });
+    notePlaceEl.textContent = places.length === 1 ? places[0] : VILLAGE_NAME;
     ids.forEach(function (id) {
       var item = document.createElement("li");
-      item.textContent = noteText(id);
+      var place = NOTE_PLACES[id] || VILLAGE_NAME;
+      var line = noteText(id);
+      item.textContent = places.length === 1 ? line : place + " — " + line;
       noteListEl.appendChild(item);
     });
   }
@@ -2124,7 +2304,7 @@
     pictureEl.removeAttribute("src");
     pictureEl.alt = "";
     proseEl.replaceChildren();
-    ["You stepped off the train this morning. Elvora met you at the platform.", "Elvora is the same as you."].forEach(function (text) {
+    ["The elder who meets you is the same as you."].forEach(function (text) {
       var p = document.createElement("p");
       p.textContent = text;
       proseEl.appendChild(p);
@@ -2145,10 +2325,17 @@
   function show(id) {
     stopVoice();
     clearGrade();
-    var opening = scenes[id] && scenes[id].where === "The train";
-    if (!state.gender && !opening) {
-      state.scene = scenes[id] ? id : "mon_home";
+    if (!state.gender) {
+      state.scene = id === "lessons" || scenes[id] ? id : "intro_train_1";
       showPick();
+      return;
+    }
+    if (id === "lessons") {
+      state.scene = "lessons";
+      setTrainWindow("");
+      document.body.classList.remove("picking");
+      writeSave();
+      if (window.MOLessons) window.MOLessons.render();
       return;
     }
     if (!scenes[id]) id = "mon_home";
@@ -2159,11 +2346,13 @@
     if (scene.mark) state.flags[scene.mark] = true;
     if (scene.eyes) state.flags["eyes" + scene.eyes] = true;
     if (scene.learn) addLearn(scene.learn);
+    if (scene.learn || scene.notesDay || scene.report) state.flags.notesOpen = true;
     writeSave();
     var placeName = scene.where || VILLAGE_NAME;
     dayEl.textContent = scene.day + " · " + placeName + " · " + langPack().name;
     document.title = scene.day + " · " + placeName + " · " + langPack().name + " — Maestro's Odyssey";
-    renderNotes(scene.notesDay || scene.report || "");
+    var noteDay = scene.notesDay || scene.report || "";
+    renderNotes(scene.where === "The train" ? false : !!state.flags.notesOpen, noteDay);
     showPicture(id, scene);
     pictureEl.alt = fill(typeof scene.alt === "function" ? scene.alt() : scene.alt);
     proseEl.replaceChildren();
@@ -2173,6 +2362,18 @@
       p.textContent = fill(text);
       proseEl.appendChild(p);
     });
+    if (scene.letter && state.flags.letterOpen) {
+      LETTER.forEach(function (text) {
+        var p = document.createElement("p");
+        p.textContent = fill(text);
+        proseEl.appendChild(p);
+      });
+      if (state.flags.letterHeard) {
+        var fold = document.createElement("p");
+        fold.textContent = LETTER_FOLD;
+        proseEl.appendChild(fold);
+      }
+    }
     var sayId = scene.pick ? scene.pick() : scene.say;
     if (scene.report && !learned(scene.report).length) sayId = "";
     if (sayId) {
@@ -2181,7 +2382,7 @@
       if (speaker) {
         var who = document.createElement("p");
         who.className = "speaker";
-        who.textContent = speaker;
+        who.textContent = fill(speaker);
         proseEl.appendChild(who);
       }
       addWords(proseEl, lineTokens(sayId));
@@ -2199,6 +2400,13 @@
     if (scene.report && !state.reports[scene.report]) list = choicesFor(scene.report);
     list = withoutRepeats(list);
     buttons(list, function (choice) {
+      if (choice.readLetter || choice.listenLetter) {
+        state.flags.letterOpen = true;
+        if (choice.listenLetter) state.flags.letterHeard = true;
+        show(state.scene);
+        if (choice.listenLetter) speakMother(LETTER);
+        return;
+      }
       if (choice.trStep) {
         var n = trFolkIndex();
         n += 1;
@@ -2244,6 +2452,19 @@
       if (choice.report) state.reports[choice.reportDay || scene.report] = choice.report;
       show(choice.next);
     });
+    if (scene.where !== "The train" && storyIds().length && choicesEl) {
+      var notesBtn = document.createElement("button");
+      notesBtn.type = "button";
+      notesBtn.textContent = notesEl && !notesEl.hidden ? "Close notes" : "What you noticed";
+      notesBtn.addEventListener("click", function () {
+        var nextOpen = !!(notesEl && notesEl.hidden);
+        state.flags.notesOpen = nextOpen;
+        renderNotes(nextOpen, "");
+        notesBtn.textContent = nextOpen ? "Close notes" : "What you noticed";
+        writeSave();
+      });
+      choicesEl.appendChild(notesBtn);
+    }
   }
 
   function applyAccount(email) {
@@ -2260,6 +2481,13 @@
         if (row.notes && typeof row.notes === "object") state.notes = row.notes;
         if (row.reports && typeof row.reports === "object") state.reports = row.reports;
         if (row.said && typeof row.said === "object") state.said = row.said;
+        if (row.lesson && typeof row.lesson.day === "number") state.lesson = row.lesson;
+        if (row.scene && row.scene !== "lessons" && !scenes[row.scene]) state.scene = "lessons";
+        var keepScene = {
+          intro_train_1: 1, intro_train_2: 1, intro_train_3: 1, intro_train_4: 1, intro_train_5: 1,
+          mon_home: 1, lessons: 1
+        };
+        if (state.scene && !keepScene[state.scene]) state.scene = "lessons";
       }
       return;
     }
@@ -2298,6 +2526,21 @@
       else if (state.gender === "boy" || state.gender === "girl") show(state.scene);
     });
   }
+
+  window.MOVillage = {
+    state: state,
+    proseEl: proseEl,
+    choicesEl: choicesEl,
+    dayEl: dayEl,
+    pictureEl: pictureEl,
+    fill: fill,
+    langPack: langPack,
+    artUrl: artUrl,
+    writeSave: writeSave,
+    stopVoice: stopVoice,
+    releaseSpeaker: releaseSpeaker,
+    listenReply: listenReply
+  };
 
   boot();
 })();

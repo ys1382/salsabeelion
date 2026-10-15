@@ -222,6 +222,16 @@
     return { ok: false };
   }
 
+  function gradeSpoken(lang, heard, accept) {
+    var result = grade(lang, heard, accept);
+    var i;
+    if (result.ok || result.letter) return { ok: !!result.ok || !!result.letter };
+    for (i = 0; i < accept.length; i++) {
+      if (foldClose(lang, heard) === foldClose(lang, accept[i])) return { ok: true };
+    }
+    return result;
+  }
+
   function firstSpecial(lang, expected, typed) {
     var exp = norm(lang, expected);
     var got = norm(lang, typed);
@@ -279,6 +289,17 @@
     }
     if (day.lesson === 3 || day.lesson === 0) return "Not yet. Use what you already know.";
     return "Not yet. Use their words.";
+  }
+
+  function spokenMiss(day, result, code) {
+    if (code === "none" || code === "language-not-supported") return "This browser can't hear you. Type it instead.";
+    if (code === "denied" || code === "audio-capture" || code === "not-allowed") {
+      return "Click Allow on the microphone prompt, then press Say it again.";
+    }
+    if (result && result.kana) return "Tap the letters, or speak the words.";
+    if (!result || result.empty) return "I didn't catch that. Press Say it again, or type it.";
+    if (day.lesson === 3 || day.lesson === 0) return "Not yet. Press Say it again, or type what you already know.";
+    return "Not yet. Say their words, or type them.";
   }
 
   function shotName(shot) {
@@ -523,19 +544,73 @@
       wireHold(input, holdPop, lang);
     }
 
+    var actions = document.createElement("div");
+    actions.className = "reply-actions";
+    var speakBtn = document.createElement("button");
+    speakBtn.type = "button";
+    speakBtn.textContent = "Say it";
     var submit = document.createElement("button");
     submit.type = "submit";
-    submit.textContent = "Say it";
-    form.appendChild(submit);
+    submit.textContent = "Send";
+    actions.appendChild(speakBtn);
+    actions.appendChild(submit);
+    form.appendChild(actions);
+    function showNote(text) {
+      note.hidden = !text;
+      note.textContent = text || "";
+    }
+    function spokenHit(sample) {
+      var n;
+      if (!sample) return "";
+      for (n = 0; n < sample.length; n++) {
+        if (gradeSpoken(lang, sample[n], lineData.accept).ok) {
+          return String(sample[n] || "").replace(/\s+/g, " ").trim();
+        }
+      }
+      return "";
+    }
+    speakBtn.addEventListener("click", function () {
+      if (speakBtn.disabled || !page.listenReply) return;
+      speakBtn.disabled = true;
+      speakBtn.textContent = "Listening…";
+      showNote("Mic is on. Say the line.");
+      page.listenReply(voicePack.voice, function (heard) {
+        if (speakBtn.disabled) showNote(heard ? ("Heard: " + heard) : "Mic is on. Say the line.");
+      }, function (sample) {
+        return !!spokenHit(sample);
+      }).then(function (result) {
+        speakBtn.disabled = false;
+        speakBtn.textContent = "Say it";
+        var said = spokenHit((result && result.texts) || []);
+        if (!said && result) said = spokenHit([result.heard]);
+        if (said) {
+          advance(said);
+          return;
+        }
+        showNote(spokenMiss(day, grade(lang, result && result.heard, lineData.accept)));
+      }).catch(function (err) {
+        var code = err && err.message;
+        speakBtn.disabled = false;
+        if (code === "cancelled") {
+          speakBtn.textContent = "Say it";
+          if (note.textContent === "Mic is on. Say the line." || note.textContent.indexOf("Heard:") === 0) showNote("");
+          return;
+        }
+        speakBtn.textContent = (code === "denied" || code === "audio-capture" || code === "not-allowed") ? "Allow mic" : "Say it";
+        showNote(spokenMiss(day, null, code));
+      });
+    });
     form.addEventListener("submit", function (event) {
       event.preventDefault();
+      page.stopVoice();
+      speakBtn.disabled = false;
+      speakBtn.textContent = "Say it";
       var result = grade(lang, input.value, lineData.accept);
       if (result.ok) {
         advance(input.value.trim());
         return;
       }
-      note.hidden = false;
-      note.textContent = missText(day, result);
+      showNote(missText(day, result));
       if (result.letter) {
         showHoldChoices(holdPop, result.letter.options, function (ch) {
           insertCaret(input, ch);
@@ -811,6 +886,7 @@
 
   window.MOLessons = {
     render: render,
-    grade: grade
+    grade: grade,
+    gradeSpoken: gradeSpoken
   };
 })();
