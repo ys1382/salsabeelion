@@ -7,14 +7,18 @@ import unittest
 from lorekeeper_knowledge_pov import (
     build_awareness_answer,
     build_knowledge_pov_answer,
+    build_political_understanding_answer,
     awareness_parts,
     answer_meets_does_know_name_gold_bar,
     is_awareness_question,
     is_does_know_question,
     is_knowledge_pov_question,
+    is_political_understanding_question,
     knowledge_pov_parts,
     names_in_knowledge_topic,
+    political_understanding_parts,
 )
+from lorekeeper_work_recall import route_question
 from lorekeeper_answer_focus import scrub_rag_artifacts
 from lorekeeper_character_summary import character_targets
 from lorekeeper_ask_router import AskPlan, local_ask_plan
@@ -704,6 +708,230 @@ class TopicRagEscalationTests(unittest.TestCase):
         answer = str(res.get("answer") or "").lower()
         self.assertIn("suspects", answer)
         self.assertNotIn("unrelated scene detail number 0", answer)
+
+
+class PoliticalUnderstandingTests(unittest.TestCase):
+    Q = (
+        "In Ashford Saga, what does Mira understand about "
+        "the political situation between the wolves and the crows?"
+    )
+
+    def _entries(self) -> list[dict]:
+        return [
+            {
+                "id": "u1",
+                "title": "Mira",
+                "body": (
+                    "Mira barely understands the treaty between the wolves and the crows. "
+                    "The wolves and the crows have been at war for years over the river tax. "
+                    "Pellin knows every clause of that treaty."
+                ),
+                "tags": ["Ashford Saga"],
+                "kind": "note",
+            },
+            {
+                "id": "u2",
+                "title": "Other",
+                "body": "Mira likes tea by the gate.",
+                "tags": ["Ashford Saga"],
+                "kind": "note",
+            },
+        ]
+
+    def test_detects_between_shape(self) -> None:
+        self.assertTrue(is_political_understanding_question(self.Q))
+        self.assertTrue(is_knowledge_pov_question(self.Q))
+        parts = political_understanding_parts(self.Q)
+        self.assertEqual(parts, ("Mira", "Wolves", "Crows"))
+        self.assertEqual(route_question(self.Q), "knowledge")
+        plan = local_ask_plan(self.Q)
+        self.assertIsNotNone(plan)
+        assert plan is not None
+        self.assertEqual(plan.question_kind, "knowledge")
+
+    def test_detects_parties_then_politics_and_how_much(self) -> None:
+        q = (
+            "Tell me how much Nia understands about "
+            "the otters and the herons' political situation"
+        )
+        parts = political_understanding_parts(q)
+        self.assertEqual(parts, ("Nia", "Otters", "Herons"))
+        self.assertFalse(
+            is_political_understanding_question(
+                "In Smoke and Mirrors, what does Elara know about Marcus's interest in Elara?"
+            )
+        )
+        self.assertFalse(
+            is_political_understanding_question(
+                "How aware is Character M of the northern alliance right now?"
+            )
+        )
+
+    def test_answer_keeps_understanding_and_drops_politics_dump(self) -> None:
+        answer, ids = build_political_understanding_answer(self.Q, self._entries())
+        assert answer is not None
+        low = answer.lower()
+        self.assertIn("mira", low)
+        self.assertIn("wolves", low)
+        self.assertIn("crows", low)
+        self.assertIn("barely understands", low)
+        self.assertNotIn("river tax", low)
+        self.assertNotIn("pellin", low)
+        self.assertNotIn("likes tea", low)
+        self.assertIn("u1", ids)
+
+    def test_gap_when_notes_never_say_how_much(self) -> None:
+        entries = [
+            {
+                "id": "war",
+                "title": "War",
+                "body": "The wolves and the crows have been at war for years over the river tax.",
+                "tags": ["Ashford Saga"],
+                "kind": "note",
+            }
+        ]
+        q = "What does Mira understand about the politics between the wolves and the crows?"
+        answer, ids = build_knowledge_pov_answer(q, entries)
+        assert answer is not None
+        low = answer.lower()
+        self.assertIn("nothing saved yet", low)
+        self.assertIn("how much mira understands", low)
+        self.assertNotIn("river tax", low)
+        self.assertEqual(ids, [])
+
+    def test_same_fact_in_different_words(self) -> None:
+        entries = [
+            {
+                "id": "para",
+                "title": "Mira",
+                "body": (
+                    "Mira suspects the unspoken rules of the predator-prey situation. "
+                    "Mira likes tea. "
+                    "Pellin knows every clause of the treaty."
+                ),
+                "tags": ["Ashford Saga"],
+                "kind": "note",
+            }
+        ]
+        q = (
+            "What does Mira understand about the political situation "
+            "between the Predators and the Preyfolk?"
+        )
+        answer, ids = build_political_understanding_answer(q, entries)
+        assert answer is not None
+        low = answer.lower()
+        self.assertIn("suspects the unspoken rules", low)
+        self.assertIn("predator-prey", low)
+        self.assertNotIn("nothing saved", low)
+        self.assertNotIn("likes tea", low)
+        self.assertNotIn("pellin", low)
+        self.assertIn("para", ids)
+
+    def test_scene_mention_is_not_the_answer(self) -> None:
+        entries = [
+            {
+                "id": "scene",
+                "title": "Gate",
+                "body": (
+                    'Mira flinched at the invitation. '
+                    '"Fellow Preyfolk," the Predator said.'
+                ),
+                "tags": ["Ashford Saga"],
+                "kind": "note",
+            },
+            {
+                "id": "fact",
+                "title": "Mira",
+                "body": "Mira suspects the unspoken rules of the predator-prey situation.",
+                "tags": ["Ashford Saga"],
+                "kind": "note",
+            },
+        ]
+        q = (
+            "What does Mira understand about the political situation "
+            "between the Predators and the Preyfolk?"
+        )
+        answer, ids = build_political_understanding_answer(q, entries)
+        assert answer is not None
+        low = answer.lower()
+        self.assertIn("suspects the unspoken rules", low)
+        self.assertIn("predator-prey", low)
+        self.assertNotIn("flinched", low)
+        self.assertNotIn("invitation", low)
+        self.assertNotIn("fellow preyfolk", low)
+        self.assertEqual(ids, ["fact"])
+
+    def test_author_correction_is_not_the_answer(self) -> None:
+        entries = [
+            {
+                "id": "aside",
+                "title": "Mira",
+                "body": (
+                    "Mira has started suspecting they took a wrong turn, "
+                    "but the truth is that the wolves and the crows have been at war for years."
+                ),
+                "tags": ["Ashford Saga"],
+                "kind": "note",
+            },
+            {
+                "id": "fact",
+                "title": "Mira",
+                "body": "Mira suspects the unspoken rules of the predator-prey situation.",
+                "tags": ["Ashford Saga"],
+                "kind": "note",
+            },
+        ]
+        q = (
+            "What does Mira understand about the political situation "
+            "between the Predators and the Preyfolk?"
+        )
+        answer, ids = build_political_understanding_answer(q, entries)
+        assert answer is not None
+        low = answer.lower()
+        self.assertIn("suspects the unspoken rules", low)
+        self.assertNotIn("truth is", low)
+        self.assertNotIn("at war", low)
+        self.assertEqual(ids, ["fact"])
+
+    def test_scene_only_says_nothing_saved(self) -> None:
+        entries = [
+            {
+                "id": "scene",
+                "title": "Gate",
+                "body": (
+                    "Mira met the Predators and the Preyfolk at the gate. "
+                    'Mira flinched at the invitation. "Fellow Preyfolk," the Predator said.'
+                ),
+                "tags": ["Ashford Saga"],
+                "kind": "note",
+            }
+        ]
+        q = (
+            "What does Mira understand about the political situation "
+            "between the Predators and the Preyfolk?"
+        )
+        answer, ids = build_political_understanding_answer(q, entries)
+        assert answer is not None
+        low = answer.lower()
+        self.assertIn("nothing saved yet", low)
+        self.assertIn("how much mira understands", low)
+        self.assertNotIn("flinched", low)
+        self.assertNotIn("invitation", low)
+        self.assertNotIn("fellow preyfolk", low)
+        self.assertEqual(ids, [])
+
+    def test_recall_stays_on_understanding(self) -> None:
+        os.environ["LOREKEEPER_RAG"] = "0"
+        res = recall_from_user_data(
+            self.Q,
+            {"lorekeeper_entries_v1": __import__("json").dumps(self._entries())},
+        )
+        self.assertTrue(res.get("ok"))
+        self.assertEqual(res.get("questionKind"), "knowledge")
+        answer = str(res.get("answer") or "").lower()
+        self.assertIn("barely understands", answer)
+        self.assertNotIn("river tax", answer)
+        self.assertNotIn("pellin", answer)
 
 
 if __name__ == "__main__":

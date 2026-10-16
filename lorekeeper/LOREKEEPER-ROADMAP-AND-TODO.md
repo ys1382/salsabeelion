@@ -227,7 +227,7 @@ Goal: **answer only what the question asks.**
 | **Your Tier A habits** | Scope, save timing, question shape | Vague or multi-part questions |
 | **Tier B–C code + tests** | Most owner daily questions | Every edge case, every typo in names |
 | **Optional RAG (Anthropic on server)** | Harder paraphrase / connect scattered draft prose | Still needs tight prompts (#44); not magic; owner rule: librarian only, no invented lore |
-| **Embeddings / vector search** | — | **Taken down 2026-08-14.** Owner: Ask finds phrasing variants well enough; fix misses with the usual Ask correction loop. Do not build. |
+| **Embeddings / vector search** | Meaning match when a note says the same fact in different words | **Reopened 2026-10-15** for “what does this person understand about the politics between these two parties.” Local model. Restate the saved line only. Not a general chat. |
 | **General LLM “understand anything”** | Theoretical upper bound | Conflicts with no-invented-lore unless heavily constrained |
 
 Treat as **out of scope unless you explicitly approve**:
@@ -522,7 +522,7 @@ Run **one row at a time** in Cursor. Don’t skip Phase 0 — it costs nothing a
 - [x] **Plan loose ends vs planned-later (Ask)** — verdict in `lorekeeper/LOOSE-ENDS-DESIGN.md`
 - [x] **Loose-ends Ask routes (Layer 2)** — `planned:` / `fix:` / `TODO fix` tags; Ask *what's not written yet* and *what's flagged to fix*; canon audit skips `planned` entries (`lorekeeper_loose_ends.py`).
 - [x] **Ask quality playbook** — `LOREKEEPER-ASK-QUALITY-PLAYBOOK.md` + Owner’s Office Phases 0–2 (categorized spot-check, pass lines, manual scoring, corrections copy, note-structure guide).
-- [x] **Ask playbook Phase 5 — embeddings / semantic retrieval — taken down 2026-08-14.** Do not build. Ask misses → usual correction loop (It got this wrong / Q·R·E), not a new search stack.
+- [x] **Ask playbook Phase 5 — meaning match reopened 2026-10-15** for one question shape: what a person understands about the politics between two parties. Local model. Saved lines only. Other Ask shapes stay on the correction loop.
 - [ ] **Ask playbook Phase 6 — launch readiness (not built yet)** — playbook tied to public launch (#25) in Owner’s Office when you say go; nginx gate stays until then.
 - [x] **Loose-ends Layer 3 — note-vs-note compare (2026-08-15)** — when two of the writer’s notes disagree on spouse or cast role, Ask names both sides; skips `planned` / planned later; mentions if those notes are not in the main draft; mentions if the main draft contradicts. Planned-for-draft Ask does not repeat “not in the draft,” but still mentions a draft contradiction. No winner, no scolding, no inventing, no other accounts. Did **not** rebuild draft-vs-notes dual.
 - [ ] **Loose-ends Layer 3 leftovers — after public launch (#25)** — optional tag picker in note editor; public help copy for `planned` / `fix:` habits (no auto plot-hole detection).

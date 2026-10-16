@@ -10,7 +10,12 @@ from typing import Any, Callable
 from lorekeeper_character_compose import is_audit_question, is_coverage_question
 from lorekeeper_character_summary import character_targets, is_who_is_question
 from lorekeeper_question_routes import is_character_portrait_question, is_story_position_question, is_what_question
-from lorekeeper_knowledge_pov import is_awareness_question, is_knowledge_pov_question
+from lorekeeper_knowledge_pov import (
+    is_awareness_question,
+    is_knowledge_pov_question,
+    is_political_understanding_question,
+    political_understanding_parts,
+)
 from lorekeeper_aliases import alias_reference_lines_for
 from lorekeeper_inference import inference_reference_lines_for
 from lorekeeper_note_compare import compose_note_compare_lines
@@ -260,6 +265,17 @@ Rules:
 - One short paragraph (2–5 sentences max) unless sources require a bit more
 """
 
+_POLITICAL_UNDERSTANDING = """
+This asks what one named person understands about the political situation between two named parties.
+
+Rules:
+- Name that person and both parties
+- Restate only saved lines about what that person understands, suspects, or does not grasp about that politics
+- Do not summarize the politics themselves, other people's knowledge, or unrelated plot
+- If the sources never say how much that person understands, say nothing saved says how much — do not guess a degree
+- One short paragraph
+"""
+
 _RELATIONSHIP_CARD = """
 This is a KINSHIP / FAMILY-TIE question — how these two people are related by family or marriage.
 
@@ -330,6 +346,14 @@ def _system_for_kind(
         is_awareness_question(question) or is_knowledge_pov_question(question)
     ):
         parts.append(_AWARENESS)
+        if is_political_understanding_question(question):
+            parts.append(_POLITICAL_UNDERSTANDING)
+            named = political_understanding_parts(question)
+            if named:
+                parts.append(
+                    f"Person: {named[0]}. Parties: {named[1]} and {named[2]}. "
+                    "Stay on what that person understands about those two."
+                )
     elif (plan and plan.intent == "relationship") or question_kind == "relationship":
         from lorekeeper_relations import is_story_arc_relationship_question
 
@@ -566,6 +590,14 @@ def _build_user_prompt(
         is_awareness_question(question) or is_knowledge_pov_question(question)
     ):
         kind_hint = _AWARENESS + "\n"
+        if is_political_understanding_question(question):
+            kind_hint += _POLITICAL_UNDERSTANDING + "\n"
+            named = political_understanding_parts(question)
+            if named:
+                kind_hint += (
+                    f"Person: {named[0]}. Parties: {named[1]} and {named[2]}. "
+                    "Stay on what that person understands about those two.\n"
+                )
     elif (plan and plan.intent == "relationship") or question_kind == "relationship":
         from lorekeeper_relations import (
             is_story_arc_relationship_question,

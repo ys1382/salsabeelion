@@ -34,7 +34,9 @@ from lorekeeper_knowledge_pov import (
     is_awareness_question,
     is_does_know_question,
     is_knowledge_pov_question,
+    is_political_understanding_question,
     knowledge_pov_parts,
+    political_understanding_parts,
     _PLOT_BLURB_RE,
 )
 from lorekeeper_notes_vs_draft import is_notes_not_in_draft_question
@@ -809,6 +811,9 @@ def local_pipeline_skips_rag(
             return False
         return bool(answer.strip())
 
+    if is_political_understanding_question(question) and answer.strip():
+        return True
+
     if is_does_know_question(question) and kind in ("knowledge", "narrow_fact"):
         if not answer.strip():
             return False
@@ -1245,6 +1250,26 @@ def recall_from_user_data(
                 "recallEngine": "local",
                 "entryCount": len(entries),
             })
+
+        # Party names in this one question are not a work title.
+        if is_political_understanding_question(question):
+            named = political_understanding_parts(question)
+            if named:
+                from lorekeeper_knowledge_pov import _party_name_set
+
+                parties = _party_name_set(named[1], named[2])
+
+                def _party_hint(hint: str) -> bool:
+                    low = (hint or "").strip().lower()
+                    if low in parties:
+                        return True
+                    words = set(re.findall(r"[a-z0-9']+", low))
+                    filler = {"and", "the", "of", "vs", "versus"}
+                    return bool(words) and words <= (parties | filler)
+
+                work_hints = {hint for hint in work_hints if not _party_hint(hint)}
+                if not work_hints:
+                    strict_work = False
 
         scoped = filter_entries_by_work(entries, work_hints, strict=strict_work)
 

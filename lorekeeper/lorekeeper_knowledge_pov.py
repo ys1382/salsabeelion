@@ -31,6 +31,48 @@ _DOES_KNOW_RE = re.compile(
     re.I,
 )
 
+# "what/how much does X understand about the politics between A and B"
+# Also "… about A and B's political situation". Not a single locked name.
+_POLITICAL_UNDERSTANDING_RE = re.compile(
+    r"^(?:how much|what)\s+(?:does\s+)?(.+?)\s+understands?\s+about\s+(.+?)\s*\??$",
+    re.I,
+)
+_POLITICS_BETWEEN_RE = re.compile(
+    r"^(?:the\s+)?(?:political situation|politics)\s+between\s+(.+?)\s+and\s+(.+)$",
+    re.I,
+)
+_PARTIES_THEN_POLITICS_RE = re.compile(
+    r"^(.+?)\s+and\s+(.+?)\s+(?:'s\s+|s'\s+)?(?:political situation|politics)$",
+    re.I,
+)
+_PARTY_NOISE = frozenset(
+    {
+        "political",
+        "politics",
+        "situation",
+        "between",
+        "the",
+        "a",
+        "an",
+        "their",
+        "its",
+        "about",
+    }
+)
+_UNDERSTANDING_CUE_RE = re.compile(
+    r"\b("
+    r"understands?|understood|grasp(?:s|ed)?|knows?|knew|aware|unaware|"
+    r"suspects?|believes?|realiz(?:es?|ed)|recogniz(?:es?|ed)|"
+    r"no idea|doesn't understand|does not understand|"
+    r"doesn't know|does not know|doesn't grasp|does not grasp|"
+    r"knows nothing|understands nothing|no understanding|"
+    r"has not (?:read|heard|learned|grasped)|"
+    r"hasn't (?:read|heard|learned|grasped)|"
+    r"barely|partly|fully|little"
+    r")\b",
+    re.I,
+)
+
 _BAD_KNOWERS = frozenset(
     {
         "it",
@@ -186,7 +228,76 @@ def does_know_parts(question: str) -> tuple[str, str] | None:
     return knower, topic
 
 
+def _political_question_core(question: str) -> str:
+    """Drop work scope, 'tell me', and a trailing leave-off clause."""
+    q = _core_ask_text(question or "")
+    q = re.sub(r"^(?:please\s+)?tell me\s+", "", q, flags=re.I).strip()
+    q = re.sub(
+        r"\s+where\s+i\s+(?:last\s+)?(?:left|leave)\s+off\b.*$",
+        "",
+        q,
+        flags=re.I,
+    ).strip()
+    return q
+
+
+def _clean_party(raw: str) -> str:
+    party = re.sub(r"\s+", " ", (raw or "").strip())
+    party = party.strip(" ?.!\"")
+    party = re.sub(r"(?:'s|\u2019s)$", "", party, flags=re.I)
+    party = re.sub(r"['\u2019]+$", "", party).strip()
+    party = re.sub(r"^(?:the|a|an)\s+", "", party, flags=re.I).strip()
+    party = re.sub(
+        r"\s+(?:political situation|politics)$",
+        "",
+        party,
+        flags=re.I,
+    ).strip()
+    if not party or party.lower() in _PARTY_NOISE or len(party) < 2:
+        return ""
+    return _display_name(party)
+
+
+def _politics_parties(about: str) -> tuple[str, str] | None:
+    text = re.sub(r"\s+", " ", (about or "").strip()).rstrip("?.!")
+    text = re.sub(
+        r"\s+where\s+i\s+(?:last\s+)?(?:left|leave)\s+off\b.*$",
+        "",
+        text,
+        flags=re.I,
+    ).strip()
+    m = _POLITICS_BETWEEN_RE.match(text) or _PARTIES_THEN_POLITICS_RE.match(text)
+    if not m:
+        return None
+    left = _clean_party(m.group(1))
+    right = _clean_party(m.group(2))
+    if not left or not right or left.lower() == right.lower():
+        return None
+    return left, right
+
+
+def political_understanding_parts(question: str) -> tuple[str, str, str] | None:
+    """Knower plus the two parties in a political-situation question."""
+    q = _political_question_core(question)
+    m = _POLITICAL_UNDERSTANDING_RE.match(q)
+    if not m:
+        return None
+    knower = _display_name(_strip_work_scope(m.group(1).strip().rstrip("?.!")))
+    if not knower or knower.lower() in _BAD_KNOWERS:
+        return None
+    parties = _politics_parties(m.group(2))
+    if not parties:
+        return None
+    return knower, parties[0], parties[1]
+
+
+def is_political_understanding_question(question: str) -> bool:
+    return political_understanding_parts(question) is not None
+
+
 def is_knowledge_pov_question(question: str) -> bool:
+    if is_political_understanding_question(question):
+        return True
     if is_awareness_question(question):
         return True
     if is_does_know_question(question):
@@ -195,6 +306,10 @@ def is_knowledge_pov_question(question: str) -> bool:
 
 
 def knowledge_pov_parts(question: str) -> tuple[str, str] | None:
+    political = political_understanding_parts(question)
+    if political:
+        knower, left, right = political
+        return knower, f"the political situation between {left} and {right}"
     m = _KNOWLEDGE_POV_RE.search(question or "")
     if m:
         knower = _display_name(_strip_work_scope(m.group(1).strip().rstrip("?.!")))
@@ -1038,9 +1153,251 @@ def build_does_know_name_answer(
     return f"{body}\n\n{footer}", ids[:8]
 
 
+def _party_in_text(party: str, text: str) -> bool:
+    if _name_in_text(party, text):
+        return True
+    low = (party or "").lower()
+    if len(low) > 3 and low.endswith("s") and _name_in_text(party[:-1], text):
+        return True
+    if low and not low.endswith("s") and _name_in_text(party + "s", text):
+        return True
+    return False
+
+
+# Writer talking, not the character's knowledge. This shape only.
+_POLITICAL_AUTHOR_RE = re.compile(
+    r"\b("
+    r"I wrote|I think|I don't know|I do not know|I don't want|I do not want|"
+    r"I know that|I have|IDK|I'm not|I am not|Initially,\s*I"
+    r")\b",
+    re.I,
+)
+
+# Scene action, stage direction, or a speech tag. Not a knowledge statement.
+_POLITICAL_STAGE_RE = re.compile(
+    r"\b("
+    r"flinch(?:es|ed)?|nods?|nodded|jerks?|jerked|"
+    r"cocks?\s+(?:his|her|their)\s+head|eyes\s+averted|"
+    r"said|asked|replied|whispered|shouted|murmured|"
+    r"responds|responded"
+    r")\b",
+    re.I,
+)
+
+_POLITICAL_CLAIM_RE = (
+    r"(?:is\s+|isn't\s+|is\s+not\s+|has\s+started\s+|"
+    r"doesn't\s+|does\s+not\s+|has\s+not\s+|hasn't\s+)?"
+    r"(?:yet\s+)?"
+    r"(suspects?|suspecting|knows?|knew|understands?|understood|"
+    r"thinks?|thought|realizes?|realized|realises?|realised|"
+    r"aware|unaware|grasp(?:s|ed)?)"
+)
+
+
+def _party_name_set(left: str, right: str) -> set[str]:
+    names: set[str] = set()
+    for party in (left, right):
+        low = (party or "").strip().lower()
+        if not low:
+            continue
+        names.add(low)
+        if len(low) > 3 and low.endswith("s"):
+            names.add(low[:-1])
+    return names
+
+
+def _political_scope(
+    question: str,
+    entries: list[dict[str, Any]],
+    knower: str,
+    left: str,
+    right: str,
+) -> list[dict[str, Any]]:
+    """Scope to a named work. Do not treat the two parties as the work title."""
+    from lorekeeper_reliability import primary_work_hints
+
+    named = {
+        hint
+        for hint in primary_work_hints(question)
+        if hint not in _party_name_set(left, right)
+    }
+    if named:
+        return _entries_for_work(entries, question)
+    knower_low = knower.lower()
+    scoped: list[dict[str, Any]] = []
+    for entry in entries:
+        if not isinstance(entry, dict):
+            continue
+        blob = f"{entry.get('title') or ''}\n{entry.get('body') or ''}".lower()
+        if knower_low in blob:
+            scoped.append(entry)
+    return scoped
+
+
+def _is_scene_dialogue_or_stage(sentence: str) -> bool:
+    """Spoken lines, speech tags, and stage direction are not an understanding."""
+    s = _normalize_ask_quotes(sentence or "")
+    if not s.strip():
+        return True
+    if _POLITICAL_STAGE_RE.search(s):
+        return True
+    if re.search(r'"[^"]{12,}"', s) and re.search(
+        r"\b(said|asked|replied|whispered|shouted|murmured|responds|responded|flinch)\b",
+        s,
+        re.I,
+    ):
+        return True
+    return False
+
+
+def _saved_work_label(named_work: set[str], entries: list[dict[str, Any]]) -> str:
+    """Use the writer's own spelling of the work, when the question names one."""
+    if not named_work:
+        return ""
+    for entry in entries:
+        if not isinstance(entry, dict):
+            continue
+        for tag in entry.get("tags") or []:
+            raw = str(tag).strip()
+            if raw.lower() in named_work:
+                return raw
+    return work_title_from_hints(named_work) or ""
+
+
+def _understanding_clause(sentence: str) -> str:
+    """Keep the character's claim. Drop an author correction after it."""
+    s = _normalize_ask_quotes(sentence or "").strip()
+    s = re.sub(r"\s+", " ", s)
+    s = re.split(r"\bbut\s+the\s+truth\s+is\b|\bthe\s+truth\s+is\b", s, maxsplit=1, flags=re.I)[0]
+    return s.strip(" -—,;")
+
+
+def _states_knower_understanding(sentence: str, knower: str) -> bool:
+    """True when this line states what the named person knows, suspects, or does not know."""
+    s = _normalize_ask_quotes(sentence or "").strip()
+    if not s or not knower:
+        return False
+    if s.endswith("?"):
+        return False
+    if _POLITICAL_AUTHOR_RE.search(s) or _AWARENESS_AUTHOR_RE.search(s):
+        return False
+    if _is_scene_dialogue_or_stage(s):
+        return False
+    # A later "will realize" is a plan, not what they understand now.
+    if re.search(r"\bwill\b.{0,40}\brealiz", s, re.I) and not re.search(
+        rf"\b{re.escape(knower)}\b.{{0,48}}\b(?:is\s+aware|knows|suspects|doesn't\s+know|does\s+not\s+know)\b",
+        s,
+        re.I,
+    ):
+        return False
+    claim = re.compile(
+        rf"\b{re.escape(knower)}\b(?:\s+\w+){{0,5}}\s+{_POLITICAL_CLAIM_RE}\b",
+        re.I,
+    )
+    return bool(claim.search(s))
+
+
+def build_political_understanding_answer(
+    question: str, entries: list[dict[str, Any]], *, fast_recall: bool = False
+) -> tuple[str | None, list[str]]:
+    """What one person understands about the politics between two parties.
+
+    Restate only saved lines that say that. If none do, say so.
+    """
+    parts = political_understanding_parts(question)
+    if not parts:
+        return None, []
+    knower, left, right = parts
+    from lorekeeper_reliability import primary_work_hints
+
+    party_names = _party_name_set(left, right)
+    named_work = {
+        hint for hint in primary_work_hints(question) if hint not in party_names
+    }
+    work_title = _saved_work_label(named_work, entries)
+    where = f" in {work_title}" if work_title else ""
+    topic = f"the political situation between {left} and {right}"
+    footer = "— From your notes only. Nothing invented."
+    gap = (
+        f"Nothing saved yet{where} that says how much {knower} understands "
+        f"about {topic}.\n\n{footer}"
+    )
+
+    scope = _political_scope(question, entries, knower, left, right)
+    scan_cap = 90 if fast_recall else 240
+    if len(scope) > scan_cap:
+        knower_low = knower.lower()
+        prioritized = [
+            e
+            for e in scope
+            if isinstance(e, dict)
+            and knower_low in str(e.get("body") or "")[:4000].lower()
+        ]
+        scope = (prioritized or scope)[:scan_cap]
+
+    from lorekeeper_semantic import MIN_MEANING_SCORE, meaning_scores
+
+    # Scene, dialogue, and stage direction are not candidates.
+    # Meaning match only ranks lines that already state this person's understanding.
+    candidates: list[tuple[str, str]] = []
+    seen_lines: set[str] = set()
+    for entry in scope:
+        if not isinstance(entry, dict):
+            continue
+        eid = str(entry.get("id") or "")
+        if "#p" in eid:
+            continue
+        body = str(entry.get("body") or "")
+        for sentence in _split_sentences(body):
+            s = sentence.strip()
+            if not s or not _name_in_text(knower, s):
+                continue
+            if _is_scene_dialogue_or_stage(s):
+                continue
+            clause = _understanding_clause(s)
+            if not _states_knower_understanding(clause, knower):
+                continue
+            key = re.sub(r"\s+", " ", clause.lower())
+            if not key or key in seen_lines:
+                continue
+            seen_lines.add(key)
+            candidates.append((clause, eid))
+
+    scores = meaning_scores(question, [s for s, _eid in candidates]) if candidates else []
+    if scores is None:
+        # Can't find candidate lines. Do not paste a scene instead.
+        return gap, []
+
+    ranked: list[tuple[float, str, str]] = []
+    for (sentence, eid), score in zip(candidates, scores):
+        if score < MIN_MEANING_SCORE:
+            continue
+        ranked.append((score, sentence, eid))
+
+    if not ranked:
+        return gap, []
+
+    ranked.sort(key=lambda row: row[0], reverse=True)
+    _score, sentence, eid = ranked[0]
+    saved = re.sub(r"\s+", " ", sentence).strip()
+    if not _states_knower_understanding(saved, knower):
+        return gap, []
+    ids: list[str] = []
+    _record_source_id(ids, eid)
+    lead = f"From what you've saved{where}, {knower}'s understanding of {topic}: "
+    answer = f"{lead}{saved}\n\n{footer}"
+    return answer, ids[:8]
+
+
 def build_knowledge_pov_answer(
     question: str, entries: list[dict[str, Any]], *, fast_recall: bool = False
 ) -> tuple[str | None, list[str]]:
+    if is_political_understanding_question(question):
+        # This shape never falls through into a scene dump.
+        return build_political_understanding_answer(
+            question, entries, fast_recall=fast_recall
+        )
+
     awareness = build_awareness_answer(question, entries, fast_recall=fast_recall)
     if awareness[0]:
         return awareness

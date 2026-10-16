@@ -151,6 +151,13 @@ fi
 # shellcheck source=/dev/null
 source "$BASE/kids-watchdog.sh"
 
+echo "Meaning-match model (local; notes stay on this server)..."
+python3 -m pip install --user --break-system-packages -q fastembed >/tmp/lorekeeper-fastembed-pip.log 2>&1 \
+  || python3 -m pip install --user -q fastembed >/tmp/lorekeeper-fastembed-pip.log 2>&1 \
+  || echo "Warning: fastembed install failed — see /tmp/lorekeeper-fastembed-pip.log" >&2
+python3 -c 'from fastembed import TextEmbedding; list(TextEmbedding(model_name="BAAI/bge-small-en-v1.5").embed(["warmup"])); print("Meaning-match model ready")' \
+  || echo "Warning: meaning-match model did not warm up" >&2
+
 echo "Smoke test: import lorekeeper_api before restart..."
 if ! (cd "$BASE" && PYTHONPATH="$BASE" python3 -c "import lorekeeper_api"); then
   echo "Error: lorekeeper_api import failed — leaving existing LoreKeeper processes running." >&2
