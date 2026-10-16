@@ -2295,7 +2295,13 @@
     document.body.classList.toggle("train-rain", id === "intro_train_1");
   }
 
+  function hideBook() {
+    var book = document.getElementById("book");
+    if (book) book.hidden = true;
+  }
+
   function showPick() {
+    hideBook();
     setTrainWindow("");
     document.body.classList.add("picking");
     renderNotes("");
@@ -2325,6 +2331,7 @@
   function show(id) {
     stopVoice();
     clearGrade();
+    hideBook();
     if (!state.gender) {
       state.scene = id === "lessons" || scenes[id] ? id : "intro_train_1";
       showPick();

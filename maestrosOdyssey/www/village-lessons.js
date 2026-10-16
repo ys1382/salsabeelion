@@ -1,4 +1,7 @@
 /* Three typed lessons. Hover stays for lessons 1 and 2. Lesson 3 has no gloss.
+   A corner phrasebook lists pieces, not the whole reply. Look, then type or speak.
+   No line tells them what to say. Any phrase they know can move the talk.
+   A missing accent still counts. What they said changes the next line.
    Spanish and Turkish: hold a key for the other letter shape.
    Japanese: tap kana. A long-press cannot write those letters. */
 (function () {
@@ -16,14 +19,36 @@
       beats: [
         {
           who: "A neighbor says",
-          es: line("Buenos días.", [["Buenos", "Good"], ["días", "morning"]], "Say good morning.", ["buenos días"]),
-          ja: line("おはよう。", [["おはよう", "good morning"]], "Say good morning.", ["おはよう"]),
-          tr: line("Günaydın.", [["Günaydın", "Good morning"]], "Say good morning.", ["günaydın"])
+          es: line("Buenos días.", [["Buenos", "Good"], ["días", "morning"]], "", ["buenos días"]),
+          ja: line("おはよう。", [["おはよう", "good morning"]], "", ["おはよう"]),
+          tr: line("Günaydın.", [["Günaydın", "Good morning"]], "", ["günaydın"])
         },
         {
-          es: line("Hola. ¿Cómo estás?", [["Hola", "Hello"], ["Cómo", "How"], ["estás", "are you"]], "Say that you are well.", ["bien", "estoy bien"], { say: "Bien.", words: [["Bien", "well"]] }),
-          ja: line("こんにちは。げんきですか。", [["こんにちは", "hello"], ["げんき", "well"], ["です", "are"], ["か", "question"]], "Say that you are well.", ["げんきです"], { say: "げんきです。", words: [["げんき", "well"], ["です", "am"]] }),
-          tr: line("Merhaba. Nasılsın?", [["Merhaba", "Hello"], ["Nasılsın", "How are you"]], "Say that you are well.", ["iyiyim"], { say: "İyiyim.", words: [["İyiyim", "I am well"]] })
+          when: {
+            how: {
+              es: line("Estoy bien.", [["Estoy", "I am"], ["bien", "well"]], "", ["bien", "estoy bien"]),
+              ja: line("げんきです。", [["げんき", "well"], ["です", "am"]], "", ["げんきです"]),
+              tr: line("İyiyim.", [["İyiyim", "I am well"]], "", ["iyiyim"])
+            },
+            well: {
+              es: line("Bien.", [["Bien", "well"]], "", ["bien"]),
+              ja: line("げんきです。", [["げんき", "well"], ["です", "am"]], "", ["げんきです"]),
+              tr: line("İyiyim.", [["İyiyim", "I am well"]], "", ["iyiyim"])
+            },
+            bye: {
+              es: line("Hasta mañana.", [["Hasta", "Until"], ["mañana", "tomorrow"]], "", ["hasta mañana"]),
+              ja: line("またあした。", [["また", "again"], ["あした", "tomorrow"]], "", ["またあした"]),
+              tr: line("Yarın görüşürüz.", [["Yarın", "Tomorrow"], ["görüşürüz", "we will see each other"]], "", ["yarın görüşürüz"])
+            },
+            thanks: {
+              es: line("Bien.", [["Bien", "well"]], "", ["gracias"]),
+              ja: line("げんきです。", [["げんき", "well"], ["です", "am"]], "", ["ありがとう"]),
+              tr: line("İyiyim.", [["İyiyim", "I am well"]], "", ["teşekkürler"])
+            }
+          },
+          es: line("Hola. ¿Cómo estás?", [["Hola", "Hello"], ["Cómo", "How"], ["estás", "are you"]], "", ["bien", "estoy bien"]),
+          ja: line("こんにちは。げんきですか。", [["こんにちは", "hello"], ["げんき", "well"], ["です", "are"], ["か", "question"]], "", ["げんきです"]),
+          tr: line("Merhaba. Nasılsın?", [["Merhaba", "Hello"], ["Nasılsın", "How are you"]], "", ["iyiyim"])
         }
       ]
     },
@@ -33,19 +58,47 @@
       beats: [
         {
           who: "A neighbor says",
-          es: line("Buenos días.", [["Buenos", "Good"], ["días", "morning"]], "Ask how they are.", ["cómo estás"], { say: "¿Cómo estás?", words: [["Cómo", "How"], ["estás", "are you"]] }),
-          ja: line("おはよう。", [["おはよう", "good morning"]], "Ask how they are.", ["げんきですか"], { say: "げんきですか。", words: [["げんき", "well"], ["です", "are"], ["か", "question"]] }),
-          tr: line("Günaydın.", [["Günaydın", "Good morning"]], "Ask how they are.", ["nasılsın"], { say: "Nasılsın?", words: [["Nasılsın", "How are you"]] })
+          jump: { bye: 2 },
+          es: line("Buenos días.", [["Buenos", "Good"], ["días", "morning"]], "", ["cómo estás"]),
+          ja: line("おはよう。", [["おはよう", "good morning"]], "", ["げんきですか"]),
+          tr: line("Günaydın.", [["Günaydın", "Good morning"]], "", ["nasılsın"])
         },
         {
-          es: line("Bien.", [["Bien", "well"]], "Say thank you.", ["gracias"], { say: "Gracias.", words: [["Gracias", "Thank you"]] }),
-          ja: line("げんきです。", [["げんき", "well"], ["です", "am"]], "Say thank you.", ["ありがとう"], { say: "ありがとう。", words: [["ありがとう", "thank you"]] }),
-          tr: line("İyiyim.", [["İyiyim", "I am well"]], "Say thank you.", ["teşekkürler"], { say: "Teşekkürler.", words: [["Teşekkürler", "Thank you"]] })
+          when: {
+            how: {
+              es: line("Bien.", [["Bien", "well"]], "", ["gracias"]),
+              ja: line("げんきです。", [["げんき", "well"], ["です", "am"]], "", ["ありがとう"]),
+              tr: line("İyiyim.", [["İyiyim", "I am well"]], "", ["teşekkürler"])
+            },
+            well: {
+              es: line("Bien.", [["Bien", "well"]], "", ["gracias"]),
+              ja: line("げんきです。", [["げんき", "well"], ["です", "am"]], "", ["ありがとう"]),
+              tr: line("İyiyim.", [["İyiyim", "I am well"]], "", ["teşekkürler"])
+            },
+            bye: {
+              es: line("Hasta mañana.", [["Hasta", "Until"], ["mañana", "tomorrow"]], "", ["hasta mañana"]),
+              ja: line("またあした。", [["また", "again"], ["あした", "tomorrow"]], "", ["またあした"]),
+              tr: line("Yarın görüşürüz.", [["Yarın", "Tomorrow"], ["görüşürüz", "we will see each other"]], "", ["yarın görüşürüz"])
+            },
+            morning: {
+              es: line("¿Cómo estás?", [["Cómo", "How"], ["estás", "are you"]], "", ["cómo estás"]),
+              ja: line("げんきですか。", [["げんき", "well"], ["です", "are"], ["か", "question"]], "", ["げんきですか"]),
+              tr: line("Nasılsın?", [["Nasılsın", "How are you"]], "", ["nasılsın"])
+            },
+            hello: {
+              es: line("¿Cómo estás?", [["Cómo", "How"], ["estás", "are you"]], "", ["cómo estás"]),
+              ja: line("げんきですか。", [["げんき", "well"], ["です", "are"], ["か", "question"]], "", ["げんきですか"]),
+              tr: line("Nasılsın?", [["Nasılsın", "How are you"]], "", ["nasılsın"])
+            }
+          },
+          es: line("Bien.", [["Bien", "well"]], "", ["gracias"]),
+          ja: line("げんきです。", [["げんき", "well"], ["です", "am"]], "", ["ありがとう"]),
+          tr: line("İyiyim.", [["İyiyim", "I am well"]], "", ["teşekkürler"])
         },
         {
-          es: line("Hasta mañana.", [["Hasta", "Until"], ["mañana", "tomorrow"]], "Say see you tomorrow.", ["hasta mañana"]),
-          ja: line("またあした。", [["また", "again"], ["あした", "tomorrow"]], "Say see you tomorrow.", ["またあした"]),
-          tr: line("Yarın görüşürüz.", [["Yarın", "Tomorrow"], ["görüşürüz", "we will see each other"]], "Say see you tomorrow.", ["yarın görüşürüz"])
+          es: line("Hasta mañana.", [["Hasta", "Until"], ["mañana", "tomorrow"]], "", ["hasta mañana"]),
+          ja: line("またあした。", [["また", "again"], ["あした", "tomorrow"]], "", ["またあした"]),
+          tr: line("Yarın görüşürüz.", [["Yarın", "Tomorrow"], ["görüşürüz", "we will see each other"]], "", ["yarın görüşürüz"])
         }
       ]
     },
@@ -55,15 +108,48 @@
       beats: [
         {
           who: "The shopkeeper says",
-          es: line("Me gusta el pan.", [["Me", "Me"], ["gusta", "likes"], ["el", "the"], ["pan", "bread"]], "Say that you like the bread.", ["me gusta el pan"]),
-          ja: line("パンがすきです。", [["パン", "bread"], ["が", "as for"], ["すき", "like"], ["です", "is"]], "Say that you like the bread.", ["パンがすきです"]),
-          tr: line("Ekmeği seviyorum.", [["Ekmeği", "The bread"], ["seviyorum", "I like"]], "Say that you like the bread.", ["ekmeği seviyorum"])
+          es: line("¿Te gusta el pan?", [["Te", "You"], ["gusta", "like"], ["el", "the"], ["pan", "bread"]], "", ["me gusta el pan", "no me gusta el pan"]),
+          ja: line("パンがすきですか。", [["パン", "bread"], ["が", "as for"], ["すき", "like"], ["です", "is"], ["か", "question"]], "", ["パンがすきです", "パンがすきじゃないです"]),
+          tr: line("Ekmeği seviyor musun?", [["Ekmeği", "The bread"], ["seviyor musun", "do you like"]], "", ["ekmeği seviyorum", "ekmeği sevmiyorum"])
         },
         {
           lead: "A darker loaf sits to the side.",
-          es: line("No me gusta el pan.", [["No", "Not"], ["me", "me"], ["gusta", "likes"], ["el", "the"], ["pan", "bread"]], "Say that you don't like the bread.", ["no me gusta el pan"]),
-          ja: line("パンがすきじゃないです。", [["パン", "bread"], ["が", "as for"], ["すき", "like"], ["じゃない", "not"], ["です", "is"]], "Say that you don't like the bread.", ["パンがすきじゃないです"]),
-          tr: line("Ekmeği sevmiyorum.", [["Ekmeği", "The bread"], ["sevmiyorum", "I don't like"]], "Say that you don't like the bread.", ["ekmeği sevmiyorum"])
+          leadWhen: ["like", "not"],
+          when: {
+            like: {
+              es: line("No me gusta este.", [["No", "Not"], ["me", "me"], ["gusta", "likes"], ["este", "this one"]], "", ["me gusta el pan", "no me gusta el pan"]),
+              ja: line("これはすきじゃないです。", [["これ", "this"], ["は", "as for"], ["すき", "like"], ["じゃない", "not"], ["です", "is"]], "", ["パンがすきです", "パンがすきじゃないです"]),
+              tr: line("Bunu sevmiyorum.", [["Bunu", "This one"], ["sevmiyorum", "I don't like"]], "", ["ekmeği seviyorum", "ekmeği sevmiyorum"])
+            },
+            not: {
+              es: line("¿Te gusta este?", [["Te", "You"], ["gusta", "like"], ["este", "this one"]], "", ["me gusta el pan", "no me gusta el pan"]),
+              ja: line("これはすきですか。", [["これ", "this"], ["は", "as for"], ["すき", "like"], ["です", "is"], ["か", "question"]], "", ["パンがすきです", "パンがすきじゃないです"]),
+              tr: line("Bunu seviyor musun?", [["Bunu", "This one"], ["seviyor musun", "do you like"]], "", ["ekmeği seviyorum", "ekmeği sevmiyorum"])
+            },
+            how: {
+              es: line("Estoy bien.", [["Estoy", "I am"], ["bien", "well"]], "", ["bien"]),
+              ja: line("げんきです。", [["げんき", "well"], ["です", "am"]], "", ["げんきです"]),
+              tr: line("İyiyim.", [["İyiyim", "I am well"]], "", ["iyiyim"])
+            },
+            hello: {
+              es: line("Hola.", [["Hola", "Hello"]], "", ["hola"]),
+              ja: line("こんにちは。", [["こんにちは", "hello"]], "", ["こんにちは"]),
+              tr: line("Merhaba.", [["Merhaba", "Hello"]], "", ["merhaba"])
+            },
+            morning: {
+              es: line("Buenos días.", [["Buenos", "Good"], ["días", "morning"]], "", ["buenos días"]),
+              ja: line("おはよう。", [["おはよう", "good morning"]], "", ["おはよう"]),
+              tr: line("Günaydın.", [["Günaydın", "Good morning"]], "", ["günaydın"])
+            },
+            bye: {
+              es: line("Hasta mañana.", [["Hasta", "Until"], ["mañana", "tomorrow"]], "", ["hasta mañana"]),
+              ja: line("またあした。", [["また", "again"], ["あした", "tomorrow"]], "", ["またあした"]),
+              tr: line("Yarın görüşürüz.", [["Yarın", "Tomorrow"], ["görüşürüz", "we will see each other"]], "", ["yarın görüşürüz"])
+            }
+          },
+          es: line("¿Te gusta este?", [["Te", "You"], ["gusta", "like"], ["este", "this one"]], "", ["me gusta el pan", "no me gusta el pan"]),
+          ja: line("これはすきですか。", [["これ", "this"], ["は", "as for"], ["すき", "like"], ["です", "is"], ["か", "question"]], "", ["パンがすきです", "パンがすきじゃないです"]),
+          tr: line("Bunu seviyor musun?", [["Bunu", "This one"], ["seviyor musun", "do you like"]], "", ["ekmeği seviyorum", "ekmeği sevmiyorum"])
         }
       ]
     },
@@ -73,9 +159,35 @@
       beats: [
         {
           who: "The shopkeeper says",
-          es: line("¿Te gusta el té?", [["Te", "You"], ["gusta", "like"], ["el", "the"], ["té", "tea"]], "Say that you don't like the tea.", ["no me gusta el té"]),
-          ja: line("おちゃがすきですか。", [["おちゃ", "tea"], ["が", "as for"], ["すき", "like"], ["です", "is"], ["か", "question"]], "Say that you don't like the tea.", ["おちゃがすきじゃないです"]),
-          tr: line("Çayı seviyor musun?", [["Çayı", "The tea"], ["seviyor musun", "do you like"]], "Say that you don't like the tea.", ["çayı sevmiyorum"])
+          leadFrom: {
+            like: "She remembers you liked it.",
+            not: "She remembers you left it."
+          },
+          es: line("¿Te gusta el té?", [["Te", "You"], ["gusta", "like"], ["el", "the"], ["té", "tea"]], "", ["me gusta el té", "no me gusta el té"]),
+          ja: line("おちゃがすきですか。", [["おちゃ", "tea"], ["が", "as for"], ["すき", "like"], ["です", "is"], ["か", "question"]], "", ["おちゃがすきです", "おちゃがすきじゃないです"]),
+          tr: line("Çayı seviyor musun?", [["Çayı", "The tea"], ["seviyor musun", "do you like"]], "", ["çayı seviyorum", "çayı sevmiyorum"])
+        },
+        {
+          when: {
+            like: {
+              es: line("A mí también.", [["A", "To"], ["mí", "me"], ["también", "too"]], "", ["gracias"]),
+              ja: line("わたしもすきです。", [["わたし", "I"], ["も", "too"], ["すき", "like"], ["です", "is"]], "", ["ありがとう"]),
+              tr: line("Ben de.", [["Ben", "I"], ["de", "too"]], "", ["teşekkürler"])
+            },
+            not: {
+              es: line("Está bien.", [["Está", "It is"], ["bien", "all right"]], "", ["gracias"]),
+              ja: line("いいです。", [["いい", "all right"], ["です", "is"]], "", ["ありがとう"]),
+              tr: line("Olur.", [["Olur", "That's all right"]], "", ["teşekkürler"])
+            },
+            how: {
+              es: line("Estoy bien.", [["Estoy", "I am"], ["bien", "well"]], "", ["bien"]),
+              ja: line("げんきです。", [["げんき", "well"], ["です", "am"]], "", ["げんきです"]),
+              tr: line("İyiyim.", [["İyiyim", "I am well"]], "", ["iyiyim"])
+            }
+          },
+          es: line("Está bien.", [["Está", "It is"], ["bien", "all right"]], "", ["gracias"]),
+          ja: line("いいです。", [["いい", "all right"], ["です", "is"]], "", ["ありがとう"]),
+          tr: line("Olur.", [["Olur", "That's all right"]], "", ["teşekkürler"])
         }
       ]
     },
@@ -93,6 +205,23 @@
           es: line("¿Te gusta el sol?", [["Te", ""], ["gusta", ""], ["el", ""], ["sol", ""]], "", ["me gusta el sol", "no me gusta el sol"]),
           ja: line("ひがすきですか。", [["ひ", ""], ["が", ""], ["すき", ""], ["です", ""], ["か", ""]], "", ["ひがすきです", "ひがすきじゃないです"]),
           tr: line("Güneşi seviyor musun?", [["Güneşi", ""], ["seviyor musun", ""]], "", ["güneşi seviyorum", "güneşi sevmiyorum"])
+        },
+        {
+          when: {
+            like: {
+              es: line("A mí también.", [["A", ""], ["mí", ""], ["también", ""]], "", ["gracias", "bien", "hasta mañana"]),
+              ja: line("わたしもすきです。", [["わたし", ""], ["も", ""], ["すき", ""], ["です", ""]], "", ["ありがとう", "げんきです", "またね"]),
+              tr: line("Ben de.", [["Ben", ""], ["de", ""]], "", ["teşekkürler", "iyiyim", "görüşürüz"])
+            },
+            not: {
+              es: line("Está bien.", [["Está", ""], ["bien", ""]], "", ["gracias", "bien", "hasta mañana"]),
+              ja: line("いいです。", [["いい", ""], ["です", ""]], "", ["ありがとう", "げんきです", "またね"]),
+              tr: line("Olur.", [["Olur", ""]], "", ["teşekkürler", "iyiyim", "görüşürüz"])
+            }
+          },
+          es: line("Está bien.", [["Está", ""], ["bien", ""]], "", ["gracias", "bien", "hasta mañana"]),
+          ja: line("いいです。", [["いい", ""], ["です", ""]], "", ["ありがとう", "げんきです", "またね"]),
+          tr: line("Olur.", [["Olur", ""]], "", ["teşekkürler", "iyiyim", "görüşürüz"])
         }
       ]
     },
@@ -107,6 +236,18 @@
           tr: line("Kahveyi seviyor musun?", [["Kahveyi", ""], ["seviyor musun", ""]], "", ["kahveyi seviyorum", "kahveyi sevmiyorum"])
         },
         {
+          when: {
+            like: {
+              es: line("Me gusta el café. Hasta mañana.", [["Me", ""], ["gusta", ""], ["el", ""], ["café", ""], ["Hasta", ""], ["mañana", ""]], "", ["hasta mañana"]),
+              ja: line("コーヒーがすきです。またね。", [["コーヒー", ""], ["が", ""], ["すき", ""], ["です", ""], ["またね", ""]], "", ["またね", "またあした"]),
+              tr: line("Kahveyi seviyorum. Görüşürüz.", [["Kahveyi", ""], ["seviyorum", ""], ["Görüşürüz", ""]], "", ["görüşürüz", "yarın görüşürüz"])
+            },
+            not: {
+              es: line("Está bien. Hasta mañana.", [["Está", ""], ["bien", ""], ["Hasta", ""], ["mañana", ""]], "", ["hasta mañana"]),
+              ja: line("いいです。またね。", [["いい", ""], ["です", ""], ["またね", ""]], "", ["またね", "またあした"]),
+              tr: line("Olur. Görüşürüz.", [["Olur", ""], ["Görüşürüz", ""]], "", ["görüşürüz", "yarın görüşürüz"])
+            }
+          },
           es: line("Hasta mañana.", [["Hasta", ""], ["mañana", ""]], "", ["hasta mañana"]),
           ja: line("またね。", [["またね", ""]], "", ["またね", "またあした"]),
           tr: line("Görüşürüz.", [["Görüşürüz", ""]], "", ["görüşürüz", "yarın görüşürüz"])
@@ -123,10 +264,112 @@
           ja: line("でんしゃがすきですか。", [["でんしゃ", ""], ["が", ""], ["すき", ""], ["です", ""], ["か", ""]], "", ["でんしゃがすきです", "でんしゃがすきじゃないです"]),
           tr: line("Treni seviyor musun?", [["Treni", ""], ["seviyor musun", ""]], "", ["treni seviyorum", "treni sevmiyorum"])
         },
+        {
+          when: {
+            like: {
+              es: line("A mí también.", [["A", ""], ["mí", ""], ["también", ""]], "", ["hasta mañana", "gracias"]),
+              ja: line("わたしもすきです。", [["わたし", ""], ["も", ""], ["すき", ""], ["です", ""]], "", ["またね", "ありがとう"]),
+              tr: line("Ben de.", [["Ben", ""], ["de", ""]], "", ["görüşürüz", "teşekkürler"])
+            },
+            not: {
+              es: line("Está bien.", [["Está", ""], ["bien", ""]], "", ["hasta mañana", "gracias"]),
+              ja: line("いいです。", [["いい", ""], ["です", ""]], "", ["またね", "ありがとう"]),
+              tr: line("Olur.", [["Olur", ""]], "", ["görüşürüz", "teşekkürler"])
+            }
+          },
+          es: line("Está bien.", [["Está", ""], ["bien", ""]], "", ["hasta mañana", "gracias"]),
+          ja: line("いいです。", [["いい", ""], ["です", ""]], "", ["またね", "ありがとう"]),
+          tr: line("Olur.", [["Olur", ""]], "", ["görüşürüz", "teşekkürler"])
+        },
         { walk: true }
       ]
     }
   ];
+
+  var BOOK = {
+    es: [
+      { day: 0, say: "Buenos días", en: "Good morning" },
+      { day: 0, say: "Hola", en: "Hello" },
+      { day: 0, say: "Cómo estás", en: "How are you" },
+      { day: 0, say: "Bien", en: "Well" },
+      { day: 0, say: "Estoy bien", en: "I am well" },
+      { day: 0, say: "Gracias", en: "Thank you" },
+      { day: 0, say: "Hasta mañana", en: "See you tomorrow" },
+      { day: 2, say: "Me gusta", en: "I like" },
+      { day: 2, say: "No me gusta", en: "I don't like" },
+      { day: 2, say: "El pan", en: "The bread" },
+      { day: 3, say: "El té", en: "The tea" },
+      { day: 4, say: "El sol", en: "The sun" },
+      { day: 5, say: "El café", en: "The coffee" },
+      { day: 6, say: "El tren", en: "The train" }
+    ],
+    ja: [
+      { day: 0, say: "おはよう", en: "Good morning" },
+      { day: 0, say: "こんにちは", en: "Hello" },
+      { day: 0, say: "げんきですか", en: "How are you" },
+      { day: 0, say: "げんき", en: "Well" },
+      { day: 0, say: "げんきです", en: "I am well" },
+      { day: 0, say: "ありがとう", en: "Thank you" },
+      { day: 0, say: "またあした", en: "See you tomorrow" },
+      { day: 0, say: "またね", en: "See you" },
+      { day: 2, say: "すきです", en: "I like" },
+      { day: 2, say: "すきじゃないです", en: "I don't like" },
+      { day: 2, say: "パン", en: "Bread" },
+      { day: 3, say: "おちゃ", en: "Tea" },
+      { day: 4, say: "ひ", en: "Sun" },
+      { day: 5, say: "コーヒー", en: "Coffee" },
+      { day: 6, say: "でんしゃ", en: "Train" }
+    ],
+    tr: [
+      { day: 0, say: "Günaydın", en: "Good morning" },
+      { day: 0, say: "Merhaba", en: "Hello" },
+      { day: 0, say: "Nasılsın", en: "How are you" },
+      { day: 0, say: "İyiyim", en: "I am well" },
+      { day: 0, say: "Teşekkürler", en: "Thank you" },
+      { day: 0, say: "Yarın görüşürüz", en: "See you tomorrow" },
+      { day: 0, say: "Görüşürüz", en: "See you" },
+      { day: 2, say: "Seviyorum", en: "I like" },
+      { day: 2, say: "Sevmiyorum", en: "I don't like" },
+      { day: 2, say: "Ekmeği", en: "The bread" },
+      { day: 3, say: "Çayı", en: "The tea" },
+      { day: 4, say: "Güneşi", en: "The sun" },
+      { day: 5, say: "Kahveyi", en: "The coffee" },
+      { day: 6, say: "Treni", en: "The train" }
+    ]
+  };
+
+  var OPEN = {
+    es: [
+      "buenos días", "hola", "cómo estás", "hola cómo estás", "cómo estás hola",
+      "bien", "estoy bien", "hola bien", "gracias", "hasta mañana",
+      "me gusta", "no me gusta",
+      "me gusta el pan", "no me gusta el pan",
+      "me gusta el té", "no me gusta el té",
+      "me gusta el sol", "no me gusta el sol",
+      "me gusta el café", "no me gusta el café",
+      "me gusta el tren", "no me gusta el tren"
+    ],
+    ja: [
+      "おはよう", "こんにちは", "げんきですか", "こんにちはげんきですか",
+      "げんきです", "ありがとう", "またあした", "またね",
+      "すきです", "すきじゃないです",
+      "パンがすきです", "パンがすきじゃないです",
+      "おちゃがすきです", "おちゃがすきじゃないです",
+      "ひがすきです", "ひがすきじゃないです",
+      "コーヒーがすきです", "コーヒーがすきじゃないです",
+      "でんしゃがすきです", "でんしゃがすきじゃないです"
+    ],
+    tr: [
+      "günaydın", "merhaba", "nasılsın", "merhaba nasılsın",
+      "iyiyim", "teşekkürler", "yarın görüşürüz", "görüşürüz",
+      "seviyorum", "sevmiyorum",
+      "ekmeği seviyorum", "ekmeği sevmiyorum",
+      "çayı seviyorum", "çayı sevmiyorum",
+      "güneşi seviyorum", "güneşi sevmiyorum",
+      "kahveyi seviyorum", "kahveyi sevmiyorum",
+      "treni seviyorum", "treni sevmiyorum"
+    ]
+  };
 
   var HOLDS = {
     es: { a: ["á"], e: ["é"], i: ["í"], o: ["ó"], u: ["ú", "ü"], n: ["ñ"], "?": ["¿"], "!": ["¡"] },
@@ -180,6 +423,7 @@
     var day = DAYS[lesson.day];
     if (day && lesson.step >= day.beats.length) lesson.step = day.beats.length - 1;
     if (!lesson.replies) lesson.replies = [];
+    if (!lesson.moods) lesson.moods = [];
     return lesson;
   }
 
@@ -205,19 +449,15 @@
 
   function grade(lang, typed, accept) {
     var got = norm(lang, typed);
+    var list = (OPEN[lang] || OPEN.es).concat(accept || []);
     var i;
     if (!got) return { ok: false, empty: true };
-    for (i = 0; i < accept.length; i++) {
-      if (got === norm(lang, accept[i])) return { ok: true };
+    for (i = 0; i < list.length; i++) {
+      if (got === norm(lang, list[i])) return { ok: true };
     }
-    var closeTo = "";
-    for (i = 0; i < accept.length; i++) {
-      if (foldClose(lang, typed) === foldClose(lang, accept[i])) {
-        closeTo = accept[i];
-        break;
-      }
+    for (i = 0; i < list.length; i++) {
+      if (foldClose(lang, typed) === foldClose(lang, list[i])) return { ok: true };
     }
-    if (closeTo) return { ok: false, letter: firstSpecial(lang, closeTo, typed) };
     if (lang === "ja" && /[a-zA-Z]/.test(typed)) return { ok: false, kana: true };
     return { ok: false };
   }
@@ -272,11 +512,21 @@
       for (b = 0; b < day.beats.length; b++) {
         if (d === upToDay && b > upToStep) break;
         beat = day.beats[b];
-        if (!beat.ja) continue;
-        text = beat.ja.say + " " + (beat.ja.accept || []).join("");
+        if (!beat.ja && !(beat.when && beat.when.how && beat.when.how.ja)) continue;
+        text = "";
+        if (beat.ja) text = beat.ja.say + " " + (beat.ja.accept || []).join("");
+        if (beat.when) {
+          Object.keys(beat.when).forEach(function (key) {
+            var branch = beat.when[key].ja;
+            if (branch) text += " " + branch.say + " " + (branch.accept || []).join("");
+          });
+        }
         add(text);
       }
     }
+    (BOOK.ja || []).forEach(function (row) {
+      if (row.day <= upToDay) add(row.say);
+    });
     return order;
   }
 
@@ -288,7 +538,7 @@
       return "Hold " + result.letter.key + " to write " + opt + ".";
     }
     if (day.lesson === 3 || day.lesson === 0) return "Not yet. Use what you already know.";
-    return "Not yet. Use their words.";
+    return "Not yet. Use the phrasebook.";
   }
 
   function spokenMiss(day, result, code) {
@@ -299,7 +549,7 @@
     if (result && result.kana) return "Tap the letters, or speak the words.";
     if (!result || result.empty) return "I didn't catch that. Press Say it again, or type it.";
     if (day.lesson === 3 || day.lesson === 0) return "Not yet. Press Say it again, or type what you already know.";
-    return "Not yet. Say their words, or type them.";
+    return "Not yet. Use the phrasebook, or say it again.";
   }
 
   function shotName(shot) {
@@ -348,16 +598,100 @@
     window.speechSynthesis.speak(utter);
   }
 
+  function meaning(lang, typed) {
+    var s = foldClose(lang, typed);
+    if (!s) return "";
+    if (lang === "ja") {
+      if (s.indexOf("じゃない") !== -1) return "not";
+      if (s.indexOf("すき") !== -1) return "like";
+      if (s.indexOf("げんきですか") !== -1) return "how";
+      if (s.indexOf("また") !== -1) return "bye";
+      if (s.indexOf("ありがとう") !== -1) return "thanks";
+      if (s.indexOf("げんき") !== -1) return "well";
+      if (s.indexOf("おはよう") !== -1) return "morning";
+      if (s.indexOf("こんにちは") !== -1) return "hello";
+      return "";
+    }
+    if (lang === "tr") {
+      if (s.indexOf("sevmiyorum") !== -1) return "not";
+      if (s.indexOf("seviyorum") !== -1) return "like";
+      if (s.indexOf("nasilsin") !== -1) return "how";
+      if (s.indexOf("gorusuruz") !== -1) return "bye";
+      if (s.indexOf("tesekkurler") !== -1) return "thanks";
+      if (s.indexOf("iyiyim") !== -1) return "well";
+      if (s.indexOf("gunaydin") !== -1) return "morning";
+      if (s.indexOf("merhaba") !== -1) return "hello";
+      return "";
+    }
+    if ((s.indexOf("no ") === 0 || s.indexOf(" no ") !== -1) && s.indexOf("gusta") !== -1) return "not";
+    if (s.indexOf("gusta") !== -1) return "like";
+    if (s.indexOf("como estas") !== -1) return "how";
+    if (s.indexOf("hasta manana") !== -1) return "bye";
+    if (s.indexOf("gracias") !== -1) return "thanks";
+    if (s.indexOf("estoy bien") !== -1 || s === "bien" || s.indexOf(" bien") !== -1) return "well";
+    if (s.indexOf("buenos dias") !== -1) return "morning";
+    if (s.indexOf("hola") !== -1) return "hello";
+    return "";
+  }
+
+  function lineFor(beat, lang, priorMood) {
+    var branch = priorMood && beat.when && beat.when[priorMood];
+    if (branch && (branch[lang] || branch.es)) return branch[lang] || branch.es;
+    return beat[lang] || beat.es;
+  }
+
+  function leadFor(beat, priorMood) {
+    var lesson = progress();
+    if (beat.leadFrom && lesson.dayMood && beat.leadFrom[lesson.dayMood]) return beat.leadFrom[lesson.dayMood];
+    if (beat.leadWhen && beat.leadWhen.indexOf(priorMood || "") === -1) return "";
+    return beat.lead || "";
+  }
+
+  function paintBook(dayIndex, showEnglish) {
+    var book = document.getElementById("book");
+    if (!book) return;
+    var list = book.querySelector("ul");
+    if (!list) return;
+    var lang = pack().id;
+    var rows = (BOOK[lang] || BOOK.es).filter(function (row) { return row.day <= dayIndex; });
+    book.hidden = false;
+    list.replaceChildren();
+    rows.forEach(function (row) {
+      var item = document.createElement("li");
+      var say = document.createElement("span");
+      say.className = "book-say";
+      say.textContent = row.say;
+      item.appendChild(say);
+      if (showEnglish && row.en) {
+        var en = document.createElement("span");
+        en.className = "book-en";
+        en.textContent = row.en;
+        item.appendChild(en);
+      }
+      list.appendChild(item);
+    });
+  }
+
   function advance(said) {
     var lesson = progress();
     var day = DAYS[lesson.day];
+    var lang = pack().id;
     if (!lesson.replies) lesson.replies = [];
+    if (!lesson.moods) lesson.moods = [];
     lesson.replies[lesson.step] = said;
-    lesson.step += 1;
+    var mood = meaning(lang, said);
+    lesson.moods[lesson.step] = mood;
+    if (mood === "like" || mood === "not") lesson.carryMood = mood;
+    var next = lesson.step + 1;
+    var spoken = day.beats[lesson.step];
+    if (spoken && spoken.jump && spoken.jump[mood] != null) next = spoken.jump[mood];
+    lesson.step = next;
     if (lesson.step >= day.beats.length) {
       lesson.day += 1;
       lesson.step = 0;
       lesson.replies = [];
+      lesson.moods = [];
+      lesson.dayMood = lesson.carryMood || "";
     }
     if (lesson.day >= DAYS.length) lesson.day = DAYS.length - 1;
     api().writeSave();
@@ -368,7 +702,7 @@
     var langs = window.VILLAGE_LANGS || [{ id: "es" }];
     var state = api().state;
     state.langIndex = ((state.langIndex || 0) + 1) % langs.length;
-    state.lesson = { day: 0, step: 0, replies: [] };
+    state.lesson = { day: 0, step: 0, replies: [], moods: [], dayMood: "" };
     state.scene = "lessons";
     api().writeSave();
     render();
@@ -387,6 +721,9 @@
     page.pictureEl.hidden = false;
     page.pictureEl.alt = day.place;
     page.pictureEl.src = page.artUrl(shotName(day.shot));
+    var notes = document.getElementById("notes");
+    if (notes) notes.hidden = true;
+    paintBook(lesson.day, !!day.hover);
     page.proseEl.replaceChildren();
     var place = document.createElement("p");
     place.textContent = page.fill(day.place);
@@ -396,7 +733,7 @@
       tip.className = "letter-hint";
       tip.textContent = lang === "ja"
         ? "Tap the letters. The small mark under each one is its roman key."
-        : "Hold a key when the letter needs another shape.";
+        : "Hold a key if you want the other letter shape.";
       page.proseEl.appendChild(tip);
     }
     page.choicesEl.replaceChildren();
@@ -453,9 +790,11 @@
     for (i = 0; i < lesson.step; i++) {
       var past = day.beats[i];
       if (!past || past.walk) continue;
-      var pastLine = past[lang] || past.es;
+      if (!(lesson.replies && lesson.replies[i])) continue;
+      var pastMood = i > 0 && lesson.moods ? lesson.moods[i - 1] : "";
+      var pastLine = lineFor(past, lang, pastMood);
       if (!pastLine) continue;
-      addLead(past.lead);
+      addLead(leadFor(past, pastMood));
       if (i === 0) addSpeaker(past.who);
       addSpeech(pastLine, false);
       addYou((lesson.replies && lesson.replies[i]) || (pastLine.accept && pastLine.accept[0]) || "");
@@ -471,32 +810,20 @@
       page.choicesEl.appendChild(again);
       return;
     }
-    var lineData = beat[lang] || beat.es;
-    addLead(beat.lead);
+    var prior = lesson.step > 0 && lesson.moods ? lesson.moods[lesson.step - 1] : "";
+    var lineData = lineFor(beat, lang, prior);
+    addLead(leadFor(beat, prior));
     if (lesson.step === 0) addSpeaker(beat.who);
     addSpeech(lineData, true);
 
     var form = document.createElement("form");
     form.className = "reply";
-    if (lineData.ask) {
-      var ask = document.createElement("p");
-      ask.className = "reply-ask";
-      ask.textContent = lineData.ask;
-      form.appendChild(ask);
-    }
-    if (day.hover && lineData.answer) {
-      var model = document.createElement("p");
-      model.className = "speech you-model";
-      model.lang = voicePack.voice || "";
-      paintLine(model, lineData.answer.say, lineData.answer.words, true);
-      form.appendChild(model);
-    }
     var input = document.createElement("input");
     input.type = "text";
     input.autocomplete = "off";
     input.autocapitalize = "off";
     input.spellcheck = false;
-    input.setAttribute("aria-label", lineData.ask || "Your reply");
+    input.setAttribute("aria-label", "Your reply");
     form.appendChild(input);
     var note = document.createElement("p");
     note.className = "reply-note";

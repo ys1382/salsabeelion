@@ -184,6 +184,57 @@ body.train-window.train-rain .train-glass {
   display: none;
 }
 
+.book {
+  position: absolute;
+  z-index: 4;
+  top: 2.6rem;
+  right: 0.85rem;
+  width: min(11.5rem, 38vw);
+  max-height: min(16rem, 40vh);
+  overflow: auto;
+  margin: 0;
+  padding: 0.65rem 0.75rem 0.8rem;
+  border-radius: 0.35rem;
+  background: rgba(244, 239, 228, 0.94);
+  color: var(--ink);
+}
+
+.book[hidden] {
+  display: none;
+}
+
+.book h2 {
+  margin: 0;
+  font-family: "Segoe UI", system-ui, sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #5c5146;
+}
+
+.book ul {
+  list-style: none;
+  margin: 0.35rem 0 0;
+  padding: 0;
+}
+
+.book li {
+  margin: 0.4rem 0 0;
+}
+
+.book-say {
+  display: block;
+  font-size: 0.98rem;
+}
+
+.book-en {
+  display: block;
+  font-family: "Segoe UI", system-ui, sans-serif;
+  font-size: 0.75rem;
+  color: #5c5146;
+}
+
 .notes h2 {
   margin: 0;
   font-family: "Segoe UI", system-ui, sans-serif;
@@ -522,6 +573,13 @@ body.picking .prose p {
     right: 0.75rem;
     width: auto;
     max-height: 30%;
+  }
+
+  .book {
+    top: 2.4rem;
+    right: 0.6rem;
+    width: min(9.5rem, 46vw);
+    max-height: 24vh;
   }
 
   .sheet {
