@@ -16,9 +16,9 @@
   }
 
   var CAST = {
-    neighbor: { role: "A neighbor says", es: "Rosa", ja: "Hana", kana: "はな", tr: "Elif" },
-    shop: { role: "The shopkeeper says", es: "Ana", ja: "Aoi", kana: "あおい", tr: "Ayşe" },
-    traveler: { role: "A traveler says", es: "Miguel", ja: "Kenji", kana: "けんじ", tr: "Yusuf" }
+    neighbor: { role: "A neighbor says", es: "Rosa", ja: "Hana", kana: "はな", tr: "Elif", gender: "woman" },
+    shop: { role: "The shopkeeper says", es: "Ana", ja: "Aoi", kana: "あおい", tr: "Ayşe", gender: "woman" },
+    traveler: { role: "A traveler says", es: "Miguel", ja: "Kenji", kana: "けんじ", tr: "Yusuf", gender: "man" }
   };
 
   var DAYS = [
@@ -443,6 +443,7 @@
     if (!lesson.replies) lesson.replies = [];
     if (!lesson.moods) lesson.moods = [];
     if (!lesson.asides) lesson.asides = [];
+    if (!lesson.knownAt) lesson.knownAt = {};
     return lesson;
   }
 
@@ -675,7 +676,7 @@
       if (s.indexOf("merhaba") !== -1) return "hello";
       return "";
     }
-    if (s.indexOf("te llamas") !== -1 || s.indexOf("tu nombre") !== -1) return "name";
+    if (s.indexOf("te llamas") !== -1 || s.indexOf("tu nombre") !== -1 || s.indexOf("cual es tu nombre") !== -1) return "name";
     if ((s.indexOf("no ") === 0 || s.indexOf(" no ") !== -1) && s.indexOf("gusta") !== -1) return "not";
     if (s.indexOf("gusta") !== -1) return "like";
     if (s.indexOf("como estas") !== -1) return "how";
@@ -694,16 +695,21 @@
   }
 
   function namesThemself(text) {
+    var raw = String(text || "");
+    if (/わたしのなまえ|ぼくのなまえ|僕の名前|私の名前|じぶんのなまえ/.test(raw)) return true;
     var s = plainFold(text);
-    return /\b(me llamo|mi llamo|llamo is|my name is|i am called|im called|call me|ismim|benim adim)\b/.test(s);
+    return /\b(me llamo|mi llamo|mi nombre|llamo is|my name is|i am called|im called|call me|ismim|benim adim|adim)\b/.test(s);
+  }
+
+  function theyAskName(text) {
+    var raw = String(text || "");
+    if (raw.indexOf("おなまえ") !== -1 || raw.indexOf("なまえは") !== -1) return true;
+    var s = plainFold(text);
+    return /\b(te llamas|tu nombre|su nombre|cual es tu nombre|como te llamas|your name|what is your name|whats your name|who are you|quien eres|kimsin|adin ne|ismin ne)\b/.test(s);
   }
 
   function asksTheirName(text) {
-    if (namesThemself(text)) return false;
-    var raw = String(text || "");
-    if (raw.indexOf("なまえ") !== -1 || raw.indexOf("名前") !== -1) return true;
-    var s = plainFold(text);
-    return /\b(te llamas|tu nombre|su nombre|your name|what is your name|whats your name|who are you|quien eres|kimsin|adin ne|ismin ne)\b/.test(s);
+    return theyAskName(text);
   }
 
   function barePolarity(text) {
@@ -735,6 +741,8 @@
       lesson.asides = lesson.asides.filter(function (row) { return row.step !== lesson.step; }).concat(kept.slice(-7));
     }
     lesson.asides.push({ step: lesson.step, you: you, say: say, en: en || "" });
+    var dayRow = DAYS[lesson.day];
+    if (dayRow && dayRow.cast) rememberCastFromLine(say, dayRow.cast, pack().id, lesson.day, lesson.step);
     api().writeSave();
     render();
   }
@@ -745,6 +753,7 @@
     var lang = pack().id;
     if (!day || !day.cast) return;
     rememberName(day.cast, lesson.day, lesson.step);
+    rememberPlayerName(you);
     var intro = nameIntro(day.cast, lang, [], true);
     pushAside(you, intro.say, "My name is " + castName(day.cast, lang) + ".");
   }
@@ -766,12 +775,17 @@
     return who[lang] || who.es;
   }
 
-  function nameKnown(lesson, person, dayIndex, step) {
+  function castMet(lesson, person) {
+    return !!(lesson.knownAt && lesson.knownAt[person] && typeof lesson.knownAt[person].day === "number");
+  }
+
+  function nameKnown(lesson, person, dayIndex, beatStep) {
     var at = lesson.knownAt && lesson.knownAt[person];
-    if (!at) return false;
+    if (!at || typeof at.day !== "number") return false;
     if (dayIndex > at.day) return true;
     if (dayIndex < at.day) return false;
-    return step >= at.step;
+    var atStep = typeof beatStep === "number" ? beatStep : 0;
+    return atStep >= at.step;
   }
 
   function rememberName(person, day, step) {
@@ -780,6 +794,31 @@
     if (!lesson.knownAt) lesson.knownAt = {};
     if (lesson.knownAt[person]) return;
     lesson.knownAt[person] = { day: day, step: step };
+  }
+
+  function rememberCastFromLine(say, person, lang, day, step) {
+    if (!say || !person) return;
+    var name = castName(person, lang);
+    if (String(say).indexOf(name) !== -1) {
+      rememberName(person, day, step);
+      return;
+    }
+    var folded = foldClose(lang, say);
+    var plain = plainFold(name);
+    if (plain && folded.indexOf(plain) !== -1 && (folded.indexOf("llamo") !== -1 || folded.indexOf("adim") !== -1 || folded.indexOf("です") !== -1)) {
+      rememberName(person, day, step);
+    }
+  }
+
+  function rememberPlayerName(text) {
+    if (!namesThemself(text)) return;
+    var lesson = progress();
+    var s = plainFold(text);
+    var m = s.match(/\b(?:me llamo|mi nombre es|my name is|i am called|im called|call me|llamo is|ismim|benim adim|adim)\s+([a-z][a-z '-]{0,28})/);
+    if (!m || !m[1]) return;
+    var name = m[1].replace(/\s+/g, " ").trim();
+    if (!name) return;
+    lesson.playerName = name.charAt(0).toUpperCase() + name.slice(1);
   }
 
   function speakerText(day, step, force) {
@@ -846,7 +885,7 @@
 
   function placeText(day) {
     var lesson = progress();
-    if (day.placeNamed && day.cast && nameKnown(lesson, day.cast, lesson.day, 0)) {
+    if (day.placeNamed && day.cast && castMet(lesson, day.cast)) {
       return day.placeNamed.replace("{name}", castName(day.cast, pack().id));
     }
     return day.place;
@@ -888,10 +927,27 @@
     if (lesson.day >= DAYS.length) lesson.day = DAYS.length - 1;
   }
 
+  function askingName(said, moodOverride) {
+    if (namesThemself(said)) return false;
+    if (asksTheirName(said)) return true;
+    if (moodOverride === "name") return true;
+    if (!moodOverride && meaning(pack().id, said) === "name") return true;
+    var lang = pack().id;
+    var s = foldClose(lang, said);
+    if (lang === "ja") return s.indexOf("なまえ") !== -1 || s.indexOf("おなまえ") !== -1;
+    if (lang === "tr") return s.indexOf("adin ne") !== -1 || s.indexOf("ismin ne") !== -1;
+    return s.indexOf("te llamas") !== -1 || s.indexOf("tu nombre") !== -1 || s.indexOf("cual es tu nombre") !== -1;
+  }
+
   function advance(said, moodOverride) {
     var lesson = progress();
     var day = DAYS[lesson.day];
     var lang = pack().id;
+    if (day && day.cast && askingName(said, moodOverride)) {
+      lesson.nameHold = false;
+      tellName(said);
+      return;
+    }
     if (lesson.nameHold) {
       lesson.nameHold = false;
       lesson.step += 1;
@@ -908,18 +964,7 @@
     if (mood === "like" || mood === "not") lesson.carryMood = mood;
     var next = lesson.step + 1;
     var spoken = day.beats[lesson.step];
-    if (mood !== "name" && spoken && spoken.jump && spoken.jump[mood] != null) next = spoken.jump[mood];
-    if (mood === "name" && day.cast) {
-      var upcoming = day.beats[next];
-      if (!upcoming || upcoming.walk) {
-        rememberName(day.cast, lesson.day + 1, 0);
-        lesson.nameHold = true;
-        api().writeSave();
-        render();
-        return;
-      }
-      rememberName(day.cast, lesson.day, next);
-    }
+    if (spoken && spoken.jump && spoken.jump[mood] != null) next = spoken.jump[mood];
     lesson.step = next;
     rollDay(lesson, day);
     api().writeSave();
@@ -1179,7 +1224,8 @@
         return;
       }
       if (lesson.nameHold) lesson.nameHold = false;
-      if (asksTheirName(text) && day.cast) {
+      rememberPlayerName(text);
+      if (day.cast && askingName(text)) {
         tellName(text);
         return;
       }
@@ -1203,8 +1249,9 @@
       speakBtn.disabled = true;
       showNote("One moment.");
       var person = day.cast || "neighbor";
-      var known = nameKnown(lesson, person, lesson.day, lesson.step);
+      var known = castMet(lesson, person);
       var last = latestAside();
+      var playerName = lesson.playerName || "";
       var controller = typeof AbortController === "function" ? new AbortController() : null;
       var timer = setTimeout(function () {
         if (controller) controller.abort();
@@ -1222,7 +1269,8 @@
           gloss: last ? (last.en || "") : (lineData.words || []).map(function (pair) { return pair[1] || ""; }).filter(Boolean).join(" "),
           moods: last ? [] : allowedList(),
           hold: !!last || !!polar,
-          earlier: earlierTalk()
+          earlier: earlierTalk(),
+          playerName: playerName
         }),
         signal: controller ? controller.signal : undefined
       }).then(function (response) {
@@ -1240,11 +1288,12 @@
           return;
         }
         var allowed = allowedMoods(lineData, lang);
-        if (!latestAside() && !barePolarity(text) && data.kind === "answer" && data.mood && allowed[data.mood] && !namesThemself(text) && !asksTheirName(text)) {
+        if (!latestAside() && !barePolarity(text) && data.kind === "answer" && data.mood && allowed[data.mood] && !namesThemself(text) && !askingName(text)) {
           advance(text, data.mood);
           return;
         }
         if (data.say && !data.error) {
+          rememberPlayerName(text);
           pushAside(text, data.say, data.en || "");
           return;
         }
@@ -1319,9 +1368,14 @@
       page.stopVoice();
       speakBtn.disabled = false;
       speakBtn.textContent = "Say it";
+      var trimmed = input.value.trim();
+      if (day.cast && askingName(trimmed)) {
+        advance(trimmed);
+        return;
+      }
       var result = grade(lang, input.value, lineData.accept);
       if (result.ok) {
-        advance(input.value.trim());
+        advance(trimmed);
         return;
       }
       if (result.empty) {

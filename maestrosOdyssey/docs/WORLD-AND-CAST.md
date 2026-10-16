@@ -20,7 +20,13 @@
 
 ## Story shape (not chosen-one)
 
-### Why you are here
+### Why you are here (basic version — owner 2026-10-12)
+
+Your parents sent you here so you would learn the language by living it, not at a school desk. The elder is the same gender as you. She or he helps because she or he is fond of your family, and used to be good friends with your grandparent of that same gender. There is no ambassador training. This version does not teach cultural practices past living the language.
+
+The older ambassador premise is parked below. It is not deleted.
+
+### Parked — elder as ambassador (2026-09-22, premise 2026-10-06)
 
 Humans and sentient fantasy peoples share ordinary life in peace, with tension left over from old wars. The peace is real, and people still have to keep it.
 

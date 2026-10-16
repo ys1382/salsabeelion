@@ -330,6 +330,7 @@ def handle_village_reply(body: dict) -> dict:
     mood_list = ", ".join(allowed) if allowed else "none"
     told_name = names_themself(player)
     hold = bool(body.get("hold"))
+    player_name = _clip(body.get("playerName"), 40)
     system = (
         "You write one spoken reply for a person in Maestro's Odyssey, a family-friendly language game. "
         "All ages. No swearing, no crude words, no slurs, no romance, no flirting, no gossip, no alcohol. "
@@ -352,6 +353,10 @@ def handle_village_reply(body: dict) -> dict:
         "Set kind to \"aside\" and mood to \"\" when they add anything else: their name, another place, a story, a new question, or a yes to a question you asked off to the side. "
         "\"Yes, my name is Elham\" is an aside. Greet them by that name. Do not treat it as only good morning.\n"
         "If they ask your name again, tell them your name again.\n"
+        + (
+            f"You already know the player's name is {player_name}. Use it naturally when you speak to them.\n"
+            if player_name else ""
+        )
         + (
             "HARD RULE: they just told you their name. kind must be \"aside\". mood must be \"\". "
             "Greet them by the name they used.\n"

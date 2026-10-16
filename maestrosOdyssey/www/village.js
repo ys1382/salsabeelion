@@ -12,15 +12,15 @@
       homeAlt: "{elder} talks with a young person between two limewashed houses.",
       street: [
         "The street is one street. Limewashed houses, clay tile roofs, and a small café with a cloth awning run the whole way, and people use them together.",
-        "Neighbors come along in modest everyday clothes, talking as they go. A blue-green visitor walks with them, only passing through."
+        "Neighbors come along in modest everyday clothes, talking as they go."
       ],
-      streetAlt: "Neighbors in modest clothes carry groceries down a limewashed street, talking, with one blue-green visitor among them.",
+      streetAlt: "Neighbors in modest clothes carry groceries down a limewashed street, talking.",
       shore: [
         "The cove is quiet. People stand on the rocks with small nets, talking while a boat waits on the clear water."
       ],
       shoreAlt: "People stand on calm rocks with small nets, a boat waiting offshore.",
       shop: [
-        "The café door is open. Limewashed walls and a cloth awning shade the step. The shopkeeper waves from the doorway while neighbors gather with baskets. A visitor comes in with them. Nobody is turned away."
+        "The café door is open. Limewashed walls and a cloth awning shade the step. The shopkeeper waves from the doorway while neighbors gather with baskets."
       ],
       shopAlt: "A shopkeeper waves neighbors with baskets into an open café.",
       station: [
@@ -36,15 +36,15 @@
       homeAlt: "{elder} talks with a young person between two stone houses.",
       street: [
         "The street is one street. Pale stone houses with arched doors, and a courtyard café, run the whole way, and people use them together.",
-        "Neighbors come along with baskets of groceries, talking as they go. A blue-green visitor walks with them, only passing through."
+        "Neighbors come along with baskets of groceries, talking as they go."
       ],
-      streetAlt: "Neighbors carry baskets down a stone street, talking, with one blue-green visitor among them.",
+      streetAlt: "Neighbors carry baskets down a stone street, talking.",
       shore: [
         "The cove is quiet. People stand in the shallows with small nets, talking beside a boat on the clear water."
       ],
       shoreAlt: "People stand in calm shallows with small nets, a boat beside them.",
       shop: [
-        "The café door is open. Stone arches shade the step. The shopkeeper waves from the doorway as neighbors come across the courtyard, a child among them. A visitor comes in with them. Nobody is turned away."
+        "The café door is open. Stone arches shade the step. The shopkeeper waves from the doorway as neighbors come across the courtyard, a child among them."
       ],
       shopAlt: "A shopkeeper waves neighbors across a courtyard café, a child with them.",
       station: [
@@ -64,11 +64,11 @@
       ],
       streetAlt: "Neighbors talk along a whitewashed lane, while a short neighbor mends a shoe.",
       shore: [
-        "The cove is quiet. People stand along the rocks with small nets, looking out over the clear water. A sea neighbor in a heavy wool coat stands with them."
+        "The cove is quiet. People stand along the rocks with small nets, looking out over the clear water."
       ],
-      shoreAlt: "Neighbors stand on calm rocks with small nets, and a sea neighbor in a heavy wool coat stands with them.",
+      shoreAlt: "Neighbors stand on calm rocks with small nets.",
       shop: [
-        "The tea shop door is open. Whitewashed walls shade the step. The shopkeeper waves neighbors in as they come up the path. A visitor comes in with them. Nobody is turned away."
+        "The tea shop door is open. Whitewashed walls shade the step. The shopkeeper waves neighbors in as they come up the path."
       ],
       shopAlt: "A shopkeeper waves neighbors in from the path at an open tea shop.",
       station: [
@@ -84,15 +84,15 @@
       homeAlt: "{elder} talks with a young person between two wooden houses.",
       street: [
         "The street is one street. Wooden houses, dark tile roofs, and a small café with a plain curtain run the whole way, and people use them together.",
-        "Neighbors come along with the groceries, talking as they go. A blue-green visitor walks with them, only passing through."
+        "Neighbors come along with the groceries, talking as they go."
       ],
-      streetAlt: "Neighbors carry groceries along a wooden lane, talking, with one blue-green visitor among them.",
+      streetAlt: "Neighbors carry groceries along a wooden lane, talking.",
       shore: [
         "The cove is quiet. People gather on the rocks with small nets, talking near the boats at the pier. The water is clear."
       ],
       shoreAlt: "People gather on calm rocks with small nets, boats tied at the pier.",
       shop: [
-        "The café door is open. A plain curtain hangs in the wooden doorway. The shopkeeper waves from the step while neighbors come along with baskets, a small child holding a hand. A visitor comes in with them. Nobody is turned away."
+        "The café door is open. A plain curtain hangs in the wooden doorway. The shopkeeper waves from the step while neighbors come along with baskets, a small child holding a hand."
       ],
       shopAlt: "A shopkeeper waves neighbors with baskets into an open café, a child with them.",
       station: [
@@ -108,15 +108,15 @@
       homeAlt: "{elder} talks with a young person between two plaster houses.",
       street: [
         "The street is one street. Plaster houses, red tile roofs, and a tea house run the whole way, and people use them together.",
-        "Neighbors come along with baskets, talking as they go. People sit over tea at the tables. One neighbor walks with them, a faint brightness at her shoulders."
+        "Neighbors come along with baskets, talking as they go. People sit over tea at the tables."
       ],
-      streetAlt: "Neighbors carry baskets down a plaster-house street, talking, one of them with a faint brightness at the shoulders.",
+      streetAlt: "Neighbors carry baskets down a plaster-house street, talking.",
       shore: [
         "The cove is quiet. People sort nets and baskets on the rocks, with small boats pulled up on the clear water."
       ],
       shoreAlt: "People sort nets and baskets on calm rocks, boats pulled up nearby.",
       shop: [
-        "The tea house door is open. Plaster walls and red tile shade the step. The shopkeeper waves from the doorway as neighbors come up, a child with them. A visitor comes in with them. Nobody is turned away."
+        "The tea house door is open. Plaster walls and red tile shade the step. The shopkeeper waves from the doorway as neighbors come up, a child with them."
       ],
       shopAlt: "A shopkeeper waves neighbors in at an open tea house, a child with them.",
       station: [
@@ -149,106 +149,13 @@
     return manName() + " says";
   }
 
-  function rockName() {
-    return "Neris";
-  }
-
   function fisherName() {
     var names = { es: "Diego", ar: "Hassan", ga: "Cian", ja: "Daichi", tr: "Emre" };
     return names[langPack().id] || names.es;
   }
 
-  function rockSays() {
-    return rockName() + " says";
-  }
-
   function fisherSays() {
     return fisherName() + " says";
-  }
-
-  var TR_FOLK = [
-    {
-      file: "shahmeran",
-      alt: "A woman in a long coat and headscarf talks on the street, with a calm serpent body where her legs would be.",
-      line: "A neighbor in a long coat and scarf is in the conversation. Where her legs would be, a calm serpent rests on the stones."
-    },
-    {
-      file: "tulpar",
-      alt: "A winged horse stands at the edge of the plaster street, with no rider.",
-      line: "A horse with wings stands at the edge of the street. Nobody is riding it."
-    },
-    {
-      file: "tepegoz",
-      alt: "A neighbor in a modest coat has one eye in the forehead and is talking with someone.",
-      line: "A neighbor with one eye in the forehead is talking with someone. The clothes are ordinary, and the face is calm."
-    },
-    {
-      file: "itbarak",
-      alt: "Dog-headed neighbors in long modest coats walk and talk on the street.",
-      line: "Dog-headed neighbors in long coats walk and talk together."
-    },
-    {
-      file: "anka",
-      alt: "A great emerald and gold bird glides far above the red tile roofs.",
-      line: "Far above the roofs, a great bird glides. The feathers are emerald and gold."
-    },
-    {
-      file: "karakoncolos",
-      alt: "A tall shaggy figure stands at a winter door.",
-      line: "At a winter door, a tall shaggy figure stands. It only stands there."
-    }
-  ];
-
-  function trFolkIndex() {
-    var n = state.flags.trLook;
-    if (typeof n !== "number" || n < 0) return 0;
-    return n;
-  }
-
-  function trFolkNow() {
-    if (!langPack || langPack().id !== "tr") return null;
-    var n = trFolkIndex();
-    if (n >= TR_FOLK.length) return null;
-    return TR_FOLK[n];
-  }
-
-  function trFolkUrl(folk) {
-    return "village-art/tr/" + folk.file + ".jpg?v=20261009d";
-  }
-
-  var ES_MX_FOLK = [
-    {
-      file: "alux",
-      alt: "At the milpa edge, a short alux in a buttoned guayabera talks with a woman in a rebozo beside tall maize.",
-      line: "Out at the milpa, an alux from the old stories stands among the maize—small, in a buttoned guayabera, with harvest in his basket."
-    },
-    {
-      file: "nahual",
-      alt: "A nahual with a coyote head wears a modest guayabera and talks with neighbors in rebozos on the village street.",
-      line: "A nahual is in the talk—a coyote head on a neighbor's body, in a guayabera and trousers like the other men. Marigolds are on the stones."
-    },
-    {
-      file: "chaneque",
-      alt: "At the forest edge, a moss-green chaneque with leaves in his hair talks with a woman in a rebozo on a shaded path.",
-      line: "Where the trees begin, a chaneque is speaking—moss-green skin, leaves in his hair, hands open. His guayabera is buttoned; a neighbor in a rebozo listens."
-    }
-  ];
-
-  function esMxFolkIndex() {
-    var n = state.flags.esMxLook;
-    if (typeof n !== "number" || n < 0) return 0;
-    return n;
-  }
-
-  function esMxFolkNow() {
-    if (!langPack || langPack().id !== "es") return null;
-    var n = esMxFolkIndex();
-    if (n >= ES_MX_FOLK.length) return null;
-    return ES_MX_FOLK[n];
-  }
-
-  function esMxFolkUrl(folk) {
-    return "village-art/es/mx/" + folk.file + ".jpg?v=20261010i";
   }
 
   var scenes = {
@@ -269,39 +176,6 @@
         list.push({ label: "Continue.", next: "intro_train_5" });
         return list;
       }
-    },
-    intro_train_2: {
-      day: "Monday",
-      where: "The train",
-      picture: "village-art/intro/intro_train_2.jpg?v=20261010art2",
-      alt: "A wide plaza, groups kept to their own sides, a courier crossing the middle.",
-      paragraphs: [
-        "Outside: a wide plaza. Humans on the steps of one arcade. Merfolk in the shallow fountain on the other — not forbidden, assigned.",
-        "A lizardfolk courier crosses the middle and every head turns the way a clock turns: polite, exact, empty of welcome."
-      ],
-      choices: [{ label: "Continue.", next: "intro_train_3" }]
-    },
-    intro_train_3: {
-      day: "Monday",
-      where: "The train",
-      picture: "village-art/intro/intro_train_3.jpg?v=20261010art2",
-      alt: "A harbor. Nets on one pier, a merfolk elder on the far rock.",
-      paragraphs: [
-        "The view slides to a harbor. Nets stacked on this pier; a merfolk elder on that rock, arms folded.",
-        "Two harbor clerks argue across the gap in voices kept pleasant. You cannot hear the words. You can hear the distance."
-      ],
-      choices: [{ label: "Continue.", next: "intro_train_4" }]
-    },
-    intro_train_4: {
-      day: "Monday",
-      where: "The train",
-      picture: "",
-      alt: "From the train, a high wall above a market.",
-      paragraphs: [
-        "Mountains. Dragonfolk silhouettes on a high wall. Lizardfolk market below. They do not mix; they coordinate.",
-        "Someone on the train coughs and you realize you have been holding your breath."
-      ],
-      choices: [{ label: "Continue.", next: "intro_train_5" }]
     },
     intro_train_5: {
       day: "Monday",
@@ -334,30 +208,10 @@
     mon_street: {
       day: "Monday",
       image: "village-art/street-together.jpg?v=20261006n",
-      picture: function () {
-        var folk = trFolkNow();
-        if (folk) return trFolkUrl(folk);
-        folk = esMxFolkNow();
-        if (folk) return esMxFolkUrl(folk);
-        if (langPack().id === "tr") return artUrl("street");
-        return "";
-      },
-      alt: function () {
-        var folk = trFolkNow() || esMxFolkNow();
-        return folk ? folk.alt : look().streetAlt;
-      },
-      paragraphs: function () {
-        var folk = trFolkNow() || esMxFolkNow();
-        return folk ? [folk.line] : look().street;
-      },
+      alt: function () { return look().streetAlt; },
+      paragraphs: function () { return look().street; },
       choices: function () {
         var list = [];
-        if (langPack().id === "tr") {
-          list.push({ label: "Look further along the street.", next: "mon_street", trStep: true });
-        }
-        if (langPack().id === "es") {
-          list.push({ label: "Look further along the street.", next: "mon_street", esMxStep: true });
-        }
         if (!alreadySaid("ch_hi_scarf")) list.push({ say: "ch_hi_scarf", next: "scarf_hi" });
         list.push({ label: "Back to {elder}.", next: "mon_return" });
         return list;
@@ -558,57 +412,15 @@
       paragraphs: function () { return look().shore; },
       choices: [
         { label: "Go to the garden.", next: "tue_meet" },
-        { say: "ch_hi_mer", next: "mer_hi" },
         { say: "ch_hi_fish", next: "fish_hi" },
         { label: "Back to {elder}.", next: "tue_return" }
-      ]
-    },
-    mer_hi: {
-      day: "Tuesday",
-      image: "village-art/shore-calm.jpg?v=20261006n",
-      alt: function () { return rockName() + " turns to you, a small net in hand."; },
-      paragraphs: function () { return [rockName() + " rests the net on the rock and makes space beside you."]; },
-      speaker: rockSays,
-      say: "mer_here",
-      choices: [
-        { say: "ask_waters", next: "mer_there" },
-        { say: "ask_net", next: "mer_net" },
-        { say: "bye", next: "tue_shore" }
-      ]
-    },
-    mer_there: {
-      day: "Tuesday",
-      image: "village-art/shore-calm.jpg?v=20261006n",
-      alt: function () { return rockName() + " looks out toward a far shore."; },
-      paragraphs: function () { return [rockName() + " nods at the far water, not at the cove under your feet."]; },
-      speaker: rockSays,
-      say: "mer_there",
-      face: "heavy",
-      learn: "tue-cove",
-      mark: "shore",
-      choices: [
-        { say: "bye", next: "tue_shore" }
-      ]
-    },
-    mer_net: {
-      day: "Tuesday",
-      image: "village-art/shore-calm.jpg?v=20261006n",
-      alt: "Small nets rest on the rocks beside clear water.",
-      paragraphs: function () { return [rockName() + " lifts the net so you can see how small it is."]; },
-      speaker: rockSays,
-      say: "mer_net",
-      face: "net",
-      learn: "tue-net",
-      mark: "shore",
-      choices: [
-        { say: "bye", next: "tue_shore" }
       ]
     },
     fish_hi: {
       day: "Tuesday",
       image: "village-art/shore-calm.jpg?v=20261006n",
       alt: function () { return fisherName() + " stands with the others."; },
-      paragraphs: function () { return [fisherName() + " has been talking with " + rockName() + " already. He includes you without a fuss."]; },
+      paragraphs: function () { return [fisherName() + " has been talking with the others already. He includes you without a fuss."]; },
       speaker: fisherSays,
       say: "fish_here",
       choices: [
@@ -864,17 +676,6 @@
       face: "bye",
       choices: [{ label: "Step back to the street.", next: "mon_street" }]
     },
-    mer_bye: {
-      day: "Tuesday",
-      image: "village-art/shore-calm.jpg?v=20261006n",
-      alt: function () { return rockName() + " answers the goodbye."; },
-      paragraphs: [],
-      speaker: rockSays,
-      say: "bye_back",
-      after: ["You leave the rocks."],
-      face: "bye",
-      choices: [{ label: "Step back from the rocks.", next: "tue_shore" }]
-    },
     fish_bye: {
       day: "Tuesday",
       image: "village-art/shore-calm.jpg?v=20261006n",
@@ -944,8 +745,6 @@
     "mon-letter": function () { return manName() + " stays with " + womanName() + " on this street, and they are not here."; },
     "tue-flowers": function () { return womanName() + " tends red tsubaki here. In Kirioka they grow them by the gate, and they open in the cold even when the walk is empty."; },
     "tue-office": function () { return "At home " + womanName() + " does not leave the office until the last train. She only meets the flowers by the porch lamp, and some nights that lamp is already out."; },
-    "tue-cove": function () { return rockName() + " is at this water, and the water is bad there."; },
-    "tue-net": function () { return "The net in " + rockName() + "'s hands is small."; },
     "tue-fish": function () { return fisherName() + " is fishing here with the others, and there they do not fish."; },
     "wed-lucia": function () { return "The cart is here and " + womanName() + "’s brother is not on it. The fire is in the streets of Jarales. A line sparked over the mill pines and came down into the houses. Her parents are still in theirs. The ridge road is shut."; },
     "wed-door": "His door is open, and there the door is shut.",
@@ -966,8 +765,6 @@
     "mon-letter": "The street",
     "tue-flowers": "The garden",
     "tue-office": "The garden",
-    "tue-cove": "The shore",
-    "tue-net": "The shore",
     "tue-fish": "The shore",
     "wed-lucia": "The lane",
     "wed-door": "The shop",
@@ -982,7 +779,9 @@
   }
 
   function learned(day) {
-    return (state.notes && state.notes[day]) || [];
+    return ((state.notes && state.notes[day]) || []).filter(function (id) {
+      return id !== "tue-cove" && id !== "tue-net";
+    });
   }
 
   function addLearn(id) {
@@ -1204,7 +1003,7 @@
     if (state.gender !== "boy" && state.gender !== "girl") state.gender = readCookieGender();
     if (!state.lesson || typeof state.lesson.day !== "number") state.lesson = { day: 0, step: 0 };
     var keepScene = {
-      intro_train_1: 1, intro_train_2: 1, intro_train_3: 1, intro_train_4: 1, intro_train_5: 1,
+      intro_train_1: 1, intro_train_5: 1,
       mon_home: 1, lessons: 1
     };
     if (state.scene && !keepScene[state.scene]) state.scene = "lessons";
@@ -2156,7 +1955,6 @@
     if (scene && scene.shot) return scene.shot;
     if (id.indexOf("scarf_") === 0) return "scarf";
     if (id.indexOf("friend_") === 0) return "friend";
-    if (id.indexOf("mer_") === 0) return "mer";
     if (id.indexOf("fish_") === 0) return "fish";
     if (id.indexOf("shop_") === 0) return "shopkeep";
     if (id.indexOf("pair_") === 0) return "pair";
@@ -2165,7 +1963,11 @@
   }
 
   function artUrl(name) {
-    return "village-art/" + (langPack().id || "es") + "/" + name + ".jpg?v=20261008g";
+    var id = langPack().id || "es";
+    var file = name;
+    if (file === "street" && id !== "ga") file = "scarf";
+    if (file === "shore" && id === "ga") file = "fish";
+    return "village-art/" + id + "/" + file + ".jpg?v=20261016i";
   }
 
   function womanPicture(name) {
@@ -2414,23 +2216,10 @@
         if (choice.listenLetter) speakMother(LETTER);
         return;
       }
-      if (choice.trStep) {
-        var n = trFolkIndex();
-        n += 1;
-        if (n > TR_FOLK.length) n = 0;
-        state.flags.trLook = n;
-      }
-      if (choice.esMxStep) {
-        var mx = esMxFolkIndex();
-        mx += 1;
-        if (mx > ES_MX_FOLK.length) mx = 0;
-        state.flags.esMxLook = mx;
-      }
       if (choice.say === "bye") {
         var byeId = choice.next;
         if (state.scene.indexOf("scarf_") === 0) byeId = "scarf_bye";
         else if (state.scene.indexOf("friend_") === 0) byeId = "friend_bye";
-        else if (state.scene.indexOf("mer_") === 0) byeId = "mer_bye";
         else if (state.scene.indexOf("fish_") === 0) byeId = "fish_bye";
         else if (state.scene.indexOf("shop_") === 0) byeId = "shop_bye";
         else if (state.scene.indexOf("pair_") === 0) byeId = "pair_bye";
@@ -2491,7 +2280,7 @@
         if (row.lesson && typeof row.lesson.day === "number") state.lesson = row.lesson;
         if (row.scene && row.scene !== "lessons" && !scenes[row.scene]) state.scene = "lessons";
         var keepScene = {
-          intro_train_1: 1, intro_train_2: 1, intro_train_3: 1, intro_train_4: 1, intro_train_5: 1,
+          intro_train_1: 1, intro_train_5: 1,
           mon_home: 1, lessons: 1
         };
         if (state.scene && !keepScene[state.scene]) state.scene = "lessons";

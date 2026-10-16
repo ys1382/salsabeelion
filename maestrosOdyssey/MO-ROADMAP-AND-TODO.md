@@ -5,6 +5,7 @@
 **Live site today:** basic café mechanics (`www/`) — still messy. **Do not deploy** for tasks below until owner approves per task after local smoke test.
 
 **Plot tone:** `docs/DRAGONS-BREW-PRE-TRAIN.md` — **week-one direction revised in “Your additions” below** (mellow room; detective later). Full plot-doc rewrite when owner asks.  
+**Plot inspiration (not canon):** `docs/PLOT-INSPIRATION.md` — owner filing what the story could become.  
 **Capabilities:** `ODDTROVE-CAPABILITIES.md`
 
 ---
@@ -325,7 +326,13 @@ Demo ending = arrive at the train station (#24). **Pegasus, griffin, and other v
 - [ ] **Player-frame language + Mara tail** — UI/chat in the language you already speak; Irish / Japanese / Turkish locked until the train. Mara tail overlay still later.
 - [ ] **Revise `DRAGONS-BREW-PRE-TRAIN.md`** when owner asks — old week-one detective/sea table → later-arc section; align with #13–19. Pegasus, griffin, and other very detailed creatures are **post-upgrade**, not week-one placeholders.
 
-### Elder as ambassador — why you are here (owner — pinned 2026-09-22, premise 2026-10-06)
+### Why you are here — live the language (owner — 2026-10-12)
+
+- [ ] Your parents sent you so you would learn the language by living it, not at a school desk. The elder matches your gender. She or he is fond of your family and used to be good friends with your grandparent of that same gender. No ambassador training. This basic version does not add cultural practices past that. On the village page the girl elder is **Elvora** and the boy elder is **Harlan** until you rename him. The older neighbor-week stories are still on the walk; they are not the point of this version.
+- [x] **Front door says this (2026-10-12)** — gender first, then the mother’s letter and the gate. The old train windows (plaza, harbor, high wall) stay in the file and are off the new path.
+- [x] **Three typed lessons (2026-10-12)** — two days each. Lesson 1 greetings with the underline. Lesson 2 like / don’t like, underline stays. Lesson 3 no hover and no English under the words. New words in every lesson. Replies are typed. Spanish and Turkish: hold a key for the other letter shape. Japanese: tap the letters, with the roman key underneath. Sunday is the train, then the same week in the next language.
+
+### Parked — elder as ambassador (owner — pinned 2026-09-22, premise 2026-10-06)
 
 - [ ] Humans and sentient fantasy peoples share ordinary life in peace, with tension left over from old wars. The peace is real, and people still have to keep it. You are in this village because you already live here, next to the elder. The world was already going on around you. She is the human who keeps good terms with the other peoples in this county. She cannot travel the way she used to, so she is training you to take up that work. That work is the next generation of the same job: keeping terms where old harm still has a shadow. Human stories still glorify violence against dragons. Relations with merfolk are tight. Prejudice against vampires can still land on bystanders.
 - [x] **Short village page (2026-10-06)** — text and pictures. A few days beside the elder: the split street, the shore, the shop porch, then arrive at the train station and stop. No picking things up. Dragons and the café are not in this page. This is the front door (`www/index.html`, also `www/village.html`). The old build is at `www/cafe.html`. The next part continues from the platform.
