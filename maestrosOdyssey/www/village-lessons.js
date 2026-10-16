@@ -807,16 +807,17 @@
     var plain = plainFold(name);
     if (plain && folded.indexOf(plain) !== -1 && (folded.indexOf("llamo") !== -1 || folded.indexOf("adim") !== -1 || folded.indexOf("です") !== -1)) {
       rememberName(person, day, step);
+      return;
     }
   }
 
   function rememberPlayerName(text) {
-    if (!namesThemself(text)) return;
     var lesson = progress();
     var s = plainFold(text);
-    var m = s.match(/\b(?:me llamo|mi nombre es|my name is|i am called|im called|call me|llamo is|ismim|benim adim|adim)\s+([a-z][a-z '-]{0,28})/);
+    if (!/\b(?:me llamo|mi llamo|mi nombre|my name is|i am called|im called|call me|llamo is|ismim|benim adim|adim)\b/.test(s)) return;
+    var m = s.match(/\b(?:me llamo|mi llamo es|mi llamo|mi nombre es|my name is|i am called|im called|call me|llamo is|ismim|benim adim|adim)\s+([a-z][a-z '-]{0,40})/);
     if (!m || !m[1]) return;
-    var name = m[1].replace(/\s+/g, " ").trim();
+    var name = m[1].replace(/\s+(?:cual|como|what|who|y|and|tu|su|your)\b.*$/, "").replace(/\s+/g, " ").trim();
     if (!name) return;
     lesson.playerName = name.charAt(0).toUpperCase() + name.slice(1);
   }
@@ -928,9 +929,8 @@
   }
 
   function askingName(said, moodOverride) {
-    if (namesThemself(said)) return false;
-    if (asksTheirName(said)) return true;
     if (moodOverride === "name") return true;
+    if (theyAskName(said)) return true;
     if (!moodOverride && meaning(pack().id, said) === "name") return true;
     var lang = pack().id;
     var s = foldClose(lang, said);
@@ -1249,9 +1249,12 @@
       speakBtn.disabled = true;
       showNote("One moment.");
       var person = day.cast || "neighbor";
+      var castRow = CAST[person] || CAST.neighbor;
       var known = castMet(lesson, person);
       var last = latestAside();
       var playerName = lesson.playerName || "";
+      var canonName = castName(person, lang);
+      var castGender = castRow.gender || "";
       var controller = typeof AbortController === "function" ? new AbortController() : null;
       var timer = setTimeout(function () {
         if (controller) controller.abort();
@@ -1265,7 +1268,9 @@
           npc: last ? last.say : (lineData.say || ""),
           place: placeText(day),
           who: ((CAST[person] || CAST.neighbor).role || "A neighbor").replace(/ says$/, ""),
-          name: known ? castName(person, lang) : "",
+          name: known ? canonName : "",
+          canonName: canonName,
+          castGender: castGender,
           gloss: last ? (last.en || "") : (lineData.words || []).map(function (pair) { return pair[1] || ""; }).filter(Boolean).join(" "),
           moods: last ? [] : allowedList(),
           hold: !!last || !!polar,
