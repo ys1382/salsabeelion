@@ -1,6 +1,8 @@
 /* Three typed lessons. Hover stays for lessons 1 and 2. Lesson 3 has no gloss.
    A corner phrasebook lists pieces, not the whole reply. Look, then type or speak.
-   No line tells them what to say. Any phrase they know can move the talk.
+   No line tells them what to say. A phrase they know moves the talk.
+   Anything else, short of vulgarity or swearing, gets a real reply and the
+   lesson stays. A clear answer in other words still moves the day.
    A missing accent still counts. What they said changes the next line.
    Each person has a name. The label stays "a neighbor" until you ask it.
    After that, later lines use the name. Spanish and Turkish: hold a key
@@ -440,6 +442,7 @@
     if (day && lesson.step >= day.beats.length) lesson.step = day.beats.length - 1;
     if (!lesson.replies) lesson.replies = [];
     if (!lesson.moods) lesson.moods = [];
+    if (!lesson.asides) lesson.asides = [];
     return lesson;
   }
 
@@ -453,6 +456,37 @@
     s = s.replace(/[¿?¡!.,]/g, " ").replace(/\s+/g, " ").trim();
     if (lang === "tr") return s.replace(/İ/g, "i").replace(/I/g, "ı").toLocaleLowerCase("tr-TR");
     return s.toLowerCase();
+  }
+
+  var RUDE_EXACT = {
+    fuck: 1, fucking: 1, fucked: 1, fucker: 1, fuk: 1, fck: 1, shit: 1, shitting: 1, bullshit: 1,
+    bitch: 1, bastard: 1, asshole: 1, ass: 1, dick: 1, cock: 1, pussy: 1, cunt: 1, slut: 1, whore: 1,
+    damn: 1, dammit: 1, crap: 1, nigger: 1, nigga: 1, faggot: 1, fag: 1, retard: 1, retarded: 1,
+    mierda: 1, joder: 1, jodido: 1, jodida: 1, jodete: 1, cono: 1, puta: 1, puto: 1, putos: 1, putas: 1,
+    cabron: 1, cabrones: 1, gilipollas: 1, maricon: 1, marica: 1, hijueputa: 1, chingar: 1, chingada: 1,
+    chingado: 1, verga: 1, pendejo: 1, pendeja: 1, culero: 1, culera: 1, pinche: 1, hostia: 1, carajo: 1,
+    follar: 1, capullo: 1,
+    siktir: 1, sikerim: 1, sikeyim: 1, sikik: 1, amk: 1, aq: 1, orospu: 1, pic: 1,
+    yarrak: 1, yarak: 1, tasak: 1, gavat: 1, kahpe: 1
+  };
+  var RUDE_PREFIX = ["fuck", "shit", "bitch", "cunt", "nigg", "faggot", "mierd", "joder", "pendej", "ching", "cabron", "gilipoll", "hijuep", "siktir", "siker", "sikey", "orospu", "yarrak"];
+
+  function villageRude(text) {
+    var raw = String(text || "");
+    if (/くそ|クソ|糞|ちくしょう|くたばれ|ファック|ビッチ|しね/.test(raw)) return true;
+    var s = raw.toLowerCase().replace(/ı/g, "i").replace(/İ/g, "i");
+    try { s = s.normalize("NFD").replace(/[\u0300-\u036f]/g, ""); } catch (err) {}
+    s = s.replace(/@/g, "a").replace(/0/g, "o").replace(/1/g, "i").replace(/3/g, "e").replace(/5/g, "s").replace(/\$/g, "s");
+    var tokens = s.match(/[a-z]+/g) || [];
+    var i;
+    var n;
+    for (i = 0; i < tokens.length; i++) {
+      if (RUDE_EXACT[tokens[i]]) return true;
+      for (n = 0; n < RUDE_PREFIX.length; n++) {
+        if (tokens[i].indexOf(RUDE_PREFIX[n]) === 0) return true;
+      }
+    }
+    return false;
   }
 
   function foldClose(lang, text) {
@@ -653,6 +687,37 @@
     return "";
   }
 
+  function plainFold(text) {
+    var s = String(text || "").toLowerCase().replace(/ı/g, "i");
+    try { s = s.normalize("NFD").replace(/[\u0300-\u036f]/g, ""); } catch (err) {}
+    return s.replace(/[^a-z0-9]+/g, " ").trim();
+  }
+
+  function namesThemself(text) {
+    var s = plainFold(text);
+    return /\b(me llamo|mi llamo|llamo is|my name is|i am called|im called|call me|ismim|benim adim)\b/.test(s);
+  }
+
+  function asksTheirName(text) {
+    if (namesThemself(text)) return false;
+    var raw = String(text || "");
+    if (raw.indexOf("なまえ") !== -1 || raw.indexOf("名前") !== -1) return true;
+    var s = plainFold(text);
+    return /\b(te llamas|tu nombre|su nombre|your name|what is your name|whats your name|adin ne|ismin ne)\b/.test(s);
+  }
+
+  function allowedMoods(lineData, lang) {
+    var allowed = {};
+    var list = (lineData && lineData.accept) || [];
+    var i;
+    var mood;
+    for (i = 0; i < list.length; i++) {
+      mood = meaning(lang, list[i]);
+      if (mood) allowed[mood] = true;
+    }
+    return allowed;
+  }
+
   function castName(person, lang) {
     var who = CAST[person] || CAST.neighbor;
     return who[lang] || who.es;
@@ -775,11 +840,12 @@
     lesson.step = 0;
     lesson.replies = [];
     lesson.moods = [];
+    lesson.asides = [];
     lesson.dayMood = lesson.carryMood || "";
     if (lesson.day >= DAYS.length) lesson.day = DAYS.length - 1;
   }
 
-  function advance(said) {
+  function advance(said, moodOverride) {
     var lesson = progress();
     var day = DAYS[lesson.day];
     var lang = pack().id;
@@ -794,7 +860,7 @@
     if (!lesson.replies) lesson.replies = [];
     if (!lesson.moods) lesson.moods = [];
     lesson.replies[lesson.step] = said;
-    var mood = meaning(lang, said);
+    var mood = moodOverride || meaning(lang, said);
     lesson.moods[lesson.step] = mood;
     if (mood === "like" || mood === "not") lesson.carryMood = mood;
     var next = lesson.step + 1;
@@ -905,6 +971,37 @@
       row.appendChild(said);
       page.proseEl.appendChild(row);
     }
+    function addFree(row, step) {
+      if (!row || !row.say) return;
+      addYou(row.you);
+      addSpeaker(speakerText(day, step, false));
+      var speech = document.createElement("p");
+      speech.className = "speech";
+      speech.lang = voicePack.voice || "";
+      var face = document.createElement("span");
+      face.className = "aside-say";
+      face.textContent = row.say;
+      speech.appendChild(face);
+      var hear = document.createElement("span");
+      hear.className = "hear";
+      hear.tabIndex = 0;
+      hear.setAttribute("role", "button");
+      hear.textContent = "Hear";
+      hear.addEventListener("click", function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        speak(row.say);
+      });
+      speech.appendChild(document.createTextNode(" "));
+      speech.appendChild(hear);
+      page.proseEl.appendChild(speech);
+      if (row.en) {
+        var en = document.createElement("p");
+        en.className = "aside-en";
+        en.textContent = row.en;
+        page.proseEl.appendChild(en);
+      }
+    }
     var i;
     var lineData;
     var through = lesson.nameHold ? lesson.step + 1 : lesson.step;
@@ -918,6 +1015,9 @@
       addLead(leadFor(past, pastMood, i));
       addSpeaker(speakerText(day, i, false));
       addSpeech(pastLine, false);
+      (lesson.asides || []).forEach(function (row) {
+        if (row && row.step === i && i < lesson.step) addFree(row, i);
+      });
       addYou((lesson.replies && lesson.replies[i]) || (pastLine.accept && pastLine.accept[0]) || "");
     }
     if (beat.walk && !lesson.nameHold) {
@@ -942,6 +1042,9 @@
       addSpeaker(speakerText(day, lesson.step, false));
       addSpeech(lineData, true);
     }
+    (lesson.asides || []).forEach(function (row) {
+      if (row && row.step === lesson.step) addFree(row, lesson.step);
+    });
 
     var form = document.createElement("form");
     form.className = "reply";
@@ -962,10 +1065,6 @@
     form.appendChild(holdPop);
 
     if (lang === "ja") {
-      input.addEventListener("keydown", function (event) {
-        if (event.key === "Backspace" || event.key === "Enter") return;
-        if (event.key.length === 1) event.preventDefault();
-      });
       var board = document.createElement("div");
       board.className = "kana-board";
       kanaNeeded(lesson.day, lesson.step).forEach(function (ch) {
@@ -1009,9 +1108,107 @@
     actions.appendChild(speakBtn);
     actions.appendChild(submit);
     form.appendChild(actions);
+    var pending = false;
     function showNote(text) {
       note.hidden = !text;
       note.textContent = text || "";
+    }
+    function replyUrl() {
+      var path = window.location.pathname || "/";
+      return path.replace(/[^/]*$/, "") + "api/village-reply";
+    }
+    function allowedList() {
+      var allowed = allowedMoods(lineData, lang);
+      return Object.keys(allowed);
+    }
+    function earlierTalk() {
+      return (lesson.asides || []).filter(function (row) {
+        return row && row.step === lesson.step && row.say;
+      }).slice(-3).map(function (row) {
+        return "Player: " + (row.you || "") + "\n" + (row.say || "");
+      }).join("\n");
+    }
+    function takeFree(said) {
+      var text = String(said || "").replace(/\s+/g, " ").trim();
+      if (!text || pending) return;
+      if (villageRude(text)) {
+        showNote("Let's keep it kind.");
+        return;
+      }
+      if (grade(lang, text, lineData.accept).ok) {
+        advance(text);
+        return;
+      }
+      if (asksTheirName(text) && day.cast) {
+        advance(text, "name");
+        return;
+      }
+      pending = true;
+      submit.disabled = true;
+      speakBtn.disabled = true;
+      showNote("One moment.");
+      var person = day.cast || "neighbor";
+      var known = nameKnown(lesson, person, lesson.day, lesson.step);
+      var controller = typeof AbortController === "function" ? new AbortController() : null;
+      var timer = setTimeout(function () {
+        if (controller) controller.abort();
+      }, 25000);
+      fetch(replyUrl(), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          lang: lang,
+          player: text,
+          npc: lineData.say || "",
+          place: placeText(day),
+          who: ((CAST[person] || CAST.neighbor).role || "A neighbor").replace(/ says$/, ""),
+          name: known ? castName(person, lang) : "",
+          gloss: (lineData.words || []).map(function (pair) { return pair[1] || ""; }).filter(Boolean).join(" "),
+          moods: allowedList(),
+          earlier: earlierTalk()
+        }),
+        signal: controller ? controller.signal : undefined
+      }).then(function (response) {
+        return response.json().then(function (data) {
+          return data || {};
+        });
+      }).then(function (data) {
+        clearTimeout(timer);
+        if (data.refused) {
+          pending = false;
+          submit.disabled = false;
+          speakBtn.disabled = false;
+          showNote("Let's keep it kind.");
+          input.focus();
+          return;
+        }
+        var allowed = allowedMoods(lineData, lang);
+        if (data.kind === "answer" && data.mood && allowed[data.mood] && !namesThemself(text)) {
+          advance(text, data.mood);
+          return;
+        }
+        if (data.say && !data.error) {
+          if (!lesson.asides) lesson.asides = [];
+          var kept = lesson.asides.filter(function (row) { return row.step === lesson.step; });
+          if (kept.length >= 8) lesson.asides = lesson.asides.filter(function (row) { return row.step !== lesson.step; }).concat(kept.slice(-7));
+          lesson.asides.push({ step: lesson.step, you: text, say: data.say, en: data.en || "" });
+          api().writeSave();
+          render();
+          return;
+        }
+        pending = false;
+        submit.disabled = false;
+        speakBtn.disabled = false;
+        showNote("They didn't catch that. Try again in a moment.");
+        input.focus();
+      }).catch(function () {
+        clearTimeout(timer);
+        pending = false;
+        submit.disabled = false;
+        speakBtn.disabled = false;
+        showNote("They didn't catch that. Try again in a moment.");
+        input.focus();
+      });
     }
     function spokenHit(sample) {
       var n;
@@ -1041,6 +1238,17 @@
           advance(said);
           return;
         }
+        var heard = "";
+        var texts = (result && result.texts) || [];
+        var n;
+        for (n = 0; n < texts.length; n++) {
+          if (String(texts[n] || "").trim().length > heard.length) heard = String(texts[n] || "").trim();
+        }
+        if (!heard && result && result.heard) heard = String(result.heard).trim();
+        if (heard) {
+          takeFree(heard);
+          return;
+        }
         showNote(spokenMiss(day, grade(lang, result && result.heard, lineData.accept)));
       }).catch(function (err) {
         var code = err && err.message;
@@ -1064,14 +1272,20 @@
         advance(input.value.trim());
         return;
       }
-      showNote(missText(day, result));
+      if (result.empty) {
+        showNote(missText(day, result));
+        return;
+      }
       if (result.letter) {
+        showNote(missText(day, result));
         showHoldChoices(holdPop, result.letter.options, function (ch) {
           insertCaret(input, ch);
           holdPop.hidden = true;
           input.focus();
         });
+        return;
       }
+      takeFree(input.value);
     });
     page.choicesEl.appendChild(form);
     input.focus();

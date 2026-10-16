@@ -294,6 +294,18 @@ body.train-window.train-rain .train-glass {
 
 .you-said {
   font-family: Georgia, Palatino, serif;
+  white-space: pre-wrap;
+}
+
+.aside-say {
+  white-space: pre-wrap;
+}
+
+.aside-en {
+  margin: 0.2rem 0 0.55rem 1.15rem;
+  font-family: "Segoe UI", system-ui, sans-serif;
+  font-size: 0.92rem;
+  color: #5c5146;
 }
 
 .talk-lead {
