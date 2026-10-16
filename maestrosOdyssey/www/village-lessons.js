@@ -703,7 +703,50 @@
     var raw = String(text || "");
     if (raw.indexOf("なまえ") !== -1 || raw.indexOf("名前") !== -1) return true;
     var s = plainFold(text);
-    return /\b(te llamas|tu nombre|su nombre|your name|what is your name|whats your name|adin ne|ismin ne)\b/.test(s);
+    return /\b(te llamas|tu nombre|su nombre|your name|what is your name|whats your name|who are you|quien eres|kimsin|adin ne|ismin ne)\b/.test(s);
+  }
+
+  function barePolarity(text) {
+    var raw = String(text || "").trim();
+    if (raw === "はい" || raw === "うん") return "yes";
+    if (raw === "いいえ" || raw === "いや") return "no";
+    var s = plainFold(text);
+    if (/^(si|yes|yeah|yep|yup|ok|okay|sure|claro|vale|evet|tamam)$/.test(s)) return "yes";
+    if (/^(no|nope|nah|hayir)$/.test(s)) return "no";
+    return "";
+  }
+
+  function latestAside() {
+    var lesson = progress();
+    var rows = lesson.asides || [];
+    var i;
+    var found = null;
+    for (i = 0; i < rows.length; i++) {
+      if (rows[i] && rows[i].step === lesson.step && rows[i].say) found = rows[i];
+    }
+    return found;
+  }
+
+  function pushAside(you, say, en) {
+    var lesson = progress();
+    if (!lesson.asides) lesson.asides = [];
+    var kept = lesson.asides.filter(function (row) { return row.step === lesson.step; });
+    if (kept.length >= 8) {
+      lesson.asides = lesson.asides.filter(function (row) { return row.step !== lesson.step; }).concat(kept.slice(-7));
+    }
+    lesson.asides.push({ step: lesson.step, you: you, say: say, en: en || "" });
+    api().writeSave();
+    render();
+  }
+
+  function tellName(you) {
+    var lesson = progress();
+    var day = DAYS[lesson.day];
+    var lang = pack().id;
+    if (!day || !day.cast) return;
+    rememberName(day.cast, lesson.day, lesson.step);
+    var intro = nameIntro(day.cast, lang, [], true);
+    pushAside(you, intro.say, "My name is " + castName(day.cast, lang) + ".");
   }
 
   function allowedMoods(lineData, lang) {
@@ -1135,12 +1178,24 @@
         showNote("Let's keep it kind.");
         return;
       }
-      if (grade(lang, text, lineData.accept).ok) {
-        advance(text);
+      if (lesson.nameHold) lesson.nameHold = false;
+      if (asksTheirName(text) && day.cast) {
+        tellName(text);
         return;
       }
-      if (asksTheirName(text) && day.cast) {
-        advance(text, "name");
+      var aside = latestAside();
+      var polar = barePolarity(text);
+      var allowedNow = allowedMoods(lineData, lang);
+      if (!aside && polar === "yes" && allowedNow.like) {
+        advance(text, "like");
+        return;
+      }
+      if (!aside && polar === "no" && allowedNow.not) {
+        advance(text, "not");
+        return;
+      }
+      if (!aside && !polar && grade(lang, text, lineData.accept).ok) {
+        advance(text);
         return;
       }
       pending = true;
@@ -1149,6 +1204,7 @@
       showNote("One moment.");
       var person = day.cast || "neighbor";
       var known = nameKnown(lesson, person, lesson.day, lesson.step);
+      var last = latestAside();
       var controller = typeof AbortController === "function" ? new AbortController() : null;
       var timer = setTimeout(function () {
         if (controller) controller.abort();
@@ -1159,12 +1215,13 @@
         body: JSON.stringify({
           lang: lang,
           player: text,
-          npc: lineData.say || "",
+          npc: last ? last.say : (lineData.say || ""),
           place: placeText(day),
           who: ((CAST[person] || CAST.neighbor).role || "A neighbor").replace(/ says$/, ""),
           name: known ? castName(person, lang) : "",
-          gloss: (lineData.words || []).map(function (pair) { return pair[1] || ""; }).filter(Boolean).join(" "),
-          moods: allowedList(),
+          gloss: last ? (last.en || "") : (lineData.words || []).map(function (pair) { return pair[1] || ""; }).filter(Boolean).join(" "),
+          moods: last ? [] : allowedList(),
+          hold: !!last || !!polar,
           earlier: earlierTalk()
         }),
         signal: controller ? controller.signal : undefined
@@ -1183,17 +1240,12 @@
           return;
         }
         var allowed = allowedMoods(lineData, lang);
-        if (data.kind === "answer" && data.mood && allowed[data.mood] && !namesThemself(text)) {
+        if (!latestAside() && !barePolarity(text) && data.kind === "answer" && data.mood && allowed[data.mood] && !namesThemself(text) && !asksTheirName(text)) {
           advance(text, data.mood);
           return;
         }
         if (data.say && !data.error) {
-          if (!lesson.asides) lesson.asides = [];
-          var kept = lesson.asides.filter(function (row) { return row.step === lesson.step; });
-          if (kept.length >= 8) lesson.asides = lesson.asides.filter(function (row) { return row.step !== lesson.step; }).concat(kept.slice(-7));
-          lesson.asides.push({ step: lesson.step, you: text, say: data.say, en: data.en || "" });
-          api().writeSave();
-          render();
+          pushAside(text, data.say, data.en || "");
           return;
         }
         pending = false;

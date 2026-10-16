@@ -329,6 +329,7 @@ def handle_village_reply(body: dict) -> dict:
     named = f" named {name}" if name else ""
     mood_list = ", ".join(allowed) if allowed else "none"
     told_name = names_themself(player)
+    hold = bool(body.get("hold"))
     system = (
         "You write one spoken reply for a person in Maestro's Odyssey, a family-friendly language game. "
         "All ages. No swearing, no crude words, no slurs, no romance, no flirting, no gossip, no alcohol. "
@@ -346,21 +347,27 @@ def handle_village_reply(body: dict) -> dict:
         f"Earlier in this talk:\n{earlier or '(nothing else)'}\n\n"
         "Set kind to \"answer\" only when the reply is basically just the answer to YOUR line, and nothing extra. "
         f"Then set mood to one of: {mood_list}.\n"
-        "A plain yes, a greeting back, goodbye, thanks, or how they are can be an answer. "
-        "Liking the thing you asked about can be an answer.\n"
-        "Set kind to \"aside\" and mood to \"\" when they add anything else: their name, another place, a story, or a new question. "
+        "Liking the thing you asked about can be an answer. A greeting back, goodbye, thanks, or how they are can be an answer when that is what you asked.\n"
+        "Yes or no answers the line you just said. Do not treat a plain yes as good morning, as being well, or as liking something unless your own last line asked about liking it.\n"
+        "Set kind to \"aside\" and mood to \"\" when they add anything else: their name, another place, a story, a new question, or a yes to a question you asked off to the side. "
         "\"Yes, my name is Elham\" is an aside. Greet them by that name. Do not treat it as only good morning.\n"
+        "If they ask your name again, tell them your name again.\n"
         + (
             "HARD RULE: they just told you their name. kind must be \"aside\". mood must be \"\". "
             "Greet them by the name they used.\n"
             if told_name else ""
+        )
+        + (
+            "HARD RULE: this reply continues the side talk. kind must be \"aside\". mood must be \"\". "
+            "Answer what they just said, including a plain yes or no.\n"
+            if hold else ""
         )
         + f"say is always required: one or two short simple sentences in {language}, about what they actually said.\n"
         "en: the same reply in simple English."
     )
     try:
         text = claude(system, user, max_tokens=220)
-        return parse_village_reply(text, allowed, force_aside=told_name)
+        return parse_village_reply(text, allowed, force_aside=told_name or hold)
     except Exception as exc:
         print(f"  village reply failed: {exc}")
         return {"error": "reply failed"}
