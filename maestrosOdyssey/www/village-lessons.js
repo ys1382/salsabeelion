@@ -2,8 +2,10 @@
    A corner phrasebook lists pieces, not the whole reply. Look, then type or speak.
    No line tells them what to say. Any phrase they know can move the talk.
    A missing accent still counts. What they said changes the next line.
-   Spanish and Turkish: hold a key for the other letter shape.
-   Japanese: tap kana. A long-press cannot write those letters. */
+   Each person has a name. The label stays "a neighbor" until you ask it.
+   After that, later lines use the name. Spanish and Turkish: hold a key
+   for the other letter shape. Japanese: tap kana. A long-press cannot
+   write those letters. */
 (function () {
   function line(say, words, ask, accept, answer) {
     var row = { say: say, words: words, ask: ask, accept: accept };
@@ -11,10 +13,17 @@
     return row;
   }
 
+  var CAST = {
+    neighbor: { role: "A neighbor says", es: "Rosa", ja: "Hana", kana: "はな", tr: "Elif" },
+    shop: { role: "The shopkeeper says", es: "Ana", ja: "Aoi", kana: "あおい", tr: "Ayşe" },
+    traveler: { role: "A traveler says", es: "Miguel", ja: "Kenji", kana: "けんじ", tr: "Yusuf" }
+  };
+
   var DAYS = [
     {
-      name: "Monday", where: "The street", shot: "street", lesson: 1, hover: true,
+      name: "Monday", where: "The street", shot: "street", lesson: 1, hover: true, cast: "neighbor",
       place: "A neighbor meets you on the street.",
+      placeNamed: "{name} meets you on the street.",
       hint: true,
       beats: [
         {
@@ -53,8 +62,9 @@
       ]
     },
     {
-      name: "Tuesday", where: "The shore", shot: "shore", lesson: 1, hover: true,
+      name: "Tuesday", where: "The shore", shot: "shore", lesson: 1, hover: true, cast: "neighbor",
       place: "The same neighbor is down by the water.",
+      placeNamed: "{name} is down by the water.",
       beats: [
         {
           who: "A neighbor says",
@@ -103,7 +113,7 @@
       ]
     },
     {
-      name: "Wednesday", where: "The shop", shot: "shop", lesson: 2, hover: true,
+      name: "Wednesday", where: "The shop", shot: "shop", lesson: 2, hover: true, cast: "shop",
       place: "Bread is on the counter.",
       beats: [
         {
@@ -154,7 +164,7 @@
       ]
     },
     {
-      name: "Thursday", where: "The shop", shot: "shop", lesson: 2, hover: true,
+      name: "Thursday", where: "The shop", shot: "shop", lesson: 2, hover: true, cast: "shop",
       place: "Tea is on the counter.",
       beats: [
         {
@@ -192,7 +202,7 @@
       ]
     },
     {
-      name: "Friday", where: "The street", shot: "street", lesson: 3, hover: false,
+      name: "Friday", where: "The street", shot: "street", lesson: 3, hover: false, cast: "neighbor",
       place: "The sun is out. No word shows its English now.",
       beats: [
         {
@@ -226,7 +236,7 @@
       ]
     },
     {
-      name: "Saturday", where: "The shop", shot: "shop", lesson: 3, hover: false,
+      name: "Saturday", where: "The shop", shot: "shop", lesson: 3, hover: false, cast: "shop",
       place: "A cup of coffee is on the counter.",
       beats: [
         {
@@ -255,7 +265,7 @@
       ]
     },
     {
-      name: "Sunday", where: "The station", shot: "station", lesson: 0, hover: false,
+      name: "Sunday", where: "The station", shot: "station", lesson: 0, hover: false, cast: "traveler",
       place: "The train is waiting. You are not leaving on it today.",
       beats: [
         {
@@ -291,6 +301,7 @@
       { day: 0, say: "Buenos días", en: "Good morning" },
       { day: 0, say: "Hola", en: "Hello" },
       { day: 0, say: "Cómo estás", en: "How are you" },
+      { day: 0, say: "Cómo te llamas", en: "What's your name" },
       { day: 0, say: "Bien", en: "Well" },
       { day: 0, say: "Estoy bien", en: "I am well" },
       { day: 0, say: "Gracias", en: "Thank you" },
@@ -307,6 +318,7 @@
       { day: 0, say: "おはよう", en: "Good morning" },
       { day: 0, say: "こんにちは", en: "Hello" },
       { day: 0, say: "げんきですか", en: "How are you" },
+      { day: 0, say: "おなまえは", en: "What's your name" },
       { day: 0, say: "げんき", en: "Well" },
       { day: 0, say: "げんきです", en: "I am well" },
       { day: 0, say: "ありがとう", en: "Thank you" },
@@ -324,6 +336,7 @@
       { day: 0, say: "Günaydın", en: "Good morning" },
       { day: 0, say: "Merhaba", en: "Hello" },
       { day: 0, say: "Nasılsın", en: "How are you" },
+      { day: 0, say: "Adın ne", en: "What's your name" },
       { day: 0, say: "İyiyim", en: "I am well" },
       { day: 0, say: "Teşekkürler", en: "Thank you" },
       { day: 0, say: "Yarın görüşürüz", en: "See you tomorrow" },
@@ -341,6 +354,7 @@
   var OPEN = {
     es: [
       "buenos días", "hola", "cómo estás", "hola cómo estás", "cómo estás hola",
+      "cómo te llamas", "cuál es tu nombre",
       "bien", "estoy bien", "hola bien", "gracias", "hasta mañana",
       "me gusta", "no me gusta",
       "me gusta el pan", "no me gusta el pan",
@@ -351,6 +365,7 @@
     ],
     ja: [
       "おはよう", "こんにちは", "げんきですか", "こんにちはげんきですか",
+      "おなまえは", "おなまえはなんですか",
       "げんきです", "ありがとう", "またあした", "またね",
       "すきです", "すきじゃないです",
       "パンがすきです", "パンがすきじゃないです",
@@ -361,6 +376,7 @@
     ],
     tr: [
       "günaydın", "merhaba", "nasılsın", "merhaba nasılsın",
+      "adın ne", "ismin ne",
       "iyiyim", "teşekkürler", "yarın görüşürüz", "görüşürüz",
       "seviyorum", "sevmiyorum",
       "ekmeği seviyorum", "ekmeği sevmiyorum",
@@ -602,6 +618,7 @@
     var s = foldClose(lang, typed);
     if (!s) return "";
     if (lang === "ja") {
+      if (s.indexOf("なまえ") !== -1) return "name";
       if (s.indexOf("じゃない") !== -1) return "not";
       if (s.indexOf("すき") !== -1) return "like";
       if (s.indexOf("げんきですか") !== -1) return "how";
@@ -613,6 +630,7 @@
       return "";
     }
     if (lang === "tr") {
+      if (s.indexOf("adin ne") !== -1 || s.indexOf("ismin ne") !== -1) return "name";
       if (s.indexOf("sevmiyorum") !== -1) return "not";
       if (s.indexOf("seviyorum") !== -1) return "like";
       if (s.indexOf("nasilsin") !== -1) return "how";
@@ -623,6 +641,7 @@
       if (s.indexOf("merhaba") !== -1) return "hello";
       return "";
     }
+    if (s.indexOf("te llamas") !== -1 || s.indexOf("tu nombre") !== -1) return "name";
     if ((s.indexOf("no ") === 0 || s.indexOf(" no ") !== -1) && s.indexOf("gusta") !== -1) return "not";
     if (s.indexOf("gusta") !== -1) return "like";
     if (s.indexOf("como estas") !== -1) return "how";
@@ -634,17 +653,95 @@
     return "";
   }
 
-  function lineFor(beat, lang, priorMood) {
-    var branch = priorMood && beat.when && beat.when[priorMood];
-    if (branch && (branch[lang] || branch.es)) return branch[lang] || branch.es;
-    return beat[lang] || beat.es;
+  function castName(person, lang) {
+    var who = CAST[person] || CAST.neighbor;
+    return who[lang] || who.es;
   }
 
-  function leadFor(beat, priorMood) {
+  function nameKnown(lesson, person, dayIndex, step) {
+    var at = lesson.knownAt && lesson.knownAt[person];
+    if (!at) return false;
+    if (dayIndex > at.day) return true;
+    if (dayIndex < at.day) return false;
+    return step >= at.step;
+  }
+
+  function rememberName(person, day, step) {
     var lesson = progress();
-    if (beat.leadFrom && lesson.dayMood && beat.leadFrom[lesson.dayMood]) return beat.leadFrom[lesson.dayMood];
+    if (!person) return;
+    if (!lesson.knownAt) lesson.knownAt = {};
+    if (lesson.knownAt[person]) return;
+    lesson.knownAt[person] = { day: day, step: step };
+  }
+
+  function speakerText(day, step, force) {
+    var person = day.cast || "neighbor";
+    var lesson = progress();
+    if (force || nameKnown(lesson, person, lesson.day, step)) return castName(person, pack().id) + " says";
+    return (CAST[person] || CAST.neighbor).role;
+  }
+
+  function gloss(hover, en) {
+    return hover ? en : "";
+  }
+
+  function nameIntro(person, lang, accept, hover) {
+    var name = castName(person, lang);
+    var who = CAST[person] || CAST.neighbor;
+    if (lang === "ja") {
+      var kana = who.kana;
+      return line(
+        "わたしは" + kana + "です。",
+        [["わたし", gloss(hover, "I")], ["は", gloss(hover, "as for")], [kana, gloss(hover, name)], ["です", gloss(hover, "am")]],
+        "",
+        accept
+      );
+    }
+    if (lang === "tr") {
+      return line(
+        "Adım " + name + ".",
+        [["Adım", gloss(hover, "My name")], [name, gloss(hover, name)]],
+        "",
+        accept
+      );
+    }
+    return line(
+      "Me llamo " + name + ".",
+      [["Me", gloss(hover, "I")], ["llamo", gloss(hover, "am called")], [name, gloss(hover, name)]],
+      "",
+      accept
+    );
+  }
+
+  function lineFor(beat, lang, priorMood, person, hover) {
+    var base = beat[lang] || beat.es;
+    if (priorMood === "name" && person) return nameIntro(person, lang, (base && base.accept) || [], hover);
+    var branch = priorMood && beat.when && beat.when[priorMood];
+    if (branch && (branch[lang] || branch.es)) return branch[lang] || branch.es;
+    return base;
+  }
+
+  function leadFor(beat, priorMood, step) {
+    var lesson = progress();
+    var day = DAYS[lesson.day];
+    var at = typeof step === "number" ? step : lesson.step;
+    if (beat.leadFrom && lesson.dayMood && beat.leadFrom[lesson.dayMood]) {
+      var text = beat.leadFrom[lesson.dayMood];
+      if (day.cast && nameKnown(lesson, day.cast, lesson.day, at)) {
+        text = text.replace(/^She\b/, castName(day.cast, pack().id));
+      }
+      return text;
+    }
     if (beat.leadWhen && beat.leadWhen.indexOf(priorMood || "") === -1) return "";
     return beat.lead || "";
+  }
+
+  function placeText(day) {
+    var lesson = progress();
+    if (day.placeNamed && day.cast && nameKnown(lesson, day.cast, lesson.day, 0)) {
+      return day.placeNamed.replace("{name}", castName(day.cast, pack().id));
+    }
+    return day.place;
   }
 
   function paintBook(dayIndex, showEnglish) {
@@ -672,10 +769,28 @@
     });
   }
 
+  function rollDay(lesson, day) {
+    if (lesson.step < day.beats.length) return;
+    lesson.day += 1;
+    lesson.step = 0;
+    lesson.replies = [];
+    lesson.moods = [];
+    lesson.dayMood = lesson.carryMood || "";
+    if (lesson.day >= DAYS.length) lesson.day = DAYS.length - 1;
+  }
+
   function advance(said) {
     var lesson = progress();
     var day = DAYS[lesson.day];
     var lang = pack().id;
+    if (lesson.nameHold) {
+      lesson.nameHold = false;
+      lesson.step += 1;
+      rollDay(lesson, day);
+      api().writeSave();
+      render();
+      return;
+    }
     if (!lesson.replies) lesson.replies = [];
     if (!lesson.moods) lesson.moods = [];
     lesson.replies[lesson.step] = said;
@@ -684,16 +799,20 @@
     if (mood === "like" || mood === "not") lesson.carryMood = mood;
     var next = lesson.step + 1;
     var spoken = day.beats[lesson.step];
-    if (spoken && spoken.jump && spoken.jump[mood] != null) next = spoken.jump[mood];
-    lesson.step = next;
-    if (lesson.step >= day.beats.length) {
-      lesson.day += 1;
-      lesson.step = 0;
-      lesson.replies = [];
-      lesson.moods = [];
-      lesson.dayMood = lesson.carryMood || "";
+    if (mood !== "name" && spoken && spoken.jump && spoken.jump[mood] != null) next = spoken.jump[mood];
+    if (mood === "name" && day.cast) {
+      var upcoming = day.beats[next];
+      if (!upcoming || upcoming.walk) {
+        rememberName(day.cast, lesson.day + 1, 0);
+        lesson.nameHold = true;
+        api().writeSave();
+        render();
+        return;
+      }
+      rememberName(day.cast, lesson.day, next);
     }
-    if (lesson.day >= DAYS.length) lesson.day = DAYS.length - 1;
+    lesson.step = next;
+    rollDay(lesson, day);
     api().writeSave();
     render();
   }
@@ -719,14 +838,14 @@
     page.dayEl.textContent = day.name + " · " + day.where + " · " + voicePack.name + (day.lesson ? " · Lesson " + day.lesson : "");
     document.title = day.name + " · " + day.where + " — Maestro's Odyssey";
     page.pictureEl.hidden = false;
-    page.pictureEl.alt = day.place;
+    page.pictureEl.alt = placeText(day);
     page.pictureEl.src = page.artUrl(shotName(day.shot));
     var notes = document.getElementById("notes");
     if (notes) notes.hidden = true;
     paintBook(lesson.day, !!day.hover);
     page.proseEl.replaceChildren();
     var place = document.createElement("p");
-    place.textContent = page.fill(day.place);
+    place.textContent = page.fill(placeText(day));
     page.proseEl.appendChild(place);
     if (day.hint && lesson.step === 0) {
       var tip = document.createElement("p");
@@ -787,19 +906,21 @@
       page.proseEl.appendChild(row);
     }
     var i;
-    for (i = 0; i < lesson.step; i++) {
+    var lineData;
+    var through = lesson.nameHold ? lesson.step + 1 : lesson.step;
+    for (i = 0; i < through; i++) {
       var past = day.beats[i];
       if (!past || past.walk) continue;
       if (!(lesson.replies && lesson.replies[i])) continue;
       var pastMood = i > 0 && lesson.moods ? lesson.moods[i - 1] : "";
-      var pastLine = lineFor(past, lang, pastMood);
+      var pastLine = lineFor(past, lang, pastMood, day.cast, day.hover);
       if (!pastLine) continue;
-      addLead(leadFor(past, pastMood));
-      if (i === 0) addSpeaker(past.who);
+      addLead(leadFor(past, pastMood, i));
+      addSpeaker(speakerText(day, i, false));
       addSpeech(pastLine, false);
       addYou((lesson.replies && lesson.replies[i]) || (pastLine.accept && pastLine.accept[0]) || "");
     }
-    if (beat.walk) {
+    if (beat.walk && !lesson.nameHold) {
       var stay = document.createElement("p");
       stay.textContent = "You stay on the platform. The next walk is the same days, in the next language.";
       page.proseEl.appendChild(stay);
@@ -810,11 +931,17 @@
       page.choicesEl.appendChild(again);
       return;
     }
-    var prior = lesson.step > 0 && lesson.moods ? lesson.moods[lesson.step - 1] : "";
-    var lineData = lineFor(beat, lang, prior);
-    addLead(leadFor(beat, prior));
-    if (lesson.step === 0) addSpeaker(beat.who);
-    addSpeech(lineData, true);
+    if (lesson.nameHold) {
+      lineData = nameIntro(day.cast, lang, [], day.hover);
+      addSpeaker(speakerText(day, lesson.step, true));
+      addSpeech(lineData, true);
+    } else {
+      var prior = lesson.step > 0 && lesson.moods ? lesson.moods[lesson.step - 1] : "";
+      lineData = lineFor(beat, lang, prior, day.cast, day.hover);
+      addLead(leadFor(beat, prior, lesson.step));
+      addSpeaker(speakerText(day, lesson.step, false));
+      addSpeech(lineData, true);
+    }
 
     var form = document.createElement("form");
     form.className = "reply";
