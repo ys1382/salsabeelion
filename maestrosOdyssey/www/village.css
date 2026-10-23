@@ -75,6 +75,7 @@ main {
   z-index: 2;
   top: 0.75rem;
   left: 1rem;
+  right: 8.5rem;
   margin: 0;
   font-family: "Segoe UI", system-ui, sans-serif;
   font-size: 0.85rem;
@@ -82,6 +83,30 @@ main {
   text-transform: uppercase;
   color: #f7f3ea;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+}
+
+.lang-back {
+  position: absolute;
+  z-index: 6;
+  top: 0.65rem;
+  right: 0.85rem;
+  margin: 0;
+  padding: 0.4rem 0.85rem;
+  border: 1px solid #f7f3ea;
+  border-radius: 999px;
+  background: #3e5344;
+  color: #f7f3ea;
+  font-family: "Segoe UI", system-ui, sans-serif;
+  font-size: 0.85rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
+}
+
+.lang-back:hover,
+.lang-back:focus-visible {
+  background: rgba(62, 83, 68, 0.92);
 }
 
 .picture {
@@ -553,6 +578,12 @@ body.picking .day {
   display: none;
 }
 
+body.picking .lang-back {
+  color: var(--choice-ink);
+  background: var(--choice);
+  border-color: var(--choice);
+}
+
 body.picking {
   background: var(--paper);
 }
@@ -701,6 +732,10 @@ body.picking .prose p {
   flex-wrap: wrap;
   gap: 0.28rem;
   margin-top: 0.35rem;
+}
+
+.hold-pop[hidden] {
+  display: none !important;
 }
 
 .hold-pop button {

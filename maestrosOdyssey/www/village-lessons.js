@@ -1447,6 +1447,8 @@
     });
   }
 
+  var holdWatch = null;
+
   function wireHold(input, pop, lang) {
     var holds = HOLDS[lang] || {};
     var timer = 0;
@@ -1459,7 +1461,12 @@
     var watchPick = false;
     var pickedValue = "";
     var suppress = "";
+    var mouseSelecting = false;
+    var shield = null;
+    var pinFrame = 0;
     var mods = { Shift: 1, Control: 1, Alt: 1, Meta: 1, CapsLock: 1 };
+
+    if (holdWatch) holdWatch.stop();
 
     function snapshot() {
       var start = input.selectionStart;
@@ -1485,12 +1492,53 @@
       timer = 0;
     }
 
+    function unlock() {
+      input.readOnly = false;
+    }
+
+    function armShield(index, length) {
+      shield = { index: index, length: length, until: Date.now() + 1200 };
+      queuePin();
+    }
+
+    function shieldLive() {
+      return !!(shield && (held || opened || Date.now() < shield.until));
+    }
+
+    function unhighlight() {
+      if (!input.isConnected) return;
+      if (mouseSelecting || applying || !shieldLive()) return;
+      var start = input.selectionStart;
+      var end = input.selectionEnd;
+      if (typeof start !== "number" || start === end) return;
+      var to = shield.index + shield.length;
+      if (start !== shield.index || end !== to) return;
+      applying = true;
+      try { input.setSelectionRange(to, to); } catch (err) {}
+      applying = false;
+    }
+
+    function queuePin() {
+      if (pinFrame) return;
+      var step = function () {
+        pinFrame = 0;
+        if (!input.isConnected) return;
+        unhighlight();
+        if (held || opened || (shield && Date.now() < shield.until)) {
+          pinFrame = requestAnimationFrame(step);
+        }
+      };
+      pinFrame = requestAnimationFrame(step);
+    }
+
     function endHold() {
       cancelTimer();
       pop.hidden = true;
+      pop.replaceChildren();
       opened = false;
       held = "";
       mark = null;
+      unlock();
     }
 
     function placeAccent(ch) {
@@ -1511,7 +1559,9 @@
       watchPick = true;
       pickedValue = input.value;
       saved = snapshot();
+      armShield(index, ch.length);
       endHold();
+      unhighlight();
       input.focus();
     }
 
@@ -1555,17 +1605,36 @@
         mark.value = input.value;
         return;
       }
+      if ((holds[held] || []).indexOf(at) !== -1) {
+        mark = { value: input.value, index: mark.index, key: at };
+        armShield(mark.index, at.length);
+        unhighlight();
+        return;
+      }
       restoreMark();
+      unhighlight();
     }
 
     input.addEventListener("beforeinput", function (event) {
       if (applying || userDelete) return;
       var type = event.inputType || "";
       if (type.indexOf("delete") === 0) return;
+      var data = event.data || "";
+      if ((type === "insertReplacementText" || type === "insertCompositionText") && held && (holds[held] || []).indexOf(data) !== -1) {
+        event.preventDefault();
+        placeAccent(data);
+        return;
+      }
       if (!held && pop.hidden !== false) return;
-      var systemEdit = type === "insertReplacementText" || type === "insertCompositionText" || (!!held && type === "insertText");
-      if (!systemEdit) return;
-      event.preventDefault();
+      if (type === "insertText" && held && data === held) {
+        event.preventDefault();
+        unhighlight();
+        return;
+      }
+      if (type === "insertReplacementText" || type === "insertCompositionText") {
+        event.preventDefault();
+        unhighlight();
+      }
     }, true);
 
     input.addEventListener("input", keepWord);
@@ -1573,6 +1642,7 @@
 
     input.addEventListener("keydown", function (event) {
       var key = event.key;
+      unhighlight();
       if (pop.hidden === false && key >= "1" && key <= "9") {
         var buttons = pop.querySelectorAll("button");
         var pick = buttons[Number(key) - 1];
@@ -1591,6 +1661,7 @@
         return;
       }
       if (key === "Backspace" || key === "Delete") {
+        shield = null;
         userDelete = true;
         watchPick = false;
         pickedValue = "";
@@ -1612,6 +1683,10 @@
         if (held || holds[key]) event.preventDefault();
         return;
       }
+      if (key !== held) {
+        shield = null;
+        unlock();
+      }
       if (opened || (held && key !== held)) endHold();
       var options = holds[key];
       if (!options) return;
@@ -1620,9 +1695,11 @@
       applying = true;
       insertAt(input, key);
       applying = false;
+      input.readOnly = true;
       mark = { value: input.value, index: before.start, key: key };
       held = key;
       opened = false;
+      armShield(before.start, key.length);
       cancelTimer();
       timer = setTimeout(function () {
         if (held !== key || !mark) return;
@@ -1631,15 +1708,23 @@
           return;
         }
         opened = true;
+        unhighlight();
         showHoldChoices(pop, options, placeAccent);
+        input.focus();
       }, 450);
     });
 
-    input.addEventListener("keyup", function (event) {
+    function onKeyUp(event) {
+      if (!input.isConnected) {
+        if (holdWatch) holdWatch.stop();
+        return;
+      }
+      if (event.target !== input && event.key !== held && event.key !== suppress) return;
       if (suppress && event.key === suppress) {
         var keyName = event.key;
         setTimeout(function () {
           protectPick();
+          unhighlight();
           if (suppress === keyName) {
             suppress = "";
             watchPick = false;
@@ -1648,16 +1733,52 @@
         }, 0);
       }
       if (event.key !== held) return;
+      unlock();
       cancelTimer();
       if (!opened) {
         held = "";
         mark = null;
       }
+    }
+
+    function onSelection() {
+      if (!input.isConnected) {
+        if (holdWatch) holdWatch.stop();
+        return;
+      }
+      if (document.activeElement !== input) return;
+      unhighlight();
+    }
+
+    function onMouseUp() {
+      mouseSelecting = false;
+      if (!input.isConnected) return;
+      var start = input.selectionStart;
+      var end = input.selectionEnd;
+      if (typeof start === "number" && end > start) shield = null;
+    }
+
+    function stop() {
+      document.removeEventListener("selectionchange", onSelection);
+      window.removeEventListener("keyup", onKeyUp, true);
+      window.removeEventListener("mouseup", onMouseUp, true);
+      if (pinFrame) cancelAnimationFrame(pinFrame);
+      pinFrame = 0;
+      unlock();
+    }
+
+    holdWatch = { stop: stop };
+    document.addEventListener("selectionchange", onSelection);
+    window.addEventListener("keyup", onKeyUp, true);
+    window.addEventListener("mouseup", onMouseUp, true);
+    input.addEventListener("mousedown", function () {
+      mouseSelecting = true;
     });
 
     input.addEventListener("blur", function () {
+      unlock();
+      if (held || opened || watchPick) return;
       cancelTimer();
-      if (opened || watchPick) return;
       held = "";
       mark = null;
     });

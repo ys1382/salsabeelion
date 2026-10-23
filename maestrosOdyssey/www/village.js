@@ -980,7 +980,7 @@
       var data = JSON.parse(localStorage.getItem(SAVE_KEY) || "");
       if (data) {
         if (data.gender === "boy" || data.gender === "girl") state.gender = data.gender;
-        if (!restart && scenes[data.scene]) state.scene = data.scene;
+        if (!restart && (scenes[data.scene] || data.scene === "lessons")) state.scene = data.scene;
         if (!restart && data.flags && typeof data.flags === "object") state.flags = data.flags;
         if (!restart && data.note) state.note = data.note;
         if (data.notes && typeof data.notes === "object") state.notes = data.notes;
@@ -1388,9 +1388,10 @@
       function scheduleQuiet() {
         clearTimeout(quietTimer);
         if (!displayLine()) return;
+        var wait = caught() ? 1000 : (safari ? 3200 : 2800);
         quietTimer = setTimeout(function () {
           if (!settled) ok();
-        }, safari ? 3200 : 2800);
+        }, wait);
       }
       function applyResults(event) {
         ready();
@@ -1413,10 +1414,6 @@
           }
         }
         notify();
-        if (caught()) {
-          ok();
-          return;
-        }
         scheduleQuiet();
       }
       function onRecError(event) {
@@ -1435,10 +1432,6 @@
           addChunk(chunks, live);
           live = "";
           notify();
-        }
-        if (caught()) {
-          ok();
-          return;
         }
         if (lastHeard && Date.now() - lastHeard > 2800 && displayLine()) {
           ok();
@@ -1518,7 +1511,7 @@
   }
 
   function listenChromium(voiceLang, maxMs, onUpdate, shouldStop, onReady) {
-    return listenSession(voiceLang, maxMs, onUpdate, shouldStop, onReady, { continuous: false, safari: false });
+    return listenSession(voiceLang, maxMs, onUpdate, shouldStop, onReady, { continuous: true, safari: false });
   }
 
   function listenReply(voiceLang, onUpdate, shouldStop) {
@@ -2271,7 +2264,7 @@
       state.gender = row.gender;
       if (typeof row.langIndex === "number") state.langIndex = savedLangIndex(row.langIndex, row.langRoster);
       if (!hardRefresh()) {
-        if (row.scene && scenes[row.scene]) state.scene = row.scene;
+        if (row.scene && (scenes[row.scene] || row.scene === "lessons")) state.scene = row.scene;
         if (row.flags && typeof row.flags === "object") state.flags = row.flags;
         if (row.note) state.note = row.note;
         if (row.notes && typeof row.notes === "object") state.notes = row.notes;
@@ -2295,6 +2288,15 @@
       .then(function (response) { return response.json(); })
       .catch(function () { return null; });
   }
+
+  function backToSpanish() {
+    state.langIndex = 0;
+    state.lesson = { day: 0, step: 0 };
+    show("lessons");
+  }
+
+  var langBack = document.getElementById("lang-back");
+  if (langBack) langBack.addEventListener("click", backToSpanish);
 
   function boot() {
     readSave();
