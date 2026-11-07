@@ -179,29 +179,256 @@
     return out;
   }
 
+  var COVER_STORE = "halalitSuggestsCoverV2:";
+  /** Checked jackets. Open Library’s live search misses these two. */
+  var KNOWN_COVERS = {
+    "charlotte s web|e b white": "https://covers.openlibrary.org/b/id/8461797-M.jpg",
+    "the last bear|hannah gold": "https://covers.openlibrary.org/b/id/13143857-M.jpg",
+  };
+
+  function knownCoverUrl(title, author) {
+    return KNOWN_COVERS[coverKey(title, author)] || "";
+  }
+
+  function straightApostrophe(s) {
+    return String(s || "").replace(/[\u2018\u2019\u201B\u2032]/g, "'");
+  }
+  var coverMem = {};
+  var coverQueue = [];
+  var coverActive = 0;
+  var coverGen = 0;
+  var coverNextAt = 0;
+  var coverPumpTimer = null;
+  var COVER_MAX = 1;
+
+  function coverKey(title, author) {
+    return normTitle(title) + "|" + normTitle(author || "");
+  }
+
+  function readStoredCover(key) {
+    if (coverMem[key]) return coverMem[key];
+    try {
+      var stored = global.sessionStorage && global.sessionStorage.getItem(COVER_STORE + key);
+      if (stored) coverMem[key] = stored;
+      return stored || "";
+    } catch (e) {
+      return "";
+    }
+  }
+
+  function writeStoredCover(key, url) {
+    coverMem[key] = url;
+    try {
+      if (global.sessionStorage) global.sessionStorage.setItem(COVER_STORE + key, url);
+    } catch (e2) {}
+  }
+
+  function forgetStoredCover(key) {
+    delete coverMem[key];
+    try {
+      if (global.sessionStorage) global.sessionStorage.removeItem(COVER_STORE + key);
+    } catch (e3) {}
+  }
+
+  function coverImgHtml(url, title) {
+    return (
+      '<img src="' +
+      escapeHtml(url) +
+      '" alt="' +
+      escapeHtml(title) +
+      ' cover" width="100" height="150" decoding="async" referrerpolicy="no-referrer" class="halalit-suggests__cover-img" />'
+    );
+  }
+
+  function showCover(slot, title, author, url) {
+    if (!slot || !url) return;
+    var key = coverKey(title, author);
+    slot.innerHTML = coverImgHtml(url, title);
+    slot.classList.add("halalit-suggests__cover--loaded");
+    var img = slot.querySelector("img");
+    if (!img) return;
+    img.addEventListener("error", function () {
+      if (slot.getAttribute("data-cover-retry") === "1") return;
+      slot.setAttribute("data-cover-retry", "1");
+      if (readStoredCover(key) === url) forgetStoredCover(key);
+      slot.classList.remove("halalit-suggests__cover--loaded");
+      slot.innerHTML = "";
+      coverQueue.push({
+        slot: slot,
+        title: title,
+        author: author || "",
+        key: key,
+        gen: coverGen,
+      });
+      pumpCoverQueue();
+    });
+  }
+
+  function coverCandidatesFromDoc(doc, Cover) {
+    var urls = [];
+    var seen = {};
+    function add(url) {
+      if (!url || seen[url]) return;
+      seen[url] = true;
+      urls.push(url);
+    }
+    if (Cover && typeof Cover.coverUrlFromDoc === "function") add(Cover.coverUrlFromDoc(doc));
+    if (doc && doc.cover_i != null && doc.cover_i === doc.cover_i) {
+      add("https://covers.openlibrary.org/b/id/" + String(doc.cover_i) + "-M.jpg");
+    }
+    var isbns = doc && doc.isbn;
+    if (isbns && isbns.length) {
+      for (var i = 0; i < isbns.length && urls.length < 5; i++) {
+        var isbn = String(isbns[i]).replace(/[^0-9Xx]/g, "");
+        if (isbn.length === 10 || isbn.length === 13) {
+          add("https://covers.openlibrary.org/b/isbn/" + isbn + "-M.jpg");
+        }
+      }
+    }
+    return urls;
+  }
+
+  function probeCoverUrl(url) {
+    return new Promise(function (resolve) {
+      var img = new global.Image();
+      var done = false;
+      function finish(ok) {
+        if (done) return;
+        done = true;
+        resolve(ok ? url : "");
+      }
+      img.onload = function () {
+        finish((img.naturalWidth || 0) > 2 && (img.naturalHeight || 0) > 2);
+      };
+      img.onerror = function () {
+        finish(false);
+      };
+      try {
+        img.referrerPolicy = "no-referrer";
+      } catch (e4) {}
+      img.src = url;
+    });
+  }
+
+  function firstRealCover(urls) {
+    var i = 0;
+    function next() {
+      if (i >= urls.length) return Promise.resolve("");
+      var url = urls[i];
+      i += 1;
+      return probeCoverUrl(url).then(function (ok) {
+        if (ok) return ok;
+        return next();
+      });
+    }
+    return next();
+  }
+
+  function retryCoverJob(job) {
+    if (job.gen !== coverGen || !job.slot || !job.slot.isConnected) return;
+    job.tries = (job.tries || 0) + 1;
+    if (job.tries >= 4) return;
+    coverQueue.push(job);
+    coverNextAt = Math.max(coverNextAt, Date.now() + 700 * job.tries);
+  }
+
+  function runCoverJob(job) {
+    var pinned = knownCoverUrl(job.title, job.author);
+    if (pinned) {
+      writeStoredCover(job.key, pinned);
+      if (job.gen === coverGen && job.slot.isConnected) {
+        showCover(job.slot, job.title, job.author, pinned);
+      }
+      coverActive = Math.max(0, coverActive - 1);
+      pumpCoverQueue();
+      return;
+    }
+    var Cover = global.HalalitCoverThumb;
+    Cover.fetchCoverDoc(job.title, job.author, { requireEligible: false })
+      .then(function (doc) {
+        if (job.gen !== coverGen || !job.slot.isConnected) return "skip";
+        if (!doc) return "";
+        return firstRealCover(coverCandidatesFromDoc(doc, Cover));
+      })
+      .then(function (url) {
+        if (url === "skip") return;
+        if (job.gen !== coverGen || !job.slot.isConnected) return;
+        if (!url) {
+          retryCoverJob(job);
+          return;
+        }
+        writeStoredCover(job.key, url);
+        showCover(job.slot, job.title, job.author, url);
+      })
+      .catch(function () {
+        retryCoverJob(job);
+      })
+      .then(function () {
+        coverActive = Math.max(0, coverActive - 1);
+        pumpCoverQueue();
+      });
+  }
+
+  function pumpCoverQueue() {
+    if (coverPumpTimer) return;
+    var wait = coverNextAt - Date.now();
+    if (wait > 0) {
+      coverPumpTimer = global.setTimeout(function () {
+        coverPumpTimer = null;
+        pumpCoverQueue();
+      }, wait);
+      return;
+    }
+    while (coverActive < COVER_MAX && coverQueue.length) {
+      var job = coverQueue.shift();
+      if (!job || job.gen !== coverGen || !job.slot || !job.slot.isConnected) continue;
+      var cached = readStoredCover(job.key);
+      if (cached) {
+        showCover(job.slot, job.title, job.author, cached);
+        continue;
+      }
+      coverActive += 1;
+      coverNextAt = Date.now() + 450;
+      runCoverJob(job);
+      coverPumpTimer = global.setTimeout(function () {
+        coverPumpTimer = null;
+        pumpCoverQueue();
+      }, 450);
+      return;
+    }
+  }
+
   function paintCover(slot, title, author) {
     if (!slot) return;
     var Cover = global.HalalitCoverThumb;
     if (!Cover || typeof Cover.fetchCoverDoc !== "function") return;
     if (
       typeof Cover.shouldShowCoverThumbForHandVetted === "function" &&
-      !Cover.shouldShowCoverThumbForHandVetted(title, author)
+      !Cover.shouldShowCoverThumbForHandVetted(straightApostrophe(title), straightApostrophe(author))
     ) {
       slot.classList.add("halalit-suggests__cover--omit");
       return;
     }
-    Cover.fetchCoverDoc(title, author, { requireEligible: false }).then(function (doc) {
-      if (!doc || !slot.isConnected) return;
-      var url = Cover.coverUrlFromDoc(doc);
-      if (!url) return;
-      slot.innerHTML =
-        '<img src="' +
-        escapeHtml(url) +
-        '" alt="' +
-        escapeHtml(title) +
-        ' cover" width="100" height="150" loading="lazy" decoding="async" referrerpolicy="no-referrer" class="halalit-suggests__cover-img" />';
-      slot.classList.add("halalit-suggests__cover--loaded");
+    var key = coverKey(title, author);
+    var pinned = knownCoverUrl(title, author);
+    if (pinned) {
+      writeStoredCover(key, pinned);
+      showCover(slot, title, author, pinned);
+      return;
+    }
+    var cached = readStoredCover(key);
+    if (cached) {
+      showCover(slot, title, author, cached);
+      return;
+    }
+    coverQueue.push({
+      slot: slot,
+      title: title,
+      author: author || "",
+      key: key,
+      gen: coverGen,
     });
+    pumpCoverQueue();
   }
 
   function cardHtml(opts) {
@@ -247,6 +474,8 @@
   function mount(root) {
     var D = Data();
     if (!root || !D) return;
+    if (root.getAttribute("data-suggests-mounted") === "1") return;
+    root.setAttribute("data-suggests-mounted", "1");
 
     var state = {
       readerBand: getReaderBand(),
@@ -447,7 +676,7 @@
           ? '<div class="halalit-suggests__grid" data-grid="search">' +
             searchHits(state.search)
               .map(function (item, idx) {
-                return renderItem(item, "q", idx);
+                return renderItem(item, "search", idx);
               })
               .join("") +
             "</div>"
@@ -531,6 +760,8 @@
     }
 
     function paint() {
+      coverGen += 1;
+      coverQueue = [];
       if (!state.readerBand) {
         root.innerHTML = renderAgeGate();
       } else if (state.view === "seeMore") {
