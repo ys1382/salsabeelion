@@ -1750,15 +1750,6 @@
       ]),
     },
     {
-      titleRe: /\bgrace of wild things\b/i,
-      authorRe: /fawcett|heather/i,
-      requiresMagicOptIn: true,
-      detail: bookNote("The Grace of Wild Things (Heather Fawcett)", [
-        "Hand-verified clean in owner scope—caring for wild creatures with a pro-nature heart.",
-        "Fantasy magic—Book Quest includes when otherwise clean; exclude magic in Advanced recommendations settings on the play page if needed.",
-      ]),
-    },
-    {
       titleRe: /\bthis changes everything\b/i,
       authorRe: /klein|naomi/i,
       detail: bookNote("This Changes Everything (Naomi Klein)", [
@@ -3446,9 +3437,9 @@
       authorRe: /fawcett|heather/i,
       tier: "flag_review",
       detail: bookNote("The Grace of Wild Things (Heather Fawcett)", [
-        "Verified clean on Halalit’s main hand list—pro-nature wild-creature care.",
-        "Fantasy magic comfort note—exclude magic in Advanced recommendations settings if needed.",
-      ], "Halalit may auto-recommend when magic is allowed."),
+        "Owner parked—was hand-verified clean; off the recommend list until re-checked.",
+        "Off Book Wander and Book Quest until the owner clears parked.",
+      ]),
     },
     {
       titleRe: /\bglobal\b/i,

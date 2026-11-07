@@ -314,7 +314,6 @@
       authorRe: /parry|rosanne/i,
     },
     { band: BAND.OLDER_CHILD_YOUNG_TEEN, titleRe: /\bwild rescuers\b|\bguardians of the taiga\b/i, authorRe: /stacyplays|stacy/i },
-    { band: BAND.OLDER_CHILD_YOUNG_TEEN, titleRe: /\bgrace of wild things\b/i, authorRe: /fawcett|heather/i },
     { band: BAND.OLDER_CHILD_YOUNG_TEEN, titleRe: /\bseekers of the (?:wild )?realm\b|\blegend of the realm\b/i, authorRe: /ott|alexandra/i },
     { band: BAND.OLDER_CHILD_YOUNG_TEEN, titleRe: /\banimal healer\b/i, authorRe: /st\.?\s*john|lauren/i },
     {

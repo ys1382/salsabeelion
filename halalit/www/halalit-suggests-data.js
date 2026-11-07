@@ -267,13 +267,6 @@
       spotlight: false,
     },
     {
-      title: "The Grace of Wild Things",
-      author: "Heather Fawcett",
-      ageBand: BAND.older_child_young_teen,
-      themeIds: ["nature"],
-      spotlight: false,
-    },
-    {
       title: "This Changes Everything",
       author: "Naomi Klein",
       ageBand: BAND.older_teen_adult,

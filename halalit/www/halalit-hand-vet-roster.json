@@ -787,14 +787,6 @@
       "notes": "Owner: Kids"
     },
     {
-      "title": "The Grace of Wild Things",
-      "author": "Heather Fawcett",
-      "source": "cursor_roster",
-      "tier": "verified_clean",
-      "ageBand": "older_kids",
-      "notes": "Owner: hand-verified clean — pro-nature; magic opt-in"
-    },
-    {
       "title": "The Graveyard Book",
       "author": "Neil Gaiman",
       "source": "cursor_roster",
@@ -1392,6 +1384,13 @@
       "notes": "Owner **hand-reject** (Jun 2026) — confirmed LGBTQ; teen dark/adult romance; `flag_review`; no Book Quest"
     },
     {
+      "title": "The Grace of Wild Things",
+      "author": "Heather Fawcett",
+      "source": "cursor_roster",
+      "tier": "parked",
+      "notes": "Owner **parked** — was hand-verified clean; off Book Wander and off recommend until re-checked."
+    },
+    {
       "title": "The Last Kids on Earth",
       "author": "Max Brallier",
       "source": "cursor_roster",
@@ -1421,7 +1420,7 @@
     }
   ],
   "counts": {
-    "vetted": 145,
-    "rejected": 33
+    "vetted": 144,
+    "rejected": 34
   }
 }

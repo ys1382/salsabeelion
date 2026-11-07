@@ -238,7 +238,9 @@ Pinned under [Library & bookstore availability](#library--bookstore-availability
 
 **Cutoff (owner Jun 2026):** Nothing *below* **Spark (Chris Baron)** on the nature browse list counts for Earth Week—that book is the **floor** of Earth Week consideration. Everything under it is general Halalit shelf only (not Earth Week picks).
 
-**On list (confirmed — 21, closed for now):** Jinx trilogy, Seekers duology, Black Beauty, Green Deen, The Lorax, Last Bear, Wolf Called Wander, Whale of the Wild, Wild Rescuers, Grace of Wild Things, Klein (*This Changes Everything*), Durst *Spark*, Manatee Summer, Magic School Bus, Magic Finger, Animal Healer, Watership Down, Berenstain Bears Go Green / Earth Day, Happy Happy Clover, Heidi (glowing praise for living in nature), Spark (Chris Baron).
+**On list (confirmed — 20, closed for now):** Jinx trilogy, Seekers duology, Black Beauty, Green Deen, The Lorax, Last Bear, Wolf Called Wander, Whale of the Wild, Wild Rescuers, Klein (*This Changes Everything*), Durst *Spark*, Manatee Summer, Magic School Bus, Magic Finger, Animal Healer, Watership Down, Berenstain Bears Go Green / Earth Day, Happy Happy Clover, Heidi (glowing praise for living in nature), Spark (Chris Baron).
+
+**Parked for re-check (Nov 2026):** *The Grace of Wild Things* (Heather Fawcett) — off Book Wander and off recommend until the owner checks it again.
 
 **Passed for Earth Week (still on general shelf):** Pax, Land of Elyon, Wolf Princess, Hobbit + Lord of the Rings, Lost Rainforest b1, Wing & Claw. **If vetted later:** Julie of the Wolves.
 
