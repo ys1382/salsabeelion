@@ -571,6 +571,14 @@
       "notes": "Owner: fine for older kids"
     },
     {
+      "title": "Peter Nimble and His Fantastic Eyes",
+      "author": "Jonathan Auxier",
+      "source": "cursor_roster",
+      "tier": "verified_clean",
+      "ageBand": "older_kids",
+      "notes": "Owner: book 1 clean. Book 2 Sophie Quire is a hard reject (suggestive disguise). Book 3 The War of the Maps not covered."
+    },
+    {
       "title": "Piper McCloud",
       "author": "Victoria Forester",
       "source": "cursor_roster",
@@ -1075,6 +1083,14 @@
       "notes": "Owner: fine for older kids"
     },
     {
+      "title": "Unicorn School",
+      "author": "Linda Chapman",
+      "source": "cursor_roster",
+      "tier": "verified_clean",
+      "ageBand": "kids",
+      "notes": "Owner: chapter-book series, clean. Book Quest only when magic is allowed. Not her other pen-name series."
+    },
+    {
       "title": "Voice of the Wilderness",
       "author": "Rosanne Parry",
       "source": "cursor_roster",
@@ -1349,6 +1365,13 @@
       "notes": "Owner **hand-reject** — blurb (before reading) has the main character in love with another girl; graphic novel; `flag_review`; no Book Quest"
     },
     {
+      "title": "Sophie Quire and the Last Storyguard",
+      "author": "Jonathan Auxier",
+      "source": "cursor_roster",
+      "tier": "flag_review",
+      "notes": "Hard reject — book 2 of The Vanished Kingdom. Female villain dressed suggestively as a helpless-victim disguise. Book 1 Peter Nimble stays clean. Book 3 not covered."
+    },
+    {
       "title": "Squished",
       "author": "Megan Wagner Lloyd",
       "source": "cursor_roster",
@@ -1398,6 +1421,13 @@
       "notes": "Age band **parked** (probably fine—still clearing)."
     },
     {
+      "title": "The Last Unicorn / Two Hearts",
+      "author": "Peter S. Beagle",
+      "source": "cursor_roster",
+      "tier": "flag_review",
+      "notes": "Hard reject — immodest tree-woman scene in The Last Unicorn; gang sexual violence in Two Hearts (also in The Way Home). Book Quest never."
+    },
+    {
       "title": "The Library of Unruly Treasures",
       "author": "",
       "source": "cursor_roster",
@@ -1417,10 +1447,17 @@
       "source": "cursor_roster",
       "tier": "parked",
       "notes": "Owner **idk** — not hand-vetted yet; off Book Quest."
+    },
+    {
+      "title": "Vampirates",
+      "author": "Justin Somper",
+      "source": "cursor_roster",
+      "tier": "flag_review",
+      "notes": "Hard reject — unmarried couple sharing a bed; partly adult romance. Whole series, including Dead Deep. Book Quest never."
     }
   ],
   "counts": {
-    "vetted": 144,
-    "rejected": 34
+    "vetted": 146,
+    "rejected": 37
   }
 }
