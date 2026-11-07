@@ -94,10 +94,11 @@ Last updated: 2026-07-17
 
 ### Maestro's Odyssey (`maestrosOdyssey/www/` → owner-only `/maestros/`)
 
-**Is:** Language-adventure **prototype** — magical-realism city, Spanish civic vocab module live.
+**Is:** Language-adventure **prototype**. **Basic version (2026-10-12):** parents sent you to live the language, not study it at a desk. The elder matches your gender and is a family friend of your grandparent. No ambassador training. Fantasy plot notes are **parked** in `docs/LOREBOOK.md`, not deleted. Spanish café module still in the older build.
 
 **Can do now:**
 - Static scene copy, vocab JS files, styling
+- Village front door: three typed lessons (greetings, then like / don’t like, then no hover), in Spanish, Japanese, and Turkish
 - Draft new vocab modules (owner review required before deploy — see `docs/LANGUAGE-VOCAB-WORKFLOW.md`)
 
 **Not built yet (do not wire story as if live):**
