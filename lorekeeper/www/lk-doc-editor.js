@@ -1554,12 +1554,24 @@
           },
         });
       }
-      // Refresh from server in the background; stale banner if another device won.
+      // Account copy can arrive after a title-only list. Pull in a longer body.
       if (LoreKeeperAccountStorage.loadContent) {
         LoreKeeperAccountStorage.loadContent().then(function () {
           if (!doc || dirty || loading) return;
           var fresh = LoreKeeperDocuments.find(doc.id);
-          if (!fresh || !fresh.updatedAt) return;
+          if (!fresh) return;
+          if (htmlWordCount(fresh.bodyHtml) > htmlWordCount(doc.bodyHtml)) {
+            doc = fresh;
+            loading = true;
+            loadHtmlIntoEditor(doc.bodyHtml || "");
+            updateWordCount();
+            hideStaleBanner();
+            global.requestAnimationFrame(function () {
+              loading = false;
+            });
+            return;
+          }
+          if (!fresh.updatedAt) return;
           if (fresh.updatedAt > (doc.updatedAt || 0) + 400) {
             showStaleBanner();
           }
@@ -1569,7 +1581,7 @@
 
     var id = docIdFromUrl();
     var raw = findRawDoc(id);
-    if (raw) {
+    if (raw && !isEmptyHtml(raw.bodyHtml || "")) {
       openRawDoc(raw);
       return;
     }

@@ -21,6 +21,8 @@
   var AUTH_CACHE_KEY = "lk_auth_me_v1";
   var AUTH_CACHE_MS = 30 * 60 * 1000;
   var FETCH_TIMEOUT_MS = 15000;
+  var CONTENT_FETCH_TIMEOUT_MS = 120000;
+  var DOCUMENTS_KEY = "lorekeeper_documents_v1";
   var FAST_MIRROR_KEYS = [
     "lorekeeper_entries_v1",
     "lorekeeper_documents_v1",
@@ -31,6 +33,7 @@
   var contentHydratePromise = null;
   var dataHydrated = false;
   var contentHydrated = false;
+  var contentSettled = false;
 
   function dispatchSyncEvent(name, detail) {
     try {
@@ -220,7 +223,7 @@
     return text.split(/\s+/).filter(Boolean).length;
   }
 
-  /** Server list is the set of documents; per id, keep the longer body. */
+  /** Per document, keep the longer body, including one the account does not have yet. */
   function mergeDocumentsPreferLonger(localRaw, serverRaw) {
     var localList;
     var serverList;
@@ -236,9 +239,11 @@
     localList.forEach(function (d) {
       if (d && d.id) byLocal[d.id] = d;
     });
+    var seen = {};
     var out = [];
     serverList.forEach(function (s) {
       if (!s || !s.id) return;
+      seen[s.id] = true;
       var localDoc = byLocal[s.id];
       if (localDoc && plainWordCount(localDoc.bodyHtml) > plainWordCount(s.bodyHtml)) {
         out.push(localDoc);
@@ -246,7 +251,56 @@
         out.push(s);
       }
     });
+    localList.forEach(function (d) {
+      if (!d || !d.id || seen[d.id]) return;
+      out.push(d);
+    });
     return JSON.stringify(out);
+  }
+
+  function docsAreMetaOnly(raw) {
+    var list = parseEntryList(raw);
+    if (!list || !list.length) return false;
+    return list.every(function (d) {
+      return !d || !Object.prototype.hasOwnProperty.call(d, "bodyHtml");
+    });
+  }
+
+  function mergeDocumentKey(serverRaw, queuedBox) {
+    if (docsAreMetaOnly(serverRaw)) {
+      if (!cacheHasValue(DOCUMENTS_KEY)) {
+        var kept = localGetItem(DOCUMENTS_KEY);
+        cache[DOCUMENTS_KEY] = kept != null && kept !== "" ? kept : serverRaw;
+      }
+      return;
+    }
+    var local = null;
+    if (pending[DOCUMENTS_KEY] && pending[DOCUMENTS_KEY] !== "__delete__") {
+      local = pending[DOCUMENTS_KEY];
+    }
+    if (local == null || local === "") {
+      local = cacheHasValue(DOCUMENTS_KEY) ? cache[DOCUMENTS_KEY] : localGetItem(DOCUMENTS_KEY);
+    }
+    if (local == null || local === "") {
+      cache[DOCUMENTS_KEY] = serverRaw;
+      localSetItem(DOCUMENTS_KEY, serverRaw);
+      if (Object.prototype.hasOwnProperty.call(pending, DOCUMENTS_KEY)) {
+        delete pending[DOCUMENTS_KEY];
+        clearPendingKeys([DOCUMENTS_KEY]);
+      }
+      return;
+    }
+    var merged = mergeDocumentsPreferLonger(local, serverRaw);
+    cache[DOCUMENTS_KEY] = merged;
+    localSetItem(DOCUMENTS_KEY, merged);
+    if (plainWordCountSum(merged) > plainWordCountSum(serverRaw)) {
+      pending[DOCUMENTS_KEY] = merged;
+      markPendingKey(DOCUMENTS_KEY);
+      queuedBox.queued = true;
+    } else if (Object.prototype.hasOwnProperty.call(pending, DOCUMENTS_KEY)) {
+      delete pending[DOCUMENTS_KEY];
+      clearPendingKeys([DOCUMENTS_KEY]);
+    }
   }
 
   function parseEntryList(raw) {
@@ -321,27 +375,25 @@
         queued = true;
       }
     }
+    var queuedBox = { queued: queued };
     Object.keys(data).forEach(function (k) {
       if (k === ENTRIES_KEY) return;
+      if (k === DOCUMENTS_KEY) {
+        mergeDocumentKey(data[k], queuedBox);
+        return;
+      }
       if (Object.prototype.hasOwnProperty.call(pending, k)) return;
       var local = localGetItem(k);
       if (local != null && local !== "" && local !== data[k]) {
-        if (k === "lorekeeper_documents_v1") {
-          var mergedDocs = mergeDocumentsPreferLonger(local, data[k]);
-          if (mergedDocs !== local) {
-            cache[k] = mergedDocs;
-            localSetItem(k, mergedDocs);
-            return;
-          }
-        }
         cache[k] = local;
         pending[k] = local;
         markPendingKey(k);
-        queued = true;
+        queuedBox.queued = true;
         return;
       }
       cache[k] = data[k];
     });
+    queued = queuedBox.queued;
     if (queued) scheduleFlush();
   }
 
@@ -364,9 +416,11 @@
     mergeIntoCache(data);
   }
 
-  function fetchUserData(profile) {
+  function fetchUserData(profile, timeoutMs) {
     var url = apiBase() + "/user/data?profile=" + encodeURIComponent(profile || "full");
-    return fetchJson(url, { method: "GET" });
+    var opts = { method: "GET" };
+    if (timeoutMs != null) opts.timeoutMs = timeoutMs;
+    return fetchJson(url, opts);
   }
 
   function startBackgroundServerHydrate() {
@@ -392,16 +446,18 @@
   function startContentHydrate() {
     if (contentHydrated) return Promise.resolve(true);
     if (contentHydratePromise) return contentHydratePromise;
-    contentHydratePromise = fetchUserData("content")
+    contentHydratePromise = fetchUserData("content", CONTENT_FETCH_TIMEOUT_MS)
       .then(function (all) {
+        contentSettled = true;
         if (all && all.ok) {
-          mergeIntoCache(all.data);
           contentHydrated = true;
+          mergeIntoCache(all.data);
           dispatchDataHydrated();
         }
         return !!(all && all.ok);
       })
       .catch(function () {
+        contentSettled = true;
         return false;
       });
     return contentHydratePromise;
@@ -470,6 +526,7 @@
         contentHydratePromise = null;
         dataHydrated = false;
         contentHydrated = false;
+        contentSettled = false;
         return false;
       })
       .catch(function () {
@@ -547,14 +604,38 @@
     });
   }
 
+  function sendKeysOneByOne(keys, batch, options) {
+    var ordered = keys.slice().sort(function (a, b) {
+      if (a === DOCUMENTS_KEY) return -1;
+      if (b === DOCUMENTS_KEY) return 1;
+      return 0;
+    });
+    var index = 0;
+    function next() {
+      if (index >= ordered.length) return Promise.resolve(0);
+      var key = ordered[index];
+      index += 1;
+      var one = {};
+      one[key] = batch[key];
+      return sendBatch([key], one, options).then(function (sent) {
+        return next().then(function (rest) {
+          return (sent || 0) + rest;
+        });
+      });
+    }
+    return next();
+  }
+
   function sendBatch(keys, batch, options) {
     var sent = keys.length;
+    var body = JSON.stringify({ data: batch });
+    var keepalive = !!(options && options.keepalive) && body.length < 60000;
     return fetch(apiBase() + "/user/data/bulk", {
       method: "POST",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ data: batch }),
-      keepalive: !!(options && options.keepalive),
+      body: body,
+      keepalive: keepalive,
     })
       .then(function (res) {
         return res.json().catch(function () {
@@ -589,6 +670,14 @@
     }
     if (!signedIn) return Promise.resolve(0);
     if (!Object.keys(pending).length) return Promise.resolve(0);
+    if (
+      Object.prototype.hasOwnProperty.call(pending, DOCUMENTS_KEY) &&
+      !contentSettled
+    ) {
+      return startContentHydrate().then(function () {
+        return flushPending(options);
+      });
+    }
     if (flushPromise) {
       return flushPromise.then(function () {
         return flushPending(options);
@@ -596,7 +685,7 @@
     }
     var taken = takePendingBatch();
     if (!taken.keys.length) return Promise.resolve(0);
-    flushPromise = sendBatch(taken.keys, taken.batch, options).finally(function () {
+    flushPromise = sendKeysOneByOne(taken.keys, taken.batch, options).finally(function () {
       flushPromise = null;
       if (Object.keys(pending).length && !flushTimer) scheduleFlush();
     });
@@ -785,6 +874,7 @@
         contentHydratePromise = null;
         dataHydrated = false;
         contentHydrated = false;
+        contentSettled = false;
         signedIn = false;
         userEmail = "";
         isOwner = false;
