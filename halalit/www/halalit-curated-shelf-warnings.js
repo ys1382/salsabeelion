@@ -172,6 +172,38 @@
       ]),
     },
     {
+      titleRe: /\bunicorn school\b/i,
+      authorRe: /chapman/i,
+      requiresMagicOptIn: true,
+      detail: bookNote("Unicorn School (Linda Chapman)", [
+        "Hand-verified clean chapter-book series in owner scope.",
+        "Fantasy magic—Book Quest includes these when otherwise clean; exclude magic in Advanced recommendations settings on the play page if needed.",
+        "This pass is Unicorn School only—not Unicorn Academy, and not her other series.",
+      ]),
+    },
+    {
+      titleRe:
+        /\bfirst[- ]class friends\b|\bthe surprise party\b|\bthe treasure hunt\b|\bthe school play\b|\bthe pet show\b|\bteam magic\b/i,
+      authorRe: /chapman/i,
+      requireAuthor: true,
+      requiresMagicOptIn: true,
+      detail: bookNote("Unicorn School (Linda Chapman)", [
+        "Hand-verified clean chapter-book series in owner scope.",
+        "Fantasy magic—Book Quest includes these when otherwise clean; exclude magic in Advanced recommendations settings on the play page if needed.",
+        "This pass is Unicorn School only—not Unicorn Academy, and not her other series.",
+      ]),
+    },
+    {
+      titleRe: /\bpeter nimble\b|\bfantastic eyes\b/i,
+      authorRe: /auxier/i,
+      detail: bookNote("Peter Nimble and His Fantastic Eyes (Jonathan Auxier, The Vanished Kingdom book 1)", [
+        "Hand-verified clean in owner scope—book 1 only.",
+        "Book 2, Sophie Quire and the Last Storyguard, is a hard reject: a female villain is dressed suggestively as a helpless-victim disguise.",
+        "Book Quest can suggest book 1. It will not suggest book 2.",
+        "Book 3, The War of the Maps, is not covered here.",
+      ]),
+    },
+    {
       titleRe: /\bchronicles of prydain\b|\bprydain chronicles\b/i,
       authorRe: /alexander/i,
       requiresMagicOptIn: true,
@@ -1286,7 +1318,7 @@
       ]),
     },
     {
-      titleRe: /\bframed\b|\bvanished\b|\btrapped\b/i,
+      titleRe: /\bframed\b|\bvanished(?!\s+kingdom)\b|\btrapped\b/i,
       authorRe: /ponti|james/i,
       detail: bookNote("Framed! (James Ponti)", [
         "Hand-verified clean in owner scope.",
@@ -2072,6 +2104,13 @@
    */
   var PRO_COLONIAL_NO_RECOMMEND = [];
 
+  var BEAGLE_UNICORN_REJECT = bookNote("The Last Unicorn and Two Hearts (Peter S. Beagle)", [
+    "Hard reject—Halalit won't recommend these, and Book Quest will never suggest them.",
+    "The Last Unicorn: a captive wizard turns the tree he is tied to into a semi-human woman who falls in love with him. That scene feels immodest.",
+    "Two Hearts, the novella in this world, includes gang sexual violence. It is also collected in The Way Home, with the later novella Sooz.",
+    "Alcohol in the novel, and family negativity in owner scope.",
+  ]);
+
   var WARNINGS = [
     {
       titleRe: /\bthe chosen\b|\bcontender\b/i,
@@ -2667,15 +2706,46 @@
       titleRe: /\bthe last unicorn\b|\blast unicorn\b|\btwo hearts\b/i,
       authorRe: /beagle|peter\s*s\.?\s*beagle|peter\s*beagle/i,
       tier: "flag_review",
-      detail: bookNote("The Last Unicorn (Peter S. Beagle)", [
-        "Firm no for now—Halalit won’t recommend.",
-        "Book Quest will never suggest this book or the rest of the Beagle unicorn line—book 1 is enough to hold the whole series.",
-        "Reader discretion: keep in mind if you look it up—owner vet of book 1 only, not a hand-verified clean call on the site.",
-        "Alcohol in the story.",
-        "Possible immodest woman scene (not illustrated in typical editions—still preview).",
-        "Family negativity in owner scope.",
-        "Shmendrick accidentally turns a tree into a sentient woman-tree who falls in love with him—odd romantic/magic beat.",
-        "Halalit won’t recommend this title.",
+      detail: BEAGLE_UNICORN_REJECT,
+    },
+    {
+      titleRe: /\bthe way home\b|\bsooz\b/i,
+      authorRe: /beagle|peter\s*s\.?\s*beagle|peter\s*beagle/i,
+      requireAuthor: true,
+      tier: "flag_review",
+      detail: BEAGLE_UNICORN_REJECT,
+    },
+    {
+      titleRe:
+        /\bvampirates\b|\bdemons of the ocean\b|\btide of terror\b|\bblood captain\b/i,
+      authorRe: /somper/i,
+      tier: "flag_review",
+      detail: bookNote("Vampirates (Justin Somper)", [
+        "Hard reject—an unmarried man and woman share a bed, and the series reads as partly adult romance.",
+        "Halalit won't recommend any book in this series, and Book Quest will never suggest them.",
+        "The line includes Demons of the Ocean, Tide of Terror, Blood Captain, Black Heart, Empire of Night, Immortal War, and the short Dead Deep.",
+      ]),
+    },
+    {
+      titleRe: /\bblack heart\b|\bempire of night\b|\bimmortal war\b|\bdead deep\b/i,
+      authorRe: /somper/i,
+      requireAuthor: true,
+      tier: "flag_review",
+      detail: bookNote("Vampirates (Justin Somper)", [
+        "Hard reject—an unmarried man and woman share a bed, and the series reads as partly adult romance.",
+        "Halalit won't recommend any book in this series, and Book Quest will never suggest them.",
+        "The line includes Demons of the Ocean, Tide of Terror, Blood Captain, Black Heart, Empire of Night, Immortal War, and the short Dead Deep.",
+      ]),
+    },
+    {
+      titleRe: /\bvanished kingdom\b|\bsophie quire\b|\blast storyguard\b/i,
+      authorRe: /auxier/i,
+      tier: "flag_review",
+      detail: bookNote("The Vanished Kingdom (Jonathan Auxier)", [
+        "Book 1, Peter Nimble and His Fantastic Eyes, is hand-verified clean.",
+        "Book 2, Sophie Quire and the Last Storyguard, is a hard reject: a female villain is dressed suggestively as a helpless-victim disguise.",
+        "Halalit won't recommend book 2, and Book Quest will not suggest it.",
+        "A series check covers both of those calls. Book 3, The War of the Maps, is not covered here.",
       ]),
     },
     {
@@ -3968,7 +4038,7 @@
       ], "Won’t Book Quest—not inappropriate."),
     },
     {
-      titleRe: /\bframed\b|\bvanished\b|\btrapped\b/i,
+      titleRe: /\bframed\b|\bvanished(?!\s+kingdom)\b|\btrapped\b/i,
       authorRe: /ponti|james/i,
       tier: "flag_review",
       detail: bookNote("Framed! (James Ponti)", [
@@ -4486,6 +4556,7 @@
     for (var i = 0; i < VERIFIED_CLEAN.length; i++) {
       var e = VERIFIED_CLEAN[i];
       if (!e.titleRe.test(tl)) continue;
+      if (e.requireAuthor && !al) continue;
       if (e.authorRe && al && !e.authorRe.test(al)) continue;
       return {
         tier: "verified_clean",
@@ -4555,6 +4626,7 @@
     for (var i = 0; i < WARNINGS.length; i++) {
       var w = WARNINGS[i];
       if (!w.titleRe.test(tl)) continue;
+      if (w.requireAuthor && !al) continue;
       if (w.authorRe && al && !w.authorRe.test(al)) continue;
       return { tier: w.tier, detail: w.detail, agentFlag: !!w.agentFlag };
     }
@@ -4659,7 +4731,7 @@
 
   /** Book Quest pick titles that imply fantasy magic in the name. */
   var FANTASY_MAGIC_TITLE_RE =
-    /\bmagic\b|\bwizard|\bwitch|\bspell|\bsorcery|\benchant|\bfablehaven|\bhobbit|\blord of the rings\b|\bfellowship of the ring\b|\bthe two towers\b|\breturn of the king\b|\bwardrobe|\boverlander|\bdrank the moon|\bprince of nowhere|\bpoison apple|\btuck everlasting|\bwrinkle in time|\bvampire|\beragon|\bunicorn chronicles|\bunicorn quest|\bspirit animals|\bprydain|\bharry potter|\bnevermoor|\bgregor the\b|\bschool for good and evil\b/i;
+    /\bmagic\b|\bwizard|\bwitch|\bspell|\bsorcery|\benchant|\bfablehaven|\bhobbit|\blord of the rings\b|\bfellowship of the ring\b|\bthe two towers\b|\breturn of the king\b|\bwardrobe|\boverlander|\bdrank the moon|\bprince of nowhere|\bpoison apple|\btuck everlasting|\bwrinkle in time|\bvampire|\beragon|\bunicorn chronicles|\bunicorn quest|\bunicorn school\b|\bspirit animals|\bprydain|\bharry potter|\bnevermoor|\bgregor the\b|\bschool for good and evil\b/i;
 
   /**
    * @param {string} title

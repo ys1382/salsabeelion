@@ -1305,9 +1305,12 @@
 
   function bookQuestBlocksLastUnicorn(title, author) {
     var tl = normTitle(title);
-    if (!tl || !/\bthe last unicorn\b|\blast unicorn\b|\btwo hearts\b/i.test(tl)) return false;
+    if (!tl) return false;
     var al = normAuthor(author);
-    if (al && !/beagle|peter\s*s\.?\s*beagle|peter\s*beagle/i.test(al)) return false;
+    var beagle = /beagle|peter\s*s\.?\s*beagle|peter\s*beagle/i.test(al);
+    if (/\bthe way home\b|\bsooz\b/i.test(tl)) return !!(al && beagle);
+    if (!/\bthe last unicorn\b|\blast unicorn\b|\btwo hearts\b/i.test(tl)) return false;
+    if (al && !beagle) return false;
     return true;
   }
 

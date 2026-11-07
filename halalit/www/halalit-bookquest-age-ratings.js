@@ -71,6 +71,7 @@
     "last-kids-on-earth": BAND.OLDER_CHILD_YOUNG_TEEN,
     "we-are-the-ship": BAND.OLDER_TEEN_ADULT,
     "fortunately-the-milk": BAND.YOUNG_CHILD,
+    "unicorn-school": BAND.YOUNG_CHILD,
     "half-moon-investigations": BAND.OLDER_CHILD_YOUNG_TEEN,
     airman: BAND.OLDER_CHILD_YOUNG_TEEN,
     tidesong: BAND.OLDER_CHILD_YOUNG_TEEN,
@@ -264,6 +265,11 @@
     { band: BAND.OLDER_CHILD_YOUNG_TEEN, titleRe: /fablehaven/i },
     {
       band: BAND.OLDER_CHILD_YOUNG_TEEN,
+      titleRe: /\bpeter nimble\b|\bfantastic eyes\b/i,
+      authorRe: /auxier/i,
+    },
+    {
+      band: BAND.OLDER_CHILD_YOUNG_TEEN,
       titleRe: /\bland of roar\b|\breturn to roar\b|\bbattle for roar\b/i,
       authorRe: /mclachlan|jenny/i,
     },
@@ -324,6 +330,18 @@
     { band: BAND.OLDER_CHILD_YOUNG_TEEN, titleRe: /black beauty/i, authorRe: /sewell|anna/i },
     { band: BAND.OLDER_CHILD_YOUNG_TEEN, titleRe: /because of winn-dixie/i },
     { band: BAND.YOUNG_CHILD, titleRe: /fortunately,?\s*the milk/i, authorRe: /gaiman|neil/i },
+    {
+      band: BAND.YOUNG_CHILD,
+      titleRe: /\bunicorn school\b/i,
+      authorRe: /chapman/i,
+    },
+    {
+      band: BAND.YOUNG_CHILD,
+      titleRe:
+        /\bfirst[- ]class friends\b|\bthe surprise party\b|\bthe treasure hunt\b|\bthe school play\b|\bthe pet show\b|\bteam magic\b/i,
+      authorRe: /chapman/i,
+      requireAuthor: true,
+    },
     { band: BAND.YOUNG_CHILD, titleRe: /charlotte'?s web/i },
     { band: BAND.YOUNG_CHILD, titleRe: /curious george/i },
     { band: BAND.YOUNG_CHILD, titleRe: /goodnight moon/i },
@@ -405,6 +423,7 @@
     for (var i = 0; i < TITLE_BAND_RULES.length; i++) {
       var r = TITLE_BAND_RULES[i];
       if (!r.titleRe.test(tl)) continue;
+      if (r.requireAuthor && !al) continue;
       if (r.authorRe && al && !r.authorRe.test(al)) continue;
       return r.band;
     }
