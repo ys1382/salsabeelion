@@ -1218,6 +1218,13 @@
       "notes": "Owner **parked** — re-checking; book 3: teen boy in bird morph attracted to a female bird; author-comment LGBTQ subtext (not on page); off Book Quest until cleared"
     },
     {
+      "title": "As You Wake, Break the Shell",
+      "author": "Becky Chambers",
+      "source": "cursor_roster",
+      "tier": "flag_review",
+      "notes": "Hard reject — adult, LGBT pride themes. Book 1 of a duology only; not her other series. Book Quest never."
+    },
+    {
       "title": "Arabian Nights / One Thousand and One Nights",
       "author": "",
       "source": "cursor_roster",
@@ -1272,6 +1279,13 @@
       "source": "cursor_roster",
       "tier": "parked",
       "notes": "Owner **parked** — stereotype portrayals to preview; off Book Quest / not verified clean in code until cleared."
+    },
+    {
+      "title": "Every Bird a Prince",
+      "author": "Jenn Reese",
+      "source": "cursor_roster",
+      "tier": "flag_review",
+      "notes": "Hard reject — LGBTQ themes; not an adult book. Also published as Jenn Coleman-Reese. Book Quest never."
     },
     {
       "title": "Eva Evergreen",
@@ -1351,6 +1365,13 @@
       "notes": "Owner **hand-reject** (Jun 2026) — adult webcomic/graphic; not MG; `flag_review`; no Book Quest"
     },
     {
+      "title": "Saved by the Spell",
+      "author": "Tanya Huff",
+      "source": "cursor_roster",
+      "tier": "flag_review",
+      "notes": "Hard reject — reportedly LGBTQ inclusive; not personally hand-checked. Also T. S. Huff. Book Quest never."
+    },
+    {
       "title": "Sisters",
       "author": "Raina Telgemeier",
       "source": "cursor_roster",
@@ -1398,6 +1419,13 @@
       "source": "cursor_roster",
       "tier": "flag_review",
       "notes": "Owner **hand-reject** (Jun 2026) — adult literary; LGBTQ and mature content; `flag_review`; no Book Quest"
+    },
+    {
+      "title": "The Dragon Has Some Complaints",
+      "author": "John Wiswell",
+      "source": "cursor_roster",
+      "tier": "flag_review",
+      "notes": "Hard reject — adult, LGBT pride themes. This novel only, not his other books. Book Quest never."
     },
     {
       "title": "The Cruel Prince / Folk of the Air",
@@ -1458,6 +1486,6 @@
   ],
   "counts": {
     "vetted": 146,
-    "rejected": 37
+    "rejected": 41
   }
 }

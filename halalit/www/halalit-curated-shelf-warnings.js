@@ -2749,6 +2749,47 @@
       ]),
     },
     {
+      titleRe: /\bas you wake,?\s*break the shell\b/i,
+      authorRe: /chambers/i,
+      tier: "flag_review",
+      detail: bookNote("As You Wake, Break the Shell (Becky Chambers)", [
+        "Hard reject—adult novel with LGBT pride themes.",
+        "Halalit won't recommend this book, and Book Quest will never suggest it.",
+        "This is book 1 of a duology. The reject is this title only—not her other series.",
+      ]),
+    },
+    {
+      titleRe: /\bthe dragon has some complaints\b|\bdragon has some complaints\b/i,
+      authorRe: /wiswell/i,
+      tier: "flag_review",
+      detail: bookNote("The Dragon Has Some Complaints (John Wiswell)", [
+        "Hard reject—adult novel with LGBT pride themes.",
+        "Halalit won't recommend this book, and Book Quest will never suggest it.",
+        "This title only—not his other novels.",
+      ]),
+    },
+    {
+      titleRe: /\bevery bird a prince\b/i,
+      authorRe: /reese|coleman[-\s]?reese/i,
+      tier: "flag_review",
+      detail: bookNote("Every Bird a Prince (Jenn Reese)", [
+        "Hard reject—LGBTQ themes. Not an adult book, but still off Halalit's family shelf.",
+        "Halalit won't recommend this book, and Book Quest will never suggest it.",
+        "Jenn Coleman-Reese is another name for this author; a lookup under either name hits this note.",
+      ]),
+    },
+    {
+      titleRe: /\bsaved by the spell\b/i,
+      authorRe: /huff|t\.?\s*s\.?\s*huff/i,
+      tier: "flag_review",
+      detail: bookNote("Saved by the Spell (Tanya Huff)", [
+        "Hard reject—reportedly LGBTQ inclusive.",
+        "Not personally hand-checked. The reject is from that report, not a full owner read.",
+        "Halalit won't recommend this book, and Book Quest will never suggest it.",
+        "T. S. Huff is another name for this author; a lookup under either name hits this note.",
+      ]),
+    },
+    {
       titleRe: /\bamina'?s voice\b|\bamina'?s song\b|\bamina'?s picture\b/i,
       authorRe: /khan|hena\s*khan/i,
       tier: "user_discretion",
