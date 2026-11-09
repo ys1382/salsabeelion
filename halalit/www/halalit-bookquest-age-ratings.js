@@ -72,6 +72,7 @@
     "we-are-the-ship": BAND.OLDER_TEEN_ADULT,
     "fortunately-the-milk": BAND.YOUNG_CHILD,
     "unicorn-school": BAND.YOUNG_CHILD,
+    "vampire-plagues-london": BAND.OLDER_CHILD_YOUNG_TEEN,
     "half-moon-investigations": BAND.OLDER_CHILD_YOUNG_TEEN,
     airman: BAND.OLDER_CHILD_YOUNG_TEEN,
     tidesong: BAND.OLDER_CHILD_YOUNG_TEEN,
@@ -97,6 +98,7 @@
     "the-giver-cl": BAND.OLDER_TEEN_ADULT,
     "benedict-society": BAND.OLDER_TEEN_ADULT,
     fablehaven: BAND.OLDER_TEEN_ADULT,
+    "vampire-plagues-london": BAND.OLDER_TEEN_ADULT,
     "this-totally-bites": BAND.OLDER_CHILD_YOUNG_TEEN,
     "at-first-bite": BAND.OLDER_CHILD_YOUNG_TEEN,
     "harriet-the-spy": BAND.OLDER_TEEN_ADULT,
@@ -267,6 +269,12 @@
       band: BAND.OLDER_CHILD_YOUNG_TEEN,
       titleRe: /\bpeter nimble\b|\bfantastic eyes\b/i,
       authorRe: /auxier/i,
+    },
+    {
+      band: BAND.OLDER_CHILD_YOUNG_TEEN,
+      titleRe:
+        /\bvampire plagues?\b.*\blondon\b|\blondon\b.*\bvampire plagues?\b|\blondon,?\s*1850\b/i,
+      authorRe: /rook|jeapes/i,
     },
     {
       band: BAND.OLDER_CHILD_YOUNG_TEEN,

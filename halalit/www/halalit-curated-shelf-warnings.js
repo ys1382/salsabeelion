@@ -204,6 +204,18 @@
       ]),
     },
     {
+      titleRe:
+        /\bvampire plagues?\b.*\blondon\b|\blondon\b.*\bvampire plagues?\b|\blondon,?\s*1850\b/i,
+      authorRe: /rook|jeapes/i,
+      requiresMagicOptIn: true,
+      detail: bookNote("Vampire Plagues: London, 1850 (Sebastian Rook, book 1)", [
+        "Hand-verified clean in owner scope—book 1 only.",
+        "Sebastian Rook is the name on the books. Ben Jeapes wrote this volume.",
+        "Paranormal and undeath—Book Quest includes book 1 when otherwise clean; exclude magic in Advanced recommendations settings on the play page if needed.",
+        "The rest of the series is not checked yet.",
+      ]),
+    },
+    {
       titleRe: /\bchronicles of prydain\b|\bprydain chronicles\b/i,
       authorRe: /alexander/i,
       requiresMagicOptIn: true,
@@ -4146,9 +4158,89 @@
       authorRe: /wrede|patricia/i,
       tier: "flag_review",
       detail: bookNote("Enchanted Forest Chronicles (Patricia C. Wrede)", [
-        "LGBTQ representation including they/them gender-choice beats in owner scope.",
-        "Halalit won’t recommend the series.",
+        "Hard reject—pride themes without an explicit scene. LGBTQ.",
+        "Dragons decide their gender later in life.",
+        "Halalit won't recommend the series, and Book Quest will never suggest it.",
       ]),
+    },
+    {
+      titleRe: /\btale of two castles\b/i,
+      authorRe: /levine|carson levine|gail carson/i,
+      tier: "flag_review",
+      detail: bookNote("The Tale of Two Castles (Gail Carson Levine)", [
+        "Hard reject—pride themes without an explicit scene. LGBTQ.",
+        "Dragons are the only beings who know their own gender.",
+        "Halalit won't recommend this series, and Book Quest will never suggest it.",
+        "Includes Stolen Magic. Not Ella Enchanted or The Two Princesses of Bamarre.",
+      ]),
+    },
+    {
+      titleRe: /\bstolen magic\b/i,
+      authorRe: /levine|carson levine|gail carson/i,
+      requireAuthor: true,
+      tier: "flag_review",
+      detail: bookNote("The Tale of Two Castles (Gail Carson Levine)", [
+        "Hard reject—pride themes without an explicit scene. LGBTQ.",
+        "Dragons are the only beings who know their own gender.",
+        "Halalit won't recommend this series, and Book Quest will never suggest it.",
+        "Includes Stolen Magic. Not Ella Enchanted or The Two Princesses of Bamarre.",
+      ]),
+    },
+    {
+      titleRe:
+        /\bmy little pony\b\s*(?::\s*)?(?:comics?|friendship is magic|friends forever|legends of magic|nightmare knights|generations|the manga)\b|\bmlp comics?\b|\bnightmare knights\b/i,
+      tier: "user_discretion",
+      detail: bookNote("My Little Pony comics", [
+        "Parent discretion—not a hardest auto-reject.",
+        "Not every comic was checked. LGBTQ representation shows up in enough of them, especially later issues, that some of those comics are on Halalit's reject list.",
+        "Halalit won't recommend the comic line, and Book Quest will not suggest it.",
+        "This note is for the comics, not the show or the chapter books.",
+      ], USER_DISCRETION_PREVIEW_CLOSING),
+    },
+    {
+      titleRe:
+        /\bmarvel comics\b|\bmarvel universe\b|\bmarvel adventures\b|\bdc comics\b|\bdc universe\b|\bdetective comics\b|\bspider-?man\b|\bbatman\b|\bsuperman\b|\bwonder woman\b|\bjustice league\b|\bteen titans\b|\bx-men\b|\bavengers\b|\biron man\b|\bcaptain america\b|\bblack panther\b|\bguardians of the galaxy\b|\bdeadpool\b|\bwolverine\b|\bfantastic four\b|\bdaredevil\b|\bdoctor strange\b|\bdr\.?\s*strange\b|\bscarlet witch\b|\bblack widow\b|\bhawkeye\b|\bant-?man\b|\bcaptain marvel\b|\bms\.?\s*marvel\b|\bmoon girl\b|\bmiles morales\b|\bgwen stacy\b|\bghost-?spider\b|\bharley quinn\b|\bbatgirl\b|\bnightwing\b|\bcatwoman\b|\bgreen lantern\b|\baquaman\b|\bsuicide squad\b|\byoung justice\b/i,
+      tier: "flag_review",
+      detail: bookNote("Marvel and DC comics", [
+        "Hard reject by default—Halalit won't recommend immodest imagery, and Book Quest will never suggest these lines.",
+        "A specific book with modest imagery can still be hand-cleared later.",
+        "This matches the comic lines, not the words marvel or dc by themselves.",
+      ]),
+    },
+    {
+      titleRe: /\bbutterfly meadow\b/i,
+      authorRe: /moss/i,
+      tier: "user_discretion",
+      detail: bookNote("Butterfly Meadow (Olivia Moss)", [
+        "Parent discretion—not a hardest auto-reject.",
+        "Plot reads clean in owner scope.",
+        "The butterflies are basically fairies with somewhat revealing clothing—not fanservice.",
+        "Halalit won't recommend the series, and Book Quest will not suggest it.",
+      ], USER_DISCRETION_PREVIEW_CLOSING),
+    },
+    {
+      titleRe:
+        /\bdazzle'?s first day\b|\btwinkle dives in\b|\bthree cheers for mallow\b|\bmallow'?s top team\b|\bskipper to the rescue\b|\bdazzle'?s new friend\b|\bdazzle'?s prickly problem\b|\btwinkle and the busy bee\b|\bskipper gets spooked\b|\bzippy'?s tall tale\b/i,
+      authorRe: /moss/i,
+      requireAuthor: true,
+      tier: "user_discretion",
+      detail: bookNote("Butterfly Meadow (Olivia Moss)", [
+        "Parent discretion—not a hardest auto-reject.",
+        "Plot reads clean in owner scope.",
+        "The butterflies are basically fairies with somewhat revealing clothing—not fanservice.",
+        "Halalit won't recommend the series, and Book Quest will not suggest it.",
+      ], USER_DISCRETION_PREVIEW_CLOSING),
+    },
+    {
+      titleRe: /\bvampire plagues?\b|\bvampire dusk\b/i,
+      authorRe: /rook|jeapes|hart/i,
+      tier: "user_discretion",
+      detail: bookNote("Vampire Plagues (Sebastian Rook)", [
+        "Only book 1, London, 1850, is hand-checked.",
+        "The rest of the series is not checked yet.",
+        "Halalit won't recommend the unchecked volumes, and Book Quest will not suggest them.",
+        "Books 4–6 were written by Helen Hart under the same pen name and are not part of the book 1 pass.",
+      ], USER_DISCRETION_PREVIEW_CLOSING),
     },
     {
       titleRe: /\bflunked\b|\bfairy tale reform school\b|\bcharmed\b|\btricked\b|\bspellbound\b|\bwished\b/i,

@@ -1091,6 +1091,14 @@
       "notes": "Owner: chapter-book series, clean. Book Quest only when magic is allowed. Not her other pen-name series."
     },
     {
+      "title": "Vampire Plagues: London, 1850",
+      "author": "Sebastian Rook",
+      "source": "cursor_roster",
+      "tier": "verified_clean",
+      "ageBand": "older_kids",
+      "notes": "Owner: book 1 only, clean when magic, paranormal, or undeath is allowed. Book Quest card. Ben Jeapes wrote this volume. The rest of the series is not checked."
+    },
+    {
       "title": "Voice of the Wilderness",
       "author": "Rosanne Parry",
       "source": "cursor_roster",
@@ -1246,6 +1254,13 @@
       "notes": "Most volumes hand-vetted; skip <em>Beach Babe</em> (parent discretion, beach/bikini); **Book Quest** when otherwise clean"
     },
     {
+      "title": "Butterfly Meadow",
+      "author": "Olivia Moss",
+      "source": "cursor_roster",
+      "tier": "user_discretion",
+      "notes": "Plot clean. Butterflies are fairy-like with somewhat revealing clothes, not fanservice. Off Book Quest."
+    },
+    {
       "title": "Batcat",
       "author": "Meggie Ramm",
       "source": "cursor_roster",
@@ -1279,6 +1294,13 @@
       "source": "cursor_roster",
       "tier": "parked",
       "notes": "Owner **parked** — off recommend list for now; same future-flagging lane as Harry Potter; plot clean in owner scope; off `VERIFIED_CLEAN` until cleared."
+    },
+    {
+      "title": "Enchanted Forest Chronicles",
+      "author": "Patricia C. Wrede",
+      "source": "cursor_roster",
+      "tier": "flag_review",
+      "notes": "Hard reject. Dragons decide their gender later in life. Pride themes without an explicit scene. Not her other books."
     },
     {
       "title": "Emmie & Friends",
@@ -1526,6 +1548,27 @@
       "notes": "Owner **idk** — not hand-vetted yet; off Book Quest."
     },
     {
+      "title": "Marvel and DC comics",
+      "author": "",
+      "source": "cursor_roster",
+      "tier": "flag_review",
+      "notes": "Hard reject by default for immodest imagery. A modest book can still be cleared later. Does not match the words marvel or dc alone, and does not cover George's Marvelous Medicine or The Marvelous Land of Oz."
+    },
+    {
+      "title": "My Little Pony comics",
+      "author": "",
+      "source": "cursor_roster",
+      "tier": "user_discretion",
+      "notes": "Not every comic. LGBTQ shows up in enough issues, especially later ones, that some are on the reject list. Not the show or the chapter books. Off Book Quest."
+    },
+    {
+      "title": "The Tale of Two Castles",
+      "author": "Gail Carson Levine",
+      "source": "cursor_roster",
+      "tier": "flag_review",
+      "notes": "Hard reject, including Stolen Magic. Dragons are the only beings who know their own gender. Pride themes without an explicit scene. Not Ella Enchanted or The Two Princesses of Bamarre."
+    },
+    {
       "title": "Vampirates",
       "author": "Justin Somper",
       "source": "cursor_roster",
@@ -1534,7 +1577,7 @@
     }
   ],
   "counts": {
-    "vetted": 146,
-    "rejected": 48
+    "vetted": 150,
+    "rejected": 53
   }
 }
