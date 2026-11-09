@@ -2790,6 +2790,96 @@
       ]),
     },
     {
+      titleRe:
+        /\bemmie\s*(?:&|and)\s*friends\b|\binvisible emmie\b|\bpositively izzy\b|\bbecoming brianna\b|\bremarkably ruby\b|\bentirely emmie\b|\bseriously,?\s*celia\b/i,
+      authorRe: /libenson/i,
+      tier: "flag_review",
+      detail: bookNote("Emmie & Friends (Terri Libenson)", [
+        "Hard reject—Halalit won't recommend this series, and Book Quest will never suggest it.",
+        "Book 1, Invisible Emmie, has a blunt explicit reference to two students having a sexual relationship.",
+        "The other volumes were not each hand-checked. Book 1 is enough to hold the series, because book 1 tends to reflect on the rest.",
+        "Not a claim that every volume repeats that scene, and not her newspaper strip The Pajama Diaries.",
+      ]),
+    },
+    {
+      titleRe: /\bjust jaime\b|\btruly tyler\b|\bsurprisingly sarah\b|\balways anthony\b/i,
+      authorRe: /libenson/i,
+      requireAuthor: true,
+      tier: "flag_review",
+      detail: bookNote("Emmie & Friends (Terri Libenson)", [
+        "Hard reject—Halalit won't recommend this series, and Book Quest will never suggest it.",
+        "Book 1, Invisible Emmie, has a blunt explicit reference to two students having a sexual relationship.",
+        "The other volumes were not each hand-checked. Book 1 is enough to hold the series, because book 1 tends to reflect on the rest.",
+        "Not a claim that every volume repeats that scene, and not her newspaper strip The Pajama Diaries.",
+      ]),
+    },
+    {
+      titleRe: /\bjust a pinch of magic\b/i,
+      authorRe: /\bdow\b|alechia/i,
+      tier: "flag_review",
+      detail: bookNote("Just a Pinch of Magic (Alechia Dow)", [
+        "Hard reject—LGBTQ themes.",
+        "Halalit won't recommend this book, and Book Quest will never suggest it.",
+        "This title only—not her other books.",
+      ]),
+    },
+    {
+      titleRe: /\ba little bit super\b|\bsmall powers come big problems\b/i,
+      authorRe: /schmidt|henderson|krosoczka|cartaya|grimes|mu[nñ]oz|perkins|lukoff|zoboi|linda sue|nayeri|\blai\b|medina/i,
+      tier: "flag_review",
+      detail: bookNote("A Little Bit Super (Gary D. Schmidt and Leah Henderson, editors)", [
+        "Hard reject for the whole story collection—LGBTQ theme.",
+        "One story has the main character setting up a same-gender romantic couple.",
+        "Halalit won't recommend this collection, and Book Quest will never suggest it.",
+        "This is the collection only—not Schmidt's other novels, and not the other writers' own books.",
+      ]),
+    },
+    {
+      titleRe: /\bhow it all ends\b/i,
+      authorRe: /hunsinger/i,
+      requireAuthor: true,
+      tier: "flag_review",
+      detail: bookNote("How It All Ends (Emma Hunsinger)", [
+        "Hard reject—an explicit reference to high-school or older students having a sexual relationship.",
+        "Halalit won't recommend this book, and Book Quest will never suggest it.",
+        "This note matches Emma Hunsinger's graphic novel, not every book with this title.",
+      ]),
+    },
+    {
+      titleRe:
+        /\bprosper redding\b|\bdreadful tale of prosper\b|\blast life of prince alastor\b|\bprince alastor\b/i,
+      authorRe: /bracken/i,
+      tier: "flag_review",
+      detail: bookNote("Prosper Redding (Alexandra Bracken)", [
+        "Hard reject for the duology—Halalit won't recommend it, and Book Quest will never suggest either book.",
+        "A scene mentions a main side character's deceased lesbian mom. LGBTQ theme.",
+        "Books: The Dreadful Tale of Prosper Redding and The Last Life of Prince Alastor.",
+        "Not Alexandra Bracken's other series.",
+      ]),
+    },
+    {
+      titleRe: /\bthe feral child\b/i,
+      authorRe: /golden/i,
+      tier: "user_discretion",
+      detail: bookNote("The Feral Child (Che Golden)", [
+        "Parent discretion—not a hardest auto-reject.",
+        "The plot has not been hand-checked.",
+        "The cover focuses on a humanoid figure, and it is unclear whether they are wearing clothes.",
+        "Halalit won't recommend a book with immodest cover imagery.",
+        "Book 1 only. The Unicorn Hunter and The Raven Queen are not covered here.",
+      ], USER_DISCRETION_PREVIEW_CLOSING),
+    },
+    {
+      titleRe: /\bthe girl who sailed the stars\b|\bgirl who sailed the stars\b/i,
+      authorRe: /woods/i,
+      tier: "user_discretion",
+      detail: bookNote("The Girl Who Sailed the Stars (Matilda Woods)", [
+        "Parent discretion—not a hardest auto-reject.",
+        "Tagged as Christmas-themed. Halalit won't recommend a book focused on a Christian holiday.",
+        "This title only—not The Boy, the Bird and the Coffin Maker.",
+      ], USER_DISCRETION_PREVIEW_CLOSING),
+    },
+    {
       titleRe: /\bamina'?s voice\b|\bamina'?s song\b|\bamina'?s picture\b/i,
       authorRe: /khan|hena\s*khan/i,
       tier: "user_discretion",

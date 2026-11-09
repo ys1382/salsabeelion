@@ -1197,6 +1197,13 @@
   ],
   "rejected": [
     {
+      "title": "A Little Bit Super",
+      "author": "Gary D. Schmidt and Leah Henderson, editors",
+      "source": "cursor_roster",
+      "tier": "flag_review",
+      "notes": "Hard reject — whole story collection. One story has a character setting up a same-gender couple. Not Schmidt's other novels or the other writers' own books. Book Quest never."
+    },
+    {
       "title": "A Series of Unfortunate Events",
       "author": "Lemony Snicket",
       "source": "cursor_roster",
@@ -1274,6 +1281,13 @@
       "notes": "Owner **parked** — off recommend list for now; same future-flagging lane as Harry Potter; plot clean in owner scope; off `VERIFIED_CLEAN` until cleared."
     },
     {
+      "title": "Emmie & Friends",
+      "author": "Terri Libenson",
+      "source": "cursor_roster",
+      "tier": "flag_review",
+      "notes": "Hard reject — book 1 Invisible Emmie has a blunt sexual reference between two students. Other volumes were not each checked; book 1 holds the series because it tends to reflect on the rest. Not The Pajama Diaries. Book Quest never."
+    },
+    {
       "title": "Encyclopedia Brown",
       "author": "Donald J. Sobol",
       "source": "cursor_roster",
@@ -1309,11 +1323,25 @@
       "notes": "Owner **hand-reject** — main character uses they/them pronouns; graphic novel; `flag_review`; no Book Quest"
     },
     {
+      "title": "How It All Ends",
+      "author": "Emma Hunsinger",
+      "source": "cursor_roster",
+      "tier": "flag_review",
+      "notes": "Hard reject — explicit reference to high-school or older students having a sexual relationship. Her graphic novel only. Book Quest never."
+    },
+    {
       "title": "Harry Potter",
       "author": "J.K. Rowling",
       "source": "cursor_roster",
       "tier": "parked",
       "notes": "Owner **parked** — editing recommendation / shelf notes; off `VERIFIED_CLEAN` until cleared."
+    },
+    {
+      "title": "Just a Pinch of Magic",
+      "author": "Alechia Dow",
+      "source": "cursor_roster",
+      "tier": "flag_review",
+      "notes": "Hard reject — LGBTQ themes. This book only, not her other books. Book Quest never."
     },
     {
       "title": "Keeper of the Lost Cities",
@@ -1356,6 +1384,13 @@
       "source": "cursor_roster",
       "tier": "flag_review",
       "notes": "Owner **no** — book 1 OK separately; book 2+ LGBTQ; Israfel/Muslim-beliefs misrepresentation; `flag_review`; no Book Quest"
+    },
+    {
+      "title": "Prosper Redding",
+      "author": "Alexandra Bracken",
+      "source": "cursor_roster",
+      "tier": "flag_review",
+      "notes": "Hard reject — duology, including The Dreadful Tale of Prosper Redding and The Last Life of Prince Alastor. A scene mentions a main side character's deceased lesbian mom. Not her other series. Book Quest never."
     },
     {
       "title": "Patrik the Vampire",
@@ -1421,6 +1456,13 @@
       "notes": "Owner **hand-reject** (Jun 2026) — adult literary; LGBTQ and mature content; `flag_review`; no Book Quest"
     },
     {
+      "title": "The Feral Child",
+      "author": "Che Golden",
+      "source": "cursor_roster",
+      "tier": "user_discretion",
+      "notes": "Parent discretion — plot not hand-checked. Cover focuses on a humanoid figure and it is unclear if they are wearing clothes. Book 1 only, not The Unicorn Hunter or The Raven Queen. Book Quest never."
+    },
+    {
       "title": "The Dragon Has Some Complaints",
       "author": "John Wiswell",
       "source": "cursor_roster",
@@ -1433,6 +1475,13 @@
       "source": "cursor_roster",
       "tier": "flag_review",
       "notes": "Owner **hand-reject** (Jun 2026) — confirmed LGBTQ; teen dark/adult romance; `flag_review`; no Book Quest"
+    },
+    {
+      "title": "The Girl Who Sailed the Stars",
+      "author": "Matilda Woods",
+      "source": "cursor_roster",
+      "tier": "user_discretion",
+      "notes": "Parent discretion — tagged Christmas-themed. Halalit will not recommend a Christian-holiday focus. This book only, not The Boy, the Bird and the Coffin Maker. Book Quest never."
     },
     {
       "title": "The Grace of Wild Things",
@@ -1486,6 +1535,6 @@
   ],
   "counts": {
     "vetted": 146,
-    "rejected": 41
+    "rejected": 48
   }
 }
