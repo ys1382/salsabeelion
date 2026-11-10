@@ -431,14 +431,286 @@
     pumpCoverQueue();
   }
 
+  var LIST_REJECT = { flag_review: true };
+  var LIST_DISCRETION = {
+    user_discretion: true,
+    fanservice_caution: true,
+    preview_caution: true,
+    teen_caution: true,
+  };
+  var bookBlurbToken = 0;
+
+  function noteLines(detail) {
+    var parts = String(detail || "").split(/\n+/);
+    var out = [];
+    for (var i = 0; i < parts.length; i++) {
+      var line = parts[i].replace(/\s+/g, " ").trim();
+      if (!line) continue;
+      if (isTitleHeader(line)) continue;
+      out.push(line);
+    }
+    return out;
+  }
+
+  function isTitleHeader(line) {
+    if (/hand-verified|reads as clean|parent|preview|magic|family/i.test(line)) return false;
+    if (line.length > 88) return false;
+    if (/[.!?]/.test(line)) return false;
+    return true;
+  }
+
+  function lineMentionsLgbtq(line) {
+    return /\blgbtq?\b|\blesbian\b|\bgay\b|\btransgender\b|\bnon-?binary\b|\bqueer\b/i.test(line);
+  }
+
+  function readerLine(line) {
+    return String(line || "")
+      .replace(/\s*(?:—|–|-)\s*Book Quest includes[\s\S]*$/i, "")
+      .replace(/\s*Book Quest includes when otherwise clean[\s\S]*$/i, "")
+      .replace(/\s*Halalit.s Book Quest includes[\s\S]*$/i, "")
+      .trim();
+  }
+
+  function pushUnique(arr, line) {
+    var key = String(line || "").toLowerCase();
+    if (!key) return;
+    for (var i = 0; i < arr.length; i++) {
+      if (String(arr[i]).toLowerCase() === key) return;
+    }
+    arr.push(line);
+  }
+
+  function collectDetails(title, author) {
+    title = straightApostrophe(title);
+    author = straightApostrophe(author);
+    var Cur = global.HalalitCuratedShelfWarnings;
+    var lines = [];
+    var hint = null;
+    var VS = global.HalalitBookcheckVetSource;
+    if (VS && typeof VS.resolveHandVetHint === "function") hint = VS.resolveHandVetHint(title, author);
+    if (hint && hint.detail) {
+      var fromHint = noteLines(hint.detail);
+      for (var i = 0; i < fromHint.length; i++) pushUnique(lines, fromHint[i]);
+    }
+    if (!Cur) return { hint: hint, lines: lines };
+    var extras = [];
+    if (typeof Cur.familyPortrayalMatch === "function") extras.push(Cur.familyPortrayalMatch(title, author));
+    if (typeof Cur.mentalHealthComfortMatch === "function") extras.push(Cur.mentalHealthComfortMatch(title, author));
+    if (typeof Cur.deityComfortMatch === "function") extras.push(Cur.deityComfortMatch(title, author));
+    if (typeof Cur.parentNoteMatch === "function") extras.push(Cur.parentNoteMatch(title, author));
+    if (typeof Cur.culturalRepresentationMatch === "function") extras.push(Cur.culturalRepresentationMatch(title, author));
+    if (typeof Cur.faithInStoryMatch === "function") extras.push(Cur.faithInStoryMatch(title, author));
+    if (typeof Cur.proseGraphicAdaptationMatch === "function") extras.push(Cur.proseGraphicAdaptationMatch(title, author));
+    for (var e = 0; e < extras.length; e++) {
+      var hit = extras[e];
+      if (!hit || !hit.detail) continue;
+      var more = noteLines(hit.detail);
+      for (var m = 0; m < more.length; m++) pushUnique(lines, more[m]);
+    }
+    return { hint: hint, lines: lines };
+  }
+
+  function boxStatus(lines) {
+    if (!lines.length) return { word: "Nothing noted", tone: "clear" };
+    if (/preview|discretion|sensitive readers/i.test(lines.join(" "))) return { word: "Preview", tone: "preview" };
+    return { word: "A note", tone: "note" };
+  }
+
+  function pageKind(hint) {
+    if (!hint || !hint.tier) return "unknown";
+    if (LIST_REJECT[hint.tier]) return "reject";
+    if (LIST_DISCRETION[hint.tier]) return "discretion";
+    if (hint.tier === "verified_clean" || hint.tier === "deity_comfort") return "clean";
+    if (/won'?t recommend|outside halalit|hard reject/i.test(String(hint.detail || ""))) return "reject";
+    return "clean";
+  }
+
+  function buildBookPageModel(title, author) {
+    var pack = collectDetails(title, author);
+    var kind = pageKind(pack.hint);
+    if (kind === "reject" || kind === "discretion") {
+      return {
+        kind: kind,
+        verdict: kind === "reject" ? "Halalit won’t recommend this." : "This one is your call.",
+        reasons: pack.lines.slice(),
+        boxes: null,
+        also: [],
+        handChecked: true,
+      };
+    }
+    if (kind === "unknown") {
+      return {
+        kind: "unknown",
+        verdict: "Halalit hasn’t read this closely yet.",
+        reasons: [],
+        boxes: null,
+        also: [],
+        handChecked: false,
+      };
+    }
+    var buckets = { lovely: [], scary: [], romance: [], substance: [], beliefs: [] };
+    var also = [];
+    var lovelyRe =
+      /hand-verified|reads as clean|week pick|stewardship|pro-nature|great family|clean overall|clean in owner|clean for/i;
+    var strongRe =
+      /preview|discretion|alcohol|drug|morphine|smoking|wine|romance|immodest|outfit|kissing|parent negativ|parent-bash|mental-health|divorced|magic|fantasy|deity|mytholog|scary|violence|horror|killing|grief|injured|sensitive readers|dark-mentality/i;
+    for (var n = 0; n < pack.lines.length; n++) {
+      var line = readerLine(pack.lines[n]);
+      if (!line || lineMentionsLgbtq(line)) continue;
+      if (lovelyRe.test(line) && !strongRe.test(line)) pushUnique(buckets.lovely, line);
+      else if (/alcohol|drug|morphine|smoking|wine|substance/i.test(line)) pushUnique(buckets.substance, line);
+      else if (/romance|immodest|outfit|kissing|modesty/i.test(line)) pushUnique(buckets.romance, line);
+      else if (
+        /magic|fantasy|deity|mytholog|family portray|parent negativ|parent-bash|mental-health|divorced|guardian/i.test(
+          line
+        )
+      ) {
+        pushUnique(buckets.beliefs, line);
+      } else if (/scary|violence|horror|killing|grief|injured|sensitive readers|dark-mentality/i.test(line)) {
+        pushUnique(buckets.scary, line);
+      } else if (lovelyRe.test(line)) pushUnique(buckets.lovely, line);
+      else pushUnique(also, line);
+    }
+    if (!buckets.lovely.length) buckets.lovely.push("Halalit hand-checked this for the family shelf.");
+    function box(titleText, lines, lovely) {
+      var status = boxStatus(lines);
+      if (lovely && status.tone !== "preview") status = { word: "Clear", tone: "clear" };
+      return { title: titleText, status: status.word, tone: status.tone, lines: lines };
+    }
+    var boxes = [
+      box("What’s lovely", buckets.lovely, true),
+      box("Scariness", buckets.scary, false),
+      box("Romance and modesty", buckets.romance, false),
+      box("Substances", buckets.substance, false),
+      box("Magic, beliefs, and family", buckets.beliefs, false),
+    ];
+    var preview = false;
+    for (var b = 0; b < boxes.length; b++) {
+      if (boxes[b].tone === "preview") preview = true;
+    }
+    if (!preview && /preview|discretion|sensitive readers/i.test(also.join(" "))) preview = true;
+    return {
+      kind: "clean",
+      verdict: preview ? "Hand-checked, with a few things to preview." : "Hand-checked. Halalit would suggest this.",
+      reasons: [],
+      boxes: boxes,
+      also: also,
+      handChecked: true,
+    };
+  }
+
+  function plainDescription(raw) {
+    var s = String(raw || "")
+      .replace(/<[^>]+>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+    if (s.length > 700) {
+      var cut = s.slice(0, 700);
+      var dot = cut.lastIndexOf(". ");
+      s = (dot > 240 ? cut.slice(0, dot + 1) : cut) + "…";
+    }
+    return s;
+  }
+
+  function descriptionFromWork(work) {
+    if (!work || typeof work !== "object") return "";
+    var d = work.description;
+    if (typeof d === "string") return d;
+    if (d && typeof d.value === "string") return d.value;
+    return "";
+  }
+
+  function loadBookBlurb(title, author, el) {
+    bookBlurbToken += 1;
+    var token = bookBlurbToken;
+    var quiet = "Halalit doesn’t have a short description for this one yet.";
+    function setText(text) {
+      if (token !== bookBlurbToken || !el) return;
+      el.textContent = text || quiet;
+    }
+    if (!el) return;
+    var Cover = global.HalalitCoverThumb;
+    if (!Cover || typeof Cover.fetchCoverDoc !== "function" || !global.fetch) {
+      setText(quiet);
+      return;
+    }
+    el.textContent = "Looking up a short description…";
+    Cover.fetchCoverDoc(title, author)
+      .then(function (doc) {
+        if (token !== bookBlurbToken) return null;
+        if (!doc) {
+          setText(quiet);
+          return null;
+        }
+        var first = doc.first_sentence;
+        var quick = "";
+        if (Array.isArray(first)) quick = first.join(" ");
+        else if (typeof first === "string") quick = first;
+        var key = doc.key;
+        if (!key || String(key).indexOf("/works/") !== 0) {
+          setText(plainDescription(quick) || quiet);
+          return null;
+        }
+        return global
+          .fetch("https://openlibrary.org" + key + ".json")
+          .then(function (res) {
+            if (!res.ok) return null;
+            return res.json();
+          })
+          .then(function (work) {
+            setText(plainDescription(descriptionFromWork(work) || quick) || quiet);
+          });
+      })
+      .catch(function () {
+        setText(quiet);
+      });
+  }
+
+  function shelfHasTitle(list, title) {
+    if (!list || !list.length) return false;
+    for (var i = 0; i < list.length; i++) {
+      var row = list[i] || {};
+      if (titleMatches(row.title || row.titlePlain || "", title)) return true;
+    }
+    return false;
+  }
+
   function cardHtml(opts) {
     var title = opts.title;
     var author = opts.author || "";
     var badge = opts.badge || "";
     var meta = opts.meta || "";
     var coverId = opts.coverId;
+    var openPage = !!opts.openPage;
+    var themes = opts.themeIds && opts.themeIds.length ? opts.themeIds.join("|") : "";
+    var pageAttrs = openPage
+      ? ' data-suggests-bookpage="1" tabindex="0" data-title="' +
+        escapeHtml(title) +
+        '" data-author="' +
+        escapeHtml(author) +
+        '" data-age="' +
+        escapeHtml(opts.ageBand || "") +
+        '" data-themes="' +
+        escapeHtml(themes) +
+        '" data-series="' +
+        escapeHtml(opts.seriesName || "") +
+        '"'
+      : "";
+    var action = openPage
+      ? '<p class="halalit-suggests__action"><a href="#suggests">Open this book</a></p>'
+      : '<p class="halalit-suggests__action"><a href="' +
+        escapeHtml(bookcheckHref(title, author)) +
+        '" data-suggests-bookcheck="1" data-title="' +
+        escapeHtml(title) +
+        '" data-author="' +
+        escapeHtml(author) +
+        '">Look up in Bookcheck</a></p>';
     return (
-      '<article class="halalit-suggests__card">' +
+      '<article class="halalit-suggests__card' +
+      (openPage ? " halalit-suggests__card--page" : "") +
+      '"' +
+      pageAttrs +
+      ">" +
       '<div class="halalit-suggests__cover" data-cover-id="' +
       escapeHtml(coverId) +
       '" aria-hidden="true"></div>' +
@@ -451,13 +723,7 @@
         ? '<p class="halalit-suggests__book-author muted">' + escapeHtml(author) + "</p>"
         : "") +
       (meta ? '<p class="halalit-suggests__meta muted">' + escapeHtml(meta) + "</p>" : "") +
-      '<p class="halalit-suggests__action"><a href="' +
-      escapeHtml(bookcheckHref(title, author)) +
-      '" data-suggests-bookcheck="1" data-title="' +
-      escapeHtml(title) +
-      '" data-author="' +
-      escapeHtml(author) +
-      '">Look up in Bookcheck</a></p>' +
+      action +
       "</div></article>"
     );
   }
@@ -484,6 +750,7 @@
       search: "",
       seeMore: false,
       seeMoreOffset: 0,
+      book: null,
     };
 
     function allStandaloneForBand() {
@@ -556,7 +823,8 @@
       return hits;
     }
 
-    function renderItem(item, coverPrefix, idx) {
+    function renderItem(item, coverPrefix, idx, openPage) {
+      if (openPage == null) openPage = true;
       if (item.kind === "series") {
         var vol = item.rep.volume;
         var step = item.rep.index + 1;
@@ -566,6 +834,10 @@
           badge: item.series.name,
           meta: "Next unread · book " + step + " of " + item.series.volumes.length,
           coverId: coverPrefix + idx,
+          openPage: openPage,
+          ageBand: vol.ageBand,
+          themeIds: item.series.themeIds || [],
+          seriesName: item.series.name,
         });
       }
       var book = item.book;
@@ -574,7 +846,114 @@
         author: book.author,
         meta: bandLabel(book.ageBand),
         coverId: coverPrefix + idx,
+        openPage: openPage,
+        ageBand: book.ageBand,
+        themeIds: book.themeIds || [],
       });
+    }
+
+    function themeName(id) {
+      for (var i = 0; i < D.THEMES.length; i++) {
+        if (D.THEMES[i].id === id) return D.THEMES[i].name;
+      }
+      return "";
+    }
+
+    function listHtml(lines) {
+      if (!lines || !lines.length) return "<li>Halalit parked this, and the note didn’t include a reason.</li>";
+      var html = "";
+      for (var i = 0; i < lines.length; i++) html += "<li>" + escapeHtml(lines[i]) + "</li>";
+      return html;
+    }
+
+    function renderBookPage() {
+      var book = state.book;
+      if (!book || !book.title) return renderHome();
+      var model = buildBookPageModel(book.title, book.author);
+      var onWish = shelfHasTitle(global.HalalitWantToRead && global.HalalitWantToRead.load(), book.title);
+      var onFinished = shelfHasTitle(loadAlreadyRead(), book.title);
+      var reasonHtml = "";
+      if (model.kind === "reject" || model.kind === "discretion") {
+        reasonHtml =
+          '<section class="halalit-suggests__reason"><h3>' +
+          (model.kind === "reject" ? "Why Halalit won’t recommend this" : "Why this is your call") +
+          "</h3><ul>" +
+          listHtml(model.reasons) +
+          "</ul></section>";
+      }
+      var boxesHtml = "";
+      if (model.boxes) {
+        boxesHtml = '<div class="halalit-suggests__boxes">';
+        for (var b = 0; b < model.boxes.length; b++) {
+          var box = model.boxes[b];
+          var lines = "";
+          for (var li = 0; li < box.lines.length; li++) {
+            lines += "<p>" + escapeHtml(box.lines[li]) + "</p>";
+          }
+          boxesHtml +=
+            '<section class="halalit-suggests__box halalit-suggests__box--' +
+            escapeHtml(box.tone) +
+            '"><h3 class="halalit-suggests__box-title">' +
+            escapeHtml(box.title) +
+            '</h3><p class="halalit-suggests__box-status">' +
+            escapeHtml(box.status) +
+            "</p>" +
+            lines +
+            "</section>";
+        }
+        boxesHtml += "</div>";
+      }
+      var alsoHtml = "";
+      if (model.also && model.also.length) {
+        alsoHtml = '<section class="halalit-suggests__also"><h3>Also noted</h3><ul>' + listHtml(model.also) + "</ul></section>";
+      }
+      var tags = [];
+      if (book.ageBand) tags.push(bandLabel(book.ageBand));
+      if (model.handChecked) tags.push("Hand-checked");
+      var themeIds = book.themeIds || [];
+      for (var t = 0; t < themeIds.length; t++) {
+        var name = themeName(themeIds[t]);
+        if (name) tags.push(name);
+      }
+      var tagsHtml = "";
+      for (var g = 0; g < tags.length; g++) {
+        tagsHtml += '<span class="halalit-suggests__tag">' + escapeHtml(tags[g]) + "</span>";
+      }
+      return (
+        '<section class="halalit-suggests__panel">' +
+        '<button type="button" class="halalit-suggests__text-btn" data-back-home>← Back to Book Wander</button>' +
+        '<div class="halalit-suggests__book">' +
+        '<div class="halalit-suggests__cover halalit-suggests__book-cover" data-cover-id="bookpage" aria-hidden="true"></div>' +
+        "<div>" +
+        (book.seriesName ? '<p class="halalit-suggests__badge">' + escapeHtml(book.seriesName) + "</p>" : "") +
+        "<h2>" +
+        escapeHtml(book.title) +
+        "</h2>" +
+        (book.author ? '<p class="halalit-suggests__book-author">' + escapeHtml(book.author) + "</p>" : "") +
+        '<p class="halalit-suggests__verdict">' +
+        escapeHtml(model.verdict) +
+        "</p>" +
+        '<div class="halalit-suggests__shelf-row">' +
+        '<button type="button" class="halalit-suggests__shelf-btn" data-shelf="wish"' +
+        (onWish ? " disabled" : "") +
+        ">" +
+        (onWish ? "On wishlist" : "Wishlist") +
+        "</button>" +
+        '<button type="button" class="halalit-suggests__shelf-btn" data-shelf="finished"' +
+        (onFinished ? " disabled" : "") +
+        ">" +
+        (onFinished ? "On finished" : "Finished") +
+        "</button></div>" +
+        '<p class="halalit-suggests__shelf-status muted" data-shelf-status></p>' +
+        "</div></div>" +
+        reasonHtml +
+        '<h3 class="halalit-suggests__blurb-title">About this book</h3>' +
+        '<p class="halalit-suggests__blurb" data-book-blurb>Looking up a short description…</p>' +
+        boxesHtml +
+        alsoHtml +
+        (tagsHtml ? '<div class="halalit-suggests__tags">' + tagsHtml + "</div>" : "") +
+        "</section>"
+      );
     }
 
     function loadCoversFor(host, items, prefix) {
@@ -654,7 +1033,7 @@
 
       var spotHtml = spots
         .map(function (item, idx) {
-          return renderItem(item, "spot", idx);
+          return renderItem(item, "spot", idx, true);
         })
         .join("");
 
@@ -759,11 +1138,24 @@
       );
     }
 
+    function fitBookPanel() {
+      if (state.view !== "book") return;
+      var panel = root.querySelector(".halalit-suggests__panel");
+      if (!panel) return;
+      var top = panel.getBoundingClientRect().top;
+      if (top < 0) top = 0;
+      panel.style.minHeight = Math.max(280, global.innerHeight - top) + "px";
+    }
+
     function paint() {
       coverGen += 1;
       coverQueue = [];
+      if (state.readerBand && state.view === "book") root.classList.add("halalit-suggests--book");
+      else root.classList.remove("halalit-suggests--book");
       if (!state.readerBand) {
         root.innerHTML = renderAgeGate();
+      } else if (state.view === "book") {
+        root.innerHTML = renderBookPage();
       } else if (state.view === "seeMore") {
         root.innerHTML = renderSeeMore();
       } else if (state.view === "theme") {
@@ -791,7 +1183,16 @@
         else items = [];
         loadCoversFor(grid, items, prefix);
       }
+      if (state.view === "book" && state.book) {
+        paintCover(root.querySelector('[data-cover-id="bookpage"]'), state.book.title, state.book.author);
+        loadBookBlurb(state.book.title, state.book.author, root.querySelector("[data-book-blurb]"));
+        fitBookPanel();
+      }
     }
+
+    global.addEventListener("resize", function () {
+      if (state.view === "book") fitBookPanel();
+    });
 
     function wire() {
       var ageBtns = root.querySelectorAll("[data-band]");
@@ -860,6 +1261,74 @@
               } catch (e) {}
             }
           }, 220);
+        });
+      }
+      function openBookPageFrom(el) {
+        var themes = String(el.getAttribute("data-themes") || "")
+          .split("|")
+          .filter(function (id) {
+            return !!id;
+          });
+        state.book = {
+          title: el.getAttribute("data-title") || "",
+          author: el.getAttribute("data-author") || "",
+          ageBand: el.getAttribute("data-age") || "",
+          themeIds: themes,
+          seriesName: el.getAttribute("data-series") || "",
+        };
+        state.view = "book";
+        state.search = "";
+        paint();
+      }
+      var pageCards = root.querySelectorAll("[data-suggests-bookpage]");
+      for (var p = 0; p < pageCards.length; p++) {
+        pageCards[p].addEventListener("click", function (ev) {
+          ev.preventDefault();
+          openBookPageFrom(ev.currentTarget);
+        });
+        pageCards[p].addEventListener("keydown", function (ev) {
+          if (ev.key !== "Enter" && ev.key !== " ") return;
+          ev.preventDefault();
+          openBookPageFrom(ev.currentTarget);
+        });
+      }
+      var shelfBtns = root.querySelectorAll("[data-shelf]");
+      for (var s = 0; s < shelfBtns.length; s++) {
+        shelfBtns[s].addEventListener("click", function (ev) {
+          var btn = ev.currentTarget;
+          var book = state.book;
+          if (!book || !book.title) return;
+          var status = root.querySelector("[data-shelf-status]");
+          var kind = btn.getAttribute("data-shelf");
+          var ok = false;
+          if (kind === "wish" && global.HalalitWantToRead && typeof global.HalalitWantToRead.add === "function") {
+            ok = global.HalalitWantToRead.add({
+              title: book.title,
+              author: book.author || "",
+              source: "book_wander",
+            });
+          } else if (kind === "finished" && global.HalalitPersonalLibrary && typeof global.HalalitPersonalLibrary.add === "function") {
+            var today = new Date();
+            var month = String(today.getMonth() + 1);
+            var day = String(today.getDate());
+            if (month.length < 2) month = "0" + month;
+            if (day.length < 2) day = "0" + day;
+            ok = global.HalalitPersonalLibrary.add({
+              title: book.title,
+              author: book.author || "",
+              source: "book_wander",
+              finishedAt: today.getFullYear() + "-" + month + "-" + day,
+            });
+          }
+          if (!ok) {
+            if (status) status.textContent = "Couldn’t save that just now.";
+            return;
+          }
+          btn.disabled = true;
+          btn.textContent = kind === "wish" ? "On wishlist" : "On finished";
+          if (status) {
+            status.textContent = kind === "wish" ? "Saved to your wishlist." : "Saved to Already read.";
+          }
         });
       }
       var bcLinks = root.querySelectorAll("a[data-suggests-bookcheck]");

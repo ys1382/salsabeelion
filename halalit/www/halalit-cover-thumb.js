@@ -147,14 +147,61 @@
     ai_likely_reject: true,
   };
 
+  /** Hand-list tiers a reader may look up. Show the cover so they can tell which book it is. */
+  var LOOKUP_COVER_TIERS = {
+    flag_review: true,
+    preview_caution: true,
+    fanservice_caution: true,
+    teen_caution: true,
+    user_discretion: true,
+  };
+
   /**
-   * Cover art can show fanservice or other problems — only show for family-shelf-eligible titles.
+   * Hide the image only when the hand note says this book's own cover is immodest.
+   * A later volume ("Book 4: immodest cover") does not hide the earlier books.
+   * "Preview covers" (bare knees, short tutus) still shows the image.
+   */
+  function lineHidesCoverImage(line) {
+    var s = String(line || "");
+    if (/cover to cover/i.test(s)) return false;
+    if (/preview covers/i.test(s) && !/immodest/i.test(s)) return false;
+    if (/immodesty fanservice on cover|fanservice on cover art/i.test(s)) return true;
+    if (/immodest cover imagery/i.test(s)) return true;
+    if (/immodest cover/i.test(s) && !/\bbook\s+\d+\b/i.test(s)) return true;
+    if (/cover focuses on/i.test(s) && /clothes/i.test(s)) return true;
+    return false;
+  }
+
+  function detailHidesCoverImage(detail) {
+    var parts = String(detail || "").split(/\n+/);
+    for (var i = 0; i < parts.length; i++) {
+      if (lineHidesCoverImage(parts[i])) return true;
+    }
+    return false;
+  }
+
+  function handVetForCover(title, author) {
+    var VS = global.HalalitBookcheckVetSource;
+    if (!VS || typeof VS.resolveHandVetHint !== "function") return null;
+    return VS.resolveHandVetHint(title, author);
+  }
+
+  /**
+   * Bookcheck lookup may show a cover for a discretion or hard-reject title
+   * unless that cover itself is immodest. Book Wander still uses
+   * shouldShowCoverThumbForHandVetted, which stays on hand-checked clean books.
    * @param {string} title
    * @param {string} author
    * @param {string|null} [catalogHintTier]
    * @param {object|null} [shelfOpts] — same opts as isEligibleForFamilyShelf (Book Quest prefs, etc.)
    */
   function shouldShowCoverThumb(title, author, catalogHintTier, shelfOpts) {
+    var hand = handVetForCover(title, author);
+    if (hand && detailHidesCoverImage(hand.detail)) return false;
+    var handTier = hand && hand.tier;
+    if (LOOKUP_COVER_TIERS[handTier]) return true;
+    if (!hand && LOOKUP_COVER_TIERS[catalogHintTier]) return true;
+
     var Policy = global.HalalitFamilyShelfPolicy;
     if (!Policy || typeof Policy.isEligibleForFamilyShelf !== "function") return false;
     if (typeof Policy.hardExclusionDetailForTitle === "function" && Policy.hardExclusionDetailForTitle(title, author)) {
@@ -162,11 +209,7 @@
     }
     var tier = catalogHintTier || "";
     if (BLOCKED_COVER_TIERS[tier]) return false;
-    var VS = global.HalalitBookcheckVetSource;
-    if (VS && typeof VS.resolveHandVetHint === "function") {
-      var hand = VS.resolveHandVetHint(title, author);
-      if (hand && BLOCKED_COVER_TIERS[hand.tier]) return false;
-    }
+    if (hand && BLOCKED_COVER_TIERS[hand.tier]) return false;
     if (typeof Policy.noRecommendKnownFanservice === "function" && Policy.noRecommendKnownFanservice(title, author)) {
       return false;
     }
