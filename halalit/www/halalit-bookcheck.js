@@ -2790,6 +2790,40 @@
       return merged;
     }
 
+    function withLookupCover(title, author, done) {
+      var Cover = global.HalalitCoverThumb;
+      var gen = catalogMeta.lookupGen;
+      var Policy = global.HalalitFamilyShelfPolicy;
+      var shelfOpts = Policy ? bookcheckShelfOpts(Policy) : null;
+      if (
+        !Cover ||
+        typeof Cover.fetchCoverDoc !== "function" ||
+        (typeof Cover.shouldShowCoverThumb === "function" &&
+          !Cover.shouldShowCoverThumb(title, author, catalogMeta.hintTier || null, shelfOpts))
+      ) {
+        done();
+        return;
+      }
+      if (statusEl) statusEl.textContent = "Fetching the cover…";
+      Cover.fetchCoverDoc(title, author, {
+        catalogHintTier: catalogMeta.hintTier || null,
+        shelfOpts: shelfOpts,
+      })
+        .then(function (doc) {
+          if (catalogMeta.lookupGen !== gen) return;
+          if (doc && typeof Cover.coverUrlFromDoc === "function") {
+            catalogMeta.lastDoc = doc;
+            var url = Cover.coverUrlFromDoc(doc) || "";
+            if (url) catalogMeta.coverUrl = url;
+          }
+          done();
+        })
+        .catch(function () {
+          if (catalogMeta.lookupGen !== gen) return;
+          done();
+        });
+    }
+
     function applyHandVetHint(handHint, ownTitle, ownAuthor) {
       handHint = mergeHandAdvisories(handHint, ownTitle, ownAuthor);
       catalogMeta.hintTier = handHint.tier;
@@ -2827,11 +2861,13 @@
         }
         releaseLookupBtn();
       }
-      if (chaseLoader && chaseLoader.isVisible()) {
-        chaseLoader.pounceAndHide(revealHandVet);
-      } else {
-        revealHandVet();
-      }
+      withLookupCover(ownTitle, ownAuthor, function () {
+        if (chaseLoader && chaseLoader.isVisible()) {
+          chaseLoader.pounceAndHide(revealHandVet);
+        } else {
+          revealHandVet();
+        }
+      });
     }
 
     function runLookupCore() {
@@ -2887,11 +2923,13 @@
             if (statusEl) statusEl.textContent = "Matched Halalit’s never-recommend rules (hardest tier).";
             releaseLookupBtn();
           }
-          if (chaseLoader && chaseLoader.isVisible()) {
-            chaseLoader.pounceAndHide(revealHardExclusion);
-          } else {
-            revealHardExclusion();
-          }
+          withLookupCover(ownTitle, ownAuthor, function () {
+            if (chaseLoader && chaseLoader.isVisible()) {
+              chaseLoader.pounceAndHide(revealHardExclusion);
+            } else {
+              revealHardExclusion();
+            }
+          });
           return;
         }
       }
