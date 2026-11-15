@@ -4432,6 +4432,89 @@
       tier: "flag_review",
       detail: HUDA_F_GRAPHIC_DETAIL,
     },
+    /* Owner reject reviews — Nov 2026 */
+    {
+      titleRe: /\bcarousel summer\b/i,
+      authorRe: /gros/i,
+      tier: "flag_review",
+      detail: bookNote("Carousel Summer (Kathleen Gros)", [
+        "Hard reject—LGBTQ themes.",
+        "Halalit won't recommend this book, and Book Quest will never suggest it.",
+        "This title only—not her other books.",
+      ]),
+    },
+    {
+      titleRe: /\bsmall town pride\b/i,
+      authorRe: /stamper/i,
+      tier: "flag_review",
+      detail: bookNote("Small Town Pride (Phil Stamper)", [
+        "Hard reject—LGBTQ themes.",
+        "Halalit won't recommend this book, and Book Quest will never suggest it.",
+        "This title only—not his other books.",
+      ]),
+    },
+    {
+      titleRe: /\bqueen bees of tybee(?: county)?\b/i,
+      authorRe: /casey\s*chu|\bchu\b|panda\s*dulce/i,
+      tier: "flag_review",
+      detail: bookNote("The Queen Bees of Tybee County (Kyle Casey Chu)", [
+        "Hard reject—LGBTQ themes.",
+        "Halalit won't recommend this book, and Book Quest will never suggest it.",
+        "Panda Dulce is another name for this author; a lookup under either name hits this note.",
+        "This title only.",
+      ]),
+    },
+    {
+      titleRe: /\bnoah frye gets crushed\b/i,
+      authorRe: /horne/i,
+      tier: "flag_review",
+      detail: bookNote("Noah Frye Gets Crushed (Maggie Horne)", [
+        "Hard reject—LGBTQ themes.",
+        "Halalit won't recommend this book, and Book Quest will never suggest it.",
+        "This title only—not her other books.",
+      ]),
+    },
+    {
+      titleRe: /\btegan\s*(?:&|and)\s*sara\b/i,
+      authorRe: /quin|walden|\btegan\b/i,
+      tier: "flag_review",
+      detail: bookNote("Tegan and Sara: Junior High (Tegan Quin, Sara Quin, Tillie Walden)", [
+        "Hard reject—LGBTQ themes.",
+        "Written by Tegan Quin and Sara Quin, drawn by Tillie Walden.",
+        "Halalit won't recommend this book, and Book Quest will never suggest it.",
+        "This book only—not Tillie Walden's other books.",
+      ]),
+    },
+    {
+      titleRe: /\bbeetle\s*(?:&|and)\s*the hollowbones\b/i,
+      authorRe: /layne|aliza/i,
+      tier: "flag_review",
+      detail: bookNote("Beetle & the Hollowbones (Aliza Layne)", [
+        "Hard reject—LGBTQ themes.",
+        "Halalit won't recommend this book, and Book Quest will never suggest it.",
+        "This title only—not her other books.",
+      ]),
+    },
+    {
+      titleRe: /\breal riley mayes\b/i,
+      authorRe: /elliott/i,
+      tier: "flag_review",
+      detail: bookNote("The Real Riley Mayes (Rachel Elliott)", [
+        "Hard reject—LGBTQ themes.",
+        "Halalit won't recommend this book, and Book Quest will never suggest it.",
+        "This title only.",
+      ]),
+    },
+    {
+      titleRe: /\bwords apart\b/i,
+      authorRe: /lucido/i,
+      tier: "flag_review",
+      detail: bookNote("Words Apart (Aimee Lucido)", [
+        "Hard reject—one parent is cheating on the other.",
+        "Halalit won't recommend this book, and Book Quest will never suggest it.",
+        "This title only—not her other books.",
+      ]),
+    },
   ];
 
   /** Advisory only — does not block the family shelf (unlike flag_review entries above). */
@@ -4622,6 +4705,58 @@
   ];
 
   var PARENT_NOTE_LABEL = "Notes for parents";
+
+  /**
+   * Owner handwritten category notes. The boxes always show on Bookcheck.
+   * Add sentences under a title when you have them. Empty boxes stay up until then.
+   * The scan does not write Positive representation.
+   * Keys: positiveRepresentation, language, violence, romance — each a list of sentences.
+   */
+  var CATEGORY_CLARIFYING_LABELS = {
+    positiveRepresentation: "Positive representation",
+    language: "Language",
+    violence: "Violence and scariness",
+    romance: "Romance",
+  };
+
+  var CATEGORY_CLARIFYING_ORDER = ["positiveRepresentation", "language", "violence", "romance"];
+
+  var CATEGORY_CLARIFYING_NOTES = [];
+
+  function categoryNoteLines(value) {
+    if (!value) return [];
+    if (typeof value === "string") {
+      var one = String(value).trim();
+      return one ? [one] : [];
+    }
+    var out = [];
+    for (var n = 0; n < value.length; n++) {
+      var line = String(value[n] || "").trim();
+      if (line) out.push(line);
+    }
+    return out;
+  }
+
+  function categoryClarifyingMatch(title, author) {
+    var tl = norm(title);
+    var al = norm(author);
+    if (!tl) return null;
+    for (var i = 0; i < CATEGORY_CLARIFYING_NOTES.length; i++) {
+      var w = CATEGORY_CLARIFYING_NOTES[i];
+      if (!w.titleRe || !w.titleRe.test(tl)) continue;
+      if (w.authorRe && al && !w.authorRe.test(al)) continue;
+      var boxes = [];
+      for (var k = 0; k < CATEGORY_CLARIFYING_ORDER.length; k++) {
+        var key = CATEGORY_CLARIFYING_ORDER[k];
+        var lines = categoryNoteLines(w[key]);
+        if (!lines.length) continue;
+        boxes.push({ id: key, label: CATEGORY_CLARIFYING_LABELS[key], lines: lines });
+      }
+      if (!boxes.length) continue;
+      return { boxes: boxes };
+    }
+    return null;
+  }
 
   /**
    * Book Quest — prose originals you’ve hand-vetted that also have graphic novel remakes.
@@ -5218,6 +5353,10 @@
     parentNoteMatch: parentNoteMatch,
     parentNoteLabel: PARENT_NOTE_LABEL,
     parentNotes: PARENT_NOTES,
+    categoryClarifyingMatch: categoryClarifyingMatch,
+    categoryClarifyingNotes: CATEGORY_CLARIFYING_NOTES,
+    categoryClarifyingLabels: CATEGORY_CLARIFYING_LABELS,
+    categoryClarifyingOrder: CATEGORY_CLARIFYING_ORDER,
     proseGraphicAdaptationMatch: proseGraphicAdaptationMatch,
     proseGraphicAdaptationSiteLine: PROSE_GRAPHIC_ADAPTATION_SITE_LINE,
     proseWithGraphicAdaptation: PROSE_WITH_GRAPHIC_ADAPTATION,

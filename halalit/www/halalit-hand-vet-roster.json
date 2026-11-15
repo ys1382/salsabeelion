@@ -1574,10 +1574,66 @@
       "source": "cursor_roster",
       "tier": "flag_review",
       "notes": "Hard reject — unmarried couple sharing a bed; partly adult romance. Whole series, including Dead Deep. Book Quest never."
+    },
+    {
+      "title": "Carousel Summer",
+      "author": "Kathleen Gros",
+      "source": "cursor_roster",
+      "tier": "flag_review",
+      "notes": "Hard reject — LGBTQ themes. This title only, not her other books. Book Quest never."
+    },
+    {
+      "title": "Small Town Pride",
+      "author": "Phil Stamper",
+      "source": "cursor_roster",
+      "tier": "flag_review",
+      "notes": "Hard reject — LGBTQ themes. This title only, not his other books. Book Quest never."
+    },
+    {
+      "title": "The Queen Bees of Tybee County",
+      "author": "Kyle Casey Chu",
+      "source": "cursor_roster",
+      "tier": "flag_review",
+      "notes": "Hard reject — LGBTQ themes. Also published as Panda Dulce. This title only. Book Quest never."
+    },
+    {
+      "title": "Noah Frye Gets Crushed",
+      "author": "Maggie Horne",
+      "source": "cursor_roster",
+      "tier": "flag_review",
+      "notes": "Hard reject — LGBTQ themes. This title only, not her other books. Book Quest never."
+    },
+    {
+      "title": "Tegan and Sara: Junior High",
+      "author": "Tegan Quin, Sara Quin, Tillie Walden",
+      "source": "cursor_roster",
+      "tier": "flag_review",
+      "notes": "Hard reject — LGBTQ themes. This book only, not Tillie Walden's other books. Book Quest never."
+    },
+    {
+      "title": "Beetle & the Hollowbones",
+      "author": "Aliza Layne",
+      "source": "cursor_roster",
+      "tier": "flag_review",
+      "notes": "Hard reject — LGBTQ themes. This title only, not her other books. Book Quest never."
+    },
+    {
+      "title": "The Real Riley Mayes",
+      "author": "Rachel Elliott",
+      "source": "cursor_roster",
+      "tier": "flag_review",
+      "notes": "Hard reject — LGBTQ themes. This title only. Book Quest never."
+    },
+    {
+      "title": "Words Apart",
+      "author": "Aimee Lucido",
+      "source": "cursor_roster",
+      "tier": "flag_review",
+      "notes": "Hard reject — one parent is cheating on the other. This title only, not her other books. Book Quest never."
     }
   ],
   "counts": {
     "vetted": 150,
-    "rejected": 53
+    "rejected": 61
   }
 }
