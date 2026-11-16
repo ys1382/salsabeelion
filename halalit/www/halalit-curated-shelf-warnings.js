@@ -1762,16 +1762,6 @@
       ]),
     },
     {
-      titleRe: /\bkindred dragons\b/i,
-      authorRe: /mensinga|sarah/i,
-      detail: bookNote("Kindred Dragons (Sarah Mensinga, graphic novels)", [
-        "Book 1 hand-verified clean in owner scope—Book Quest includes book 1 when otherwise clean; rest of series not owner-vetted yet.",
-        "Book 1 includes a line like “ANOTHER secret baby?”—may nod at secret or out-of-wedlock children; owner reads it as minor, not a main plot beat (preview if that topic bothers you).",
-        "No fanservice in owner scope—still preview panel art.",
-        GRAPHIC_PHYSICAL_IMMODESTY_NOTE,
-      ]),
-    },
-    {
       titleRe: /\btidesong\b|\btide song\b/i,
       authorRe: /wendy\s*xu|\bxu,?\s*wendy/i,
       requiresMagicOptIn: true,
@@ -2038,9 +2028,10 @@
       titleRe: /\bsorceline\b/i,
       authorRe: /douy[eé]|antista/i,
       detail: bookNote("Sorceline (Sylvia Douyé / Paola Antista)", [
-        "Plot hand-checked largely clean in scope reviewed.",
-        "Graphic novel series with stronger visual fanservice in panels than Pokemon manga—preview every volume.",
-        "Family-bashing tone toward the mother—not only imperfect-family friction.",
+        "Plot hand-vetted largely clean in owner scope.",
+        "Hard reject—panel immodesty: the protagonist’s mother wears a deep v-neck throughout the first five books in owner scope.",
+        "Books 1–5 hold the series on that call; later volumes not each owner-vetted here.",
+        GRAPHIC_PHYSICAL_IMMODESTY_NOTE,
       ], FANSERVICE_NO_RECOMMEND_CLOSING),
     },
     {
@@ -3214,12 +3205,13 @@
       ], "Won’t Book Quest—not inappropriate."),
     },
     {
-      titleRe: /\bhaunted high\b/i,
+      titleRe: /\bhaunted high\b|\bthe haunted\b|\bwolf within me\b|\bghost files\b/i,
       authorRe: /alsop|cheree/i,
       tier: "flag_review",
       detail: bookNote("The Haunted High (Cheree Alsop)", [
-        "Firm no—Halalit won’t recommend the series.",
-        "Plot turns dark; bully uses very crude explicit insults in owner scope.",
+        "Hard reject—book 1 includes adult crude accusations aimed at the protagonist in owner scope.",
+        "Halalit won't recommend this series, and Book Quest will never suggest it.",
+        "The Haunted High line only—not her other series unless separately vetted.",
       ]),
     },
     {
@@ -3345,13 +3337,28 @@
       ], "Won’t Book Quest—not inappropriate."),
     },
     {
-      titleRe: /\bunseen magic\b/i,
+      titleRe: /\bunseen magic\b|\bunspoken magic\b/i,
       authorRe: /lloyd-jones|emily/i,
-      tier: "flag_review",
-      detail: bookNote("Unseen Magic (Emily Lloyd-Jones)", [
-        "Duology: book 1 clean in owner scope.",
-        "Book 2: brief LGBTQ reference and parent negativity—Halalit won’t recommend book 2.",
-      ], "Won’t Book Quest—not inappropriate."),
+      tier: "user_discretion",
+      detail: bookNote("Unseen Magic (Emily Lloyd-Jones, duology)", [
+        "Parent discretion—not a hardest auto-reject.",
+        "Book 1 reads clean in owner scope.",
+        "Book 2 (Unspoken Magic): the protagonist briefly wonders whether her mother’s new love interest is another woman—the mother is not in a same-sex relationship on the page.",
+        "That beat still suggests the series could lean into LGBTQ themes if more books follow—preview before continuing the line.",
+        "Not on Book Quest; Halalit won’t auto-recommend—preview and decide for your home.",
+      ], USER_DISCRETION_PREVIEW_CLOSING),
+    },
+    {
+      titleRe: /\bkindred dragons\b/i,
+      authorRe: /mensinga|sarah/i,
+      tier: "user_discretion",
+      detail: bookNote("Kindred Dragons (Sarah Mensinga, graphic novels)", [
+        "Parent discretion—not a hardest auto-reject.",
+        "Mostly clean in owner scope.",
+        "Mentions secret children; might read as a nod to illegitimate or out-of-wedlock children—preview if that topic bothers you.",
+        "Rest of series not owner-vetted yet.",
+        GRAPHIC_PHYSICAL_IMMODESTY_NOTE,
+      ], USER_DISCRETION_PREVIEW_CLOSING),
     },
     {
       titleRe:
@@ -3566,8 +3573,9 @@
       authorRe: /shirai|demizu|kaiu|posuka/i,
       tier: "flag_review",
       detail: bookNote("The Promised Neverland (manga)", [
-        "Firm no—Halalit won’t recommend the series.",
-        "Fanservice, parent negativity, and very dark-mindset material in owner scope.",
+        "Hard reject—mental-health themes and fanservice in at least one volume in owner scope.",
+        "Halalit won't recommend this series, and Book Quest will never suggest it.",
+        "Parent negativity and very dark tone in owner scope.",
         GRAPHIC_PHYSICAL_IMMODESTY_NOTE,
       ]),
     },
@@ -3829,8 +3837,10 @@
       authorRe: /horwitz|sarah jean/i,
       tier: "flag_review",
       detail: bookNote("The Dark Lord Clementine (Sarah Jean Horwitz)", [
-        "Hand-verified clean with parent negativity and a crossdressing reference.",
-      ], "Halalit may auto-recommend with notes."),
+        "Hard reject—it is heavily implied that a character had an adult romantic relationship outside marriage in owner scope.",
+        "Halalit won't recommend this book, and Book Quest will never suggest it.",
+        "This title only—not her other books.",
+      ]),
     },
     {
       titleRe: /\bdragonfell\b/i,
@@ -4067,11 +4077,14 @@
     {
       titleRe: /\bamelia bedelia\b/i,
       authorRe: /parish|herman|lynne/i,
-      tier: "flag_review",
-      detail: bookNote("Amelia Bedelia Chapter Books", [
+      tier: "user_discretion",
+      detail: bookNote("Amelia Bedelia Chapter Books (Herman Parish)", [
+        "Parent discretion—not a hardest auto-reject.",
         "Generally fine in owner scope.",
-        "Book 7 hints at a cousin who may be an illegitimate child—Halalit won’t auto-recommend the line.",
-      ], "Won’t Book Quest—not inappropriate."),
+        "A scene has the protagonist strip down to her bikini in writing—preview modesty.",
+        "Book 7 hints that a cousin may be an illegitimate child—preview if that topic bothers you.",
+        "Not on Book Quest; Halalit won't auto-recommend—preview and decide for your home.",
+      ], USER_DISCRETION_PREVIEW_CLOSING),
     },
     {
       titleRe:
@@ -4140,9 +4153,9 @@
       authorRe: /ponti|james/i,
       tier: "flag_review",
       detail: bookNote("Dead City (James Ponti)", [
-        "Owner parked—off Halalit recommend list for now (same future-flagging lane as Harry Potter / J.K. Rowling).",
-        "Plot reads clean in owner scope for books 1–2; book 3 turns darker—preview if you read on your own.",
-        "No Book Quest or auto-recommend until owner clears parked.",
+        "Hard reject—glorifies a martial-arts form tied to the IDF (Israeli military) in owner scope.",
+        "Halalit won't recommend this series, and Book Quest will never suggest it.",
+        "Line includes Dead City, Blue Moon, and Dark Days—this series only, not Framed! or City Spies unless separately vetted.",
       ]),
     },
     {
@@ -4518,6 +4531,49 @@
         "This title only—not her other books.",
       ]),
     },
+    {
+      titleRe: /\bnox winters\b|\bmidnight wolf\b|\bnox winters chronicles\b/i,
+      authorRe: /hassan|rochelle/i,
+      tier: "flag_review",
+      detail: bookNote("Nox Winters and the Midnight Wolf (Rochelle Hassan)", [
+        "Hard reject—the story repeatedly references the boys' mother as a young teen when she had them and their births outside marriage.",
+        "Halalit won't recommend this book or the Nox Winters Chronicles line, and Book Quest will never suggest it.",
+        "Book 1 holds the series; not The Prince of Nowhere (hand-vetted separately).",
+      ]),
+    },
+    {
+      titleRe: /\bdefanged\b/i,
+      authorRe: /edgmon|h\.?\s*e\.?\s*edgmon/i,
+      tier: "flag_review",
+      detail: bookNote("Defanged (H.E. Edgmon)", [
+        "Hard reject—a female vampire ally is a lesbian wife in owner scope.",
+        "Halalit won't recommend this book, and Book Quest will never suggest it.",
+        "This title only—not the author's other books.",
+      ]),
+    },
+    {
+      titleRe: /\blu and ren\b|\bgeozoology\b|\blirrin\b/i,
+      authorRe: /hsieh|angela/i,
+      tier: "flag_review",
+      detail: bookNote("Lu and Ren's Guide to Geozoology (Angela Hsieh)", [
+        "Hard reject—it is heavily implied that the grandmother had a past lesbian relationship in owner scope.",
+        "Halalit won't recommend this book, and Book Quest will never suggest it.",
+        "This graphic novel only—not the author's other books.",
+      ]),
+    },
+    {
+      titleRe: /\bfresh start\b/i,
+      authorRe: /galligan|gale/i,
+      tier: "flag_review",
+      detail: bookNote("Fresh Start (Gale Galligan)", [
+        "Hard reject—immodest outfits in dance scenes in owner scope.",
+        "Flag: discussion of women's menstrual cycles in owner scope.",
+        "Parents and siblings often hostile or emotionally unsafe—family-tone note.",
+        "Halalit won't recommend this book, and Book Quest will never suggest it.",
+        "This title only—not other Babysitters Club graphic adaptations unless separately vetted.",
+        GRAPHIC_PHYSICAL_IMMODESTY_NOTE,
+      ]),
+    },
   ];
 
   /** Advisory only — does not block the family shelf (unlike flag_review entries above). */
@@ -4529,15 +4585,6 @@
         "Schoolyard pantsing played for laughs—the victim is wearing pants under the skirt, but still preview.",
         GRAPHIC_PHYSICAL_IMMODESTY_NOTE,
         "Advisory only—Halalit still requires a graphic-novel hand-check before auto-recommend.",
-      ]),
-    },
-    {
-      titleRe: /\bfresh start\b/i,
-      authorRe: /galligan/i,
-      detail: bookNote("Fresh Start (Gale Galligan)", [
-        "Otherwise mild middle-grade fiction.",
-        "Parents and siblings often hostile, unfair, or emotionally unsafe—home as the main wound.",
-        "Advisory only—not a romance or teen ban; preview if family-as-antagonist bothers you.",
       ]),
     },
     {

@@ -1292,8 +1292,8 @@
       "title": "Dead City",
       "author": "James Ponti",
       "source": "cursor_roster",
-      "tier": "parked",
-      "notes": "Owner **parked** — off recommend list for now; same future-flagging lane as Harry Potter; plot clean in owner scope; off `VERIFIED_CLEAN` until cleared."
+      "tier": "flag_review",
+      "notes": "Hard reject — glorifies martial arts tied to the IDF (owner scope). Dead City / Blue Moon / Dark Days series. Not Framed! or City Spies. Book Quest never."
     },
     {
       "title": "Enchanted Forest Chronicles",
@@ -1376,8 +1376,15 @@
       "title": "Kindred Dragons",
       "author": "Sarah Mensinga",
       "source": "cursor_roster",
-      "tier": "parked",
-      "notes": "Book 1 hand-vetted; rest of series open; book 1 “secret baby?” line flagged as minor note; **Book Quest** includes book 1 when otherwise clean"
+      "tier": "user_discretion",
+      "notes": "Parent discretion — mostly clean; secret-children mentions may nod at illegitimate/out-of-wedlock children; rest of series open. Off Book Quest."
+    },
+    {
+      "title": "Sorceline",
+      "author": "Sylvia Douyé / Paola Antista",
+      "source": "cursor_roster",
+      "tier": "flag_review",
+      "notes": "Hard reject — plot largely clean; mother’s deep v-neck in panels throughout books 1–5 (immodesty). Known-fanservice/immodesty no-recommend line. Book Quest never."
     },
     {
       "title": "Look on the Bright Side",
@@ -1637,10 +1644,66 @@
       "source": "cursor_roster",
       "tier": "flag_review",
       "notes": "Hard reject — a dragon character uses they/them pronouns (owner scope). MG graphic novel series; vols 1–2. Not Awkward/Berrybrook/Nightschool. Book Quest never."
+    },
+    {
+      "title": "Nox Winters and the Midnight Wolf",
+      "author": "Rochelle Hassan",
+      "source": "cursor_roster",
+      "tier": "flag_review",
+      "notes": "Hard reject — repeated references to mother as a young teen when the twins were born outside marriage. Nox Winters Chronicles; not The Prince of Nowhere. Book Quest never."
+    },
+    {
+      "title": "Unseen Magic",
+      "author": "Emily Lloyd-Jones",
+      "source": "cursor_roster",
+      "tier": "user_discretion",
+      "notes": "Parent discretion — book 1 clean; book 2 (Unspoken Magic) brief beat where Fin wonders if mom’s love interest is a woman (mom is not same-sex on page); series could lean LGBT if it continues. Off Book Quest."
+    },
+    {
+      "title": "Defanged",
+      "author": "H.E. Edgmon",
+      "source": "cursor_roster",
+      "tier": "flag_review",
+      "notes": "Hard reject — female vampire ally is a lesbian wife (owner scope). This title only, not the author's other books. Book Quest never."
+    },
+    {
+      "title": "Lu and Ren's Guide to Geozoology",
+      "author": "Angela Hsieh",
+      "source": "cursor_roster",
+      "tier": "flag_review",
+      "notes": "Hard reject — implied past lesbian relationship for grandmother. This graphic novel only. Book Quest never."
+    },
+    {
+      "title": "Fresh Start",
+      "author": "Gale Galligan",
+      "source": "cursor_roster",
+      "tier": "flag_review",
+      "notes": "Hard reject — immodest dance outfits + menstrual-cycle discussion (owner scope). This title only. Book Quest never."
+    },
+    {
+      "title": "The Dark Lord Clementine",
+      "author": "Sarah Jean Horwitz",
+      "source": "cursor_roster",
+      "tier": "flag_review",
+      "notes": "Hard reject — implied adult relationship outside marriage. This title only. Book Quest never."
+    },
+    {
+      "title": "The Haunted High",
+      "author": "Cheree Alsop",
+      "source": "cursor_roster",
+      "tier": "flag_review",
+      "notes": "Hard reject — book 1 adult crude accusations at protagonist. Series only. Book Quest never."
+    },
+    {
+      "title": "Amelia Bedelia",
+      "author": "Herman Parish",
+      "source": "cursor_roster",
+      "tier": "user_discretion",
+      "notes": "Parent discretion — bikini strip scene in writing; book 7 cousin may be illegitimate. Chapter books. Off Book Quest."
     }
   ],
   "counts": {
     "vetted": 150,
-    "rejected": 62
+    "rejected": 71
   }
 }
