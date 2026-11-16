@@ -1630,10 +1630,17 @@
       "source": "cursor_roster",
       "tier": "flag_review",
       "notes": "Hard reject — one parent is cheating on the other. This title only, not her other books. Book Quest never."
+    },
+    {
+      "title": "The Weirn Books",
+      "author": "Svetlana Chmakova",
+      "source": "cursor_roster",
+      "tier": "flag_review",
+      "notes": "Hard reject — a dragon character uses they/them pronouns (owner scope). MG graphic novel series; vols 1–2. Not Awkward/Berrybrook/Nightschool. Book Quest never."
     }
   ],
   "counts": {
     "vetted": 150,
-    "rejected": 61
+    "rejected": 62
   }
 }

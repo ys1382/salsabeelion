@@ -3572,14 +3572,17 @@
       ]),
     },
     {
-      titleRe: /\bweirn books\b|\bbe wary of the silent woods\b/i,
+      titleRe:
+        /\bweirn books\b|\bbe wary of the silent woods\b|\bghost and the stolen dragon\b|\bstolen dragon\b.*\bweirn\b|\bweirn\b.*\bstolen dragon\b/i,
       authorRe: /chmakova|svetlana/i,
       tier: "flag_review",
-      detail: bookNote("The Weirn Books (Svetlana Chmakova)", [
-        "Series clean in owner scope; book 2 includes they/them representation.",
-        "Halalit won’t auto-recommend without parent preview.",
+      detail: bookNote("The Weirn Books (Svetlana Chmakova, graphic novels)", [
+        "Hard reject—a dragon character uses they/them pronouns in owner scope.",
+        "Halalit won't recommend this series, and Book Quest will never suggest it.",
+        "Volumes include Be Wary of the Silent Woods and The Ghost and the Stolen Dragon—book 2 is enough to hold the line.",
+        "This series only—not Awkward, Berrybrook, or Nightschool unless separately vetted.",
         GRAPHIC_PHYSICAL_IMMODESTY_NOTE,
-      ], "Won’t Book Quest—not inappropriate."),
+      ]),
     },
     {
       titleRe: /\bchi'?s sweet home\b|\bchi'?s sweet adventures\b/i,
