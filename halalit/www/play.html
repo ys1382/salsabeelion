@@ -1167,6 +1167,10 @@
         return CROSSING_SKINS[idx];
       }
 
+      function currentAreaPack() {
+        return AREA_PACKS[bookQuestPackIndex()];
+      }
+
       function librarianGender() {
         var g = currentAreaPack().gender;
         return g === "m" ? "m" : "f";
