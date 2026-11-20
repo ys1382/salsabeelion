@@ -907,14 +907,6 @@
       "notes": "Owner: fine for older kids"
     },
     {
-      "title": "The Pumpkin Princess",
-      "author": "Steven Banbury",
-      "source": "cursor_roster",
-      "tier": "verified_clean",
-      "ageBand": "older_kids",
-      "notes": "Owner: fine for older kids"
-    },
-    {
       "title": "The Rainbow Fish",
       "author": "",
       "source": "cursor_roster",
@@ -925,14 +917,6 @@
     {
       "title": "The Rose Legacy",
       "author": "Jessica Day George",
-      "source": "cursor_roster",
-      "tier": "verified_clean",
-      "ageBand": "older_kids",
-      "notes": "Owner: fine for older kids"
-    },
-    {
-      "title": "The Sisters Grimm",
-      "author": "Michael Buckley",
       "source": "cursor_roster",
       "tier": "verified_clean",
       "ageBand": "older_kids",
@@ -1700,10 +1684,199 @@
       "source": "cursor_roster",
       "tier": "user_discretion",
       "notes": "Parent discretion — bikini strip scene in writing; book 7 cousin may be illegitimate. Chapter books. Off Book Quest."
+    },
+    {
+      "title": "The Way Home",
+      "author": "Peter S. Beagle",
+      "source": "cursor_roster",
+      "tier": "flag_review",
+      "notes": "Firm reject — not hand-read. Several readers reported a medieval-style gang sexual assault. Two Hearts and Sooz. Not The Last Unicorn's other notes. Book Quest never."
+    },
+    {
+      "title": "The House of Many Ways",
+      "author": "Diana Wynne Jones",
+      "source": "cursor_roster",
+      "tier": "flag_review",
+      "notes": "Firm reject — a dog changes gender to be a girl like his owner; sentient beings discuss laying eggs in people. This book only. Book Quest never."
+    },
+    {
+      "title": "The Enchanter's Child",
+      "author": "Angie Sage",
+      "source": "cursor_roster",
+      "tier": "flag_review",
+      "notes": "Firm reject — near the end of book 2 the father cheated on his wife. This duology only. Book Quest never."
+    },
+    {
+      "title": "Defender of the Realm",
+      "author": "Mark Huckerby and Nick Ostler",
+      "source": "cursor_roster",
+      "tier": "flag_review",
+      "notes": "Firm reject — mostly clean; main villains described as naked after a magical change. Older family-conflict note stays. Book Quest never."
+    },
+    {
+      "title": "The Pumpkin Princess",
+      "author": "Steven Banbury",
+      "source": "cursor_roster",
+      "tier": "user_discretion",
+      "notes": "Parent discretion — plot clean; Halloween story and Christmas in both books. Older Christian-holiday and family-negativity notes stay. Off the clean list. Off Book Quest."
+    },
+    {
+      "title": "City of Dragons",
+      "author": "Jaimal Yogis",
+      "source": "cursor_roster",
+      "tier": "user_discretion",
+      "notes": "Parent discretion — mostly clean; book 3 focuses more on romance. Older deity and jealous-dating notes stay. Includes Quest for the True Dragon. Off Book Quest."
+    },
+    {
+      "title": "The Chronicles of Vladimir Tod",
+      "author": "Heather Brewer / Zac Brewer",
+      "source": "cursor_roster",
+      "tier": "flag_review",
+      "notes": "Firm reject — book 1 parents unmarried when he was born; book 2 refers to 14-year-olds having sex. This series only. Book Quest never."
+    },
+    {
+      "title": "Greenwild",
+      "author": "Pari Thomson",
+      "source": "cursor_roster",
+      "tier": "flag_review",
+      "notes": "Firm reject — two dads, and later a married couple of two women. Older family-conflict note stays. Book Quest never."
+    },
+    {
+      "title": "Samurai Kids",
+      "author": "Sandy Fussell",
+      "source": "cursor_roster",
+      "tier": "user_discretion",
+      "notes": "Parent discretion — otherwise plot clean; repeated seppuku. Older dark, religion, modesty, and sexism notes stay. Off the clean list. Off Book Quest."
+    },
+    {
+      "title": "Fruits Basket",
+      "author": "Natsuki Takaya / Nana Hatake",
+      "source": "cursor_roster",
+      "tier": "flag_review",
+      "notes": "Firm reject — immodesty, characters transform back with no clothes, adult relationships. This series only. Book Quest never."
+    },
+    {
+      "title": "Enola Holmes novels",
+      "author": "Nancy Springer",
+      "source": "cursor_roster",
+      "tier": "user_discretion",
+      "notes": "Parent discretion for now — implied risk of sexual violence toward women; the word virginal. Older Gypsy, family, and adult-aside notes stay. Off Book Quest."
+    },
+    {
+      "title": "Enola Holmes graphic novels",
+      "author": "Serena Blasco",
+      "source": "cursor_roster",
+      "tier": "flag_review",
+      "notes": "Firm reject — one volume treats cross-dressing as something to approve of. Prose novels stay discretion. Book Quest never."
+    },
+    {
+      "title": "Inkheart",
+      "author": "Cornelia Funke",
+      "source": "cursor_roster",
+      "tier": "user_discretion",
+      "notes": "Parent discretion — first book only. Refers to sexual violence toward women; it does not happen on the page. Not Inkspell or Inkdeath. Off Book Quest."
+    },
+    {
+      "title": "Skyborn",
+      "author": "Jessica Khoury",
+      "source": "cursor_roster",
+      "tier": "flag_review",
+      "notes": "Firm reject — clear LGBTQ content. Sparrow Rising, Call of the Crow, Phoenix Flight. This series only. Book Quest never."
+    },
+    {
+      "title": "The Hatmakers",
+      "author": "Tamzin Merchant",
+      "source": "cursor_roster",
+      "tier": "flag_review",
+      "notes": "Firm reject — clear LGBTQ content. Whole series, including The Mapmakers and The Mythmakers. Older book 1 note stays. Book Quest never."
+    },
+    {
+      "title": "Estranged",
+      "author": "Ethan M. Aldridge",
+      "source": "cursor_roster",
+      "tier": "flag_review",
+      "notes": "Firm reject — clear LGBTQ content. Older jokes, book 2 relationship, and family-conflict notes stay. Includes The Changeling King. Book Quest never."
+    },
+    {
+      "title": "Dear Student",
+      "author": "Elly Swartz",
+      "source": "cursor_roster",
+      "tier": "flag_review",
+      "notes": "Firm reject — anti-Palestinian in treating Israel as a normal place to visit. This book only. Book Quest never."
+    },
+    {
+      "title": "Crown and Court",
+      "author": "Sherwood Smith",
+      "source": "cursor_roster",
+      "tier": "flag_review",
+      "notes": "Firm reject — romance focus; unclear how adult. Crown Duel, Court Duel, A Stranger to Command, Remalna's Children. Book Quest never."
+    },
+    {
+      "title": "Not If I Can Help It",
+      "author": "Carolyn Mackler",
+      "source": "cursor_roster",
+      "tier": "flag_review",
+      "notes": "Firm reject — a major side character is a gay man. Older family-conflict note stays. Book Quest never."
+    },
+    {
+      "title": "The Unadoptables",
+      "author": "Hana Tooke",
+      "source": "cursor_roster",
+      "tier": "flag_review",
+      "notes": "Firm reject — protagonist's parents apparently never married. Her other books are parent discretion, not an automatic reject. Book Quest never."
+    },
+    {
+      "title": "The Secret Starling",
+      "author": "Judith Eagle",
+      "source": "cursor_roster",
+      "tier": "flag_review",
+      "notes": "Firm reject — protagonist's parents apparently never married. By Judith Eagle, not Judith Rossell. Her other books are parent discretion. Book Quest never."
+    },
+    {
+      "title": "How to Save a Queendom",
+      "author": "Jessica Lawson",
+      "source": "cursor_roster",
+      "tier": "parked",
+      "notes": "Parked — likely a reject, not a finished firm call. Off Book Quest until the owner finishes."
+    },
+    {
+      "title": "The Witch Boy",
+      "author": "Lee Knox Ostertag / Molly Knox Ostertag",
+      "source": "cursor_roster",
+      "tier": "flag_review",
+      "notes": "Firm reject — openly LGBTQ series. The Witch Boy, The Hidden Witch, The Midwinter Witch. This series only. Book Quest never."
+    },
+    {
+      "title": "The Rosewood Chronicles",
+      "author": "Connie Glynn",
+      "source": "cursor_roster",
+      "tier": "flag_review",
+      "notes": "Firm reject — openly LGBTQ series. This series only. Book Quest never."
+    },
+    {
+      "title": "The Adventurers Guild",
+      "author": "Zack Loran Clark and Nick Eliopulos",
+      "source": "cursor_roster",
+      "tier": "flag_review",
+      "notes": "Hard reject — the main character ends up firmly gay. Includes Twilight of the Elves and Night of Dangers. This series only. Book Quest never."
+    },
+    {
+      "title": "The Sisters Grimm",
+      "author": "Michael Buckley",
+      "source": "cursor_roster",
+      "tier": "flag_review",
+      "notes": "Firm reject — Miss Muffet marries the nursery-rhyme spider and has a child with him. Mostly clean; mental-health themes in books 3 and 6. Off the clean list and off Parents/Grandparents Week. Book Quest never."
+    },
+    {
+      "title": "Never Cry Wolf",
+      "author": "Farley Mowat",
+      "source": "cursor_roster",
+      "tier": "flag_review",
+      "notes": "Firm reject — adult relationship or relationships outside marriage. Plot mostly clean. This book only. Book Quest never."
     }
   ],
   "counts": {
-    "vetted": 150,
-    "rejected": 71
+    "vetted": 148,
+    "rejected": 98
   }
 }

@@ -110,14 +110,6 @@
         "Rest of plot not fully owner-vetted in this note—preview before sharing.",
       ], "Won’t Book Quest—not inappropriate."),
     },
-    {
-      titleRe: /\bcity of dragons\b|\bawakening storm\b|\brise of the shadowfire\b/i,
-      authorRe: /yogis|jaimal/i,
-      detail: bookNote("City of Dragons (Jaimal Yogis)", [
-        "Deity/mythology treated as real in owner scope.",
-        "Book 3: jealous-girl dating situation gets weird—preview that volume.",
-      ], "Won’t Book Quest—not inappropriate."),
-    },
   ];
   /**
    * Owner hand-verified clean for the family shelf (whole series or title pattern).
@@ -1129,17 +1121,6 @@
       ]),
     },
     {
-      titleRe:
-        /\bsisters grimm\b|\bfairy[- ]tale detectives\b|\bunusual suspects\b|\bproblem child\b|\bonce upon a crime\b|\bmagic mirror\b|\bespecially peculiar\b|\bbe grimm\b|\binside the story\b|\bcouncil of mirrors\b/i,
-      authorRe: /buckley|michael/i,
-      detail: bookNote("The Sisters Grimm (Michael Buckley)", [
-        "Hand-verified clean overall.",
-        "Owner Parents Week and Grandparents Week pick—great family series.",
-        "Some books carry a darker mentality—preview for sensitive readers.",
-        "Parent-bashing tone in places—not only imperfect-family friction.",
-      ]),
-    },
-    {
       titleRe: /\bspiderwick\b|\bfield guide\b.*\bspiderwick\b|\blucinda'?s secret\b|\bseeing stone\b|\bironwood tree\b|\bwrath of mulgarath\b|\bnectar of dreams\b|\bnixie'?s song\b|\bgiant problem\b|\bwyrm king\b/i,
       authorRe: /black|holly|diterlizzi|tony/i,
       detail:
@@ -1338,18 +1319,6 @@
       ]),
     },
     {
-      titleRe: /\bsamurai kids|owl ninja|shaolin tiger/i,
-      authorRe: /fussell|sandy/i,
-      detail: bookNote("Samurai Kids (Sandy Fussell)", [
-        "Hand-verified largely clean in owner scope (books 1–3).",
-        "Serious dark parts in places—preview intensity.",
-        "Other-religion representation—flag for parents.",
-        "Scene helping an elderly naked man out of a shower/bath—preview modesty.",
-        "Text calls out a sexism beat within the story.",
-        "Rest of series not owner-vetted.",
-      ]),
-    },
-    {
       titleRe: /\bhappy happy clover\b/i,
       authorRe: /tatsuyama|sayuri/i,
       requiresDeityMythologyOptIn: true,
@@ -1454,14 +1423,6 @@
       detail: bookNote("Save Me a Seat (Sarah Weeks)", [
         "Hand-verified clean in owner scope.",
         "Bullying not always called out—parent preview.",
-      ]),
-    },
-    {
-      titleRe: /\bpumpkin princess\b/i,
-      authorRe: /banbury|steven/i,
-      detail: bookNote("The Pumpkin Princess (Steven Banbury)", [
-        "Hand-verified clean in owner scope.",
-        "Flag Christian holiday references and family negativity—parent preview.",
       ]),
     },
     {
@@ -1860,6 +1821,48 @@
    */
   var USER_DISCRETION_PARKED = [
     {
+      authorWide: true,
+      authorRe: /hana\s*tooke|\btooke\b/i,
+      exceptTitleRe: /\bunadoptables\b/i,
+      detail: bookNote("Hana Tooke — other books", [
+        "Parent discretion for this author—not an automatic firm reject of every book.",
+        "The Unadoptables is a firm reject: the main character’s parents were apparently never married.",
+        "Preview another Tooke book if the story centers on a child whose parents were not married.",
+      ], USER_DISCRETION_PREVIEW_CLOSING),
+    },
+    {
+      authorWide: true,
+      authorRe: /judith\s*eagle|eagle,?\s*judith|(?:^|\s)eagle$/i,
+      exceptTitleRe: /\bsecret starling\b/i,
+      detail: bookNote("Judith Eagle — other books", [
+        "Parent discretion for this author—not an automatic firm reject of every book.",
+        "The Secret Starling is a firm reject: the main character’s parents were apparently never married.",
+        "Preview another Eagle book if the story centers on a child whose parents were not married.",
+      ], USER_DISCRETION_PREVIEW_CLOSING),
+    },
+    {
+      titleRe: /\bcity of dragons\b|\bawakening storm\b|\brise of the shadowfire\b|\bquest for the true dragon\b/i,
+      authorRe: /yogis|jaimal/i,
+      requireAuthor: true,
+      detail: bookNote("City of Dragons (Jaimal Yogis)", [
+        "Parent discretion—not a firm reject.",
+        "The plot is mostly clean. Book 3, Quest for the True Dragon, focuses more on romance.",
+        "Gods and mythology are treated as real.",
+        "Book 3 also has a jealous dating situation—preview that volume.",
+        "Not on Book Quest; Halalit won’t auto-recommend—preview and decide for your home.",
+      ], USER_DISCRETION_PREVIEW_CLOSING),
+    },
+    {
+      titleRe: /\binkheart\b/i,
+      authorRe: /funke|cornelia/i,
+      detail: bookNote("Inkheart (Cornelia Funke) — first book only", [
+        "Parent discretion—not a firm reject.",
+        "The first book refers to a risk of sexual violence toward women. It does not happen on the page.",
+        "Inkspell and Inkdeath are not covered here—look those up separately.",
+        "Not on Book Quest; Halalit won’t auto-recommend—preview and decide for your home.",
+      ], USER_DISCRETION_PREVIEW_CLOSING),
+    },
+    {
       titleRe: /\bblack beauty\b/i,
       authorRe: /sewell|anna/i,
       requiresCulturalMisrepresentationOptIn: true,
@@ -2091,6 +2094,8 @@
       "Romani called “Gypsy/Gypsies”; book six title/wording flagged.",
       "Strong family-bashing and period sexism; painful escape beat (not fistfight gore).",
       "Adult references off the main plots (Cryptic Crinoline prologue; mistaken illegitimacy rumor; book six procuress).",
+      "Nothing explicit happens. The books imply that women face a risk of sexual violence, including that women are less safe than men when they are out on their own.",
+      "The word “virginal” is used.",
       "Preview for younger tweens.",
       "Not on Book Quest; Halalit won’t auto-recommend—preview and decide for your home.",
     ],
@@ -2169,17 +2174,15 @@
     },
     {
       titleRe: ENOLA_HOLMES_GRAPHIC_TITLE_RE,
-      tier: "user_discretion",
+      tier: "flag_review",
       detail: bookNote(
         "Enola Holmes — graphic novel editions",
         [
-          "Parent discretion—not a hardest auto-reject.",
-          "Crossdressing treated as an active, supported solution—not the Springer prose novels.",
-          "Graphic adaptations lean toward LGBTQ/crossdressing sympathy in certain books without explicit LGBTQ promotion on the page.",
-          "See the prose Enola entry for notes on novels 1–6.",
-          "Not on Book Quest; Halalit won’t auto-recommend—preview and decide for your home.",
-        ],
-        USER_DISCRETION_PREVIEW_CLOSING
+          "Firm reject—Halalit won't recommend these graphic novels, and Book Quest will never suggest them.",
+          "One of them treats cross-dressing as something to approve of.",
+          "Crossdressing is an active, supported practice here—not the Springer prose novels.",
+          "See the prose Enola entry for the original novels, which stay parent discretion.",
+        ]
       ),
     },
     {
@@ -2352,13 +2355,15 @@
       ]),
     },
     {
-      titleRe: /\bestranged\b/i,
+      titleRe: /\bestranged\b|\bchangeling king\b/i,
       authorRe: /aldridge/i,
+      requireAuthor: true,
       tier: "flag_review",
       detail: bookNote("Estranged (Ethan M. Aldridge)", [
-        "Book 1: LGBTQ references as jokes; boyfriend/girlfriend pairing; alcohol references.",
-        "Book 2: direct LGBTQ relationship.",
-        "Strong family-bashing toward fae parents.",
+        "Firm reject—clear LGBTQ content. Halalit won't recommend this series, and Book Quest will never suggest it.",
+        "Book 1: LGBTQ references as jokes; a dating pair; alcohol references.",
+        "Book 2, The Changeling King: a direct LGBTQ relationship.",
+        "Harsh family conflict toward the fae parents.",
       ]),
     },
     {
@@ -2716,7 +2721,201 @@
       authorRe: /beagle|peter\s*s\.?\s*beagle|peter\s*beagle/i,
       requireAuthor: true,
       tier: "flag_review",
-      detail: BEAGLE_UNICORN_REJECT,
+      detail: bookNote("The Way Home (Peter S. Beagle)", [
+        "Firm reject—Halalit won't recommend this, and Book Quest will never suggest it.",
+        "Not hand-read. Several readers reported a medieval-style gang sexual assault.",
+        "The collection includes the novellas Two Hearts and Sooz.",
+      ]),
+    },
+    {
+      titleRe: /\bhouse of many ways\b/i,
+      authorRe: /wynne jones|diana wynne|\bwynne\b/i,
+      requireAuthor: true,
+      tier: "flag_review",
+      detail: bookNote("The House of Many Ways (Diana Wynne Jones)", [
+        "Firm reject—Halalit won't recommend this, and Book Quest will never suggest it.",
+        "A dog changes gender to be a girl like his owner.",
+        "Sentient beings discuss laying their eggs in people.",
+        "Only this book, not her other titles.",
+      ]),
+    },
+    {
+      titleRe: /\benchanter'?s child\b|\btwilight hauntings\b/i,
+      authorRe: /angie\s*sage|\bsage\b/i,
+      requireAuthor: true,
+      tier: "flag_review",
+      detail: bookNote("The Enchanter’s Child (Angie Sage)", [
+        "Firm reject—Halalit won't recommend this duology, and Book Quest will never suggest it.",
+        "Near the end of the second book, the main character’s father cheated on his wife.",
+        "Only this duology, not her other series.",
+      ]),
+    },
+    {
+      titleRe: /\bvladimir tod\b|\beighth grade bites\b|\bninth grade slays\b|\btenth grade bleeds\b|\beleventh grade burns\b|\btwelfth grade kills\b/i,
+      authorRe: /heather\s*brewer|zac\s*brewer|\bbrewer\b/i,
+      requireAuthor: true,
+      tier: "flag_review",
+      detail: bookNote("The Chronicles of Vladimir Tod (Heather Brewer / Zac Brewer)", [
+        "Firm reject—Halalit won't recommend this series, and Book Quest will never suggest it.",
+        "In the first book, the main character’s parents were not married when he was born.",
+        "The second book casually refers to 14-year-olds having sex.",
+        "Only this series. Lookups under Heather Brewer or Zac Brewer should hit the same note.",
+      ]),
+    },
+    {
+      titleRe: /\bfruits basket\b/i,
+      authorRe: /takaya|hatake|natsuki/i,
+      requireAuthor: true,
+      tier: "flag_review",
+      detail: bookNote("Fruits Basket (Natsuki Takaya)", [
+        "Firm reject—Halalit won't recommend this series, and Book Quest will never suggest it.",
+        "Many immodest scenes. Many side characters turn back into people with no clothes on.",
+        "Several characters are in adult relationships.",
+        "The name on the books is Natsuki Takaya. Her other name is Nana Hatake.",
+        "Only this series.",
+      ]),
+    },
+    {
+      titleRe: /\bskyborn\b|\bsparrow rising\b|\bcall of the crow\b|\bphoenix flight\b/i,
+      authorRe: /khoury/i,
+      requireAuthor: true,
+      tier: "flag_review",
+      detail: bookNote("Skyborn (Jessica Khoury)", [
+        "Firm reject—clear LGBTQ content. Halalit won't recommend this series, and Book Quest will never suggest it.",
+        "The books are Sparrow Rising, Call of the Crow, and Phoenix Flight.",
+        "Only this series, not her other books.",
+      ]),
+    },
+    {
+      titleRe: /\bdear student\b/i,
+      authorRe: /swartz/i,
+      requireAuthor: true,
+      tier: "flag_review",
+      detail: bookNote("Dear Student (Elly Swartz)", [
+        "Firm reject—Halalit won't recommend this, and Book Quest will never suggest it.",
+        "It is anti-Palestinian in the way it treats Israel as a normal place to visit.",
+        "Only this book, not her other titles.",
+      ]),
+    },
+    {
+      titleRe: /\bcrown duel\b|\bcourt duel\b|\bstranger to command\b|\bremalna'?s children\b/i,
+      authorRe: /sherwood/i,
+      requireAuthor: true,
+      tier: "flag_review",
+      detail: bookNote("Crown and Court (Sherwood Smith)", [
+        "Firm reject—Halalit won't recommend this series, and Book Quest will never suggest it.",
+        "The focus is romance, and it is unclear how adult that gets.",
+        "The series is Crown Duel, Court Duel, A Stranger to Command, and Remalna’s Children.",
+        "Only these books.",
+      ]),
+    },
+    {
+      titleRe: /\bunadoptables\b/i,
+      authorRe: /tooke|hana/i,
+      tier: "flag_review",
+      detail: bookNote("The Unadoptables (Hana Tooke)", [
+        "Firm reject—Halalit won't recommend this, and Book Quest will never suggest it.",
+        "The main character’s parents were apparently never married.",
+      ]),
+    },
+    {
+      titleRe: /\bsecret starling\b/i,
+      tier: "flag_review",
+      detail: bookNote("The Secret Starling (Judith Eagle)", [
+        "Firm reject—Halalit won't recommend this, and Book Quest will never suggest it.",
+        "The main character’s parents were apparently never married.",
+        "This book is by Judith Eagle.",
+      ]),
+    },
+    {
+      titleRe: /\bhow to save a queendom\b/i,
+      authorRe: /lawson/i,
+      requireAuthor: true,
+      tier: "flag_review",
+      detail: bookNote("How to Save a Queendom (Jessica Lawson)", [
+        "Parked — likely a reject, not a finished firm call.",
+        "Halalit won't recommend it until that call is finished.",
+      ], "Parked—not finished vet."),
+    },
+    {
+      titleRe: /\bwitch boy\b|\bhidden witch\b|\bmidwinter witch\b/i,
+      authorRe: /ostertag|knox/i,
+      requireAuthor: true,
+      tier: "flag_review",
+      detail: bookNote("The Witch Boy (Lee Knox Ostertag)", [
+        "Firm reject—the series is openly LGBTQ. Halalit won't recommend it, and Book Quest will never suggest it.",
+        "The books are The Witch Boy, The Hidden Witch, and The Midwinter Witch.",
+        "They were published under Molly Knox Ostertag as well as Lee Knox Ostertag.",
+        "Only this series.",
+      ]),
+    },
+    {
+      titleRe: /\brosewood chronicles\b|\bundercover princess\b|\bprincess in practice\b/i,
+      authorRe: /glynn|connie/i,
+      requireAuthor: true,
+      tier: "flag_review",
+      detail: bookNote("The Rosewood Chronicles (Connie Glynn)", [
+        "Firm reject—the series is openly LGBTQ. Halalit won't recommend it, and Book Quest will never suggest it.",
+        "Only this series.",
+      ]),
+    },
+    {
+      titleRe: /\badventurers guild\b|\btwilight of the elves\b|\bnight of dangers\b/i,
+      authorRe: /eliopulos|loran/i,
+      requireAuthor: true,
+      tier: "flag_review",
+      detail: bookNote("The Adventurers Guild (Zack Loran Clark and Nick Eliopulos)", [
+        "Hard reject—Halalit won't recommend this series, and Book Quest will never suggest it.",
+        "The main character ends up firmly gay.",
+        "Includes Twilight of the Elves and Night of Dangers.",
+        "Only this series. A lookup under either author should hit the same note.",
+      ]),
+    },
+    {
+      titleRe:
+        /\bsisters grimm\b|\bfairy[- ]tale detectives\b|\bonce upon a crime\b|\bmagic and other misdemeanors\b|\beverafter war\b|\bespecially peculiar\b|\bcouncil of mirrors\b/i,
+      authorRe: /buckley/i,
+      tier: "flag_review",
+      detail: bookNote("The Sisters Grimm (Michael Buckley)", [
+        "Firm reject—Halalit won't recommend this series, and Book Quest will never suggest it.",
+        "The plot is mostly clean. Books 3 and 6, The Problem Child and Tales from the Hood, have some mental-health themes.",
+        "The Everafter Miss Muffet marries the spider from the nursery rhyme and has a child with him. That relationship with a sentient animal is why the series is a reject.",
+        "Some books carry a darker mentality—preview for sensitive readers.",
+        "Parent-bashing tone in places—not only imperfect-family friction.",
+        "Only this series.",
+      ]),
+    },
+    {
+      titleRe: /\bproblem child\b|\bunusual suspects\b|\btales from the hood\b|\binside the story\b|\bbe grimm\b/i,
+      authorRe: /buckley/i,
+      requireAuthor: true,
+      tier: "flag_review",
+      detail: bookNote("The Sisters Grimm (Michael Buckley)", [
+        "Firm reject—Halalit won't recommend this series, and Book Quest will never suggest it.",
+        "This volume is part of The Sisters Grimm.",
+        "The Everafter Miss Muffet marries the spider from the nursery rhyme and has a child with him.",
+        "Books 3 and 6 have some mental-health themes. Some books are darker, and some have harsh family conflict.",
+      ]),
+    },
+    {
+      titleRe: /\bheartseeker\b|\briverbound\b/i,
+      authorRe: /beatty|melinda/i,
+      requireAuthor: true,
+      tier: "flag_review",
+      detail: bookNote("Heartseeker (Melinda Beatty)", [
+        "Firm reject—casual LGBTQ content. Halalit won't recommend this duology, and Book Quest will never suggest it.",
+        "The books are Heartseeker and Riverbound.",
+      ]),
+    },
+    {
+      titleRe: /\bwilderlore\b|\baccidental apprentice\b|\bweeping tide\b|\bever storms\b|\btraitor'?s gambit\b/i,
+      authorRe: /foody|amanda/i,
+      requireAuthor: true,
+      tier: "flag_review",
+      detail: bookNote("Wilderlore (Amanda Foody)", [
+        "Firm reject—casual LGBTQ content. Halalit won't recommend this series, and Book Quest will never suggest it.",
+        "Only this series.",
+      ]),
     },
     {
       titleRe:
@@ -3086,14 +3285,16 @@
     {
       titleRe: /\bsamurai kids|owl ninja|shaolin tiger/i,
       authorRe: /fussell|sandy/i,
-      tier: "flag_review",
+      tier: "user_discretion",
       detail: bookNote("Samurai Kids (Sandy Fussell)", [
-        "Books 1–3: serious dark parts but otherwise largely clean in owner scope.",
+        "Parent discretion—not a firm reject. The plot is otherwise clean.",
+        "The books keep mentioning seppuku (ritual suicide).",
+        "Serious dark parts in places—preview intensity.",
         "Other-religion representation—flag for parents.",
         "Scene helping an elderly naked man out of a shower/bath—preview modesty.",
         "Text calls out a sexism beat within the story.",
-        "Rest of series not owner-vetted.",
-      ], "Won’t Book Quest—not inappropriate."),
+        "Not on Book Quest; Halalit won’t auto-recommend—preview and decide for your home.",
+      ], USER_DISCRETION_PREVIEW_CLOSING),
     },
     {
       titleRe: /\bsci-fi junior high\b/i,
@@ -3260,11 +3461,13 @@
     {
       titleRe: /\bpumpkin princess\b/i,
       authorRe: /banbury|steven/i,
-      tier: "flag_review",
+      tier: "user_discretion",
       detail: bookNote("The Pumpkin Princess (Steven Banbury)", [
-        "Clean so far in owner scope.",
+        "Parent discretion—not a firm reject. The plot is clean.",
+        "It is a Halloween story, and the main character celebrates Christmas in both books.",
         "Flag Christian holiday references and family negativity.",
-      ], "Won’t Book Quest—not inappropriate."),
+        "Not on Book Quest; Halalit won’t auto-recommend—preview and decide for your home.",
+      ], USER_DISCRETION_PREVIEW_CLOSING),
     },
     {
       titleRe: /\braven crown\b|\braven heir\b/i,
@@ -3633,9 +3836,9 @@
       authorRe: /mowat|farley/i,
       tier: "flag_review",
       detail: bookNote("Never Cry Wolf (Farley Mowat)", [
-        "Mostly plot clean in owner scope, but leave out of Halalit recommends.",
-        "Personal references to adult romance—outside the family shelf for that reason.",
-        "Halalit won’t recommend or Book Quest this title.",
+        "Firm reject—Halalit won't recommend this book, and Book Quest will never suggest it.",
+        "The plot is mostly clean.",
+        "It refers to the main character’s adult relationship or relationships outside marriage.",
       ]),
     },
     {
@@ -3746,8 +3949,10 @@
       authorRe: /mackler|carolyn/i,
       tier: "flag_review",
       detail: bookNote("Not If I Can Help It (Carolyn Mackler)", [
-        "Clean plot but parent negativity and LGBTQ reference—Halalit won’t recommend.",
-      ], "Won’t Book Quest—not inappropriate."),
+        "Firm reject—Halalit won't recommend this, and Book Quest will never suggest it.",
+        "A major side character is a gay man.",
+        "Also: harsh family conflict.",
+      ]),
     },
     {
       titleRe: /\bcurse of the phoenix\b/i,
@@ -4119,12 +4324,13 @@
       ]),
     },
     {
-      titleRe: /\bcordelia hatmaker\b|\bhatmakers\b|\btroublemakers\b/i,
+      titleRe: /\bcordelia hatmaker\b|\bhatmakers\b|\bmapmakers\b|\btroublemakers\b|\bmythmakers\b/i,
       authorRe: /merchant|tamzin/i,
+      requireAuthor: true,
       tier: "flag_review",
-      detail: bookNote("Cordelia Hatmaker (Tamzin Merchant)", [
-        "Book 1: major LGBTQ moment—outside Halalit’s family shelf.",
-        "Book 3 not owner-vetted.",
+      detail: bookNote("The Hatmakers (Tamzin Merchant)", [
+        "Firm reject—clear LGBTQ content. Halalit won't recommend this series, and Book Quest will never suggest it.",
+        "Book 1 has a major LGBTQ moment. The reject covers the whole series, including The Mapmakers, The Troublemakers, and The Mythmakers.",
       ]),
     },
     {
@@ -4160,13 +4366,13 @@
     },
     {
       titleRe: /\bdefender of the realm\b/i,
-      authorRe: /huckerby|mark/i,
+      authorRe: /huckerby|ostler|nick\s*ostler/i,
       tier: "flag_review",
-      detail: bookNote("Defender of the Realm (Mark Huckerby)", [
-        "Otherwise clean in owner scope.",
-        "Intense parent-bashing, evil brother, and a brief non-graphic nudity beat after a de-transformation scene.",
-        "Rest of series not owner-vetted.",
-      ], "Won’t Book Quest—not inappropriate."),
+      detail: bookNote("Defender of the Realm (Mark Huckerby and Nick Ostler)", [
+        "Firm reject—Halalit won't recommend this series, and Book Quest will never suggest it.",
+        "The story is mostly clean. The main villains are described as naked after a magical change.",
+        "Also: intense parent-bashing and an evil brother.",
+      ]),
     },
     {
       titleRe:
@@ -4304,11 +4510,13 @@
       ], "Won’t Book Quest—not inappropriate."),
     },
     {
-      titleRe: /\bgreenwild\b|\bforest in the sky\b/i,
-      authorRe: /thomson|pari/i,
+      titleRe: /\bgreenwild\b|\bforest in the sky\b|\bworld behind the door\b|\bcity beyond the sea\b/i,
+      authorRe: /thomson|thompson|pari/i,
       tier: "flag_review",
       detail: bookNote("Greenwild (Pari Thomson)", [
-        "LGBTQ threads and parent-bashing in owner scope—not explicit, but off Halalit’s shelf.",
+        "Firm reject—Halalit won't recommend this series, and Book Quest will never suggest it.",
+        "A side character has two dads, and later in the series there is a married couple of two women.",
+        "Harsh family conflict in owner scope.",
       ]),
     },
     {
@@ -4893,9 +5101,17 @@
     var tl = norm(title);
     var al = norm(author);
     if (!tl) return null;
+    var authorWideHit = null;
     for (var i = 0; i < USER_DISCRETION_PARKED.length; i++) {
       var e = USER_DISCRETION_PARKED[i];
-      if (!e.titleRe.test(tl)) continue;
+      if (e.authorWide) {
+        if (!authorWideHit && al && e.authorRe && e.authorRe.test(al)) {
+          if (!(e.exceptTitleRe && e.exceptTitleRe.test(tl))) authorWideHit = e;
+        }
+        continue;
+      }
+      if (!e.titleRe || !e.titleRe.test(tl)) continue;
+      if (e.requireAuthor && !al) continue;
       if (e.authorRe && al && !e.authorRe.test(al)) continue;
       return {
         tier: "user_discretion",
@@ -4904,7 +5120,13 @@
         requiresCulturalMisrepresentationOptIn: !!e.requiresCulturalMisrepresentationOptIn,
       };
     }
-    return null;
+    if (!authorWideHit) return null;
+    return {
+      tier: "user_discretion",
+      detail: authorWideHit.detail,
+      requiresMentalHealthComfortOptIn: !!authorWideHit.requiresMentalHealthComfortOptIn,
+      requiresCulturalMisrepresentationOptIn: !!authorWideHit.requiresCulturalMisrepresentationOptIn,
+    };
   }
 
   function noRecommendKnownFanserviceMatch(title, author) {

@@ -438,8 +438,12 @@
    * Match on normalized title + author (author substring allowed when multiple authors listed).
    */
   var BLOCKED_BY_TITLE = [
-    { title: "the secret starling", author: "judith rossell" },
-    { title: "secret starling", author: "judith rossell" },
+    { title: "the secret starling", author: "judith eagle" },
+    { title: "secret starling", author: "judith eagle" },
+    { title: "the unadoptables", author: "hana tooke" },
+    { title: "unadoptables", author: "hana tooke" },
+    { title: "eighth grade bites", author: "brewer" },
+    { title: "vladimir tod", author: "brewer" },
   ];
 
   /** Hand-maintained exclusions: demonizes an entire race, religion, ethnicity, or similar group. */

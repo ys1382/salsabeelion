@@ -90,14 +90,6 @@
       ],
     },
     {
-      id: "sisters-grimm",
-      name: "The Sisters Grimm",
-      themeIds: ["adventure", "cozy_family"],
-      volumes: [
-        { title: "The Sisters Grimm", author: "Michael Buckley", ageBand: BAND.older_child_young_teen },
-      ],
-    },
-    {
       id: "savvy",
       name: "Savvy (Beaumont)",
       themeIds: ["cozy_family", "fathers"],
