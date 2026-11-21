@@ -1857,7 +1857,7 @@
       authorRe: /funke|cornelia/i,
       detail: bookNote("Inkheart (Cornelia Funke) — first book only", [
         "Parent discretion—not a firm reject.",
-        "The first book refers to a risk of sexual violence toward women. It does not happen on the page.",
+        "The color white is tied to 'innocence,' which hints at harm a parent should know about. The book makes clear Capricorn does not do that, and nothing happens on the page.",
         "Inkspell and Inkdeath are not covered here—look those up separately.",
         "Not on Book Quest; Halalit won’t auto-recommend—preview and decide for your home.",
       ], USER_DISCRETION_PREVIEW_CLOSING),
@@ -2746,7 +2746,7 @@
       tier: "flag_review",
       detail: bookNote("The Enchanter’s Child (Angie Sage)", [
         "Firm reject—Halalit won't recommend this duology, and Book Quest will never suggest it.",
-        "Near the end of the second book, the main character’s father cheated on his wife.",
+        "Near the end of book 2, the father had cheated on his wife and had his first child with another woman, before book 1.",
         "Only this duology, not her other series.",
       ]),
     },
@@ -3288,7 +3288,24 @@
       tier: "user_discretion",
       detail: bookNote("Samurai Kids (Sandy Fussell)", [
         "Parent discretion—not a firm reject. The plot is otherwise clean.",
-        "The books keep mentioning seppuku (ritual suicide).",
+        "This note is for books 1–3 only: White Crane, Owl Ninja, and Shaolin Tiger. The rest of the series has not been hand-vetted.",
+        "These books keep mentioning seppuku (ritual suicide).",
+        "Serious dark parts in places—preview intensity.",
+        "Other-religion representation—flag for parents.",
+        "Scene helping an elderly naked man out of a shower/bath—preview modesty.",
+        "Text calls out a sexism beat within the story.",
+        "Not on Book Quest; Halalit won’t auto-recommend—preview and decide for your home.",
+      ], USER_DISCRETION_PREVIEW_CLOSING),
+    },
+    {
+      titleRe: /\bwhite crane\b/i,
+      authorRe: /fussell|sandy/i,
+      requireAuthor: true,
+      tier: "user_discretion",
+      detail: bookNote("Samurai Kids (Sandy Fussell)", [
+        "Parent discretion—not a firm reject. The plot is otherwise clean.",
+        "This note is for books 1–3 only: White Crane, Owl Ninja, and Shaolin Tiger. The rest of the series has not been hand-vetted.",
+        "These books keep mentioning seppuku (ritual suicide).",
         "Serious dark parts in places—preview intensity.",
         "Other-religion representation—flag for parents.",
         "Scene helping an elderly naked man out of a shower/bath—preview modesty.",
