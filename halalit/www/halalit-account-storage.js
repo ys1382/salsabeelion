@@ -36,6 +36,7 @@
     "halalitReaderModel",
     "halalitPendingReview",
     "halalitReadingMilestonesEarned",
+    "halalitBookLinksList",
   ];
 
   function apiBase() {

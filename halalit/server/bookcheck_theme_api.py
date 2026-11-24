@@ -100,15 +100,27 @@ THEME_SPECS = [
     ),
     ("romanticized_crime", "Romanticized crime, cruelty, or vigilante harm"),
     ("teen_ya_age", "Teen or young-adult audience (not all-ages)"),
-    ("violence_intense", "Strong violence, horror, or intense scary content"),
+    (
+        "violence_intense",
+        "Violence or scariness a parent would want described: a fight, injury, death, threat, nightmare, "
+        "or a clearly scary scene. Not ordinary adventure tension with no scary or violent beat named.",
+    ),
     ("family_portrayed_negatively", "Parents/guardians unfair, hostile, or villainized"),
     ("cultural_stereotype", "Cultural stereotyping or shallow/false representation"),
     ("group_demonization", "Demonizes an entire race, religion, ethnicity, or people group"),
     ("pro_colonial_narrative", "Pro-colonial or imperial framing treated as natural or good"),
-    ("crude_profanity", "Harsh swearing, slurs, or crude profanity"),
+    (
+        "crude_profanity",
+        "Language a parent would want named: harsh swearing, slurs, or crude profanity, "
+        "or milder words (heck, darn, stupid, shut up) when a summary or review actually mentions them.",
+    ),
     ("deity_mythology", "Deity, spirits, or mythology treated as real in the story"),
     ("substance", "Alcohol, smoking, or drug-related content"),
     ("magic", "Fantasy magic (spells, wizards, magical creatures as fantasy device)"),
+    (
+        "positive_representation",
+        "Do not use. The site owner writes Positive representation by hand. Always mark present false and leave brief empty.",
+    ),
 ]
 
 THEME_IDS = [t[0] for t in THEME_SPECS]
@@ -197,6 +209,56 @@ FAMILY_NEGATIVE_ABSENT_RE = re.compile(
     re.IGNORECASE,
 )
 
+HARSH_LANGUAGE_RE = re.compile(
+    r"\b(?:fuck|fucking|shit|bitch|asshole|damn|goddamn|bastard|cunt|nigger|nigga|f-word|sh-word)\b",
+    re.IGNORECASE,
+)
+
+MILD_LANGUAGE_RE = re.compile(
+    r"\b(?:heck|darn|dang|stupid|idiot|shut up|dumb|jerk)\b",
+    re.IGNORECASE,
+)
+
+POSITIVE_REP_WHO_RE = re.compile(
+    r"\b(?:muslims?|islam(?:ic)?|hijabi?|mosque|quran|qur'an|arab|palestinian|"
+    r"jewish|jews|christian|hindu|sikh|buddhist|immigrant|refugee|"
+    r"disabilit(?:y|ies)|disabled|indigenous)\b",
+    re.IGNORECASE,
+)
+
+POSITIVE_REP_HOW_RE = re.compile(
+    r"\b(?:shown|portrays?|portrayed|portrayal|depicted|depicts|practices|prays|prayer|"
+    r"wears|treats|treated|respect(?:ful|ed)?|everyday life)\b",
+    re.IGNORECASE,
+)
+
+POSITIVE_REP_PROBLEM_RE = re.compile(
+    r"\b(?:stereotyp|caricatur|misrepresent|demoniz)\b",
+    re.IGNORECASE,
+)
+
+
+def language_brief_is_harsh(brief: str) -> bool:
+    return bool(HARSH_LANGUAGE_RE.search(str(brief or "")))
+
+
+def language_brief_is_mild_note(brief: str) -> bool:
+    text = str(brief or "")
+    if language_brief_is_harsh(text):
+        return False
+    return bool(MILD_LANGUAGE_RE.search(text))
+
+
+def positive_representation_brief_is_usable(brief: str) -> bool:
+    text = str(brief or "").strip()
+    if len(text) < 80:
+        return False
+    if POSITIVE_REP_PROBLEM_RE.search(text):
+        return False
+    if theme_brief_denies_presence("positive_representation", text):
+        return False
+    return bool(POSITIVE_REP_WHO_RE.search(text) and POSITIVE_REP_HOW_RE.search(text))
+
 
 def is_clean_ya_only_brief(tid: str, brief: str) -> bool:
     b = str(brief or "").strip()
@@ -245,7 +307,7 @@ def theme_brief_denies_presence(tid: str, brief: str) -> bool:
     if tid == "romantic_tension" and is_clean_ya_only_brief(tid, b):
         return True
     if tid == "crude_profanity" and CRUDE_PROFANITY_ABSENT_RE.search(b):
-        return True
+        return not language_brief_is_mild_note(b)
     if tid == "family_portrayed_negatively" and FAMILY_NEGATIVE_ABSENT_RE.search(b):
         return True
     if re.search(
@@ -264,6 +326,16 @@ def enforce_absent_briefs(themes_out: list[dict[str, Any]]) -> list[dict[str, An
         brief = str(row.get("brief") or "")
         if theme_brief_denies_presence(tid, brief):
             row["present"] = False
+    return themes_out
+
+
+def scrub_positive_representation(themes_out: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Positive representation is an owner handwritten note. The scan never publishes one."""
+    for row in themes_out:
+        if str(row.get("id") or "") != "positive_representation":
+            continue
+        row["present"] = False
+        row["brief"] = ""
     return themes_out
 
 
@@ -446,19 +518,32 @@ CRITICAL — theme "romantic_tension":
 - Mark present TRUE for on-page crushes, dating, or a clean romantic subplot at a middle-grade / all-ages level—not mere friendship or fan shipping.
 - Mark present FALSE for reader speculation that two friends "might" be a couple with no on-page romance beat.
 - Mark present FALSE when the romance is college/new-adult, mature-rated, or explicit—that belongs under adult_romance instead.
+- When present, say what the romance actually is in modest words (a crush, holding hands, a kiss, dating). Two or three sentences if a summary describes it; one sentence if the source is thin. Do not invent.
 
 CRITICAL — theme "adult_romance":
 - Mark present TRUE when a mature-rated or explicit romantic relationship is a major plot thread: college/university romance,
   new-adult fiction, open-door/explicit sexual content in the romance, or series reputation as mature romance (e.g. Off-Campus, hockey romance NA lines).
 - Mark present FALSE for clean all-ages crush/dating, chaste romance within marriage, or Islamic/clean romance that stays within marriage and avoids explicit detail.
 - Mark present FALSE when the book is YA with only age-appropriate crush/dating—even if you mention "mature-rated" in the brief to explain what is NOT in the book.
-- In brief, name the ROMANCE LEVEL in plain words (e.g. "mature-rated college romance, explicit adult relationship central to plot")—not just "two characters are in a relationship."
+- In brief, say how far the romance goes in modest words (a crush, a kiss, dating, marriage, or explicit). Use two or three sentences when a summary describes it, or one sentence if that is all the source supports. Do not invent a scene.
 - Do NOT use the word "steamy" in brief or seriesNote—say mature-rated, explicit, or new-adult instead.
 
-CRITICAL — theme "crude_profanity":
-- Mark present TRUE only when harsh swearing, slurs, or crude profanity appears in dialogue or narration (e.g. f-word, sh-word, crude insults).
-- Mark present FALSE when reviews do not mention swearing or you are unsure—do NOT mark present true while saying there is no profanity.
-- If present is false, brief may note absence; if present is true, name the kind of language in plain words.
+CRITICAL — theme "crude_profanity" (shown to parents as Language):
+- Mark present TRUE for harsh swearing, slurs, or crude profanity.
+- Also mark present TRUE when a summary or review names milder words (heck, darn, stupid, shut up). 
+- Mark present FALSE when language is not discussed or you are unsure. Do not guess, and do not invent quotes.
+- When present, name the words or the kind of language. Two or three sentences if the source says how it shows up; one sentence if that is all you know.
+- If the words are only mild, describe those words. Do not add the phrase "no harsh swearing."
+
+CRITICAL — theme "violence_intense" (shown to parents as Violence and scariness):
+- Mark present TRUE for strong violence, horror, or a scary scene a summary actually describes (a fight, a death, a threat, a nightmare, a chase that is frightening).
+- Mark present FALSE for ordinary adventure with no scary or violent beat named, or when you are unsure. Do not invent a scene.
+- When present, name what happens and how scary or violent it is. Two or three sentences if the source describes it; one sentence if the source is thin. Say when it is not graphic.
+- Do not call the book "horror fiction" unless it is actually marketed as horror.
+
+CRITICAL — theme "positive_representation":
+- Always mark present FALSE and leave brief empty.
+- The site owner writes this note by hand. Do not draft it.
 
 Theme ids:
 {theme_lines}
@@ -466,7 +551,7 @@ Theme ids:
 Return ONLY valid JSON:
 {{
   "themes": [
-    {{ "id": "lgbtq", "present": false, "confidence": "high", "brief": "one sentence" }}
+    {{ "id": "lgbtq", "present": false, "confidence": "high", "brief": "one sentence, or up to three when a source describes the scene" }}
   ],
   "seriesNote": "optional short note if series-wide vs one volume matters"
 }}"""
@@ -696,7 +781,7 @@ def themes_from_parsed(parsed: dict[str, Any]) -> tuple[list[dict[str, Any]], st
                 "id": tid,
                 "present": bool(item.get("present")),
                 "confidence": str(item.get("confidence") or "unknown"),
-                "brief": str(item.get("brief") or "")[:280],
+                "brief": str(item.get("brief") or "")[:520],
             }
         )
     series_note = str(parsed.get("seriesNote") or "")[:400]
@@ -704,6 +789,7 @@ def themes_from_parsed(parsed: dict[str, Any]) -> tuple[list[dict[str, Any]], st
     themes_out = enforce_adult_romance_theme(themes_out, series_note)
     themes_out = enforce_forced_gender_magic_theme(themes_out, series_note)
     themes_out = enforce_absent_briefs(themes_out)
+    themes_out = scrub_positive_representation(themes_out)
     return themes_out, series_note
 
 

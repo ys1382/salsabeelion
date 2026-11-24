@@ -5,6 +5,7 @@
   var EXCLUDE_FROM_AI_BLOB = {
     sexual_content: true,
     graphic_format: true,
+    positive_representation: true,
   };
 
   /** Forced/magic gender-change — soft caution only; never feeds LGBTQ hard-reject policy blob. */
@@ -351,6 +352,35 @@
   var CRUDE_PROFANITY_ABSENT_RE =
     /no (?:information to suggest|evidence of).{0,48}(?:harsh swearing|crude profanity|profan)|no harsh swearing|does not contain.{0,48}profan|without harsh swearing/i;
 
+  var HARSH_LANGUAGE_RE =
+    /\b(?:fuck|fucking|shit|bitch|asshole|damn|goddamn|bastard|cunt|nigger|nigga|f-word|sh-word)\b/i;
+
+  var MILD_LANGUAGE_RE = /\b(?:heck|darn|dang|stupid|idiot|shut up|dumb|jerk)\b/i;
+
+  var POSITIVE_REP_WHO_RE =
+    /\b(?:muslims?|islam(?:ic)?|hijabi?|mosque|quran|qur'an|arab|palestinian|jewish|jews|christian|hindu|sikh|buddhist|immigrant|refugee|disabilit(?:y|ies)|disabled|indigenous)\b/i;
+
+  var POSITIVE_REP_HOW_RE =
+    /\b(?:shown|portrays?|portrayed|portrayal|depicted|depicts|practices|prays|prayer|wears|treats|treated|respect(?:ful|ed)?|everyday life)\b/i;
+
+  function languageBriefIsHarsh(text) {
+    return HARSH_LANGUAGE_RE.test(String(text || ""));
+  }
+
+  function languageBriefIsMildNote(text) {
+    var t = String(text || "");
+    if (languageBriefIsHarsh(t)) return false;
+    return MILD_LANGUAGE_RE.test(t);
+  }
+
+  function positiveRepresentationNoteOk(text) {
+    var t = String(text || "").trim();
+    if (t.length < 80) return false;
+    if (/\b(?:stereotyp|caricatur|misrepresent|demoniz)\b/i.test(t)) return false;
+    if (themeBriefDeniesPresence("positive_representation", t)) return false;
+    return POSITIVE_REP_WHO_RE.test(t) && POSITIVE_REP_HOW_RE.test(t);
+  }
+
   var FAMILY_NEGATIVE_ABSENT_RE =
     /(?:are|is) not portrayed as (?:unfair|hostile|villain)|family members themselves are not portrayed|not portrayed as unfair, hostile, or villainized/i;
 
@@ -360,7 +390,9 @@
     if (themeId === "lgbtq" || (!themeId && lgbtqBriefDeniesContent(t))) return lgbtqBriefDeniesContent(t);
     if (themeId === "adult_romance" && ADULT_ROMANCE_ABSENT_RE.test(t)) return true;
     if (themeId === "romantic_tension" && isCleanYaOnlyBrief(t)) return true;
-    if (themeId === "crude_profanity" && CRUDE_PROFANITY_ABSENT_RE.test(t)) return true;
+    if (themeId === "crude_profanity" && CRUDE_PROFANITY_ABSENT_RE.test(t)) {
+      return !languageBriefIsMildNote(t);
+    }
     if (themeId === "family_portrayed_negatively" && FAMILY_NEGATIVE_ABSENT_RE.test(t)) return true;
     if (/there is no (?:information|evidence|confirmed)|does not (?:contain|include|feature|center)|the plot does not|no indication that|reader (?:speculation|projection)|perceived subtext is reader projection|not identified in reviews/i.test(t)) {
       return true;
@@ -546,6 +578,9 @@
     lgbtqBriefDeniesContent: lgbtqBriefDeniesContent,
     themeBriefEmbedsLgbtqDenial: themeBriefEmbedsLgbtqDenial,
     themeBriefDeniesPresence: themeBriefDeniesPresence,
+    languageBriefIsHarsh: languageBriefIsHarsh,
+    languageBriefIsMildNote: languageBriefIsMildNote,
+    positiveRepresentationNoteOk: positiveRepresentationNoteOk,
     stripLgbtqDenialClause: stripLgbtqDenialClause,
   };
 })(typeof window !== "undefined" ? window : this);

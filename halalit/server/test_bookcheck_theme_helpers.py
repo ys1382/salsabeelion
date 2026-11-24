@@ -35,8 +35,11 @@ sys.modules["halalit_lookup_log"].lookup_group_key = lambda *a, **k: ""  # type:
 from bookcheck_theme_api import (  # noqa: E402
     _merge_sensitive_present,
     is_clean_ya_only_brief,
+    language_brief_is_harsh,
+    language_brief_is_mild_note,
     lgbtq_affirmative_evidence,
     merge_theme_scans,
+    positive_representation_brief_is_usable,
     theme_brief_denies_presence,
 )
 
@@ -105,6 +108,47 @@ class BookcheckThemeHelperTests(unittest.TestCase):
         self.assertTrue(theme_brief_denies_presence("romantic_tension", brief))
         teen_brief = "the book is published as a Young Adult fantasy novel with a teenage protagonist."
         self.assertTrue(is_clean_ya_only_brief("teen_ya_age", teen_brief))
+
+    def test_mild_language_note_is_kept(self) -> None:
+        brief = "A character says heck once during an argument."
+        self.assertTrue(language_brief_is_mild_note(brief))
+        self.assertFalse(language_brief_is_harsh(brief))
+        self.assertFalse(theme_brief_denies_presence("crude_profanity", brief))
+
+    def test_harsh_language_absence_still_denies(self) -> None:
+        brief = "No harsh swearing in the reviews."
+        self.assertTrue(theme_brief_denies_presence("crude_profanity", brief))
+        self.assertTrue(language_brief_is_harsh("The dialogue uses the f-word often."))
+
+    def test_positive_representation_needs_a_real_portrayal(self) -> None:
+        self.assertFalse(positive_representation_brief_is_usable("Positive representation."))
+        self.assertFalse(
+            positive_representation_brief_is_usable("A diverse cast of friends goes on an adventure together.")
+        )
+        self.assertTrue(
+            positive_representation_brief_is_usable(
+                "A Muslim family is shown at home before a trip. The daughter wears hijab and they pray together. "
+                "Reviews describe this as everyday life."
+            )
+        )
+
+    def test_scan_never_publishes_positive_representation(self) -> None:
+        from bookcheck_theme_api import scrub_positive_representation
+
+        rows = scrub_positive_representation(
+            [
+                {
+                    "id": "positive_representation",
+                    "present": True,
+                    "brief": (
+                        "A Muslim family is shown at home before a trip. The daughter wears hijab and they pray together. "
+                        "Reviews describe this as everyday life."
+                    ),
+                }
+            ]
+        )
+        self.assertFalse(rows[0]["present"])
+        self.assertEqual(rows[0]["brief"], "")
 
 
 if __name__ == "__main__":

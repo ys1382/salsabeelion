@@ -127,6 +127,7 @@ KNOWN_DATA_KEYS = frozenset(
         "halalitLibraryFavoritePlaces",
         "halalitReaderModel",
         "halalitPendingReview",
+        "halalitBookLinksList",
     }
 )
 

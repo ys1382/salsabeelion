@@ -71,7 +71,7 @@
     },
     {
       id: "violence_intense",
-      label: "Violence or horror intensity",
+      label: "Violence and scariness",
       shelfTier: "caution",
       subjectRe: /horror fiction|graphic violence|true crime|murder|serial killer/i,
       textRe: /graphic violence|\bgory\b|serial killer|torture|horror fiction|true crime|war crimes/i,
@@ -107,7 +107,7 @@
     },
     {
       id: "crude_profanity",
-      label: "Harsh swearing or slurs",
+      label: "Language",
       shelfTier: "flag_review",
       subjectRe: /profan|vulgar|swear|obscene|offensive language|explicit language/i,
       textRe: /\bf+\W*u+\W*c+\W*k|\bbitch|\bsh+\W*i+\W*t|\bnigg|\bcunt\b|\basshole|\bgoddamn/i,

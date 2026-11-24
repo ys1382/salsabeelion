@@ -83,6 +83,20 @@
       justify-content: center;
       position: relative;
     }
+    /* Keep the picture in the page so the browser will load it, but don't hold an empty gap. */
+    .scene-visual:not(.scene-visual--ok) {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      margin: 0;
+      overflow: hidden;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .scene-visual.scene-visual--ok {
+      position: relative;
+      opacity: 1;
+    }
     .scene-visual img {
       display: block;
       width: 100%;
@@ -2845,7 +2859,7 @@
        * www/assets/halalit-reader-armchair-cat.png — URL-safe condensed string.
        */
       var BOOKQUEST_IMAGE_STYLE =
-        "Warm Halalit library mood walnut amber golden lamplight wood shelves cozy scholarly hush, soft stylized cinematic illustration calm slice-of-life, gentle anime-influenced linework normal realistic eye size not chibi not huge cartoon eyes, simplified symmetric faces two eyes one nose one mouth aligned no warp no melt no duplicate features, medium-wide or full shot never extreme facial close-up, modest long-sleeved layered dignified clothing when people appear, emotion mainly through posture hands and silhouette not facial micro-detail, burgundy cream dusty rose muted palette painterly shading, all-ages family-friendly consistent adult-youth height scale in frame, no photoreal skin texture no hyperdetail no glossy CGI";
+        "Soft gouache children's storybook painting, not a photograph and not fashion. Every person wears a loose coat buttoned to the chin, long sleeves to the wrists, and a long skirt or loose trousers. Only the face and hands are bare. Warm wood library, simple painted faces, full bodies in frame, all-ages.";
 
 
       function hashStringToSeed(s) {
@@ -3056,8 +3070,12 @@
 
       function buildBookQuestPollinationsUrl(fullPrompt, seed) {
         var maxLen = 1280;
+        var lock =
+          "Children's storybook painting. Loose coat buttoned to the chin, long sleeves, long skirt or loose trousers, only face and hands bare. ";
+        var budget = maxLen - lock.length;
         var p = String(fullPrompt);
-        if (p.length > maxLen) p = p.slice(0, maxLen);
+        if (p.length > budget) p = p.slice(0, budget);
+        p = lock + p;
         var path = "https://image.pollinations.ai/prompt/" + encodeURIComponent(p);
         var q =
           "width=" +
@@ -3068,6 +3086,52 @@
           encodeURIComponent(String(seed));
         return path + "?" + q;
       }
+
+      function halalitSceneImageReady(img) {
+        var fig = img && img.closest ? img.closest("figure") : null;
+        if (!fig) return;
+        var limitCard = false;
+        try {
+          var c = document.createElement("canvas");
+          var w = 16;
+          var h = 9;
+          c.width = w;
+          c.height = h;
+          var x = c.getContext("2d");
+          x.drawImage(img, 0, 0, w, h);
+          var d = x.getImageData(0, 0, w, h).data;
+          var hot = 0;
+          var n = w * h;
+          var rSum = 0;
+          var gSum = 0;
+          var bSum = 0;
+          for (var i = 0; i < d.length; i += 4) {
+            var r = d[i];
+            var g = d[i + 1];
+            var b = d[i + 2];
+            rSum += r;
+            gSum += g;
+            bSum += b;
+            if (r > 200 && g > 160 && b < 150 && r > b + 60) hot += 1;
+          }
+          limitCard = rSum / n > 210 && gSum / n > 170 && bSum / n < 170 && hot / n > 0.45;
+        } catch (e) {}
+        if (limitCard) {
+          var tries = Number(img.getAttribute("data-tries") || "0");
+          if (tries < 2) {
+            img.setAttribute("data-tries", String(tries + 1));
+            window.setTimeout(function () {
+              var base = String(img.src || "").replace(/([?&])retry=\d+/, "$1").replace(/[?&]$/, "");
+              img.src = base + (base.indexOf("?") >= 0 ? "&" : "?") + "retry=" + String(tries + 1);
+            }, 12000);
+            return;
+          }
+          fig.classList.add("scene-visual--empty");
+          return;
+        }
+        fig.classList.add("scene-visual--ok");
+      }
+      window.halalitSceneImageReady = halalitSceneImageReady;
 
       function sceneImageFigureHtml(sceneKey) {
         var subject = bookQuestSceneSubjectPrompt(sceneKey);
@@ -3087,14 +3151,13 @@
           String(BOOKQUEST_IMAGE_PIXEL_W) +
           "\" height=\"" +
           String(BOOKQUEST_IMAGE_PIXEL_H) +
-          "\" loading=\"eager\" fetchpriority=\"high\" decoding=\"async\" referrerpolicy=\"no-referrer\" onerror=\"this.closest('figure').classList.add('scene-visual--empty')\" />" +
+          "\" crossorigin=\"anonymous\" loading=\"eager\" fetchpriority=\"high\" decoding=\"async\" onload=\"halalitSceneImageReady(this)\" onerror=\"this.closest('figure').classList.add('scene-visual--empty')\" />" +
           "</figure>"
         );
       }
 
       function withSceneVisual(sceneKey, innerMarkup) {
-        /* Scene art paused — book covers only for now. */
-        return innerMarkup;
+        return sceneImageFigureHtml(sceneKey) + innerMarkup;
       }
 
       function applyScores(delta) {
@@ -3984,7 +4047,7 @@
         var choiceList =
           nodeId === "riddleToll" ? riddleChoicesForRender() : nodeId === "genreChoice" ? GENRE_CHOICES : node.choices;
 
-        let html = bodyHtml + "<div class=\"choices\">";
+        let html = sceneImageFigureHtml(nodeId) + bodyHtml + "<div class=\"choices\">";
         choiceList.forEach(function (ch, i) {
           html += "<button type=\"button\" class=\"choice\" data-i=\"" + i + "\">" + ch.text + "</button>";
         });

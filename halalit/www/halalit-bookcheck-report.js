@@ -8,7 +8,7 @@
   var SCAN_TOPICS = [
     { id: "audience", label: "Age band", subjectRe: /young adult|teen fiction|ya fiction/i, textRe: /young adult|teen fiction|teenage readers/i },
     { id: "lgbtq", label: "LGBTQ themes", subjectRe: /lgbt|lesbian|gay|homosexual|queer|transgender|same[- ]sex|gender identity/i, textRe: /\blgbtq?\b|lesbian|gay\b|homosexual|queer\b|transgender|they\/them|two[- ]moms?|same[- ]sex/i },
-    { id: "romance", label: "Romance or dating", subjectRe: /romance|dating|love stories/i, textRe: /romantic|love triangle|dating|betrothal|crush on/i },
+    { id: "romance", label: "Romance", subjectRe: /romance|dating|love stories/i, textRe: /romantic|love triangle|dating|betrothal|crush on/i },
     {
       id: "forced_gender_magic",
       label: "Forced or magic gender-change",
@@ -18,10 +18,10 @@
     },
     { id: "modesty", label: "Sexual content or fanservice", subjectRe: /erotica|sexual/i, textRe: /fanservice|fan service|ecchi|panty|sexualized|immodest|explicit/i },
     { id: "illegitimacy", label: "Illegitimate-children plot", subjectRe: /illegitim|born out of wedlock|bastardy/i, textRe: /illegitim|born out of wedlock|unwed mother/i },
-    { id: "violence", label: "Violence or horror", subjectRe: /horror|murder|violence/i, textRe: /graphic violence|serial killer|torture|horror fiction|true crime/i },
+    { id: "violence", label: "Violence and scariness", subjectRe: /horror|murder|violence/i, textRe: /graphic violence|serial killer|torture|horror fiction|true crime/i },
     {
       id: "crude_profanity",
-      label: "Harsh swearing or slurs",
+      label: "Language",
       subjectRe: /profan|vulgar|swear|obscene|offensive language|explicit language/i,
       textRe: null,
     },
@@ -50,32 +50,56 @@
   var AI_THEME_ROW_LABELS = {
     lgbtq: "LGBTQ themes",
     adult_romance: "Adult romance",
-    romantic_tension: "Romance or dating",
+    romantic_tension: "Romance",
     illegitimate_children: "Illegitimate-children plot",
-    crude_profanity: "Harsh swearing or slurs",
+    crude_profanity: "Language",
     group_demonization: "Group demonization",
     pro_colonial_narrative: "Pro-colonial narrative",
-    violence_intense: "Violence or horror",
+    violence_intense: "Violence and scariness",
     family_portrayed_negatively: "Family portrayed harshly",
     cultural_stereotype: "Cultural stereotyping",
     substance: "Alcohol, smoking, or drugs",
     romanticized_crime: "Crime or cruelty tone",
+    positive_representation: "Positive representation",
   };
 
   function shortThemeNote(text) {
     var t = String(text || "").replace(/\s+/g, " ").trim();
     if (!t) return "";
-    var first = t.match(/^[^.!?]+[.!?]?/);
-    if (first) t = first[0].trim();
-    if (t.length > 140) t = t.slice(0, 137) + "…";
+    var sentences = t.match(/[^.!?]+[.!?]+|[^.!?]+$/g);
+    if (sentences && sentences.length) {
+      var kept = [];
+      for (var i = 0; i < sentences.length && kept.length < 3; i++) {
+        var sentence = String(sentences[i] || "").trim();
+        if (sentence) kept.push(sentence);
+      }
+      if (kept.length) t = kept.join(" ");
+    }
+    if (t.length > 480) t = t.slice(0, 477) + "…";
     return t;
+  }
+
+  function languageBriefIsHarsh(brief) {
+    var AI = global.HalalitBookcheckAi;
+    if (AI && typeof AI.languageBriefIsHarsh === "function") return AI.languageBriefIsHarsh(brief);
+    return /\b(?:fuck|fucking|shit|bitch|asshole|damn|goddamn|bastard|cunt|nigger|nigga|f-word|sh-word)\b/i.test(
+      String(brief || "")
+    );
+  }
+
+  function positiveRepresentationNoteOk(brief) {
+    var AI = global.HalalitBookcheckAi;
+    if (AI && typeof AI.positiveRepresentationNoteOk === "function") return AI.positiveRepresentationNoteOk(brief);
+    return false;
   }
 
   function familyBriefIsMild(brief) {
     return !/unfair|hostile|villain|abus|neglect|cruel (?:mother|father|parent)/i.test(String(brief || ""));
   }
 
-  function aiThemeCommentStatus(id) {
+  function aiThemeCommentStatus(id, brief) {
+    if (id === "positive_representation") return "note";
+    if (id === "crude_profanity") return languageBriefIsHarsh(brief) ? "concern" : "caution";
     if (
       id === "lgbtq" ||
       id === "adult_romance" ||
@@ -94,6 +118,7 @@
     if (themeBriefDeniesIssue(theme.brief)) return false;
     if (theme.id === "lgbtq" && lgbtqBriefDeniesContent(theme.brief)) return false;
     if (theme.id === "family_portrayed_negatively" && familyBriefIsMild(theme.brief)) return false;
+    if (theme.id === "positive_representation" && !positiveRepresentationNoteOk(theme.brief)) return false;
     if (theme.id === "romantic_tension" && report && report.dimensions) {
       for (var i = 0; i < report.dimensions.length; i++) {
         if (report.dimensions[i] && report.dimensions[i].id === "romance") return false;
@@ -359,7 +384,7 @@
         if (tagHits.length)
           noteParts.push("Open Library tag: “" + tagHits.slice(0, 4).join("”; “") + "”");
         if (descHit) noteParts.push('Description: “' + descHit + "”");
-        if (!tagHits.length && !descHit) noteParts.push("Harsh swearing or slurs in catalog or plot text for this edition.");
+        if (!tagHits.length && !descHit) noteParts.push("Language: harsh swearing or slurs in the catalog or plot text for this edition.");
         return { id: topic.id, label: topic.label, status: "concern", note: noteParts.join(" · ") };
       }
       return null;
@@ -910,7 +935,7 @@
       rows.push({
         id: rowId,
         label: AI_THEME_ROW_LABELS[theme.id] || theme.id,
-        status: aiThemeCommentStatus(theme.id),
+        status: aiThemeCommentStatus(theme.id, theme.brief),
         note: note,
       });
       seenIds[rowId] = true;
@@ -1538,11 +1563,14 @@
       var note = parts[2].trim();
       var idByLabel = {
         "LGBTQ themes": "lgbtq",
+        Romance: "romance",
         "Romance or dating": "romance",
         "Sexual content or fanservice": "modesty",
         "Age band": "audience",
         "Illegitimate-children plot": "illegitimacy",
+        "Violence and scariness": "violence",
         "Violence or horror": "violence",
+        "Language": "crude_profanity",
         "Harsh swearing or slurs": "crude_profanity",
         "Alcohol, smoking, or drugs": "substance",
         "Deity or mythology": "deity",
@@ -1958,6 +1986,7 @@
 
   function statusLabel(status) {
     if (status === "ok") return "Clear";
+    if (status === "note") return "Noted";
     if (status === "caution") return "Preview";
     if (status === "concern") return "Concern";
     return "Silent";
@@ -2015,6 +2044,81 @@
       .trim();
   }
 
+  function ownerCategoryBoxes(report) {
+    var Cur = global.HalalitCuratedShelfWarnings;
+    if (!Cur || typeof Cur.categoryClarifyingMatch !== "function" || !report) return [];
+    var hit = Cur.categoryClarifyingMatch(report.title, report.author || "");
+    return hit && hit.boxes ? hit.boxes : [];
+  }
+
+  function ownerCategoryCoversDimension(boxes, row) {
+    if (!row || !boxes || !boxes.length) return false;
+    var id = row.id || "";
+    var label = String(row.label || "");
+    for (var i = 0; i < boxes.length; i++) {
+      var key = boxes[i].id;
+      if (key === "language" && (id === "crude_profanity" || label === "Language" || label === "Harsh swearing or slurs"))
+        return true;
+      if (
+        key === "violence" &&
+        (id === "violence" || id === "violence_intense" || label === "Violence and scariness" || label === "Violence or horror")
+      )
+        return true;
+      if (
+        key === "romance" &&
+        (id === "romance" || id === "romantic_tension" || id === "adult_romance" || label === "Romance" || label === "Romance or dating" || label === "Adult romance")
+      )
+        return true;
+      if (key === "positiveRepresentation" && (id === "positive_representation" || label === "Positive representation"))
+        return true;
+    }
+    return false;
+  }
+
+  function standingCategoryBoxes(report) {
+    var Cur = global.HalalitCuratedShelfWarnings;
+    var labels =
+      (Cur && Cur.categoryClarifyingLabels) || {
+        positiveRepresentation: "Positive representation",
+        language: "Language",
+        violence: "Violence and scariness",
+        romance: "Romance",
+      };
+    var order =
+      (Cur && Cur.categoryClarifyingOrder) || ["positiveRepresentation", "language", "violence", "romance"];
+    var written = {};
+    var hit = ownerCategoryBoxes(report);
+    for (var i = 0; i < hit.length; i++) {
+      if (hit[i] && hit[i].id) written[hit[i].id] = hit[i].lines || [];
+    }
+    var boxes = [];
+    for (var k = 0; k < order.length; k++) {
+      var id = order[k];
+      boxes.push({ id: id, label: labels[id] || id, lines: written[id] || [] });
+    }
+    return boxes;
+  }
+
+  function renderOwnerCategoryNotesHtml(report) {
+    var boxes = standingCategoryBoxes(report);
+    var html = "";
+    for (var i = 0; i < boxes.length; i++) {
+      var box = boxes[i];
+      var lines = box.lines || [];
+      html += '<div class="bookcheck-halalit-note">';
+      html += '<p class="bookcheck-halalit-note-title">' + escapeHtml(box.label) + "</p><ul>";
+      if (!lines.length) {
+        html += '<li class="muted">No note yet.</li>';
+      } else {
+        for (var n = 0; n < lines.length; n++) {
+          html += "<li>" + escapeHtml(lines[n]) + "</li>";
+        }
+      }
+      html += "</ul></div>";
+    }
+    return html;
+  }
+
   function renderBookcheckReportHtmlCompact(report, opts) {
     if (!report) return "";
     opts = opts || {};
@@ -2029,7 +2133,9 @@
     var autoReject = hasAutoReject(report, hint);
 
     html += renderAutoRejectionHtml(report, hint);
-    if (autoReject) return html;
+    var ownerNotesHtml = opts.skipCategoryNotes ? "" : renderOwnerCategoryNotesHtml(report);
+    var ownerBoxes = ownerCategoryBoxes(report);
+    if (autoReject) return html + ownerNotesHtml;
 
     if (report.summary && !slim) {
       html += '<p class="bookcheck-report-summary">' + escapeHtml(stripCjk(report.summary)) + "</p>";
@@ -2052,8 +2158,21 @@
         if (crow.id === "catalog_silent" || crow.status === "unknown") continue;
         if (crow.id === "audience") continue;
         if (crow.id === "ai_scan") continue;
+        if (ownerCategoryCoversDimension(ownerBoxes, crow)) continue;
         if (themeBriefDeniesIssue(crow.note) || scanNoteHidesLgbtqDenial(crow.note, report, hint)) continue;
         concernRows.push(crow);
+      }
+    }
+
+    var noteRows = [];
+    if (report.mode !== "curated" && report.dimensions && report.dimensions.length) {
+      for (var nr = 0; nr < report.dimensions.length; nr++) {
+        var nrow = report.dimensions[nr];
+        if (!nrow || nrow.status !== "note") continue;
+        if (ownerCategoryCoversDimension(ownerBoxes, nrow)) continue;
+        if (nrow.id === "positive_representation") continue;
+        if (!shortThemeNote(nrow.note)) continue;
+        noteRows.push(nrow);
       }
     }
 
@@ -2062,9 +2181,11 @@
         report.parsedNote &&
         report.parsedNote.bullets.length) ||
       concernRows.length ||
+      noteRows.length ||
       report.aiSeriesNote;
 
     if (!plotExtras) {
+      html += ownerNotesHtml;
       if (report.descriptionExcerpt) {
         var descOnly = stripCjk(report.descriptionExcerpt);
         if (descOnly.length >= 24) {
@@ -2077,6 +2198,7 @@
       return html;
     }
 
+    html += ownerNotesHtml;
     html += '<div class="bookcheck-halalit-note">';
     html += '<p class="bookcheck-halalit-note-title">Plot &amp; themes</p><ul>';
 
@@ -2101,6 +2223,18 @@
         "</li>";
       shown += 1;
       if (shown >= 4) break;
+    }
+
+    for (var n = 0; n < noteRows.length; n++) {
+      var noteRow = noteRows[n];
+      var noteText = shortThemeNote(stripCjk(noteRow.note));
+      if (!noteText) continue;
+      html +=
+        "<li><strong>" +
+        escapeHtml(noteRow.label) +
+        ":</strong> " +
+        escapeHtml(noteText) +
+        "</li>";
     }
 
     if (report.aiSeriesNote) {
@@ -2141,9 +2275,12 @@
     }
 
     html += renderAutoRejectionHtml(report, hint);
-    if (autoReject) return html;
+    var ownerNotesHtml = opts.skipCategoryNotes ? "" : renderOwnerCategoryNotesHtml(report);
+    var ownerBoxes = ownerCategoryBoxes(report);
+    if (autoReject) return html + ownerNotesHtml;
 
     html += renderYouDecideLineHtml(report, hint, opts);
+    html += ownerNotesHtml;
 
     if (report.summary && !slim && !autoReject) {
       html += '<p class="bookcheck-report-summary">' + escapeHtml(report.summary) + "</p>";
@@ -2177,6 +2314,8 @@
           continue;
         if (d.id === "catalog_silent" || d.status === "unknown") continue;
         if (d.id === "ai_scan" && opts.vetSource === "ai_themes") continue;
+        if (ownerCategoryCoversDimension(ownerBoxes, d)) continue;
+        if (d.id === "positive_representation") continue;
         if (themeBriefDeniesIssue(d.note) || scanNoteHidesLgbtqDenial(d.note, report, hint)) continue;
         html +=
           '<li class="bookcheck-scan-row bookcheck-scan-row--' +
@@ -2241,6 +2380,7 @@
     renderYouDecideLineHtml: renderYouDecideLineHtml,
     renderHtml: renderBookcheckReportHtml,
     renderHtmlCompact: renderBookcheckReportHtmlCompact,
+    categoryNotesHtml: renderOwnerCategoryNotesHtml,
     themeBriefDeniesIssue: themeBriefDeniesIssue,
   };
 })(typeof window !== "undefined" ? window : this);

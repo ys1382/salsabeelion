@@ -37,7 +37,7 @@
 - [x] **Verified clean** tier (hand list in `halalit-curated-shelf-warnings.js`; Spirit Animals series first)
 - [ ] More verified-clean series/titles + bulk plot check against rules
 - [ ] Bulk plot check (summaries + rules, later AI) so many books can be judged without the owner reading each one
-- [x] Bookcheck **what to do** line + **what we noticed** signals on lookups
+- [x] **Bookcheck category notes (Nov 2026)** — Every Bookcheck shows **Positive representation**, **Language**, **Violence and scariness**, and **Romance** boxes, including **No note yet** until the owner writes them. Notes live in `categoryClarifyingNotes` in `halalit-curated-shelf-warnings.js`. The scan does not write Positive representation. Hard reject rules unchanged.
 - [x] Stronger automatic scan: LGBTQ/romance/fanservice in descriptions; children’s comics → preview tier
 - [x] **Catalog title pins (Jun 2026)** — `halalit-catalog-pins.js`: core title only → main book (Kiki’s Delivery Service → Eiko Kadono novel); longer query (e.g. coloring book) → full catalog list. Wired in Bookcheck, Book Quest own-title lookup, library enrich. **Sketchbooks / art books** → same hand-check path as graphic novels.
 - [x] Bookcheck extra sources (allowed APIs): Wikipedia **plot**, Wikidata genres, librarian tags, Halalit theme index file — see `HALALIT-BOOKCHECK-SOURCES.md`

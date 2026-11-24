@@ -252,6 +252,100 @@
     .tab-panel[hidden] {
       display: none !important;
     }
+    .book-links-panel {
+      max-width: 40rem;
+      margin: 1.25rem auto 2.5rem;
+    }
+    .book-links-lead {
+      margin: 0 0 0.85rem;
+    }
+    .book-links-heading {
+      font-size: 0.95rem;
+      margin: 1.1rem 0 0.25rem;
+      color: var(--accent);
+      font-weight: 600;
+    }
+    .book-links-heading:first-child {
+      margin-top: 0;
+    }
+    .book-links-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      padding: 0.4rem 0;
+      border-bottom: 1px solid var(--rule);
+    }
+    .book-links-line {
+      flex: 1;
+      line-height: 1.35;
+    }
+    .book-links-row input[type="checkbox"] {
+      width: 1.15rem;
+      height: 1.15rem;
+      flex: 0 0 auto;
+      accent-color: var(--accent);
+    }
+    .book-links-main {
+      flex: 1;
+      display: flex;
+      align-items: baseline;
+      gap: 0.65rem;
+      min-width: 0;
+    }
+    .book-links-textbtn {
+      border: 0;
+      background: transparent;
+      color: var(--dim);
+      font: inherit;
+      font-size: 0.82rem;
+      cursor: pointer;
+      text-decoration: underline;
+      padding: 0;
+      flex: 0 0 auto;
+    }
+    .book-links-edit {
+      flex: 1;
+      display: grid;
+      gap: 0.35rem;
+      min-width: 0;
+    }
+    .book-links-edit label {
+      display: grid;
+      gap: 0.2rem;
+      font-family: system-ui, "Segoe UI", sans-serif;
+      font-size: 0.78rem;
+      color: var(--dim);
+    }
+    .book-links-edit input[type="text"],
+    .book-links-add input[type="text"] {
+      width: 100%;
+      padding: 0.4rem 0.55rem;
+      border-radius: 8px;
+      border: 1px solid var(--rule);
+      background: rgba(0, 0, 0, 0.22);
+      color: var(--ink);
+      font-family: system-ui, "Segoe UI", sans-serif;
+      font-size: 0.88rem;
+    }
+    .book-links-edit-actions,
+    .book-links-add-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+      align-items: center;
+    }
+    .book-links-add {
+      margin-top: 0.9rem;
+    }
+    .book-links-add label {
+      display: grid;
+      gap: 0.2rem;
+      margin-bottom: 0.45rem;
+      font-family: system-ui, "Segoe UI", sans-serif;
+      font-size: 0.78rem;
+      color: var(--dim);
+    }
     .scroll-scanner-panel {
       max-width: 36rem;
     }
@@ -2062,6 +2156,13 @@
       border-color: rgba(168, 201, 154, 0.4);
       background: rgba(168, 201, 154, 0.08);
     }
+    .bookcheck-category-notes {
+      margin: 0.85rem 0 0.35rem;
+    }
+    .bookcheck-category-notes-title {
+      margin: 0 0 0.45rem;
+      font-size: 0.95rem;
+    }
     .bookcheck-halalit-note-title {
       margin: 0 0 0.4rem;
       font-weight: 600;
@@ -2615,6 +2716,7 @@
     <button type="button" class="site-tab" role="tab" id="tab-btn-wishlist" aria-controls="panel-wishlist-library" aria-selected="false">The Wishlist Library</button>
     <button type="button" class="site-tab" role="tab" id="tab-btn-continue-series" aria-controls="panel-continue-series" aria-selected="false">Continue Series</button>
     <button type="button" class="site-tab" role="tab" id="tab-btn-bookcheck" aria-controls="panel-bookcheck" aria-selected="false">Bookcheck</button>
+    <button type="button" class="site-tab" role="tab" id="tab-btn-book-links" aria-controls="panel-book-links" aria-selected="false" hidden>Book Links List</button>
     <button type="button" class="site-tab" role="tab" id="tab-btn-scroll-scanner" aria-controls="panel-scroll-scanner" aria-selected="false">Scroll Scanner</button>
   </nav>
 
@@ -2816,6 +2918,27 @@
         <button type="button" class="import-btn" id="bookcheckLookup">Check this title</button>
         <span class="muted" id="bookcheckLookupStatus" style="font-size:0.85rem" aria-live="polite"></span>
       </div>
+      <div class="bookcheck-category-notes" id="bookcheckCategoryNotes">
+        <p class="bookcheck-category-notes-title"><strong>Category notes</strong></p>
+        <div id="bookcheckCategoryNotesBody">
+          <div class="bookcheck-halalit-note">
+            <p class="bookcheck-halalit-note-title">Positive representation</p>
+            <ul><li class="muted">No note yet.</li></ul>
+          </div>
+          <div class="bookcheck-halalit-note">
+            <p class="bookcheck-halalit-note-title">Language</p>
+            <ul><li class="muted">No note yet.</li></ul>
+          </div>
+          <div class="bookcheck-halalit-note">
+            <p class="bookcheck-halalit-note-title">Violence and scariness</p>
+            <ul><li class="muted">No note yet.</li></ul>
+          </div>
+          <div class="bookcheck-halalit-note">
+            <p class="bookcheck-halalit-note-title">Romance</p>
+            <ul><li class="muted">No note yet.</li></ul>
+          </div>
+        </div>
+      </div>
       <details class="guidelines-box bookcheck-feedback-box">
         <summary class="bookcheck-guidelines-summary">
           <span class="bookcheck-guidelines-title"><strong>Let us know how we did!</strong></span>
@@ -2917,6 +3040,14 @@
     </div>
   </section>
 
+  <section id="panel-book-links" class="tab-panel" role="tabpanel" aria-labelledby="tab-btn-book-links" hidden>
+    <div class="panel book-links-panel">
+      <h2>Book Links List</h2>
+      <p class="muted book-links-lead">Only you see this. Your edits stay on your account.</p>
+      <div id="bookLinksList"></div>
+    </div>
+  </section>
+
   <section id="panel-scroll-scanner" class="tab-panel" role="tabpanel" aria-labelledby="tab-btn-scroll-scanner" hidden>
     <div class="already-panel panel scroll-scanner-panel" style="border-radius:14px;border:1px solid rgba(255,255,255,0.05);background:var(--panel);padding:1.25rem 1.5rem">
       <h2>Scroll Scanner</h2>
@@ -2967,7 +3098,7 @@
   </footer>
   <script src="./halalit-handheld-device.js?v=20260610i"></script>
   <script src="./halalit-bookcheck-config.js?v=20260716a"></script>
-  <script src="./halalit-account-storage.js?v=20260718a"></script>
+  <script src="./halalit-account-storage.js?v=20261123a"></script>
   <script src="./halalit-owner-feedback.js?v=20260610d"></script>
   <script src="./halalit-site-flags.js?v=20260610b"></script>
   <script src="./halalit-pacific-occasion-banner.js?v=20260601b"></script>
@@ -2987,19 +3118,19 @@
   <script src="./halalit-owner-vet-ui.js?v=20260611g"></script>
   <script src="./halalit-curated-shelf-warnings.js?v=20261121a"></script>
   <script src="./halalit-ai-vet-staging.js?v=20260611a"></script>
-  <script src="./halalit-shelf-themes.js?v=20260531c"></script>
+  <script src="./halalit-shelf-themes.js?v=20261110b"></script>
   <script src="./halalit-theme-index-data.js?v=20260529b"></script>
   <script src="./halalit-theme-index.js?v=20260529b"></script>
   <script src="./halalit-series-expectation.js?v=20260531a"></script>
   <script src="./halalit-bookquest-age-ratings.js?v=20261106d"></script>
   <script src="./halalit-catalog-pins.js?v=20260626e"></script>
   <script src="./halalit-family-shelf-policy.js?v=20261119a"></script>
-  <script src="./halalit-bookcheck-report.js?v=20260815b"></script>
+  <script src="./halalit-bookcheck-report.js?v=20261110e"></script>
   <script src="./halalit-wikipedia-shelf-hint.js?v=20260529a"></script>
   <script src="./halalit-wikidata-shelf-hint.js?v=20260529b"></script>
   <script src="./halalit-bookcheck-config.js?v=20260716a"></script>
   <script src="./halalit-bookcheck-vet-source.js?v=20260711a"></script>
-  <script src="./halalit-bookcheck-ai.js?v=20260712a"></script>
+  <script src="./halalit-bookcheck-ai.js?v=20261110b"></script>
   <script src="./halalit-lookup-quality.js?v=20260610c"></script>
   <script src="./halalit-scroll-scanner.js?v=20260728a"></script>
   <script src="./halalit-owner-shelf-scanner.js?v=20260717a"></script>
@@ -3007,8 +3138,9 @@
   <script src="./halalit-occasion-week-home.js?v=20260626e"></script>
   <script src="./halalit-suggests-data.js?v=20261119a"></script>
   <script src="./halalit-suggests.js?v=20261109e"></script>
-  <script src="./halalit-bookcheck.js?v=20261110a"></script>
+  <script src="./halalit-bookcheck.js?v=20261110e"></script>
   <script src="./halalit-bookcheck-shelf-queue.js?v=20260627a"></script>
+  <script src="./halalit-book-links-list.js?v=20261123a"></script>
   <script>
     Promise.all([
       HalalitAccountStorage.ready,
@@ -3047,6 +3179,16 @@
       }
       applySiteFlags();
 
+      var bookLinksOwner =
+        window.HalalitAccountStorage &&
+        HalalitAccountStorage.isSignedIn() &&
+        HalalitAccountStorage.isOwner();
+      var bookLinksBtn = document.getElementById("tab-btn-book-links");
+      if (bookLinksBtn) bookLinksBtn.hidden = !bookLinksOwner;
+      if (bookLinksOwner && window.HalalitBookLinksList) {
+        window.HalalitBookLinksList.mount(document.getElementById("bookLinksList"));
+      }
+
       var Lib = window.HalalitPersonalLibrary;
       var Want = window.HalalitWantToRead;
       var tabMeta = [
@@ -3057,6 +3199,7 @@
         { btn: "tab-btn-wishlist", panel: "panel-wishlist-library", hash: "#wishlist-library" },
         { btn: "tab-btn-continue-series", panel: "panel-continue-series", hash: "#continue-series" },
         { btn: "tab-btn-bookcheck", panel: "panel-bookcheck", hash: "#bookcheck" },
+        { btn: "tab-btn-book-links", panel: "panel-book-links", hash: "#book-links" },
         { btn: "tab-btn-scroll-scanner", panel: "panel-scroll-scanner", hash: "#scroll-scanner" },
       ];
 
@@ -4877,6 +5020,10 @@
           selectTab(tabIndexForPanel("panel-wishlist-library"));
         else if (h === "#continue-series" || h === "#continue") selectTab(tabIndexForPanel("panel-continue-series"));
         else if (h === "#bookcheck") selectTab(tabIndexForPanel("panel-bookcheck"));
+        else if (h === "#book-links") {
+          if (bookLinksOwner) selectTab(tabIndexForPanel("panel-book-links"));
+          else selectTab(0);
+        }
         else if (h === "#scroll-scanner") {
           var handheldScan =
             window.HalalitHandheldDevice && typeof window.HalalitHandheldDevice.isHandheld === "function"

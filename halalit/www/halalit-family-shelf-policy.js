@@ -1021,7 +1021,7 @@
     if (!b && !tl) return signals;
     if (blob && blobMentionsLgbtq(b)) signals.push("LGBTQ themes in catalog or description");
     if (textMentionsCrudeProfanity(b) || textMentionsCrudeProfanity(tl)) {
-      signals.push("Harsh swearing or slurs in catalog or description");
+      signals.push("Language: harsh swearing or slurs in the catalog or description");
     }
     if (isTeenBlob(b)) signals.push("Teen or young-adult audience");
     if (ROMANCE_SUBJECT_RE.test(b) || LIGHT_ROMANCE_THEME_RE.test(b) || HARD_ADULT_ROMANCE_RE.test(b)) {

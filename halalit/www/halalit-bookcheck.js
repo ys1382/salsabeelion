@@ -1673,6 +1673,14 @@
         for (var i = 0; i < themes.length; i++) {
           var row = themes[i];
           if (!row || !row.present || !hard[row.id]) continue;
+          if (row.id === "crude_profanity") {
+            var AI = global.HalalitBookcheckAi;
+            var harsh =
+              AI && typeof AI.languageBriefIsHarsh === "function"
+                ? AI.languageBriefIsHarsh(row.brief)
+                : true;
+            if (!harsh) continue;
+          }
           labels.push(hard[row.id]);
         }
         if (labels.length) {
@@ -1735,6 +1743,14 @@
         verdictBox.hidden = true;
         verdictBox.innerHTML = "";
         verdictBox.className = "bookcheck-verdict";
+      }
+      var notesBodyReset = panel.querySelector("#bookcheckCategoryNotesBody");
+      if (
+        notesBodyReset &&
+        global.HalalitBookcheckReport &&
+        typeof global.HalalitBookcheckReport.categoryNotesHtml === "function"
+      ) {
+        notesBodyReset.innerHTML = global.HalalitBookcheckReport.categoryNotesHtml({});
       }
       if (seriesNoteEl) {
         seriesNoteEl.hidden = true;
@@ -2399,6 +2415,16 @@
           coverBlock = CoverThumb.thumbHtml(coverUrl, catalogMeta.matchedTitle || title || "Book cover");
         }
       }
+      var notesBody = panel.querySelector("#bookcheckCategoryNotesBody");
+      if (
+        notesBody &&
+        global.HalalitBookcheckReport &&
+        typeof global.HalalitBookcheckReport.categoryNotesHtml === "function"
+      ) {
+        notesBody.innerHTML = global.HalalitBookcheckReport.categoryNotesHtml(
+          catalogMeta.familyReport || { title: title, author: author }
+        );
+      }
       verdictBox.innerHTML =
         vetBanner +
         coverBlock +
@@ -2411,6 +2437,7 @@
               compact: catalogMeta.compactReport || autoReject,
               vetSource: catalogMeta.vetSource,
               experienced: experienced,
+              skipCategoryNotes: !!notesBody,
             })
           : verdictActionHtml(v, { hideFamilyAction: catalogMeta.compactReport || autoReject })) +
         (v.body &&
