@@ -14,6 +14,7 @@
     ["Bartholomew and the Oobleck", "Dr. Seuss"],
     ["Beezus and Ramona", "Beverly Cleary"],
     ["Berenstain Bears", "Stan and Jan Berenstain"],
+    ["The Berenstain Bears and the Messy Room", "Stan and Jan Berenstain"],
     ["Brown Bear, Brown Bear, What Do You See?", "Bill Martin Jr. and Eric Carle"],
     ["Castle Glower", "Jessica Day George"],
     ["Charlotte's Web", "E.B. White"],

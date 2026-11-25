@@ -102,6 +102,55 @@
   padding: 0;
 }
 
+.halalit-affiliate {
+  margin: 0.65rem 0 0;
+}
+
+.halalit-affiliate__statement {
+  margin: 0;
+  font-family: system-ui, "Segoe UI", sans-serif;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: var(--dim, #b8a684);
+}
+
+.halalit-affiliate__row {
+  margin: 0.35rem 0 0;
+  font-family: system-ui, "Segoe UI", sans-serif;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.halalit-affiliate__link {
+  color: var(--accent, #e3b86a);
+  font-weight: 500;
+}
+
+.halalit-affiliate__tag {
+  color: var(--dim, #b8a684);
+  font-size: 0.85rem;
+}
+
+.halalit-suggests__affiliate {
+  margin: 0.85rem 0 0;
+}
+
+.halalit-suggests__affiliate-row {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.halalit-suggests__affiliate-link {
+  color: var(--accent, #e3b86a);
+  font-weight: 500;
+}
+
+.halalit-suggests__affiliate-tag {
+  color: var(--dim, #b8a684);
+  font-size: 0.85rem;
+}
+
 .halalit-suggests__occasion {
   font-family: system-ui, "Segoe UI", sans-serif;
   font-size: 0.9rem;

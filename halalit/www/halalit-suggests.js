@@ -675,6 +675,12 @@
     return false;
   }
 
+  function affiliateBlockHtml(title, author) {
+    var Aff = global.HalalitAmazonAffiliate;
+    if (!Aff || typeof Aff.blockHtml !== "function") return "";
+    return Aff.blockHtml(title, author);
+  }
+
   function cardHtml(opts) {
     var title = opts.title;
     var author = opts.author || "";
@@ -723,6 +729,7 @@
         ? '<p class="halalit-suggests__book-author muted">' + escapeHtml(author) + "</p>"
         : "") +
       (meta ? '<p class="halalit-suggests__meta muted">' + escapeHtml(meta) + "</p>" : "") +
+      affiliateBlockHtml(title, author) +
       action +
       "</div></article>"
     );
@@ -859,12 +866,12 @@
       return "";
     }
 
-    function listHtml(lines) {
-      if (!lines || !lines.length) return "<li>Halalit parked this, and the note didn’t include a reason.</li>";
-      var html = "";
-      for (var i = 0; i < lines.length; i++) html += "<li>" + escapeHtml(lines[i]) + "</li>";
-      return html;
-    }
+  function listHtml(lines) {
+    if (!lines || !lines.length) return "<li>Halalit parked this, and the note didn’t include a reason.</li>";
+    var html = "";
+    for (var i = 0; i < lines.length; i++) html += "<li>" + escapeHtml(lines[i]) + "</li>";
+    return html;
+  }
 
     function renderBookPage() {
       var book = state.book;
@@ -945,6 +952,7 @@
         (onFinished ? "On finished" : "Finished") +
         "</button></div>" +
         '<p class="halalit-suggests__shelf-status muted" data-shelf-status></p>' +
+        affiliateBlockHtml(book.title, book.author) +
         "</div></div>" +
         reasonHtml +
         '<h3 class="halalit-suggests__blurb-title">About this book</h3>' +

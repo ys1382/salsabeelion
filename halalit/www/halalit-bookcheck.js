@@ -473,6 +473,14 @@
       .replace(/"/g, "&quot;");
   }
 
+  /** Hand-checked and owner-flagged titles always carry the Associates line. */
+  function handSettledAffiliateHtml(title, author, vetSource) {
+    if (vetSource !== "hand_vetted" && vetSource !== "owner_rejected") return "";
+    var Aff = global.HalalitAmazonAffiliate;
+    if (!Aff || typeof Aff.blockHtml !== "function") return "";
+    return Aff.blockHtml(title, author);
+  }
+
   /** Multi-line curated notes: first line title, following lines become a short list. */
   function formatNoteHtml(text) {
     var raw = String(text || "").trim();
@@ -2431,6 +2439,11 @@
         (headline
           ? '<p class="bookcheck-verdict__headline">' + escapeHtml(headline) + "</p>"
           : "") +
+        handSettledAffiliateHtml(
+          catalogMeta.matchedTitle || title,
+          catalogMeta.matchedAuthor || author,
+          catalogMeta.vetSource
+        ) +
         aiScanQualityLineHtml(catalogMeta, experienced) +
         (catalogMeta.familyReport && global.HalalitBookcheckReport
           ? global.HalalitBookcheckReport.renderHtml(catalogMeta.familyReport, {

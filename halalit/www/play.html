@@ -137,6 +137,26 @@
       color: var(--accent);
       margin: 0.5rem 0 0;
     }
+    .halalit-affiliate {
+      margin: 0.75rem 0 0;
+    }
+    .halalit-affiliate__statement {
+      margin: 0;
+      font-family: system-ui, sans-serif;
+      font-size: 0.82rem;
+      line-height: 1.45;
+      color: var(--dim);
+    }
+    .halalit-affiliate__row {
+      margin: 0.35rem 0 0;
+      font-family: system-ui, sans-serif;
+      font-size: 0.9rem;
+    }
+    .halalit-affiliate__link { color: var(--accent); }
+    .halalit-affiliate__tag {
+      color: var(--dim);
+      font-size: 0.82rem;
+    }
     .muted { color: var(--dim); font-size: 0.95rem; }
     .restart {
       margin-top: 1rem;
@@ -682,12 +702,13 @@
   <script src="./halalit-designer-gate.js"></script>
   <script src="./halalit-personal-library.js"></script>
   <script src="./halalit-want-to-read.js"></script>
-  <script src="./halalit-curated-shelf-warnings.js?v=20261121a"></script>
+  <script src="./halalit-curated-shelf-warnings.js?v=20261124c"></script>
   <script src="./halalit-catalog-pins.js?v=20260626e"></script>
   <script src="./halalit-cover-thumb.js?v=20261109e"></script>
   <script src="./halalit-family-shelf-policy.js?v=20261119a"></script>
-  <script src="./halalit-bookquest-age-ratings.js?v=20261106d"></script>
+  <script src="./halalit-bookquest-age-ratings.js?v=20261124b"></script>
   <script src="./halalit-shelf-feedback.js?v=20260530d"></script>
+  <script src="./halalit-amazon-affiliate.js?v=20261124j"></script>
   <script>
     Promise.all([
       HalalitAccountStorage.ready,
@@ -1828,6 +1849,15 @@
       const REC_VARIANTS = {
         cautiousSocial: [
           {
+            id: "berenstain-messy-room",
+            genre: "realistic_fiction",
+            titlePlain: "The Berenstain Bears and the Messy Room by Stan and Jan Berenstain",
+            aspects: ["gentle_pace", "humor", "friendship"],
+            line: "You like home stories where a small mess turns into a chance to help the family.",
+            book:
+              "<em>The Berenstain Bears and the Messy Room</em> by Stan and Jan Berenstain — Brother and Sister Bear, a very messy room, and putting things back where they belong.",
+          },
+          {
             id: "charlottes-web",
             genre: "realistic_fiction",
             titlePlain: "Charlotte’s Web by E. B. White",
@@ -2825,6 +2855,17 @@
           .replace(/&/g, "&amp;")
           .replace(/</g, "&lt;")
           .replace(/"/g, "&quot;");
+      }
+
+      function affiliateEndHtml(rec) {
+        var Aff = window.HalalitAmazonAffiliate;
+        if (!Aff || typeof Aff.blockHtml !== "function" || !rec || !rec.titlePlain) return "";
+        var Lib = window.HalalitPersonalLibrary;
+        var parsed =
+          Lib && typeof Lib.parseTitlePlain === "function" ? Lib.parseTitlePlain(rec.titlePlain) : null;
+        var title = parsed && parsed.title ? parsed.title : rec.titlePlain;
+        var author = parsed && parsed.author ? parsed.author : "";
+        return Aff.blockHtml(title, author);
       }
 
       function attachQuestCoverThumb(host, titlePlain) {
@@ -3927,6 +3968,7 @@
                 "<p class=\"end-book\">" +
                 rec.pick +
                 "</p>" +
+                affiliateEndHtml(rec) +
                 "<p class=\"muted\">Already reading something else from your own want-to-read pile? You can still leave your note on <em>that</em> title below, if it meets the same family shelf rules—Halalit doesn’t need you to switch books midstream.</p>" +
                 "<p class=\"muted\">This web build is a tiny stand-in for the fuller Halalit prototype—your choices here are only a sketch of the real game’s signals. Named titles are hand-picked for family-friendly shelves.</p>" +
                 reviewSectionHtml(ctx) +
@@ -3946,6 +3988,7 @@
                 "<p class=\"end-book\">" +
                 rec.pick +
                 "</p>" +
+                affiliateEndHtml(rec) +
                 "<p class=\"muted\">Your note is saved—about Halalit’s pick or the title you named from your own list. The shelf will weigh it the next time it offers a title.</p>" +
                 "<p class=\"muted\">Affirmed “own list” titles that pass the automatic catalog family check are saved to your account for Halalit’s curated recommendation pool.</p>" +
                 "<p class=\"restart\"><button type=\"button\" id=\"again\">Play again</button></p>"
@@ -3975,6 +4018,7 @@
                   "<p class=\"end-book\">" +
                   rec.pick +
                   "</p>" +
+                  affiliateEndHtml(rec) +
                   "<p class=\"muted\">Already reading something else? Name that title below, optionally look it up in Open Library for catalog age hints, and save a note—optional on this first full run. Titles you affirm as Halalit-suitable are saved to your account.</p>" +
                   "<p class=\"muted\">This web build is a tiny stand-in for the fuller Halalit prototype—your choices here are only a sketch of the real game’s signals. Named titles are hand-picked for family-friendly shelves.</p>" +
                   "<p class=\"muted\">From your next full quest onward, the shelf will ask for a short reader note before it unlocks another round—so suggestions can lean with you.</p>" +
@@ -4001,6 +4045,7 @@
                   "<p class=\"end-book\">" +
                   rec.pick +
                   "</p>" +
+                  affiliateEndHtml(rec) +
                   "<p class=\"muted\">Your note is saved—about Halalit’s pick or the title you named from your own list.</p>" +
                   "<p class=\"muted\">This web build is a tiny stand-in for the fuller Halalit prototype—your choices here are only a sketch of the real game’s signals. Named titles are hand-picked for family-friendly shelves.</p>" +
                   "<p class=\"muted\">From your next full quest onward, the shelf will ask for a short reader note before it unlocks another round—so suggestions can lean with you.</p>" +

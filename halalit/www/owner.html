@@ -633,7 +633,7 @@
   <script src="./halalit-owner-vets-runtime.js?v=20260611f"></script>
   <script src="./halalit-personal-library.js?v=20260610g"></script>
   <script src="./halalit-series-expand.js?v=20260528b"></script>
-  <script src="./halalit-curated-shelf-warnings.js?v=20261121a"></script>
+  <script src="./halalit-curated-shelf-warnings.js?v=20261124c"></script>
   <script src="./halalit-ai-vet-staging.js?v=20260611a"></script>
   <script src="./halalit-family-shelf-policy.js?v=20261119a"></script>
   <script src="./halalit-bookcheck-vet-source.js?v=20260711a"></script>
@@ -652,7 +652,8 @@
   <script src="./halalit-scroll-scanner.js?v=20260728a"></script>
   <script src="./halalit-owner-cover-preview.js?v=20260611f"></script>
   <script src="./halalit-owner-shelf-scanner.js?v=20260717a"></script>
-  <script src="./halalit-bookcheck.js?v=20261110e"></script>
+  <script src="./halalit-amazon-affiliate.js?v=20261124j"></script>
+  <script src="./halalit-bookcheck.js?v=20261124c"></script>
   <script src="./halalit-auth.js?v=20260715a"></script>
   <script src="./halalit-bookstore-owner.js?v=20260804a"></script>
   <script>
@@ -1200,7 +1201,7 @@
       }
 
       function loadCursorVetRoster() {
-        return fetch("./halalit-hand-vet-roster.json?v=20261121a")
+        return fetch("./halalit-hand-vet-roster.json?v=20261124a")
           .then(function (res) {
             return res.ok ? res.json() : null;
           })

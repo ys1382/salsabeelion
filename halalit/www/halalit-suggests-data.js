@@ -126,12 +126,24 @@
           author: "Stan Berenstain",
           ageBand: BAND.young_child,
         },
+        {
+          title: "The Berenstain Bears and the Messy Room",
+          author: "Stan and Jan Berenstain",
+          ageBand: BAND.young_child,
+        },
       ],
     },
   ];
 
   /** Standalone (or single-title) cards — not folded into SERIES above */
   var STANDALONES = [
+    {
+      title: "The Berenstain Bears and the Messy Room",
+      author: "Stan and Jan Berenstain",
+      ageBand: BAND.young_child,
+      themeIds: ["cozy_family"],
+      spotlight: false,
+    },
     {
       title: "Fortunately, the Milk",
       author: "Neil Gaiman",
@@ -254,6 +266,13 @@
     {
       title: "The Animal Healer",
       author: "Lauren St John",
+      ageBand: BAND.older_child_young_teen,
+      themeIds: ["nature"],
+      spotlight: false,
+    },
+    {
+      title: "How to Change Everything",
+      author: "Naomi Klein",
       ageBand: BAND.older_child_young_teen,
       themeIds: ["nature"],
       spotlight: false,

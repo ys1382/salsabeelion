@@ -796,6 +796,7 @@
         "Owner Parents Week pick—pretty good family series overall.",
         "Mother’s Day titles from the series—owner Mother’s Week picks; Father’s Day titles—owner Father’s Week picks.",
         "The Berenstain Bears Go Green / Earth Day title—owner Earth Week pick (pro-nature message).",
+        "The Berenstain Bears and the Messy Room—owner hand-check for younger children.",
         "Some books include Christian holiday content—preview for families who skip religious holidays.",
       ]),
     },
@@ -909,7 +910,7 @@
     },
     {
       titleRe: /\blittle engine that could\b|\bthe little engine that could\b/i,
-      authorRe: /piper|watty|long/i,
+      authorRe: /piper|watty|munk|long/i,
       detail: "Hand-verified for Halalit’s family shelf: The Little Engine That Could reads as clean.",
     },
     {
@@ -1742,6 +1743,14 @@
         "Hand-verified clean across the series in owner scope—wildlife rescue in wild places.",
         "Pro-nature stewardship tone; some fantasy-magic beats—comfort note for families who skip magic.",
         "Book Quest includes when otherwise clean—exclude magic in Advanced recommendations settings on the play page if needed.",
+      ]),
+    },
+    {
+      titleRe: /\bhow to change everything\b/i,
+      authorRe: /klein|naomi|stefoff/i,
+      detail: bookNote("How to Change Everything (Naomi Klein)", [
+        "Hand-verified clean in owner scope—nature nonfiction for older kids through adults. The cover calls it the young human’s guide.",
+        "It talks about natural disasters and encounters with environmental racism. It does not describe graphic violence.",
       ]),
     },
     {
@@ -4996,7 +5005,15 @@
 
   var CATEGORY_CLARIFYING_ORDER = ["positiveRepresentation", "language", "violence", "romance"];
 
-  var CATEGORY_CLARIFYING_NOTES = [];
+  var CATEGORY_CLARIFYING_NOTES = [
+    {
+      titleRe: /\brainbow fish\b(?!\s+(?:to|and)\b)/i,
+      authorRe: /pfister|marcus/i,
+      romance: [
+        "The word “rainbow” refers to the fish’s colorful scales, not pride themes.",
+      ],
+    },
+  ];
 
   function categoryNoteLines(value) {
     if (!value) return [];

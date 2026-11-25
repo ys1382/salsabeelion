@@ -34,6 +34,7 @@
   /** Book Quest REC_VARIANTS ids → content band. */
   var VARIANT_BAND = {
     "charlottes-web": BAND.YOUNG_CHILD,
+    "berenstain-messy-room": BAND.YOUNG_CHILD,
     "winn-dixie": BAND.OLDER_CHILD_YOUNG_TEEN,
     "ameenas-ramadan-diary": BAND.OLDER_TEEN_ADULT,
     ivan: BAND.OLDER_CHILD_YOUNG_TEEN,
@@ -86,6 +87,7 @@
    */
   var VARIANT_INTEREST_THROUGH = {
     "charlottes-web": BAND.OLDER_CHILD_YOUNG_TEEN,
+    "berenstain-messy-room": BAND.YOUNG_CHILD,
     "winn-dixie": BAND.OLDER_TEEN_ADULT,
     "ameenas-ramadan-diary": BAND.OLDER_TEEN_ADULT,
     ivan: BAND.OLDER_TEEN_ADULT,
@@ -141,6 +143,11 @@
       through: BAND.OLDER_TEEN_ADULT,
       titleRe: /fortunately,?\s*the milk/i,
       authorRe: /gaiman|neil/i,
+    },
+    {
+      through: BAND.OLDER_TEEN_ADULT,
+      titleRe: /\bhow to change everything\b/i,
+      authorRe: /klein|naomi|stefoff/i,
     },
     {
       through: BAND.OLDER_TEEN_ADULT,
@@ -246,6 +253,11 @@
       band: BAND.YOUNG_CHILD,
       titleRe: /\beasy guide to american sign language\b/i,
       authorRe: /heller|lora/i,
+    },
+    {
+      band: BAND.OLDER_CHILD_YOUNG_TEEN,
+      titleRe: /\bhow to change everything\b/i,
+      authorRe: /klein|naomi|stefoff/i,
     },
     { band: BAND.OLDER_TEEN_ADULT, titleRe: /this changes everything/i, authorRe: /klein|naomi/i },
     { band: BAND.OLDER_TEEN_ADULT, titleRe: /ameena'?s ramadan diary/i },
